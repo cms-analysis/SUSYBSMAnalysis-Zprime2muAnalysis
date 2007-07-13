@@ -1,0 +1,11 @@
+include "AnalysisExamples/Zprime2muAnalysis/data/Zprime2muAnalysisCommon.cff"
+
+module Zprime2muResolution = Zprime2muResolution {
+  using Zprime2muAnalysisCommon
+  
+  untracked string outputFile = "muon_resolution.ps"
+
+  include "AnalysisExamples/Zprime2muAnalysis/data/ResolutionDataSets.cff"
+
+  string dataSet = "Zp1000"
+}

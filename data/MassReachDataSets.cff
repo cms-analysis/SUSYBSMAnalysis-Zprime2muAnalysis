@@ -1,0 +1,38 @@
+
+PSet Zssm1000  = {
+    # number of bins and mass window for plots
+    uint32  nBins   = 24
+    vdouble massWin = { 400., 1600. }
+    # order of GenMass arrays: signal, bkgnd, aux bkgnd 
+    # bkgnd bounds is usually same as signal bounds
+    vdouble lowerGenMass = {   400.,   400.,  200. }
+    vdouble upperGenMass = { 99999., 99999.,  400. }
+    string  resModel  = "Zssm"
+    uint32  resMassId = 1000
+    # Production cross-section times branching ratio, in fb
+    # for signal, bkgnd, aux bkgnd (PYTHIA 6.227S, CTEQ6L)
+    vdouble XSec = { 611., 221., 2479. }
+    # K-factors.  Currently use the mass-average value of QCD NNLO/LO K-factor,
+    # 1.35 +/- 0.05, calculated by M. Schmitt (SUSY/BSM meeting, Dec.16, 2005)
+    # for signal, bkgnd, aux bkgnd
+    vdouble KFactor = { 1.35, 1.35, 1.35 }
+    # Number of *generated* events in each sample.  Used for normalization
+    # of histograms.
+    vuint32 nGenEvents = { 1000, 1000, 1000 }
+}
+
+PSet Zssm3000 = {
+    uint32 nBins    = 30
+    vdouble massWin = { 1500., 4500. }
+    vdouble lowerGenMass = {  1500.,  1500., 1000. }
+    vdouble upperGenMass = { 99999., 99999., 1500. }
+    string  resModel   = "Zssm"
+    uint32  resMassId  = 3000
+    vdouble XSec       = { 2.8,  1.1,  6.6  }
+    vdouble KFactor    = { 1.35, 1.35, 1.35 }
+    vuint32 nGenEvents = { 1000, 1000, 1000 }
+}
+
+// a dummy pset for users to replace
+PSet User = {
+}

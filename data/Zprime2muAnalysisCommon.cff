@@ -1,0 +1,11 @@
+block Zprime2muAnalysisCommon = {
+  bool doingHiggs = false
+  bool generatedOnly = false
+  #InputTag genMuons = source
+  InputTag genMuons = VtxSmeared
+  InputTag globalMuons = globalMuons
+  InputTag globalMuonsFMS = globalMuonsFMS
+  InputTag globalMuonsPMR = globalMuonsPMR
+  InputTag standAloneMuons = standAloneMuons:UpdatedAtVtx
+  InputTag photons = correctedPhotons
+}

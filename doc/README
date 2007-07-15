@@ -47,9 +47,11 @@ At the time being, the package has been written and tested to work with
 
 Zprime2muAnalysis
 -----------------
-In data/Zprime2muAnalysisCommon.cff one can find a set of InputTags defining
-which collections of reco objects are to be used from the input ROOT
-file; these may be changed if necessary.
+In data/Zprime2muAnalysisCommon.cff one can find a set of InputTags
+defining which collections of reco objects are to be used from the
+input ROOT file; these may be changed if necessary.  Level-1/HLT
+selection has not been updated since ORCA times and is currently
+disabled.
 
 Zprime2muResolution
 -------------------

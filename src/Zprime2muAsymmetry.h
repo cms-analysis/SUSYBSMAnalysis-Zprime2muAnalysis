@@ -14,9 +14,9 @@
 
 #include "SimDataFormats/HepMCProduct/interface/HepMCProduct.h"
 
-#include "AnalysisExamples/Zprime2muAnalysis/src/AsymFitData.h"
-#include "AnalysisExamples/Zprime2muAnalysis/src/TFMultiD.h"
-#include "AnalysisExamples/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymFitData.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TFMultiD.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
 
 const int FIT_ARRAY_SIZE = 50000;// max size of arrays for unbinned fits. 
 

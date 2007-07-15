@@ -11,8 +11,8 @@
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/EgammaCandidates/interface/Photon.h"
 
-#include "AnalysisExamples/Zprime2muAnalysis/src/Muon.h"
-#include "AnalysisExamples/Zprime2muAnalysis/src/DiMuon.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Muon.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DiMuon.h"
 
 // details about the number of reconstruction levels stored
 const int NUM_REC_LEVELS = 4;

@@ -25,7 +25,7 @@
 #include "SimDataFormats/HepMCProduct/interface/HepMCProduct.h"
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 
-#include "AnalysisExamples/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
 
 using namespace std;
 

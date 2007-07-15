@@ -8,7 +8,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "AnalysisExamples/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
 
 // max number of files for mass fits
 const int NF = 2;

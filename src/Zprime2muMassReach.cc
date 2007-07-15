@@ -19,9 +19,9 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "AnalysisExamples/Zprime2muAnalysis/src/Functions.h"
-#include "AnalysisExamples/Zprime2muAnalysis/src/UnbinnedFitter.h"
-#include "AnalysisExamples/Zprime2muAnalysis/src/Zprime2muMassReach.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Functions.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/UnbinnedFitter.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muMassReach.h"
 
 using namespace std;
 

@@ -22,13 +22,13 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "AnalysisExamples/Zprime2muAnalysis/src/AsymFitManager.h"
-#include "AnalysisExamples/Zprime2muAnalysis/src/AsymFunctions.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymFitManager.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymFunctions.h"
 // JMTBAD perhaps a more descriptive name for this file
-#include "AnalysisExamples/Zprime2muAnalysis/src/Functions.h"
-#include "AnalysisExamples/Zprime2muAnalysis/src/TFMultiD.h"
-#include "AnalysisExamples/Zprime2muAnalysis/src/UnbinnedFitter.h"
-#include "AnalysisExamples/Zprime2muAnalysis/src/Zprime2muAsymmetry.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Functions.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TFMultiD.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/UnbinnedFitter.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAsymmetry.h"
 
 using namespace std;
 

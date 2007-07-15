@@ -1,4 +1,4 @@
-include "AnalysisExamples/Zprime2muAnalysis/data/Zprime2muAnalysisCommon.cff"
+include "SUSYBSMAnalysis/Zprime2muAnalysis/data/Zprime2muAnalysisCommon.cff"
 
 module Zprime2muMassReach = Zprime2muMassReach {
   using Zprime2muAnalysisCommon
@@ -21,7 +21,7 @@ module Zprime2muMassReach = Zprime2muMassReach {
   bool fitGenMass = false
   bool fitRecMass = true
 
-  include "AnalysisExamples/Zprime2muAnalysis/data/MassReachDataSets.cff"
+  include "SUSYBSMAnalysis/Zprime2muAnalysis/data/MassReachDataSets.cff"
 
   string dataSet = "Zssm1000"
 }

@@ -10,7 +10,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "AnalysisExamples/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
 
 class Zprime2muResolution : public Zprime2muAnalysis {
  public:

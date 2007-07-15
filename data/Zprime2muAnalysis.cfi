@@ -1,4 +1,4 @@
-include "AnalysisExamples/Zprime2muAnalysis/data/Zprime2muAnalysisCommon.cff"
+include "SUSYBSMAnalysis/Zprime2muAnalysis/data/Zprime2muAnalysisCommon.cff"
 
 module Zprime2muAnalysis = Zprime2muAnalysis {
   using Zprime2muAnalysisCommon

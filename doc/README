@@ -1,0 +1,183 @@
+
+The Zprime2muAnalysis package
+-----------------------------
+
+Authors: Robert Cousins
+         Jason Mumford
+         Jordan Tucker
+         Slava Valuev
+         (UCLA)
+
+Zprime2muAnalysis consists of several analysis modules intended for
+studying high-mass resonances.
+
+Zprime2muAnalysis:   fills vectors of muons, constructs dimuons, calculates
+                     invariant mass and other quantities.  This is the base
+                     class for the other modules, so its code is called
+                     in each of them.
+
+Zprime2muResolution: calculates resolutions (mass, phi, eta, etc.) of
+                     the muon fits at different levels of reconstruction
+                     and plots them.
+
+Zprime2muAsymmetry:  performs 6D unbinned maximum-likelihood fits to measure
+                     the forward-backward asymmetry (A_{FB}) for Drell-Yan
+                     and Z' events, for both generated and reconstructed
+                     muons (see CMS NOTE 2005/022).
+
+Zprime2muMassReach:  performs unbinned maximum-likelihood fits to measure
+                     signal and background contribution and calculates
+                     the discovery potential for a given integrated
+                     luminosity (see CMS NOTE 2006/062).
+
+As mentioned above, Zprime2muAnalysis is not intended to be run
+separately, except for debugging purposes.  In this case it will dump
+to the appropriate MessageLogger destination various messages
+concerning the selection of muons (either generated, or at various
+levels of reconstruction) and the assembling of dimuons.
+
+The .cfg files in the test/ subdirectory illustrate usage of these
+modules; default parameters for each module are specified in the .cfi
+and .cff files in the data/ subdirectory.  As in the .cfg files, in general
+these modules take as input EDM ROOT files with fully-reconstructed
+(i.e. GEN-SIM-DIGI-RECO all performed) Z' --> mu- mu+ events.  Some
+sample files are available at /castor/cern.ch/user/s/slava/CMSSW_1_3_1.
+At the time being, the package has been written and tested to work with
+1_3_X series of CMSSW.  Module-specific instructions follow.
+
+Zprime2muAnalysis
+-----------------
+In data/Zprime2muAnalysisCommon.cff one can find a set of InputTags defining
+which collections of reco objects are to be used from the input ROOT
+file; these may be changed if necessary.
+
+Zprime2muResolution
+-------------------
+The user defines the mass range for the histograms to be produced,
+and the number of bins.  The user inputs the ROOT file(s) to be analyzed,
+runs the cmsRun job, and various plots are produced in the current
+directory in muon_resolution.ps.
+
+Zprime2muAsymmetry
+------------------
+Here there are a few knobs for the user to turn.  Depending on the Z'
+model and mass one wishes to study, an appropriate PSet such as the
+ones in data/AsymmetryDataSets.cff must be specified.  (For example,
+the Zssm1000 PSet contains parameters appropriate for examining a SSM
+Z' at 1 TeV.)  Ignoring the more self-explanatory parameters, the user
+must specify:
+
+  genSample:    an EDM ROOT file with many events from which the code
+                obtains parameterizations for the relevant variables.
+  massDistType: what form the pdf for the invariant mass distribution
+                should take; for example, if the data is Drell-Yan
+                continuum, the user specifies 1 for a falling exponential
+                fit.
+  recSigma:     the sigma of the Gaussians used in the smear which
+                simulates detector resolution; these are obtained from
+                the plots on the last two pages of fitHistos.*.ps
+                (which is written by the code).
+
+Then, the dataSet parameter must be changed to the appropriate PSet
+name. Other parameters that can be changed are:
+
+  verbosity:      control the level of debug information dumped;
+                  current levels are 0-3 (0 being none, and 3 being
+                  too much);
+  noFit:          only produce histograms of the data, and do not
+                  actually perform any fit; useful for getting the
+                  plots to obtain the recSigma information above;
+  onlyEvalLLR:    if true, do not do the full fit on the data, but
+                  evaluate the log-likelihood ratios, useful for spin
+                  discrimination studies (currently disabled);
+  fitType:        a magic number which determines the form of the
+                  cos_theta_cs pdf used in the fit or evaluation of
+                  the likelihood ratio;
+  numFits:        how many of the fits to do (default is all 6, which
+                  are combinations of generated or reconstructed data,
+                  and detector resolution simulation via smearing or
+                  not);
+  maxParamEvents: a way to cap the number of events read from
+                  genSample; useful if using all events is overkill
+
+Once the config is set, after running the cmsRun job there will be
+various files written to the current directory. These contain various
+histograms of the data and the result of the fit. (In the filename,
+* is replaced by outputFileBase and other important information.)
+
+  diffFrameAsym.*.ps:
+    contains plots of cos_theta in various frames (Gottfried-Jackson,
+    Collins-Soper, etc.), and plots of A_{FB} as functions of rapidity
+    and mass;
+  dumpFitData.*.txt:
+    a dump of the six variables that are to be fitted: cos_theta_cs,
+    dilepton inv. mass, rapidity, pT, phi, and phi_cs, each both
+    at generator level and reconstructed;
+  fitHistos.*.ps:
+    the data in the previous file histogrammed, as well as resolution
+    plots relevant to the asymmetry fit;
+  fitParams.*.ps:
+    histograms of the info used to calculate the parameterizations,
+    and mistag probability information plots;
+  frameAsym.*.txt:
+    A_{FB} in various frames calculated by a simple counting method
+    for each reconstruction level;
+  recAsymFit.*.txt:
+    contains the mistag parameter information and the results of the
+    fits (A_{FB} and errors).
+
+Zprime2muMassReach
+------------------
+The user is supposed to provide three input files.  The first one is
+signal (full-interference Z'), the other two are backgrounds.  The
+first background sample is the Drell-Yan generated in the same mass
+region as the signal, the second one can be anything but is typically
+the Drell-Yan generated at lower masses.  The former background sample
+is normally used only for signal-vs-background plots (except for
+special applications, when it is used to get a parameterization of the
+background slope); the latter gets added to the signal sample
+(typically provides events leaking from lower masses to higher
+masses).
+
+The user should define a number of parameters for each of the sets in
+data/MassReachDataSets.cff.  These parameters include the
+cross-sections, K factors, number of generated events (used for
+normalizations of certain histograms), and lowerGenMass and
+upperGenMass vectors (used to pre-select events based on true dimuon
+masses to avoid double-counting).  For the full list of sample-related
+parameters, see comments in data/MassReachDataSets.cff.
+
+Parameters defining the analysis flow are in data/Zprime2muMassReach.cfi.
+Most of them have special purposes and the default values should not
+be modified in the "normal" job.  Notable exceptions are:
+
+- FixedMass and FixedFWHM.  They define whether the resonance mass and
+  the resonance width are let float in the fits, or are fixed to some
+  reasonable values (default).
+
+- ExpPlots.  If this parameter is set to true, invariant mass distributions
+  of individual "pseudo-experiments" and the results of their fits
+  will be saved into postscript files in test/mass_plots directory
+  (for the first 10 pseudo-experiments).
+
+- intLumi.  Defines the integrated luminosity (in inv. fb) for which the
+  user wishes to calculate the mass reach.
+
+The code contains several pre-defined parameterizations used in the
+fits, such as of the background slope and of the invariant mass
+resolution.  The exact values of the parameters depend on several
+factors (CMSSW version, alignment scenario, etc.) and hence should be
+tuned for every use case.  The values currently used are essentially
+the ones used for the studies in the Physics TDR; we made sure they
+give reasonable results for the ideal alignment case in CMSSW_1_3_1,
+but have not (re-)tuned them carefully.  One caveat: if one wishes to
+study Z' masses other than 1 TeV (3 and 5 TeV are the other two
+allowed use cases), one needs to change integration limits in
+src/Functions.C (mass_min and mass_max in lorengauPlusExpbckgNorm
+method).
+
+The output of the job consists of various dumps in Zprime.out, and two
+ps files.  Zmodelmass_sig_back.ps contains signal-vs-background plots;
+mass_fits.ps stores the results of the fits (notably various significance
+distributions), and some goodness-of-fit distributions for S+B and B-only
+hypotheses.

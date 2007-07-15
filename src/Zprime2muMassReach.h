@@ -78,6 +78,7 @@ class Zprime2muMassReach : public Zprime2muAnalysis {
   bool kDYEvents;
   bool kGenuineEvents;
   bool kGMR;
+  bool useL3Muons;
   bool kFixedMass;
   bool kFixedFWHM;
   bool kSmoothedSample;
@@ -89,13 +90,13 @@ class Zprime2muMassReach : public Zprime2muAnalysis {
 
   bool fitGenMass;
   bool fitRecMass;
-  bool useL3Muons;
+
+  std::string resModel;
+  unsigned int resMassId;
   unsigned int nBins;
   std::vector<double> massWin;
   std::vector<double> lowerGenMass;
   std::vector<double> upperGenMass;
-  std::string resModel;
-  unsigned int resMassId;
   std::vector<double> XSec;
   std::vector<double> KFactor;
   std::vector<unsigned int> nGenEvents;

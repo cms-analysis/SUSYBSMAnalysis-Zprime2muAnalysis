@@ -62,12 +62,12 @@ Zprime2muMassReach::Zprime2muMassReach(const edm::ParameterSet& config)
   edm::ParameterSet dataSetConfig =
     config.getParameter<edm::ParameterSet>(dataSet);
 
+  resModel     = dataSetConfig.getParameter<string>("resModel");
+  resMassId    = dataSetConfig.getParameter<unsigned int>("resMassId");
   nBins        = dataSetConfig.getParameter<unsigned int>("nBins");
   massWin      = dataSetConfig.getParameter<vector<double> >("massWin");
   lowerGenMass = dataSetConfig.getParameter<vector<double> >("lowerGenMass");
   upperGenMass = dataSetConfig.getParameter<vector<double> >("upperGenMass");
-  resModel     = dataSetConfig.getParameter<string>("resModel");
-  resMassId    = dataSetConfig.getParameter<unsigned int>("resMassId");
   XSec         = dataSetConfig.getParameter<vector<double> >("XSec");
   KFactor      = dataSetConfig.getParameter<vector<double> >("KFactor");
   nGenEvents   = dataSetConfig.getParameter<vector<unsigned int> >("nGenEvents");
@@ -133,11 +133,9 @@ void Zprime2muMassReach::endJob() {
       avail = true;
     }
   }
-  else if (resModel == "G") {
-    if (resMassId == 1500) { // 1.5 TeV G*
-      avail = true;
-    }
-  }
+  // Add more models and masses later...  They might work out of the box,
+  // but this needs to be checked.
+
   if (!avail) {
     edm::LogWarning("endJob") 
       << "+++ Sorry, mass reach analysis for resModel = " << resModel
@@ -1744,13 +1742,6 @@ void Zprime2muMassReach::analyzeUnbinnedMassFits(
     ps->NewPage();
     // c1->Clear();
     c1->cd(0);
-    // TPaveLabel *title = new TPaveLabel(0.1, 0.94, 0.9, 0.98, "Mother");
-    // title->SetFillColor(10);
-    // title->Draw();
-    // TPad *pad = new TPad("", "", 0.05, 0.05, 0.95, 0.93);
-    // pad->Draw();
-    // pad->Divide(1,2);
-    // pad->cd(1);
     massHisto->SetTitle("");
     massHisto->GetXaxis()->SetTitle("#mu^{+}#mu^{-} mass (GeV)");
     string ytit = "Events/" + strbinw.str() + " GeV/"

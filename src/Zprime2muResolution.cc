@@ -2834,6 +2834,9 @@ void Zprime2muResolution::DrawResHistos(){
   gStyle->SetOptLogy(0);
   c1->Update();
 
+  // some temp histograms for plotting ratios
+  TH1F* ratio[2][6];
+
   // Charge misassignment vs pT and 1/pT
   ps->NewPage();
   c1->Clear();
@@ -2846,73 +2849,85 @@ void Zprime2muResolution::DrawResHistos(){
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,3);
-  pad[page]->cd(1);  TH1F *rat1_1 = (TH1F*)QResVsPt[0][0]->Clone();
-  rat1_1->SetNameTitle("", "(wrong Q)/(right Q) vs L1 pT");
-  rat1_1->Divide(QResVsPt[0][1], QResVsPt[0][0], 1., 1.);  rat1_1->Draw();
-  pad[page]->cd(2);  TH1F *rat1_2 = (TH1F*)QResVsInvPt[0][0]->Clone();
-  rat1_2->SetNameTitle("", "(wrong Q)/(right Q) vs L1 1/pT");
-  rat1_2->Divide(QResVsInvPt[0][1], QResVsInvPt[0][0], 1., 1.); rat1_2->Draw();
-  pad[page]->cd(3);  TH1F *rat1_3 = (TH1F*)QResVsPt[1][0]->Clone();
-  rat1_3->SetNameTitle("", "(wrong Q)/(right Q) vs L2 pT");
-  rat1_3->Divide(QResVsPt[1][1], QResVsPt[1][0], 1., 1.);  rat1_3->Draw();
-  pad[page]->cd(4);  TH1F *rat1_4 = (TH1F*)QResVsInvPt[1][0]->Clone();
-  rat1_4->SetNameTitle("", "(wrong Q)/(right Q) vs L2 1/pT");
-  rat1_4->Divide(QResVsInvPt[1][1], QResVsInvPt[1][0], 1., 1.); rat1_4->Draw();
-  pad[page]->cd(5);  TH1F *rat1_5 = (TH1F*)QResVsPt[2][0]->Clone();
-  rat1_5->SetNameTitle("", "(wrong Q)/(right Q) vs L3 pT");
-  rat1_5->Divide(QResVsPt[2][1], QResVsPt[2][0], 1., 1.);  rat1_5->Draw();
-  pad[page]->cd(6);  TH1F *rat1_6 = (TH1F*)QResVsInvPt[2][0]->Clone();
-  rat1_6->SetNameTitle("", "(wrong Q)/(right Q) vs L3 1/pT");
-  rat1_6->Divide(QResVsInvPt[2][1], QResVsInvPt[2][0], 1., 1.); rat1_6->Draw();
+  pad[page]->cd(1);
+  ratio[0][0] = (TH1F*)QResVsPt[0][0]->Clone();
+  ratio[0][0]->SetNameTitle("", "(wrong Q)/(right Q) vs L1 pT");
+  ratio[0][0]->Divide(QResVsPt[0][1], QResVsPt[0][0], 1., 1.);
+  ratio[0][0]->Draw();
+  pad[page]->cd(2);
+  ratio[0][1] = (TH1F*)QResVsInvPt[0][0]->Clone();
+  ratio[0][1]->SetNameTitle("", "(wrong Q)/(right Q) vs L1 1/pT");
+  ratio[0][1]->Divide(QResVsInvPt[0][1], QResVsInvPt[0][0], 1., 1.);
+  ratio[0][1]->Draw();
+  pad[page]->cd(3);
+  ratio[0][2] = (TH1F*)QResVsPt[1][0]->Clone();
+  ratio[0][2]->SetNameTitle("", "(wrong Q)/(right Q) vs L2 pT");
+  ratio[0][2]->Divide(QResVsPt[1][1], QResVsPt[1][0], 1., 1.); 
+  ratio[0][2]->Draw();
+  pad[page]->cd(4);
+  ratio[0][3] = (TH1F*)QResVsInvPt[1][0]->Clone();
+  ratio[0][3]->SetNameTitle("", "(wrong Q)/(right Q) vs L2 1/pT");
+  ratio[0][3]->Divide(QResVsInvPt[1][1], QResVsInvPt[1][0], 1., 1.);
+  ratio[0][3]->Draw();
+  pad[page]->cd(5);
+  ratio[0][4] = (TH1F*)QResVsPt[2][0]->Clone();
+  ratio[0][4]->SetNameTitle("", "(wrong Q)/(right Q) vs L3 pT");
+  ratio[0][4]->Divide(QResVsPt[2][1], QResVsPt[2][0], 1., 1.); 
+  ratio[0][4]->Draw();
+  pad[page]->cd(6);
+  ratio[0][5] = (TH1F*)QResVsInvPt[2][0]->Clone();
+  ratio[0][5]->SetNameTitle("", "(wrong Q)/(right Q) vs L3 1/pT");
+  ratio[0][5]->Divide(QResVsInvPt[2][1], QResVsInvPt[2][0], 1., 1.);
+  ratio[0][5]->Draw();
   c1->Update();
-  delete rat1_1;
-  delete rat1_2;
-  delete rat1_3;
-  delete rat1_4;
-  delete rat1_5;
-  delete rat1_6;
 
   // Charge misassignment vs P and 1/P
   ps->NewPage();
   c1->Clear();
   c1->cd(0);
   delete title; title = new TPaveLabel(0.1,0.94,0.9,0.98,
-			 "Charge Misassignment vs P and 1/P");
+				       "Charge Misassignment vs P and 1/P");
   title->SetFillColor(10);
   title->Draw();
   strpage << "- " << (++page) << " -";
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,3);
-  pad[page]->cd(1);  TH1F *rat2_1 = (TH1F*)QResVsP[0][0]->Clone();
-  rat2_1->SetNameTitle("", "(wrong Q)/(right Q) vs L1 P");
-  rat2_1->Divide(QResVsP[0][1], QResVsP[0][0], 1., 1.);  rat2_1->Draw();
-  pad[page]->cd(2);  TH1F *rat2_2 = (TH1F*)QResVsInvP[0][0]->Clone();
-  rat2_2->SetNameTitle("", "(wrong Q)/(right Q) vs L1 1/P");
-  rat2_2->Divide(QResVsInvP[0][1], QResVsInvP[0][0], 1., 1.); rat2_2->Draw();
-  pad[page]->cd(3);  TH1F *rat2_3 = (TH1F*)QResVsP[1][0]->Clone();
-  rat2_3->SetNameTitle("", "(wrong Q)/(right Q) vs L2 P");
-  rat2_3->Divide(QResVsP[1][1], QResVsP[1][0], 1., 1.);  rat2_3->Draw();
-  pad[page]->cd(4);  TH1F *rat2_4 = (TH1F*)QResVsInvP[1][0]->Clone();
-  rat2_4->SetNameTitle("", "(wrong Q)/(right Q) vs L2 1/P");
-  rat2_4->Divide(QResVsInvP[1][1], QResVsInvP[1][0], 1., 1.); rat2_4->Draw();
-  pad[page]->cd(5);  TH1F *rat2_5 = (TH1F*)QResVsP[2][0]->Clone();
-  rat2_5->SetNameTitle("", "(wrong Q)/(right Q) vs L3 P");
-  rat2_5->Divide(QResVsP[2][1], QResVsP[2][0], 1., 1.);
-  rat2_5->SetMinimum(-0.1);  rat2_5->SetMaximum(0.5);  rat2_5->Draw();
-  pad[page]->cd(6);  TH1F *rat2_6 = (TH1F*)QResVsInvP[2][0]->Clone();
-  rat2_6->SetNameTitle("", "(wrong Q)/(right Q) vs L3 1/P");
-  rat2_6->Divide(QResVsInvP[2][1], QResVsInvP[2][0], 1., 1.);
-  rat2_6->SetMinimum(-0.1);  rat2_6->SetMaximum(0.5);  rat2_6->Draw();
+  pad[page]->cd(1);
+  ratio[1][0] = (TH1F*)QResVsP[0][0]->Clone();
+  ratio[1][0]->SetNameTitle("", "(wrong Q)/(right Q) vs L1 P");
+  ratio[1][0]->Divide(QResVsP[0][1], QResVsP[0][0], 1., 1.); 
+  ratio[1][0]->Draw();
+  pad[page]->cd(2);
+  ratio[1][1] = (TH1F*)QResVsInvP[0][0]->Clone();
+  ratio[1][1]->SetNameTitle("", "(wrong Q)/(right Q) vs L1 1/P");
+  ratio[1][1]->Divide(QResVsInvP[0][1], QResVsInvP[0][0], 1., 1.);
+  ratio[1][1]->Draw();
+  pad[page]->cd(3);
+  ratio[1][2] = (TH1F*)QResVsP[1][0]->Clone();
+  ratio[1][2]->SetNameTitle("", "(wrong Q)/(right Q) vs L2 P");
+  ratio[1][2]->Divide(QResVsP[1][1], QResVsP[1][0], 1., 1.); 
+  ratio[1][2]->Draw();
+  pad[page]->cd(4);
+  ratio[1][3] = (TH1F*)QResVsInvP[1][0]->Clone();
+  ratio[1][3]->SetNameTitle("", "(wrong Q)/(right Q) vs L2 1/P");
+  ratio[1][3]->Divide(QResVsInvP[1][1], QResVsInvP[1][0], 1., 1.);
+  ratio[1][3]->Draw();
+  pad[page]->cd(5);
+  ratio[1][4] = (TH1F*)QResVsP[2][0]->Clone();
+  ratio[1][4]->SetNameTitle("", "(wrong Q)/(right Q) vs L3 P");
+  ratio[1][4]->Divide(QResVsP[2][1], QResVsP[2][0], 1., 1.);
+  ratio[1][4]->SetMinimum(-0.1); 
+  ratio[1][4]->SetMaximum(0.5); 
+  ratio[1][4]->Draw();
+  pad[page]->cd(6);
+  ratio[1][5] = (TH1F*)QResVsInvP[2][0]->Clone();
+  ratio[1][5]->SetNameTitle("", "(wrong Q)/(right Q) vs L3 1/P");
+  ratio[1][5]->Divide(QResVsInvP[2][1], QResVsInvP[2][0], 1., 1.);
+  ratio[1][5]->SetMinimum(-0.1); 
+  ratio[1][5]->SetMaximum(0.5); 
+  ratio[1][5]->Draw();
   c1->Update();
-  /*
-  delete rat2_1;
-  delete rat2_2;
-  delete rat2_3;
-  delete rat2_4;
-  delete rat2_5;
-  delete rat2_6;
-  */
 
   if (doingHiggs) {
     ps->NewPage();
@@ -2952,6 +2967,10 @@ void Zprime2muResolution::DrawResHistos(){
   ps->Close();
   delete ps;
   delete c1;
+
+  for (int i = 0; i < 2; i++)
+    for (int j = 0; j < 2; j++)
+      delete ratio[i][j];
 }
 
 void Zprime2muResolution::analyze(const edm::Event& event, 

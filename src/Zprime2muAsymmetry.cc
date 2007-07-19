@@ -57,6 +57,8 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   // limit on how many events to read from the parameterization sample
   // JMTBAD will be removed later when this is done by a different module
   maxParamEvents = config.getParameter<int>("maxParamEvents");
+  // whether to use the on-peak fit window or the off-peak one
+  onPeak = config.getParameter<bool>("onPeak");
 
   // get the parameters specific to the data sample on which we are running
   string dataSet = config.getParameter<string>("dataSet");
@@ -69,17 +71,13 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   peakMass = dataSetConfig.getParameter<double>("peakMass");
 
   // let the asymFitManager take care of setting mass_type, etc.
-  asymFitManager.SetConstants(dataSetConfig);
+  asymFitManager.setConstants(dataSetConfig, onPeak);
 
   // convenient flag for checking to see if we're doing graviton studies
   doingGravFit = fitType >= GRAV;
   // right now mistagInData is redundant alongside doingGravFit, but
   // it is useful to be able to turn off the mistag for asym studies
   mistagInData = !doingGravFit;
-  // this should be robust enough to determine if we're doing a fit on
-  // or off the peak
-  onPeak = peakMass > asymFitManager.fit_win(0) && 
-           peakMass < asymFitManager.fit_win(1);
   // turn on/off the fit prints in AsymFunctions
   asymDebug = verbosity >= VERBOSITY_SIMPLE;
 
@@ -1758,6 +1756,7 @@ void Zprime2muAsymmetry::getAsymParams(bool internalBremOn) {
   page_print.str(""); page_print << page + 1;
   ttl.DrawLatex(.9, .02, page_print.str().c_str());
   pad[page]->Draw();
+  pad[page]->cd(0);
   h2_cos_cs_vs_true->Draw("lego2");
   page++;
   c1->Update();

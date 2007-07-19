@@ -20,6 +20,8 @@ module Zprime2muAsymmetry = Zprime2muAsymmetry {
   int32 numFits = 6
   // max number of events to read from the parameterization sample
   int32 maxParamEvents = -1
+  // whether to use the on-peak fit window or the off-peak one
+  bool onPeak = true
 
   include "SUSYBSMAnalysis/Zprime2muAnalysis/data/AsymmetryDataSets.cff"
   

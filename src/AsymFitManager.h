@@ -1,6 +1,7 @@
 #ifndef ASYMFITMANAGER_H
 #define ASYMFITMANAGER_H
 
+#include <string>
 #include <vector>
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -38,11 +39,13 @@ class AsymFitManager;
 
 class AsymFitManager {
  public:
-  void SetConstants(const edm::ParameterSet& pset) {
+  void setConstants(const edm::ParameterSet& pset, bool onPeak) {
     _mass_type = pset.getParameter<int>("massDistType");
     _max_rap = pset.getParameter<double>("maxRapidity");
     _max_pt = pset.getParameter<double>("maxPt");
-    _fit_win = pset.getParameter<std::vector<double> >("fitWindow");
+    std::string fitWinType = "fitWindow";
+    fitWinType += (onPeak ? "OnPeak" : "OffPeak");
+    _fit_win = pset.getParameter<std::vector<double> >(fitWinType);
     _gen_win = pset.getParameter<std::vector<double> >("genWindow");
     _rec_sigma = pset.getParameter<std::vector<double> >("recSigma");
 

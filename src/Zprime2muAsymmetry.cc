@@ -2108,7 +2108,7 @@ void Zprime2muAsymmetry::fitAsymmetry() {
   for (int i = 0; i < 5; i++)
     outfile << setw(9) << setprecision(3) << phi_cs_pars[i] << " "; 
   outfile << endl << setw(15) << "mass_pars = ";
-  for (int i = 0; i < 6; i++)
+  for (int i = 0; i < 7; i++)
     outfile << setw(9) << setprecision(3) << mass_pars[i] << " "; 
   outfile << endl << setw(15) << "sigma = ";
   for (int i = 0; i < 6; i++)

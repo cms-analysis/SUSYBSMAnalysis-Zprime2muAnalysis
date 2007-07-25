@@ -581,7 +581,7 @@ Double_t TFMultiD::crudeMCIntegral(UInt_t n, const Double_t *a,
 
   if (n > MAX_DIM)
     throw cms::Exception("crudeMCIntegral") << n << " dimensions > 15; "
-					    << "  refusing to integrate";
+					    << "  refusing to integrate\n";
   
   // initialize parameters
   InitArgs(rndm,fParams);

@@ -1359,7 +1359,7 @@ void Zprime2muResolution::fillMuonHistos(const int rec, const bool debug) {
 
   if (rec >= NUM_REC_LEVELS) {
     throw cms::Exception("Zprime2muResolution")
-      << "+++ Unknown rec. level = " << rec << " in fillMuonHistos() +++";
+      << "+++ Unknown rec. level = " << rec << " in fillMuonHistos() +++\n";
   }
 
   if (debug) {

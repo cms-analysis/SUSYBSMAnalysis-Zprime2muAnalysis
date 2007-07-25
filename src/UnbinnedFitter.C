@@ -85,7 +85,7 @@ void unbinnedFitLikelihoodFCN(int &npar, double *gin, double &r,
     }
     else
       throw cms::Exception("unbinnedFitLikelihoodFCN")
-	<< "fcnmode = " << fcnmode << " not valid";
+	<< "fcnmode = " << fcnmode << " not valid\n";
       
     //LogTrace("UnbinnedFitter") 
     // << "fitdata1[" << i << "] = " << fitdata1[i] << ", pars = [" 

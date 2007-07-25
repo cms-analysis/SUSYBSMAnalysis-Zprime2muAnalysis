@@ -109,7 +109,7 @@ class AsymFitManager {
     case GRAVTH: asym_3_PDF = GravitonCos_th_PDF; break;
     default: 
       throw cms::Exception("AsymFitManager") 
-	<< "unrecognized PDF type " << _type;
+	<< "unrecognized PDF type " << _type << "\n";
     }
   }
 

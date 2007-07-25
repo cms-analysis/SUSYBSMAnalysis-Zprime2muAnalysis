@@ -1866,13 +1866,13 @@ double massDist(double *x, double *par) {
   double mass = x[0];
 
   if (mass < 0.)
-    throw cms::Exception("massDist") << "mass = " << mass << " is negative";
+    throw cms::Exception("massDist") << "mass = " << mass << " is negative\n";
 
   const int mass_type = asymFitManager.mass_type();
 
   if (mass_type < 0 || mass_type > 3)
     throw cms::Exception("massDist") << "mass_type = " << mass_type
-				     << " is unknown";
+				     << " is unknown\n";
   double f = -999.;
   if (mass_type == MASS_EXP)
     f = expBckg(&mass, mass_pars);
@@ -1892,7 +1892,8 @@ double massDist(double *x, double *par) {
 double ptSqrDist(double *x, double *par) {
   double pt_sq = x[0];
   if (pt_sq < 0.)
-    throw cms::Exception("ptSqrDist") << "pt_sq = " << pt_sq << " is negative";
+    throw cms::Exception("ptSqrDist") << "pt_sq = " << pt_sq
+				      << " is negative\n";
 
   double f = (pt_pars[0]*exp(-pt_pars[1]*sqrt(pt_sq))) +
     (pt_pars[2]*exp(-pt_pars[3]*sqrt(pt_sq)));
@@ -1927,7 +1928,7 @@ double phiCSDist(double *x, double *par) {
   //if (phi_cs > TMath::Pi()) phi_cs = 2*TMath::Pi() - phi_cs;
   if (phi_cs < 0. || phi_cs > TMath::Pi())
     throw cms::Exception("phiCSDist") << "phi_cs = " << phi_cs
-				      << "is negative";
+				      << "is negative\n";
 
   double f = 1.;
   int y = (int) phi_cs_pars[3];

@@ -1066,9 +1066,8 @@ void Zprime2muAsymmetry::fillParamHistos(bool internalBremOn, bool fakeData) {
 
   // Open the root file containing the extra generated sample, from which
   // we extract the mistag parameterization
-  // JMTBAD these few functions brought over from GenKineAna, which will
-  // be ported too
-  TFile* paramFile = new TFile(genSample.c_str());
+  // use static TFile::Open to handle remote files as well
+  TFile* paramFile = TFile::Open(genSample.c_str());
   TTree* paramEvents = dynamic_cast<TTree*>(paramFile->Get("Events"));
   // JMTBAD hardcoded branch name
   TBranch* paramMCBranch = 

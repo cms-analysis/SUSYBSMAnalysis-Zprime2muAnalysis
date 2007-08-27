@@ -3,7 +3,7 @@ PSet Zssm1000 = {
   untracked string outputFileBase = "Zssm1000"
   # an EDM ROOT file with generated data in it to obtain
   # mistag parameterizations
-  string genSample = "Zssm1000_fm_GEN_SIM.forParam.root"
+  string genSample = "rfio:/castor/cern.ch/user/s/slava/CMSSW_1_3_1/Zssm1000_fm_GEN_SIM.forParam.root"
   double peakMass = 1000
   // massDistType: 1 = falling exponential, 2 = lorentzian peak, 3 = 1+2
   int32 massDistType = 3
@@ -20,7 +20,7 @@ PSet Zssm1000 = {
  
 PSet Zssm3000 = {
   untracked string outputFileBase = "Zssm3000"
-  string genSample = "Zssm3000_fm_GEN_SIM.forParam.root"
+  string genSample = "rfio:/castor/cern.ch/user/s/slava/CMSSW_1_3_1/Zssm3000_fm_GEN_SIM.forParam.root"
   double peakMass = 3000
   int32 massDistType = 3
   double maxPt = 3000
@@ -33,7 +33,7 @@ PSet Zssm3000 = {
 
 PSet dy_above400 = {
   untracked string outputFileBase = "dy_above400"
-  string genSample = "dy_above400_GEN_SIM.forParam.root"
+  string genSample = "rfio:/castor/cern.ch/user/s/slava/CNSSW_1_3_1/dy_above400_GEN_SIM.forParam.root"
   double peakMass = 450 // no peak, but set this for completeness
   int32 massDistType = 1
   double maxPt = 1000

@@ -183,3 +183,25 @@ ps files.  Zmodelmass_sig_back.ps contains signal-vs-background plots;
 mass_fits.ps stores the results of the fits (notably various significance
 distributions), and some goodness-of-fit distributions for S+B and B-only
 hypotheses.
+
+Step-by-step instructions
+-------------------------
+
+To check out the package:
+
+ > scramv1 project CMSSW CMSSW_1_3_3
+ > cd CMSSW_1_3_3/src
+ > project CMSSW
+ > cvs co SUSYBSMAnalysis/Zprime2muAnalysis
+
+To compile:
+
+ > eval `scramv1 runtime -csh`
+ > cd SUSYBSMAnalysis/Zprime2muAnalysis/src
+ > scramv1 b
+
+To run:
+
+ > cd ../test
+ > cmsRun -p test*.cfg
+   (where test*.cfg can be any of the 4 .cfg files in /test)

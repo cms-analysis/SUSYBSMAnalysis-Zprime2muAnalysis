@@ -17,6 +17,7 @@
 #include "TStyle.h"
 #include "TText.h"
 #include "TTree.h"
+#include "TMath.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -29,6 +30,11 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TFMultiD.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/UnbinnedFitter.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAsymmetry.h"
+#include "DataFormats/Candidate/interface/CompositeRefCandidate.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticleCandidate.h"
+#include "DataFormats/FWLite/interface/Handle.h"
+#include "DataFormats/Candidate/interface/Candidate.h"
+#include "DataFormats/Candidate/interface/CandidateFwd.h"
 
 using namespace std;
 
@@ -145,6 +151,7 @@ void Zprime2muAsymmetry::endJob() {
   edm::LogInfo("Zprime2muAsymmetry")
     << "Loading sample parameters for asym fit using " << genSample << endl;
   fillParamHistos(bremOn, false);
+
   getAsymParams(bremOn);
 
   if (onlyEvalLLR)
@@ -1070,26 +1077,29 @@ void Zprime2muAsymmetry::fillParamHistos(bool internalBremOn, bool fakeData) {
   TFile* paramFile = TFile::Open(genSample.c_str());
   TTree* paramEvents = dynamic_cast<TTree*>(paramFile->Get("Events"));
   // JMTBAD hardcoded branch name
-  TBranch* paramMCBranch = 
-    paramEvents->GetBranch("edmHepMCProduct_VtxSmeared__GENSIM.obj");
 
-  edm::HepMCProduct mcp;
-  paramMCBranch->SetAddress(&mcp);
+  fwlite::Event ev2(paramFile);
+
+  int jentry = 0;
 
   int nentries = maxParamEvents > 0 ? 
     maxParamEvents : paramEvents->GetEntries();
-  int jentry;
-  for (jentry = 0; jentry < nentries; jentry++) {
+
+  for (ev2.toBegin(); !ev2.atEnd(); ++ev2) {
+    if ( jentry >= nentries ) break;
+
+    fwlite::Handle<reco::CandidateCollection> genParticles;
+    genParticles.getByLabel(ev2,"genParticleCandidates");
+
     if (verbosity >= VERBOSITY_SIMPLE && jentry % 1000 == 0)
       LogTrace("fillParamHistos") << "fillParamHistos: " << jentry
 				     << " events processed";
-    paramMCBranch->GetEntry(jentry);
 
     // Remove effect from internal brem
     AsymFitData data;
-    if (!computeFitQuantities(mcp, internalBremOn, jentry, data))
+    if (!computeFitQuantities(genParticles.ref(), internalBremOn, jentry, data)) {
       continue; // if finding the Z'/etc failed, skip this event
-
+    }
     /*
     // For some studies usefull to replace real data with data artificially 
     // created with any parameterization desired
@@ -1213,58 +1223,65 @@ ostream& operator<<(ostream& out, const HepMC::GenParticle* p) {
 // the final-state (after-brem) mu-/mu+ (mum/mup),
 // the muons before bremsstrahlung (mu?_noib),
 // and the quark that entered the hard interaction (quark).
-bool Zprime2muAsymmetry::getGenerated4Vectors(const edm::HepMCProduct& mcp,
+bool Zprime2muAsymmetry::getGenerated4Vectors(const reco::CandidateCollection& genParticles,
 					      unsigned int eventNum,
 					      GenMomenta& genMom) {
-  bool debug = verbosity >= VERBOSITY_TOOMUCH;
 
-  const HepMC::GenEvent* genEvt = mcp.GetEvent();
+  bool debug = verbosity >= VERBOSITY_TOOMUCH;
 
   // These are pointers (and not arrays/vectors) because we explicitely assume
   // that there one and only Z' in the record.
-  HepMC::GenParticle* quark = 0;
-  HepMC::GenParticle* Zprime = 0;
-  HepMC::GenParticle* Mup = 0;
-  HepMC::GenParticle* Mum = 0;
-  HepMC::GenParticle* Mup_noib = 0;
-  HepMC::GenParticle* Mum_noib = 0;
+  const reco::Candidate* quark = 0;
+  const reco::Candidate* Zprime = 0;
+  const reco::Candidate* Mup = 0;
+  const reco::Candidate* Mum = 0;
+  const reco::Candidate* Mup_noib = 0;
+  const reco::Candidate* Mum_noib = 0;
 
   // Total number of quarks entering the hard interaction.
   int iq = 0;
 
   // Loop over all particles stored in the current event.
-  for (HepMC::GenEvent::particle_const_iterator p = genEvt->particles_begin();
-       p != genEvt->particles_end(); ++p) {
-    if (debug)
-      LogDebug("getGenerated4Vectors")
-        << "id = " << (*p)->pdg_id() << " status = " << (*p)->status()
-	<< " end vtx " << (*p)->end_vertex()
-	<< " prod vtx " << (*p)->production_vertex();
+  for (reco::CandidateCollection::const_iterator p = genParticles.begin();
+       p != genParticles.end(); p++) {
 
-    if ((*p)->status() == 3) {
+    if (debug)
+    LogDebug("getGenerated4Vectors")
+        << "id = " << (p)->pdgId() << " status = " << (p)->status();
+//CL	<< " end vtx " << (p)->end_vertex()
+//CL	<< " prod vtx " << (p)->production_vertex();
+
+    if ((p)->status() == 3) {
     // Documentation lines.  We look for partons that enter the hard
     // interaction.  Their "mothers" are the partons that initiate parton
     // showers; the "mothers" of the "mothers" are primary protons, always
     // on lines 1 and 2.
-      HepMC::GenParticle* mother = (*p)->mother();
+      const reco::Candidate* mother = (p)->mother();
+
       if (mother != 0) {
-	HepMC::GenParticle* grandmother = mother->mother();
-	if (grandmother != 0 &&
-	    (grandmother->barcode() == 1 || grandmother->barcode() == 2)) {
-	  int id = (*p)->pdg_id();
+	const reco::Candidate* grandmother = mother->mother();
+	if (grandmother != 0  &&
+	    (grandmother->pdgId() == 2212 )) { //FIXME
+	  int id = (p)->pdgId();
 	  if (id >= 1 && id <= 6) {
 	    if (debug)
 	      LogDebug("getGenerated4Vectors")
-		<< " quark in hard interaction found at line " << (*p)->barcode()
+		<< " quark in hard interaction found at line "
+		//<< (*p)->barcode()
 		<< "; id = " << id;
 	    iq++;
-	    quark = (*p);
-	  }
-	}
+	    quark = (&*p);
+	  } 
+	} else {
+           if (debug)
+           LogDebug("getGenerated4Vectors")
+             << " grand mother invalid ";
+        }
       }
     }
-  }
-  if (iq != 1) {
+  } 
+
+  if (iq != 1) { 
     edm::LogWarning("getGenerated4Vectors")
       << "+++ There were " << iq << " quarks in the hard interaction;"
       << " skip the event # " << eventNum << " +++\n";
@@ -1273,87 +1290,106 @@ bool Zprime2muAsymmetry::getGenerated4Vectors(const edm::HepMCProduct& mcp,
   //hKFQuark->Fill(quark->pdg_id());
 
   // Main loop, to find Z' and its decay products.
-  for (HepMC::GenEvent::particle_const_iterator p = genEvt->particles_begin();
-       p != genEvt->particles_end(); ++p) {
+  for (reco::CandidateCollection::const_iterator p = genParticles.begin();
+       p != genParticles.end(); p++) {
     // Look for Z' in documentation lines since the one in the main body of
     // event listing has no end vertex and no descendants.
-    if ((*p)->pdg_id() == 32 && (*p)->status() == 3) {
+    if ((p)->pdgId() == 32 && (p)->status() == 3) {
       if (debug)
 	LogDebug("getGenerated4Vectors") << " Z' found";
-      if (Zprime == 0) Zprime = (*p);
+      if (Zprime == 0) Zprime = (&*p);
       else {
 	throw cms::Exception("getGenerated4Vectors")
 	  << "+++ Second generated Z' found in event # " << eventNum // << ev.id().event()
 	  << "! +++\n";
       }
-      if (debug) LogDebug("getGenerated4Vectors") << Zprime;
+      if (debug) LogDebug("getGenerated4Vectors") << print(*Zprime);
 
       // Z' children are muons before bremsstrahlung and Z' itself (??).
       // Use them later to get muons before brem.
-      vector<HepMC::GenParticle*> ZprimeChildren = (*p)->listChildren();
+
+        const reco::GenParticleCandidate* ppp = dynamic_cast<const reco::GenParticleCandidate*>(&*p);
+
+        size_t ZprimeChildren_size = (ppp)->numberOfDaughters();
+
       if (debug) {
 	LogDebug("getGenerated4Vectors") << "Children:";
-	for (unsigned int ic = 0; ic < ZprimeChildren.size(); ic++) {
-	  if (debug) LogDebug("getGenerated4Vectors") << ZprimeChildren[ic];
+	for (unsigned int ic = 0; ic < ZprimeChildren_size; ic++) {
+	  if (debug) LogDebug("getGenerated4Vectors") << print(*ppp->daughter(ic));
 	}
       }
       if (debug)
 	LogDebug("getGenerated4Vectors") << "Mus before brem:";
-      for (unsigned int ic = 0; ic < ZprimeChildren.size(); ic++) {
+      for (unsigned int ic = 0; ic < ZprimeChildren_size; ic++) {
 	// look for the muons before brem, and store them
 	// (hepmc says these mus have status 3)
-	if (ZprimeChildren[ic]->status() == 3) {
-	  if (ZprimeChildren[ic]->pdg_id() == 13) {
-	    if (Mum_noib == 0) Mum_noib = ZprimeChildren[ic];
+	if (ppp->daughter(ic)->status() == 3) {
+	  if (ppp->daughter(ic)->pdgId() == 13) {
+	    if (Mum_noib == 0) Mum_noib = ppp->daughter(ic);
 	    else {
 	      throw cms::Exception("getGenerated4Vectors")
 		<< "+++ Second before-brem mu- found in Z' decay in event # "
 		<< eventNum << "! +++\n";
 	    }
-	    if (debug) LogDebug("getGenerated4Vectors") << Mum_noib;
+	    if (debug) LogDebug("getGenerated4Vectors") << print(*Mum_noib);
 	  }
-	  else if (ZprimeChildren[ic]->pdg_id() == -13) {
-	    if (Mup_noib == 0) Mup_noib = ZprimeChildren[ic];
+	  else if (ppp->daughter(ic)->pdgId() == -13) {
+	    if (Mup_noib == 0) Mup_noib = ppp->daughter(ic);
 	    else {
 	      throw cms::Exception("getGenerated4Vectors")
 		<< "+++ Second before-brem mu+ found in Z' decay in event # "
 		<< eventNum << "! +++\n";
 	    }
-	    if (debug) LogDebug("getGenerated4Vectors") << Mup_noib;
+	   if (debug) LogDebug("getGenerated4Vectors") << print(*Mup_noib);
 	  }
 	}
       }
-
       // Z' descendants also include final-state muons and photons produced
       // by initial-state muons.
-      vector<HepMC::GenParticle*> ZprimeDescendants = (*p)->listDescendants();
+
+      std::vector<const reco::Candidate*> ZprimeDescendants;
+
+      // CL: add up to granddaughter, enough?
+      for (unsigned int ida = 0; ida != p->numberOfDaughters(); ida++) {
+          ZprimeDescendants.push_back(p->daughter(ida));
+      } 
+      std::vector<const reco::Candidate*> ZprimeGrandChildren;
+
+      for (std::vector<const reco::Candidate*>::const_iterator idaug = ZprimeDescendants.begin(); idaug != ZprimeDescendants.end(); idaug++ ) {
+        if ( (*idaug)->numberOfDaughters() == 0 ) continue;
+        for (unsigned int igdd = 0; igdd != (*idaug)->numberOfDaughters(); igdd++) {
+            ZprimeGrandChildren.push_back((*idaug)->daughter(igdd));
+        }
+      }
+      ZprimeDescendants.insert(ZprimeDescendants.end(),ZprimeGrandChildren.begin(),ZprimeGrandChildren.end());
+
       if (debug) {
 	LogDebug("getGenerated4Vectors") << "Descendants:";
-	for (unsigned int id = 0; id < ZprimeDescendants.size(); id++) {
-	  if (debug) LogDebug("getGenerated4Vectors") << ZprimeDescendants[id];
+	for (std::vector<const reco::Candidate*>::const_iterator id = ZprimeDescendants.begin(); id != ZprimeDescendants.end(); id++) {
+	  if (debug) LogDebug("getGenerated4Vectors") << print(**id);
 	}
       }
       if (debug)
 	LogDebug("getGenerated4Vectors") << "Stable mus:";
-      for (unsigned int id = 0; id < ZprimeDescendants.size(); id++) {
-	if (ZprimeDescendants[id]->status() == 1) {
-	  if (ZprimeDescendants[id]->pdg_id() == 13) {
-	    if (Mum == 0) Mum = ZprimeDescendants[id];
+      for (std::vector<const reco::Candidate*>::const_iterator id = ZprimeDescendants.begin(); id != ZprimeDescendants.end(); id++) {
+	if ((*id)->status() == 1) {
+	  if ((*id)->pdgId() == 13) {
+	    if (Mum == 0) Mum = (*id);
 	    else {
 	      throw cms::Exception("getGenerated4Vectors")
 		<< "+++ Second mu- found in Z' decay in event # "
 		<< eventNum << "! +++\n";
 	    }
-	    if (debug) LogDebug("getGenerated4Vectors") << Mum;
+	    if (debug) LogDebug("getGenerated4Vectors") << print(*Mum);
 	  }
-	  else if (ZprimeDescendants[id]->pdg_id() == -13) {
-	    if (Mup == 0) Mup = ZprimeDescendants[id];
+	  else if ((*id)->pdgId() == -13) {
+	    if (Mup == 0) Mup = (*id);
 	    else {
 	      throw cms::Exception("getGenerated4Vectors")
 		<< "+++ Second mu+ found in Z' decay in event # "
 		<< eventNum << "! +++\n";
 	    }
-	    if (debug) LogDebug("getGenerated4Vectors") << Mup;
+	    if (debug) LogDebug("getGenerated4Vectors") << print(*Mup);
 	  }
 	}
       }
@@ -1375,12 +1411,12 @@ bool Zprime2muAsymmetry::getGenerated4Vectors(const edm::HepMCProduct& mcp,
   }
 
   // return the 4-vectors in the structure provided
-  genMom.res = Zprime->momentum();
-  genMom.mum = Mum->momentum();
-  genMom.mup = Mup->momentum();
-  genMom.mum_noib = Mum_noib->momentum();
-  genMom.mup_noib = Mup_noib->momentum();
-  genMom.quark = quark->momentum();
+  genMom.res = Zprime->p4();
+  genMom.mum = Mum->p4();
+  genMom.mup = Mup->p4();
+  genMom.mum_noib = Mum_noib->p4();
+  genMom.mup_noib = Mup_noib->p4();
+  genMom.quark = quark->p4();
   return true;
 }
 
@@ -1388,14 +1424,13 @@ bool Zprime2muAsymmetry::getGenerated4Vectors(const edm::HepMCProduct& mcp,
 // dimension fit. Variables used in the fit are stored in the
 // structure "data" returned by reference.  The flag "internalBremOn",
 // is for switching on and off the effect of internal bremsstrahlung.
-bool Zprime2muAsymmetry::computeFitQuantities(const edm::HepMCProduct &mcp, 
+bool Zprime2muAsymmetry::computeFitQuantities(const reco::CandidateCollection& genParticles, 
 					      bool internalBremOn,
 					      int eventNum,
 					      AsymFitData& data) {
   bool debug = verbosity >= VERBOSITY_TOOMUCH;
-
   GenMomenta genMom;
-  if (!getGenerated4Vectors(mcp, eventNum, genMom))
+  if (!getGenerated4Vectors(genParticles, eventNum, genMom))
     return false;
 
   // Set the 4-vectors for the two muons
@@ -1432,15 +1467,18 @@ bool Zprime2muAsymmetry::computeFitQuantities(const edm::HepMCProduct &mcp,
   // we will later assume the p_z of the dilepton is the p_z of the quark
   // we've mistagged this if the quark was actually going the other direction
   // translated from kir_anal.F
-  HepLorentzVector pdil = genMom.mum + genMom.mup;
+  math::XYZTLorentzVector pdil = genMom.mum + genMom.mup;
   int gen_mistag = (pdil.z()*genMom.quark.z() < 0) ? 1 : 0;
 
   // Cosine theta^* between mu- and the quark in the Z' CMS frame ("true"
   // cos theta^*).
-  Hep3Vector boost = genMom.res.findBoostToCM(); // = -res.boostVector()
-  HepLorentzVector mum_star = genMom.mum.boost(boost);
-  HepLorentzVector quark_star = genMom.quark.boost(boost);
-  double gen_cos_true = mum_star.vect().cosTheta(quark_star.vect());
+//  Hep3Vector boost = genMom.res.findBoostToCM(); // = -res.boostVector()
+//  ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> >
+//  math::XYZTLorentzVectorD::BetaVector boost = genMom.res.BoostToCM();
+//CL:FIXME: are the following 3 lines OK?
+  math::XYZTLorentzVector mum_star = LorentzBoost(genMom.mum, genMom.res);
+  math::XYZTLorentzVector quark_star = LorentzBoost(genMom.mum, genMom.res);
+  float gen_cos_true = cosTheta(mum_star, quark_star);
   
   // kir_anal.F calculates cos_theta_cs too, but we already do that here
   // in calcCosThetaCSAnal
@@ -2870,4 +2908,15 @@ void Zprime2muAsymmetry::deleteHistos() {
   delete h2_pL_mistag_prob;
   delete h2_cos_cs_vs_true;
   delete h2_pTrap_mistag_prob;
+}
+
+string Zprime2muAsymmetry::print(const reco::Candidate& par) const {
+  stringstream out;
+  out << "GenParticle: "
+      << " ID:" << par.pdgId()
+      << " (P,E)=" << par.p4().x() << "," << par.p4().y()
+      << "," << par.p4().z() << "," << par.p4().t()
+      << " Stat:" << par.status()
+      << " Vertex:" << par.vertex();
+  return out.str();
 }

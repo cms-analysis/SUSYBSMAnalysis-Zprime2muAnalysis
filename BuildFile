@@ -7,10 +7,6 @@
 <use name=SimDataFormats/HepMCProduct>
 <use name=SimDataFormats/Track>
 <use name=DataFormats/EgammaCandidates>
-<flags SEAL_PLUGIN_NAME="SUSYBSMAnalysisZprime2muAnalysis">
-<export>
-   <lib name=SUSYBSMAnalysisZprime2muAnalysis>
-   <use name=FWCore/Framework>
-   <use name=Foundation/PluginManager>
-   <use name=FWCore/ParameterSet>
-</export>
+<use name=DataFormats/HepMCCandidate>
+<use name=DataFormats/FWLite>
+<flags EDM_PLUGIN=1>

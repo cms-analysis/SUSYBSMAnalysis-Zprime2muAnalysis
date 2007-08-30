@@ -22,12 +22,12 @@ const int FIT_ARRAY_SIZE = 50000;// max size of arrays for unbinned fits.
 
 // a class for passing around the needed generator-level momenta easily
 struct GenMomenta {
-  HepLorentzVector res;
-  HepLorentzVector mum;
-  HepLorentzVector mup;
-  HepLorentzVector mum_noib;
-  HepLorentzVector mup_noib;
-  HepLorentzVector quark;
+  math::XYZTLorentzVector res;
+  math::XYZTLorentzVector mum;
+  math::XYZTLorentzVector mup;
+  math::XYZTLorentzVector mum_noib;
+  math::XYZTLorentzVector mup_noib;
+  math::XYZTLorentzVector quark;
 };
 
 class Zprime2muAsymmetry : public Zprime2muAnalysis {
@@ -60,10 +60,10 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
 
   // JMTBAD GenKineAna methods... to be moved
   void printGenParticle(const HepMC::GenParticle* p) const;
-  bool getGenerated4Vectors(const edm::HepMCProduct& mcp,
+  bool getGenerated4Vectors(const reco::CandidateCollection& ,
 			    unsigned int eventNum,
 			    GenMomenta& genMom);
-  bool computeFitQuantities(const edm::HepMCProduct& mcp, 
+  bool computeFitQuantities(const reco::CandidateCollection&, 
 			    bool internalBremOn, int eventNum,
 			    AsymFitData& data);
   void bookParamHistos();

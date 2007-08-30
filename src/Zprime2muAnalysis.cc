@@ -17,6 +17,7 @@
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/Math/interface/Vector.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
+#include "DataFormats/MuonReco/interface/MuonTrackLinks.h"
 #include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
 #include "DataFormats/SiStripDetId/interface/StripSubdetector.h"
 #include "DataFormats/TrackingRecHit/interface/TrackingRecHit.h"
@@ -26,6 +27,7 @@
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticleCandidate.h"
 
 using namespace std;
 
@@ -190,12 +192,8 @@ void Zprime2muAnalysis::storeGeneratedMuons(const edm::Event& event) {
   // http://lcgapp.cern.ch/project/simu/HepMC/refman/HepMC.2.00.02/annotated.html
 
   // Generated particles (i.e. PYTHIA).
-  //edm::Handle<reco::CandidateCollection> genParticles;
-  //event.getByLabel("genParticleCandidates", genParticles);
-  edm::Handle<edm::HepMCProduct> hepmc;
-  event.getByLabel(genMuons, hepmc);
-  const HepMC::GenEvent* hepEvt = hepmc->GetEvent();
-  HepMC::GenEvent::particle_const_iterator ipl;
+  edm::Handle<reco::CandidateCollection> genParticles;
+  event.getByLabel("genParticleCandidates", genParticles);
 
   // Simulated tracks (i.e. GEANT particles).
   edm::Handle<edm::SimTrackContainer> simtracks;
@@ -212,38 +210,37 @@ void Zprime2muAnalysis::storeGeneratedMuons(const edm::Event& event) {
   // is that apparently only particles within a certain eta range
   // (|eta| < 5 or so) are saved in GEANT container (why?), and a
   // fraction of muons from high-mass resonance decays would not be found.
-  //for (reco::CandidateCollection::const_iterator ipl = genParticles->begin();
-  //     ipl != genParticles->end(); ipl++) {
-  for (ipl = hepEvt->particles_begin(); ipl != hepEvt->particles_end(); ipl++) {
-    if ((*ipl)->status() == 1) { // skip documentation lines
-      int id = (*ipl)->pdg_id();
+  for (reco::CandidateCollection::const_iterator ipl = genParticles->begin();
+       ipl != genParticles->end(); ipl++) {
+    if ((ipl)->status() == 1) { // skip documentation lines
+      int id = (ipl)->pdgId();
       if (abs(id) != 13) continue;
-      const CLHEP::HepLorentzVector& pmu = (*ipl)->momentum();
+      const reco::Particle::Vector& pmu = (ipl)->momentum();
       int charge = -id/abs(id);
       if (debug)
 	LogTrace("storeGeneratedMuons")
-	  << "Generated muon: pt = " << pmu.perp() << " eta = " << pmu.eta()
-	  << " q = " << charge << " ind = " << (*ipl)->barcode();
+	  << "Generated muon: pt = " << pmu.Rho() << " eta = " << pmu.Eta()
+	  << " q = " << charge;//CL: << " ind = " << (ipl)->barcode();
 
       // Find its mother and grandmother.
-      HepMC::GenParticle* genmuon = (*ipl);
+      const reco::Candidate* genmuon = (&*ipl);
       int motherInd = 0;
       int motherId  = 0, grandmaId = 0;
       while (motherInd == 0) {
-	HepMC::GenParticle* mother = genmuon->mother();
+	const reco::Candidate* mother = genmuon->mother();
 	if (mother == 0) {
 	  edm::LogWarning("storeGeneratedMuons")
-	    << "+++ empty mother for particle #" << genmuon->barcode()
+	    << "+++ empty mother for particle #" //CL: << genmuon->barcode()
 	    << " +++\n";
 	  break;
 	}
 	else {
-	  int mId = mother->pdg_id();
+	  int mId = mother->pdgId();
 	  if (debug) 
 	    LogTrace("storeGeneratedMuons")
 	      << "Mother: id = " << mId << " pt = "
-	      << mother->Momentum().perp() << " M = " << mother->Mass()
-	      << " line = " << mother->barcode();
+	      << mother->momentum().Rho() << " M = " << mother->mass();
+//CL	      << " line = " << mother->barcode();
 	  // If muon's mother is a muon, go up the decay chain.  This is
 	  // mainly to avoid stopping at muons in documentation lines,
 	  // which are declared to be ancestors of muons produced in
@@ -252,51 +249,57 @@ void Zprime2muAnalysis::storeGeneratedMuons(const edm::Event& event) {
 	    genmuon = mother;
 	  }
 	  else {
-	    motherInd = mother->barcode();
+	    motherInd = 0; //CL: mother->barcode();
 	    motherId  = mId;
 
 	    // Also look for the muon's grandmother so we can
 	    // sort by type (gg/qqbar) for graviton stuff.
-	    vector<HepMC::GenParticle*> grandmas = mother->listParents();
+	    std::vector<const reco::Candidate*> grandmas;
+            for (unsigned int igm = 0; igm != mother->numberOfMothers(); igm++) 
+               grandmas.push_back(mother->mother(igm)); 
+
 	    // Could loop over list of parents, but assume
 	    // that using the first grandma (q/qbar or g) works
 	    // just as well as the other.
-	    HepMC::GenParticle* grandma = grandmas[0];
-	    //HepMC::GenParticle* grandma = mother->mother();
+	    const reco::Candidate* grandma = grandmas[0];
 	    if (grandma != 0) {
-	      grandmaId = grandma->pdg_id();
+	      grandmaId = grandma->pdgId();
 	    }
 	    break;
 	  }
 	}
       }
 
-      if (motherInd == 0) {
+//CL      if (motherInd == 0) {
+
+	if (motherId == 0) {
 	edm::LogWarning("storeGeneratedMuons")
-	  << "+++ cannot find motherId for particle #" << genmuon->barcode()
+	  << "+++ cannot find motherId for particle #"//CL << genmuon->barcode()
 	  << " +++\n";
-	for (ipl = hepEvt->particles_begin();
-	     ipl != hepEvt->particles_end(); ipl++) {
-	  HepMC::GenParticle* mother = (*ipl)->mother();
+
+  for (reco::CandidateCollection::const_iterator ipl = genParticles->begin();
+       ipl != genParticles->end(); ipl++) {
+//	  const reco::Candidate* mother = (ipl)->mother();
 	  int motherLine = 0;
-	  if (mother != 0) motherLine = mother->barcode();
+//	  if (mother != 0) motherLine = mother->barcode(); //FIXME
 	  edm::LogWarning("storeGeneratedMuons")
-	    << "Status = "  << (*ipl)->status()
-	    << " id = "     << (*ipl)->pdg_id()
-	    << " line = "   << (*ipl)->barcode()
-	    << " pT = "     << (*ipl)->momentum().perp()
-	    << " eta = "    << (*ipl)->momentum().pseudoRapidity()
-	    << " M = "      << (*ipl)->momentum().m()
+	    << "Status = "  << (ipl)->status()
+	    << " id = "     << (ipl)->pdgId()
+//	    << " line = "   << (ipl)->barcode()
+	    << " pT = "     << (ipl)->momentum().Rho()
+	    << " eta = "    << (ipl)->momentum().Eta()
+	    << " M = "      << (ipl)->mass()
 	    << " mother = " << motherLine;
 	}
       }
 
       zp2mu::Muon thisMu;
       thisMu.fill(1, imu, lgen, charge,
-		  pmu.phi(), pmu.eta(), pmu.perp(), pmu.rho());
+		  pmu.phi(), pmu.eta(), pmu.rho(),  pmu.R());
       thisMu.setMotherId(motherId);
       thisMu.setMotherLine(motherInd);
       thisMu.setGrandmaId(grandmaId);
+      thisMu.setVertexXYZ((*ipl).vx(), (*ipl).vy(), (*ipl).vz()); 
       allMuons[lgen].push_back(thisMu);
       imu++;
     }
@@ -430,6 +433,47 @@ int Zprime2muAnalysis::matchStandAloneMuon(
     return closest_ndx;
 }
 
+// utility function to match muons from same vertex
+//
+bool Zprime2muAnalysis::haveSameVertex(const zp2mu::Muon& lhs, const zp2mu::Muon& rhs) const {
+  return ( (lhs.vertex() - rhs.vertex()).R() < 1e-6 );
+
+}
+
+bool Zprime2muAnalysis::haveSameVertex(const zp2mu::Muon& lhs, const math::XYZPoint& rhs) const {
+  return ( (lhs.vertex() - rhs).R() < 1e-6 );
+
+}
+
+// check if a GenParticleCandidate is a mother of 2 zp2mu::Muons 
+// temporary fix to work as checking barcode
+
+bool Zprime2muAnalysis::isMotherOf(const reco::GenParticleCandidate& particle, const zp2mu::Muon& mup, const zp2mu::Muon& mum) const {
+  if ( particle.numberOfDaughters() < 2 ) return false;
+  if ( particle.charge() != 0 ) return false; 
+
+  bool mupOK = false;
+  bool mumOK = false;
+
+  for (unsigned int igd = 0; igd != particle.numberOfDaughters(); igd++) {
+      if ( abs(particle.daughter(igd)->pdgId()) != 13 ) continue;
+      if ( particle.daughter(igd)->pdgId() == 13 ) {
+         math::XYZVector mom = particle.daughter(igd)->momentum();
+         if ( (fabs(mom.Eta() - mum.eta()) < 1e-5)
+            &&(fabs(mom.Phi() - mum.phi()) < 1e-5)
+            &&(fabs(mom.Rho() - mum.pt()) < 1e-5) ) mumOK = true;
+      }
+      if ( particle.daughter(igd)->pdgId() != -13 ) {
+         math::XYZVector mom = particle.daughter(igd)->momentum();
+         if ( (fabs(mom.Eta() - mup.eta()) < 1e-5)
+            &&(fabs(mom.Phi() - mup.phi()) < 1e-5)
+            &&(fabs(mom.Rho() - mup.pt()) < 1e-5) ) mumOK = true;
+      }
+  }
+  return ( mupOK && mumOK );
+}
+
+
 // Fill a vector of Level-2 muons.  Use offline standalone muons for now
 // instead of true Level-2 muons (seeded by Level-1 tracks).
 void Zprime2muAnalysis::storeL2Muons(const edm::Event& event) {
@@ -468,7 +512,7 @@ void Zprime2muAnalysis::storeL2Muons(const edm::Event& event) {
 void Zprime2muAnalysis::storeOfflineMuons(const edm::Event& event, 
 					  const edm::InputTag& whichMuons,
 					  RECLEVEL irec, bool trackerOnly) {
-  edm::Handle<reco::MuonCollection> muons;
+  edm::Handle<reco::MuonTrackLinksCollection> muons;
   event.getByLabel(whichMuons, muons);
 
   // we want to look at the standalone tracks as seeds for the different
@@ -487,7 +531,7 @@ void Zprime2muAnalysis::storeOfflineMuons(const edm::Event& event,
   //  << "Found " << photonCollection.size() << " photons";
 
   int imu = 0;
-  for (reco::MuonCollection::const_iterator muon = muons->begin();
+  for (reco::MuonTrackLinksCollection::const_iterator muon = muons->begin();
        muon != muons->end(); muon++) {
     // Null references to combined, tracker-only, and standalone muon tracks.
     reco::TrackRef theTrack;
@@ -496,19 +540,19 @@ void Zprime2muAnalysis::storeOfflineMuons(const edm::Event& event,
 
     // Fill (some of) them depending on the flag.
     if (trackerOnly) {
-      theTrack = muon->track();
+      theTrack = muon->trackerTrack();
       tkTrack  = theTrack;
     }
     else {
-      theTrack = muon->combinedMuon();
-      tkTrack  = muon->track();
-      muTrack  = muon->standAloneMuon();
+      theTrack = muon->globalTrack();
+      tkTrack  = muon->trackerTrack();
+      muTrack  = muon->standAloneTrack();
     }
 
     // Do the rest only if theTrack is not empty.
     if (theTrack.isNonnull()) {
       // seedIndex is now the index into the standAloneMuon track collection
-      int seedIndex = matchStandAloneMuon(staTracks, muon->standAloneMuon());
+      int seedIndex = matchStandAloneMuon(staTracks, muon->standAloneTrack());
 
       bool isStored = storeOfflineMuon(imu, irec, theTrack, tkTrack, muTrack,
 				       seedIndex, photonCollection);
@@ -1320,13 +1364,16 @@ Zprime2muAnalysis::makeDileptons(const int rec,
   // muons that were produced by the resonance.  In order to do this, we make
   // sure that the muons have a mother ID equal to the ID of the resonance.
   if (rec == 0 && muons.size() > 1) {
-    int idx[MAX_DILEPTONS];
+   // int idx[MAX_DILEPTONS]; //CL: determine by vertex pos instead of barcode
+
+    math::XYZPoint vertexs[MAX_DILEPTONS];
     for (pmu = muons.begin(); pmu != muons.end(); pmu++) {
       if (pmu->genMotherId() == 32) {
 	bool isnewdil = true;
 	int  idxdil = -999;
 	for (i_dil = 0; i_dil < n_dil; i_dil++) {
-	  if (pmu->genMotherLine() == idx[i_dil]) {
+//	  if (pmu->genMotherLine() == idx[i_dil]) { //FIXME
+	  if ( haveSameVertex((*pmu), vertexs[i_dil])) { 
 	    idxdil = i_dil;
 	    isnewdil = false;
 	    break;
@@ -1338,7 +1385,8 @@ Zprime2muAnalysis::makeDileptons(const int rec,
 	  thisDiMu.fill(true, n_dil, 0);
 	  diMuons.push_back(thisDiMu);
 	  idxdil = n_dil;
-	  idx[idxdil] = pmu->genMotherLine();
+//	  idx[idxdil] = pmu->genMotherLine();
+	  vertexs[idxdil] = pmu->vertex();
 	  n_dil++;
 	}
 
@@ -1482,10 +1530,8 @@ void Zprime2muAnalysis::addTrueResonance(const edm::Event& event,
   bool debug = verbosity >= VERBOSITY_TOOMUCH;
 
   // Generated particles (i.e. PYTHIA).
-  edm::Handle<edm::HepMCProduct> hepmc;
-  event.getByLabel(genMuons, hepmc);
-  const HepMC::GenEvent* hepEvt = hepmc->GetEvent();
-  HepMC::GenEvent::particle_const_iterator ipl;
+  edm::Handle<reco::CandidateCollection> genParticles;
+  event.getByLabel("genParticleCandidates", genParticles);
 
   for (vector<zp2mu::DiMuon>::iterator pdi = diMuons.begin();
        pdi != diMuons.end(); pdi++) {
@@ -1499,17 +1545,24 @@ void Zprime2muAnalysis::addTrueResonance(const edm::Event& event,
     // Take true resonance from PYTHIA only if generated mu+ and mu-
     // originated from the same resonance.
     // SV: same approach as in ORCA, but perhaps needs some thinking.
-    if (pdi->muPlus().genMotherLine() == pdi->muMinus().genMotherLine()) {
-      for (ipl = hepEvt->particles_begin();
-	   ipl != hepEvt->particles_end(); ipl++) {
-	if ((*ipl)->barcode() == pdi->muPlus().genMotherLine()) {
-	  pdi->setResV(TLorentzVector((*ipl)->momentum().px(),
-				      (*ipl)->momentum().py(),
-				      (*ipl)->momentum().pz(),
-				      (*ipl)->momentum().e()));
-	  // if (debug) LogTrace("addTrueResonance")
-	  //   << "Resonance: id = " << (*ipl)->pdg_id()
-	  //   << " line = " << (*ipl)->barcode() << " M = " << (*ipl)->Mass();
+//CL    if (pdi->muPlus().genMotherLine() == pdi->muMinus().genMotherLine()) {
+
+  if ( haveSameVertex(pdi->muPlus(), pdi->muMinus()) ) {
+
+  for (reco::CandidateCollection::const_iterator ipl = genParticles->begin();
+       ipl != genParticles->end(); ipl++) {
+
+//CL	if ((ipl)->barcode() == pdi->muPlus().genMotherLine()) {
+
+        if ( isMotherOf((*(dynamic_cast<const reco::GenParticleCandidate*>(&*ipl))), pdi->muPlus(), pdi->muMinus()) ) { //FIXME
+	  pdi->setResV(TLorentzVector((ipl)->p4().x(),
+				      (ipl)->p4().y(),
+				      (ipl)->p4().z(),
+				      (ipl)->p4().t()));
+	   if (debug) LogTrace("addTrueResonance")
+	     << "Resonance: id = " << (ipl)->pdgId()
+	    // << " line = " << (*ipl)->barcode()
+             << " M = " << (ipl)->mass();
 	  break;
 	}
       }

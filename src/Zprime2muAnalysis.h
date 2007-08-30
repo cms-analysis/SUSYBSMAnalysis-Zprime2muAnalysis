@@ -28,6 +28,8 @@ const int NUM_L2_CUTS      = 4;
 const int NUM_L3_CUTS      = 9;
 const int NUM_TRACKER_CUTS = 4;
 
+namespace reco {class GenParticleCandidate;}
+
 enum VERBOSITY { VERBOSITY_NONE, VERBOSITY_SIMPLE,
 		 VERBOSITY_LOTS, VERBOSITY_TOOMUCH };
 
@@ -138,6 +140,14 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // utility function to match standalone muons (to match seeds)
   int matchStandAloneMuon(const edm::Handle<reco::TrackCollection> staTracks,
 			  const reco::TrackRef& track);
+
+  // utility function to match muons from same vertex
+  bool haveSameVertex(const zp2mu::Muon& , const zp2mu::Muon&) const;
+
+  // utility function to match muons from same vertex
+  bool haveSameVertex(const zp2mu::Muon& , const math::XYZPoint&) const;
+
+  bool isMotherOf(const reco::GenParticleCandidate&, const zp2mu::Muon&, const zp2mu::Muon&) const;
 
   edm::InputTag standAloneMuons;
   edm::InputTag genMuons;

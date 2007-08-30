@@ -80,6 +80,8 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
 
   void deleteHistos();
 
+  std::string print(const reco::Candidate& par) const;
+
   TH1F *h_genCosNoCut;
   TH2F *AsymFitSmearHisto[6];
   TH1F *AsymFitHistoGen[6], *AsymFitHistoRec[6], *AsymFitSmearHistoDif[6];

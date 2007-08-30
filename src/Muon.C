@@ -93,6 +93,11 @@ namespace zp2mu {
     else           return 0.;
   }
 
+  /** returns X, Y or Z position of the vertex. */
+  math::XYZPoint Muon::vertex() const {
+    return math::XYZPoint(theVertexXYZ[0],theVertexXYZ[1],theVertexXYZ[2]);
+  }
+
   /** returns X, Y or Z position of the track at the inner tracker surface. */
   double Muon::trackerXYZ(const int index) const {
     if (index < 3) return theTrackerXYZ[index];

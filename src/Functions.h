@@ -2,6 +2,7 @@
 #define FUNCTIONS_h
 
 #include "TLorentzVector.h"
+#include "DataFormats/Math/interface/LorentzVector.h"
 
 double Lorentzian(double *x, double *par);
 double Relativistic_Lorentzian(double *x, double *par);
@@ -22,6 +23,12 @@ double mass_resolution(double *x, double *par);
 
 TLorentzVector LorentzBoost(TLorentzVector boost_frame,
 			    TLorentzVector rest_frame);
+
+math::XYZTLorentzVector LorentzBoost(math::XYZTLorentzVector boost_frame,
+                        math::XYZTLorentzVector rest_frame);
+
+double cosTheta(math::XYZTLorentzVector, math::XYZTLorentzVector);
+
 double Momentum(double pT, double eta);
 double probks(const double alam);
 

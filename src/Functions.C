@@ -680,6 +680,33 @@ TLorentzVector LorentzBoost(TLorentzVector boost_frame,
   return boost_lorentz_vector;
 }
 
+//
+// dummy implementation for math::XYZTLorentzVector
+//
+math::XYZTLorentzVector LorentzBoost(math::XYZTLorentzVector boost_frame,
+                                     math::XYZTLorentzVector rest_frame) {
+  TLorentzVector b_t(boost_frame.x(), boost_frame.y(), boost_frame.z(), boost_frame.t());
+  TLorentzVector r_t(rest_frame.x(), rest_frame.y(), rest_frame.z(), rest_frame.t());
+  TLorentzVector result_t = LorentzBoost(b_t, r_t);
+  math::XYZTLorentzVector result(result_t.Px(), result_t.Py(),result_t.Pz(),result_t.E());
+  return result;
+}
+
+
+//
+// cosTheta of 2 vectors
+//
+double cosTheta(math::XYZTLorentzVector lhs, math::XYZTLorentzVector rhs) {
+
+   math::XYZTLorentzVector delta = lhs - rhs;
+   Double_t ll = lhs.Vect().R();
+   Double_t rr = rhs.Vect().R();
+   Double_t dd = delta.Vect().R();
+
+   float costheta = (ll*ll + rr*rr - dd*dd)/(2*ll*rr);
+   return costheta;
+}
+
 //=============================================================================
 
 double probks(const double alam) {

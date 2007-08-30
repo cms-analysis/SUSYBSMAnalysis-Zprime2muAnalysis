@@ -26,6 +26,7 @@ Main class for a muon, either generated or reconstructed.
 //-----------------
 
 #include "TLorentzVector.h"
+#include "DataFormats/Math/interface/Point3D.h"
 
 namespace zp2mu {
   const int REC_LEVELS = 8;
@@ -146,6 +147,8 @@ namespace zp2mu {
 
     /** returns X, Y or Z position of the vertex. */
     double vertexXYZ(const int index) const;
+
+    math::XYZPoint vertex() const;
 
     /** returns X, Y or Z position of the track at the inner surface of
 	the tracker. */

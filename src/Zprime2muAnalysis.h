@@ -10,6 +10,7 @@
 
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/EgammaCandidates/interface/Photon.h"
+#include "DataFormats/EgammaCandidates/interface/PhotonFwd.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Muon.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DiMuon.h"

@@ -43,7 +43,8 @@ these modules take as input EDM ROOT files with fully-reconstructed
 (i.e. GEN-SIM-DIGI-RECO all performed) Z' --> mu- mu+ events.  Some
 sample files are available at /castor/cern.ch/user/s/slava/CMSSW_1_3_1.
 At the time being, the package has been written and tested to work with
-1_3_X series of CMSSW.  Module-specific instructions follow.
+1_3_X series of CMSSW.  The tag V00-00-00 should be used.  Module-specific
+instructions follow.
 
 Zprime2muAnalysis
 -----------------
@@ -192,7 +193,7 @@ To check out the package:
  > scramv1 project CMSSW CMSSW_1_3_3
  > cd CMSSW_1_3_3/src
  > project CMSSW
- > cvs co SUSYBSMAnalysis/Zprime2muAnalysis
+ > cvs co -r V00-00-00 SUSYBSMAnalysis/Zprime2muAnalysis
 
 To compile:
 

@@ -1,5 +1,6 @@
 block Zprime2muAnalysisCommon = {
   bool doingHiggs = false
+  bool doingElectrons = false
   bool generatedOnly = false
   #InputTag genMuons = source
   InputTag genMuons = VtxSmeared

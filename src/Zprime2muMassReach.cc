@@ -186,8 +186,14 @@ void Zprime2muMassReach::dilMassPlots(const bool debug) {
   // "Off-line" dileptons in events passing the trigger and quality cuts
   vector<zp2mu::DiMuon> diMuons;
   for (int i = 0; i < 2; i++) {
+    if(!doingElectrons){
     if (i == 0)      diMuons = allDiMuons[useL3Muons ? l3 : lgmr];
     else if (i == 1) diMuons = bestDiMuons;
+    }else{
+      if (i == 0)      diMuons = allDiMuons[lpmel];
+      else if (i == 1) diMuons = bestDiMuons;
+    }
+
     if (diMuons.size() > 0) {
       if (DO_QCUTS ?
 	  dilQCheck(diMuons[0], QSEL, qcut_mum, qcut_mup, debug) : true) {
@@ -249,8 +255,13 @@ void Zprime2muMassReach::fillMassArrays() {
 
   // Reconstructed dimuons: "best" by default, GMR optional
   vector<zp2mu::DiMuon> recdi;
+
+  if(!doingElectrons){
   if (kGMR) recdi = allDiMuons[useL3Muons ? l3 : lgmr];
   else      recdi = bestDiMuons;
+  }else{
+    recdi= bestDiMuons;
+  }
 
   for (pdi = recdi.begin(); pdi != recdi.end(); pdi++) {
     // Check the "off-line" track quality and apply the cuts

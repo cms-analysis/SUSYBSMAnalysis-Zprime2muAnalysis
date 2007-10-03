@@ -1324,7 +1324,7 @@ bool Zprime2muAsymmetry::getGenerated4Vectors(const reco::CandidateCollection& g
 	// look for the muons before brem, and store them
 	// (hepmc says these mus have status 3)
 	if (ppp->daughter(ic)->status() == 3) {
-	  if (ppp->daughter(ic)->pdgId() == 13) {
+	  if (ppp->daughter(ic)->pdgId() == leptonFlavor) {
 	    if (Mum_noib == 0) Mum_noib = ppp->daughter(ic);
 	    else {
 	      throw cms::Exception("getGenerated4Vectors")
@@ -1333,7 +1333,7 @@ bool Zprime2muAsymmetry::getGenerated4Vectors(const reco::CandidateCollection& g
 	    }
 	    if (debug) LogDebug("getGenerated4Vectors") << print(*Mum_noib);
 	  }
-	  else if (ppp->daughter(ic)->pdgId() == -13) {
+	  else if (ppp->daughter(ic)->pdgId() == -1*leptonFlavor) {
 	    if (Mup_noib == 0) Mup_noib = ppp->daughter(ic);
 	    else {
 	      throw cms::Exception("getGenerated4Vectors")
@@ -1373,7 +1373,7 @@ bool Zprime2muAsymmetry::getGenerated4Vectors(const reco::CandidateCollection& g
 	LogDebug("getGenerated4Vectors") << "Stable mus:";
       for (std::vector<const reco::Candidate*>::const_iterator id = ZprimeDescendants.begin(); id != ZprimeDescendants.end(); id++) {
 	if ((*id)->status() == 1) {
-	  if ((*id)->pdgId() == 13) {
+	  if ((*id)->pdgId() == leptonFlavor) {
 	    if (Mum == 0) Mum = (*id);
 	    else {
 	      throw cms::Exception("getGenerated4Vectors")
@@ -1382,7 +1382,7 @@ bool Zprime2muAsymmetry::getGenerated4Vectors(const reco::CandidateCollection& g
 	    }
 	    if (debug) LogDebug("getGenerated4Vectors") << print(*Mum);
 	  }
-	  else if ((*id)->pdgId() == -13) {
+	  else if ((*id)->pdgId() == -1*leptonFlavor) {
 	    if (Mup == 0) Mup = (*id);
 	    else {
 	      throw cms::Exception("getGenerated4Vectors")

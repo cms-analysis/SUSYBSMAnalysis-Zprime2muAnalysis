@@ -30,8 +30,6 @@
 
 using namespace std;
 
-// muon mass in GeV/c^2
-const double Zprime2muAnalysis::MUMASS = 0.10566;
 // minimum pT value for all muons
 const double Zprime2muAnalysis::PTMIN = 1e-3;
 // maximum number of dileptons to ever keep
@@ -119,6 +117,20 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   globalMuonsFMS = config.getParameter<edm::InputTag>("globalMuonsFMS");
   globalMuonsPMR = config.getParameter<edm::InputTag>("globalMuonsPMR");
   photons = config.getParameter<edm::InputTag>("photons");
+  doingElectrons = config.getParameter<bool>("doingElectrons");
+  pixelMatchGsfElectrons = config.getParameter<edm::InputTag>("pixelMatchGsfElectrons");
+
+  if(doingElectrons){
+    leptonFlavor= 11;
+    //ELECTRON mass in GeV/c^2
+    MUMASS = 0.000511;
+  }else{
+    leptonFlavor= 13;
+    // muon mass in GeV/c^2
+    MUMASS = 0.10566;
+
+  }
+
 
   InitROOT();
 }
@@ -215,7 +227,7 @@ void Zprime2muAnalysis::storeGeneratedMuons(const edm::Event& event) {
     idx++;
     if ((ipl)->status() == 1) { // skip documentation lines
       int id = (ipl)->pdgId();
-      if (abs(id) != 13) continue;
+      if (abs(id) != leptonFlavor) continue;
       const reco::Particle::Vector& pmu = (ipl)->momentum();
       int charge = -id/abs(id);
       if (debug)
@@ -258,7 +270,7 @@ void Zprime2muAnalysis::storeGeneratedMuons(const edm::Event& event) {
 	  // mainly to avoid stopping at muons in documentation lines,
 	  // which are declared to be ancestors of muons produced in
 	  // hard interaction (i.e., ancestors of themselves).
-	  if (abs(mId) == 13) {
+	  if (abs(mId) == leptonFlavor) { 
 	    genmuon = mother;
 	  }
 	  else {
@@ -316,7 +328,7 @@ void Zprime2muAnalysis::storeGeneratedMuons(const edm::Event& event) {
     for (edm::SimTrackContainer::const_iterator isimtrk = simtracks->begin();
 	 isimtrk != simtracks->end(); ++isimtrk) {
       // Store only muons above a certain pT threshold.
-      if (abs(isimtrk->type()) == 13) {
+      if (abs(isimtrk->type()) == leptonFlavor) {
 	//HepMC::FourVector pmu = (*cand)->momentum();
 	const CLHEP::HepLorentzVector& pmu = isimtrk->momentum();
 	float pt  = pmu.perp();
@@ -386,8 +398,59 @@ double Zprime2muAnalysis::invPtError(const reco::TrackRef& track) {
   return sig_invpt;
 }
 
+double Zprime2muAnalysis::invPtError(const reco::GsfTrackRef& track) {
+
+
+  // pt = sqrt(px^2 + py^2)
+  //    = cos(lambda) * q / qoverp
+  // with qoverp = q/|p|
+
+  double qoverp = track->qoverp();
+  double lambda = track->lambda();
+  double q = track->charge();
+
+  // need the derivatives to propagate error
+  double dpt_dlambda = -sin(lambda)*q/qoverp;
+  double dpt_dqoverp = -cos(lambda)*q/qoverp/qoverp;
+
+  const int i_lambda = reco::TrackBase::i_lambda;
+  const int i_qoverp = reco::TrackBase::i_qoverp;
+
+  // use standard error propagation formula
+  double var_pt =
+    track->covariance(i_lambda, i_lambda)   * dpt_dlambda * dpt_dlambda +
+    track->covariance(i_qoverp, i_qoverp)   * dpt_dqoverp * dpt_dqoverp +
+    2*track->covariance(i_lambda, i_qoverp) * dpt_dlambda * dpt_dqoverp;
+
+  double sig_pt = sqrt(var_pt);
+  double pt = track->pt();
+
+  // further propagate the error to 1/pt
+  double sig_invpt = 1/pt/pt*sig_pt;
+  return sig_invpt;
+}
+
 // JMTBAD calculate error on p ourselves, too
 double Zprime2muAnalysis::invPError(const reco::TrackRef& track) {
+  // dumb identity:
+  // p = q / qoverp
+  // dp_dqoverp = - q/qoverp^2
+
+  double qoverp = track->qoverp();
+  double q = track->charge();
+  
+  double sig_p = track->qoverpError() * q/qoverp/qoverp;
+  if (sig_p < 0) sig_p = -sig_p;
+
+  // further propagate the error to 1/p
+  double p = track->p();
+  double sig_invp = 1/p/p*sig_p;
+  return sig_invp;
+}
+
+double Zprime2muAnalysis::invPError(const reco::GsfTrackRef& track) {
+
+
   // dumb identity:
   // p = q / qoverp
   // dp_dqoverp = - q/qoverp^2
@@ -518,6 +581,7 @@ void Zprime2muAnalysis::storeL2Muons(const edm::Event& event) {
 void Zprime2muAnalysis::storeOfflineMuons(const edm::Event& event, 
 					  const edm::InputTag& whichMuons,
 					  RECLEVEL irec, bool trackerOnly) {
+
   edm::Handle<reco::MuonTrackLinksCollection> muons;
   event.getByLabel(whichMuons, muons);
 
@@ -567,12 +631,35 @@ void Zprime2muAnalysis::storeOfflineMuons(const edm::Event& event,
   }
 }
 
+void Zprime2muAnalysis::storePixelMatchGsfElectrons(const edm::Event& event,
+						    const edm::InputTag& whichMuons,
+						    RECLEVEL irec, bool trackerOnly) {
+
+  edm::Handle<reco::PixelMatchGsfElectronCollection> muons;
+  event.getByLabel(whichMuons, muons);
+  edm::Handle<reco::PhotonCollection> thePhotons;
+  event.getByLabel(photons, thePhotons);
+  const reco::PhotonCollection photonCollection = *(thePhotons.product());
+  int imu = 0;
+
+
+  for (reco::PixelMatchGsfElectronCollection::const_iterator muon = muons->begin();
+       muon != muons->end(); muon++) {
+
+    reco::PixelMatchGsfElectron theElectron = *(muon);
+
+    bool isStored= storePixelMatchGsfElectron(imu, irec, theElectron, photonCollection);
+    if(isStored) imu++;
+  }
+}
+
 bool Zprime2muAnalysis::storeOfflineMuon(const int imu, const RECLEVEL irec,
 					 const reco::TrackRef& theTrack,
 					 const reco::TrackRef& tkTrack,
 					 const reco::TrackRef& muTrack,
 					 const int seedIndex,
 			 const reco::PhotonCollection& photonCollection) {
+
   bool isStored = false;
 
   // Skip muons with non-positive number of dof.
@@ -685,10 +772,154 @@ bool Zprime2muAnalysis::storeOfflineMuon(const int imu, const RECLEVEL irec,
   return isStored;
 }
 
+bool Zprime2muAnalysis::storePixelMatchGsfElectron(const int imu, const RECLEVEL irec,
+						   const reco::PixelMatchGsfElectron& theElectron,
+						   const reco::PhotonCollection& photonCollection){
+
+  bool isStored=false;
+
+  // Skip electrons with non-positive number of dof.
+  // JMTBAD is this still relevant (does GMR keep muons with dof < 0?)
+  
+  reco::GsfTrackRef theTrack = theElectron.gsfTrack();
+
+  if (theTrack->ndof() <= 0) {
+    edm::LogWarning("storeOfflineElectron")
+      << "muon's dof is " << theTrack->ndof() << "; skipping it";
+    return isStored;
+  }
+
+  // Use momentum measured at vertex (taken from the interaction point).
+  // JMTBAD assume this is what the reco people did in storing the momentum
+  // in the muon class
+
+  //pixelMatchGsfElectrons have much better et than pt measurement... Thus use et in lieu of pt
+  double pt = theElectron.pt();
+
+  if (pt > PTMIN) {
+    zp2mu::Muon thisMu;
+    thisMu.fill(1, imu, irec, theTrack->charge(), theElectron.phi(),
+		theElectron.eta(), theElectron.pt(), theElectron.p());
+
+    int nRecHits = theTrack->recHitsSize();
+    int nPixHits = 0, nSilHits = 0, nEcalHits = 0;
+    // loop over all the rechits and count how many are in the pixels and
+    // how many are in the strips
+    for (trackingRecHit_iterator trh = theTrack->recHitsBegin();
+	 trh != theTrack->recHitsEnd(); trh++) {
+      DetId did = (*trh)->geographicalId();
+      DetId::Detector det = did.det();
+      if (det == DetId::Tracker) {
+	int subdetId = did.subdetId();
+	// trying not to use magic numbers -- but pixel subdets are 1 and 2,
+	// strip subdets are 3-6
+	switch (subdetId) {
+	case StripSubdetector::TIB:
+	case StripSubdetector::TOB:
+	case StripSubdetector::TID:
+	case StripSubdetector::TEC:
+	  nSilHits++;
+	  break;
+	case PixelSubdetector::PixelBarrel:
+	case PixelSubdetector::PixelEndcap:
+	  nPixHits++;
+	  break;
+	default:
+	  edm::LogWarning("storeOfflineElectron")
+	    << "unknown subid for TrackingRecHit";
+	}
+      }
+      else if (det == DetId::Ecal)
+	nEcalHits++;
+    }
+   
+    // redundant check, hopefully
+    if (nPixHits + nSilHits + nEcalHits != nRecHits)
+      edm::LogWarning("storeOfflineElectron")
+	<< "TrackingRecHits from outside the tracker or ECAL systems!";
+    // last arg is sum of pixel, sil. and muon hits
+    thisMu.setHits(nPixHits, nSilHits, nRecHits);
+
+    // JMTBAD ndof for TrackBase is a double...
+    thisMu.setDof(int(theTrack->ndof()));
+    thisMu.setChi2(theTrack->chi2());
+
+    thisMu.setEInvPt(invPtError(theTrack));
+    thisMu.setEInvP(invPError(theTrack));
+
+    // set the vertex found by the track fit
+    thisMu.setVertexXYZ(theElectron.vx(), theElectron.vy(), theElectron.vz());
+    thisMu.setTrackerXYZ(theTrack->innerPosition().X(),
+			 theTrack->innerPosition().Y(),
+			 theTrack->innerPosition().Z());
+
+    //For electrons, don't set the closest photons.
+    //If you do, you'll find a Zprime with the twice it's actual mass!
+    //
+    //TLorentzVector photon = findClosestPhoton(theTrack, photonCollection);
+    //thisMu.setClosestPhoton(photon);
+
+    allMuons[irec].push_back(thisMu);
+    isStored = true;
+  }
+  else {
+    edm::LogWarning("storeOfflineElectron")
+      << "skipping electron at rec level " << irec << " with pT = " << pt
+      << " p = " << theElectron.p() << " eta " << theElectron.eta();
+  }
+
+  return isStored;
+}
+
 TLorentzVector Zprime2muAnalysis::findClosestPhoton(
                               const reco::TrackRef& theTrack,
 			      const reco::PhotonCollection& photonCollection) {
   static bool debug = verbosity >= VERBOSITY_TOOMUCH;
+  double phdist = 999.0;
+  reco::Particle::LorentzVector phclos; // 4-momentum of the closest PhotonCandidate
+
+  double muon_eta = theTrack->eta();
+  double muon_phi = theTrack->phi();
+
+  for (reco::PhotonCollection::const_iterator iph = photonCollection.begin();
+       iph != photonCollection.end(); iph++) {
+
+    reco::Photon thePhoton(*iph);
+
+    // Photon direction can be improved by taking into account precise
+    // position of the primary vertex - leave for later.
+    // thePhoton.setVertex(vtx);
+
+    double phot_eta = thePhoton.eta();
+    double phot_phi = thePhoton.phi();
+    double dist = deltaR(muon_eta, muon_phi, phot_eta, phot_phi);
+
+    if (debug) LogTrace("findClosestPhoton")
+      << "Photon: eta = " << phot_eta << " phi = " << phot_phi
+      << " energy = " << thePhoton.energy() << " dR = " << dist;
+
+    if (dist < phdist) {
+      phclos = thePhoton.p4();
+      phdist = dist;
+    }
+  }
+
+  if (debug) LogTrace("findClosestPhoton")
+    << "Closest photon: eta = " << phclos.eta() << " phi = " << phclos.phi()
+    << " px = " << phclos.px() << " py = " << phclos.py()
+    << " pz = " << phclos.pz() << " energy = " << phclos.e()
+    << " dR  = " << phdist;
+
+  TLorentzVector photon(phclos.px(), phclos.py(), phclos.pz(), phclos.e());
+  return photon;
+}
+
+TLorentzVector Zprime2muAnalysis::findClosestPhoton(
+						    const reco::GsfTrackRef& theTrack,
+						    const reco::PhotonCollection& photonCollection) {
+
+
+  bool debug = verbosity >= VERBOSITY_TOOMUCH;
   double phdist = 999.0;
   reco::Particle::LorentzVector phclos; // 4-momentum of the closest PhotonCandidate
 
@@ -745,16 +976,23 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
   // Generated particles: GEANT and PYTHIA info
   storeGeneratedMuons(event);
   if (!generatedOnly) {
-    // Standalone muons; should be replaced by Level-2 muons
-    storeL2Muons(event);
-    // off-line muons reconstructed with GlobalMuonProducer
-    storeOfflineMuons(event, globalMuons, lgmr);
-    // store the muons using the tracker-only tracks
-    storeOfflineMuons(event, globalMuons, ltk, true);
-    // muons using tracker+first muon station
-    storeOfflineMuons(event, globalMuonsFMS, lfms);
-    // muons using the PickyMuonReconstructor
-    storeOfflineMuons(event, globalMuonsPMR, lpmr);
+
+    if(!doingElectrons){
+      // Standalone muons; should be replaced by Level-2 muons
+      storeL2Muons(event);
+      // off-line muons reconstructed with GlobalMuonProducer
+      storeOfflineMuons(event, globalMuons, lgmr);
+      // store the muons using the tracker-only tracks
+      storeOfflineMuons(event, globalMuons, ltk, true);
+      // muons using tracker+first muon station
+      storeOfflineMuons(event, globalMuonsFMS, lfms);
+      // muons using the PickyMuonReconstructor
+      storeOfflineMuons(event, globalMuonsPMR, lpmr);
+    }else{
+      //leptonFlavor==11 (doing electrons)
+      storePixelMatchGsfElectrons(event,pixelMatchGsfElectrons, lpmel);
+    }
+
   }
 
   // Sort the list of found muons using overloaded criteria.
@@ -780,7 +1018,7 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
   // Dump all muon vectors
   bool debug = verbosity >= VERBOSITY_TOOMUCH;
   if (debug) dumpEvent(true, true, true, true, true);
-
+  
   // Construct opposite-sign dileptons out of lists of muons.
   // Pass ref. to Event only to save true resonance; need to think of a better
   // solution?
@@ -792,63 +1030,71 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
 // starting with 1_4_0_pre2, so we could switch to official versions once
 // we start using 1_4_0 (after making sure that they agree with our version).
 vector<zp2mu::Muon> Zprime2muAnalysis::findBestMuons() {
+
   bool debug = verbosity >= VERBOSITY_TOOMUCH;
   vector<zp2mu::Muon> tmpV;
-  vector<zp2mu::Muon>::const_iterator pmu;
-  static int ntrk = 0, ngmr = 0, nfms = 0, npmr = 0, ngpr = 0, ntot = 0;
 
-  // Start with tracker-only tracks, as Norbert does.
-  for (pmu = allMuons[ltk].begin(); pmu != allMuons[ltk].end(); pmu++) {
-    zp2mu::Muon trkmu, gmrmu, fmsmu, pmrmu;
-    int gmr_id = pmu->sameSeedId(lgmr);
-    int fms_id = pmu->sameSeedId(lfms);
-    int pmr_id = pmu->sameSeedId(lpmr);
-    trkmu = *pmu;
-    if (gmr_id != -999) gmrmu = muonRef(lgmr, gmr_id);
-    if (fms_id != -999) fmsmu = muonRef(lfms, fms_id);
-    if (pmr_id != -999) pmrmu = muonRef(lpmr, pmr_id);
-    //zp2mu::Muon bestMu = NorbertsCocktail(trkmu, gmrmu, fmsmu, pmrmu, debug);
-    zp2mu::Muon bestMu = PiotrsCocktail(trkmu, fmsmu, pmrmu, debug);
-    if (debug) {
-      if (bestMu == trkmu) {
-	ntrk++; LogTrace("findBestMuons") << "  --> select Tracker only";
+  if(doingElectrons){
+    //just have one set of electrons to look at in this case
+    tmpV=allMuons[lpmel];
+  }
+  else{
+
+    vector<zp2mu::Muon>::const_iterator pmu;
+    static int ntrk = 0, ngmr = 0, nfms = 0, npmr = 0, ngpr = 0, ntot = 0;
+
+    // Start with tracker-only tracks, as Norbert does.
+    for (pmu = allMuons[ltk].begin(); pmu != allMuons[ltk].end(); pmu++) {
+      zp2mu::Muon trkmu, gmrmu, fmsmu, pmrmu;
+      int gmr_id = pmu->sameSeedId(lgmr);
+      int fms_id = pmu->sameSeedId(lfms);
+      int pmr_id = pmu->sameSeedId(lpmr);
+      trkmu = *pmu;
+      if (gmr_id != -999) gmrmu = muonRef(lgmr, gmr_id);
+      if (fms_id != -999) fmsmu = muonRef(lfms, fms_id);
+      if (pmr_id != -999) pmrmu = muonRef(lpmr, pmr_id);
+      //zp2mu::Muon bestMu = NorbertsCocktail(trkmu, gmrmu, fmsmu, pmrmu, debug);
+      zp2mu::Muon bestMu = PiotrsCocktail(trkmu, fmsmu, pmrmu, debug);
+      if (debug) {
+	if (bestMu == trkmu) {
+	  ntrk++; LogTrace("findBestMuons") << "  --> select Tracker only";
+	}
+	else if (bestMu == gmrmu) {
+	  ngmr++; LogTrace("findBestMuons") << "  --> select GMR";
+	  if (gmrmu.isValid() && pmrmu.isValid() &&
+	      fabs(gmrmu.phi() - pmrmu.phi()) < 0.001 &&
+	      fabs(gmrmu.eta() - pmrmu.eta()) < 0.001 &&
+	      fabs(gmrmu.pt()  - pmrmu.pt()) < 0.001) ngpr++;
+	}
+	else if (bestMu == fmsmu) {
+	  nfms++; LogTrace("findBestMuons") << "  --> select TPFMS";
+	}
+	else if (bestMu == pmrmu) {
+	  npmr++; LogTrace("findBestMuons") << "  --> select PMR";
+	}
+	else if (!bestMu.isValid()) {
+	  ntot--; edm::LogWarning("findBestMuons") << "  --> reject muon\n";
+	}
+	else {
+	  throw cms::Exception("findBestMuons") << "+++ Unknown outcome! +++\n";
+	}
+	ntot++;
       }
-      else if (bestMu == gmrmu) {
-	ngmr++; LogTrace("findBestMuons") << "  --> select GMR";
-	if (gmrmu.isValid() && pmrmu.isValid() &&
-	    fabs(gmrmu.phi() - pmrmu.phi()) < 0.001 &&
-	    fabs(gmrmu.eta() - pmrmu.eta()) < 0.001 &&
-	    fabs(gmrmu.pt()  - pmrmu.pt()) < 0.001) ngpr++;
+      if (bestMu.isValid()) {
+	tmpV.push_back(bestMu);
       }
-      else if (bestMu == fmsmu) {
-	nfms++; LogTrace("findBestMuons") << "  --> select TPFMS";
-      }
-      else if (bestMu == pmrmu) {
-	npmr++; LogTrace("findBestMuons") << "  --> select PMR";
-      }
-      else if (!bestMu.isValid()) {
-	ntot--; edm::LogWarning("findBestMuons") << "  --> reject muon\n";
-      }
-      else {
-	throw cms::Exception("findBestMuons") << "+++ Unknown outcome! +++\n";
-      }
-      ntot++;
     }
-    if (bestMu.isValid()) {
-      tmpV.push_back(bestMu);
+    // Fractions of events from different reconstructors.
+    if (debug && (eventNum%1000 == 0 && eventNum > 0)) {
+      LogTrace("findBestMuons")
+	<< "\nfindBestMuons summary: "
+	<< "TO: "    << ntrk/double(ntot) << "; GMR: " << ngmr/double(ntot)
+	<< "; FMS: " << nfms/double(ntot) << "; PMR: " << npmr/double(ntot);
+      LogTrace("findBestMuons")
+	<< "GMR=PMR: " << ((ngmr > 0) ? ngpr/double(ngmr) : 0);
     }
   }
-
-  // Fractions of events from different reconstructors.
-  if (debug && (eventNum%1000 == 0 && eventNum > 0)) {
-    LogTrace("findBestMuons")
-      << "\nfindBestMuons summary: "
-      << "TO: "    << ntrk/double(ntot) << "; GMR: " << ngmr/double(ntot)
-      << "; FMS: " << nfms/double(ntot) << "; PMR: " << npmr/double(ntot);
-    LogTrace("findBestMuons")
-      << "GMR=PMR: " << ((ngmr > 0) ? ngpr/double(ngmr) : 0);
-  }
-
+  
   return tmpV;
 }
 
@@ -985,12 +1231,14 @@ bool Zprime2muAnalysis::matchEta(const double eta1, const double eta2,
 	<< "Eta Match!  Difference is: " << *eta_diff;
     return true;
   }
-  else
+  else{
     return false;
+  }
 }
 
 bool Zprime2muAnalysis::matchPhi(const double phi1, const double phi2, 
 				 double *phi_diff) {
+
   // See if difference in phi is less than or equal to .5 rad.
 
   bool debug = verbosity >= VERBOSITY_TOOMUCH;
@@ -1008,13 +1256,15 @@ bool Zprime2muAnalysis::matchPhi(const double phi1, const double phi2,
       LogTrace("matchPhi") << "Phi Match!  Diff: " << *phi_diff;
     return true;
   }
-  else
+  else{
     return false;
+  }
 }
 
 bool Zprime2muAnalysis::matchEtaAndPhi(const double eta1, const double eta2,
 				       const double phi1, const double phi2,
 				       double *match_diff) {
+
   // See if eta and phi match for the 2 tracks.
   bool debug = false;
   double eta_diff = 999., phi_diff = 999.;
@@ -1268,7 +1518,9 @@ void Zprime2muAnalysis::matchStudy(const zp2mu::Muon& muon) {
 	<< "  index = " << muonInd << " seedInd = " << seedInd
 	<< " closInd = " << closInd;
     }
+
     dumpEvent(true, false, false, true, false);
+    
   }
 }
 
@@ -1341,6 +1593,7 @@ void Zprime2muAnalysis::makeDileptons(const int rec, const bool debug) {
   }
 
   vector<zp2mu::Muon>& muons = allMuons[rec];
+
   allDiMuons[rec] = makeDileptons(rec, muons, debug);
 
   // Reset dilepton id's.
@@ -1448,12 +1701,15 @@ Zprime2muAnalysis::makeDileptons(const int rec,
   // Dileptons search in reconstructed muons.  First consider all possible
   // combinations of mu+ and mu-.
   if (rec > 0 && muons.size() > 1) {
+
     for (pmu = muons.begin(); pmu != muons.end()-1; pmu++) {
 
       vmu1.SetPtEtaPhiM(pmu->pt(), pmu->eta(), pmu->phi(), MUMASS);
 
       for (qmu = pmu+1; qmu != muons.end(); qmu++) {
+
 	if (qmu->charge() != pmu->charge()) {
+
 	  vmu2.SetPtEtaPhiM(qmu->pt(), qmu->eta(), qmu->phi(), MUMASS);
 	  vdil = vmu1 + vmu2;
 
@@ -1473,7 +1729,7 @@ Zprime2muAnalysis::makeDileptons(const int rec,
 	}
       }
     }
-  }
+  } 
 
   // If H -> ZZ* -> 4mu, sort dileptons to look for two highest-mass ones.
   // If Z' or G*, do nothing because all muons were sorted from the highest
@@ -1974,38 +2230,54 @@ bool Zprime2muAnalysis::dilQCheck(const zp2mu::DiMuon& dimuon, const int qsel,
 void Zprime2muAnalysis::dumpEvent(const bool printGen, const bool printL1,
 				  const bool printL2,  const bool printL3,
 				  const bool printBest) const {
+
   vector<zp2mu::Muon>::const_iterator pmu;
 
   ostringstream out;
+
   out << "\n******************************** Event " << eventNum << "\n";
+  
+  
   if (printGen)
     for (pmu = allMuons[0].begin(); pmu != allMuons[0].end(); pmu++) {
       out << *pmu;
     }
+  
+
   if (printL1)
     for (pmu = allMuons[l1].begin(); pmu != allMuons[1].end(); pmu++) {
       out << *pmu;
     }
-  if (printL2)
+
+  if (printL2) 
     for (pmu = allMuons[l2].begin(); pmu != allMuons[2].end(); pmu++) {
       out << *pmu;
     }
-  if (printL3) {
-    for (int rec = l3; rec < MAX_LEVELS; rec++)
+
+  
+  if (printL3) 
+    for (int rec = l3; rec < MAX_LEVELS; rec++){
+      std::cout<<std::endl;
       for (pmu = allMuons[rec].begin(); pmu != allMuons[rec].end(); pmu++) {
 	out << *pmu;
       }
-  }
-  if (printBest) {
+    }
+  
+	
+
+  if (printBest){ 
+    
     out << "\nBest off-line muons: \n";
     for (pmu = bestMuons.begin(); pmu != bestMuons.end(); pmu++) {
       out << *pmu;
     }
   }
+
   LogTrace("dumpEvent") << out.str();
 }
 
 void Zprime2muAnalysis::dumpDiMuonMasses() const {
+
   ostringstream out;
   out << "Dilepton masses at levels  ";
   for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {

@@ -9,4 +9,5 @@ block Zprime2muAnalysisCommon = {
   InputTag globalMuonsPMR = globalMuonsPMR
   InputTag standAloneMuons = standAloneMuons:UpdatedAtVtx
   InputTag photons = correctedPhotons
+  InputTag pixelMatchGsfElectrons = pixelMatchGsfElectrons
 }

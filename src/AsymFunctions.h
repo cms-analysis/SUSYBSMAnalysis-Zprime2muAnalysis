@@ -8,7 +8,7 @@
 #include "AsymFitData.h"
 #include "AsymFitManager.h"
 
-extern bool mistagInData;
+extern bool correctMistags;
 extern bool doingGravFit;
 extern const bool useMistagHist;
 extern bool asymDebug;

@@ -23,7 +23,7 @@ using namespace std;
 
 // JMTBAD these flags are set from the config file; should really be
 // const access
-bool mistagInData;
+bool correctMistags;
 bool doingGravFit;
 const bool useMistagHist = false;
 bool asymDebug;
@@ -131,7 +131,7 @@ double asym_mistag_PDF(double *x, double *pars) {
   double cos = x[0];
   double neg_cos = -cos;
   double w = 0.;
-  if (mistagInData) { w = mistagProb(rap, cos); }
+  if (correctMistags) { w = mistagProb(rap, cos); }
   double func = (1. - w)*asym_3_PDF(&cos, pars) + 
     w*asym_3_PDF(&neg_cos, pars);
 
@@ -244,7 +244,7 @@ double asym2D(double *x, double *par) {
   //double qpL    = x[3];
   //double pT     = x[4];
 
-  double etalim = MUM_ETA_LIM[1];
+  double etalim = ETALIM;
 
   // See if dimuon is within detector acceptance.
   if (fabs(rap) > fabs(rapMaxAccept(&cos_cs, &etalim))) return EPSILON;
@@ -252,15 +252,15 @@ double asym2D(double *x, double *par) {
   double w = 0.;
   // A Few options for calculating mistag probability:
   // 1. Default version using rapidity and cos_cs
-  if (mistagInData) { w = mistagProb(rap, cos_cs); }
+  if (correctMistags) { w = mistagProb(rap, cos_cs); }
   // 2. Most precise version using quark and dilepton pL
-  //if (mistagInData) { w = mistagProbVsPL(qpL, pL); }
+  //if (correctMistags) { w = mistagProbVsPL(qpL, pL); }
   // 3. Version using dilepton pT and rap
-  //if (mistagInData) { w = mistagProbVsPtRap(pT, rap); }
+  //if (correctMistags) { w = mistagProbVsPtRap(pT, rap); }
   // 4. Version using dilepton pL
-  //if (mistagInData) { w = mistagProbVsPL(pL); }
+  //if (correctMistags) { w = mistagProbVsPL(pL); }
   // 5. Version using only dilepton rapidity
-  //if (mistagInData) { w = mistagProbVsRap(rap); }
+  //if (correctMistags) { w = mistagProbVsRap(rap); }
  
 
   double func = (1.-w)*asym_3_PDF(&cos_cs, par) + 
@@ -808,8 +808,8 @@ double asym6D(double *x, double *par) {
   double cos_cs = data.cos_cs;
 
   double w = 0.;
-  if (mistagInData) { w = mistagProb(fabs(rap), cos_cs); }
-  //if (mistagInData) { w = mistagProbVsRap(fabs(rap)); }
+  if (correctMistags) { w = mistagProb(fabs(rap), cos_cs); }
+  //if (correctMistags) { w = mistagProbVsRap(fabs(rap)); }
 
   double neg_cos_cs = -data.cos_cs;
   double func = (1.-w)*asym_3_PDF(&cos_cs, par) + 
@@ -1369,7 +1369,7 @@ CUTSTATUS diRapAccept(TLorentzVector v_dil, TLorentzVector v_mum,
   v_mum.Boost(v_dil.BoostVector());
   v_mup.Boost(v_dil.BoostVector());
 
-  // If eta's are less than maximum eta, returnval is true.
+  // check if muons are within eta acceptance
   double eta_mum = v_mum.Eta();
   double eta_mup = v_mup.Eta();
   if (eta_mum < MUM_ETA_LIM[0] || eta_mum > MUM_ETA_LIM[1] ||

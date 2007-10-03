@@ -7,12 +7,12 @@
 #include "TH2F.h"
 #include "TProfile.h"
 
+#include "SimDataFormats/HepMCProduct/interface/HepMCProduct.h"
+
 #include "CLHEP/Vector/LorentzVector.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-
-#include "SimDataFormats/HepMCProduct/interface/HepMCProduct.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymFitData.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TFMultiD.h"
@@ -50,25 +50,32 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   void bookFrameHistos();
   void bookFitHistos();
 
-  void calcHistoAsymmetry(const TH1F* IdF, const TH1F* IdB, TH1F* IdA,
-			  fstream& out);
+  void makeFakeData(int nEvents, double A_FB, double b);
+  void smearGenData(const AsymFitData& data);
+
+  double calcAFBError(double f, double b);
+  void calcAsymmetry(double f, double b, double& A_FB, double& e_A_FB);
+  void calcAsymmetry(const TH1F* h_cos, double& A_FB, double& e_A_FB);
+  void calcAsymmetry(const TH1F* IdF, const TH1F* IdB, TH1F* IdA,
+		     fstream& out);
+
   void calcFrameAsym();
   void fillFrameHistos();
 
-  void fillFitData();
+  void fillGenData(const reco::CandidateCollection& mcp);
+  void fillFitData(const reco::CandidateCollection& mcp);
   void dumpFitData();
 
   // JMTBAD GenKineAna methods... to be moved
-  void printGenParticle(const HepMC::GenParticle* p) const;
   bool getGenerated4Vectors(const reco::CandidateCollection& ,
 			    unsigned int eventNum,
 			    GenMomenta& genMom);
   bool computeFitQuantities(const reco::CandidateCollection&, 
-			    bool internalBremOn, int eventNum,
-			    AsymFitData& data);
+			    int eventNum, AsymFitData& data);
+
   void bookParamHistos();
-  void fillParamHistos(bool internalBremOn, bool fakeData);
-  void getAsymParams(bool internalBremOn);
+  void fillParamHistos(bool fakeData);
+  void getAsymParams();
 
   TFMultiD* getNewFitFcn(int fitType);
   void evalLikelihoods();
@@ -82,9 +89,13 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
 
   std::string print(const reco::Candidate& par) const;
 
+  // store the event number so we don't have to get it from the edm
+  // object every time
+  int eventNum;
   TH1F *h_genCosNoCut;
   TH2F *AsymFitSmearHisto[6];
   TH1F *AsymFitHistoGen[6], *AsymFitHistoRec[6], *AsymFitSmearHistoDif[6];
+  TH1F *AsymFitHistoGenSmeared[6];
   // look at the angular distributions separately by type
   TH1F *AsymFitHistoGenByType[2][6], *AsymFitHistoRecByType[2][6];
 
@@ -125,24 +136,37 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   TH1F *h_rap_dil[2], *h_pt_dil;
   TH1F *h_phi_cs;
 
-  // Unbinned fits of cos(theta) vs Y.  Fixed size arrays for now.
-  int nfit_ycos_used; // number of events
-  int nfit_used[2];   // number of events
-  double fit_data1[FIT_ARRAY_SIZE]; // cos(theta_CS)
-  double fit_data2[FIT_ARRAY_SIZE]; // Y
-  double pt_dil_data[2][FIT_ARRAY_SIZE];
-  double phi_dil_data[2][FIT_ARRAY_SIZE];
-  double mass_dil_data[2][FIT_ARRAY_SIZE];
-  double rap_dil_data[2][FIT_ARRAY_SIZE];
-  double cos_theta_cs_data[2][FIT_ARRAY_SIZE];
-  double phi_cs_data[2][FIT_ARRAY_SIZE];
-  // weights to keep track of which data point is from gg/qqbar
-  double qqbar_weights[2][FIT_ARRAY_SIZE];
-  double gg_weights[2][FIT_ARRAY_SIZE];
+  TH1F *h_cos_theta_true, *h_cos_theta_cs_acc;
+  TH1F *h_cos_theta_cs, *h_cos_theta_cs_fixed;
+  TH1F *h_b_mass, *h_f_mass, *h_b_smass, *h_f_smass;
+  TH1F *h_gen_sig[2];
+  TH2F *h2_rap_cos_d[2];
 
-  bool ibOnParams;
+  // Data arrays for unbinned fits.  Fixed size arrays for now.
+  // Order of the arrays: generated events, reconstructed events,
+  //                      smeared generated events
+  int nfit_used[3];   // number of events
+  double pt_dil_data[3][FIT_ARRAY_SIZE];
+  double phi_dil_data[3][FIT_ARRAY_SIZE];
+  double mass_dil_data[3][FIT_ARRAY_SIZE];
+  double rap_dil_data[3][FIT_ARRAY_SIZE];
+  double cos_theta_cs_data[3][FIT_ARRAY_SIZE];
+  double phi_cs_data[3][FIT_ARRAY_SIZE];
+  // weights to keep track of which data point is from gg/qqbar
+  double qqbar_weights[3][FIT_ARRAY_SIZE];
+  double gg_weights[3][FIT_ARRAY_SIZE];
+
+  // arrays for generating fake data from distributions
+  double fake_cos_true[FIT_ARRAY_SIZE];
+  double fake_cos_cs[FIT_ARRAY_SIZE];
+  double fake_rap[FIT_ARRAY_SIZE];
+  int fake_mistag_true[FIT_ARRAY_SIZE];
+  int fake_mistag_cs[FIT_ARRAY_SIZE];
+
+  std::vector<double> angDist;
 
   // config file parameters
+  edm::InputTag genMuons;
   VERBOSITY verbosity;
   std::string outputFileBase;
   std::string genSample;
@@ -153,6 +177,11 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   FITTYPE fitType;
   int numFits;
   int maxParamEvents;
+  bool useCachedParams;
+  bool internalBremOn;
+  bool fixbIn1DFit;
+  bool useCosTrueInFit;
+  bool artificialCosCS;
 };
 
 #endif // ZP2MUASYM_H

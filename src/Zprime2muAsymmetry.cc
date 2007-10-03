@@ -14,6 +14,7 @@
 #include "TPad.h"
 #include "TPaveLabel.h"
 #include "TPostScript.h"
+#include "TRandom3.h"
 #include "TStyle.h"
 #include "TText.h"
 #include "TTree.h"
@@ -46,25 +47,64 @@ const unsigned int Zprime2muAsymmetry::nNormPoints = 100000;
 Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config) 
   : Zprime2muAnalysis(config)
 {
+  // initialize array counters since we don't use automatically sized
+  // arrays yet
+  for (int i = 0; i < 3; i++)
+    nfit_used[i] = 0;
+
+  // taken from the Analysis common config
+  genMuons = config.getParameter<edm::InputTag>("genMuons");
+
   // verbosity controls the amount of debugging information printed;
   // levels are defined in an enum
   verbosity = VERBOSITY(config.getUntrackedParameter<int>("verbosity", 1));
+
   // turn off the fit and only make the histograms -- useful to get the
   // recSigma information from the asymHistos.ps
   noFit = config.getParameter<bool>("noFit");
+
   // if requested, only evaluate the log-likelihood ratio for each
   // data point
   onlyEvalLLR = config.getParameter<bool>("onlyEvalLLR");
+
   // choose the type of fit (magic number in the cfg, but
   // is an enum FITTYPE here in the code)
   FITTYPE fitType = FITTYPE(config.getParameter<int>("fitType"));
+
+  // convenient flag for checking to see if we're doing graviton studies
+  doingGravFit = fitType >= GRAV;
+
   // only do so many of the fits (up to 6; from gen+gen to rec+rec)
   numFits = config.getParameter<int>("numFits");
+
   // limit on how many events to read from the parameterization sample
-  // JMTBAD will be removed later when this is done by a different module
   maxParamEvents = config.getParameter<int>("maxParamEvents");
+
+  // whether to use the cached parameters (depending on the existence
+  // of the cache root file)
+  useCachedParams = config.getParameter<bool>("useCachedParams");
+
   // whether to use the on-peak fit window or the off-peak one
   onPeak = config.getParameter<bool>("onPeak");
+
+  // whether bremsstrahlung was switched on in the generator for the
+  // parameterization sample
+  internalBremOn = config.getParameter<bool>("internalBremOn");
+
+  // whether to fix b for the simple 1-D fits
+  fixbIn1DFit = config.getParameter<bool>("fixbIn1DFit");
+
+  // whether to use cos_true in the 2/6-D fits
+  useCosTrueInFit = config.getParameter<bool>("useCosTrueInFit");
+
+  // whether to correct the cos_cs values using MC truth
+  artificialCosCS = config.getParameter<bool>("artificialCosCS");
+
+  // whether to use the probabilistic mistag correction; always turn
+  // it off if doing graviton fit, if we are artificially
+  // correcting with MC truth, or if we are fitting to cos_theta_true
+  correctMistags = doingGravFit || artificialCosCS || useCosTrueInFit ? false :
+    config.getParameter<bool>("correctMistags");
 
   // get the parameters specific to the data sample on which we are running
   string dataSet = config.getParameter<string>("dataSet");
@@ -79,11 +119,6 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   // let the asymFitManager take care of setting mass_type, etc.
   asymFitManager.setConstants(dataSetConfig, onPeak);
 
-  // convenient flag for checking to see if we're doing graviton studies
-  doingGravFit = fitType >= GRAV;
-  // right now mistagInData is redundant alongside doingGravFit, but
-  // it is useful to be able to turn off the mistag for asym studies
-  mistagInData = !doingGravFit;
   // turn on/off the fit prints in AsymFunctions
   asymDebug = verbosity >= VERBOSITY_SIMPLE;
 
@@ -108,8 +143,15 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   if (onPeak) out << "on ";
   else out << "off ";
   out << "peak\n";
-  if (!mistagInData) out << "NOT ";
-  out << "Correcting for mistags in data\n";
+  if (!correctMistags) out << "NOT ";
+  out << "Correcting for mistags in data using probabilistic method\n";
+  if (!internalBremOn) out << "NOT ";
+  out << "Correcting for bremsstrahlung in parameterization sample\n";
+  if (fixbIn1DFit) out << "Fixing b = 1.0 in 1-D fits\n";
+  if (useCosTrueInFit) out << "Using cos_theta_true in 2/6-D fits\n";
+  if (artificialCosCS)
+    out << "Artificially correcting mistags using MC truth\n";
+  
   out << "------------------------------------------------------------";
   edm::LogInfo("Zprime2muAsymmetry") << out.str();
 
@@ -127,9 +169,12 @@ void Zprime2muAsymmetry::analyze(const edm::Event& event,
 				 const edm::EventSetup& eSetup) {
   // delegate filling our muon vectors to the parent class
   Zprime2muAnalysis::analyze(event, eSetup);
+  eventNum = event.id().event();
 
-  // JMTBAD more descriptive names for these, perhaps
-  fillFitData();
+  edm::Handle<reco::CandidateCollection> genParticles;
+  event.getByLabel("genParticleCandidates", genParticles);
+  fillGenData(*genParticles);
+  fillFitData(*genParticles);
   fillFrameHistos();
 }
 
@@ -147,12 +192,7 @@ void Zprime2muAsymmetry::endJob() {
   if (noFit)
     return;
 
-  bool bremOn = true;
-  edm::LogInfo("Zprime2muAsymmetry")
-    << "Loading sample parameters for asym fit using " << genSample << endl;
-  fillParamHistos(bremOn, false);
-
-  getAsymParams(bremOn);
+  getAsymParams();
 
   if (onlyEvalLLR)
     evalLikelihoods();
@@ -163,6 +203,30 @@ void Zprime2muAsymmetry::endJob() {
 void Zprime2muAsymmetry::bookFitHistos() {
   const double twoPi = 2.*TMath::Pi();
   AsymFitManager& amg = asymFitManager;
+
+  TH1::AddDirectory(false);
+  h_cos_theta_true = new TH1F("", "cos #theta^{*}_{true}",   50, -1., 1.);
+  h_cos_theta_cs = new TH1F("", "cos #theta^{*}_{CS}", 50, -1., 1.);
+  h_cos_theta_cs_acc = new TH1F("", "cos #theta^{*}_{CS} (in acceptance)", 
+				50, -1., 1.);
+  h_cos_theta_cs_fixed = new TH1F("",
+      "cos #theta^{*}_{CS} (mistags corrected)", 50, -1., 1.);
+  h_b_smass = new TH1F("bsm", "Smeared Mass of Backward Events", 
+		       50, amg.fit_win(0), amg.fit_win(1));
+  h_f_smass = new TH1F("fsm", "Smeared Mass of Forward Events", 
+		       50, amg.fit_win(0), amg.fit_win(1));
+  h_b_mass = new TH1F("bm", "Mass of Backward Events", 
+		      50, amg.fit_win(0), amg.fit_win(1));
+  h_f_mass = new TH1F("fm", "Mass of Forward Events", 
+		      50, amg.fit_win(0), amg.fit_win(1));
+  h_gen_sig[0] = new TH1F("sigf", "Mass of Forward Events in Signal", 
+			  50, amg.fit_win(0), amg.fit_win(1));
+  h_gen_sig[1] = new TH1F("sigb", "Mass of Backward Events in Signal", 
+			  50, amg.fit_win(0), amg.fit_win(1));
+  h2_rap_cos_d[0] = new TH2F("rapcos", "rap vs cos_cs dil", 
+			     25, -1., 1., 25, -3.5, 3.5);
+  h2_rap_cos_d[1] = new TH2F("rapcos", "rap vs cos_true dil", 
+			     25, -1., 1., 25, -3.5, 3.5);
 
   h_genCosNoCut      = new TH1F("h_genCosNoCut", "Dil Gen cos_cs (all)",
 				20, -1., 1.);
@@ -241,6 +305,19 @@ void Zprime2muAsymmetry::bookFitHistos() {
     AsymFitHistoRecByType[type][5] = new TH1F("RSH6", "Rec phi_cs", 
 					      50, 0., twoPi);
   }
+
+  AsymFitHistoGenSmeared[0] = new TH1F("GSHS1", "Dil Smeared Gen Pt",
+				       50,  0., amg.max_pt());
+  AsymFitHistoGenSmeared[1] = new TH1F("GSHS2", "Dil Smeared Gen Rap",
+				       50, -amg.max_rap(), amg.max_rap());
+  AsymFitHistoGenSmeared[2] = new TH1F("GSHS3", "Dil Smeared Gen Phi",
+				       50,  0., twoPi);
+  AsymFitHistoGenSmeared[3] = new TH1F("GSHS4", "Dil Smeared Gen Mass",
+				       50, amg.fit_win(0), amg.fit_win(1));
+  AsymFitHistoGenSmeared[4] = new TH1F("GSHS5", "Gen Smeared cos_cs",
+				       50, -1., 1.);
+  AsymFitHistoGenSmeared[5] = new TH1F("GSHS6", "Gen Smeared phi_cs",
+				       50,  0., twoPi);
 }
 
 void Zprime2muAsymmetry::bookFrameHistos() {
@@ -366,9 +443,195 @@ void Zprime2muAsymmetry::bookFrameHistos() {
   rap3_vs_rap0 = new TH2F("","L3 Rap vs Gen Rap", 50, -4., 4., 50, -4., 4.);
 }
 
-void Zprime2muAsymmetry::fillFitData() {
+void Zprime2muAsymmetry::makeFakeData(int nEvents, double A_FB, double b) {
+  // To see whether fitter is working properly, sometimes it is helpful
+  // to use artificially created data taken from distributions.
+
+  gRandom->SetSeed(12191982);
+
+  // Chosen sets of mistag and rapidity parameters
+  //mistag_pars[0] = -.462;   mistag_pars[1] = .108; mistag_pars[2] = 2.15;
+  //mistag_pars[3] = .000762; mistag_pars[4] = .281; mistag_pars[5] = 14.1;
+  //rap_pars[0] = 4.94e+3; rap_pars[1] = -3.82; rap_pars[2] = 6.1;
+  //rap_pars[3] = -1.11;   rap_pars[4] =  6.3e4;
+
+  // asymetry and rapiditiy pdfs
+  TF1* f_cos = new TF1("f_cos", asym_3_PDF, -1., 1., 3);
+  TF1* f_rap = new TF1("f_rap", yDistRTC, -3.5, 3.5);
+
+  // Set desired asymmetry values
+  f_cos->SetParameters(1., A_FB, b);
+
+  for (int i = 0; i < nEvents; i++) {
+    // Get random rapidity and cos_true values, and store in arrays
+    double rap = f_rap->GetRandom();
+    fake_rap[i] = rap;
+    double cos_true = f_cos->GetRandom();
+    fake_cos_true[i] = cos_true;
+
+    // Get probability for mistag from rapidity and cos_true
+    double w_rap = mistagProbVsRap(rap);
+    double w = mistagProb(rap, cos_true);
+
+    // Generate random number, if random number is less than total mistag
+    // probability take cos_cs to have opposite sign from cos_true.
+    double rand = gRandom->Rndm();
+    double cos_cs = cos_true;
+    if (rand < w) {
+      cos_cs *= -1.;
+      fake_mistag_cs[i] = 1;
+    }
+    else
+      fake_mistag_cs[i] = 0;
+    fake_cos_cs[i] = cos_cs;
+
+    // Also if random number is less than mistag from rapidity, store
+    // set mistag_true value to 1
+    fake_mistag_true[i] = rand < w_rap ? 1 : 0;
+  }
+}
+
+void Zprime2muAsymmetry::fillGenData(const reco::CandidateCollection& mcp) {
+  AsymFitData data;
+  if (!computeFitQuantities(mcp, eventNum, data)) {
+    // if finding the Z'/etc failed, skip this event
+    edm::LogWarning("fillGenData") << "could not compute fit quantities!";
+    return;
+  }
+
+  // remove mistag correction for gravitons (where there are only
+  // terms even in cos_cs anyway)
+  if (doingGravFit && data.pL < 0)
+    angDist.push_back(-data.cos_cs);
+  else
+    angDist.push_back(data.cos_cs);
+
+  // mass distributions for forward and backward events separately for
+  // the entire spectrum, not just in the reconstructed window
+  h_gen_sig[data.cos_true >= 0 ? 0 : 1]->Fill(data.mass);
+
+  if (data.mass > asymFitManager.fit_win(0) &&
+      data.mass < asymFitManager.fit_win(1)) {
+    // 1D histograms with cos_true and cos_cs to be fit with binned fit.
+    h_cos_theta_true->Fill(data.cos_true);
+    h_cos_theta_cs->Fill(data.cos_cs); 
+    //if (data.mistag_true == 0) h_cos_theta_cs_fixed->Fill(data.cos_cs);
+    if (data.mistag_cs == 0)
+      h_cos_theta_cs_fixed->Fill(data.cos_cs);
+    else
+      h_cos_theta_cs_fixed->Fill(-data.cos_cs);
+    
+    // See if dimuon is within detector acceptance.
+    if (data.cut_status == NOTCUT) {
+      //1D histo for fit with data containing mistags and acceptance
+      h_cos_theta_cs_acc->Fill(data.cos_cs); 
+      
+      // Store data used for doing resolution-smeared type fits
+      // JMTBAD currently do not do the fits
+      smearGenData(data);
+
+      // Artificially correct for mistags using MC truth
+      //if (data.mistag_cs != 0 && correctMistags) data.cos_cs *= -1;
+      //if (data.mistag_true == 1 && correctMistags) data.cos_cs *= -1.;
+
+      // These lines can be used to test mistag probability (start with
+      // cos_true and introduce mistag artificially (either with mistag
+      // definition or from sampling from mistag as a function of 
+      // rapidity distribution.
+      //double rndm = gRandom->Rndm();
+      //double w = mistagProb(data.rapidity, data.cos_true);
+      //double w = mistagProbVsRap(data.rapidity);
+      //if (rndm < w) data.cos_cs *= -1.;
+
+      h2_rap_cos_d[0]->Fill(data.cos_cs, data.rapidity);
+      h2_rap_cos_d[1]->Fill(data.cos_true, data.rapidity);
+    }
+  }
+}
+
+void Zprime2muAsymmetry::smearGenData(const AsymFitData& data) {
+  // Smear generated data with gaussians and store to be fit
+
+  // alias for typing
+  const AsymFitManager& afm = asymFitManager;
+
+  // First smear the mass... If the data still lies within the mass window
+  // then proceed to smear and store cos and rapidity
+  double smear_mass = gRandom->Gaus(data.mass, afm.recSigmaMass());
+
+  if (smear_mass >= afm.fit_win(0) && smear_mass <= afm.fit_win(1)) {
+    double smear_cos = gRandom->Gaus(data.cos_cs, afm.recSigmaCosCS());
+    // JMTBAD cos_true smear uses resolution for cos_cs
+    double smear_cos_true = gRandom->Gaus(data.cos_true, afm.recSigmaCosCS());
+    double smear_rap = gRandom->Gaus(data.rapidity, afm.recSigmaRap());
+    double smear_pt = gRandom->Gaus(data.pT, afm.recSigmaPt());
+    double smear_phi = gRandom->Gaus(data.phi, afm.recSigmaPhi());
+    double smear_phi_cs = gRandom->Gaus(data.phi_cs, afm.recSigmaPhiCS());
+
+    // Clamp smeared values appropriately
+    if (smear_cos > 1.)
+      smear_cos =  2. - smear_cos;
+    else if (smear_cos < -1.)
+      smear_cos = -2. - smear_cos;
+
+    if (smear_pt < 0)
+      smear_pt *= -1;
+
+    const double twopi = 2*TMath::Pi();
+    if (smear_phi < 0)
+      smear_phi += twopi;
+    else if (smear_phi > twopi)
+      smear_phi -= twopi; 
+
+    if (smear_phi_cs < 0)
+      smear_phi_cs += twopi;
+    else if (smear_phi_cs > twopi)
+      smear_phi_cs -= twopi;
+
+    // Store data in arrays and histograms
+    cos_theta_cs_data[2][nfit_used[2]] = smear_cos;
+    rap_dil_data[2][nfit_used[2]] = smear_rap;
+    pt_dil_data[2][nfit_used[2]] = smear_pt;
+    phi_dil_data[2][nfit_used[2]] = smear_phi;
+    mass_dil_data[2][nfit_used[2]] = smear_mass;
+    phi_cs_data[2][nfit_used[2]] = smear_phi_cs;
+    nfit_used[2]++;
+
+    AsymFitHistoGenSmeared[0]->Fill(smear_pt);
+    AsymFitHistoGenSmeared[1]->Fill(smear_rap);
+    AsymFitHistoGenSmeared[2]->Fill(smear_phi);
+    AsymFitHistoGenSmeared[3]->Fill(smear_mass);
+    AsymFitHistoGenSmeared[4]->Fill(smear_cos);
+    AsymFitHistoGenSmeared[5]->Fill(smear_phi_cs);
+
+    // Artificially smear of mass and cos_true to compare with number
+    // extracted from fit to reconstructed data (this is for a
+    // counting-type measurement for forward-backward asymmetry;
+    // different than the 2D fit done with smeared data)
+    if (smear_cos_true < 0)
+      h_b_smass->Fill(smear_mass);
+    else
+      h_f_smass->Fill(smear_mass);
+  
+    // also store un-smeared values
+    if (data.cos_true < 0)
+      h_b_mass->Fill(data.mass);
+    else
+      h_f_mass->Fill(data.mass);
+  }
+}
+
+void Zprime2muAsymmetry::fillFitData(const reco::CandidateCollection& mcp) {
   // the debug dumps are the outputs of the calcCosTheta*/etc. functions
   bool debug = verbosity >= VERBOSITY_TOOMUCH; 
+
+  AsymFitData data;
+  // JMTBAD redundant with some calculations below
+  if (!computeFitQuantities(mcp, eventNum, data)) {
+    // if finding the Z'/etc failed, skip this event
+    edm::LogWarning("fillFitData") << "could not compute fit quantities!";
+    return;
+  }
 
   TLorentzVector genV, recV;
   zp2mu::Muon gen_mup, gen_mum, rec_mup, rec_mum;
@@ -403,13 +666,14 @@ void Zprime2muAsymmetry::fillFitData() {
 
     // Check to see if generated dimuons lie within acceptance cut and
     // generated window
-    if (fabs(gen_mum.eta()) < ETA_CUT && fabs(gen_mup.eta()) < ETA_CUT) {
+    if (gen_mum.eta() > MUM_ETA_LIM[0] && gen_mum.eta() < MUM_ETA_LIM[1] &&
+	gen_mup.eta() > MUP_ETA_LIM[0] && gen_mup.eta() < MUP_ETA_LIM[1]) {
       if (genV.M() > asymFitManager.fit_win(0) && 
 	  genV.M() < asymFitManager.fit_win(1)) {
 	if (nfit_used[0] == FIT_ARRAY_SIZE - 1)
 	  throw cms::Exception("Zprime2muAsymmetry")
 	    << "data arrays not large enough! nfit_used[0]="
-	    << nfit_used[0] << " FIT_ARRAY_SIZE=" << FIT_ARRAY_SIZE;
+	    << nfit_used[0] << " FIT_ARRAY_SIZE=" << FIT_ARRAY_SIZE << endl;
 
 	// Store generated quantities in histograms and arrays used in fit.
 	pt_dil_data[0][nfit_used[0]] = genV.Pt();
@@ -418,7 +682,13 @@ void Zprime2muAsymmetry::fillFitData() {
 	  phi_dil_data[0][nfit_used[0]] += 2.*TMath::Pi();
 	mass_dil_data[0][nfit_used[0]] = genV.M();
 	rap_dil_data[0][nfit_used[0]] = genV.Rapidity();
-	cos_theta_cs_data[0][nfit_used[0]] = gen_cos_cs;
+	if (useCosTrueInFit)
+	  cos_theta_cs_data[0][nfit_used[0]] = data.cos_true;
+	else {
+	  if (artificialCosCS && data.mistag_cs)
+	    gen_cos_cs *= -1;
+	  cos_theta_cs_data[0][nfit_used[0]] = gen_cos_cs;
+	}
 	phi_cs_data[0][nfit_used[0]] = gen_phi_cs;
 	AsymFitHistoGen[0]->Fill(pt_dil_data[0][nfit_used[0]]);
 	AsymFitHistoGen[1]->Fill(rap_dil_data[0][nfit_used[0]]);
@@ -477,6 +747,7 @@ void Zprime2muAsymmetry::fillFitData() {
       h_genCosNoCut->Fill(gen_cos_cs);
     }
   }
+
   // Now loop over all reconstructed dimuons and store those to be fitted
   // (which lie inside desired reconstructed window).
   for (unsigned int i_dil = 0; i_dil < n_dil; i_dil++) {
@@ -486,7 +757,7 @@ void Zprime2muAsymmetry::fillFitData() {
       if (nfit_used[0] == FIT_ARRAY_SIZE - 1)
 	throw cms::Exception("Zprime2muAsymmetry")
 	  << "data arrays not large enough! nfit_used[1]="
-	  << nfit_used[1] << " FIT_ARRAY_SIZE=" << FIT_ARRAY_SIZE;
+	  << nfit_used[1] << " FIT_ARRAY_SIZE=" << FIT_ARRAY_SIZE << endl;
 
       rec_mum = bestDiMuons[i_dil].muMinus();
       rec_mup = bestDiMuons[i_dil].muPlus();
@@ -541,10 +812,9 @@ void Zprime2muAsymmetry::fillFitData() {
   }
 }
 
-//-----------------------------------------------------------------------------
-//                Calculate cosine theta^* in various frames
-//-----------------------------------------------------------------------------
 void Zprime2muAsymmetry::fillFrameHistos() {
+  // Calculate cosine theta^* in various frames.
+
   bool debug = verbosity >= VERBOSITY_TOOMUCH;
 
   double cos_gj, cos_gj_tag, cos_cs_anal;
@@ -710,16 +980,6 @@ void Zprime2muAsymmetry::fillFrameHistos() {
 	cosCS[i_rec][0]->Fill(cos_cs[i_rec][i_dil]);
 	if (i_rec == 0 || i_rec == 3)
 	  rap_vs_cosCS[i_rec]->Fill(cos_cs[i_rec][i_dil], rap);
-	if (i_rec == 3) { //fill arrays for unbinned fit
-	  if (nfit_ycos_used < FIT_ARRAY_SIZE) {
-	    fit_data1[nfit_ycos_used] = cos_cs[i_rec][i_dil];
-	    fit_data2[nfit_ycos_used] = rap;
-	    nfit_ycos_used++;
-	  }
-	  else
-	    edm::LogWarning("fillFrameHistos")
-	      << "FIT_ARRAY_SIZE is too small";
-	}
 
 	// A few resolution plots
 	if (i_rec > 0 && allDiMuons[0].size() == diMuons.size()) {
@@ -861,9 +1121,35 @@ void Zprime2muAsymmetry::fillFrameHistos() {
   }
 }
 
-void Zprime2muAsymmetry::calcHistoAsymmetry(const TH1F* IdF, const TH1F* IdB,
-					    TH1F* IdA,
-					    fstream& out) {
+double Zprime2muAsymmetry::calcAFBError(double f, double b) {
+  return (f > 0 && b > 0) ? 2*f*b/(f+b)/(f+b)*sqrt(1/f+1/b) : 1;
+}
+
+void Zprime2muAsymmetry::calcAsymmetry(double f, double b,
+				       double& A_FB, double& e_A_FB) {
+  // Calculate A_FB and its error from f(orward) and b(ackward) counts
+  // and return by reference.
+  if (f+b > 0)
+    A_FB = (f-b)/(f+b);
+  else
+    A_FB = 0;
+
+  e_A_FB = calcAFBError(f,b);
+}
+
+void Zprime2muAsymmetry::calcAsymmetry(const TH1F* h_cos,
+				       double& A_FB, double& e_A_FB) {
+  // With h_cos a histogram of cos_theta from -1 to 1, calculate the
+  // asymmetry using the integral from -1 to 0 and and the integral
+  // from 0 to 1
+  int nBins = h_cos->GetNbinsX();
+  int nBack = int(h_cos->Integral(1, int(nBins/2.)));
+  int nFor = int(h_cos->Integral((int(nBins/2.) + 1), nBins));
+  calcAsymmetry(nFor, nBack, A_FB, e_A_FB);
+}
+
+void Zprime2muAsymmetry::calcAsymmetry(const TH1F* IdF, const TH1F* IdB,
+				       TH1F* IdA, fstream& out) {
   // This routine takes a forward mass histogram (IdF), and a 
   // backward mass histogram (IdB), and creates an asymmetry 
   // histogram (IdA) with (IdF-IdB)/(IdF+IdB).
@@ -888,30 +1174,15 @@ void Zprime2muAsymmetry::calcHistoAsymmetry(const TH1F* IdF, const TH1F* IdB,
   for (int ibin = 1; ibin <= nBinsF; ibin++) {
     f_bin = IdF->GetBinContent(ibin);
     b_bin = IdB->GetBinContent(ibin);
-    if (f_bin > 0. && b_bin > 0.)
-      sigma_bin = 2.*f_bin*b_bin*(sqrt(1./f_bin + 1./b_bin))/
-	(TMath::Power((f_bin + b_bin), 2));
-    else
-      sigma_bin = 1.;
+    sigma_bin = calcAFBError(f_bin, b_bin);
     IdA->SetBinError(ibin, sigma_bin);
   }
 
   // Find the asymmetry from the total number of forward and backward events.
-  Stat_t F_total = IdF->GetEntries();
-  Stat_t B_total = IdB->GetEntries();
-  Stat_t A_FB, sigma_AS;
-  if ((F_total+B_total)>0)
-    A_FB = (F_total-B_total)/(F_total+B_total);
-  else
-    A_FB = 0.;
-
-  // Compute the error on the asymmetry.
-  if (F_total > 0. && B_total > 0.) {
-    sigma_AS = 2.*F_total*B_total*(sqrt(1./F_total + 1./B_total))/
-      (TMath::Power(F_total+B_total, 2));
-  }
-  else
-    sigma_AS = 1.;
+  double F_total = IdF->GetEntries();
+  double B_total = IdB->GetEntries();
+  double A_FB, sigma_AS;
+  calcAsymmetry(F_total, B_total, A_FB, sigma_AS);
 
   const int NBIN = 9;
   if (nBinsF == NBIN-1) {
@@ -928,46 +1199,46 @@ void Zprime2muAsymmetry::calcFrameAsym() {
   for (int i_rec = 0; i_rec < NUM_REC_LEVELS; i_rec++) {
     out << "Rec level: " << i_rec << endl;
     out << "Asymmetry in GJ frame:        ";
-    calcHistoAsymmetry(FMassGJ[i_rec][0], BMassGJ[i_rec][0], 
-		       AMassGJ[i_rec][0], out);
-    calcHistoAsymmetry(FRapGJ[i_rec][0],  BRapGJ[i_rec][0],  
-		       ARapGJ[i_rec][0], out);
+    calcAsymmetry(FMassGJ[i_rec][0], BMassGJ[i_rec][0],
+		  AMassGJ[i_rec][0], out);
+    calcAsymmetry(FRapGJ[i_rec][0],  BRapGJ[i_rec][0],  
+		  ARapGJ[i_rec][0], out);
     out << "Asymmetry in tagged GJ frame: ";
-    calcHistoAsymmetry(FMassGJ[i_rec][1], BMassGJ[i_rec][1], 
-		       AMassGJ[i_rec][1], out);
-    calcHistoAsymmetry(FRapGJ[i_rec][1],  BRapGJ[i_rec][1],  
-		       ARapGJ[i_rec][1], out);
+    calcAsymmetry(FMassGJ[i_rec][1], BMassGJ[i_rec][1], 
+		  AMassGJ[i_rec][1], out);
+    calcAsymmetry(FRapGJ[i_rec][1],  BRapGJ[i_rec][1],  
+		  ARapGJ[i_rec][1], out);
     out << "Asymmetry in CS frame:        ";
-    calcHistoAsymmetry(FMassCS[i_rec][0], BMassCS[i_rec][0], 
-		       AMassCS[i_rec][0], out);
-    calcHistoAsymmetry(FRapCS[i_rec][0],  BRapCS[i_rec][0],
-		       ARapCS[i_rec][0], out);
+    calcAsymmetry(FMassCS[i_rec][0], BMassCS[i_rec][0], 
+		  AMassCS[i_rec][0], out);
+    calcAsymmetry(FRapCS[i_rec][0],  BRapCS[i_rec][0],
+		  ARapCS[i_rec][0], out);
     out << "Asymmetry in analyt CS frame: ";
-    calcHistoAsymmetry(FMassCS[i_rec][1], BMassCS[i_rec][1],
-		       AMassCS[i_rec][1], out);
-    calcHistoAsymmetry(FRapCS[i_rec][1],  BRapCS[i_rec][1],
-		       ARapCS[i_rec][1], out);
+    calcAsymmetry(FMassCS[i_rec][1], BMassCS[i_rec][1],
+		  AMassCS[i_rec][1], out);
+    calcAsymmetry(FRapCS[i_rec][1],  BRapCS[i_rec][1],
+		  ARapCS[i_rec][1], out);
     out << "Asymmetry in Boost frame:     ";
-    calcHistoAsymmetry(FMassBoost[i_rec], BMassBoost[i_rec],
-		       AMassBoost[i_rec], out);
-    calcHistoAsymmetry(FRapBoost[i_rec],  BRapBoost[i_rec],
-		       ARapBoost[i_rec], out);
+    calcAsymmetry(FMassBoost[i_rec], BMassBoost[i_rec],
+		  AMassBoost[i_rec], out);
+    calcAsymmetry(FRapBoost[i_rec],  BRapBoost[i_rec],
+		  ARapBoost[i_rec], out);
     out << "Asymmetry in Wulz frame:      ";
-    calcHistoAsymmetry(FMassW[i_rec], BMassW[i_rec], AMassW[i_rec], out);
-    calcHistoAsymmetry(FRapW[i_rec], BRapW[i_rec], ARapW[i_rec], out);
+    calcAsymmetry(FMassW[i_rec], BMassW[i_rec], AMassW[i_rec], out);
+    calcAsymmetry(FRapW[i_rec], BRapW[i_rec], ARapW[i_rec], out);
     
     for (int i = 0; i < 6; i++) {
       out << "Asymmetry in MBCut[" << i << "] frame:  ";
-      calcHistoAsymmetry(FMBoostCut[i_rec][i], BMBoostCut[i_rec][i],
-			 AsymMBoostCut[i_rec][i], out);
+      calcAsymmetry(FMBoostCut[i_rec][i], BMBoostCut[i_rec][i],
+		    AsymMBoostCut[i_rec][i], out);
     }
   }
   out.close();
 }
 
 void Zprime2muAsymmetry::dumpFitData() {
-  string dumpfile = "dumpFitData." + outputFileBase + ".txt";
-  fstream f(dumpfile.c_str(), ios::out);
+  string fn = "dumpFitData." + outputFileBase + ".txt";
+  fstream f(fn.c_str(), ios::out);
 
   for (int i = 0; i < 2; i++) {
     f << "#i=" << i << " nfit_used[i]=" << nfit_used[i] << endl;
@@ -978,6 +1249,15 @@ void Zprime2muAsymmetry::dumpFitData() {
   }
 
   f.close();
+
+  // dump the generated pre-acceptance-cut cos_cs distribution
+  fn = "angDist." + outputFileBase + ".txt";
+  fstream f2(fn.c_str(), ios::out);
+  f2 << "# angular distribution\n"
+     << "# format: cos_theta_cs \t mistag?\n";
+  for (unsigned int i = 0; i < angDist.size(); i++)
+    f2 << angDist[i] << endl;
+  f2.close();
 }
 
 void Zprime2muAsymmetry::bookParamHistos() {
@@ -1041,26 +1321,32 @@ void Zprime2muAsymmetry::bookParamHistos() {
 			25, 0., 500., 25, 0., 5000.);
   h2_mistag[3] = new TH2F("mist42", "q dil pL mist==1 (reduced range)",   
 			25, 0., 500., 25, 0., 5000.);
-  h2_mistagProb = new TH2F("h_mis", "Mistag prob cos rap", nMistagBins, 
-			     0., 1., nMistagBins, 0., 3.5);
+  h2_mistagProb = new TH2F("h2_mistagProb",
+			   "Mistag prob cos rap", nMistagBins, 
+			   0., 1., nMistagBins, 0., 3.5);
   h2_pTrap = new TH2F("h2_pTrap", "Rap vs pT", nMistagBins, 0., 700., 
 		      nMistagBins, 0., 3.5);
   h2_pTrap_mistag = new TH2F("h2_pTrap", "Rap vs pT, mistag == 1", nMistagBins,
 			     0., 700., nMistagBins, 0., 3.5);
-  h_rap_mistag_prob = new TH1F("h_rap_mis","Mistag prob rap", 50, 0., 3.5);
-  h_cos_true_mistag_prob = new TH1F("h_cos_mis","Mistag prob cos", 50, 0., 1.);
-  h_pL_mistag_prob = new TH1F("h_pL_mis", "Mistag prob pL", 50, 0., 5000.);
-  h2_pL_mistag_prob = new TH2F("h2_pL_mis", "Mistag prob dil pL vs quark pL", 
+  h_rap_mistag_prob = new TH1F("h_rap_mistag_prob",
+			       "Mistag prob rap", 50, 0., 3.5);
+  h_cos_true_mistag_prob = new TH1F("h_cos_true_mistag_prob",
+				    "Mistag prob cos", 50, 0., 1.);
+  h_pL_mistag_prob = new TH1F("h_pL_mistag_prob",
+			      "Mistag prob pL", 50, 0., 5000.);
+  h2_pL_mistag_prob = new TH2F("h2_pL_mistag_prob",
+			       "Mistag prob dil pL vs quark pL", 
 			       25, 0., 500., 25, 0., 5000.);
-  h2_cos_cs_vs_true = new TH2F("h2_cos","cos #theta_{true} vs cos #theta_{CS}",
+  h2_cos_cs_vs_true = new TH2F("h2_cos_cs_vs_true",
+			       "cos #theta_{true} vs cos #theta_{CS}",
 			       50, -1., 1., 50, -1., 1.);
-  h2_pTrap_mistag_prob = new TH2F("h2_pTrap_mis", "Mistag prob rap vs pT",
+  h2_pTrap_mistag_prob = new TH2F("h2_pTrap_mistag_prob",
+				  "Mistag prob rap vs pT",
 				  nMistagBins, 0., 700., nMistagBins, 0., 3.5);
 }
 
-// JMTBAD can probably take the fakeData choice out
-void Zprime2muAsymmetry::fillParamHistos(bool internalBremOn, bool fakeData) {
-  // JMTBAD will we want to change these ever? when we port GenKineAna, yes
+void Zprime2muAsymmetry::fillParamHistos(bool fakeData) {
+  // JMTBAD will we want to change these ever?
   const bool PARAM_MISTAG = true;
   const bool PARAM_MASS = true;
   const bool PARAM_PT = true;
@@ -1068,41 +1354,36 @@ void Zprime2muAsymmetry::fillParamHistos(bool internalBremOn, bool fakeData) {
   const bool PARAM_PHICS = true;
   const bool IGNORE_MASS_RANGE = false;
 
-  // Store whether internal brem was switched on or off for parameterization.
-  ibOnParams = internalBremOn;
-
   // Open the root file containing the extra generated sample, from which
   // we extract the mistag parameterization
   // use static TFile::Open to handle remote files as well
   TFile* paramFile = TFile::Open(genSample.c_str());
-  TTree* paramEvents = dynamic_cast<TTree*>(paramFile->Get("Events"));
-  // JMTBAD hardcoded branch name
 
   fwlite::Event ev2(paramFile);
 
+  int nentries = maxParamEvents > 0 ? maxParamEvents : ev2.size();
+
+  edm::LogInfo("Zprime2muAsymmetry")
+    << "Loading sample parameters for asym fit using " << nentries
+    << " events from " << genSample << endl;
+
   int jentry = 0;
-
-  int nentries = maxParamEvents > 0 ? 
-    maxParamEvents : paramEvents->GetEntries();
-
-  for (ev2.toBegin(); !ev2.atEnd(); ++ev2) {
-    if ( jentry >= nentries ) break;
-
+  for (ev2.toBegin(); !ev2.atEnd() && jentry < nentries; ++ev2, ++jentry) {
     fwlite::Handle<reco::CandidateCollection> genParticles;
     genParticles.getByLabel(ev2,"genParticleCandidates");
 
     if (verbosity >= VERBOSITY_SIMPLE && jentry % 1000 == 0)
       LogTrace("fillParamHistos") << "fillParamHistos: " << jentry
-				     << " events processed";
+				  << " events processed";
 
     // Remove effect from internal brem
     AsymFitData data;
-    if (!computeFitQuantities(genParticles.ref(), internalBremOn, jentry, data)) {
+    if (!computeFitQuantities(genParticles.ref(), jentry, data))
       continue; // if finding the Z'/etc failed, skip this event
-    }
+
     /*
-    // For some studies usefull to replace real data with data artificially 
-    // created with any parameterization desired
+    // For some studies, it is useful to replace real data with data
+    // artificially created with any parameterization desired
     if (fakeData) {
       data.rapidity    = fake_rap[jentry];
       data.cos_true    = fake_cos_true[jentry];
@@ -1113,12 +1394,8 @@ void Zprime2muAsymmetry::fillParamHistos(bool internalBremOn, bool fakeData) {
     */
 
     // Store full mass spectrum of sample
-    if (PARAM_MASS) {
+    if (PARAM_MASS)
       h_mass_dil[0]->Fill(data.mass); 
-      if (data.mass > asymFitManager.fit_win(0) &&
-	  data.mass < asymFitManager.fit_win(1))
-	h_mass_dil[1]->Fill(data.mass);
-    }
 
     // Fill events over window where sample was generated
     if ((data.mass > asymFitManager.fit_win(0) &&
@@ -1226,7 +1503,6 @@ ostream& operator<<(ostream& out, const HepMC::GenParticle* p) {
 bool Zprime2muAsymmetry::getGenerated4Vectors(const reco::CandidateCollection& genParticles,
 					      unsigned int eventNum,
 					      GenMomenta& genMom) {
-
   bool debug = verbosity >= VERBOSITY_TOOMUCH;
 
   // These are pointers (and not arrays/vectors) because we explicitely assume
@@ -1324,7 +1600,7 @@ bool Zprime2muAsymmetry::getGenerated4Vectors(const reco::CandidateCollection& g
 	// look for the muons before brem, and store them
 	// (hepmc says these mus have status 3)
 	if (ppp->daughter(ic)->status() == 3) {
-	  if (ppp->daughter(ic)->pdgId() == leptonFlavor) {
+	  if (ppp->daughter(ic)->pdgId() == int(leptonFlavor)) {
 	    if (Mum_noib == 0) Mum_noib = ppp->daughter(ic);
 	    else {
 	      throw cms::Exception("getGenerated4Vectors")
@@ -1333,7 +1609,7 @@ bool Zprime2muAsymmetry::getGenerated4Vectors(const reco::CandidateCollection& g
 	    }
 	    if (debug) LogDebug("getGenerated4Vectors") << print(*Mum_noib);
 	  }
-	  else if (ppp->daughter(ic)->pdgId() == -1*leptonFlavor) {
+	  else if (ppp->daughter(ic)->pdgId() == -int(leptonFlavor)) {
 	    if (Mup_noib == 0) Mup_noib = ppp->daughter(ic);
 	    else {
 	      throw cms::Exception("getGenerated4Vectors")
@@ -1373,7 +1649,7 @@ bool Zprime2muAsymmetry::getGenerated4Vectors(const reco::CandidateCollection& g
 	LogDebug("getGenerated4Vectors") << "Stable mus:";
       for (std::vector<const reco::Candidate*>::const_iterator id = ZprimeDescendants.begin(); id != ZprimeDescendants.end(); id++) {
 	if ((*id)->status() == 1) {
-	  if ((*id)->pdgId() == leptonFlavor) {
+	  if ((*id)->pdgId() == int(leptonFlavor)) {
 	    if (Mum == 0) Mum = (*id);
 	    else {
 	      throw cms::Exception("getGenerated4Vectors")
@@ -1382,7 +1658,7 @@ bool Zprime2muAsymmetry::getGenerated4Vectors(const reco::CandidateCollection& g
 	    }
 	    if (debug) LogDebug("getGenerated4Vectors") << print(*Mum);
 	  }
-	  else if ((*id)->pdgId() == -1*leptonFlavor) {
+	  else if ((*id)->pdgId() == -int(leptonFlavor)) {
 	    if (Mup == 0) Mup = (*id);
 	    else {
 	      throw cms::Exception("getGenerated4Vectors")
@@ -1425,15 +1701,16 @@ bool Zprime2muAsymmetry::getGenerated4Vectors(const reco::CandidateCollection& g
 // structure "data" returned by reference.  The flag "internalBremOn",
 // is for switching on and off the effect of internal bremsstrahlung.
 bool Zprime2muAsymmetry::computeFitQuantities(const reco::CandidateCollection& genParticles, 
-					      bool internalBremOn,
 					      int eventNum,
 					      AsymFitData& data) {
   bool debug = verbosity >= VERBOSITY_TOOMUCH;
+
   GenMomenta genMom;
   if (!getGenerated4Vectors(genParticles, eventNum, genMom))
     return false;
 
-  // Set the 4-vectors for the two muons
+  // Copy the four-vectors into TLorentzVectors, since our code uses
+  // those already
   TLorentzVector v_dil, v_mum, v_mup, v_muq;
   TLorentzVector v_my_dil, v_my_mum, v_my_mup;
 
@@ -1460,29 +1737,17 @@ bool Zprime2muAsymmetry::computeFitQuantities(const reco::CandidateCollection& g
   data.pT = v_my_dil.Pt();
   data.rapidity = v_my_dil.Rapidity();
   data.phi = v_my_dil.Phi();
-  data.mass =  v_my_dil.M(); 
+  data.mass = v_my_dil.M(); 
   data.qpL = v_muq.Pz();
   data.pL = v_my_dil.Pz();
 
-  // we will later assume the p_z of the dilepton is the p_z of the quark
-  // we've mistagged this if the quark was actually going the other direction
-  // translated from kir_anal.F
-  math::XYZTLorentzVector pdil = genMom.mum + genMom.mup;
-  int gen_mistag = (pdil.z()*genMom.quark.z() < 0) ? 1 : 0;
-
   // Cosine theta^* between mu- and the quark in the Z' CMS frame ("true"
   // cos theta^*).
-//  Hep3Vector boost = genMom.res.findBoostToCM(); // = -res.boostVector()
-//  ROOT::Math::LorentzVector<ROOT::Math::PxPyPzM4D<double> >
-//  math::XYZTLorentzVectorD::BetaVector boost = genMom.res.BoostToCM();
-//CL:FIXME: are the following 3 lines OK?
-  math::XYZTLorentzVector mum_star = LorentzBoost(genMom.mum, genMom.res);
-  math::XYZTLorentzVector quark_star = LorentzBoost(genMom.mum, genMom.res);
-  float gen_cos_true = cosTheta(mum_star, quark_star);
+  // JMTBAD calculated by calcCosThetaTrue above already
+  //math::XYZTLorentzVector mum_star = LorentzBoost(genMom.res, genMom.mum);
+  //math::XYZTLorentzVector quark_star = LorentzBoost(genMom.res, genMom.quark);
+  //float gen_cos_true = cosTheta(mum_star, quark_star);
   
-  // kir_anal.F calculates cos_theta_cs too, but we already do that here
-  // in calcCosThetaCSAnal
-
   data.cos_cs = calcCosThetaCSAnal(v_my_mum.Pz(), v_my_mum.E(),
 				   v_my_mup.Pz(), v_my_mup.E(),
 				   v_my_dil.Pt(), v_my_dil.Pz(), 
@@ -1492,20 +1757,17 @@ bool Zprime2muAsymmetry::computeFitQuantities(const reco::CandidateCollection& g
 			      v_my_dil.Pt(), v_my_dil.Eta(), v_my_dil.Phi(),
 			      data.mass, debug);
 
-  // Calculations for cos_cs and phi_cs
-  if (internalBremOn) {
-    // Two types of mistag one using direction of quark, other using
-    // sign of cos_cs and cos_true.
-    data.mistag_true = gen_mistag;
-    data.mistag_cs = (data.cos_cs/gen_cos_true > 0) ? 0 : 1;
-  }
-  else {
-    // take the mistag indication from the dilepton made out of 
-    // non-bremmed muons (JMTBAD shouldn't this be the same as above if
-    // brem is off?)
-    data.mistag_true = (v_my_dil.Pz()*genMom.quark.z() < 0) ? 1 : 0;
-    data.mistag_cs = (data.cos_cs/data.cos_true > 0) ? 0 : 1;
-  }
+  // we will later assume the p_z of the dilepton is the p_z of the
+  // quark we've mistagged this if the quark was actually going the
+  // other direction.  translating from kir_anal.F, we looked at the
+  // dilepton formed from adding the muon final-state four-vectors
+  // (i.e., we ignored small effect of any brem):
+  // data.mistag_true = (v_my_dil.Pz()*genMom.quark.z() < 0) ? 1 : 0;
+  // but, since we have the true resonance four-vector:
+  data.mistag_true = (genMom.res.z()*genMom.quark.z() < 0) ? 1 : 0;
+  // alternatively, we've mistagged if the signs of cos_cs and
+  // cos_true are different
+  data.mistag_cs = (data.cos_cs/data.cos_true > 0) ? 0 : 1;
 
   // Do some extra calculations to determine if event passed acceptance.
   calc4Vectors(data, v_dil, v_mum, v_mup, debug);
@@ -1514,16 +1776,74 @@ bool Zprime2muAsymmetry::computeFitQuantities(const reco::CandidateCollection& g
   return true;
 }
 
-void Zprime2muAsymmetry::getAsymParams(bool internalBremOn) {
-  if (internalBremOn)
-    edm::LogInfo("Zprime2muAsymmetry") << "After internal brem!" << endl;
-  else
-    edm::LogInfo("Zprime2muAsymmetry") << "Before internal brem!" << endl;
+void Zprime2muAsymmetry::getAsymParams() {
+  string cachefn = genSample;
+  cachefn.replace(cachefn.find(".root"), 5, ".cached.root");
+  // genSample can point to a file on CASTOR; only write the cache
+  // file locally
+  // JMTBAD rfind is fragile, need basename() replacement
+  cachefn.erase(0, cachefn.rfind("/") + 1);
+  
+  TFile* paramFile = 0; 
+    
+  if (useCachedParams) {
+    // first try to get the already calculated params from the file
+    paramFile = new TFile(cachefn.c_str(), "read");
+    if (paramFile->IsOpen()) {
+      // JMTBAD from here, assume that all the reading of the file works
+      edm::LogInfo("getAsymParams") << "Using cached parameterizations from "
+				    << cachefn;
+      TArrayD* arr;
+      paramFile->GetObject("mistag_pars", arr);
+      for (int i = 0; i < 6; i++) mistag_pars[i] = arr->At(i);
+      paramFile->GetObject("mass_pars", arr);
+      for (int i = 0; i < 7; i++) mass_pars[i] = arr->At(i);
+      paramFile->GetObject("rap_pars", arr);
+      for (int i = 0; i < 5; i++) rap_pars[i] = arr->At(i);
+      paramFile->GetObject("pt_pars", arr);
+      for (int i = 0; i < 5; i++) pt_pars[i] = arr->At(i);
+      paramFile->GetObject("phi_cs_pars", arr);
+      for (int i = 0; i < 5; i++) phi_cs_pars[i] = arr->At(i);
+      TArrayI* iarr;
+      paramFile->GetObject("nMistagBins", iarr);
+      nMistagBins = iarr->At(0);
+      // JMTBAD having to delete the booked histograms
+      delete h2_mistagProb;
+      h2_mistagProb = (TH2F*)paramFile->Get("h2_mistagProb");
+      h2_mistagProb->SetDirectory(0);
+      delete h_rap_mistag_prob;
+      h_rap_mistag_prob = (TH1F*)paramFile->Get("h_rap_mistag_prob");
+      h_rap_mistag_prob->SetDirectory(0);
+      delete h_cos_true_mistag_prob;
+      h_cos_true_mistag_prob = (TH1F*)paramFile->Get("h_cos_true_mistag_prob");
+      h_cos_true_mistag_prob->SetDirectory(0);
+      delete h_pL_mistag_prob;
+      h_pL_mistag_prob = (TH1F*)paramFile->Get("h_pL_mistag_prob");
+      h_pL_mistag_prob->SetDirectory(0);
+      delete h2_pL_mistag_prob;
+      h2_pL_mistag_prob = (TH2F*)paramFile->Get("h2_pL_mistag_prob");
+      h2_pL_mistag_prob->SetDirectory(0);
+      delete h2_cos_cs_vs_true;
+      h2_cos_cs_vs_true = (TH2F*)paramFile->Get("h2_cos_cs_vs_true");
+      h2_cos_cs_vs_true->SetDirectory(0);
+      delete h2_pTrap_mistag_prob;
+      h2_pTrap_mistag_prob = (TH2F*)paramFile->Get("h2_pTrap_mistag_prob");
+      h2_pTrap_mistag_prob->SetDirectory(0);
+      paramFile->Close();
+      delete paramFile;
+      return;
+    }
+  }
+  
+  edm::LogInfo("getAsymParams") << "Calculating parameterizations from " 
+				<< genSample;
+  fillParamHistos(false);
+
   TCanvas *c1 = new TCanvas("c1", "", 0, 1, 500, 700);
   c1->SetTicks();
 
   string filename = "fitParams.";
-  if (ibOnParams) filename += "ib.";
+  if (internalBremOn) filename += "ib.";
   if (onPeak)
     filename += "on";
   else
@@ -1693,7 +2013,7 @@ void Zprime2muAsymmetry::getAsymParams(bool internalBremOn) {
   }
   else
     throw cms::Exception("Zprime2muAsymmetry")
-      << amg.mass_type() << " is not a known mass fit type!";
+      << amg.mass_type() << " is not a known mass fit type!\n";
 
   h_mass_dil[0]->Fit("f_mass", "VIL", "", amg.gen_win(0), amg.gen_win(1));
   pad[page]->cd(2); h_mass_dil[1]->Draw();
@@ -1775,7 +2095,7 @@ void Zprime2muAsymmetry::getAsymParams(bool internalBremOn) {
   f_phics->SetParLimits(1, 0, 1e6);
   f_phics->FixParameter(2, 1.57);
   h_phi_cs->Fit("f_phics", "VIL", "", 0., 3.14);
-  if (ibOnParams) {
+  if (internalBremOn) {
     for (int i = 0; i < 3; i++) phi_cs_pars[i] = f_phics->GetParameter(i);
     phi_cs_pars[3] = 8.;
     phi_cs_pars[4] = f_phics->Integral(0., 3.14);
@@ -1875,6 +2195,45 @@ void Zprime2muAsymmetry::getAsymParams(bool internalBremOn) {
   gPad->SetPhi(210); h2_pTrap_mistag_prob->Draw("lego2");
   page++;
   c1->Update();
+
+  // now write out all the calculated parameters and associated histos
+  // to the cache file
+  paramFile = new TFile(cachefn.c_str(), "recreate");
+  if (paramFile->IsOpen()) {
+    TArrayD arr;
+    arr.Set(6, mistag_pars);
+    paramFile->WriteObject(&arr, "mistag_pars");
+    arr.Set(7, mass_pars);
+    paramFile->WriteObject(&arr, "mass_pars");
+    arr.Set(5, rap_pars);
+    paramFile->WriteObject(&arr, "rap_pars");
+    arr.Set(5, pt_pars);
+    paramFile->WriteObject(&arr, "pt_pars");
+    arr.Set(5, phi_cs_pars);
+    paramFile->WriteObject(&arr, "phi_cs_pars");
+    TArrayI iarr(1);
+    iarr.AddAt(nMistagBins, 0);
+    paramFile->WriteObject(&iarr, "nMistagBins");
+
+    h2_mistagProb->Write();
+    h2_mistagProb->SetDirectory(0);
+    h_rap_mistag_prob->Write();
+    h_rap_mistag_prob->SetDirectory(0);
+    h_cos_true_mistag_prob->Write(); 
+    h_cos_true_mistag_prob->SetDirectory(0);
+    h_pL_mistag_prob->Write();
+    h_pL_mistag_prob->SetDirectory(0);
+    h2_pL_mistag_prob->Write();
+    h2_pL_mistag_prob->SetDirectory(0);
+    h2_cos_cs_vs_true->Write();
+    h2_cos_cs_vs_true->SetDirectory(0);
+    h2_pTrap_mistag_prob->Write();
+    h2_pTrap_mistag_prob->SetDirectory(0);
+
+    paramFile->Close();
+    delete paramFile;
+  }
+
   ps->Close(); 
 
   delete ps;
@@ -1930,8 +2289,8 @@ TFMultiD* Zprime2muAsymmetry::getNewFitFcn(int fitType) {
 			 "nSmearPoints", "nSigma");
   }
   else
-    throw cms::Exception("fitAsymmetry") << "Invalid fit type number: "
-					 << fitType;
+    throw cms::Exception("getNewFitFcn")
+      << "Invalid fit type number: " << fitType << endl;
 
   return f_recmd;
 }
@@ -2090,41 +2449,23 @@ void Zprime2muAsymmetry::fitAsymmetry() {
   // Do the asymmetry fit using different combinations:
   // generated/reconstructed data, smearing on/off
 
-  double par, eplus, eminus, eparab, globcc;
-  TVirtualFitter *fitter = TVirtualFitter::GetFitter();
-
-  //Get asymmetry for generated data (no trigger cuts) using counting method
-  int nFor, nBack;
-  int nBins = h_genCosNoCut->GetNbinsX();
-  nBack = int(h_genCosNoCut->Integral(1, int(nBins/2.)));
-  nFor  = int(h_genCosNoCut->Integral((int(nBins/2.) + 1), nBins));
-  double genAfb = double(nFor - nBack)/double(nFor + nBack);
-  double e_genAfb = 2.*nFor*nBack/((nFor+nBack)*(nFor+nBack))*
-    sqrt(1./nFor + 1./nBack);
-
-  TF1* f_gen = new TF1("f_gen", asym_3_PDF, -1., 1., 3);
-  int nEntries = int(h_genCosNoCut->GetEntries());
-  f_gen->SetParameters(1., .6, .9);
-  f_gen->FixParameter(0, 2.*nEntries/nBins);
-  f_gen->SetParNames("Norm", "A_fb", "b");
-  h_genCosNoCut->Fit(f_gen, "ILNVR");
-  
-  // Initialize output file for storing results.  Store parameterizations.
   string filename = "recAsymFit." + string(onPeak ? "on" : "off") +
     "_peak." + outputFileBase + ".txt";
-
   fstream outfile;
   outfile.open(filename.c_str(), ios::out);
+
   outfile << " Asym Fit Results" << endl;
   outfile << "---------------------------------------------\n";
-  outfile << "Parameterization " << (ibOnParams ? "after" : "before")
+  outfile << "Parameterization " << (internalBremOn ? "after" : "before")
 	  << " internal bremsstrahlung.\n";
+  outfile << "Signal window is (" << asymFitManager.fit_win(0) << ", "
+	  << asymFitManager.fit_win(1) << ")\n";
   outfile << "Acceptance in diRapAccept: "
 	  << MUM_ETA_LIM[0] << " < eta mu- < " << MUM_ETA_LIM[1] << "; "
 	  << MUP_ETA_LIM[0] << " < eta mu+ < " << MUP_ETA_LIM[1] << endl;
   outfile << "Mistag correction in asym2D/6D is " 
-	  << (mistagInData ? "on" : "off") << endl;
-  outfile << "Parameterization from " << maxParamEvents << " from file "
+	  << (correctMistags ? "on" : "off") << endl;
+  outfile << "Parameterization from " << maxParamEvents << " events from file "
 	  << genSample << endl;
 
   if (useMistagHist)
@@ -2156,10 +2497,47 @@ void Zprime2muAsymmetry::fitAsymmetry() {
   outfile << nSigma << " sigma used in smear\n";
   outfile << nNormPoints << " points used in normalization\n\n";
 
-  outfile << "Counting method: nBins=" << nBins
-	  << " nBack=" << nBack << " nForward=" << nFor << endl;
+  // Count forward and backward generated events, f&b smeared generated events,
+  // and f&b generated events in signal area.
+  double b = h_b_mass->Integral(), f = h_f_mass->Integral(),
+    bs = h_b_smass->Integral(), fs = h_f_smass->Integral(),
+    f_sig = h_gen_sig[0]->Integral(), b_sig = h_gen_sig[1]->Integral();
+
+  // Calculate Asymmetry for all, smeared and signal
+  double asym, sigma, asyms, sigmas, asym_sig, sigma_sig;
+  calcAsymmetry(f, b, asym, sigma);
+  calcAsymmetry(fs, bs, asyms, sigmas);
+  calcAsymmetry(f_sig, b_sig, asym_sig, sigma_sig);
+
+  outfile << "countSmearAsym" << endl
+	  << "  Forward/Backward events in signal = " << f_sig 
+	  << "/" << b_sig << endl
+	  << "  Forward events before/after mass smear = " << f << "/" << fs 
+	  << "\n  Backward events before/after mass smear = " << b << "/" << bs
+	  << "\n  Asymmetry in signal = " << asym_sig << "+/-" 
+	  << sigma_sig << endl
+	  << "  Asymmetry in reconstructed window before smear = " << endl
+	  << "\t" << asym << "+/-" << sigma << endl
+	  << "  Asymmetry in reconstructed window after smear = " 
+	  << asyms << "+/-" << sigmas << endl;
+
+  //Get asymmetry for generated data (no trigger cuts) using counting method
+  double genAfb, e_genAfb;
+  calcAsymmetry(h_genCosNoCut, genAfb, e_genAfb);
   outfile << "A_FB from counting generated data = " << genAfb 
 	  << " +/- " << e_genAfb << endl;
+
+  // and also from a 1D fit
+  TF1* f_gen = new TF1("f_gen", asym_3_PDF, -1., 1., 3);
+  int nEntries = int(h_genCosNoCut->GetEntries());
+  int nBins = h_genCosNoCut->GetNbinsX();
+  f_gen->SetParameters(1., .6, .9);
+  f_gen->FixParameter(0, 2.*nEntries/nBins);
+  f_gen->SetParNames("Norm", "A_fb", "b");
+  h_genCosNoCut->Fit(f_gen, "ILNVR");
+  
+  double par, eplus, eminus, eparab, globcc;
+  TVirtualFitter *fitter = TVirtualFitter::GetFitter();
   outfile << "From fit to gen cos_cs histo: \n";
   par = fitter->GetParameter(1);
   fitter->GetErrors(1, eplus, eminus, eparab, globcc);
@@ -2169,6 +2547,11 @@ void Zprime2muAsymmetry::fitAsymmetry() {
   fitter->GetErrors(2, eplus, eminus, eparab, globcc);
   outfile << "   b = " << setw(8) << setprecision(3) << par 
 	  << " +/- " << eparab << endl << endl;
+
+  // Get asymmetry for generated data with acceptance cuts (same as above?)
+  calcAsymmetry(h_cos_theta_cs_acc, genAfb, e_genAfb);
+  outfile << "A_FB from counting generated data with acceptance cuts = "
+	  << genAfb << " +/- " << e_genAfb << endl << endl;
 
   // loop over the 6 high-level fitting functions
 
@@ -2304,7 +2687,7 @@ void Zprime2muAsymmetry::drawFitHistos() {
   string filename = "fitHistos." + outputFileBase + ".ps";
   TPostScript *ps = new TPostScript(filename.c_str(), 111);
 
-  const int NUM_PAGES = 15;
+  const int NUM_PAGES = 20;
   TPad *pad[NUM_PAGES];
   for (int i_page = 0; i_page <= NUM_PAGES; i_page++)
     pad[i_page] = new TPad("","", .05, .05, .95, .93);
@@ -2358,6 +2741,25 @@ void Zprime2muAsymmetry::drawFitHistos() {
     pad[page]->cd(i+1);  
     if (i == 0) gPad->SetLogy(1);
     AsymFitHistoGen[i]->Draw(); 
+  }
+  c1->Update();
+
+  ps->NewPage();
+  c1->Clear(); 
+  c1->cd(0); 
+  title = new TPaveLabel(0.1,0.94,0.9,0.98,
+			 "Generated PDFs of quantities, smeared");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+  gStyle->SetOptDate(1);
+  pad[page]->Draw();
+  pad[page]->Divide(2,3);
+  for (int i = 0; i < 6; i++) {
+    pad[page]->cd(i+1);  
+    if (i == 0) gPad->SetLogy(1);
+    AsymFitHistoGenSmeared[i]->Draw(); 
   }
   c1->Update();
 
@@ -2543,6 +2945,152 @@ void Zprime2muAsymmetry::drawFitHistos() {
     AsymFitSmearHistoDif[3+i]->Fit("gaus","Q");
   }
   c1->Update();
+
+  c1->SetTicks();
+
+  ps->NewPage();
+  c1->Clear();
+  c1->cd(0);
+  gStyle->SetOptStat(111111);
+  gStyle->SetOptFit(1111);
+  title = new TPaveLabel(0.1,0.94,0.9,0.98,
+			 "cos #theta_{CS} vs rapidity");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+  pad[page]->Draw();
+  pad[page]->cd(0);
+  pad[page]->Divide(1, 2);
+  pad[page]->cd(1); 
+  gPad->SetPhi(120); h2_rap_cos_d[0]->Draw("lego2");
+  pad[page]->cd(2); 
+  gPad->SetPhi(120); h2_rap_cos_d[1]->Draw("lego2");
+  c1->Update();
+
+  ps->NewPage();
+  c1->Clear();
+  c1->cd(0);
+  title = new TPaveLabel(0.1,0.94,0.9,0.98,
+			 "Mass Forward/Backward Events with Smear");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+  pad[page]->Draw();
+  pad[page]->cd(0);
+  pad[page]->Divide(2, 3);
+  pad[page]->cd(1);  h_b_mass->Draw();
+  pad[page]->cd(2);  h_b_smass->Draw();
+  pad[page]->cd(3);  h_f_mass->Draw();
+  pad[page]->cd(4);  h_f_smass->Draw();
+  TH1F *h_smass = (TH1F*)h_b_smass->Clone();
+  TH1F *h_mass = (TH1F*)h_b_mass->Clone();
+  h_smass->Add(h_f_smass);  h_mass->Add(h_f_mass);
+  pad[page]->cd(5);  h_mass->Draw();
+  h_mass->SetTitle("Mass of All Events");
+  pad[page]->cd(6);  h_smass->Draw();
+  h_smass->SetTitle("Smeared Mass of All Events");
+  c1->Update();
+
+  delete h_smass;
+  delete h_mass;
+
+  /*
+  if (fitSmearedData) {
+    ps->NewPage();
+    c1->Clear();
+    c1->cd(0);
+    title = new TPaveLabel(0.1,0.94,0.9,0.98, "Smeared Events");
+    title->SetFillColor(10);
+    title->Draw();
+    strpage << "- " << (++page) << " -";
+    t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+    pad[page]->Draw();
+    pad[page]->cd(0);
+    pad[page]->Divide(2, 3);
+    pad[page]->cd(1); h_data[3]->Draw();
+    pad[page]->cd(3); h_data[1]->Draw();
+    pad[page]->cd(5); h_data[4]->Draw();
+    for (Int_t i = 0; i < 3; i++){
+      pad[page]->cd(2*i+2);
+      h_smear_data[i]->Draw();
+    }
+    c1->Update();
+  }
+  */
+
+  ps->NewPage();
+  c1->Clear();
+  c1->cd(0);
+  gStyle->SetOptStat(1111);
+  title = new TPaveLabel(0.1,0.94,0.9,0.98,
+			 "cos#theta (no acceptance required)");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+  TF1* f_cos = new TF1("f_cos", asym_3_PDF, -1., 1., 3);
+  f_cos->SetParameters(1., .5, .9);
+  f_cos->SetLineWidth(2);
+  //f_cos->FixParameter(0,  1.);
+  if (doingGravFit) {
+    f_cos->SetParLimits(1, -5., 5.);
+    f_cos->SetParLimits(2, -5., 5.);
+  }
+  else {
+    f_cos->SetParLimits(1, -2., 2.);
+    f_cos->SetParLimits(2,  0., 5.);
+  }
+  if (fixbIn1DFit)
+    f_cos->FixParameter(2, 1);
+
+  f_cos->SetParNames("Norm","AFB","b");
+  pad[page]->Draw();
+  pad[page]->cd(0);
+  pad[page]->Divide(2, 2);
+  pad[page]->cd(1);
+  gStyle->SetStatX(.5);
+  gStyle->SetStatY(.85);
+  gStyle->SetTitleY(1.);
+  // figure out a common scale
+  double m,max = 0;
+  if ((m = h_cos_theta_true->GetMaximum()) > max) max = m;
+  if ((m = h_cos_theta_cs->GetMaximum()) > max) max = m;
+  if ((m = h_cos_theta_cs_fixed->GetMaximum()) > max) max = m;
+  if ((m = h_cos_theta_cs_acc->GetMaximum()) > max) max = m;
+  h_cos_theta_true->SetMaximum(1.1*max);
+  h_cos_theta_true->Fit(f_cos, "ILVER","", -1., 1.);
+  h_cos_theta_true->GetXaxis()->SetTitle("cos #theta^{*}");
+  h_cos_theta_true->GetYaxis()->SetTitle("Entries");
+  h_cos_theta_true->GetYaxis()->SetTitleOffset(1.6);
+  TLatex tex;
+  tex.DrawLatex(.7, 2700., "(a)");
+  pad[page]->cd(2);  
+  h_cos_theta_cs->SetMaximum(1.1*max);
+  h_cos_theta_cs->Fit(f_cos, "ILVER","", -1., 1.);
+  h_cos_theta_cs->GetXaxis()->SetTitle("cos #theta^{*}");
+  h_cos_theta_cs->GetYaxis()->SetTitle("Entries");
+  h_cos_theta_cs->GetYaxis()->SetTitleOffset(1.6);
+  tex.DrawLatex(.7, 2700., "(b)");
+  pad[page]->cd(3);  
+  h_cos_theta_cs_fixed->SetMaximum(1.1*max);
+  h_cos_theta_cs_fixed->Fit(f_cos, "ILVER","", -1., 1.);
+  h_cos_theta_cs_fixed->GetXaxis()->SetTitle("cos #theta^{*}");
+  h_cos_theta_cs_fixed->GetYaxis()->SetTitle("Entries");
+  h_cos_theta_cs_fixed->GetYaxis()->SetTitleOffset(1.6);
+  tex.DrawLatex(.7, 2700., "(c)");
+  pad[page]->cd(4);  
+  h_cos_theta_cs_acc->SetMaximum(1.1*max);
+  h_cos_theta_cs_acc->Fit(f_cos, "ILVER","", -1., 1.);
+  h_cos_theta_cs_acc->GetXaxis()->SetTitle("cos #theta^{*}");
+  h_cos_theta_cs_acc->GetYaxis()->SetTitle("Entries");
+  h_cos_theta_cs_acc->GetYaxis()->SetTitleOffset(1.6);
+  tex.DrawLatex(.7, 2700., "(d)");
+  c1->Update();
+
+  delete f_cos;
+
   ps->Close();
 
   delete c1;
@@ -2815,9 +3363,18 @@ void Zprime2muAsymmetry::drawFrameHistos() {
 
 void Zprime2muAsymmetry::deleteHistos() {
   // FitHistos
+  delete h_cos_theta_true;
+  delete h_cos_theta_cs;
+  delete h_cos_theta_cs_acc;
+  delete h_cos_theta_cs_fixed;
+  for (int i = 0; i < 2; i++) {
+    delete h_gen_sig[i];
+    delete h2_rap_cos_d[i];
+  }
   delete h_genCosNoCut;
   for (int i = 0; i < 6; i++) {
     delete AsymFitHistoGen[i];
+    delete AsymFitHistoGenSmeared[i];
     delete AsymFitHistoRec[i];
     delete AsymFitSmearHisto[i];
     delete AsymFitSmearHistoDif[i];
@@ -2828,7 +3385,7 @@ void Zprime2muAsymmetry::deleteHistos() {
   }
 
   // FrameHistos
-  for (int m = 0; m<NUM_REC_LEVELS; m++) {
+  for (int m = 0; m < NUM_REC_LEVELS; m++) {
     delete cosBoost[m];
     delete cosW[m];
     delete rap_vs_cosCS[m];

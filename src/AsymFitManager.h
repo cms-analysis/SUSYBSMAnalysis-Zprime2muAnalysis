@@ -94,6 +94,14 @@ class AsymFitManager {
   double limit_low(unsigned int i) const { return _limit_low[i]; }
   double limit_upp(unsigned int i) const { return _limit_upp[i]; }
 
+  // accessors for specific rec sigmas
+  double recSigmaCosCS() const { return _rec_sigma[SIGMA_COSCS]; }
+  double recSigmaRap() const { return _rec_sigma[SIGMA_RAP]; }
+  double recSigmaPt() const { return _rec_sigma[SIGMA_PT]; }
+  double recSigmaPhi() const { return _rec_sigma[SIGMA_PHI]; }
+  double recSigmaMass() const { return _rec_sigma[SIGMA_MASS]; }
+  double recSigmaPhiCS() const { return _rec_sigma[SIGMA_PHICS]; }
+
   // the currently available pdfs
   enum PDFTYPE { ASYM, GRAV, GRAVTH };
 
@@ -123,6 +131,9 @@ class AsymFitManager {
     return PDFNAMES[pdfType];
   }
 
+  enum RECSIGMA { SIGMA_COSCS, SIGMA_RAP, SIGMA_PT,
+		  SIGMA_PHI, SIGMA_MASS, SIGMA_PHICS };
+
  private:
   // mass_type values: 1 = falling exponential, 2 = lorentzian peak, 3 = 1+2
   int _mass_type;
@@ -132,6 +143,7 @@ class AsymFitManager {
   std::vector<double> _gen_win;
   // These sigma are the reconstructed - generated for dilepton pt, rap, mass, 
   // phi, cos_cs, and phi_cs.  They are taken from DY generated above 1 TeV.
+  // order: cos_cs, rapidity, pT, phi, mass, phi_cs (see above enum)
   std::vector<double> _rec_sigma;
   // These are the limits of integration used for normalized the smeared 
   // PDF.  Integration must be done over all possible reconstructed values

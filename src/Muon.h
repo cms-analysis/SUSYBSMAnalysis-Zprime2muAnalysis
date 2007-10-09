@@ -29,7 +29,7 @@ Main class for a muon, either generated or reconstructed.
 #include "DataFormats/Math/interface/Point3D.h"
 
 namespace zp2mu {
-  const int REC_LEVELS = 9;
+  const int REC_LEVELS = 8;
 
   //---------------------
   //-- Class Interface --

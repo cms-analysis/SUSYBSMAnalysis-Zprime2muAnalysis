@@ -988,11 +988,10 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
       storeOfflineMuons(event, globalMuonsFMS, lfms);
       // muons using the PickyMuonReconstructor
       storeOfflineMuons(event, globalMuonsPMR, lpmr);
-    }else{
-      //leptonFlavor==11 (doing electrons)
-      storePixelMatchGsfElectrons(event,pixelMatchGsfElectrons, lpmel);
     }
-
+    else{
+      storePixelMatchGsfElectrons(event, pixelMatchGsfElectrons, lgmr);
+    }
   }
 
   // Sort the list of found muons using overloaded criteria.
@@ -1036,7 +1035,7 @@ vector<zp2mu::Muon> Zprime2muAnalysis::findBestMuons() {
 
   if(doingElectrons){
     //just have one set of electrons to look at in this case
-    tmpV=allMuons[lpmel];
+    tmpV = allMuons[lgmr];
   }
   else{
 
@@ -1634,7 +1633,7 @@ Zprime2muAnalysis::makeDileptons(const int rec,
 	int  idxdil = -999;
 	for (i_dil = 0; i_dil < n_dil; i_dil++) {
 //	  if (pmu->genMotherLine() == idx[i_dil]) { //FIXME
-	  if ( haveSameVertex((*pmu), vertexs[i_dil])) { 
+	  if (haveSameVertex((*pmu), vertexs[i_dil])) { 
 	    idxdil = i_dil;
 	    isnewdil = false;
 	    break;

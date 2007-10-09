@@ -187,10 +187,11 @@ void Zprime2muMassReach::dilMassPlots(const bool debug) {
   vector<zp2mu::DiMuon> diMuons;
   for (int i = 0; i < 2; i++) {
     if(!doingElectrons){
-    if (i == 0)      diMuons = allDiMuons[useL3Muons ? l3 : lgmr];
-    else if (i == 1) diMuons = bestDiMuons;
-    }else{
-      if (i == 0)      diMuons = allDiMuons[lpmel];
+      if (i == 0)      diMuons = allDiMuons[useL3Muons ? l3 : lgmr];
+      else if (i == 1) diMuons = bestDiMuons;
+    }
+    else{
+      if (i == 0)      diMuons = allDiMuons[lgmr];
       else if (i == 1) diMuons = bestDiMuons;
     }
 

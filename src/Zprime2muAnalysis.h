@@ -19,10 +19,10 @@
 
 // details about the number of reconstruction levels stored
 const int NUM_REC_LEVELS = 4;
-const int MAX_LEVELS = zp2mu::REC_LEVELS; //=8+1=9
-enum RECLEVEL { lgen, l1, l2, l3, lgmr, ltk, lfms, lpmr, lpmel, lbest = 99 };
+const int MAX_LEVELS = zp2mu::REC_LEVELS;
+enum RECLEVEL { lgen, l1, l2, l3, lgmr, ltk, lfms, lpmr, lbest = 99 };
 const std::string str_level[] = {
-  "Gen", " L1", " L2", " L3", "GMR", "Tracker-only", "TPFMS", "PMR", "PMEL", "TMR"
+  "Gen", " L1", " L2", " L3", "GMR", "Tracker-only", "TPFMS", "PMR", "TMR"
 };
 
 // details about the number of quality cuts available

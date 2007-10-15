@@ -113,6 +113,8 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 
   void clearValues();
   void storeGeneratedMuons(const edm::Event&);
+  void storeL1Decision(const edm::Event& event);
+  void storeL1Muons(const edm::Event& event);
   void storeL2Muons(const edm::Event& event);
   void storeOfflineMuons(const edm::Event&, const edm::InputTag& whichMuons,
 			 RECLEVEL irec, bool trackerOnly=false);
@@ -162,6 +164,8 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 
   bool isMotherOf(const reco::GenParticleCandidate&, const zp2mu::Muon&, const zp2mu::Muon&) const;
 
+  edm::InputTag l1ParticleMap;
+  edm::InputTag l1Muons;
   edm::InputTag standAloneMuons;
   edm::InputTag genMuons;
   edm::InputTag globalMuons;
@@ -190,7 +194,6 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   std::vector<zp2mu::DiMuon> bestDiMuons;
 
   bool passTrig[NUM_REC_LEVELS];
-  bool calcTrig[NUM_REC_LEVELS];
   unsigned int trigWord[NUM_REC_LEVELS];
 
   unsigned int leptonFlavor;

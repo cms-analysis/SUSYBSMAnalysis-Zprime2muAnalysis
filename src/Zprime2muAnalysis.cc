@@ -16,6 +16,7 @@
 
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/Math/interface/Vector.h"
+#include "DataFormats/L1Trigger/interface/L1ParticleMap.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonTrackLinks.h"
 #include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
@@ -111,12 +112,14 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   generatedOnly = config.getParameter<bool>("generatedOnly");
 
   // input tags for the reco collections we need
+  l1ParticleMap   = config.getParameter<edm::InputTag>("l1ParticleMap");
+  l1Muons         = config.getParameter<edm::InputTag>("l1Muons");
   standAloneMuons = config.getParameter<edm::InputTag>("standAloneMuons");
-  genMuons = config.getParameter<edm::InputTag>("genMuons");
-  globalMuons = config.getParameter<edm::InputTag>("globalMuons");
-  globalMuonsFMS = config.getParameter<edm::InputTag>("globalMuonsFMS");
-  globalMuonsPMR = config.getParameter<edm::InputTag>("globalMuonsPMR");
-  photons = config.getParameter<edm::InputTag>("photons");
+  genMuons        = config.getParameter<edm::InputTag>("genMuons");
+  globalMuons     = config.getParameter<edm::InputTag>("globalMuons");
+  globalMuonsFMS  = config.getParameter<edm::InputTag>("globalMuonsFMS");
+  globalMuonsPMR  = config.getParameter<edm::InputTag>("globalMuonsPMR");
+  photons         = config.getParameter<edm::InputTag>("photons");
   doingElectrons = config.getParameter<bool>("doingElectrons");
   pixelMatchGsfElectrons = config.getParameter<edm::InputTag>("pixelMatchGsfElectrons");
 
@@ -128,9 +131,7 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
     leptonFlavor= 13;
     // muon mass in GeV/c^2
     MUMASS = 0.10566;
-
   }
-
 
   InitROOT();
 }
@@ -161,7 +162,6 @@ void Zprime2muAnalysis::InitROOT() {
 void Zprime2muAnalysis::clearValues() {
   for (int i_rec = 0; i_rec < NUM_REC_LEVELS; i_rec++) {
     passTrig[i_rec] = true;
-    calcTrig[i_rec] = false;
     trigWord[i_rec] = 0;
   }
   for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
@@ -978,6 +978,9 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
   if (!generatedOnly) {
 
     if(!doingElectrons){
+      // Level-1.
+      storeL1Decision(event);
+      storeL1Muons(event);
       // Standalone muons; should be replaced by Level-2 muons
       storeL2Muons(event);
       // off-line muons reconstructed with GlobalMuonProducer
@@ -2253,7 +2256,6 @@ void Zprime2muAnalysis::dumpEvent(const bool printGen, const bool printL1,
       out << *pmu;
     }
 
-  
   if (printL3) 
     for (int rec = l3; rec < MAX_LEVELS; rec++){
       std::cout<<std::endl;
@@ -2261,11 +2263,8 @@ void Zprime2muAnalysis::dumpEvent(const bool printGen, const bool printL1,
 	out << *pmu;
       }
     }
-  
-	
 
   if (printBest){ 
-    
     out << "\nBest off-line muons: \n";
     for (pmu = bestMuons.begin(); pmu != bestMuons.end(); pmu++) {
       out << *pmu;
@@ -2476,58 +2475,110 @@ zp2mu::DiMuon& Zprime2muAnalysis::dimuonRef(const int rec, const int id) {
 //-----------------------------------------------------------------------------
 //                                 Trigger
 //-----------------------------------------------------------------------------
+
 bool Zprime2muAnalysis::passTrigger(const int irec) {
 
-  if (calcTrig[irec])
-    return passTrig[irec];
-
-  // Keep track of the fact that you have checked the trigger already
-  calcTrig[irec] = true;
-
-  // JMTBAD all events pass trigger for now...
-  trigWord[irec] = 1; 
-  passTrig[irec] = true;
-  return true;
-
-  /*
-  unsigned int trigbits = 0;
-  switch(irec) {
-  case 0:
-    // Generated events always pass.
-    trigbits = 1;
-    break;
-  case 1:
-    trigbits = PassL1Trigger();
-    break;
-  case 2:
-    trigbits = PassL2Trigger();
-    break;
-  case 3:
-    trigbits = PassL3Trigger();
-    break;
-  default:
-    edm::LogError("Zprime2muAnalysis")
+  if (irec < 0 || irec > l3) {
+    throw cms::Exception("Zprime2muAnalysis")
       << "+++ passTrigger error: L" << irec << " trigger is unknown +++\n";
-    break;
   }
-  trigWord[irec] = trigbits;
-  passTrig[irec] = (trigbits != 0);
-  return passTrig[irec];
-  */
+
+  if (irec == l1) {
+    return passTrig[irec];
+  }
+  else {
+    // JMTBAD Fake; all events pass trigger for now...
+    trigWord[irec] = 1; 
+    passTrig[irec] = true;
+    return true;
+  }
 }
 
 bool Zprime2muAnalysis::passTrigger() {
   unsigned int decision = 1;
 
-  for (int itrig = l1; itrig <= l3; itrig++) {
-    if (!calcTrig[itrig]) {
-      decision *= passTrigger(itrig);
-    }
-    else {
-      decision *= trigWord[itrig];
-    }
+  // BAD: always accept L2 and L3 for now.
+  //for (int itrig = l1; itrig <= l3; itrig++) {
+  for (int itrig = l1; itrig <= l1; itrig++) {
+    decision *= trigWord[itrig];
   }
   return (decision != 0);
+}
+
+void Zprime2muAnalysis::storeL1Decision(const edm::Event& event) {
+  const static bool debug = (verbosity >= VERBOSITY_SIMPLE);
+
+  // Get Level-1 decisions for trigger paths we are interested in.
+  edm::Handle<l1extra::L1ParticleMapCollection> l1MapColl;
+  event.getByLabel(l1ParticleMap, l1MapColl);
+
+  if (!l1MapColl.isValid()) {
+    edm::LogWarning("storeL1Decision")
+      << "L1ParticleMapCollection with label [" << l1ParticleMap.encode()
+      << "] not found!" << std::endl;
+    return;
+  }
+
+  // Level-1 paths we want to use for the trigger decision.
+  // MOVE TO CONSTRUCTOR?
+  vector<l1extra::L1ParticleMap::L1TriggerType> l1paths;
+  l1paths.push_back(l1extra::L1ParticleMap::kSingleMu7);
+  l1paths.push_back(l1extra::L1ParticleMap::kDoubleMu3);
+
+  // Loop over chosen paths, check trigger decisions, and save them into
+  // "trigbits".
+  unsigned int trigbits = 0;
+  int nl1paths = l1paths.size();
+  for (int ipath = 0; ipath < nl1paths; ipath++) {
+    const l1extra::L1ParticleMap& thisMap = (*l1MapColl)[l1paths[ipath]];
+    bool fired = thisMap.triggerDecision();
+    if (fired) trigbits = trigbits | (1 << ipath);
+    if (debug) LogTrace("storeL1Decision")
+      << thisMap.triggerName() << " (index " << l1paths[ipath]
+      << "): decision " << fired;
+  }
+
+  if (debug) LogTrace("storeL1Decision") << "  L1 trigbits: " << trigbits;
+  trigWord[l1] = trigbits;
+  passTrig[l1] = (trigbits != 0);
+}
+
+void Zprime2muAnalysis::storeL1Muons(const edm::Event& event) {
+  const static bool debug = (verbosity >= VERBOSITY_TOOMUCH);
+
+  // Get Level-1 Global Muon Trigger muons.
+  edm::Handle<l1extra::L1MuonParticleCollection> l1MuColl;
+  event.getByLabel(l1Muons, l1MuColl);
+  if (debug) LogTrace("storeL1Muons")
+    << "Number of Level-1 muons: " << l1MuColl->size();
+ 
+  l1extra::L1MuonParticleCollection::const_iterator muItr;
+  int imu = 0;
+  for (muItr = l1MuColl->begin(); muItr != l1MuColl->end(); ++muItr) {
+    if (debug) LogTrace(" ")
+      << "   L1 mu #" << imu << " q = " << muItr->charge()
+      << " p = (" << muItr->px() << ", " << muItr->py()
+      << ", " << muItr->pz() << ", " << muItr->energy()
+      << ") pt = " << muItr->pt() << "\n"
+      << "    eta = " << muItr->eta() << " phi = " << muItr->phi() 
+      << " iso = " << muItr->isIsolated() << " mip = " << muItr->isMip()
+      << " fwd = " << muItr->isForward() << " rpc = " << muItr->isRPC();
+
+    if (muItr->pt() > PTMIN) {
+      zp2mu::Muon thisMu;
+      thisMu.fill(1, imu, l1, muItr->charge(), muItr->phi(), muItr->eta(),
+		  muItr->pt(), muItr->p());
+      //thisMu.setQuality((*igmt).Quality());
+      allMuons[l1].push_back(thisMu);
+      imu++;
+    }
+    else {
+      edm::LogWarning("storeL1Muons")
+	<< "Event " << eventNum
+	<< ": skipping L1 muon with pT = " << muItr->pt()
+	<< " p = " << muItr->p() << " eta = " << muItr->eta() << "\n";
+    }
+  }
 }
 
 void Zprime2muAnalysis::analyze(const edm::Event& event,

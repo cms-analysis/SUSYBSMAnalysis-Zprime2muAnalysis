@@ -8,5 +8,6 @@
 <use name=SimDataFormats/Track>
 <use name=DataFormats/EgammaCandidates>
 <use name=DataFormats/HepMCCandidate>
+<use name=DataFormats/L1Trigger>
 <use name=DataFormats/FWLite>
 <flags EDM_PLUGIN=1>

@@ -2,5 +2,5 @@ include "SUSYBSMAnalysis/Zprime2muAnalysis/data/Zprime2muAnalysisCommon.cff"
 
 module Zprime2muAnalysis = Zprime2muAnalysis {
   using Zprime2muAnalysisCommon
-  untracked int32 verbosity = 3
+  untracked int32 verbosity = 2
 }

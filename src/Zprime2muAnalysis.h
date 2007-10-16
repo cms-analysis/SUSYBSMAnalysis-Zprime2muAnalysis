@@ -8,6 +8,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
+#include "DataFormats/L1Trigger/interface/L1ParticleMap.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
 #include "DataFormats/EgammaCandidates/interface/Photon.h"
@@ -198,6 +199,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 
   unsigned int leptonFlavor;
 
+  std::vector<l1extra::L1ParticleMap::L1TriggerType> l1paths;
 };
 
 ostream& operator<<(ostream& out, const TLorentzVector& vect);

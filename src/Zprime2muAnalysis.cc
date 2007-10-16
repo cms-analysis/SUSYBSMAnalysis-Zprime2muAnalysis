@@ -16,7 +16,6 @@
 
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/Math/interface/Vector.h"
-#include "DataFormats/L1Trigger/interface/L1ParticleMap.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonTrackLinks.h"
 #include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
@@ -123,14 +122,19 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   doingElectrons = config.getParameter<bool>("doingElectrons");
   pixelMatchGsfElectrons = config.getParameter<edm::InputTag>("pixelMatchGsfElectrons");
 
-  if(doingElectrons){
-    leptonFlavor= 11;
+  if (doingElectrons) {
+    leptonFlavor = 11;
     //ELECTRON mass in GeV/c^2
     MUMASS = 0.000511;
-  }else{
-    leptonFlavor= 13;
+  }
+  else {
+    leptonFlavor = 13;
     // muon mass in GeV/c^2
     MUMASS = 0.10566;
+
+    // Level-1 paths we want to use for the trigger decision.
+    l1paths.push_back(l1extra::L1ParticleMap::kSingleMu7);
+    l1paths.push_back(l1extra::L1ParticleMap::kDoubleMu3);
   }
 
   InitROOT();
@@ -190,7 +194,7 @@ void Zprime2muAnalysis::clearValues() {
 // and
 // https://twiki.cern.ch/twiki/bin/view/CMS/WorkBookGenParticleCandidate
 void Zprime2muAnalysis::storeGeneratedMuons(const edm::Event& event) {
-  static bool debug = verbosity >= VERBOSITY_TOOMUCH;
+  static bool debug = verbosity >= VERBOSITY_LOTS;
   int imu = 0;
 
   // JMTBAD as far as I can see, GenParticleCandidateProducer doesn't
@@ -755,7 +759,7 @@ bool Zprime2muAnalysis::storeOfflineMuon(const int imu, const RECLEVEL irec,
 			 theTrack->innerPosition().Y(),
 			 theTrack->innerPosition().Z());
 
-    if (verbosity >= VERBOSITY_TOOMUCH)
+    if (verbosity >= VERBOSITY_LOTS)
       LogTrace(" ") << "irec = " << irec;
     TLorentzVector photon = findClosestPhoton(theTrack, photonCollection);
     thisMu.setClosestPhoton(photon);
@@ -874,7 +878,7 @@ bool Zprime2muAnalysis::storePixelMatchGsfElectron(const int imu, const RECLEVEL
 TLorentzVector Zprime2muAnalysis::findClosestPhoton(
                               const reco::TrackRef& theTrack,
 			      const reco::PhotonCollection& photonCollection) {
-  static bool debug = verbosity >= VERBOSITY_TOOMUCH;
+  static bool debug = verbosity >= VERBOSITY_LOTS;
   double phdist = 999.0;
   reco::Particle::LorentzVector phclos; // 4-momentum of the closest PhotonCandidate
 
@@ -919,7 +923,7 @@ TLorentzVector Zprime2muAnalysis::findClosestPhoton(
 						    const reco::PhotonCollection& photonCollection) {
 
 
-  bool debug = verbosity >= VERBOSITY_TOOMUCH;
+  bool debug = verbosity >= VERBOSITY_LOTS;
   double phdist = 999.0;
   reco::Particle::LorentzVector phclos; // 4-momentum of the closest PhotonCandidate
 
@@ -977,7 +981,7 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
   storeGeneratedMuons(event);
   if (!generatedOnly) {
 
-    if(!doingElectrons){
+    if (!doingElectrons) {
       // Level-1.
       storeL1Decision(event);
       storeL1Muons(event);
@@ -992,7 +996,11 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
       // muons using the PickyMuonReconstructor
       storeOfflineMuons(event, globalMuonsPMR, lpmr);
     }
-    else{
+    else {
+      // Events always pass Level-1 trigger till it gets implemented.
+      passTrig[l1] = true;
+      trigWord[l1] = 1;
+
       storePixelMatchGsfElectrons(event, pixelMatchGsfElectrons, lgmr);
     }
   }
@@ -1018,7 +1026,7 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
   }
 
   // Dump all muon vectors
-  bool debug = verbosity >= VERBOSITY_TOOMUCH;
+  bool debug = verbosity >= VERBOSITY_SIMPLE;
   if (debug) dumpEvent(true, true, true, true, true);
   
   // Construct opposite-sign dileptons out of lists of muons.
@@ -1033,7 +1041,7 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
 // we start using 1_4_0 (after making sure that they agree with our version).
 vector<zp2mu::Muon> Zprime2muAnalysis::findBestMuons() {
 
-  bool debug = verbosity >= VERBOSITY_TOOMUCH;
+  bool debug = verbosity >= VERBOSITY_SIMPLE;
   vector<zp2mu::Muon> tmpV;
 
   if(doingElectrons){
@@ -1220,7 +1228,7 @@ zp2mu::Muon Zprime2muAnalysis::PiotrsCocktail(const zp2mu::Muon& trk,
 bool Zprime2muAnalysis::matchEta(const double eta1, const double eta2, 
 				 double *eta_diff) {
 
-  bool debug = verbosity >= VERBOSITY_TOOMUCH;
+  const static bool debug = verbosity >= VERBOSITY_TOOMUCH;
 
   *eta_diff = abs(eta1-eta2);
   // if (debug)
@@ -1243,7 +1251,7 @@ bool Zprime2muAnalysis::matchPhi(const double phi1, const double phi2,
 
   // See if difference in phi is less than or equal to .5 rad.
 
-  bool debug = verbosity >= VERBOSITY_TOOMUCH;
+  const static bool debug = verbosity >= VERBOSITY_TOOMUCH;
 
   *phi_diff = abs(phi1-phi2);
   if (debug)
@@ -1793,7 +1801,7 @@ Zprime2muAnalysis::makeDileptons(const int rec,
 
 void Zprime2muAnalysis::addTrueResonance(const edm::Event& event,
 					 vector<zp2mu::DiMuon>& diMuons) {
-  bool debug = verbosity >= VERBOSITY_TOOMUCH;
+  bool debug = verbosity >= VERBOSITY_LOTS;
 
   // Generated particles (i.e. PYTHIA).
   edm::Handle<reco::CandidateCollection> genParticles;
@@ -2519,12 +2527,6 @@ void Zprime2muAnalysis::storeL1Decision(const edm::Event& event) {
     return;
   }
 
-  // Level-1 paths we want to use for the trigger decision.
-  // MOVE TO CONSTRUCTOR?
-  vector<l1extra::L1ParticleMap::L1TriggerType> l1paths;
-  l1paths.push_back(l1extra::L1ParticleMap::kSingleMu7);
-  l1paths.push_back(l1extra::L1ParticleMap::kDoubleMu3);
-
   // Loop over chosen paths, check trigger decisions, and save them into
   // "trigbits".
   unsigned int trigbits = 0;
@@ -2544,7 +2546,7 @@ void Zprime2muAnalysis::storeL1Decision(const edm::Event& event) {
 }
 
 void Zprime2muAnalysis::storeL1Muons(const edm::Event& event) {
-  const static bool debug = (verbosity >= VERBOSITY_TOOMUCH);
+  const static bool debug = (verbosity >= VERBOSITY_LOTS);
 
   // Get Level-1 Global Muon Trigger muons.
   edm::Handle<l1extra::L1MuonParticleCollection> l1MuColl;

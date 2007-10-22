@@ -3,6 +3,7 @@ block Zprime2muAnalysisCommon = {
   bool doingElectrons = false
   bool generatedOnly = false
   bool reconstructedOnly = false
+  bool doingGeant4 = true
   bool useOtherMuonRecos = true
   bool usingAODOnly = false
   #InputTag genMuons = source

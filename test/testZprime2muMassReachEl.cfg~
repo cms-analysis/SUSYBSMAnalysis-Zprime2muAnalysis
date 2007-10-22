@@ -1,0 +1,41 @@
+process testZprime2muMassReach = {
+
+ untracked PSet maxEvents = {untracked int32 input = -1}
+
+    source = PoolSource {
+	untracked vstring fileNames = {
+
+            #'file:/uscmst1b_scratch/lpc1/old_scratch/lpctrig/jwerner/CMSSW_1_6_0/src/EgammaAnalysis/ElectronIDProducers/test/electrons_PileupSMDYminMass300.root',
+            #'file:/uscmst1b_scratch/lpc1/old_scratch/lpctrig/jwerner/CMSSW_1_6_0/src/EgammaAnalysis/ElectronIDProducers/test/electrons_PileupSMDYminMass600.root',
+            #'/store/mc/2007/9/23/RelVal-RelValZPrimeEEM1000-1190561297/0000/FA7C927F-4C6A-DC11-BDB8-003048767DC9.root'
+            'file:/uscmst1b_scratch/lpc1/old_scratch/lpctrig/jwerner/CMSSW_1_6_0/src/ZprimeMCConfigs/test/fastZprimeSSM_mass1000x.root',
+            'file:/uscmst1b_scratch/lpc1/old_scratch/lpctrig/jwerner/CMSSW_1_6_0/src/ZprimeMCConfigs/test/fastSMDrellYan_minMass400.root',
+            'file:/uscmst1b_scratch/lpc1/old_scratch/lpctrig/jwerner/CMSSW_1_6_0/src/ZprimeMCConfigs/test/fastSMDrellYan_minMass200.root'
+
+	}
+
+    }
+  
+    # include "FWCore/MessageService/data/MessageLogger.cfi"
+    service = MessageLogger {
+	untracked vstring destinations = {"Zprime.out"}
+	untracked vstring categories   = {
+	    "FwkJob", "FwkReport", "Root_NoDictionary"
+	}
+	untracked PSet Zprime.out = {
+	    untracked string threshold  = "DEBUG"
+	    untracked int32 lineLength  = 132
+	    untracked bool noLineBreaks = true
+	    untracked PSet FwkReport = {untracked int32 reportEvery = 100}
+	}
+
+	untracked vstring debugModules = {
+	    "Zprime2muMassReach",
+	    "Zprime2muAnalysis"
+	}
+    }
+
+    include "SUSYBSMAnalysis/Zprime2muAnalysis/data/Zprime2muMassReachEl.cfi"
+
+    path p = {Zprime2muMassReach}
+}

@@ -112,6 +112,9 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   // trying to store globalMuons, standAloneMuons, etc)
   generatedOnly = config.getParameter<bool>("generatedOnly");
 
+  //whether to look at Geant4 particles in addition to Pythia particles
+  doingGeant4 = config.getParameter<bool>("doingGeant4");
+
   // whether to look at only reconstructed muons (as in the real data sets)
   reconstructedOnly = config.getParameter<bool>("reconstructedOnly");
 
@@ -131,6 +134,7 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
 
   // whether we are looking at electrons instead of muons
   doingElectrons = config.getParameter<bool>("doingElectrons");
+
 
   // input tags for the reco collections we need
   l1ParticleMap   = config.getParameter<edm::InputTag>("l1ParticleMap");
@@ -234,7 +238,7 @@ void Zprime2muAnalysis::storeGeneratedMuons(const edm::Event& event) {
 
   // Simulated tracks (i.e. GEANT particles).
   edm::Handle<edm::SimTrackContainer> simtracks;
-  if (!generatedOnly)
+  if (!generatedOnly && doingGeant4)
     event.getByLabel("g4SimHits", simtracks);
 
   if (debug)
@@ -349,7 +353,7 @@ void Zprime2muAnalysis::storeGeneratedMuons(const edm::Event& event) {
     }
   }
 
-  if (!generatedOnly) {
+  if (!generatedOnly && doingGeant4) {
     // Add GEANT muons which were not in PYTHIA list.
     for (edm::SimTrackContainer::const_iterator isimtrk = simtracks->begin();
 	 isimtrk != simtracks->end(); ++isimtrk) {
@@ -612,9 +616,6 @@ void Zprime2muAnalysis::storePixelMatchGsfElectrons(const edm::Event& event,
 						    RECLEVEL irec, bool trackerOnly) {
   edm::Handle<reco::PixelMatchGsfElectronCollection> muons;
   event.getByLabel(whichMuons, muons);
-  edm::Handle<reco::PhotonCollection> thePhotons;
-  event.getByLabel(photons, thePhotons);
-  const reco::PhotonCollection photonCollection = *(thePhotons.product());
   int imu = 0;
 
   for (reco::PixelMatchGsfElectronCollection::const_iterator muon = muons->begin();
@@ -622,7 +623,7 @@ void Zprime2muAnalysis::storePixelMatchGsfElectrons(const edm::Event& event,
 
     reco::PixelMatchGsfElectron theElectron = *(muon);
 
-    bool isStored = storePixelMatchGsfElectron(imu, irec, theElectron, photonCollection);
+    bool isStored = storePixelMatchGsfElectron(imu, irec, theElectron);
     if (isStored) imu++;
   }
 }
@@ -750,8 +751,7 @@ bool Zprime2muAnalysis::storeOfflineMuon(const int imu, const RECLEVEL irec,
 }
 
 bool Zprime2muAnalysis::storePixelMatchGsfElectron(const int imu, const RECLEVEL irec,
-						   const reco::PixelMatchGsfElectron& theElectron,
-						   const reco::PhotonCollection& photonCollection){
+						   const reco::PixelMatchGsfElectron& theElectron){
   bool isStored=false;
 
   // Skip electrons with non-positive number of dof.
@@ -831,12 +831,6 @@ bool Zprime2muAnalysis::storePixelMatchGsfElectron(const int imu, const RECLEVEL
       thisMu.setTrackerXYZ(theTrack->innerPosition().X(),
 			   theTrack->innerPosition().Y(),
 			   theTrack->innerPosition().Z());
-
-    //For electrons, don't set the closest photons.
-    //If you do, you'll find a Zprime with the twice it's actual mass!
-    //
-    //TLorentzVector photon = findClosestPhoton(theTrack, photonCollection);
-    //thisMu.setClosestPhoton(photon);
 
     allMuons[irec].push_back(thisMu);
     isStored = true;

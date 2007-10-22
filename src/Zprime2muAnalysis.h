@@ -69,6 +69,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   bool generatedOnly; // whether only to look at generated muons
   bool reconstructedOnly; // whether only to look at generated muons
   bool doingElectrons; // determines whether to run on muons or electrons
+  bool doingGeant4; // whether to look at Geant4 particles
   bool useOtherMuonRecos; // whether to use other muons (FMS, PMR, etc)
   bool usingAODOnly; // whether not to use things in RECO tier
 
@@ -129,8 +130,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 			const int seedIndex,
 			const reco::PhotonCollection& photonCollection);
   bool storePixelMatchGsfElectron(const int imu, const RECLEVEL irec,
-				  const reco::PixelMatchGsfElectron& theElectron,
-				  const reco::PhotonCollection& photonCollection);
+				  const reco::PixelMatchGsfElectron& theElectron);
   void storePixelMatchGsfElectrons(const edm::Event&, const edm::InputTag& whichMuons,
 				   RECLEVEL irec, bool trackerOnly=false);
   void storeMuons(const edm::Event&);

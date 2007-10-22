@@ -67,7 +67,10 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // config file parameters
   bool doingHiggs; // determines whether one or two dimuons are kept
   bool generatedOnly; // whether only to look at generated muons
-  bool doingElectrons; //determines whether to run on muons or electrons
+  bool reconstructedOnly; // whether only to look at generated muons
+  bool doingElectrons; // determines whether to run on muons or electrons
+  bool useOtherMuonRecos; // whether to use other muons (FMS, PMR, etc)
+  bool usingAODOnly; // whether not to use things in RECO tier
 
   // Track quality studies and optimization.
   bool TrackQCheck(const zp2mu::Muon& muon, const int qsel,
@@ -139,19 +142,16 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   zp2mu::Muon PiotrsCocktail(const zp2mu::Muon& trk, const zp2mu::Muon& fms,
 			     const zp2mu::Muon& pmr, const bool debug) const;
 
-  TLorentzVector findClosestPhoton(const reco::TrackRef& muonTrack,
-			       const reco::PhotonCollection& photonCollection);
-  TLorentzVector findClosestPhoton(const reco::GsfTrackRef& muonTrack,
-				   const reco::PhotonCollection& photonCollection);
+  template <typename TrackType> TLorentzVector
+    findClosestPhoton(const TrackType& muonTrack,
+		      const reco::PhotonCollection& photonCollection);
   double deltaR(const double eta1, const double phi1,
 		const double eta2, const double phi2) const;
 
   // utility functions needed to calculate error on 1/Pt, 1/P since such
   // methods do not exist in reco::Track as of now
-  double invPtError(const reco::TrackRef& track);
-  double invPtError(const reco::GsfTrackRef& track);
-  double invPError(const reco::TrackRef& track);
-  double invPError(const reco::GsfTrackRef& track);
+  template <typename TrackType> double invPtError(const TrackType& track);
+  template <typename TrackType> double invPError(const TrackType& track);
 
   // utility function to match standalone muons (to match seeds)
   int matchStandAloneMuon(const edm::Handle<reco::TrackCollection> staTracks,

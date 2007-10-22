@@ -506,14 +506,14 @@ bool Zprime2muAnalysis::isMotherOf(const reco::GenParticleCandidate& particle, c
   bool mumOK = false;
 
   for (unsigned int igd = 0; igd != particle.numberOfDaughters(); igd++) {
-      if ( abs(particle.daughter(igd)->pdgId()) != 13 ) continue;
-      if ( particle.daughter(igd)->pdgId() == 13 ) {
+      if ( abs(particle.daughter(igd)->pdgId()) != leptonFlavor ) continue;
+      if ( particle.daughter(igd)->pdgId() == int(leptonFlavor) ) {
          math::XYZVector mom = particle.daughter(igd)->momentum();
          if ( (fabs(mom.Eta() - mum.eta()) < 1e-5)
             &&(fabs(mom.Phi() - mum.phi()) < 1e-5)
             &&(fabs(mom.Rho() - mum.pt()) < 1e-5) ) mumOK = true;
       }
-      if ( particle.daughter(igd)->pdgId() != -13 ) {
+      if ( particle.daughter(igd)->pdgId() != -int(leptonFlavor) ) {
          math::XYZVector mom = particle.daughter(igd)->momentum();
          if ( (fabs(mom.Eta() - mup.eta()) < 1e-5)
             &&(fabs(mom.Phi() - mup.phi()) < 1e-5)

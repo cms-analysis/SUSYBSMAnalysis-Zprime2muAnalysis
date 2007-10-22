@@ -42,19 +42,32 @@ The .cfg files in the test/ subdirectory illustrate usage of these
 modules; default parameters for each module are specified in the .cfi
 and .cff files in the data/ subdirectory.  As in the .cfg files, in general
 these modules take as input EDM ROOT files with fully-reconstructed
-(i.e. GEN-SIM-DIGI-RECO all performed) Z' --> mu- mu+ events.  Some
-sample files are available at /castor/cern.ch/user/s/slava/CMSSW_1_3_1.
+(i.e. GEN-SIM-DIGI-RECO-L1 all performed) Z' --> mu- mu+ events.  Some
+sample files are available at /castor/cern.ch/user/t/tucker/CMSSW_1_6_0.
 At the time being, the package has been written and tested to work with
-1_3_X series of CMSSW.  The tag V00-00-00 should be used.  Module-specific
+version 1_6_0 of CMSSW.  The tag V00-00-03 should be used.  Module-specific
 instructions follow.
 
 Zprime2muAnalysis
 -----------------
 In data/Zprime2muAnalysisCommon.cff one can find a set of InputTags
 defining which collections of reco objects are to be used from the
-input ROOT file; these may be changed if necessary.  Level-1/HLT
-selection has not been updated since ORCA times and is currently
-disabled.
+input ROOT file; these may be changed if necessary. HLT selection
+has not been updated since ORCA times and is currently disabled. There are
+a few flags of interest:
+
+  doingElectrons:    switch to using electron collections instead of muons
+                     (see below section, "Electron Extension").
+  generatedOnly:     whether only to bother with generator-level information.
+  reconstructedOnly: likewise, whether only to bother with reconstructed
+                     information.
+  useOtherMuonRecos: if set, look for other MuonCollections in the input file
+                     named "muonsFMS", etc., which correspond to the other
+                     available TeV muon reconstructors.
+  usingAODOnly:      whether only to use objects that are available in the
+                     AOD; this overrides generatedOnly, reconstructedOnly,
+                     and useOtherMuonRecos with the values false, true, and
+                     false, respectively.
 
 Zprime2muResolution
 -------------------
@@ -219,21 +232,19 @@ Step-by-step instructions
 
 To check out the package:
 
- > scramv1 project CMSSW CMSSW_1_3_3
- > cd CMSSW_1_3_3/src
- > project CMSSW
- > cvs co -r V00-00-00 SUSYBSMAnalysis/Zprime2muAnalysis
+   scramv1 project CMSSW CMSSW_1_6_0
+   cd CMSSW_1_6_0/src
+   project CMSSW
+   cvs co -r V00-00-03 SUSYBSMAnalysis/Zprime2muAnalysis
 
 To compile:
 
- > eval `scramv1 runtime -csh`
- > cd SUSYBSMAnalysis/Zprime2muAnalysis/src
- > scramv1 b
+   eval `scramv1 runtime -csh`
+   cd SUSYBSMAnalysis/Zprime2muAnalysis/src
+   scramv1 b
 
-To run:
+To run (where the .cfg can be any of the 4 .cfg files in /test):
 
- > cd ../test
- > cmsRun -p test*.cfg
-   (where test*.cfg can be any of the 4 .cfg files in /test)
-
+   cd ../test
+   cmsRun testZprime2muResolution.cfg
 

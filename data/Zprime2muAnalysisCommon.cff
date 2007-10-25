@@ -10,6 +10,11 @@ block Zprime2muAnalysisCommon = {
   InputTag genMuons = VtxSmeared
   InputTag l1ParticleMap = l1extraParticleMap
   InputTag l1Muons = l1extraParticles
+  # every process puts a TriggerResults product into the event;
+  # pick the HLT one
+  InputTag hltResults = TriggerResults::HLT
+  InputTag hltL2Muons = hltL2MuonCandidates
+  InputTag hltL3Muons = hltL3Muons # get the TrackLinksCollection for this one
   InputTag globalMuons = muons
   InputTag globalMuonsFMS = muonsFMS
   InputTag globalMuonsPMR = muonsPMR

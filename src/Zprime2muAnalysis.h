@@ -113,22 +113,30 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   bool passTrigger(const int irec);
   bool passTrigger();
 
+  bool isResonance(int pid) {
+    // Z', Z0/gamma*, G, or G*
+    return pid == 32 || pid == 23 || pid == 39 || pid == 5000039;
+  }
+
  private:
   VERBOSITY verbosity;
-
+  edm::Handle<reco::TrackCollection> seedTracks;
+  edm::Handle<reco::PhotonCollection> photonCollection;
+  
   void clearValues();
   void storeGeneratedMuons(const edm::Event&);
   void storeL1Decision(const edm::Event& event);
   void storeL1Muons(const edm::Event& event);
   void storeL2Muons(const edm::Event& event);
+  void storeL3Muons(const edm::Event& event);
+  void storeHLTDecision(const edm::Event& event);
   void storeOfflineMuons(const edm::Event&, const edm::InputTag& whichMuons,
 			 RECLEVEL irec, bool trackerOnly=false);
   bool storeOfflineMuon(const int imu, const RECLEVEL irec,
 			const reco::TrackRef& theTrack,
 			const reco::TrackRef& tkTrack,
 			const reco::TrackRef& muTrack,
-			const int seedIndex,
-			const reco::PhotonCollection& photonCollection);
+			const int seedIndex);
   bool storePixelMatchGsfElectron(const int imu, const RECLEVEL irec,
 				  const reco::PixelMatchGsfElectron& theElectron);
   void storePixelMatchGsfElectrons(const edm::Event&, const edm::InputTag& whichMuons,
@@ -142,9 +150,8 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   zp2mu::Muon PiotrsCocktail(const zp2mu::Muon& trk, const zp2mu::Muon& fms,
 			     const zp2mu::Muon& pmr, const bool debug) const;
 
-  template <typename TrackType> TLorentzVector
-    findClosestPhoton(const TrackType& muonTrack,
-		      const reco::PhotonCollection& photonCollection);
+  template <typename TrackType>
+    TLorentzVector findClosestPhoton(const TrackType& muonTrack);
   double deltaR(const double eta1, const double phi1,
 		const double eta2, const double phi2) const;
 
@@ -154,8 +161,8 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   template <typename TrackType> double invPError(const TrackType& track);
 
   // utility function to match standalone muons (to match seeds)
-  int matchStandAloneMuon(const edm::Handle<reco::TrackCollection> staTracks,
-			  const reco::TrackRef& track);
+  int matchStandAloneMuon(const reco::TrackRef& track,
+			  bool relaxedMatch=false);
 
   // utility function to match muons from same vertex
   bool haveSameVertex(const zp2mu::Muon& , const zp2mu::Muon&) const;
@@ -167,6 +174,9 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 
   edm::InputTag l1ParticleMap;
   edm::InputTag l1Muons;
+  edm::InputTag hltResults;
+  edm::InputTag l2Muons;
+  edm::InputTag l3Muons;
   edm::InputTag standAloneMuons;
   edm::InputTag genMuons;
   edm::InputTag globalMuons;
@@ -186,6 +196,8 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   void addBremCandidates(std::vector<zp2mu::DiMuon>& diMuons, 
 			 const bool debug = false);
 
+  bool eventIsInteresting();
+
  protected:  // the muons need to be accessible from our derived classes
   std::vector<zp2mu::Muon> allMuons[MAX_LEVELS];
   std::vector<zp2mu::Muon> bestMuons;
@@ -200,6 +212,9 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   unsigned int leptonFlavor;
 
   std::vector<l1extra::L1ParticleMap::L1TriggerType> l1paths;
+  std::vector<std::string> hltModules[2]; // in order: L2, L3
+  std::vector<std::string> hltPaths;
+
 };
 
 ostream& operator<<(ostream& out, const TLorentzVector& vect);

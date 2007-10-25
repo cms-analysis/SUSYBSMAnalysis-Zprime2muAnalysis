@@ -10,14 +10,18 @@
 #include "CLHEP/GenericFunctions/CumulativeChiSquare.hh"
 
 #include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/TriggerNames.h"
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
+#include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/DetId/interface/DetId.h"
+#include "DataFormats/HLTReco/interface/HLTFilterObject.h"
 #include "DataFormats/Math/interface/Vector.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonTrackLinks.h"
+#include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
 #include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
 #include "DataFormats/SiStripDetId/interface/StripSubdetector.h"
 #include "DataFormats/TrackingRecHit/interface/TrackingRecHit.h"
@@ -132,6 +136,9 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
     generatedOnly = false;
   }
 
+  if (generatedOnly || reconstructedOnly)
+    doingGeant4 = false;
+
   // whether we are looking at electrons instead of muons
   doingElectrons = config.getParameter<bool>("doingElectrons");
 
@@ -139,6 +146,9 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   // input tags for the reco collections we need
   l1ParticleMap   = config.getParameter<edm::InputTag>("l1ParticleMap");
   l1Muons         = config.getParameter<edm::InputTag>("l1Muons");
+  hltResults = config.getParameter<edm::InputTag>("hltResults");
+  l2Muons = config.getParameter<edm::InputTag>("hltL2Muons");
+  l3Muons = config.getParameter<edm::InputTag>("hltL3Muons");
   standAloneMuons = config.getParameter<edm::InputTag>("standAloneMuons");
   genMuons = config.getParameter<edm::InputTag>("genMuons");
   globalMuons = config.getParameter<edm::InputTag>("globalMuons");
@@ -150,7 +160,7 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
 
   if (doingElectrons) {
     leptonFlavor = 11;
-    //ELECTRON mass in GeV/c^2
+    // ELECTRON mass in GeV/c^2
     MUMASS = 0.000511;
   }
   else {
@@ -161,6 +171,18 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
     // Level-1 paths we want to use for the trigger decision.
     l1paths.push_back(l1extra::L1ParticleMap::kSingleMu7);
     l1paths.push_back(l1extra::L1ParticleMap::kDoubleMu3);
+
+    // Level-2 paths (actually, the names of the modules ran)
+    hltModules[0].push_back("SingleMuNoIsoL2PreFiltered");
+    hltModules[0].push_back("DiMuonNoIsoL2PreFiltered");
+    // Level-3 paths (module names)
+    hltModules[1].push_back("SingleMuNoIsoL3PreFiltered");
+    hltModules[1].push_back("DiMuonNoIsoL3PreFiltered");
+    
+    // HLT paths (the logical ANDs of L2 and L3 single/dimuon paths
+    // above)
+    hltPaths.push_back("HLT1MuonNonIso");
+    hltPaths.push_back("HLT2MuonNonIso");
   }
 
   InitROOT();
@@ -238,7 +260,7 @@ void Zprime2muAnalysis::storeGeneratedMuons(const edm::Event& event) {
 
   // Simulated tracks (i.e. GEANT particles).
   edm::Handle<edm::SimTrackContainer> simtracks;
-  if (!generatedOnly && doingGeant4)
+  if (doingGeant4)
     event.getByLabel("g4SimHits", simtracks);
 
   if (debug)
@@ -353,7 +375,7 @@ void Zprime2muAnalysis::storeGeneratedMuons(const edm::Event& event) {
     }
   }
 
-  if (!generatedOnly && doingGeant4) {
+  if (doingGeant4) {
     // Add GEANT muons which were not in PYTHIA list.
     for (edm::SimTrackContainer::const_iterator isimtrk = simtracks->begin();
 	 isimtrk != simtracks->end(); ++isimtrk) {
@@ -453,27 +475,47 @@ double Zprime2muAnalysis::invPError(const TrackType& track) {
 // -- use to mock up seedIndex
 // JMTBAD there's probably a better way to do this, since the collections for
 // GMR, TK, FMS, PMR all seem sorted in the same way
-int Zprime2muAnalysis::matchStandAloneMuon(
-                         const edm::Handle<reco::TrackCollection> staTracks,
-                         const reco::TrackRef& track) {
+int Zprime2muAnalysis::matchStandAloneMuon(const reco::TrackRef& track,
+					   bool relaxedMatch) {
+  const static bool debug = verbosity >= VERBOSITY_TOOMUCH;
+
+  if (!seedTracks.isValid())
+    throw cms::Exception("findClosestPhoton")
+      << "+++ photonCollection not set! +++\n";
+
   int closest_ndx = -1;
   double min_mag2 = 1e99;
   const double MAX_MAG2 = 1; // more than enough for a comparison between doubles
   int ndx = 0;
-  for (reco::TrackCollection::const_iterator stamu = staTracks->begin();
-       stamu != staTracks->end(); stamu++) {
-    if (stamu->charge() == track->charge()) {
+  ostringstream out;
+  if (debug)
+    out << "Matching with stand-alone muons:\n"
+	<< "Track to match:\ncharge = " << track->charge()
+	<< " p = " << track->momentum() << endl
+	<< "Stand-alone muons:\n";
+  for (reco::TrackCollection::const_iterator seedmu = seedTracks->begin();
+       seedmu != seedTracks->end(); seedmu++) {
+    if (debug)
+      out << "charge = " << seedmu->charge()
+	  << " p = " << seedmu->momentum();
+    if (seedmu->charge() == track->charge()) {
       // calling mag2 results in complaints from the linker, even though I'm linking
       // against ROOT... grr
-      double mag2 = (stamu->momentum() - track->momentum()).mag2();
+      double mag2 = (seedmu->momentum() - track->momentum()).mag2();
+      if (debug) out << " mag2: " << mag2;
       if (mag2 < min_mag2) {
 	closest_ndx = ndx;
 	min_mag2 = mag2;
       }
     }
+    if (debug) out << endl;
     ndx++;
   }
-  if (min_mag2 > MAX_MAG2) {
+
+  if (debug)
+    LogTrace("matchStandAloneMuon") << out.str();
+
+  if (min_mag2 > MAX_MAG2 && !relaxedMatch) {
     edm::LogWarning("matchStandAloneMuon")
       << "could not match stand-alone muon!\n"
       << "muon 3-momentum p = " << track->momentum();
@@ -517,40 +559,144 @@ bool Zprime2muAnalysis::isMotherOf(const reco::GenParticleCandidate& particle, c
          math::XYZVector mom = particle.daughter(igd)->momentum();
          if ( (fabs(mom.Eta() - mup.eta()) < 1e-5)
             &&(fabs(mom.Phi() - mup.phi()) < 1e-5)
-            &&(fabs(mom.Rho() - mup.pt()) < 1e-5) ) mumOK = true;
+            &&(fabs(mom.Rho() - mup.pt()) < 1e-5) ) mupOK = true;
       }
   }
   return ( mupOK && mumOK );
 }
 
+void Zprime2muAnalysis::storeL1Muons(const edm::Event& event) {
+  const static bool debug = (verbosity >= VERBOSITY_LOTS);
 
-// Fill a vector of Level-2 muons.  Use offline standalone muons for now
-// instead of true Level-2 muons (seeded by Level-1 tracks).
+  // Get Level-1 Global Muon Trigger muons.
+  edm::Handle<l1extra::L1MuonParticleCollection> l1MuColl;
+  event.getByLabel(l1Muons, l1MuColl);
+  if (debug) LogTrace("storeL1Muons")
+    << "Number of Level-1 muons: " << l1MuColl->size();
+ 
+  l1extra::L1MuonParticleCollection::const_iterator muItr;
+  int imu = 0;
+  for (muItr = l1MuColl->begin(); muItr != l1MuColl->end(); ++muItr) {
+    if (debug) LogTrace(" ")
+      << "   L1 mu #" << imu << " q = " << muItr->charge()
+      << " p = (" << muItr->px() << ", " << muItr->py()
+      << ", " << muItr->pz() << ", " << muItr->energy()
+      << ") pt = " << muItr->pt() << "\n"
+      << "    eta = " << muItr->eta() << " phi = " << muItr->phi() 
+      << " iso = " << muItr->isIsolated() << " mip = " << muItr->isMip()
+      << " fwd = " << muItr->isForward() << " rpc = " << muItr->isRPC();
+
+    if (muItr->pt() > PTMIN) {
+      zp2mu::Muon thisMu;
+      thisMu.fill(1, imu, l1, muItr->charge(), muItr->phi(), muItr->eta(),
+		  muItr->pt(), muItr->p());
+      //thisMu.setQuality((*igmt).Quality());
+      allMuons[l1].push_back(thisMu);
+      imu++;
+    }
+    else {
+      edm::LogWarning("storeL1Muons")
+	<< "Event " << eventNum
+	<< ": skipping L1 muon with pT = " << muItr->pt()
+	<< " p = " << muItr->p() << " eta = " << muItr->eta() << "\n";
+    }
+  }
+}
+
 void Zprime2muAnalysis::storeL2Muons(const edm::Event& event) {
+  const static bool debug = (verbosity >= VERBOSITY_LOTS);
 
-  // Null reference to tracker-only tracks.
-  reco::TrackRef tkTrack;
+  edm::Handle<reco::RecoChargedCandidateCollection> l2MuColl;
+  event.getByLabel(l2Muons, l2MuColl);
 
-  // Standalone muons.
-  edm::Handle<reco::TrackCollection> staTracks;
-  event.getByLabel(standAloneMuons, staTracks);
+  if (debug) LogTrace("storeL2Muons")
+    << "Number of Level-2 muons: " << l2MuColl->size();
 
-  // Empty collection of photons since they are not applicable.
-  reco::PhotonCollection photonCollection;
+  reco::RecoChargedCandidateCollection::const_iterator muItr;
+  int imu = 0;
+  for (muItr = l2MuColl->begin(); muItr != l2MuColl->end(); ++muItr) {
+    reco::TrackRef theTrack = muItr->track();
+    if (debug) LogTrace(" ")
+      << "   L2 mu #" << imu << " q = " << muItr->charge()
+      << " p = (" << muItr->px() << ", " << muItr->py()
+      << ", " << muItr->pz() << ", " << muItr->energy()
+      << ") pt = " << muItr->pt() << "\n"
+      << "    eta = " << muItr->eta() << " phi = " << muItr->phi();
+    
+    if (muItr->pt() > PTMIN) {
+      zp2mu::Muon thisMu;
+      thisMu.fill(1, imu, l2, muItr->charge(), muItr->phi(), muItr->eta(),
+		  muItr->pt(), muItr->p());
+      thisMu.setHits(0, 0, theTrack->recHitsSize());
+      thisMu.setDof(int(theTrack->ndof()));
+      thisMu.setChi2(theTrack->chi2());
+      thisMu.setEInvPt(invPtError(theTrack));
+      thisMu.setEInvP(invPError(theTrack));
+      allMuons[l2].push_back(thisMu);
+      imu++;
+    }
+    else {
+      edm::LogWarning("storeHLTMuons")
+	<< "Event " << eventNum
+	<< ": skipping L2 muon with pT = " << muItr->pt()
+	<< " p = " << muItr->p() << " eta = " << muItr->eta() << "\n";
+    }
+  }
+}
+
+// Fill a vector of Level-3 muons.
+// JMTBAD this is duplicate code as in storeOfflineMuons, except that
+// "muons" is a MuonTrackLinksCollection. to avoid duplicating code,
+// would have to play with templates (a lot).
+void Zprime2muAnalysis::storeL3Muons(const edm::Event& event) {
+  const static bool debug = verbosity >= VERBOSITY_LOTS;
+
+  edm::Handle<reco::MuonTrackLinksCollection> muons;
+  event.getByLabel(l3Muons, muons);
 
   int imu = 0;
-  // Loop over tracks.
-  for (unsigned int ista = 0; ista < staTracks->size(); ++ista) {
-    // Build the reference to the standalone track.
-    reco::TrackRef muTrack = reco::TrackRef(staTracks, ista);
+  ostringstream out;
+  if (debug)
+    out << "Number of Level-3 muons: " << muons->size() << endl;
 
-    // Do the rest only if muTrack is not empty.
-    if (muTrack.isNonnull()) {
-      bool isStored = storeOfflineMuon(imu, l2, muTrack, tkTrack, muTrack,
-				       ista, photonCollection);
+  for (reco::MuonTrackLinksCollection::const_iterator muon = muons->begin();
+       muon != muons->end(); muon++) {
+    // Null references to combined, tracker-only, and standalone muon tracks.
+    reco::TrackRef theTrack;
+    reco::TrackRef tkTrack, tk;
+    reco::TrackRef muTrack;
+
+    theTrack = muon->globalTrack();
+    // JMTBAD for some reason, the tracker track here is a track with 
+    // opposite charge! don't use it
+    tkTrack  = muon->trackerTrack();
+    muTrack  = muon->standAloneTrack();
+
+    if (debug) 
+      out << "   L3 mu #" << imu << ":\n"
+	  << "     theTrack: q=" << theTrack->charge()
+	  << " p=" << theTrack->momentum() << endl
+	  << "     tkTrack:  q=" << tkTrack->charge()
+	  << " p=" << tkTrack->momentum() << endl
+	  << "     muTrack:  q=" << muTrack->charge()
+	  << " p=" << muTrack->momentum() << endl;
+
+    // Do the rest only if theTrack is not empty.
+    if (theTrack.isNonnull()) {
+      // seedIndex is now the index into the standAloneMuon track
+      // collection
+      // do a relaxed match since the l2 muon in "muTrack" will have a
+      // slightly different momentum than the offline stand-alone
+      // muons
+      int seedIndex = matchStandAloneMuon(muon->standAloneTrack(), true);
+      bool isStored = storeOfflineMuon(imu, l3, theTrack, tk, muTrack,
+				       seedIndex);
       if (isStored) imu++;
     }
   }
+
+  if (debug)
+    LogTrace("storeL3Muons") << out.str();
 }
 
 // Fill a vector of off-line muons.
@@ -564,21 +710,6 @@ void Zprime2muAnalysis::storeOfflineMuons(const edm::Event& event,
 					  RECLEVEL irec, bool trackerOnly) {
   edm::Handle<reco::MuonCollection> muons;
   event.getByLabel(whichMuons, muons);
-
-  // we want to look at the standalone tracks as seeds for the different
-  // reconstructed muons -- can use the index into the collection as a 
-  // seedIndex?
-  edm::Handle<reco::TrackCollection> staTracks;
-  event.getByLabel(standAloneMuons, staTracks);
-
-  // Get collection of "corrected" (calibrated?) photons.
-  // Should we move this block one level up, to avoid calling if for every
-  // muon collection?
-  edm::Handle<reco::PhotonCollection> thePhotons;
-  event.getByLabel(photons, thePhotons);
-  const reco::PhotonCollection photonCollection = *(thePhotons.product());
-  //LogTrace("storeOfflineMuons")
-  //  << "Found " << photonCollection.size() << " photons";
 
   int imu = 0;
   for (reco::MuonCollection::const_iterator muon = muons->begin();
@@ -602,10 +733,9 @@ void Zprime2muAnalysis::storeOfflineMuons(const edm::Event& event,
     // Do the rest only if theTrack is not empty.
     if (theTrack.isNonnull()) {
       // seedIndex is now the index into the standAloneMuon track collection
-      int seedIndex = matchStandAloneMuon(staTracks, muon->standAloneMuon());
-
+      int seedIndex = matchStandAloneMuon(muon->standAloneMuon());
       bool isStored = storeOfflineMuon(imu, irec, theTrack, tkTrack, muTrack,
-				       seedIndex, photonCollection);
+				       seedIndex);
       if (isStored) imu++;
     }
   }
@@ -632,8 +762,7 @@ bool Zprime2muAnalysis::storeOfflineMuon(const int imu, const RECLEVEL irec,
 					 const reco::TrackRef& theTrack,
 					 const reco::TrackRef& tkTrack,
 					 const reco::TrackRef& muTrack,
-					 const int seedIndex,
-			 const reco::PhotonCollection& photonCollection) {
+					 const int seedIndex) {
   bool isStored = false;
 
   // Skip muons with non-positive number of dof.
@@ -735,7 +864,7 @@ bool Zprime2muAnalysis::storeOfflineMuon(const int imu, const RECLEVEL irec,
 
     if (verbosity >= VERBOSITY_LOTS)
       LogTrace(" ") << "irec = " << irec;
-    TLorentzVector photon = findClosestPhoton(theTrack, photonCollection);
+    TLorentzVector photon = findClosestPhoton(theTrack);
     thisMu.setClosestPhoton(photon);
 
     allMuons[irec].push_back(thisMu);
@@ -751,7 +880,7 @@ bool Zprime2muAnalysis::storeOfflineMuon(const int imu, const RECLEVEL irec,
 }
 
 bool Zprime2muAnalysis::storePixelMatchGsfElectron(const int imu, const RECLEVEL irec,
-						   const reco::PixelMatchGsfElectron& theElectron){
+						   const reco::PixelMatchGsfElectron& theElectron) {
   bool isStored=false;
 
   // Skip electrons with non-positive number of dof.
@@ -845,18 +974,21 @@ bool Zprime2muAnalysis::storePixelMatchGsfElectron(const int imu, const RECLEVEL
 }
 
 template <typename TrackType>
-TLorentzVector Zprime2muAnalysis::findClosestPhoton(
-                              const TrackType& theTrack,
-			      const reco::PhotonCollection& photonCollection) {
+TLorentzVector Zprime2muAnalysis::findClosestPhoton(const TrackType& theTrack) {
   static bool debug = verbosity >= VERBOSITY_LOTS;
+  
+  if (!photonCollection.isValid())
+    throw cms::Exception("findClosestPhoton")
+      << "+++ photonCollection not set! +++\n";
+
   double phdist = 999.0;
   reco::Particle::LorentzVector phclos; // 4-momentum of the closest PhotonCandidate
 
   double muon_eta = theTrack->eta();
   double muon_phi = theTrack->phi();
 
-  for (reco::PhotonCollection::const_iterator iph = photonCollection.begin();
-       iph != photonCollection.end(); iph++) {
+  for (reco::PhotonCollection::const_iterator iph = photonCollection->begin();
+       iph != photonCollection->end(); iph++) {
 
     reco::Photon thePhoton(*iph);
 
@@ -902,17 +1034,33 @@ double Zprime2muAnalysis::deltaR(const double eta1, const double phi1,
 // does the duty of what was done in MuExAnalysis::initialize()
 void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
   clearValues();
+  
   // Generated particles: GEANT and PYTHIA info
-  if (!reconstructedOnly)
-    storeGeneratedMuons(event);
+  storeGeneratedMuons(event);
 
   if (!generatedOnly) {
+    // Store handles to the stand-alone track and photon collections
+    // so that we don't have to pass them into storeL3/OfflineMuons
+    // so many times.
+
+    // we want to look at the standalone tracks as seeds for the different
+    // reconstructed muons -- can use the index into the collection as a 
+    // seedIndex?
+    // JMTBAD switch to the actual L2 muon tracks? 
+    event.getByLabel(standAloneMuons, seedTracks);
+
+    // Get collection of "corrected" (calibrated?) photons.
+    event.getByLabel(photons, photonCollection);
+    
     if (!doingElectrons) {
+
       // Level-1.
       storeL1Decision(event);
       storeL1Muons(event);
-      // Standalone muons; should be replaced by Level-2 muons
+      // HLT 
       storeL2Muons(event);
+      storeL3Muons(event);
+      storeHLTDecision(event);
       // off-line muons reconstructed with GlobalMuonProducer
       storeOfflineMuons(event, globalMuons, lgmr);
       // store the muons using the tracker-only tracks
@@ -1570,7 +1718,7 @@ Zprime2muAnalysis::makeDileptons(const int rec,
     math::XYZPoint vertexs[MAX_DILEPTONS];
     for (pmu = muons.begin(); pmu != muons.end(); pmu++) {
       int pid = pmu->genMotherId();
-      if (pid == 32 || pid == 23 || pid == 39) { // Z', Z0, or G
+      if (isResonance(pid)) {
 	bool isnewdil = true;
 	int  idxdil = -999;
 	for (i_dil = 0; i_dil < n_dil; i_dil++) {
@@ -2422,23 +2570,13 @@ bool Zprime2muAnalysis::passTrigger(const int irec) {
       << "+++ passTrigger error: L" << irec << " trigger is unknown +++\n";
   }
 
-  if (irec == l1) {
-    return passTrig[irec];
-  }
-  else {
-    // JMTBAD Fake; all events pass trigger for now...
-    trigWord[irec] = 1; 
-    passTrig[irec] = true;
-    return true;
-  }
+  return passTrig[irec];
 }
 
 bool Zprime2muAnalysis::passTrigger() {
   unsigned int decision = 1;
 
-  // BAD: always accept L2 and L3 for now.
-  //for (int itrig = l1; itrig <= l3; itrig++) {
-  for (int itrig = l1; itrig <= l1; itrig++) {
+  for (int itrig = l1; itrig <= l3; itrig++) {
     decision *= trigWord[itrig];
   }
   return (decision != 0);
@@ -2476,42 +2614,68 @@ void Zprime2muAnalysis::storeL1Decision(const edm::Event& event) {
   passTrig[l1] = (trigbits != 0);
 }
 
-void Zprime2muAnalysis::storeL1Muons(const edm::Event& event) {
-  const static bool debug = (verbosity >= VERBOSITY_LOTS);
+void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
+  const static bool debug = (verbosity >= VERBOSITY_SIMPLE);
+  ostringstream out;
 
-  // Get Level-1 Global Muon Trigger muons.
-  edm::Handle<l1extra::L1MuonParticleCollection> l1MuColl;
-  event.getByLabel(l1Muons, l1MuColl);
-  if (debug) LogTrace("storeL1Muons")
-    << "Number of Level-1 muons: " << l1MuColl->size();
- 
-  l1extra::L1MuonParticleCollection::const_iterator muItr;
-  int imu = 0;
-  for (muItr = l1MuColl->begin(); muItr != l1MuColl->end(); ++muItr) {
-    if (debug) LogTrace(" ")
-      << "   L1 mu #" << imu << " q = " << muItr->charge()
-      << " p = (" << muItr->px() << ", " << muItr->py()
-      << ", " << muItr->pz() << ", " << muItr->energy()
-      << ") pt = " << muItr->pt() << "\n"
-      << "    eta = " << muItr->eta() << " phi = " << muItr->phi() 
-      << " iso = " << muItr->isIsolated() << " mip = " << muItr->isMip()
-      << " fwd = " << muItr->isForward() << " rpc = " << muItr->isRPC();
+  // Try to get the HLT TriggerResults object now, before
+  // trying to get the HLTFilterObjectWithRefs below
+  // so that if there is no HLT information in the file, 
+  // getByLabel will go ahead and throw an exception.
+  edm::Handle<edm::TriggerResults> hltRes;
+  event.getByLabel(hltResults, hltRes);
+  edm::TriggerNames hltTrigNames;
+  hltTrigNames.init(*hltRes);
 
-    if (muItr->pt() > PTMIN) {
-      zp2mu::Muon thisMu;
-      thisMu.fill(1, imu, l1, muItr->charge(), muItr->phi(), muItr->eta(),
-		  muItr->pt(), muItr->p());
-      //thisMu.setQuality((*igmt).Quality());
-      allMuons[l1].push_back(thisMu);
-      imu++;
+  if (debug) out << "storeHLTDecision():\n";
+
+  for (unsigned int lvl = 0; lvl < 2; lvl++) {
+    unsigned int trigbits = 0;
+    for (unsigned int ipath = 0; ipath < hltModules[lvl].size(); ipath++) {
+      edm::Handle<reco::HLTFilterObjectWithRefs> hltFilterObjs;
+      bool fired = true;
+      try {
+	event.getByLabel(hltModules[lvl][ipath], hltFilterObjs);
+      }
+      catch (const cms::Exception& e) {
+	fired = false;
+      }
+      if (fired) trigbits = trigbits | (1 << ipath);
+      if (debug)
+	out << "  " << setw(30) << hltModules[lvl][ipath]
+	    << ": decision = " << fired << endl;
     }
-    else {
-      edm::LogWarning("storeL1Muons")
-	<< "Event " << eventNum
-	<< ": skipping L1 muon with pT = " << muItr->pt()
-	<< " p = " << muItr->p() << " eta = " << muItr->eta() << "\n";
-    }
+    unsigned int l = l2 + lvl;
+    trigWord[l] = trigbits;
+    passTrig[l] = (trigbits != 0);
+    out << "  trigWord[l" << l << "]: " << trigWord[l] << endl;
   }
+
+  /*
+  for (unsigned int i = 0; i < hltRes->size(); i++) {
+    cout << "Trig #" << i << " " << hltTrigNames.triggerName(i)
+	 << " Decision: " << hltRes->accept(i) << endl;
+  }
+  */
+
+  if (debug) {
+    for (unsigned int i = 0; i < hltPaths.size(); i++) {
+      int ndx = hltTrigNames.triggerIndex(hltPaths[i]);
+      out << "  HLT path #" << ndx << ": " << hltPaths[i]
+	  << " decision = " << hltRes->accept(ndx) << endl;
+    }
+
+    LogTrace("storeHLTDecision") << out.str();
+  }
+}
+
+bool Zprime2muAnalysis::eventIsInteresting() {
+  if (bestDiMuons.size() > 0) {
+    const zp2mu::DiMuon& dimu = bestDiMuons[0];
+    if (dimu.resV().M() > 500)
+      return true;
+  }
+  return false;
 }
 
 void Zprime2muAnalysis::analyze(const edm::Event& event,
@@ -2519,6 +2683,13 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   // could store the whole event/eventsetup object if needed
   eventNum = event.id().event();
   storeMuons(event);
+  // if the event is "interesting" and verbosity is set such that
+  // we aren't already dumping all events, dump the event
+  if (verbosity == VERBOSITY_NONE && eventIsInteresting()) {
+    edm::LogInfo("Zprime2muAnalysis") << "'Interesting' event found!";
+    dumpEvent(true, true, true, true, true);
+    dumpDiMuonMasses();
+  }
 }
 
 void Zprime2muAnalysis::beginJob(const edm::EventSetup& eSetup) {

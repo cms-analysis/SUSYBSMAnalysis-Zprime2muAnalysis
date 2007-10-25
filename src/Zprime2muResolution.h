@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "TFile.h"
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TProfile.h"
@@ -40,6 +41,7 @@ class Zprime2muResolution : public Zprime2muAnalysis {
 
   int getOrigin(const int motherId);
 
+  void WriteHistos();
   void DeleteHistos();
 
   void DrawResHistos();
@@ -52,15 +54,15 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   TH2F *L1TrigFailMu2VsMu1, *L1TrigPassMu2VsMu1;
   TH1F *L2MuonHits, *L3TrackerHits, *GMRMuonHits[3], *GMRChi2dof[3];
   TH1F *NMuons[NUM_REC_LEVELS][4], *NumDilVsRec, *SignOfDil[NUM_REC_LEVELS];
-  TH1F *MuonEta[NUM_REC_LEVELS], *MuonRap[NUM_REC_LEVELS], *MuonPhi[NUM_REC_LEVELS];
-  TH1F *MuonPt[NUM_REC_LEVELS], *MuonPz[NUM_REC_LEVELS], *MuonP[NUM_REC_LEVELS];
-  TH2F *MuonPVsEta[NUM_REC_LEVELS], *MuonPtVsEta[NUM_REC_LEVELS];
-  TH1F *AllDilMass[NUM_REC_LEVELS], *DilMass[NUM_REC_LEVELS];
-  TH2F *DilMassVsEta[NUM_REC_LEVELS], *DilMassVsY[NUM_REC_LEVELS];
-  TH2F *MuMVsMuP[NUM_REC_LEVELS][3];
-  TH1F *Phi[NUM_REC_LEVELS][3], *Eta[NUM_REC_LEVELS][3], *Rapidity[NUM_REC_LEVELS][3];
-  TProfile *PVsEta[NUM_REC_LEVELS][3], *PtVsEta[NUM_REC_LEVELS][3];
-  TH1F *Pt[NUM_REC_LEVELS][3], *Pz[NUM_REC_LEVELS][3], *P[NUM_REC_LEVELS][3];
+  TH1F *MuonEta[MAX_LEVELS+1], *MuonRap[MAX_LEVELS+1], *MuonPhi[MAX_LEVELS+1];
+  TH1F *MuonPt[MAX_LEVELS+1], *MuonPz[MAX_LEVELS+1], *MuonP[MAX_LEVELS+1];
+  TH2F *MuonPVsEta[MAX_LEVELS+1], *MuonPtVsEta[MAX_LEVELS+1];
+  TH1F *AllDilMass[MAX_LEVELS+1], *DilMass[MAX_LEVELS+1];
+  TH2F *DilMassVsEta[MAX_LEVELS+1], *DilMassVsY[MAX_LEVELS+1];
+  TH2F *MuMVsMuP[MAX_LEVELS+1][3];
+  TH1F *Phi[MAX_LEVELS+1][3], *Eta[MAX_LEVELS+1][3], *Rapidity[MAX_LEVELS+1][3];
+  TProfile *PVsEta[MAX_LEVELS+1][3], *PtVsEta[MAX_LEVELS+1][3];
+  TH1F *Pt[MAX_LEVELS+1][3], *Pz[MAX_LEVELS+1][3], *P[MAX_LEVELS+1][3];
   TH1F *ZonDilMass[NUM_REC_LEVELS], *ZofDilMass[NUM_REC_LEVELS];
   TH1F *Eta4muons, *Pt4muons;
   TH1F *EtaRes[MAX_LEVELS+1], *PhiRes[MAX_LEVELS+1], *PtDiff[MAX_LEVELS+1];
@@ -68,7 +70,7 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   TProfile *GenPhiResVsPhi[3], *PResVsP[MAX_LEVELS+1], *GenPResVsPt[3];
   TProfile *GenInvPResVsPt[3], *GenInvPtResVsPt[3];
   TH2F *GenEtaResScat[3], *GenPhiResScat[3], *GenPtResScat[3];
-  TH1F *AllDilMassRes[3], *GenDilMassRes[3], *GenDilMassFrRes[3];
+  TH1F *AllDilMassRes, *GenDilMassRes[3], *GenDilMassFrRes[3];
   TProfile *GenDilMassResScat[3], *GenDilMassFrResScat[3];
   TH1F *L1EtaRes[2], *L1PhiRes[2], *L1PtDiff[2];
   TH2F *L1EtaResScat[2], *L1PhiResScat[2], *L1PtResScat[2];
@@ -96,7 +98,11 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   double lowerMassWin;
   double upperMassWin;
   int binSize;
+  double maxTrigMass;
+
   std::string outputFile;
+  bool doResolutions;
+  TFile* histoFile;
 };
 
 #endif // ZP2MURESOLUTION_H

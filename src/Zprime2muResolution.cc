@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "TCanvas.h"
+#include "TFile.h"
 #include "TPad.h"
 #include "TPostScript.h"
 #include "TStyle.h"
@@ -35,7 +36,10 @@ Zprime2muResolution::Zprime2muResolution(const edm::ParameterSet& config)
   lowerMassWin = dataSetConfig.getParameter<double>("lowerMassWin");
   upperMassWin = dataSetConfig.getParameter<double>("upperMassWin");
   binSize = dataSetConfig.getParameter<int>("binSize");
+  maxTrigMass = dataSetConfig.getParameter<double>("maxTrigMass");
 
+  string fn = config.getUntrackedParameter<string>("histoFile");
+  histoFile = new TFile(fn.c_str(), "RECREATE");
   BookResHistos();
   BookEffHistos();
   BookPtResHistos();
@@ -45,40 +49,47 @@ Zprime2muResolution::Zprime2muResolution(const edm::ParameterSet& config)
 
 Zprime2muResolution::~Zprime2muResolution() {
   DeleteHistos();
+  delete histoFile;
+}
+
+inline string nameHist(const char* s, int i, int j = -1) {
+  string x = string(s) + char(i + 48);
+  if (j >= 0) x += char(j + 48);
+  return x.c_str();
 }
 
 void Zprime2muResolution::BookResHistos() {
   // Origin of muons
-  Origin[0] = new TH1F("","Particle Id of Mother of all mu's", 20, 0, 20);
-  Origin[1] = new TH1F("","Particle Id of Mother of opp-sign dilepton mu's",
+  Origin[0] = new TH1F("Origin0","Particle Id of Mother of all mu's", 20, 0, 20);
+  Origin[1] = new TH1F("Origin1","Particle Id of Mother of opp-sign dilepton mu's",
 		       20, 0, 20);
 
   // Trigger decisions
-  TrigResult[0][0] = new TH1F("", "Gen, all events",        5, 0., 5.);
-  TrigResult[1][0] = new TH1F("", "L1 trigger, all events", 5, 0., 5.);
-  TrigResult[2][0] = new TH1F("", "L2 trigger, all events", 5, 0., 5.);
-  TrigResult[3][0] = new TH1F("", "L3 trigger, all events", 5, 0., 5.);
-  TrigResult[0][1] = new TH1F("", "Gen, #eta < 2.4",        5, 0., 5.);
-  TrigResult[1][1] = new TH1F("","L1 trigger, #eta < 2.4",  5, 0., 5.);
-  TrigResult[2][1] = new TH1F("","L2 trigger, #eta < 2.4",  5, 0., 5.);
-  TrigResult[3][1] = new TH1F("","L3 trigger, #eta < 2.4",  5, 0., 5.);
-  TrigResult[0][2] = new TH1F("", "Gen, #eta < 2.1",        5, 0., 5.);
-  TrigResult[1][2] = new TH1F("","L1 trigger, #eta < 2.1",  5, 0., 5.);
-  TrigResult[2][2] = new TH1F("","L2 trigger, #eta < 2.1",  5, 0., 5.);
-  TrigResult[3][2] = new TH1F("","L3 trigger, #eta < 2.1",  5, 0., 5.);
+  TrigResult[0][0] = new TH1F("TrigResult00", "Gen, all events",        5, 0., 5.);
+  TrigResult[1][0] = new TH1F("TrigResult10", "L1 trigger, all events", 5, 0., 5.);
+  TrigResult[2][0] = new TH1F("TrigResult20", "L2 trigger, all events", 5, 0., 5.);
+  TrigResult[3][0] = new TH1F("TrigResult30", "L3 trigger, all events", 5, 0., 5.);
+  TrigResult[0][1] = new TH1F("TrigResult01", "Gen, #eta < 2.4",        5, 0., 5.);
+  TrigResult[1][1] = new TH1F("TrigResult11","L1 trigger, #eta < 2.4",  5, 0., 5.);
+  TrigResult[2][1] = new TH1F("TrigResult21","L2 trigger, #eta < 2.4",  5, 0., 5.);
+  TrigResult[3][1] = new TH1F("TrigResult31","L3 trigger, #eta < 2.4",  5, 0., 5.);
+  TrigResult[0][2] = new TH1F("TrigResult02", "Gen, #eta < 2.1",        5, 0., 5.);
+  TrigResult[1][2] = new TH1F("TrigResult12","L1 trigger, #eta < 2.1",  5, 0., 5.);
+  TrigResult[2][2] = new TH1F("TrigResult22","L2 trigger, #eta < 2.1",  5, 0., 5.);
+  TrigResult[3][2] = new TH1F("TrigResult32","L3 trigger, #eta < 2.1",  5, 0., 5.);
 
-  TrigMass[0][0] = new TH1F("", "Gen mass, Gen, all events", 27, 0., 5.4);
-  TrigMass[1][0] = new TH1F("", "Gen mass, L1, all events",  27, 0., 5.4);
-  TrigMass[2][0] = new TH1F("", "Gen mass, L2, all events",  27, 0., 5.4);
-  TrigMass[3][0] = new TH1F("", "Gen mass, L3, all events",  27, 0., 5.4);
-  TrigMass[0][1] = new TH1F("", "Gen mass, Gen, #eta < 2.4", 27, 0., 5.4);
-  TrigMass[1][1] = new TH1F("", "Gen mass, L1, #eta < 2.4",  27, 0., 5.4);
-  TrigMass[2][1] = new TH1F("", "Gen mass, L2, #eta < 2.4",  27, 0., 5.4);
-  TrigMass[3][1] = new TH1F("", "Gen mass, L3, #eta < 2.4",  27, 0., 5.4);
-  TrigMass[0][2] = new TH1F("", "Gen mass, Gen, #eta < 2.1", 27, 0., 5.4);
-  TrigMass[1][2] = new TH1F("", "Gen mass, L1, #eta < 2.1",  27, 0., 5.4);
-  TrigMass[2][2] = new TH1F("", "Gen mass, L2, #eta < 2.1",  27, 0., 5.4);
-  TrigMass[3][2] = new TH1F("", "Gen mass, L3, #eta < 2.1",  27, 0., 5.4);
+  TrigMass[0][0] = new TH1F("TrigMass00", "Gen mass, Gen, all events", 27, 0., maxTrigMass);
+  TrigMass[1][0] = new TH1F("TrigMass10", "Gen mass, L1, all events",  27, 0., maxTrigMass);
+  TrigMass[2][0] = new TH1F("TrigMass20", "Gen mass, L2, all events",  27, 0., maxTrigMass);
+  TrigMass[3][0] = new TH1F("TrigMass30", "Gen mass, L3, all events",  27, 0., maxTrigMass);
+  TrigMass[0][1] = new TH1F("TrigMass01", "Gen mass, Gen, #eta < 2.4", 27, 0., maxTrigMass);
+  TrigMass[1][1] = new TH1F("TrigMass11", "Gen mass, L1, #eta < 2.4",  27, 0., maxTrigMass);
+  TrigMass[2][1] = new TH1F("TrigMass21", "Gen mass, L2, #eta < 2.4",  27, 0., maxTrigMass);
+  TrigMass[3][1] = new TH1F("TrigMass31", "Gen mass, L3, #eta < 2.4",  27, 0., maxTrigMass);
+  TrigMass[0][2] = new TH1F("TrigMass02", "Gen mass, Gen, #eta < 2.1", 27, 0., maxTrigMass);
+  TrigMass[1][2] = new TH1F("TrigMass12", "Gen mass, L1, #eta < 2.1",  27, 0., maxTrigMass);
+  TrigMass[2][2] = new TH1F("TrigMass22", "Gen mass, L2, #eta < 2.1",  27, 0., maxTrigMass);
+  TrigMass[3][2] = new TH1F("TrigMass32", "Gen mass, L3, #eta < 2.1",  27, 0., maxTrigMass);
 
   // Define errors
   for (int i_rec = 0; i_rec < NUM_REC_LEVELS; i_rec++) {
@@ -87,102 +98,102 @@ void Zprime2muResolution::BookResHistos() {
     }
   }
 
-  EventsInAccFailed  = new TH1F("", "Events in acc., failed", 5, 0., 5.);
-  L1TrigFailSingleMu = new TH1F("", "pT, failed 1mu L1", 25, 0., 25.);
-  L1TrigFailMu2VsMu1 = new TH2F("", "pT mu2 vs pT mu1, failed di-mu L1",
+  EventsInAccFailed  = new TH1F("EventsInAccFailed", "Events in acc., failed", 5, 0., 5.);
+  L1TrigFailSingleMu = new TH1F("L1TrigFailSingleMu", "pT, failed 1mu L1", 25, 0., 25.);
+  L1TrigFailMu2VsMu1 = new TH2F("L1TrigFailMu2VsMu1", "pT mu2 vs pT mu1, failed di-mu L1",
 				25, 0., 25., 25, 0., 25.);
-  L1TrigPassSingleMu = new TH1F("", "pT, passed 1mu L1", 25, 0., 25.);
-  L1TrigPassMu2VsMu1 = new TH2F("", "pT mu2 vs pT mu1, passed di-mu L1",
+  L1TrigPassSingleMu = new TH1F("L1TrigPassSingleMu", "pT, passed 1mu L1", 25, 0., 25.);
+  L1TrigPassMu2VsMu1 = new TH2F("L1TrigPassMu2VsMu1", "pT mu2 vs pT mu1, passed di-mu L1",
 				25, 0., 25., 25, 0., 25.);
 
-  L2MuonHits    = new TH1F("", "Muon hits, Level-2", 25, 0., 25.);
-  L3TrackerHits = new TH1F("", "Tracker hits (pixel+silicon), Level-3",
+  L2MuonHits    = new TH1F("L2MuonHits", "Muon hits, Level-2", 25, 0., 25.);
+  L3TrackerHits = new TH1F("L3TrackerHits", "Tracker hits (pixel+silicon), Level-3",
 			   25, 0., 25.);
-  GMRMuonHits[0]= new TH1F("", "Muon hits, GMR, barrel",  25, 0., 25.);
-  GMRMuonHits[1]= new TH1F("", "Muon hits, GMR, overlap", 25, 0., 25.);
-  GMRMuonHits[2]= new TH1F("", "Muon hits, GMR, endcap",  25, 0., 25.);
-  GMRChi2dof[0] = new TH1F("", "Chi2/d.o.f., GMR, barrel",  100, 0., 5.);
-  GMRChi2dof[1] = new TH1F("", "Chi2/d.o.f., GMR, overlap", 100, 0., 5.);
-  GMRChi2dof[2] = new TH1F("", "Chi2/d.o.f., GMR, endcap",  100, 0., 5.);
+  GMRMuonHits[0]= new TH1F("GMRMuonHits0", "Muon hits, GMR, barrel",  25, 0., 25.);
+  GMRMuonHits[1]= new TH1F("GMRMuonHits1", "Muon hits, GMR, overlap", 25, 0., 25.);
+  GMRMuonHits[2]= new TH1F("GMRMuonHits2", "Muon hits, GMR, endcap",  25, 0., 25.);
+  GMRChi2dof[0] = new TH1F("GMRChi2dof0", "Chi2/d.o.f., GMR, barrel",  100, 0., 5.);
+  GMRChi2dof[1] = new TH1F("GMRChi2dof1", "Chi2/d.o.f., GMR, overlap", 100, 0., 5.);
+  GMRChi2dof[2] = new TH1F("GMRChi2dof2", "Chi2/d.o.f., GMR, endcap",  100, 0., 5.);
 
   // Muons per event
-  NMuons[0][0] = new TH1F("", "Muons/Event, Gen", 10, 0, 10);
-  NMuons[1][0] = new TH1F("", "Muons/Event, L1",  10, 0, 10);
-  NMuons[2][0] = new TH1F("", "Muons/Event, L2",  10, 0, 10);
-  NMuons[3][0] = new TH1F("", "Muons/Event, L3",  10, 0, 10);
-  NMuons[0][1] = new TH1F("", "Muons/Event (w/ opp-sign dilepton), Gen",
+  NMuons[0][0] = new TH1F("NMuons00", "Muons/Event, Gen", 10, 0, 10);
+  NMuons[1][0] = new TH1F("NMuons10", "Muons/Event, L1",  10, 0, 10);
+  NMuons[2][0] = new TH1F("NMuons20", "Muons/Event, L2",  10, 0, 10);
+  NMuons[3][0] = new TH1F("NMuons30", "Muons/Event, L3",  10, 0, 10);
+  NMuons[0][1] = new TH1F("NMuons01", "Muons/Event (w/ opp-sign dilepton), Gen",
 			  10, 0, 10);
-  NMuons[1][1] = new TH1F("", "Muons/Event (w/ opp-sign dilepton), L1",
+  NMuons[1][1] = new TH1F("NMuons11", "Muons/Event (w/ opp-sign dilepton), L1",
 			  10, 0, 10);
-  NMuons[2][1] = new TH1F("", "Muons/Event (w/ opp-sign dilepton), L2",
+  NMuons[2][1] = new TH1F("NMuons21", "Muons/Event (w/ opp-sign dilepton), L2",
 			  10, 0, 10);
-  NMuons[3][1] = new TH1F("", "Muons/Event (w/ opp-sign dilepton), L3",
+  NMuons[3][1] = new TH1F("NMuons31", "Muons/Event (w/ opp-sign dilepton), L3",
 			  10, 0, 10);
-  NMuons[0][2] = new TH1F("", "Muons/Event, Gen, triggered", 10, 0., 10.);
-  NMuons[1][2] = new TH1F("", "Muons/Event, L1, triggered",  10, 0., 10.);
-  NMuons[2][2] = new TH1F("", "Muons/Event, L2, triggered",  10, 0., 10.);
-  NMuons[3][2] = new TH1F("", "Muons/Event, L3, triggered",  10, 0., 10.);
-  NMuons[0][3] = new TH1F("", "Muons/Event in acc., Gen, failed", 10, 0., 10.);
-  NMuons[1][3] = new TH1F("", "Muons/Event in acc., L1, failed",  10, 0., 10.);
-  NMuons[2][3] = new TH1F("", "Muons/Event in acc., L2, failed",  10, 0., 10.);
-  NMuons[3][3] = new TH1F("", "Muons/Event in acc., L3, failed",  10, 0., 10.);
-  NumDilVsRec  = new TH1F("", "Events w/ opp-sign dilepton vs Rec Level",
+  NMuons[0][2] = new TH1F("NMuons02", "Muons/Event, Gen, triggered", 10, 0., 10.);
+  NMuons[1][2] = new TH1F("NMuons12", "Muons/Event, L1, triggered",  10, 0., 10.);
+  NMuons[2][2] = new TH1F("NMuons22", "Muons/Event, L2, triggered",  10, 0., 10.);
+  NMuons[3][2] = new TH1F("NMuons32", "Muons/Event, L3, triggered",  10, 0., 10.);
+  NMuons[0][3] = new TH1F("NMuons03", "Muons/Event in acc., Gen, failed", 10, 0., 10.);
+  NMuons[1][3] = new TH1F("NMuons13", "Muons/Event in acc., L1, failed",  10, 0., 10.);
+  NMuons[2][3] = new TH1F("NMuons23", "Muons/Event in acc., L2, failed",  10, 0., 10.);
+  NMuons[3][3] = new TH1F("NMuons33", "Muons/Event in acc., L3, failed",  10, 0., 10.);
+  NumDilVsRec  = new TH1F("NumDilVsRec", "Events w/ opp-sign dilepton vs Rec Level",
 			   5, 0,  5);
-  SignOfDil[0] = new TH1F("", "Number of opp-sign dileptons, Gen",
+  SignOfDil[0] = new TH1F("SignOfDil0", "Number of opp-sign dileptons, Gen",
 			  2, 0,  2);
-  SignOfDil[1] = new TH1F("", "Number of opp-sign, like-sign dileptons, L1",
+  SignOfDil[1] = new TH1F("SignOfDil1", "Number of opp-sign, like-sign dileptons, L1",
 			  3, 0,  3);
-  SignOfDil[2] = new TH1F("", "Number of opp-sign, like-sign dileptons, L2",
+  SignOfDil[2] = new TH1F("SignOfDil2", "Number of opp-sign, like-sign dileptons, L2",
 			  3, 0,  3);
-  SignOfDil[3] = new TH1F("", "Number of opp-sign, like-sign dileptons, L3",
+  SignOfDil[3] = new TH1F("SignOfDil3", "Number of opp-sign, like-sign dileptons, L3",
 			  3, 0,  3);
 
   // Main kinematic variables for all muons
-  for (int i = 0; i < NUM_REC_LEVELS; i++) {
-    MuonEta[i] = new TH1F("", "Eta", 100, -5.,  5. );
-    MuonRap[i] = new TH1F("", "Y",   100, -5.,  5. );
-    MuonPhi[i] = new TH1F("", "Phi", 100,  0.,  6.3);
+  for (int i = 0; i <= MAX_LEVELS; i++) {
+    MuonEta[i] = new TH1F(nameHist("MuonEta", i).c_str(), "Eta", 100, -5.,  5. );
+    MuonRap[i] = new TH1F(nameHist("MuonRap", i).c_str(), "Y",   100, -5.,  5. );
+    MuonPhi[i] = new TH1F(nameHist("MuonPhi", i).c_str(), "Phi", 100,  0.,  6.3);
     if (i==1) {
-      MuonPt[i] = new TH1F("", "Pt", 100,  0.,  150.);
-      MuonPz[i] = new TH1F("", "Pz", 100,  0.,  800.);
-      MuonP[i]  = new TH1F("", "P",  100, -5.,  800.);
-      MuonPVsEta[i]  = new TH2F("", "P vs Eta",  100, -6., 6., 100, 0., 1000);
-      MuonPtVsEta[i] = new TH2F("", "Pt vs Eta", 100, -6., 6., 100, 0., 150);
+      MuonPt[i] = new TH1F(nameHist("MuonPt", i).c_str(), "Pt", 100,  0.,  150.);
+      MuonPz[i] = new TH1F(nameHist("MuonPz", i).c_str(), "Pz", 100,  0.,  800.);
+      MuonP[i]  = new TH1F(nameHist("MuonP", i).c_str(), "P",  100, -5.,  800.);
+      MuonPVsEta[i]  = new TH2F(nameHist("MuonPVsEta", i).c_str(), "P vs Eta",  100, -6., 6., 100, 0., 1000);
+      MuonPtVsEta[i] = new TH2F(nameHist("MuonPtVsEta", i).c_str(), "Pt vs Eta", 100, -6., 6., 100, 0., 150);
     }
     else {
-      MuonPt[i] = new TH1F("", "Pt", 100, 0.,    peakMass);
-      MuonPz[i] = new TH1F("", "Pz", 100, 0., 2.*peakMass);
-      MuonP[i]  = new TH1F("", "P",  100, 0., 2.*peakMass);
-      MuonPVsEta[i]  = new TH2F("", "P vs Eta",  100, -6., 6., 100, 0., 
+      MuonPt[i] = new TH1F(nameHist("MuonPt", i).c_str(), "Pt", 100, 0.,    peakMass);
+      MuonPz[i] = new TH1F(nameHist("MuonPz", i).c_str(), "Pz", 100, 0., 2.*peakMass);
+      MuonP[i]  = new TH1F(nameHist("MuonP", i).c_str(), "P",  100, 0., 2.*peakMass);
+      MuonPVsEta[i]  = new TH2F(nameHist("MuonPVsEta", i).c_str(), "P vs Eta",  100, -6., 6., 100, 0., 
 				2.*peakMass);
-      MuonPtVsEta[i] = new TH2F("", "Pt vs Eta", 100, -6., 6., 100, 0., 
+      MuonPtVsEta[i] = new TH2F(nameHist("MuonPtVsEta", i).c_str(), "Pt vs Eta", 100, -6., 6., 100, 0., 
 				   peakMass);
     }
 
     // Main kinematic variables for opp-sign dileptons and
     // muons associated with opp-sign dileptons
     if (i == 1) {
-      // AllDilMass[i] = new TH1F("", "Opp-sign Dilepton Mass before Q cuts",
+      // AllDilMass[i] = new TH1F(nameHist("AllDilMass", i).c_str(), "Opp-sign Dilepton Mass before Q cuts",
       //			       100, 0, 1200);
-      DilMass[i]    = new TH1F("", "Opp-sign Dilepton Mass", 100, 0, 1200);
-      DilMassVsEta[i] = new TH2F("", "Dilepton Mass vs Eta", 50, -10., 10.,
+      DilMass[i]    = new TH1F(nameHist("DilMass", i).c_str(), "Opp-sign Dilepton Mass", 100, 0, 1200);
+      DilMassVsEta[i] = new TH2F(nameHist("DilMassVsEta", i).c_str(), "Dilepton Mass vs Eta", 50, -10., 10.,
 				 100, 0, 1200);
-      DilMassVsY[i] = new TH2F("", "Dilepton Mass vs Y", 50, -5., 5., 100, 0,
+      DilMassVsY[i] = new TH2F(nameHist("DilMassVsY", i).c_str(), "Dilepton Mass vs Y", 50, -5., 5., 100, 0,
 			       1200);
-      MuMVsMuP[i][2] = new TH2F("","Pt  of mu- vs mu+", 100,0, 150,100, 0,150);
+      MuMVsMuP[i][2] = new TH2F(nameHist("MuMVsMuP", i, 2).c_str(),"Pt  of mu- vs mu+", 100,0, 150,100, 0,150);
     }
     else {
-      // AllDilMass[i] = new TH1F("", "Opp-sign Dilepton Mass before Q cuts",
+      // AllDilMass[i] = new TH1F(nameHist("AllDilMass", i).c_str(), "Opp-sign Dilepton Mass before Q cuts",
       //		       binSize, lowerMassWin,
       //		       upperMassWin);
-      DilMass[i]    = new TH1F("", "Opp-sign Dilepton Mass",
+      DilMass[i]    = new TH1F(nameHist("DilMass", i).c_str(), "Opp-sign Dilepton Mass",
 			       binSize, lowerMassWin,
 			       upperMassWin);
-      DilMassVsEta[i] = new TH2F("", "Dilepton Mass vs Eta", 50, -10., 10., 
+      DilMassVsEta[i] = new TH2F(nameHist("DilMassVsEta", i).c_str(), "Dilepton Mass vs Eta", 50, -10., 10., 
 				 50, 0, upperMassWin);
-      DilMassVsY[i] = new TH2F("", "Dilepton Mass vs Y", 50, -5., 5.,   50, 0, 
+      DilMassVsY[i] = new TH2F(nameHist("DilMassVsY", i).c_str(), "Dilepton Mass vs Y", 50, -5., 5.,   50, 0, 
 			       upperMassWin);
-      MuMVsMuP[i][2] = new TH2F("","Pt  of mu- vs mu+",
+      MuMVsMuP[i][2] = new TH2F(nameHist("MuMVsMuP", i, 2).c_str(),"Pt  of mu- vs mu+",
 				100, 0., peakMass,
 				100, 0., peakMass);
     }
@@ -190,46 +201,48 @@ void Zprime2muResolution::BookResHistos() {
     AllDilMass[i] =
       new TH1F("", tit.c_str(), 50, 0., upperMassWin);
 
-    MuMVsMuP[i][0] = new TH2F("","Eta of mu- vs mu+", 100, -3, 3, 100, -3, 3);
-    MuMVsMuP[i][1] = new TH2F("","Phi of mu- vs mu+", 100, 0, 6.28,100,0,6.28);
+    MuMVsMuP[i][0] = new TH2F(nameHist("MuMVsMuP", i, 0).c_str(),"Eta of mu- vs mu+", 100, -3, 3, 100, -3, 3);
+    MuMVsMuP[i][1] = new TH2F(nameHist("MuMVsMuP", i, 1).c_str(),"Phi of mu- vs mu+", 100, 0, 6.28,100,0,6.28);
     for (int j = 0; j < 3; j++) {
-      Phi[i][j]      = new TH1F("", "Phi",       100, 0., 6.3);
-      PVsEta[i][j]   = new TProfile("", "P vs Eta",  50, -6., 6.);
-      PtVsEta[i][j]  = new TProfile("", "Pt vs Eta", 50, -6., 6.);
-      Eta[i][j]      = new TH1F("", "Eta",          100, -5., 5.);
-      Rapidity[i][j] = new TH1F("", "y",            100, -5., 5.);
+      Phi[i][j]      = new TH1F(nameHist("Phi", i, j).c_str(), "Phi",       100, 0., 6.3);
+      PVsEta[i][j]   = new TProfile(nameHist("PVsEta", i, j).c_str(), "P vs Eta",  50, -6., 6.);
+      PtVsEta[i][j]  = new TProfile(nameHist("PtVsEta", i, j).c_str(), "Pt vs Eta", 50, -6., 6.);
+      Eta[i][j]      = new TH1F(nameHist("Eta", i, j).c_str(), "Eta",          100, -5., 5.);
+      Rapidity[i][j] = new TH1F(nameHist("Rapidity", i, j).c_str(), "y",            100, -5., 5.);
       if (j != 2) {
 	if (i == 1) { // mu+ and mu- at L1
-	  Pt[i][j] = new TH1F("", "Pt", 100, 0., 200.);
-	  P[i][j]  = new TH1F("", "P",  100, 0., 800.);
-	  Pz[i][j] = new TH1F("", "Pz", 100, 0., 800.);
+	  Pt[i][j] = new TH1F(nameHist("Pt", i, j).c_str(), "Pt", 100, 0., 200.);
+	  P[i][j]  = new TH1F(nameHist("P", i, j).c_str(), "P",  100, 0., 800.);
+	  Pz[i][j] = new TH1F(nameHist("Pz", i, j).c_str(), "Pz", 100, 0., 800.);
 	}
 	else {
-	  Pt[i][j] = new TH1F("", "Pt", 100, 0.,    peakMass);
-	  P[i][j]  = new TH1F("", "P",  100, 0., 2.*peakMass);
-	  Pz[i][j] = new TH1F("", "Pz", 100, 0., 2.*peakMass);
+	  Pt[i][j] = new TH1F(nameHist("Pt", i, j).c_str(), "Pt", 100, 0.,    peakMass);
+	  P[i][j]  = new TH1F(nameHist("P", i, j).c_str(), "P",  100, 0., 2.*peakMass);
+	  Pz[i][j] = new TH1F(nameHist("Pz", i, j).c_str(), "Pz", 100, 0., 2.*peakMass);
 	}
       }
       else { // Special range for dilepton values.
 	if (i==1) {
-	  Pt[i][j] = new TH1F("", "Pt", 100, 0., 200.);
-	  P[i][j]  = new TH1F("", "P",  100, 0., 800.);
-	  Pz[i][j] = new TH1F("", "Pz", 100, 0., 800.);	
+	  Pt[i][j] = new TH1F(nameHist("Pt", i, j).c_str(), "Pt", 100, 0., 200.);
+	  P[i][j]  = new TH1F(nameHist("P", i, j).c_str(), "P",  100, 0., 800.);
+	  Pz[i][j] = new TH1F(nameHist("Pz", i, j).c_str(), "Pz", 100, 0., 800.);	
 	}
 	else {
-	  Pt[i][j] = new TH1F("", "Pt", 100, 0., .5*peakMass);
-	  P[i][j]  = new TH1F("", "P",
+	  Pt[i][j] = new TH1F(nameHist("Pt", i, j).c_str(), "Pt", 100, 0., .5*peakMass);
+	  P[i][j]  = new TH1F(nameHist("P", i, j).c_str(), "P",
 			      100, 0, 1000.+upperMassWin);
-	  Pz[i][j] = new TH1F("", "Pz",
+	  Pz[i][j] = new TH1F(nameHist("Pz", i, j).c_str(), "Pz",
 			      100, 0, 1000.+upperMassWin);
 	}
       }
     }
-    ZonDilMass[i] = new TH1F("", "Highest Z mass", 100, 0., 120.);
-    ZofDilMass[i] = new TH1F("", "Second  Z mass", 100, 0., 120.);
   }
-  Eta4muons = new TH1F("", "Eta", 100, -5.,  5.);
-  Pt4muons  = new TH1F("", "pT",  100,  0.,100.);
+  for (int i = 0; i < NUM_REC_LEVELS; i++) {
+    ZonDilMass[i] = new TH1F(nameHist("ZonDilMass", i).c_str(), "Highest Z mass", 100, 0., 120.);
+    ZofDilMass[i] = new TH1F(nameHist("ZofDilMass", i).c_str(), "Second  Z mass", 100, 0., 120.);
+  }
+  Eta4muons = new TH1F("Eta4muons", "Eta", 100, -5.,  5.);
+  Pt4muons  = new TH1F("Pt4muons", "pT",  100,  0.,100.);
 
   // Differences between different levels of reconstruction
   for (int i = l1; i <= MAX_LEVELS; i++) {
@@ -239,156 +252,155 @@ void Zprime2muResolution::BookResHistos() {
     string tit_p   = "(" + str_level[i] + " P - Gen P)/(Gen P)";
     string tit_ppr = "(" + str_level[i] + " P - Gen P)/(Gen P) vs Gen P";
     if (i == l1) {
-      EtaRes[i] = new TH1F("", tit_eta.c_str(), 100, -0.1,  0.1);
-      PhiRes[i] = new TH1F("", tit_phi.c_str(), 100, -0.1,  0.1);
-      PtDiff[i] = new TH1F("", tit_pt.c_str(),  100, 
+      EtaRes[i] = new TH1F(nameHist("EtaRes", i).c_str(), tit_eta.c_str(), 100, -0.1,  0.1);
+      PhiRes[i] = new TH1F(nameHist("PhiRes", i).c_str(), tit_phi.c_str(), 100, -0.1,  0.1);
+      PtDiff[i] = new TH1F(nameHist("PtDiff", i).c_str(), tit_pt.c_str(),  100, 
 			   -700.-.2*peakMass,
 			   700.+.2*peakMass);
-      PRes[i]   = new TH1F("", tit_p.c_str(),   100, -1., 1.);
-      PResVsP[i]= new TProfile("", tit_ppr.c_str(), 50,
+      PRes[i]   = new TH1F(nameHist("PRes", i).c_str(), tit_p.c_str(),   100, -1., 1.);
+      PResVsP[i]= new TProfile(nameHist("PResVsP", i).c_str(), tit_ppr.c_str(), 50,
 			       0., upperMassWin, -1., 1.);
     }
     else if (i == l2) {
-      EtaRes[i] = new TH1F("", tit_eta.c_str(), 100, -0.01, 0.01);
-      PhiRes[i] = new TH1F("", tit_phi.c_str(), 100, -0.01, 0.01);
-      PtDiff[i] = new TH1F("", tit_pt.c_str(),  100,
+      EtaRes[i] = new TH1F(nameHist("EtaRes", i).c_str(), tit_eta.c_str(), 100, -0.01, 0.01);
+      PhiRes[i] = new TH1F(nameHist("PhiRes", i).c_str(), tit_phi.c_str(), 100, -0.01, 0.01);
+      PtDiff[i] = new TH1F(nameHist("PtDiff", i).c_str(), tit_pt.c_str(),  100,
 			-0.4*peakMass, 0.4*peakMass);
-      PRes[i]   = new TH1F("", tit_p.c_str(),   100, -1., 1.);
-      PResVsP[i]= new TProfile("", tit_ppr.c_str(), 50,
+      PRes[i]   = new TH1F(nameHist("PRes", i).c_str(), tit_p.c_str(),   100, -1., 1.);
+      PResVsP[i]= new TProfile(nameHist("PResVsP", i).c_str(), tit_ppr.c_str(), 50,
 			       0., upperMassWin, -1., 1.);
     }
     else {
-      EtaRes[i] = new TH1F("", tit_eta.c_str(), 100, -0.001,  0.001);
-      PhiRes[i] = new TH1F("", tit_phi.c_str(), 100, -0.0005, 0.0005);
-      PtDiff[i] = new TH1F("", tit_pt.c_str(),  100, 
+      EtaRes[i] = new TH1F(nameHist("EtaRes", i).c_str(), tit_eta.c_str(), 100, -0.001,  0.001);
+      PhiRes[i] = new TH1F(nameHist("PhiRes", i).c_str(), tit_phi.c_str(), 100, -0.0005, 0.0005);
+      PtDiff[i] = new TH1F(nameHist("PtDiff", i).c_str(), tit_pt.c_str(),  100, 
 		        -0.1*peakMass, 0.1*peakMass);
-      PRes[i]   = new TH1F("", tit_p.c_str(),   100, -0.3, 0.3);
-      PResVsP[i]= new TProfile("", tit_ppr.c_str(), 50,
+      PRes[i]   = new TH1F(nameHist("PRes", i).c_str(), tit_p.c_str(),   100, -0.3, 0.3);
+      PResVsP[i]= new TProfile(nameHist("PResVsP", i).c_str(), tit_ppr.c_str(), 50,
 			       0., upperMassWin, -0.3, 0.3);
     }
   }
 
-  GenPhiResVsPhi[0] = new TProfile("", "|L1 phi - Gen phi| vs Gen phi",
+  GenPhiResVsPhi[0] = new TProfile("GenPhiResVsPhi0", "|L1 phi - Gen phi| vs Gen phi",
 				   25, 0., 6.3, -0.1,  0.1);
-  GenPhiResVsPhi[1] = new TProfile("", "|L2 phi - Gen phi| vs Gen phi",
+  GenPhiResVsPhi[1] = new TProfile("GenPhiResVsPhi1", "|L2 phi - Gen phi| vs Gen phi",
 				   25, 0., 6.3, -0.1,  0.1);
-  GenPhiResVsPhi[2] = new TProfile("", "|L3 phi - Gen phi| vs Gen phi",
+  GenPhiResVsPhi[2] = new TProfile("GenPhiResVsPhi2", "|L3 phi - Gen phi| vs Gen phi",
 				   25, 0., 6.3, -0.01, 0.01);
 
-  GenInvPtRes[0] = new TH1F("", "(L1 1/Pt - Gen 1/Pt)/(Gen 1/Pt)", 100,
+  GenInvPtRes[0] = new TH1F("GenInvPtRes0", "(L1 1/Pt - Gen 1/Pt)/(Gen 1/Pt)", 100,
 			    -.6*peakMass/140.,
 			     .6*peakMass/140.);
-  GenInvPtRes[1] = new TH1F("", "(L2 1/Pt - Gen 1/Pt)/(Gen 1/Pt)", 100, -2, 2);
-  GenInvPtRes[2] = new TH1F("", "(L3 1/Pt - Gen 1/Pt)/(Gen 1/Pt)",
+  GenInvPtRes[1] = new TH1F("GenInvPtRes1", "(L2 1/Pt - Gen 1/Pt)/(Gen 1/Pt)", 100, -2, 2);
+  GenInvPtRes[2] = new TH1F("GenInvPtRes2", "(L3 1/Pt - Gen 1/Pt)/(Gen 1/Pt)",
 			    100, -0.3, 0.3);
-  GenInvPtResVsPt[0] = new TProfile("",
+  GenInvPtResVsPt[0] = new TProfile("GenInvPtResVsPt0",
                         "(L1 1/pT - Gen 1/pT)/(Gen 1/pT) vs Gen pT",
 				    50, 0., peakMass,
 				    -.6*peakMass/140.,
 				     .6*peakMass/140.);
-  GenInvPtResVsPt[1] = new TProfile("",
+  GenInvPtResVsPt[1] = new TProfile("GenInvPtResVsPt1",
                         "(L2 1/pT - Gen 1/pT)/(Gen 1/pT) vs Gen pT",
 				    50, 0., peakMass, -2., 2.);
-  GenInvPtResVsPt[2] = new TProfile("",
+  GenInvPtResVsPt[2] = new TProfile("GenInvPtResVsPt2",
                         "(L3 1/pT - Gen 1/pT)/(Gen 1/pT) vs Gen pT",
 				    50, 0., peakMass, -0.3, 0.3);
 
-  GenInvPRes[0] = new TH1F("", "(L1 1/P - Gen 1/P)/(Gen 1/P)", 100,
+  GenInvPRes[0] = new TH1F("GenInvPRes0", "(L1 1/P - Gen 1/P)/(Gen 1/P)", 100,
 			   -upperMassWin/200.,
 			    upperMassWin/200.);
-  GenInvPRes[1] = new TH1F("", "(L2 1/P - Gen 1/P)/(Gen 1/P)", 100, -2.,  2.);
-  GenInvPRes[2] = new TH1F("", "(L3 1/P - Gen 1/P)/(Gen 1/P)", 100, -0.3, 0.3);
-  GenPResVsPt[0] = new TProfile("", "(L1 P - Gen P)/(Gen P) vs Gen pT",
+  GenInvPRes[1] = new TH1F("GenInvPRes1", "(L2 1/P - Gen 1/P)/(Gen 1/P)", 100, -2.,  2.);
+  GenInvPRes[2] = new TH1F("GenInvPRes2", "(L3 1/P - Gen 1/P)/(Gen 1/P)", 100, -0.3, 0.3);
+  GenPResVsPt[0] = new TProfile("GenPResVsPt0", "(L1 P - Gen P)/(Gen P) vs Gen pT",
 				50, 0., .6*peakMass, -1.,  1.);
-  GenPResVsPt[1] = new TProfile("", "(L2 P - Gen P)/(Gen P) vs Gen pT",
+  GenPResVsPt[1] = new TProfile("GenPResVsPt1", "(L2 P - Gen P)/(Gen P) vs Gen pT",
 				50, 0., .6*peakMass, -1.,  1.);
-  GenPResVsPt[2] = new TProfile("", "(L3 P - Gen P)/(Gen P) vs Gen pT",
+  GenPResVsPt[2] = new TProfile("GenPResVsPt2", "(L3 P - Gen P)/(Gen P) vs Gen pT",
 				50, 0., .7*peakMass, -0.3, 0.3);
-  GenInvPResVsPt[0] = new TProfile("","(L1 1/P - Gen 1/P)/(Gen 1/P) vs Gen pT",
+  GenInvPResVsPt[0] = new TProfile("GenInvPResVsPt0","(L1 1/P - Gen 1/P)/(Gen 1/P) vs Gen pT",
 				   50, 0., peakMass,
 				-upperMassWin/200.,
 				 upperMassWin/200.);
-  GenInvPResVsPt[1] = new TProfile("","(L2 1/P - Gen 1/P)/(Gen 1/P) vs Gen pT",
+  GenInvPResVsPt[1] = new TProfile("GenInvPResVsPt1","(L2 1/P - Gen 1/P)/(Gen 1/P) vs Gen pT",
 				   50, 0., peakMass, -2.,  2.);
-  GenInvPResVsPt[2] = new TProfile("","(L3 1/P - Gen 1/P)/(Gen 1/P) vs Gen pT",
+  GenInvPResVsPt[2] = new TProfile("GenInvPResVsPt2","(L3 1/P - Gen 1/P)/(Gen 1/P) vs Gen pT",
 				   50, 0., peakMass, -0.3, 0.3);
 
-  GenEtaResScat[0] = new TH2F("", "L1 Eta vs Gen Eta", 100, -3, 3, 100, -3, 3);
-  GenEtaResScat[1] = new TH2F("", "L2 Eta vs Gen Eta", 100, -3, 3, 100, -3, 3);
-  GenEtaResScat[2] = new TH2F("", "L3 Eta vs Gen Eta", 100, -3, 3, 100, -3, 3);
-  GenPhiResScat[0]=new TH2F("", "L1 Phi vs Gen Phi", 100, 0, 6.3, 100, 0, 6.3);
-  GenPhiResScat[1]=new TH2F("", "L2 Phi vs Gen Phi", 100, 0, 6.3, 100, 0, 6.3);
-  GenPhiResScat[2]=new TH2F("", "L3 Phi vs Gen Phi", 100, 0, 6.3, 100, 0, 6.3);
-  GenPtResScat[0]  = new TH2F("", "L1 Pt vs Gen Pt",
+  GenEtaResScat[0] = new TH2F("GenEtaResScat0", "L1 Eta vs Gen Eta", 100, -3, 3, 100, -3, 3);
+  GenEtaResScat[1] = new TH2F("GenEtaResScat1", "L2 Eta vs Gen Eta", 100, -3, 3, 100, -3, 3);
+  GenEtaResScat[2] = new TH2F("GenEtaResScat2", "L3 Eta vs Gen Eta", 100, -3, 3, 100, -3, 3);
+  GenPhiResScat[0]=new TH2F("GenPhiResScat0", "L1 Phi vs Gen Phi", 100, 0, 6.3, 100, 0, 6.3);
+  GenPhiResScat[1]=new TH2F("GenPhiResScat1", "L2 Phi vs Gen Phi", 100, 0, 6.3, 100, 0, 6.3);
+  GenPhiResScat[2]=new TH2F("GenPhiResScat2", "L3 Phi vs Gen Phi", 100, 0, 6.3, 100, 0, 6.3);
+  GenPtResScat[0]  = new TH2F("GenPtResScat0", "L1 Pt vs Gen Pt",
 			      100, 0., peakMass, 100, 0., 200.);
-  GenPtResScat[1]  = new TH2F("", "L2 Pt vs Gen Pt",
+  GenPtResScat[1]  = new TH2F("GenPtResScat1", "L2 Pt vs Gen Pt",
 			      100, 0., peakMass,
 			      100, 0., peakMass);
-  GenPtResScat[2]  = new TH2F("", "L3 Pt vs Gen Pt",
+  GenPtResScat[2]  = new TH2F("GenPtResScat2", "L3 Pt vs Gen Pt",
 			      100, 0., peakMass,
 			      100, 0., peakMass);
-  AllDilMassRes[0] = AllDilMassRes[1] = 0;
-  AllDilMassRes[2] = new TH1F("", "L3 Mass - Gen Mass, before Q cuts", 100, 
+  AllDilMassRes = new TH1F("AllDilMassRes2", "L3 Mass - Gen Mass, before Q cuts", 100, 
+			   -.2*peakMass,
+			   .2*peakMass);
+  GenDilMassRes[0] = new TH1F("GenDilMassRes0", "L1 Mass - Gen Mass", 100,
+			      -peakMass, peakMass);
+  GenDilMassRes[1] = new TH1F("GenDilMassRes1", "L2 Mass - Gen Mass", 100,
+			      -peakMass, peakMass);
+  GenDilMassRes[2] = new TH1F("GenDilMassRes2", "L3 Mass - Gen Mass", 100,
 			      -.2*peakMass,
 			       .2*peakMass);
-  GenDilMassRes[0] = new TH1F("", "L1 Mass - Gen Mass", 100,
-			      -peakMass, peakMass);
-  GenDilMassRes[1] = new TH1F("", "L2 Mass - Gen Mass", 100,
-			      -peakMass, peakMass);
-  GenDilMassRes[2] = new TH1F("", "L3 Mass - Gen Mass", 100,
-			      -.2*peakMass,
-			       .2*peakMass);
-  GenDilMassFrRes[0] = new TH1F("","(L1 Mass-Gen Mass)/(Gen Mass)",100,-1.,1.);
-  GenDilMassFrRes[1] = new TH1F("","(L2 Mass-Gen Mass)/(Gen Mass)",100,-1.,1.);
-  GenDilMassFrRes[2] = new TH1F("","(L3 Mass-Gen Mass)/(Gen Mass)",
+  GenDilMassFrRes[0] = new TH1F("GenDilMassFrRes0","(L1 Mass-Gen Mass)/(Gen Mass)",100,-1.,1.);
+  GenDilMassFrRes[1] = new TH1F("GenDilMassFrRes1","(L2 Mass-Gen Mass)/(Gen Mass)",100,-1.,1.);
+  GenDilMassFrRes[2] = new TH1F("GenDilMassFrRes2","(L3 Mass-Gen Mass)/(Gen Mass)",
 				100, -0.2, 0.2);
-  GenDilMassResScat[0] = new TProfile("", "L1-Gen Mass vs Gen Mass", 25, 0.,
+  GenDilMassResScat[0] = new TProfile("GenDilMassResScat0", "L1-Gen Mass vs Gen Mass", 25, 0.,
 				      upperMassWin, 0., 
 			     peakMass*peakMass, " ");
-  GenDilMassResScat[1] = new TProfile("", "L2-Gen Mass vs Gen Mass", 25, 0.,
+  GenDilMassResScat[1] = new TProfile("GenDilMassResScat1", "L2-Gen Mass vs Gen Mass", 25, 0.,
 			              upperMassWin, 0., 
 			     peakMass*peakMass, " ");
-  GenDilMassResScat[2] = new TProfile("", "L3-Gen Mass vs Gen Mass", 25, 0.,
+  GenDilMassResScat[2] = new TProfile("GenDilMassResScat2", "L3-Gen Mass vs Gen Mass", 25, 0.,
 				      upperMassWin, 0., 
 			0.04*peakMass*peakMass, " ");
-  GenDilMassFrResScat[0] = new TProfile("",
+  GenDilMassFrResScat[0] = new TProfile("GenDilMassFrResScat0",
                             "(L1-Gen Mass)/(Gen Mass) vs Gen Mass",
 				   25, 0., upperMassWin, 
 					-1., 1., " ");
-  GenDilMassFrResScat[1] = new TProfile("",
+  GenDilMassFrResScat[1] = new TProfile("GenDilMassFrResScat1",
                             "(L2-Gen Mass)/(Gen Mass) vs Gen Mass",
 				   25, 0., upperMassWin, 
 					-1., 1., " ");
-  GenDilMassFrResScat[2] = new TProfile("",
+  GenDilMassFrResScat[2] = new TProfile("GenDilMassFrResScat2",
                             "(L3-Gen Mass)/(Gen Mass) vs Gen Mass",
 				   25, 0., upperMassWin, 
 					-0.2, 0.2, " ");
 
-  L1EtaRes[0] = new TH1F("", "L2 Eta - L1 Eta", 100, -0.1, 0.1);
-  L1EtaRes[1] = new TH1F("", "L3 Eta - L1 Eta", 100, -0.1, 0.1);
-  L1PhiRes[0] = new TH1F("", "L2 Phi - L1 Phi", 100, -0.1, 0.1);
-  L1PhiRes[1] = new TH1F("", "L3 Phi - L1 Phi", 100, -0.1, 0.1);
-  L1PtDiff[0] = new TH1F("", "L2 Pt - L1 Pt",   100, -200.,
+  L1EtaRes[0] = new TH1F("L1EtaRes0", "L2 Eta - L1 Eta", 100, -0.1, 0.1);
+  L1EtaRes[1] = new TH1F("L1EtaRes1", "L3 Eta - L1 Eta", 100, -0.1, 0.1);
+  L1PhiRes[0] = new TH1F("L1PhiRes0", "L2 Phi - L1 Phi", 100, -0.1, 0.1);
+  L1PhiRes[1] = new TH1F("L1PhiRes1", "L3 Phi - L1 Phi", 100, -0.1, 0.1);
+  L1PtDiff[0] = new TH1F("L1PtDiff0", "L2 Pt - L1 Pt",   100, -200.,
 			 -200.+peakMass);
-  L1PtDiff[1] = new TH1F("", "L3 Pt - L1 Pt",   100, -150., 
+  L1PtDiff[1] = new TH1F("L1PtDiff1", "L3 Pt - L1 Pt",   100, -150., 
 			 -150.+peakMass);
 
-  L1EtaResScat[0] = new TH2F("", "L2 Eta vs L1 Eta", 100, -3, 3, 100, -3, 3);
-  L1EtaResScat[1] = new TH2F("", "L3 Eta vs L1 Eta", 100, -3, 3, 100, -3, 3);
-  L1PhiResScat[0] = new TH2F("", "L2 Phi vs L1 Phi", 100, 0, 6.3, 100, 0, 6.3);
-  L1PhiResScat[1] = new TH2F("", "L3 Phi vs L1 Phi", 100, 0, 6.3, 100, 0, 6.3);
-  L1PtResScat[0]  = new TH2F("", "L2 Pt vs L1 Pt", 100, 0., 200.,
+  L1EtaResScat[0] = new TH2F("L1EtaResScat0", "L2 Eta vs L1 Eta", 100, -3, 3, 100, -3, 3);
+  L1EtaResScat[1] = new TH2F("L1EtaResScat1", "L3 Eta vs L1 Eta", 100, -3, 3, 100, -3, 3);
+  L1PhiResScat[0] = new TH2F("L1PhiResScat0", "L2 Phi vs L1 Phi", 100, 0, 6.3, 100, 0, 6.3);
+  L1PhiResScat[1] = new TH2F("L1PhiResScat1", "L3 Phi vs L1 Phi", 100, 0, 6.3, 100, 0, 6.3);
+  L1PtResScat[0]  = new TH2F("L1PtResScat0", "L2 Pt vs L1 Pt", 100, 0., 200.,
 			     100, 0., peakMass);
-  L1PtResScat[1]  = new TH2F("", "L3 Pt vs L1 Pt", 100, 0., 200.,
+  L1PtResScat[1]  = new TH2F("L1PtResScat1", "L3 Pt vs L1 Pt", 100, 0., 200.,
 			     100, 0., peakMass);
 
-  L2EtaRes = new TH1F("", "L3 Eta - L2 Eta", 100, -0.025, 0.025);
-  L2PhiRes = new TH1F("", "L3 Phi - L2 Phi", 100, -0.05,  0.05);
-  L2PtDiff = new TH1F("", "L3 Pt - L2 Pt",   100,
+  L2EtaRes = new TH1F("L2EtaRes", "L3 Eta - L2 Eta", 100, -0.025, 0.025);
+  L2PhiRes = new TH1F("L2PhiRes", "L3 Phi - L2 Phi", 100, -0.05,  0.05);
+  L2PtDiff = new TH1F("L2PtDiff", "L3 Pt - L2 Pt",   100,
 		      -.6*peakMass, .6*peakMass);
-  L2EtaResScat = new TH2F("", "L3 Eta vs L2 Eta", 100, -3,  3,  100, -3, 3);
-  L2PhiResScat = new TH2F("", "L3 Phi vs L2 Phi", 100,  0, 6.3,  100, 0, 6.3);
-  L2PtResScat  = new TH2F("", "L3 Pt vs L2 Pt", 100, 0., peakMass,
+  L2EtaResScat = new TH2F("L2EtaResScat", "L3 Eta vs L2 Eta", 100, -3,  3,  100, -3, 3);
+  L2PhiResScat = new TH2F("L2PhiResScat", "L3 Phi vs L2 Phi", 100,  0, 6.3,  100, 0, 6.3);
+  L2PtResScat  = new TH2F("L2PtResScat", "L3 Pt vs L2 Pt", 100, 0., peakMass,
 			  100, 0., peakMass);
 }
 
@@ -396,21 +408,21 @@ void Zprime2muResolution::BookEffHistos() {
   string tit;
   for (int i = lgen; i <= MAX_LEVELS; i++) {
     tit = "Gen eta, " + str_level[i] + " muons";
-    EffVsEta[i] = new TH1F("", tit.c_str(), 50, -2.5, 2.5);
+    EffVsEta[i] = new TH1F(nameHist("EffVsEta", i).c_str(), tit.c_str(), 50, -2.5, 2.5);
     tit = "Gen phi, " + str_level[i] + " muons";
-    EffVsPhi[i] = new TH1F("", tit.c_str(), 63,  0.,  6.3);
+    EffVsPhi[i] = new TH1F(nameHist("EffVsPhi", i).c_str(), tit.c_str(), 63,  0.,  6.3);
     tit = "Gen pT, "  + str_level[i] + " muons";
-    EffVsPt[i]  = new TH1F("", tit.c_str(), 35,  0., 3500.);
+    EffVsPt[i]  = new TH1F(nameHist("EffVsPt", i).c_str(), tit.c_str(), 35,  0., 3500.);
   }
 
-  RecMass[0][0] = new TH1F("", "Gen mass, gen, all",  27, 0., 5.4);
-  RecMass[0][1] = new TH1F("", "Gen mass, gen, in acceptance", 27, 0., 5.4);
-  RecMass[1][0] = new TH1F("", "Gen mass, L3, 2mu",   27, 0., 5.4);
-  RecMass[1][1] = new TH1F("", "Gen mass, L3, dimu",  27, 0., 5.4);
-  RecMass[2][0] = new TH1F("", "Gen mass, GMR, 2mu",  27, 0., 5.4);
-  RecMass[2][1] = new TH1F("", "Gen mass, GMR, dimu", 27, 0., 5.4);
-  RecMass[3][0] = new TH1F("", "Gen mass, TMR, 2mu",  27, 0., 5.4);
-  RecMass[3][1] = new TH1F("", "Gen mass, TMR, dimu", 27, 0., 5.4);
+  RecMass[0][0] = new TH1F("RecMass00", "Gen mass, gen, all",  27, 0., maxTrigMass);
+  RecMass[0][1] = new TH1F("RecMass01", "Gen mass, gen, in acceptance", 27, 0., maxTrigMass);
+  RecMass[1][0] = new TH1F("RecMass10", "Gen mass, L3, 2mu",   27, 0., maxTrigMass);
+  RecMass[1][1] = new TH1F("RecMass11", "Gen mass, L3, dimu",  27, 0., maxTrigMass);
+  RecMass[2][0] = new TH1F("RecMass20", "Gen mass, GMR, 2mu",  27, 0., maxTrigMass);
+  RecMass[2][1] = new TH1F("RecMass21", "Gen mass, GMR, dimu", 27, 0., maxTrigMass);
+  RecMass[3][0] = new TH1F("RecMass30", "Gen mass, TMR, 2mu",  27, 0., maxTrigMass);
+  RecMass[3][1] = new TH1F("RecMass31", "Gen mass, TMR, dimu", 27, 0., maxTrigMass);
 
   // Define errors
   for (int i = lgen; i <= MAX_LEVELS; i++) {
@@ -426,58 +438,58 @@ void Zprime2muResolution::BookEffHistos() {
 }
 
 void Zprime2muResolution::BookPtResHistos() {
-  ResidualPt[0] = new TProfile("", "(delta 1/pT)/(1/pT) vs Eta, pT < 10",
+  ResidualPt[0] = new TProfile("ResidualPt0", "(delta 1/pT)/(1/pT) vs Eta, pT < 10",
 			       12, 0., 2.4, -10., 10.); // very long tails
-  ResidualPt[1] = new TProfile("", "(delta 1/pT)/(1/pT) vs Eta, pT < 25",
+  ResidualPt[1] = new TProfile("ResidualPt1", "(delta 1/pT)/(1/pT) vs Eta, pT < 25",
 			       12, 0., 2.4, -10., 10.);
-  ResidualPt[2] = new TProfile("", "(delta 1/pT)/(1/pT) vs Eta, pT < 50",
+  ResidualPt[2] = new TProfile("ResidualPt2", "(delta 1/pT)/(1/pT) vs Eta, pT < 50",
 			       12, 0., 2.4, -10., 10.);
-  ResidualPt[3] = new TProfile("", "(delta 1/pT)/(1/pT) vs Eta, pT < 75",
+  ResidualPt[3] = new TProfile("ResidualPt3", "(delta 1/pT)/(1/pT) vs Eta, pT < 75",
 			       12, 0., 2.4, -10., 10.);
-  ResidualPt[4] = new TProfile("", "(delta 1/pT)/(1/pT) vs Eta, pT < 100",
+  ResidualPt[4] = new TProfile("ResidualPt4", "(delta 1/pT)/(1/pT) vs Eta, pT < 100",
 			       12, 0., 2.4, -10., 10.);
-  ResidualPt[5] = new TProfile("", "(delta 1/pT)/(1/pT) vs Eta, pT < 1000",
+  ResidualPt[5] = new TProfile("ResidualPt5", "(delta 1/pT)/(1/pT) vs Eta, pT < 1000",
 			       12, 0., 2.4, -10., 10.);
 
   // 1/p resolution for GMR and TMR, separately for barrel, overlap and endcap.
-  MuInvPRes[0][0] = new TH1F("", "1/P res, GMR, barrel",  100, -0.3, 0.3);
-  MuInvPRes[0][1] = new TH1F("", "1/P res, GMR, overlap", 100, -0.3, 0.3);
-  MuInvPRes[0][2] = new TH1F("", "1/P res, GMR, endcap",  100, -0.3, 0.3);
+  MuInvPRes[0][0] = new TH1F("MuInvPRes00", "1/P res, GMR, barrel",  100, -0.3, 0.3);
+  MuInvPRes[0][1] = new TH1F("MuInvPRes01", "1/P res, GMR, overlap", 100, -0.3, 0.3);
+  MuInvPRes[0][2] = new TH1F("MuInvPRes02", "1/P res, GMR, endcap",  100, -0.3, 0.3);
 
-  MuInvPRes[1][0] = new TH1F("", "1/P res, TMR, barrel",  100, -0.3, 0.3);
-  MuInvPRes[1][1] = new TH1F("", "1/P res, TMR, overlap", 100, -0.3, 0.3);
-  MuInvPRes[1][2] = new TH1F("", "1/P res, TMR, endcap",  100, -0.3, 0.3);
+  MuInvPRes[1][0] = new TH1F("MuInvPRes10", "1/P res, TMR, barrel",  100, -0.3, 0.3);
+  MuInvPRes[1][1] = new TH1F("MuInvPRes11", "1/P res, TMR, overlap", 100, -0.3, 0.3);
+  MuInvPRes[1][2] = new TH1F("MuInvPRes12", "1/P res, TMR, endcap",  100, -0.3, 0.3);
 
   // 1/pT resolution for GMR and TMR, separately for barrel, overlap and endcap
-  MuInvPtRes[0][0] = new TH1F("", "1/pT res, GMR, barrel",  100, -0.3, 0.3);
-  MuInvPtRes[0][1] = new TH1F("", "1/pT res, GMR, overlap", 100, -0.3, 0.3);
-  MuInvPtRes[0][2] = new TH1F("", "1/pT res, GMR, endcap",  100, -0.3, 0.3);
+  MuInvPtRes[0][0] = new TH1F("MuInvPtRes00", "1/pT res, GMR, barrel",  100, -0.3, 0.3);
+  MuInvPtRes[0][1] = new TH1F("MuInvPtRes01", "1/pT res, GMR, overlap", 100, -0.3, 0.3);
+  MuInvPtRes[0][2] = new TH1F("MuInvPtRes02", "1/pT res, GMR, endcap",  100, -0.3, 0.3);
 
-  MuInvPtRes[1][0] = new TH1F("", "1/pT res, TMR, barrel",  100, -0.3, 0.3);
-  MuInvPtRes[1][1] = new TH1F("", "1/pT res, TMR, overlap", 100, -0.3, 0.3);
-  MuInvPtRes[1][2] = new TH1F("", "1/pT res, TMR, endcap",  100, -0.3, 0.3);
+  MuInvPtRes[1][0] = new TH1F("MuInvPtRes10", "1/pT res, TMR, barrel",  100, -0.3, 0.3);
+  MuInvPtRes[1][1] = new TH1F("MuInvPtRes11", "1/pT res, TMR, overlap", 100, -0.3, 0.3);
+  MuInvPtRes[1][2] = new TH1F("MuInvPtRes12", "1/pT res, TMR, endcap",  100, -0.3, 0.3);
 
   // pT res for all fits
-  MuPtDiff[0] = new TH1F("",  "L3 pT - Gen pT", 100, -1500., 1500.);
-  MuPtDiff[1] = new TH1F("", "TMR pT - Gen pT", 100, -1500., 1500.);
-  TotInvPtRes[0] = new TH1F("", 
+  MuPtDiff[0] = new TH1F("MuPtDiff0",  "L3 pT - Gen pT", 100, -1500., 1500.);
+  MuPtDiff[1] = new TH1F("MuPtDiff1", "TMR pT - Gen pT", 100, -1500., 1500.);
+  TotInvPtRes[0] = new TH1F("TotInvPtRes0", 
 			     "(L3 1/pT - Gen 1/pT)/(Gen 1/pT)", 100, -.5, .5);
-  TotInvPtRes[1] = new TH1F("", "(Tracker Only 1/pT - Gen 1/pT)/(Gen 1/pT)", 
+  TotInvPtRes[1] = new TH1F("TotInvPtRes1", "(Tracker Only 1/pT - Gen 1/pT)/(Gen 1/pT)", 
 			     100, -.5, .5);
   TotInvPtRes[2] = 
     new TH1F("", "(Tracker + 1 mu-station 1/pT - Gen 1/pT)/(Gen 1/pT)", 
 	     100, -.5, .5);
-  //TotInvPtRes[3] = new TH1F("", "(ABCM 1/pT - Gen 1/pT)/(Gen 1/pT)", 
+  //TotInvPtRes[3] = new TH1F("TotInvPtRes3", "(ABCM 1/pT - Gen 1/pT)/(Gen 1/pT)", 
   //		    100, -.5, .5);
-  TotInvPtRes[3] = new TH1F("", "(Outer 1/pT - Gen 1/pT)/(Gen 1/pT)", 
+  TotInvPtRes[3] = new TH1F("TotInvPtRes3", "(Outer 1/pT - Gen 1/pT)/(Gen 1/pT)", 
 			    100, -.5, .5);
   // 1/pT pull for all fits
-  TotInvPtPull[0] = new TH1F("", "L3 1/pT Pull", 100, -10., 10.);
-  TotInvPtPull[1] = new TH1F("", "Tracker Only 1/pT Pull", 100, -10., 10.);
-  TotInvPtPull[2] = new TH1F("", "Tracker + 1 mu-station 1/pT Pull", 
+  TotInvPtPull[0] = new TH1F("TotInvPtPull0", "L3 1/pT Pull", 100, -10., 10.);
+  TotInvPtPull[1] = new TH1F("TotInvPtPull1", "Tracker Only 1/pT Pull", 100, -10., 10.);
+  TotInvPtPull[2] = new TH1F("TotInvPtPull2", "Tracker + 1 mu-station 1/pT Pull", 
 			     100, -10., 10.);
-  //TotInvPtPull[3] = new TH1F("", "ABCM 1/pT Pull", 100, -10., 10.);
-  TotInvPtPull[3] = new TH1F("", "Outer 1/pT Pull", 100, -10., 10.);
+  //TotInvPtPull[3] = new TH1F("TotInvPtPull3", "ABCM 1/pT Pull", 100, -10., 10.);
+  TotInvPtPull[3] = new TH1F("TotInvPtPull3", "Outer 1/pT Pull", 100, -10., 10.);
 
   // pT res for all fits (split up by barrel and endcap)
   InvPtRes[0][0] = new TH1F("eta < 1.04", "L3", 100, -.3, .3); 
@@ -507,18 +519,18 @@ void Zprime2muResolution::BookPtResHistos() {
 void Zprime2muResolution::BookDilResHistos(){
   // Dilepton mass spectra:
   //  - dilepton only (i=0);
-  //  - dileptom plus nearby photon candidates (i=1).
+  //  - dilepton plus nearby photon candidates (i=1).
   int nbins = binSize;
   double mass_min = lowerMassWin;
   double mass_max = upperMassWin;
   for (int i = lgen; i <= MAX_LEVELS; i++) {
     for (int j = 0; j < 2; j++) {
       if (i == l1 || i == l2) {
-	DilMassComp[i][j] = new TH1F("", str_level[i].c_str(), nbins,
+	DilMassComp[i][j] = new TH1F(nameHist("DilMassComp", i, j).c_str(), str_level[i].c_str(), nbins,
 				     0., mass_max);
       }
       else {
-	DilMassComp[i][j] = new TH1F("", str_level[i].c_str(), nbins,
+	DilMassComp[i][j] = new TH1F(nameHist("DilMassComp", i, j).c_str(), str_level[i].c_str(), nbins,
 				     mass_min, mass_max);
       }
     }
@@ -535,64 +547,64 @@ void Zprime2muResolution::BookDilResHistos(){
   for (int i = l1; i <= MAX_LEVELS; i++) {
     for (int j = 0; j < 6; j++) {
       if (i == l1 || i == l2) {
-	DilMassRes[i][j] = new TH1F("", str_level[i].c_str(), 100, -1.,  1.);
+	DilMassRes[i][j] = new TH1F(nameHist("DilMassRes", i, j).c_str(), str_level[i].c_str(), 100, -1.,  1.);
       }
       else {
-	DilMassRes[i][j] = new TH1F("", str_level[i].c_str(), 100, -0.3, 0.3);
+	DilMassRes[i][j] = new TH1F(nameHist("DilMassRes", i, j).c_str(), str_level[i].c_str(), 100, -0.3, 0.3);
       }
     }
   }
   for (int j = 0; j < 6; j++) {
-    DilMassRes[MAX_LEVELS+1][j] = new TH1F("", "TMR, D0 method",
+    DilMassRes[MAX_LEVELS+1][j] = new TH1F(nameHist("DilMassRes", MAX_LEVELS+1, j).c_str(), "TMR, D0 method",
 					   100, -0.3, 0.3);
   }
 
   // Dilepton pT resolution
   DilPtRes[0] = 0;
   for (int i = l1; i <= MAX_LEVELS; i++) {
-    DilPtRes[i] = new TH1F("", str_level[i].c_str(), 100, -1., 4.);
+    DilPtRes[i] = new TH1F(nameHist("DilPtRes", i).c_str(), str_level[i].c_str(), 100, -1., 4.);
   }
 
-  MuPVsMuM[0] = new TH2F("", "pT Rel Error for dM > 0.1", 100, 0., 1.,
+  MuPVsMuM[0] = new TH2F("MuPVsMuM0", "pT Rel Error for dM > 0.1", 100, 0., 1.,
 			 100, 0., 1.);
-  MuPVsMuM[1] = new TH2F("", "pT Rel Error for dM < 0.1", 100, 0., 1., 
+  MuPVsMuM[1] = new TH2F("MuPVsMuM1", "pT Rel Error for dM < 0.1", 100, 0., 1., 
 			 100, 0., 1.);
 }
 
 void Zprime2muResolution::BookChargeResHistos() {
   for (int i = l1; i <= MAX_LEVELS; i++) {
     string tit = str_level[i] + " charge - Gen charge";
-    QRes[i] = new TH1F("", tit.c_str(), 7, -3.5, 3.5);
+    QRes[i] = new TH1F(nameHist("QRes", i).c_str(), tit.c_str(), 7, -3.5, 3.5);
   }
 
-  QResVsPt[0][0] = new TH1F("", "L1 pT, right charge", 50, 0., 150.);
-  QResVsPt[1][0] = new TH1F("", "L2 pT, right charge", 50, 0., 500.);
-  QResVsPt[2][0] = new TH1F("", "L3 pT, right charge", 50, 0., 500.);
-  QResVsPt[0][1] = new TH1F("", "L1 pT, wrong charge", 50, 0., 150.);
-  QResVsPt[1][1] = new TH1F("", "L2 pT, wrong charge", 50, 0., 500.);
-  QResVsPt[2][1] = new TH1F("", "L3 pT, wrong charge", 50, 0., 500.);
-  QResVsInvPt[0][0] = new TH1F("", "1/L1pT, right charge", 50, 0., 0.04);
-  QResVsInvPt[1][0] = new TH1F("", "1/L2pT, right charge", 50, 0., 0.04);
-  QResVsInvPt[2][0] = new TH1F("", "1/L3pT, right charge", 50, 0., 0.04);
-  QResVsInvPt[0][1] = new TH1F("", "1/L1pT, wrong charge", 50, 0., 0.04);
-  QResVsInvPt[1][1] = new TH1F("", "1/L2pT, wrong charge", 50, 0., 0.04);
-  QResVsInvPt[2][1] = new TH1F("", "1/L3pT, wrong charge", 50, 0., 0.04);
-  QResVsP[0][0]  = new TH1F("", "L1 P, right charge", 50, 0., 750.);
-  QResVsP[1][0]  = new TH1F("", "L2 P, right charge", 50, 0., 
+  QResVsPt[0][0] = new TH1F("QResVsPt00", "L1 pT, right charge", 50, 0., 150.);
+  QResVsPt[1][0] = new TH1F("QResVsPt10", "L2 pT, right charge", 50, 0., 500.);
+  QResVsPt[2][0] = new TH1F("QResVsPt20", "L3 pT, right charge", 50, 0., 500.);
+  QResVsPt[0][1] = new TH1F("QResVsPt01", "L1 pT, wrong charge", 50, 0., 150.);
+  QResVsPt[1][1] = new TH1F("QResVsPt11", "L2 pT, wrong charge", 50, 0., 500.);
+  QResVsPt[2][1] = new TH1F("QResVsPt21", "L3 pT, wrong charge", 50, 0., 500.);
+  QResVsInvPt[0][0] = new TH1F("QResVsInvPt00", "1/L1pT, right charge", 50, 0., 0.04);
+  QResVsInvPt[1][0] = new TH1F("QResVsInvPt10", "1/L2pT, right charge", 50, 0., 0.04);
+  QResVsInvPt[2][0] = new TH1F("QResVsInvPt20", "1/L3pT, right charge", 50, 0., 0.04);
+  QResVsInvPt[0][1] = new TH1F("QResVsInvPt01", "1/L1pT, wrong charge", 50, 0., 0.04);
+  QResVsInvPt[1][1] = new TH1F("QResVsInvPt11", "1/L2pT, wrong charge", 50, 0., 0.04);
+  QResVsInvPt[2][1] = new TH1F("QResVsInvPt21", "1/L3pT, wrong charge", 50, 0., 0.04);
+  QResVsP[0][0]  = new TH1F("QResVsP00", "L1 P, right charge", 50, 0., 750.);
+  QResVsP[1][0]  = new TH1F("QResVsP10", "L2 P, right charge", 50, 0., 
 			    upperMassWin);
-  QResVsP[2][0]  = new TH1F("", "L3 P, right charge", 50, 0., 
+  QResVsP[2][0]  = new TH1F("QResVsP20", "L3 P, right charge", 50, 0., 
 			    upperMassWin);
-  QResVsP[0][1]  = new TH1F("", "L1 P, wrong charge", 50, 0., 750.);
-  QResVsP[1][1]  = new TH1F("", "L2 P, wrong charge", 50, 0., 
+  QResVsP[0][1]  = new TH1F("QResVsP01", "L1 P, wrong charge", 50, 0., 750.);
+  QResVsP[1][1]  = new TH1F("QResVsP11", "L2 P, wrong charge", 50, 0., 
 			    upperMassWin);
-  QResVsP[2][1]  = new TH1F("", "L3 P, wrong charge", 50, 0., 
+  QResVsP[2][1]  = new TH1F("QResVsP21", "L3 P, wrong charge", 50, 0., 
 			    upperMassWin);
-  QResVsInvP[0][0] = new TH1F("", "1/L1P, right charge", 50, 0., 0.02);
-  QResVsInvP[1][0] = new TH1F("", "1/L2P, right charge", 50, 0., 0.02);
-  QResVsInvP[2][0] = new TH1F("", "1/L3P, right charge", 50, 0., 0.02);
-  QResVsInvP[0][1] = new TH1F("", "1/L1P, wrong charge", 50, 0., 0.02);
-  QResVsInvP[1][1] = new TH1F("", "1/L2P, wrong charge", 50, 0., 0.02);
-  QResVsInvP[2][1] = new TH1F("", "1/L3P, wrong charge", 50, 0., 0.02);
+  QResVsInvP[0][0] = new TH1F("QResVsInvP00", "1/L1P, right charge", 50, 0., 0.02);
+  QResVsInvP[1][0] = new TH1F("QResVsInvP10", "1/L2P, right charge", 50, 0., 0.02);
+  QResVsInvP[2][0] = new TH1F("QResVsInvP20", "1/L3P, right charge", 50, 0., 0.02);
+  QResVsInvP[0][1] = new TH1F("QResVsInvP01", "1/L1P, wrong charge", 50, 0., 0.02);
+  QResVsInvP[1][1] = new TH1F("QResVsInvP11", "1/L2P, wrong charge", 50, 0., 0.02);
+  QResVsInvP[2][1] = new TH1F("QResVsInvP21", "1/L3P, wrong charge", 50, 0., 0.02);
 
   // Define errors
   for (int i_rec = l1; i_rec <= MAX_LEVELS; i_rec++) {
@@ -632,7 +644,9 @@ void Zprime2muResolution::calcResolution(const bool debug) {
   for (int i_rec = 0; i_rec < NUM_REC_LEVELS; i_rec++) {
     // Total number of muons found in each level of reconstruction.
     NMuons[i_rec][0]->Fill((double)allMuons[i_rec].size());
+  }
 
+  for (int i_rec = 0; i_rec <= MAX_LEVELS; i_rec++) {
     // Fill y, eta, phi, p, pt, pz, pt vs eta, p vs eta plots for all muons.
     fillMuonHistos(i_rec, debug);
   }
@@ -658,7 +672,7 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	}
       }
       else {
-	if (!doingHiggs)
+	if (!doingHiggs && !reconstructedOnly)
 	  edm::LogWarning("Zprime2muResolution")
 	    << "+++ Warning in calcResolution: " << diMuon.size()
 	    << " generated dimuons found! +++\n";
@@ -765,9 +779,9 @@ void Zprime2muResolution::calcResolution(const bool debug) {
       if (i_rec <= l3) AllDilMass[i_rec]->Fill(pdi->dimuV().M());
       if (i_rec == l3) {
 	if (diMuon.size() == allDiMuons[0].size())
-	  AllDilMassRes[i_rec-1]->
+	  AllDilMassRes->
 	    Fill(pdi->dimuV().M()-allDiMuons[0][pdi->id()].dimuV().M());
-	if (allDiMuons[0].size() <= 0)
+	if (!reconstructedOnly && allDiMuons[0].size() <= 0)
 	  edm::LogWarning("Zprime2muResolution")
 	    << "+++ Warning: no dilepton in the MC! +++\n";
       }
@@ -808,11 +822,9 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	  NMuons[i_rec][1]->Fill((double)allMuons[i_rec].size());
 
 	// Dilepton invariant mass.
-	if (i_rec <= l3) {
-	  DilMass[i_rec]->Fill(pdi->dimuV().M());
-	  DilMassVsEta[i_rec]->Fill(pdi->dimuV().Eta(),    pdi->dimuV().M());
-	  DilMassVsY[i_rec]->Fill(pdi->dimuV().Rapidity(), pdi->dimuV().M());
-	}
+	DilMass[i_rec]->Fill(pdi->dimuV().M());
+	DilMassVsEta[i_rec]->Fill(pdi->dimuV().Eta(),    pdi->dimuV().M());
+	DilMassVsY[i_rec]->Fill(pdi->dimuV().Rapidity(), pdi->dimuV().M());
 
 	TLorentzVector vmum, vmup;
 	zp2mu::Muon mum = pdi->muMinus();
@@ -821,11 +833,9 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	vmup.SetPtEtaPhiM(mup.pt(), mup.eta(), mup.phi(), MUMASS);
 
 	// A few mu- vs mu+ scatter plots
-	if (i_rec <= l3) {
-	  MuMVsMuP[i_rec][0]->Fill(vmup.Eta(), vmum.Eta());
-	  MuMVsMuP[i_rec][1]->Fill(mup.phi(),  mum.phi());
-	  MuMVsMuP[i_rec][2]->Fill(vmup.Pt(),  vmum.Pt());
-	}
+	MuMVsMuP[i_rec][0]->Fill(vmup.Eta(), vmum.Eta());
+	MuMVsMuP[i_rec][1]->Fill(mup.phi(),  mum.phi());
+	MuMVsMuP[i_rec][2]->Fill(vmup.Pt(),  vmum.Pt());
 
 	// Loop over "particle types": 0 stands for mu-, 1 - for mu+,
 	// 2 - for opposite sign dilepton.
@@ -855,16 +865,14 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	  else
 	    phival = tempV.Phi();
 
-	  if (i_rec <= l3) {
-	    Eta[i_rec][i_part]->Fill(tempV.Eta());
-	    Phi[i_rec][i_part]->Fill(phival);
-	    P[i_rec][i_part]->Fill(tempV.P());
-	    Pt[i_rec][i_part]->Fill(tempV.Pt());
-	    Pz[i_rec][i_part]->Fill(abs(tempV.Pz()));
-	    Rapidity[i_rec][i_part]->Fill(tempV.Rapidity());
-	    PVsEta[i_rec][i_part]->Fill(tempV.Eta(),  tempV.P());
-	    PtVsEta[i_rec][i_part]->Fill(tempV.Eta(), tempV.Pt());
-	  }
+	  Eta[i_rec][i_part]->Fill(tempV.Eta());
+	  Phi[i_rec][i_part]->Fill(phival);
+	  P[i_rec][i_part]->Fill(tempV.P());
+	  Pt[i_rec][i_part]->Fill(tempV.Pt());
+	  Pz[i_rec][i_part]->Fill(abs(tempV.Pz()));
+	  Rapidity[i_rec][i_part]->Fill(tempV.Rapidity());
+	  PVsEta[i_rec][i_part]->Fill(tempV.Eta(),  tempV.P());
+	  PtVsEta[i_rec][i_part]->Fill(tempV.Eta(), tempV.Pt());
 
 	  int id = pdi->id();
 	  // Calculate the resolution of each rec muon.
@@ -1006,7 +1014,7 @@ void Zprime2muResolution::fillEffHistos() {
 
   // Efficiency for single muons
   for (pmu = allMuons[lgen].begin(); pmu != allMuons[lgen].end(); pmu++) {
-    if (pmu->genMotherId() == 32) {
+    if (isResonance(pmu->genMotherId())) {
       gen_eta = pmu->eta();
       gen_phi = pmu->phi();
       gen_pt  = pmu->pt();
@@ -1357,7 +1365,7 @@ void Zprime2muResolution::fillMuonHistos(const int rec, const bool debug) {
   TLorentzVector lVect;
   double phival;
 
-  if (rec >= NUM_REC_LEVELS) {
+  if (rec > MAX_LEVELS) {
     throw cms::Exception("Zprime2muResolution")
       << "+++ Unknown rec. level = " << rec << " in fillMuonHistos() +++\n";
   }
@@ -1374,8 +1382,11 @@ void Zprime2muResolution::fillMuonHistos(const int rec, const bool debug) {
   }
 
   // Loop over all muons
+  vector<zp2mu::Muon>& muons = allMuons[rec];
+  if (rec == MAX_LEVELS) muons = bestMuons;
+
   vector<zp2mu::Muon>::const_iterator pmu;
-  for (pmu = allMuons[rec].begin(); pmu != allMuons[rec].end(); pmu++) {
+  for (pmu = muons.begin(); pmu != muons.end(); pmu++) {
 
     // Use TLorentzVector for easier access to variables such as Pz.
     lVect.SetPtEtaPhiM(pmu->pt(), pmu->eta(), pmu->phi(), MUMASS);
@@ -1654,6 +1665,140 @@ int Zprime2muResolution::getOrigin(const int motherId) {
   return origin;
 }
 
+void Zprime2muResolution::WriteHistos() {
+  // ResHistos
+  EventsInAccFailed->Write();
+  L1TrigFailSingleMu->Write();
+  L1TrigFailMu2VsMu1->Write();
+  L1TrigPassSingleMu->Write();
+  L1TrigPassMu2VsMu1->Write();
+  L2MuonHits->Write();
+  for (int i = 0; i < 3; i++) {
+    GMRMuonHits[i]->Write();
+    GMRChi2dof[i]->Write();
+  }
+  L3TrackerHits->Write();
+  NumDilVsRec->Write();
+  for (int i = 0; i < 4; i++)
+    for (int j = 0; j < 2; j++)
+      RecMass[i][j]->Write();
+  for (int i = 0; i <= MAX_LEVELS; i++) {
+    EffVsEta[i]->Write();
+    EffVsPhi[i]->Write();
+    EffVsPt[i]->Write();
+  }
+  for (int i = 0; i < NUM_REC_LEVELS; i++) {
+    for (int j = 0; j < 3; j++) {
+      TrigResult[i][j]->Write();
+      TrigMass[i][j]->Write();
+    }
+    for (int j = 0; j < 4; j++)
+      NMuons[i][j]->Write();
+    SignOfDil[i]->Write();
+    ZonDilMass[i]->Write();
+    ZofDilMass[i]->Write();
+  }
+  for (int i = 0; i <= MAX_LEVELS; i++) {
+    AllDilMass[i]->Write();
+    DilMass[i]->Write();
+    DilMassVsEta[i]->Write();
+    DilMassVsY[i]->Write();
+    MuonEta[i]->Write();
+    MuonPhi[i]->Write();
+    MuonRap[i]->Write();
+    MuonP[i]->Write();
+    MuonPt[i]->Write();
+    MuonPz[i]->Write();
+    MuonPVsEta[i]->Write();
+    MuonPtVsEta[i]->Write();
+    for (int j = 0; j < 3; j++) {
+      Eta[i][j]->Write();
+      Phi[i][j]->Write();
+      Rapidity[i][j]->Write();
+      P[i][j]->Write();
+      Pt[i][j]->Write();
+      Pz[i][j]->Write();
+      PVsEta[i][j]->Write();
+      PtVsEta[i][j]->Write();
+      MuMVsMuP[i][j]->Write();
+    }
+  }
+  Eta4muons->Write();
+  Pt4muons->Write();
+  for (int k = l1; k <= MAX_LEVELS; k++) {
+    EtaRes[k]->Write();
+    PhiRes[k]->Write();
+    PtDiff[k]->Write();
+    PRes[k]->Write();
+    PResVsP[k]->Write();
+  }
+  for (int k=0; k<3; k++) {
+    GenPhiResVsPhi[k]->Write();
+    GenInvPtRes[k]->Write();
+    GenInvPtResVsPt[k]->Write();
+    GenInvPRes[k]->Write();
+    GenPResVsPt[k]->Write();
+    GenInvPResVsPt[k]->Write();
+    GenEtaResScat[k]->Write();
+    GenPhiResScat[k]->Write();
+    GenPtResScat[k]->Write();
+    GenDilMassRes[k]->Write();
+    GenDilMassFrRes[k]->Write();
+    GenDilMassResScat[k]->Write();
+    GenDilMassFrResScat[k]->Write();
+  }
+  AllDilMassRes->Write();
+  for (int l=0; l<2; l++) {
+    Origin[l]->Write();
+    L1EtaRes[l]->Write();
+    L1PhiRes[l]->Write();
+    L1PtDiff[l]->Write();
+    L1EtaResScat[l]->Write();
+    L1PhiResScat[l]->Write();
+    L1PtResScat[l]->Write();
+  }
+  L2EtaRes->Write();
+  L2PhiRes->Write();
+  L2PtDiff->Write();
+  L2EtaResScat->Write();
+  L2PhiResScat->Write();
+  L2PtResScat->Write();
+  // end of ResHistos
+
+  // PtRes histos
+  for (int i = 0; i < 2; i++) {
+    MuPtDiff[i]->Write();
+    for (int j = 0; j < 3; j++) {
+      MuInvPRes[i][j]->Write();
+      MuInvPtRes[i][j]->Write();
+    }
+  }
+  for (int i_pt = 0; i_pt < 6; i_pt++)
+    ResidualPt[i_pt]->Write();
+  for (int i = 0; i < 4; i++) {
+    TotInvPtRes[i]->Write();
+    TotInvPtPull[i]->Write();
+    for (int j = 0; j < 2; j++) {
+      InvPtRes[i][j]->Write();
+      InvPtPull[i][j]->Write();
+    }
+  }
+
+  // DilRes histos
+  for (int i = 0; i <= MAX_LEVELS; i++) {
+    for (int j = 0; j < 2; j++)
+      DilMassComp[i][j]->Write();
+      if (i > 0) {
+      for (int j = 0; j < 6; j++)
+	DilMassRes[i][j]->Write();
+      DilPtRes[i]->Write();
+    }
+  }
+
+  for (unsigned int j = 0; j < 2; j++)
+    MuPVsMuM[j]->Write();
+}
+
 void Zprime2muResolution::DeleteHistos(){
   // ResHistos
   delete EventsInAccFailed;
@@ -1681,11 +1826,17 @@ void Zprime2muResolution::DeleteHistos(){
       delete TrigResult[i][j];
       delete TrigMass[i][j];
     }
+    for (int j = 0; j < 4; j++)
+      delete NMuons[i][j];
+    delete SignOfDil[i];
+    delete ZonDilMass[i];
+    delete ZofDilMass[i];
+  }
+  for (int i = 0; i <= MAX_LEVELS; i++) {
     delete AllDilMass[i];
     delete DilMass[i];
     delete DilMassVsEta[i];
     delete DilMassVsY[i];
-    delete SignOfDil[i];
     delete MuonEta[i];
     delete MuonPhi[i];
     delete MuonRap[i];
@@ -1694,8 +1845,6 @@ void Zprime2muResolution::DeleteHistos(){
     delete MuonPz[i];
     delete MuonPVsEta[i];
     delete MuonPtVsEta[i];
-    for (int j = 0; j < 4; j++)
-      delete NMuons[i][j];
     for (int j = 0; j < 3; j++) {
       delete Eta[i][j];
       delete Phi[i][j];
@@ -1707,8 +1856,6 @@ void Zprime2muResolution::DeleteHistos(){
       delete PtVsEta[i][j];
       delete MuMVsMuP[i][j];
     }
-    delete ZonDilMass[i];
-    delete ZofDilMass[i];
   }
   delete Eta4muons;
   delete Pt4muons;
@@ -1729,12 +1876,12 @@ void Zprime2muResolution::DeleteHistos(){
     delete GenEtaResScat[k];
     delete GenPhiResScat[k];
     delete GenPtResScat[k];
-    delete AllDilMassRes[k];
     delete GenDilMassRes[k];
     delete GenDilMassFrRes[k];
     delete GenDilMassResScat[k];
     delete GenDilMassFrResScat[k];
   }
+  delete AllDilMassRes;
   for (int l=0; l<2; l++) {
     delete Origin[l];
     delete L1EtaRes[l];
@@ -1796,7 +1943,7 @@ void Zprime2muResolution::DrawResHistos(){
   TCanvas *c1 = new TCanvas("c1", "", 0, 0, 500, 700);
   TPostScript *ps = new TPostScript(outputFile.c_str(), 111);
 
-  const int NUM_PAGES = 70;
+  const int NUM_PAGES = 90;
   TPad *pad[NUM_PAGES];
   for (int i_page = 0; i_page <= NUM_PAGES; i_page++)
     pad[i_page] = new TPad("","", .05, .05, .95, .93);
@@ -1942,13 +2089,19 @@ void Zprime2muResolution::DrawResHistos(){
   c1->Update();
   delete GMRChi2dofTot;
 
+  string histtitle;
+  int nbins;
+  Stat_t f_bin, ent_bin, err_bin;
+  // some temp histograms for plotting ratios
+  TH1F* ratio[2][6];
+
 #ifdef LATER
   // Off-line reconstruction efficiencies for muons
   ps->NewPage();
   c1->Clear();
   c1->cd(0);
   delete title; title = new TPaveLabel(0.1, 0.94, 0.9, 0.98,
-			 "Off-line Efficiency for Muons from Z' Decays");
+				       "Off-line Efficiency for Muons from Z' Decays");
   title->SetFillColor(10);
   title->Draw();
   strpage << "- " << (++page) << " -";
@@ -1991,7 +2144,7 @@ void Zprime2muResolution::DrawResHistos(){
   c1->Clear();
   c1->cd(0);
   delete title; title = new TPaveLabel(0.1, 0.94, 0.9, 0.98,
-			 "Efficiency for Muons from Z' Decays");
+				       "Efficiency for Muons from Z' Decays");
   title->SetFillColor(10);
   title->Draw();
   strpage << "- " << (++page) << " -";
@@ -2000,7 +2153,6 @@ void Zprime2muResolution::DrawResHistos(){
   pad[page]->Draw();
   pad[page]->Divide(2,4);
   TH1F *effvseta[MAX_LEVELS+1];
-  string histtitle;
   // Muon reconstruction efficiency (different reconstructors) as a
   // function of true eta. Only muons produced in Z' decays are used;
   // L1/HLT efficiency is not included.
@@ -2146,7 +2298,7 @@ void Zprime2muResolution::DrawResHistos(){
   c1->Update();
 
   // Draw Eta, Phi, Rap, momentum for all mu's for all rec levels
-  for (int i=0; i<NUM_REC_LEVELS; i++) {
+  for (int i=0; i<=MAX_LEVELS; i++) {
     ps->NewPage();
     c1->Clear();
     c1->cd(0);
@@ -2171,7 +2323,7 @@ void Zprime2muResolution::DrawResHistos(){
 
   // Draw Eta, Phi, Rap, momentum for all levels Mu+ and Mu- associated
   // with an opp-sign dilepton.
-  for (int i=0; i<NUM_REC_LEVELS; i++) {
+  for (int i=0; i<=MAX_LEVELS; i++) {
     for (int j=0; j<2; j++) {
       ps->NewPage();
       c1->Clear();
@@ -2197,7 +2349,7 @@ void Zprime2muResolution::DrawResHistos(){
   }
 
   // Opposite sign dileptons, at Gen, L1, L2 and L3
-  for (int i_rec = 0; i_rec < NUM_REC_LEVELS; i_rec++) {
+  for (int i_rec = 0; i_rec <= MAX_LEVELS; i_rec++) {
     // Eta, Phi, Rap and momentum
     ps->NewPage();
     c1->Clear();
@@ -2388,7 +2540,7 @@ void Zprime2muResolution::DrawResHistos(){
   for (int j = 0; j < 3; j++) {
     for (int i = 0; i < 2; i++) {
       pad[page]->cd(2*j+i+1);  MuInvPtRes[i][j]->Draw();
-                               MuInvPtRes[i][j]->Fit("gaus","Q");
+      MuInvPtRes[i][j]->Fit("gaus","Q");
     }
   }
   TH1F* MuInvPtResGMRTot = (TH1F*)MuInvPtRes[0][0]->Clone();
@@ -2411,7 +2563,7 @@ void Zprime2muResolution::DrawResHistos(){
   c1->Clear();
   c1->cd(0);
   delete title; title = new TPaveLabel(0.1, 0.94, 0.9, 0.98,
-			 "1/pT Resolution For Different Fits");
+				       "1/pT Resolution For Different Fits");
   title->SetFillColor(10);
   title->Draw();
   strpage << "- " << (++page) << " -";
@@ -2445,8 +2597,6 @@ void Zprime2muResolution::DrawResHistos(){
   c1->Update();
 
   // P resolution
-  int nbins;
-  Stat_t f_bin, ent_bin, err_bin;
   TH1F *PResVsPMod[MAX_LEVELS+1];
   for (int i_rec = l1; i_rec <= MAX_LEVELS; i_rec++) {
     histtitle = "Sqrt(Var((" + str_level[i_rec] + "-Gen P)/Gen P)) vs Gen P";
@@ -2535,7 +2685,7 @@ void Zprime2muResolution::DrawResHistos(){
   for (int j = 0; j < 3; j++) {
     for (int i = 0; i < 2; i++) {
       pad[page]->cd(2*j+i+1);  MuInvPRes[i][j]->Draw();
-                               MuInvPRes[i][j]->Fit("gaus","Q");
+      MuInvPRes[i][j]->Fit("gaus","Q");
     }
   }
   TH1F* MuInvPResGMRTot = (TH1F*)MuInvPRes[0][0]->Clone();
@@ -2579,6 +2729,27 @@ void Zprime2muResolution::DrawResHistos(){
   c1->Clear();
   c1->cd(0);
   delete title; title = new TPaveLabel(0.1, 0.94, 0.9, 0.98,
+			 "Invariant Mass Distributions, Dilepton Only (log scale)");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+  pad[page]->Draw();
+  pad[page]->Divide(2,5);
+  for (int i = 0; i < MAX_LEVELS+1; i++) {
+    pad[page]->cd(i+1);
+    gPad->SetLogy(1);
+    DilMassComp[i][0]->Draw();
+    DilMassComp[i][0]->GetXaxis()->SetTitle("#mu^{+}#mu^{-} mass");
+    DilMassComp[i][0]->GetYaxis()->SetTitle("Entries");
+    DilMassComp[i][0]->SetTitleOffset(1.2, "Y");
+  }
+  c1->Update();
+
+  ps->NewPage();
+  c1->Clear();
+  c1->cd(0);
+  delete title; title = new TPaveLabel(0.1, 0.94, 0.9, 0.98,
 			 "Invariant Mass Distributions, Including Photons");
   title->SetFillColor(10);
   title->Draw();
@@ -2595,12 +2766,33 @@ void Zprime2muResolution::DrawResHistos(){
   }
   c1->Update();
 
+  ps->NewPage();
+  c1->Clear();
+  c1->cd(0);
+  delete title; title = new TPaveLabel(0.1, 0.94, 0.9, 0.98,
+			 "Invariant Mass Distributions, Including Photons (log scale)");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+  pad[page]->Draw();
+  pad[page]->Divide(2,5);
+  for (int i = 0; i < MAX_LEVELS+1; i++) {
+    pad[page]->cd(i+1);
+    gPad->SetLogy(1);
+    DilMassComp[i][1]->Draw();
+    DilMassComp[i][1]->GetXaxis()->SetTitle("Resonance mass");
+    DilMassComp[i][1]->GetYaxis()->SetTitle("Entries");
+    DilMassComp[i][1]->SetTitleOffset(1.2, "Y");
+  }
+  c1->Update();
+
   // Mass Resolution in each level.
   ps->NewPage();
   c1->Clear();
   c1->cd(0);
   delete title; title = new TPaveLabel(0.1, 0.94, 0.9, 0.98,
-			 "Invariant Mass Resolution, Dilepton Only");
+				       "Invariant Mass Resolution, Dilepton Only");
   title->SetFillColor(10);
   title->Draw();
   strpage << "- " << (++page) << " -";
@@ -2615,8 +2807,8 @@ void Zprime2muResolution::DrawResHistos(){
   GenDilMassRes[1]->Fit("gaus","Q");
   pad[page]->cd(4);  GenDilMassFrRes[1]->Draw();
   GenDilMassFrRes[1]->Fit("gaus","Q");
-  pad[page]->cd(5);  AllDilMassRes[2]->Draw();
-  AllDilMassRes[2]->Fit("gaus","Q");
+  pad[page]->cd(5);  AllDilMassRes->Draw();
+  AllDilMassRes->Fit("gaus","Q");
   pad[page]->cd(7);  GenDilMassRes[2]->Draw();
   GenDilMassRes[2]->Fit("gaus","Q");
   pad[page]->cd(8);  GenDilMassFrRes[2]->Draw();
@@ -2627,7 +2819,7 @@ void Zprime2muResolution::DrawResHistos(){
   c1->Clear();
   c1->cd(0);
   delete title; title = new TPaveLabel(0.1, 0.94, 0.9, 0.98,
-			 "Invariant Mass Resolution, Dilepton Only");
+				       "Invariant Mass Resolution, Dilepton Only");
   title->SetFillColor(10);
   title->Draw();
   strpage << "- " << (++page) << " -";
@@ -2643,8 +2835,8 @@ void Zprime2muResolution::DrawResHistos(){
     histname << "Sqrt(Var(L" << i_rec + 1 << "-Gen Mass)) vs Gen Mass";
     nbins = GenDilMassResScat[i_rec]->GetNbinsX();
     MassResScat[i_rec] = new TH1F("", histname.str().c_str(), nbins,
-			   GenDilMassResScat[i_rec]->GetXaxis()->GetXmin(),
-			   GenDilMassResScat[i_rec]->GetXaxis()->GetXmax());
+				  GenDilMassResScat[i_rec]->GetXaxis()->GetXmin(),
+				  GenDilMassResScat[i_rec]->GetXaxis()->GetXmax());
     for (int ibin = 1; ibin <= nbins; ibin++) {
       f_bin   = GenDilMassResScat[i_rec]->GetBinContent(ibin);
       ent_bin = GenDilMassResScat[i_rec]->GetBinEntries(ibin);
@@ -2663,8 +2855,8 @@ void Zprime2muResolution::DrawResHistos(){
       "-Gen Mass)/Gen Mass)) vs Gen Mass";
     nbins = GenDilMassFrResScat[i_rec]->GetNbinsX();
     MassFrResScat[i_rec] = new TH1F("dm", histtitle.c_str(), nbins,
-			    GenDilMassFrResScat[i_rec]->GetXaxis()->GetXmin(),
-			    GenDilMassFrResScat[i_rec]->GetXaxis()->GetXmax());
+				    GenDilMassFrResScat[i_rec]->GetXaxis()->GetXmin(),
+				    GenDilMassFrResScat[i_rec]->GetXaxis()->GetXmax());
     for (int ibin = 1; ibin <= nbins; ibin++) {
       f_bin   = GenDilMassFrResScat[i_rec]->GetBinContent(ibin);
       ent_bin = GenDilMassFrResScat[i_rec]->GetBinEntries(ibin);
@@ -2691,7 +2883,7 @@ void Zprime2muResolution::DrawResHistos(){
   c1->Clear();
   c1->cd(0);
   delete title; title = new TPaveLabel(0.1, 0.94, 0.9, 0.98,
-			 "Dilepton Mass Resolution, Muons Only");
+				       "Dilepton Mass Resolution, Muons Only");
   title->SetFillColor(10);  title->Draw();
   strpage << "- " << (++page) << " -";
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
@@ -2712,7 +2904,7 @@ void Zprime2muResolution::DrawResHistos(){
   c1->Clear();
   c1->cd(0);
   delete title; title = new TPaveLabel(0.1, 0.94, 0.9, 0.98,
-			"Dilepton Mass Resolution w.r.t. True Resonance Mass");
+				       "Dilepton Mass Resolution w.r.t. True Resonance Mass");
   title->SetFillColor(10);  title->Draw();
   strpage << "- " << (++page) << " -";
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
@@ -2733,7 +2925,7 @@ void Zprime2muResolution::DrawResHistos(){
   c1->Clear();
   c1->cd(0);
   delete title; title = new TPaveLabel(0.1, 0.94, 0.9, 0.98,
-		       "Resonance Mass Resolution w.r.t. True Resonance Mass");
+				       "Resonance Mass Resolution w.r.t. True Resonance Mass");
   title->SetFillColor(10);  title->Draw();
   strpage << "- " << (++page) << " -";
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
@@ -2753,7 +2945,7 @@ void Zprime2muResolution::DrawResHistos(){
   c1->Clear();
   c1->cd(0);
   delete title; title = new TPaveLabel(0.1, 0.94, 0.9, 0.98,
-			 "Dilepton Mass Resolution at Z' Mass, Muons Only");
+				       "Dilepton Mass Resolution at Z' Mass, Muons Only");
   title->SetFillColor(10);  title->Draw();
   strpage << "- " << (++page) << " -";
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
@@ -2773,7 +2965,7 @@ void Zprime2muResolution::DrawResHistos(){
   c1->Clear();
   c1->cd(0);
   delete title; title = new TPaveLabel(0.1, 0.94, 0.9, 0.98,
-		      "Dilepton Mass Resolution at Z' Mass, w.r.t. True Mass");
+				       "Dilepton Mass Resolution at Z' Mass, w.r.t. True Mass");
   title->SetFillColor(10);  title->Draw();
   strpage << "- " << (++page) << " -";
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
@@ -2794,7 +2986,7 @@ void Zprime2muResolution::DrawResHistos(){
   c1->Clear();
   c1->cd(0);
   delete title; title = new TPaveLabel(0.1, 0.94, 0.9, 0.98,
-		     "Resonance Mass Resolution at Z' Mass, w.r.t. True Mass");
+				       "Resonance Mass Resolution at Z' Mass, w.r.t. True Mass");
   title->SetFillColor(10);  title->Draw();
   strpage << "- " << (++page) << " -";
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
@@ -2827,22 +3019,19 @@ void Zprime2muResolution::DrawResHistos(){
     pad[page]->cd(i_rec);  QRes[i_rec]->Draw("hist");
   }
   /* for (int ibin = 1; ibin <= QRes[3]->GetNbinsX(); ibin++) {
-       LogTrace("Zprime2muResolution") << "ibin = "     << ibin
-         << " entries = " << QRes[3]->GetBinContent(ibin);
+     LogTrace("Zprime2muResolution") << "ibin = "     << ibin
+     << " entries = " << QRes[3]->GetBinContent(ibin);
      } */
   gStyle->SetOptStat(111111);
   gStyle->SetOptLogy(0);
   c1->Update();
-
-  // some temp histograms for plotting ratios
-  TH1F* ratio[2][6];
 
   // Charge misassignment vs pT and 1/pT
   ps->NewPage();
   c1->Clear();
   c1->cd(0);
   delete title; title = new TPaveLabel(0.1,0.94,0.9,0.98,
-			 "Charge Misassignment vs pT and 1/pT");
+				       "Charge Misassignment vs pT and 1/pT");
   title->SetFillColor(10);
   title->Draw();
   strpage << "- " << (++page) << " -";
@@ -2965,6 +3154,8 @@ void Zprime2muResolution::DrawResHistos(){
 
   // Close postscript file.
   ps->Close();
+
+  delete title;
   delete ps;
   delete c1;
 
@@ -2985,5 +3176,12 @@ void Zprime2muResolution::beginJob(const edm::EventSetup& eSetup) {
 }
 
 void Zprime2muResolution::endJob() {
+  // JMTBAD make sure we're cd'ed into our histoFile, else ROOT tries
+  // to write to one of the input files
+  histoFile->cd();
+  WriteHistos();
+  histoFile->Write();
+  histoFile->Close();
+
   DrawResHistos();
 }

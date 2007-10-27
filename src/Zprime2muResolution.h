@@ -41,6 +41,7 @@ class Zprime2muResolution : public Zprime2muAnalysis {
 
   int getOrigin(const int motherId);
 
+  void getHistosFromFile();
   void WriteHistos();
   void DeleteHistos();
 
@@ -101,8 +102,8 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   double maxTrigMass;
 
   std::string outputFile;
-  bool doResolutions;
   TFile* histoFile;
+  bool useHistosFromFile;
 };
 
 #endif // ZP2MURESOLUTION_H

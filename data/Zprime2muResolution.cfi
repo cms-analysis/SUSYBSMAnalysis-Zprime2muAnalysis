@@ -5,6 +5,7 @@ module Zprime2muResolution = Zprime2muResolution {
   
   untracked string outputFile = "muon_resolution.ps"
   untracked string histoFile = "resolution_histos.root"
+  untracked bool useHistosFromFile = false
 
   include "SUSYBSMAnalysis/Zprime2muAnalysis/data/ResolutionDataSets.cff"
 

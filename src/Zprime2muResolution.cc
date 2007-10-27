@@ -39,23 +39,31 @@ Zprime2muResolution::Zprime2muResolution(const edm::ParameterSet& config)
   maxTrigMass = dataSetConfig.getParameter<double>("maxTrigMass");
 
   string fn = config.getUntrackedParameter<string>("histoFile");
-  histoFile = new TFile(fn.c_str(), "RECREATE");
-  BookResHistos();
-  BookEffHistos();
-  BookPtResHistos();
-  BookDilResHistos();
-  BookChargeResHistos();
+  useHistosFromFile = config.getUntrackedParameter<bool>("useHistosFromFile");
+  if (useHistosFromFile) {
+    histoFile = new TFile(fn.c_str(), "READ");
+    getHistosFromFile();
+  }
+  else {
+    histoFile = new TFile(fn.c_str(), "RECREATE");
+    BookResHistos();
+    BookEffHistos();
+    BookPtResHistos();
+    BookDilResHistos();
+    BookChargeResHistos();
+  }
 }
 
 Zprime2muResolution::~Zprime2muResolution() {
-  DeleteHistos();
+  if (!useHistosFromFile)
+    DeleteHistos();
   delete histoFile;
 }
 
 inline string nameHist(const char* s, int i, int j = -1) {
   string x = string(s) + char(i + 48);
   if (j >= 0) x += char(j + 48);
-  return x.c_str();
+  return x;
 }
 
 void Zprime2muResolution::BookResHistos() {
@@ -199,7 +207,7 @@ void Zprime2muResolution::BookResHistos() {
     }
     string tit = "Opp-sign Dilepton Mass, " + str_level[i];
     AllDilMass[i] =
-      new TH1F("", tit.c_str(), 50, 0., upperMassWin);
+      new TH1F(nameHist("AllDilMass", i).c_str(), tit.c_str(), 50, 0., upperMassWin);
 
     MuMVsMuP[i][0] = new TH2F(nameHist("MuMVsMuP", i, 0).c_str(),"Eta of mu- vs mu+", 100, -3, 3, 100, -3, 3);
     MuMVsMuP[i][1] = new TH2F(nameHist("MuMVsMuP", i, 1).c_str(),"Phi of mu- vs mu+", 100, 0, 6.28,100,0,6.28);
@@ -340,7 +348,7 @@ void Zprime2muResolution::BookResHistos() {
   GenPtResScat[2]  = new TH2F("GenPtResScat2", "L3 Pt vs Gen Pt",
 			      100, 0., peakMass,
 			      100, 0., peakMass);
-  AllDilMassRes = new TH1F("AllDilMassRes2", "L3 Mass - Gen Mass, before Q cuts", 100, 
+  AllDilMassRes = new TH1F("AllDilMassRes", "L3 Mass - Gen Mass, before Q cuts", 100, 
 			   -.2*peakMass,
 			   .2*peakMass);
   GenDilMassRes[0] = new TH1F("GenDilMassRes0", "L1 Mass - Gen Mass", 100,
@@ -477,7 +485,7 @@ void Zprime2muResolution::BookPtResHistos() {
   TotInvPtRes[1] = new TH1F("TotInvPtRes1", "(Tracker Only 1/pT - Gen 1/pT)/(Gen 1/pT)", 
 			     100, -.5, .5);
   TotInvPtRes[2] = 
-    new TH1F("", "(Tracker + 1 mu-station 1/pT - Gen 1/pT)/(Gen 1/pT)", 
+    new TH1F("TotInvPtRes2", "(Tracker + 1 mu-station 1/pT - Gen 1/pT)/(Gen 1/pT)", 
 	     100, -.5, .5);
   //TotInvPtRes[3] = new TH1F("TotInvPtRes3", "(ABCM 1/pT - Gen 1/pT)/(Gen 1/pT)", 
   //		    100, -.5, .5);
@@ -492,28 +500,28 @@ void Zprime2muResolution::BookPtResHistos() {
   TotInvPtPull[3] = new TH1F("TotInvPtPull3", "Outer 1/pT Pull", 100, -10., 10.);
 
   // pT res for all fits (split up by barrel and endcap)
-  InvPtRes[0][0] = new TH1F("eta < 1.04", "L3", 100, -.3, .3); 
-  InvPtRes[0][1] = new TH1F("eta > 1.04", "L3", 100, -.3, .3); 
-  InvPtRes[1][0] = new TH1F("eta < 1.04", "Tracker Only", 100, -.3, .3); 
-  InvPtRes[1][1] = new TH1F("eta > 1.04", "Tracker Only", 100, -.3, .3); 
-  InvPtRes[2][0] = new TH1F("eta < 1.04", "Tracker + 1 mu-station",
+  InvPtRes[0][0] = new TH1F("InvPtRes00", "eta < 1.04, L3", 100, -.3, .3); 
+  InvPtRes[0][1] = new TH1F("InvPtRes01", "eta > 1.04, L3", 100, -.3, .3); 
+  InvPtRes[1][0] = new TH1F("InvPtRes10", "eta < 1.04, Tracker Only", 100, -.3, .3); 
+  InvPtRes[1][1] = new TH1F("InvPtRes11", "eta > 1.04, Tracker Only", 100, -.3, .3); 
+  InvPtRes[2][0] = new TH1F("InvPtRes20", "eta < 1.04, Tracker + 1 mu-station",
 			    100, -.3, .3); 
-  InvPtRes[2][1] = new TH1F("eta > 1.04", "Tracker + 1 mu-station", 
+  InvPtRes[2][1] = new TH1F("InvPtRes21", "eta > 1.04, Tracker + 1 mu-station", 
 			    100, -.3, .3); 
-  InvPtRes[3][0] = new TH1F("eta < 1.04", "GMR", 100, -.3, .3); 
-  InvPtRes[3][1] = new TH1F("eta > 1.04", "GMR", 100, -.3, .3); 
+  InvPtRes[3][0] = new TH1F("InvPtRes30", "eta < 1.04, GMR", 100, -.3, .3); 
+  InvPtRes[3][1] = new TH1F("InvPtRes31", "eta > 1.04, GMR", 100, -.3, .3); 
 
   // 1/pT pull for all fits (split up by barrel and endcap)
-  InvPtPull[0][0] = new TH1F("eta < 1.04", "L3", 100, -10., 10.); 
-  InvPtPull[0][1] = new TH1F("eta > 1.04", "L3", 100, -10., 10.); 
-  InvPtPull[1][0] = new TH1F("eta < 1.04", "Tracker Only", 100, -10., 10.); 
-  InvPtPull[1][1] = new TH1F("eta > 1.04", "Tracker Only", 100, -10., 10.);
-  InvPtPull[2][0] = new TH1F("eta < 1.04", "Tracker + 1 mu-station", 
+  InvPtPull[0][0] = new TH1F("InvPtPull00", "eta < 1.04, L3", 100, -10., 10.); 
+  InvPtPull[0][1] = new TH1F("InvPtPull01", "eta > 1.04, L3", 100, -10., 10.); 
+  InvPtPull[1][0] = new TH1F("InvPtPull10", "eta < 1.04, Tracker Only", 100, -10., 10.); 
+  InvPtPull[1][1] = new TH1F("InvPtPull11", "eta > 1.04, Tracker Only", 100, -10., 10.);
+  InvPtPull[2][0] = new TH1F("InvPtPull20", "eta < 1.04, Tracker + 1 mu-station", 
 				100, -10., 10.); 
-  InvPtPull[2][1] = new TH1F("eta > 1.04", "Tracker + 1 mu-station", 
+  InvPtPull[2][1] = new TH1F("InvPtPull21", "eta > 1.04, Tracker + 1 mu-station", 
 				100, -10., 10.); 
-  InvPtPull[3][0] = new TH1F("eta < 1.04", "GMR", 100, -10., 10.); 
-  InvPtPull[3][1] = new TH1F("eta > 1.04", "GMR", 100, -10., 10.); 
+  InvPtPull[3][0] = new TH1F("InvPtPull30", "eta < 1.04, GMR", 100, -10., 10.); 
+  InvPtPull[3][1] = new TH1F("InvPtPull31", "eta > 1.04, GMR", 100, -10., 10.); 
 }
 
 void Zprime2muResolution::BookDilResHistos(){
@@ -1662,7 +1670,146 @@ int Zprime2muResolution::getOrigin(const int motherId) {
   case 5000039: origin = G; break;        // G*
     // rest blank
   }
+    
   return origin;
+}
+
+void Zprime2muResolution::getHistosFromFile() {
+  // JMTBAD there is undoubtedly a better way to to this...
+  histoFile->GetObject("EventsInAccFailed", EventsInAccFailed);
+  histoFile->GetObject("L1TrigFailSingleMu", L1TrigFailSingleMu);
+  histoFile->GetObject("L1TrigFailMu2VsMu1", L1TrigFailMu2VsMu1);
+  histoFile->GetObject("L1TrigPassSingleMu", L1TrigPassSingleMu);
+  histoFile->GetObject("L1TrigPassMu2VsMu1", L1TrigPassMu2VsMu1);
+  histoFile->GetObject("L2MuonHits", L2MuonHits);
+  for (int i = 0; i < 3; i++) {
+    histoFile->GetObject(nameHist("GMRMuonHits", i).c_str(), GMRMuonHits[i]);
+    histoFile->GetObject(nameHist("GMRChi2dof", i).c_str(), GMRChi2dof[i]);
+  }
+  histoFile->GetObject("L3TrackerHits", L3TrackerHits);
+  histoFile->GetObject("NumDilVsRec", NumDilVsRec);
+  for (int i = 0; i < 4; i++)
+    for (int j = 0; j < 2; j++)
+      histoFile->GetObject(nameHist("RecMass", i, j).c_str(), RecMass[i][j]);
+  for (int i = 0; i <= MAX_LEVELS; i++) {
+    histoFile->GetObject(nameHist("EffVsEta", i).c_str(), EffVsEta[i]);
+    histoFile->GetObject(nameHist("EffVsPhi", i).c_str(), EffVsPhi[i]);
+    histoFile->GetObject(nameHist("EffVsPt", i).c_str(), EffVsPt[i]);
+  }
+  for (int i = 0; i < NUM_REC_LEVELS; i++) {
+    for (int j = 0; j < 3; j++) {
+      histoFile->GetObject(nameHist("TrigResult", i, j).c_str(), TrigResult[i][j]);
+      histoFile->GetObject(nameHist("TrigMass", i, j).c_str(), TrigMass[i][j]);
+    }
+    for (int j = 0; j < 4; j++)
+      histoFile->GetObject(nameHist("NMuons", i, j).c_str(), NMuons[i][j]);
+    histoFile->GetObject(nameHist("SignOfDil", i).c_str(), SignOfDil[i]);
+    histoFile->GetObject(nameHist("ZonDilMass", i).c_str(), ZonDilMass[i]);
+    histoFile->GetObject(nameHist("ZofDilMass", i).c_str(), ZofDilMass[i]);
+  }
+  for (int i = 0; i <= MAX_LEVELS; i++) {
+    histoFile->GetObject(nameHist("AllDilMass", i).c_str(), AllDilMass[i]);
+    histoFile->GetObject(nameHist("DilMass", i).c_str(), DilMass[i]);
+    histoFile->GetObject(nameHist("DilMassVsEta", i).c_str(), DilMassVsEta[i]);
+    histoFile->GetObject(nameHist("DilMassVsY", i).c_str(), DilMassVsY[i]);
+    histoFile->GetObject(nameHist("MuonEta", i).c_str(), MuonEta[i]);
+    histoFile->GetObject(nameHist("MuonPhi", i).c_str(), MuonPhi[i]);
+    histoFile->GetObject(nameHist("MuonRap", i).c_str(), MuonRap[i]);
+    histoFile->GetObject(nameHist("MuonP", i).c_str(), MuonP[i]);
+    histoFile->GetObject(nameHist("MuonPt", i).c_str(), MuonPt[i]);
+    histoFile->GetObject(nameHist("MuonPz", i).c_str(), MuonPz[i]);
+    histoFile->GetObject(nameHist("MuonPVsEta", i).c_str(), MuonPVsEta[i]);
+    histoFile->GetObject(nameHist("MuonPtVsEta", i).c_str(), MuonPtVsEta[i]);
+    for (int j = 0; j < 3; j++) {
+      histoFile->GetObject(nameHist("Eta", i, j).c_str(), Eta[i][j]);
+      histoFile->GetObject(nameHist("Phi", i, j).c_str(), Phi[i][j]);
+      histoFile->GetObject(nameHist("Rapidity", i, j).c_str(), Rapidity[i][j]);
+      histoFile->GetObject(nameHist("P", i, j).c_str(), P[i][j]);
+      histoFile->GetObject(nameHist("Pt", i, j).c_str(), Pt[i][j]);
+      histoFile->GetObject(nameHist("Pz", i, j).c_str(), Pz[i][j]);
+      histoFile->GetObject(nameHist("PVsEta", i, j).c_str(), PVsEta[i][j]);
+      histoFile->GetObject(nameHist("PtVsEta", i, j).c_str(), PtVsEta[i][j]);
+      histoFile->GetObject(nameHist("MuMVsMuP", i, j).c_str(), MuMVsMuP[i][j]);
+    }
+  }
+  histoFile->GetObject("Eta4muons", Eta4muons);
+  histoFile->GetObject("Pt4muons", Pt4muons);
+  for (int k = l1; k <= MAX_LEVELS; k++) {
+    histoFile->GetObject(nameHist("EtaRes", k).c_str(), EtaRes[k]);
+    histoFile->GetObject(nameHist("PhiRes", k).c_str(), PhiRes[k]);
+    histoFile->GetObject(nameHist("PtDiff", k).c_str(), PtDiff[k]);
+    histoFile->GetObject(nameHist("PRes", k).c_str(), PRes[k]);
+    histoFile->GetObject(nameHist("PResVsP", k).c_str(), PResVsP[k]);
+  }
+  for (int k=0; k<3; k++) {
+    histoFile->GetObject(nameHist("GenPhiResVsPhi", k).c_str(), GenPhiResVsPhi[k]);
+    histoFile->GetObject(nameHist("GenInvPtRes", k).c_str(), GenInvPtRes[k]);
+    histoFile->GetObject(nameHist("GenInvPtResVsPt", k).c_str(), GenInvPtResVsPt[k]);
+    histoFile->GetObject(nameHist("GenInvPRes", k).c_str(), GenInvPRes[k]);
+    histoFile->GetObject(nameHist("GenPResVsPt", k).c_str(), GenPResVsPt[k]);
+    histoFile->GetObject(nameHist("GenInvPResVsPt", k).c_str(), GenInvPResVsPt[k]);
+    histoFile->GetObject(nameHist("GenEtaResScat", k).c_str(), GenEtaResScat[k]);
+    histoFile->GetObject(nameHist("GenPhiResScat", k).c_str(), GenPhiResScat[k]);
+    histoFile->GetObject(nameHist("GenPtResScat", k).c_str(), GenPtResScat[k]);
+    histoFile->GetObject(nameHist("GenDilMassRes", k).c_str(), GenDilMassRes[k]);
+    histoFile->GetObject(nameHist("GenDilMassFrRes", k).c_str(), GenDilMassFrRes[k]);
+    histoFile->GetObject(nameHist("GenDilMassResScat", k).c_str(), GenDilMassResScat[k]);
+    histoFile->GetObject(nameHist("GenDilMassFrResScat", k).c_str(), GenDilMassFrResScat[k]);
+  }
+  histoFile->GetObject("AllDilMassRes", AllDilMassRes);
+  for (int l=0; l<2; l++) {
+    histoFile->GetObject(nameHist("Origin", l).c_str(), Origin[l]);
+    histoFile->GetObject(nameHist("L1EtaRes", l).c_str(), L1EtaRes[l]);
+    histoFile->GetObject(nameHist("L1PhiRes", l).c_str(), L1PhiRes[l]);
+    histoFile->GetObject(nameHist("L1PtDiff", l).c_str(), L1PtDiff[l]);
+    histoFile->GetObject(nameHist("L1EtaResScat", l).c_str(), L1EtaResScat[l]);
+    histoFile->GetObject(nameHist("L1PhiResScat", l).c_str(), L1PhiResScat[l]);
+    histoFile->GetObject(nameHist("L1PtResScat", l).c_str(), L1PtResScat[l]);
+  }
+  histoFile->GetObject("L2EtaRes", L2EtaRes);
+  histoFile->GetObject("L2PhiRes", L2PhiRes);
+  histoFile->GetObject("L2PtDiff", L2PtDiff);
+  histoFile->GetObject("L2EtaResScat", L2EtaResScat);
+  histoFile->GetObject("L2PhiResScat", L2PhiResScat);
+  histoFile->GetObject("L2PtResScat", L2PtResScat);
+  for (int i = 0; i < 2; i++) {
+    histoFile->GetObject(nameHist("MuPtDiff", i).c_str(), MuPtDiff[i]);
+    for (int j = 0; j < 3; j++) {
+      histoFile->GetObject(nameHist("MuInvPRes", i, j).c_str(), MuInvPRes[i][j]);
+      histoFile->GetObject(nameHist("MuInvPtRes", i, j).c_str(), MuInvPtRes[i][j]);
+    }
+  }
+  for (int i_pt = 0; i_pt < 6; i_pt++)
+    histoFile->GetObject(nameHist("ResidualPt", i_pt).c_str(), ResidualPt[i_pt]);
+  for (int i = 0; i < 4; i++) {
+    histoFile->GetObject(nameHist("TotInvPtRes", i).c_str(), TotInvPtRes[i]);
+    histoFile->GetObject(nameHist("TotInvPtPull", i).c_str(), TotInvPtPull[i]);
+    for (int j = 0; j < 2; j++) {
+      histoFile->GetObject(nameHist("InvPtRes", i, j).c_str(), InvPtRes[i][j]);
+      histoFile->GetObject(nameHist("InvPtPull", i, j).c_str(), InvPtPull[i][j]);
+    }
+  }
+  for (int i = 0; i <= MAX_LEVELS; i++) {
+    for (int j = 0; j < 2; j++)
+      histoFile->GetObject(nameHist("DilMassComp", i, j).c_str(), DilMassComp[i][j]);
+    if (i > 0) {
+      for (int j = 0; j < 6; j++)
+	histoFile->GetObject(nameHist("DilMassRes", i, j).c_str(), DilMassRes[i][j]);
+      histoFile->GetObject(nameHist("DilPtRes", i).c_str(), DilPtRes[i]);
+    }
+  }
+  for (unsigned int j = 0; j < 2; j++)
+    histoFile->GetObject(nameHist("MuPVsMuM", j).c_str(), MuPVsMuM[j]);
+  for (int i = l1; i <= MAX_LEVELS; i++)
+    histoFile->GetObject(nameHist("QRes", i).c_str(), QRes[i]);
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 2; j++) {
+      histoFile->GetObject(nameHist("QResVsPt", i, j).c_str(), QResVsPt[i][j]);
+      histoFile->GetObject(nameHist("QResVsInvPt", i, j).c_str(), QResVsInvPt[i][j]);
+      histoFile->GetObject(nameHist("QResVsP", i, j).c_str(), QResVsP[i][j]);
+      histoFile->GetObject(nameHist("QResVsInvP", i, j).c_str(), QResVsInvP[i][j]);
+    }
+  }
 }
 
 void Zprime2muResolution::WriteHistos() {
@@ -1788,7 +1935,7 @@ void Zprime2muResolution::WriteHistos() {
   for (int i = 0; i <= MAX_LEVELS; i++) {
     for (int j = 0; j < 2; j++)
       DilMassComp[i][j]->Write();
-      if (i > 0) {
+    if (i > 0) {
       for (int j = 0; j < 6; j++)
 	DilMassRes[i][j]->Write();
       DilPtRes[i]->Write();
@@ -1797,6 +1944,17 @@ void Zprime2muResolution::WriteHistos() {
 
   for (unsigned int j = 0; j < 2; j++)
     MuPVsMuM[j]->Write();
+
+  for (int i = l1; i <= MAX_LEVELS; i++)
+    QRes[i]->Write();
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 2; j++) {
+      QResVsPt[i][j]->Write();
+      QResVsInvPt[i][j]->Write();
+      QResVsP[i][j]->Write();
+      QResVsInvP[i][j]->Write();
+    }
+  }
 }
 
 void Zprime2muResolution::DeleteHistos(){
@@ -1929,6 +2087,17 @@ void Zprime2muResolution::DeleteHistos(){
 
   for (unsigned int j = 0; j < 2; j++)
     delete MuPVsMuM[j];
+
+  for (int i = l1; i <= MAX_LEVELS; i++)
+    delete QRes[i];
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 2; j++) {
+      delete QResVsPt[i][j];
+      delete QResVsInvPt[i][j];
+      delete QResVsP[i][j];
+      delete QResVsInvP[i][j];
+    }
+  }
 }
 
 void Zprime2muResolution::DrawResHistos(){
@@ -3166,10 +3335,14 @@ void Zprime2muResolution::DrawResHistos(){
 
 void Zprime2muResolution::analyze(const edm::Event& event, 
 				  const edm::EventSetup& eSetup) {
-  // delegate filling our muon vectors to the parent class
-  Zprime2muAnalysis::analyze(event, eSetup);
-  // fill resolution histos
-  calcResolution();
+  // don't bother reading any events if we're getting the histos from
+  // a file
+  if (!useHistosFromFile) {
+    // delegate filling our muon vectors to the parent class
+    Zprime2muAnalysis::analyze(event, eSetup);
+    // fill resolution histos
+    calcResolution();
+  }
 }
 
 void Zprime2muResolution::beginJob(const edm::EventSetup& eSetup) {
@@ -3178,10 +3351,12 @@ void Zprime2muResolution::beginJob(const edm::EventSetup& eSetup) {
 void Zprime2muResolution::endJob() {
   // JMTBAD make sure we're cd'ed into our histoFile, else ROOT tries
   // to write to one of the input files
-  histoFile->cd();
-  WriteHistos();
-  histoFile->Write();
-  histoFile->Close();
+  if (!useHistosFromFile) {
+    histoFile->cd();
+    WriteHistos();
+    histoFile->Write();
+  }
 
   DrawResHistos();
+  histoFile->Close();
 }

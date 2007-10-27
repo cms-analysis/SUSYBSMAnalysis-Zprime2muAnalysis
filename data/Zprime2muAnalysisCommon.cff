@@ -6,6 +6,7 @@ block Zprime2muAnalysisCommon = {
   bool doingGeant4 = true
   bool useOtherMuonRecos = true
   bool usingAODOnly = false
+  bool useTriggerInfo = true
   #InputTag genMuons = source
   InputTag genMuons = VtxSmeared
   InputTag l1ParticleMap = l1extraParticleMap

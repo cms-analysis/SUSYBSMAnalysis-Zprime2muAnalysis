@@ -72,6 +72,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   bool doingGeant4; // whether to look at Geant4 particles
   bool useOtherMuonRecos; // whether to use other muons (FMS, PMR, etc)
   bool usingAODOnly; // whether not to use things in RECO tier
+  bool useTriggerInfo; // whether to look for trigger info in the input file
 
   // Track quality studies and optimization.
   bool TrackQCheck(const zp2mu::Muon& muon, const int qsel,

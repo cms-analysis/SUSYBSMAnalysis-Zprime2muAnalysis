@@ -142,6 +142,9 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   // whether we are looking at electrons instead of muons
   doingElectrons = config.getParameter<bool>("doingElectrons");
 
+  // whether trigger information is supposed to be present in the
+  // input file
+  useTriggerInfo = config.getParameter<bool>("useTriggerInfo");
 
   // input tags for the reco collections we need
   l1ParticleMap   = config.getParameter<edm::InputTag>("l1ParticleMap");
@@ -1053,14 +1056,15 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
     event.getByLabel(photons, photonCollection);
     
     if (!doingElectrons) {
-
-      // Level-1.
-      storeL1Decision(event);
-      storeL1Muons(event);
-      // HLT 
-      storeL2Muons(event);
-      storeL3Muons(event);
-      storeHLTDecision(event);
+      if (useTriggerInfo) {
+	// Level-1.
+	storeL1Decision(event);
+	storeL1Muons(event);
+	// HLT 
+	storeL2Muons(event);
+	storeL3Muons(event);
+	storeHLTDecision(event);
+      }
       // off-line muons reconstructed with GlobalMuonProducer
       storeOfflineMuons(event, globalMuons, lgmr);
       // store the muons using the tracker-only tracks
@@ -1073,11 +1077,15 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
       }
     }
     else {
-      // Events always pass Level-1 trigger till it gets implemented.
-      passTrig[l1] = true;
-      trigWord[l1] = 1;
-
       storePixelMatchGsfElectrons(event, pixelMatchGsfElectrons, lgmr);
+    }
+  }
+
+  if (!useTriggerInfo || doingElectrons) {
+    // Events always pass Level-1 trigger till it gets implemented.
+    for (int itrig = l1; itrig <= l3; itrig++) {
+      passTrig[itrig] = true;
+      trigWord[itrig] = 1;
     }
   }
 

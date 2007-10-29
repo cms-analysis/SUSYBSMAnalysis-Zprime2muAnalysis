@@ -18,6 +18,7 @@
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/HLTReco/interface/HLTFilterObject.h"
+#include "DataFormats/L1GlobalMuonTrigger/interface/L1MuGMTExtendedCand.h"
 #include "DataFormats/Math/interface/Vector.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonTrackLinks.h"
@@ -483,8 +484,8 @@ int Zprime2muAnalysis::matchStandAloneMuon(const reco::TrackRef& track,
   const static bool debug = verbosity >= VERBOSITY_TOOMUCH;
 
   if (!seedTracks.isValid())
-    throw cms::Exception("findClosestPhoton")
-      << "+++ photonCollection not set! +++\n";
+    throw cms::Exception("matchStandAloneMuon")
+      << "+++ seed collection not set! +++\n";
 
   int closest_ndx = -1;
   double min_mag2 = 1e99;
@@ -580,6 +581,7 @@ void Zprime2muAnalysis::storeL1Muons(const edm::Event& event) {
   l1extra::L1MuonParticleCollection::const_iterator muItr;
   int imu = 0;
   for (muItr = l1MuColl->begin(); muItr != l1MuColl->end(); ++muItr) {
+    const L1MuGMTExtendedCand& gmtMu = muItr->gmtMuonCand();
     if (debug) LogTrace(" ")
       << "   L1 mu #" << imu << " q = " << muItr->charge()
       << " p = (" << muItr->px() << ", " << muItr->py()
@@ -587,13 +589,14 @@ void Zprime2muAnalysis::storeL1Muons(const edm::Event& event) {
       << ") pt = " << muItr->pt() << "\n"
       << "    eta = " << muItr->eta() << " phi = " << muItr->phi() 
       << " iso = " << muItr->isIsolated() << " mip = " << muItr->isMip()
-      << " fwd = " << muItr->isForward() << " rpc = " << muItr->isRPC();
+      << " fwd = " << muItr->isForward() << " rpc = " << muItr->isRPC()
+      << " quality = " << gmtMu.quality();
 
     if (muItr->pt() > PTMIN) {
       zp2mu::Muon thisMu;
       thisMu.fill(1, imu, l1, muItr->charge(), muItr->phi(), muItr->eta(),
 		  muItr->pt(), muItr->p());
-      //thisMu.setQuality((*igmt).Quality());
+      thisMu.setQuality(gmtMu.quality());
       allMuons[l1].push_back(thisMu);
       imu++;
     }
@@ -619,13 +622,23 @@ void Zprime2muAnalysis::storeL2Muons(const edm::Event& event) {
   int imu = 0;
   for (muItr = l2MuColl->begin(); muItr != l2MuColl->end(); ++muItr) {
     reco::TrackRef theTrack = muItr->track();
-    if (debug) LogTrace(" ")
-      << "   L2 mu #" << imu << " q = " << muItr->charge()
-      << " p = (" << muItr->px() << ", " << muItr->py()
-      << ", " << muItr->pz() << ", " << muItr->energy()
-      << ") pt = " << muItr->pt() << "\n"
-      << "    eta = " << muItr->eta() << " phi = " << muItr->phi();
-    
+    if (debug) {
+      LogTrace("storeL2Muons")
+	<< "   L2 mu #" << imu << " q = " << muItr->charge()
+	<< " p = (" << muItr->px() << ", " << muItr->py()
+	<< ", " << muItr->pz() << ", " << muItr->energy() << ")\n"
+	<< "     pt = " << muItr->pt() << " eta = " << muItr->eta()
+	<< " phi = " << muItr->phi();
+      // mimic what HLTMuonPrefilter does for pt cut
+      double ptLx = theTrack->pt();
+      double err0 = theTrack->error(0);
+      double abspar0 = fabs(theTrack->parameter(0));
+      // convert 50% efficiency threshold to 90% efficiency threshold
+      if (abspar0>0) ptLx += 3.9*err0/abspar0*ptLx;
+      LogTrace("storeL2Muons")
+	<< "     ptLx: " << ptLx << " err0: " << err0 << " abspar0: " << abspar0;
+    }
+
     if (muItr->pt() > PTMIN) {
       zp2mu::Muon thisMu;
       thisMu.fill(1, imu, l2, muItr->charge(), muItr->phi(), muItr->eta(),
@@ -639,7 +652,7 @@ void Zprime2muAnalysis::storeL2Muons(const edm::Event& event) {
       imu++;
     }
     else {
-      edm::LogWarning("storeHLTMuons")
+      edm::LogWarning("storeL2Muons")
 	<< "Event " << eventNum
 	<< ": skipping L2 muon with pT = " << muItr->pt()
 	<< " p = " << muItr->p() << " eta = " << muItr->eta() << "\n";
@@ -675,15 +688,28 @@ void Zprime2muAnalysis::storeL3Muons(const edm::Event& event) {
     tkTrack  = muon->trackerTrack();
     muTrack  = muon->standAloneTrack();
 
-    if (debug) 
+    if (debug) {
       out << "   L3 mu #" << imu << ":\n"
 	  << "     theTrack: q=" << theTrack->charge()
 	  << " p=" << theTrack->momentum() << endl
 	  << "     tkTrack:  q=" << tkTrack->charge()
 	  << " p=" << tkTrack->momentum() << endl
 	  << "     muTrack:  q=" << muTrack->charge()
-	  << " p=" << muTrack->momentum() << endl;
-
+	  << " p=" << muTrack->momentum() << endl
+	  << "     pt = " << theTrack->pt() << " eta = " << theTrack->eta()
+	  << " phi = " << theTrack->phi() << endl
+	  << "     vertex: (" << theTrack->vx() << ", " 
+	  << theTrack->vy() << ", " << theTrack->vz() << ")\n";
+      // what HLTMuonPrefilter does for pt cut
+      double ptLx = theTrack->pt();
+      double err0 = theTrack->error(0);
+      double abspar0 = fabs(theTrack->parameter(0));
+      // convert 50% efficiency threshold to 90% efficiency threshold
+      if (abspar0>0) ptLx += 2.2*err0/abspar0*ptLx;
+      out << "     ptLx: " << ptLx << endl;
+    }
+    
+    
     // Do the rest only if theTrack is not empty.
     if (theTrack.isNonnull()) {
       // seedIndex is now the index into the standAloneMuon track
@@ -990,6 +1016,9 @@ TLorentzVector Zprime2muAnalysis::findClosestPhoton(const TrackType& theTrack) {
   double muon_eta = theTrack->eta();
   double muon_phi = theTrack->phi();
 
+  ostringstream out;
+  if (debug) out << "Search for closest photon for track eta = "
+		 << muon_eta << " phi = " << muon_phi << ":\n";
   for (reco::PhotonCollection::const_iterator iph = photonCollection->begin();
        iph != photonCollection->end(); iph++) {
 
@@ -1003,9 +1032,9 @@ TLorentzVector Zprime2muAnalysis::findClosestPhoton(const TrackType& theTrack) {
     double phot_phi = thePhoton.phi();
     double dist = deltaR(muon_eta, muon_phi, phot_eta, phot_phi);
 
-    if (debug) LogTrace("findClosestPhoton")
-      << "Photon: eta = " << phot_eta << " phi = " << phot_phi
-      << " energy = " << thePhoton.energy() << " dR = " << dist;
+    if (debug)
+      out  << "  Photon: eta = " << phot_eta << " phi = " << phot_phi
+	   << " energy = " << thePhoton.energy() << " dR = " << dist << endl;
 
     if (dist < phdist) {
       phclos = thePhoton.p4();
@@ -1013,11 +1042,13 @@ TLorentzVector Zprime2muAnalysis::findClosestPhoton(const TrackType& theTrack) {
     }
   }
 
-  if (debug) LogTrace("findClosestPhoton")
-    << "Closest photon: eta = " << phclos.eta() << " phi = " << phclos.phi()
-    << " px = " << phclos.px() << " py = " << phclos.py()
-    << " pz = " << phclos.pz() << " energy = " << phclos.e()
-    << " dR  = " << phdist;
+  if (debug) {
+    out << " Closest photon: eta = " << phclos.eta() << " phi = " << phclos.phi()
+	<< " px = " << phclos.px() << " py = " << phclos.py()
+	<< " pz = " << phclos.pz() << " energy = " << phclos.e()
+	<< " dR  = " << phdist;
+    LogTrace("findClosestPhoton") << out.str();
+  }
 
   TLorentzVector photon(phclos.px(), phclos.py(), phclos.pz(), phclos.e());
   return photon;
@@ -1058,8 +1089,8 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
     if (!doingElectrons) {
       if (useTriggerInfo) {
 	// Level-1.
-	storeL1Decision(event);
 	storeL1Muons(event);
+	storeL1Decision(event);
 	// HLT 
 	storeL2Muons(event);
 	storeL3Muons(event);
@@ -2590,6 +2621,136 @@ bool Zprime2muAnalysis::passTrigger() {
   return (decision != 0);
 }
 
+
+bool Zprime2muAnalysis::TriggerTranslator(const string& algo,
+					  const unsigned int lvl,
+					  const unsigned int nmu) {
+  // Function to translate the algorithm algo defined for trigger level lvl,
+  // requiring nmu muons (e.g. single or dimuon trigger).
+  // See https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideMuonHLT
+  // https://twiki.cern.ch/twiki/bin/view/CMS/L1TriggerTableHLTExercise
+  // L1 Quality codes are still the same, but we are suggested to use the 
+  // methods useInSingleMuonTrigger() etc. instead of using the quality
+  // code directly:
+  // https://twiki.cern.ch/twiki/bin/view/CMS/GMTEmulator
+
+  // Arrays are first-indexed by trigger level then by the number of
+  // muons required.
+  const unsigned int l = lvl - 1;
+  const unsigned int n = nmu - 1;
+
+  // these are for L = 10^{32}
+  const double ptMin[3][2] = {
+    { 7, 3},
+    {16, 3},
+    {16, 3}
+  };
+  const double etaMax[3] = { 2.5, 2.5, 2.5 };
+  // 28/10/2007: in CMSSW_1_6_0, requirement is just that 
+  // the vertex be < 200 microns from the beam axis, i.e. 
+  // sqrt(vx**2+vy**2) < 0.02
+  const double dxy2Max[3] = { 9999, 9999, 0.02*0.02 };
+  const double dzMax[3] = { 9999, 9999, 9999 };
+  const double nSigmaPt[3] = { 0, 3.9, 2.2 };
+  // 12/05/2004: a muon must have more than 5 pixel plus silicon hits in
+  // the tracker (DAQ TDR, p. 306).
+  //const int minHits[3] = { 0, 0, 6 };
+  // 28/10/2007: for CMSSW_1_6_0, min hits is 0
+  // JMTBAD no hit counts in the AOD anyway...
+  const int minHits[3] = { 0, 0, 0 };
+
+  // Check if the algorithm string passed in is one we recognized.
+  // String value is not currently used, but will be used in the
+  // future to differentiate between, e.g., Iso and NonIso triggers.
+  if (algo != "L1_SingleMu7" &&
+      algo != "L1_DoubleMu3" &&
+      algo != "SingleMuNoIsoL2PreFiltered" && 
+      algo != "SingleMuNoIsoL3PreFiltered" &&
+      algo != "DiMuonNoIsoL2PreFiltered" && 
+      algo != "DiMuonNoIsoL3PreFiltered") {
+    edm::LogWarning("TriggerTranslator")
+      << "+++ unrecognized algorithm " << algo << "! +++";
+    return false;
+  }
+
+  const static bool debug = verbosity >= VERBOSITY_SIMPLE;
+  ostringstream out;
+
+  if (debug) out << "TriggerTranslator, " << algo << ":\n";
+
+  unsigned int muonsPass = 0;
+  vector<zp2mu::Muon>::const_iterator pmu; //, pmu_prev;
+  //vector<double> zvtx;
+  //vector<double>::const_iterator pvtx;
+
+  for (pmu = allMuons[lvl].begin(); pmu != allMuons[lvl].end(); pmu++) {
+    // JMTBAD HLTMuonPrefilter cuts not on pt but on what they call ptLx
+    // nSigmaPt[l1] = 0, so ptLx(l1) = pt(l1).
+    double ptLx = (1 + nSigmaPt[l]*pmu->errInvP()*pmu->p())*pmu->pt();
+    if (debug)
+      out << "  mu #" << pmu->id()
+	  << " pt: " << pmu->pt() << " ptLx: " << ptLx << " (cut: " << ptMin[l][n] 
+	  << ") eta: " << pmu->eta() << " (cut: " << etaMax[l] << ")\n";
+    bool pass = ptLx >= ptMin[l][n] && fabs(pmu->eta()) <= etaMax[l];
+    // don't bother evaluating the other constraints if they aren't set
+    if (dxy2Max[l] != 9999) {
+      double vx = pmu->vertexXYZ(0);
+      double vy = pmu->vertexXYZ(1);
+      pass = pass && vx*vx + vy*vy < dxy2Max[l];
+    }
+    if (dzMax[l] != 9999) {
+      pass = pass && fabs(pmu->vertexXYZ(2)) < dzMax[l];
+    }
+    if (minHits[l] != 0) {
+      // JMTBAD switch to reco::Track::numberOfValidHits()
+      pass && (pmu->npixHits() + pmu->nsilHits()) > minHits[l];
+    }
+    if (pass) {
+      // here check extra stuff depending on the trigger algorithm
+      bool passExtra = true;
+
+      if (lvl == l1) {
+	int quality = pmu->l1Quality();
+	// In single muon trigger, GMT uses only muons with quality > 3.
+	// In dimuon trigger, GMT uses muons with quality = 3 and 5-7.
+	if ((nmu == 1 && quality < 4) || (nmu == 2 && (quality < 3 || quality == 4)))
+	  passExtra = false;
+      }
+      /*
+      // JMTBAD disabled for now, not currently in HLT
+      else if (lvl == l3 && nmu == 2) {
+	for (pmu_prev = allMuons[lvl].begin(); pmu_prev != pmu; pmu_prev++) {
+          // Skip ghost tracks (see p. 308 of DAQ TDR)
+	  if (fabs(pmu->eta() - pmu_prev->eta()) < 0.01 &&
+	      fabs(pmu->phi() - pmu_prev->phi()) < 0.05 &&
+	      fabs(pmu->pt()  - pmu_prev->pt())  < 0.1) passExtra = false;
+	}
+      }
+      */
+
+      if (passExtra)
+	muonsPass++;
+    }
+
+    if (muonsPass == nmu)
+      break;
+  }
+
+  bool result;
+  if (debug) out << "  TriggerTranslator result for " << algo << ": ";
+  if (muonsPass >= nmu) {
+    out << "pass!";
+    result = true;
+  }
+  else {
+    out << "fail!";
+    result = false;
+  }
+  if (debug) LogTrace("TriggerTranslator") << out.str();
+
+  return result;
+}
+
 void Zprime2muAnalysis::storeL1Decision(const edm::Event& event) {
   const static bool debug = (verbosity >= VERBOSITY_SIMPLE);
 
@@ -2604,27 +2765,55 @@ void Zprime2muAnalysis::storeL1Decision(const edm::Event& event) {
     return;
   }
 
+  if (debug) LogTrace("storeL1Decision") << "storeL1Decision:";
+
   // Loop over chosen paths, check trigger decisions, and save them into
   // "trigbits".
   unsigned int trigbits = 0;
+  unsigned int homemade_trigbits = 0;
   int nl1paths = l1paths.size();
   for (int ipath = 0; ipath < nl1paths; ipath++) {
     const l1extra::L1ParticleMap& thisMap = (*l1MapColl)[l1paths[ipath]];
     bool fired = thisMap.triggerDecision();
     if (fired) trigbits = trigbits | (1 << ipath);
     if (debug) LogTrace("storeL1Decision")
-      << thisMap.triggerName() << " (index " << l1paths[ipath]
+      << "  " << thisMap.triggerName() << " (index " << l1paths[ipath]
       << "): decision " << fired;
+
+    // Also try to emulate GMT algorithms.
+    if (TriggerTranslator(thisMap.triggerName(), l1, ipath+1)) {
+      // If the event passes, set the corresponding bit in trigbits.
+      homemade_trigbits = homemade_trigbits | (1 << ipath);
+      if (debug)
+	LogTrace("storeL1Decision")
+	  << "  " << thisMap.triggerName() << " (homemade): decision " << fired;
+    }
   }
 
-  if (debug) LogTrace("storeL1Decision") << "  L1 trigbits: " << trigbits;
+  if (debug)
+    LogTrace("storeL1Decision") << " L1 official trigbits: " << trigbits
+				<< " homemade: " << homemade_trigbits;
   trigWord[l1] = trigbits;
   passTrig[l1] = (trigbits != 0);
+
+  // Compare official and homemade decisions.
+  if (homemade_trigbits != trigbits) {
+    edm::LogWarning("storeL1Decision")
+      << "+++ Warning: official L1 decision disagrees with homemade decision "
+      << "in event # " << eventNum << ": official: " << trigWord[l1]
+      << " homemade: " << trigbits << " +++";
+    if (verbosity == VERBOSITY_NONE)
+      dumpEvent(true, true, false, false, false);
+  }
 }
 
 void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
   const static bool debug = (verbosity >= VERBOSITY_SIMPLE);
   ostringstream out;
+
+  // Getting the result of the entire HLT path is done easily with the
+  // TriggerResults object, however to get at the separate decisions
+  // for L2 and L3 we have to do a little hacky magic.
 
   // Try to get the HLT TriggerResults object now, before
   // trying to get the HLTFilterObjectWithRefs below
@@ -2635,41 +2824,95 @@ void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
   edm::TriggerNames hltTrigNames;
   hltTrigNames.init(*hltRes);
 
-  if (debug) out << "storeHLTDecision():\n";
+  if (debug) out << "storeHLTDecision:\n";
 
+  // Extract L2 and L3 decisions by seeing if the corresponding
+  // HLTFilterObjectWithRefs exists and seeing how many muons it holds.
   for (unsigned int lvl = 0; lvl < 2; lvl++) {
+    unsigned int l = l2 + lvl;
     unsigned int trigbits = 0;
+    unsigned int homemade_trigbits = 0;
     for (unsigned int ipath = 0; ipath < hltModules[lvl].size(); ipath++) {
+      const string& trigName = hltModules[lvl][ipath];
       edm::Handle<reco::HLTFilterObjectWithRefs> hltFilterObjs;
+
       bool fired = true;
       try {
-	event.getByLabel(hltModules[lvl][ipath], hltFilterObjs);
+	event.getByLabel(trigName, hltFilterObjs);
       }
       catch (const cms::Exception& e) {
 	fired = false;
       }
-      if (fired) trigbits = trigbits | (1 << ipath);
+
+      // There may be an HLTFilterObject in the event even if the
+      // trigger did not accept; the real check is to make sure that
+      // the minimum number of muons for the trigger was met.
+      const unsigned int minNMuons = ipath + 1;
+      if (fired && hltFilterObjs->size() < minNMuons)
+	fired = false;	  
+	
       if (debug)
-	out << "  " << setw(30) << hltModules[lvl][ipath]
+	out << "  " << trigName
 	    << ": decision = " << fired << endl;
+
+      if (fired) {
+	trigbits = trigbits | (1 << ipath);
+
+	if (debug) {
+	  out << "  " << trigName << " filter result muons:\n";
+	  reco::HLTFilterObjectWithRefs::const_iterator muItr;
+	  int imu = 0;
+	  for (muItr = hltFilterObjs->begin(); muItr != hltFilterObjs->end();
+	       muItr++) {
+	    out << "    #" << imu++ << " q = " << muItr->charge()
+		<< " p = (" << muItr->px() << ", " << muItr->py()
+		<< ", " << muItr->pz() << ", " << muItr->energy() << ")\n"
+		<< "     pt = " << muItr->pt() << " eta = " << muItr->eta()
+		<< " phi = " << muItr->phi() << endl;
+	  }
+	}
+      }
+
+      // Try to emulate HLT algorithms.
+      fired = TriggerTranslator(hltModules[lvl][ipath], l, ipath+1);
+	  
+      // If the event passes, set the corresponding bit in trigbits.
+      if (fired) homemade_trigbits = homemade_trigbits | (1 << ipath);
+      if (debug)
+	out << "  " << trigName << " (homemade): decision = " << fired << endl;
     }
-    unsigned int l = l2 + lvl;
+
     trigWord[l] = trigbits;
     passTrig[l] = (trigbits != 0);
     out << "  trigWord[l" << l << "]: " << trigWord[l] << endl;
-  }
 
-  /*
-  for (unsigned int i = 0; i < hltRes->size(); i++) {
-    cout << "Trig #" << i << " " << hltTrigNames.triggerName(i)
-	 << " Decision: " << hltRes->accept(i) << endl;
+    // "Official" muon HLTs are calculated only when corresponding
+    // previous levels gave OK, while we calculate the decision for a
+    // given level regardless of previous levels' decisions.
+    if (l >= l2)
+      homemade_trigbits &= trigWord[l1];
+    if (l >= l3)
+      homemade_trigbits &= trigWord[l2];
+    // Compare official and homemade decisions.
+    if (homemade_trigbits != trigbits) {
+      edm::LogWarning("storeHLTDecision")
+	<< "+++ Warning: official L" << l
+	<< " decision disagrees with homemade decision:"
+	<< " official: " << trigbits
+	<< " homemade: " << homemade_trigbits << " +++";
+      
+      if (verbosity == VERBOSITY_NONE)
+	dumpEvent(false, true, true, true, false);
+    }
+    
+    if (debug) out << " L" << l << " official trigbits: " << trigbits
+		   << " homemade: " << homemade_trigbits << endl;
   }
-  */
 
   if (debug) {
     for (unsigned int i = 0; i < hltPaths.size(); i++) {
       int ndx = hltTrigNames.triggerIndex(hltPaths[i]);
-      out << "  HLT path #" << ndx << ": " << hltPaths[i]
+      out << " HLT path #" << ndx << ": " << hltPaths[i]
 	  << " decision = " << hltRes->accept(ndx) << endl;
     }
 
@@ -2680,7 +2923,11 @@ void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
 bool Zprime2muAnalysis::eventIsInteresting() {
   if (bestDiMuons.size() > 0) {
     const zp2mu::DiMuon& dimu = bestDiMuons[0];
-    if (dimu.resV().M() > 500)
+    if (dimu.resV().M() > 800)
+      return true;
+    const zp2mu::Muon& mum = dimu.muMinus();
+    const zp2mu::Muon& mup = dimu.muMinus();
+    if (fabs(mum.phi() - mup.phi()) < .33)
       return true;
   }
   return false;

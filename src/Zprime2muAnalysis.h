@@ -126,10 +126,12 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   
   void clearValues();
   void storeGeneratedMuons(const edm::Event&);
-  void storeL1Decision(const edm::Event& event);
   void storeL1Muons(const edm::Event& event);
   void storeL2Muons(const edm::Event& event);
   void storeL3Muons(const edm::Event& event);
+  bool TriggerTranslator(const std::string& algo, const unsigned int lvl, 
+			 const unsigned int nmu);
+  void storeL1Decision(const edm::Event& event);
   void storeHLTDecision(const edm::Event& event);
   void storeOfflineMuons(const edm::Event&, const edm::InputTag& whichMuons,
 			 RECLEVEL irec, bool trackerOnly=false);

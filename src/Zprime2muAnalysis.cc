@@ -2685,8 +2685,13 @@ bool Zprime2muAnalysis::TriggerTranslator(const string& algo,
 
   for (pmu = allMuons[lvl].begin(); pmu != allMuons[lvl].end(); pmu++) {
     // JMTBAD HLTMuonPrefilter cuts not on pt but on what they call ptLx
-    // nSigmaPt[l1] = 0, so ptLx(l1) = pt(l1).
-    double ptLx = (1 + nSigmaPt[l]*pmu->errInvP()*pmu->p())*pmu->pt();
+    // nSigmaPt[l1] = 0, so ptLx(l1) = pt(l1), but safeguard against
+    // accidentally setting nSigmaPt[l1] != 0:
+    double ptLx;
+    if (lvl == l1)
+      ptLx = pmu->pt();
+    else
+      ptLx = (1 + nSigmaPt[l]*pmu->errInvP()*pmu->p())*pmu->pt();
     if (debug)
       out << "  mu #" << pmu->id()
 	  << " pt: " << pmu->pt() << " ptLx: " << ptLx << " (cut: " << ptMin[l][n] 
@@ -2904,20 +2909,34 @@ void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
       if (verbosity == VERBOSITY_NONE)
 	dumpEvent(false, true, true, true, false);
     }
-    
+
     if (debug) out << " L" << l << " official trigbits: " << trigbits
 		   << " homemade: " << homemade_trigbits << endl;
   }
-
-  if (debug) {
-    for (unsigned int i = 0; i < hltPaths.size(); i++) {
-      int ndx = hltTrigNames.triggerIndex(hltPaths[i]);
+    
+  // Check that the official full HLT path decisions agree with
+  // what we extracted for the official L3 decision.
+  unsigned int hlt_trigbits = 0;
+  for (unsigned int i = 0; i < hltPaths.size(); i++) {
+    int ndx = hltTrigNames.triggerIndex(hltPaths[i]);
+    bool fired = hltRes->accept(ndx);
+    if (debug)
       out << " HLT path #" << ndx << ": " << hltPaths[i]
-	  << " decision = " << hltRes->accept(ndx) << endl;
-    }
-
-    LogTrace("storeHLTDecision") << out.str();
+	  << " decision = " << fired << endl;
+    if (fired) hlt_trigbits |= 1 << i;
   }
+  if (hlt_trigbits != trigWord[l3]) {
+    edm::LogWarning("storeHLTDecision")
+      << "+++ Warning: official HLT"
+      << " decision disagrees with extracted L3 decision:"
+      << " official HLT: " << hlt_trigbits
+      << " extracted L3: " << trigWord[l3] << " +++";
+      
+    if (verbosity == VERBOSITY_NONE)
+      dumpEvent(false, true, true, true, false);
+  }
+
+  if (debug) LogTrace("storeHLTDecision") << out.str();
 }
 
 bool Zprime2muAnalysis::eventIsInteresting() {

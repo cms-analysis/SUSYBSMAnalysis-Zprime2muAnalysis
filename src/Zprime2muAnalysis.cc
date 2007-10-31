@@ -474,7 +474,7 @@ double Zprime2muAnalysis::invPError(const TrackType& track) {
   return sig_invp;
 }
 
-// Return the index into the standAloneMuons collection staTracks that
+// Return the index into the standAloneMuons collection seedTracks that
 // this Muon's standAloneMuon (passed in as track) most closely matches 
 // -- use to mock up seedIndex
 // JMTBAD there's probably a better way to do this, since the collections for
@@ -717,7 +717,7 @@ void Zprime2muAnalysis::storeL3Muons(const edm::Event& event) {
       // do a relaxed match since the l2 muon in "muTrack" will have a
       // slightly different momentum than the offline stand-alone
       // muons
-      int seedIndex = matchStandAloneMuon(muon->standAloneTrack(), true);
+      int seedIndex = matchStandAloneMuon(muTrack, true);
       bool isStored = storeOfflineMuon(imu, l3, theTrack, tk, muTrack,
 				       seedIndex);
       if (isStored) imu++;
@@ -1113,7 +1113,7 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
   }
 
   if (!useTriggerInfo || doingElectrons) {
-    // Events always pass Level-1 trigger till it gets implemented.
+    // Events always pass Level-1 and HLT triggers till they get implemented.
     for (int itrig = l1; itrig <= l3; itrig++) {
       passTrig[itrig] = true;
       trigWord[itrig] = 1;

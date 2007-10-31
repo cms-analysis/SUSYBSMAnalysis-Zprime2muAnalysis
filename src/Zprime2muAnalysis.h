@@ -23,7 +23,7 @@ const int NUM_REC_LEVELS = 4;
 const int MAX_LEVELS = zp2mu::REC_LEVELS;
 enum RECLEVEL { lgen, l1, l2, l3, lgmr, ltk, lfms, lpmr, lbest = 99 };
 const std::string str_level[] = {
-  "Gen", " L1", " L2", " L3", "GMR", "Tracker-only", "TPFMS", "PMR", "TMR"
+  "Gen", " L1", " L2", " L3", "GMR", "Tracker-only", "TPFMS", "PMR", "OPT"
 };
 
 // details about the number of quality cuts available
@@ -67,7 +67,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // config file parameters
   bool doingHiggs; // determines whether one or two dimuons are kept
   bool generatedOnly; // whether only to look at generated muons
-  bool reconstructedOnly; // whether only to look at generated muons
+  bool reconstructedOnly; // whether only to look at reconstructed muons
   bool doingElectrons; // determines whether to run on muons or electrons
   bool doingGeant4; // whether to look at Geant4 particles
   bool useOtherMuonRecos; // whether to use other muons (FMS, PMR, etc)

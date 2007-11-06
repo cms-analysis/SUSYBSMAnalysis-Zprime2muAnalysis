@@ -73,11 +73,10 @@ process Rec1 = {
   #include "Configuration/StandardSequences/data/MixingLowLumiPileUp.cff" 
   #include "Configuration/StandardSequences/data/MixingHighLumiPileUp.cff" 
 
-  # ideal conditions
-  include "Configuration/StandardSequences/data/FrontierConditions.cff"
+  #include "Configuration/StandardSequences/data/FrontierConditions.cff" # ideal conditions
   #include "Configuration/StandardSequences/data/FrontierStartupConditions.cff"
   #include "Configuration/StandardSequences/data/Frontier10pbConditions.cff"
-  #include "Configuration/StandardSequences/data/Frontier100pbConditions.cff"
+  include "Configuration/StandardSequences/data/Frontier100pbConditions.cff"
   #include "Configuration/StandardSequences/data/FakeConditions.cff"
 
   include "Configuration/StandardSequences/data/VtxSmearedGauss.cff"

@@ -80,7 +80,7 @@ process HLT = {
     untracked int32 basketSize = 4096
     using FEVTSIMEventContent
     untracked PSet dataset = {
-      untracked string dataTier = "GEN-SIM-DIGI-RAW"
+      untracked string dataTier = "GEN-SIM-DIGI-RECO"
     }
   }
 

@@ -1119,6 +1119,7 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
 	storeHLTDecision(event);
 	storeL2Muons(event);
 	storeL3Muons(event);
+	compareHLTDecision();
       }
       // off-line muons reconstructed with GlobalMuonProducer
       storeOfflineMuons(event, globalMuons, lgmr);
@@ -2860,7 +2861,6 @@ void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
   for (unsigned int lvl = 0; lvl < 2; lvl++) {
     unsigned int l = l2 + lvl;
     unsigned int trigbits = 0;
-    unsigned int homemade_trigbits = 0;
     for (unsigned int ipath = 0; ipath < hltModules[lvl].size(); ipath++) {
       const string& trigName = hltModules[lvl][ipath];
       edm::Handle<reco::HLTFilterObjectWithRefs> hltFilterObjs;
@@ -2901,41 +2901,11 @@ void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
 	  }
 	}
       }
-
-      // Try to emulate HLT algorithms.
-      fired = TriggerTranslator(hltModules[lvl][ipath], l, ipath+1);
-	  
-      // If the event passes, set the corresponding bit in trigbits.
-      if (fired) homemade_trigbits = homemade_trigbits | (1 << ipath);
-      if (debug)
-	out << "  " << trigName << " (homemade): decision = " << fired << endl;
     }
 
     trigWord[l] = trigbits;
     passTrig[l] = (trigbits != 0);
     out << "  trigWord[l" << l << "]: " << trigWord[l] << endl;
-
-    // "Official" muon HLTs are calculated only when corresponding
-    // previous levels gave OK, while we calculate the decision for a
-    // given level regardless of previous levels' decisions.
-    if (l >= l2)
-      homemade_trigbits &= trigWord[l1];
-    if (l >= l3)
-      homemade_trigbits &= trigWord[l2];
-    // Compare official and homemade decisions.
-    if (homemade_trigbits != trigbits) {
-      edm::LogWarning("storeHLTDecision")
-	<< "+++ Warning: official L" << l
-	<< " decision disagrees with homemade decision:"
-	<< " official: " << trigbits
-	<< " homemade: " << homemade_trigbits << " +++";
-      
-      if (verbosity == VERBOSITY_NONE)
-	dumpEvent(false, true, true, true, false);
-    }
-
-    if (debug) out << " L" << l << " official trigbits: " << trigbits
-		   << " homemade: " << homemade_trigbits << endl;
   }
     
   // Check that the official full HLT path decisions agree with
@@ -2962,6 +2932,51 @@ void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
 
   if (debug) LogTrace("storeHLTDecision") << out.str();
 }
+
+void Zprime2muAnalysis::compareHLTDecision() {
+  const static bool debug = (verbosity >= VERBOSITY_SIMPLE);
+  ostringstream out;
+
+  if (debug) out << "compareHLTDecision:\n";
+
+  for (unsigned int lvl = 0; lvl < 2; lvl++) {
+    unsigned int l = l2 + lvl;
+    unsigned int homemade_trigbits = 0;
+    for (unsigned int ipath = 0; ipath < hltModules[lvl].size(); ipath++) {
+      const string& trigName = hltModules[lvl][ipath];
+
+      // Try to emulate HLT algorithms.
+      bool fired = TriggerTranslator(hltModules[lvl][ipath], l, ipath+1);
+	  
+      // If the event passes, set the corresponding bit in trigbits.
+      if (fired) homemade_trigbits = homemade_trigbits | (1 << ipath);
+      if (debug)
+	out << "  " << trigName << " (homemade): decision = " << fired << endl;
+    }
+
+    // "Official" muon HLTs are calculated only when corresponding
+    // previous levels gave OK, while we calculate the decision for a
+    // given level regardless of previous levels' decisions.
+    if (l >= l2)
+      homemade_trigbits &= trigWord[l1];
+    if (l >= l3)
+      homemade_trigbits &= trigWord[l2];
+    // Compare official and homemade decisions.
+    if (homemade_trigbits != trigWord[l]) {
+      edm::LogWarning("compareHLTDecision")
+	<< "+++ Warning: official L" << l
+	<< " decision disagrees with homemade decision:"
+	<< " official: " << trigWord[l]
+	<< " homemade: " << homemade_trigbits << " +++";
+      
+      if (verbosity == VERBOSITY_NONE)
+	dumpEvent(false, true, true, true, false);
+    }
+  }
+    
+  if (debug) LogTrace("compareHLTDecision") << out.str();
+}
+  
 
 bool Zprime2muAnalysis::eventIsInteresting() {
   return false;

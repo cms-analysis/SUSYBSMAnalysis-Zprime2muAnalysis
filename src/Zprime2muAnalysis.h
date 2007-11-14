@@ -133,6 +133,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 			 const unsigned int nmu);
   void storeL1Decision(const edm::Event& event);
   void storeHLTDecision(const edm::Event& event);
+  void compareHLTDecision();
   void storeOfflineMuons(const edm::Event&, const edm::InputTag& whichMuons,
 			 RECLEVEL irec, bool trackerOnly=false);
   bool storeOfflineMuon(const int imu, const RECLEVEL irec,

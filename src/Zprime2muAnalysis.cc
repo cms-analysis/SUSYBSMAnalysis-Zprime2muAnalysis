@@ -613,7 +613,19 @@ void Zprime2muAnalysis::storeL2Muons(const edm::Event& event) {
   const static bool debug = (verbosity >= VERBOSITY_LOTS);
 
   edm::Handle<reco::RecoChargedCandidateCollection> l2MuColl;
-  event.getByLabel(l2Muons, l2MuColl);
+  try {
+    event.getByLabel(l2Muons, l2MuColl);
+  } catch (const cms::Exception& e) {
+    if (passTrig[l2])
+      throw e;
+    else {
+      edm::LogWarning("storeL2Muons")
+	<< "No collection '" << l2Muons
+	<< "' in event and event did not pass the L2 trigger, "
+	<< "continuing execution";
+      return;
+    }
+  }
 
   if (debug) LogTrace("storeL2Muons")
     << "Number of Level-2 muons: " << l2MuColl->size();
@@ -668,7 +680,19 @@ void Zprime2muAnalysis::storeL3Muons(const edm::Event& event) {
   const static bool debug = verbosity >= VERBOSITY_LOTS;
 
   edm::Handle<reco::MuonTrackLinksCollection> muons;
-  event.getByLabel(l3Muons, muons);
+  try {
+    event.getByLabel(l3Muons, muons);
+  } catch (const cms::Exception& e) {
+    if (passTrig[l3])
+      throw e;
+    else {
+      edm::LogWarning("storeL3Muons")
+	<< "No collection '" << l3Muons
+	<< "' in event and event did not pass the L3 trigger, "
+	<< "continuing execution";
+      return;
+    }
+  }
 
   int imu = 0;
   ostringstream out;
@@ -1092,9 +1116,9 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
 	storeL1Muons(event);
 	storeL1Decision(event);
 	// HLT 
+	storeHLTDecision(event);
 	storeL2Muons(event);
 	storeL3Muons(event);
-	storeHLTDecision(event);
       }
       // off-line muons reconstructed with GlobalMuonProducer
       storeOfflineMuons(event, globalMuons, lgmr);
@@ -2940,6 +2964,8 @@ void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
 }
 
 bool Zprime2muAnalysis::eventIsInteresting() {
+  return false;
+
   if (bestDiMuons.size() > 0) {
     const zp2mu::DiMuon& dimu = bestDiMuons[0];
     if (dimu.resV().M() > 800)

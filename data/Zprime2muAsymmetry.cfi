@@ -22,6 +22,10 @@ module Zprime2muAsymmetry = Zprime2muAsymmetry {
   int32 maxParamEvents = -1
   // whether to use the cached parameterization
   bool useCachedParams = false
+  // the name of the root file that holds the cached parameters
+  string paramCacheFile = "cached.root"
+  // whether only to calculate the parameterization
+  bool calcParamsOnly = false
   // whether to use the on-peak fit window or the off-peak one
   bool onPeak = true
   // whether bremsstrahlung was turned on for the generated events

@@ -62,8 +62,7 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   void calcFrameAsym();
   void fillFrameHistos();
 
-  void fillGenData(const reco::CandidateCollection& mcp);
-  void fillFitData(const reco::CandidateCollection& mcp);
+  void fillFitData(const edm::Event& event);
   void dumpFitData();
 
   // JMTBAD GenKineAna methods... to be moved
@@ -99,30 +98,30 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   // look at the angular distributions separately by type
   TH1F *AsymFitHistoGenByType[2][6], *AsymFitHistoRecByType[2][6];
 
-  TH1F *cosGJ[NUM_REC_LEVELS][2], *cosCS[NUM_REC_LEVELS][2];
-  TH1F *cosBoost[NUM_REC_LEVELS], *cosW[NUM_REC_LEVELS];
-  TH1F *cosCSRes[NUM_REC_LEVELS-1];
-  TH2F *rap_vs_cosCS[NUM_REC_LEVELS], *rap3_vs_rap0;
-  TH1F *FMassGJ[NUM_REC_LEVELS][2], *FMassCS[NUM_REC_LEVELS][2];
-  TH1F *BMassGJ[NUM_REC_LEVELS][2], *BMassCS[NUM_REC_LEVELS][2];
-  TH1F *AMassGJ[NUM_REC_LEVELS][2], *AMassCS[NUM_REC_LEVELS][2];
-  TH1F *FMassBoost[NUM_REC_LEVELS], *FMassW[NUM_REC_LEVELS];
-  TH1F *BMassBoost[NUM_REC_LEVELS], *BMassW[NUM_REC_LEVELS];
-  TH1F *AMassBoost[NUM_REC_LEVELS], *AMassW[NUM_REC_LEVELS];
-  TH1F *FRapGJ[NUM_REC_LEVELS][2],  *FRapCS[NUM_REC_LEVELS][2];
-  TH1F *BRapGJ[NUM_REC_LEVELS][2],  *BRapCS[NUM_REC_LEVELS][2];
-  TH1F *ARapGJ[NUM_REC_LEVELS][2],  *ARapCS[NUM_REC_LEVELS][2];
-  TH1F *FRapBoost[NUM_REC_LEVELS],  *FRapW[NUM_REC_LEVELS];
-  TH1F *BRapBoost[NUM_REC_LEVELS],  *BRapW[NUM_REC_LEVELS];
-  TH1F *ARapBoost[NUM_REC_LEVELS],  *ARapW[NUM_REC_LEVELS];
-  TH1F *FPseudGJ[NUM_REC_LEVELS],   *FPseudCS[NUM_REC_LEVELS];
-  TH1F *BPseudGJ[NUM_REC_LEVELS],   *BPseudCS[NUM_REC_LEVELS];
-  TH1F *FPseudBoost[NUM_REC_LEVELS],*FPseudW[NUM_REC_LEVELS];
-  TH1F *BPseudBoost[NUM_REC_LEVELS],*BPseudW[NUM_REC_LEVELS];
+  TH1F *cosGJ[MAX_LEVELS][2], *cosCS[MAX_LEVELS][2];
+  TH1F *cosBoost[MAX_LEVELS], *cosW[MAX_LEVELS];
+  TH1F *cosCSRes[MAX_LEVELS-1];
+  TH2F *rap_vs_cosCS[MAX_LEVELS], *rap3_vs_rap0;
+  TH1F *FMassGJ[MAX_LEVELS][2], *FMassCS[MAX_LEVELS][2];
+  TH1F *BMassGJ[MAX_LEVELS][2], *BMassCS[MAX_LEVELS][2];
+  TH1F *AMassGJ[MAX_LEVELS][2], *AMassCS[MAX_LEVELS][2];
+  TH1F *FMassBoost[MAX_LEVELS], *FMassW[MAX_LEVELS];
+  TH1F *BMassBoost[MAX_LEVELS], *BMassW[MAX_LEVELS];
+  TH1F *AMassBoost[MAX_LEVELS], *AMassW[MAX_LEVELS];
+  TH1F *FRapGJ[MAX_LEVELS][2],  *FRapCS[MAX_LEVELS][2];
+  TH1F *BRapGJ[MAX_LEVELS][2],  *BRapCS[MAX_LEVELS][2];
+  TH1F *ARapGJ[MAX_LEVELS][2],  *ARapCS[MAX_LEVELS][2];
+  TH1F *FRapBoost[MAX_LEVELS],  *FRapW[MAX_LEVELS];
+  TH1F *BRapBoost[MAX_LEVELS],  *BRapW[MAX_LEVELS];
+  TH1F *ARapBoost[MAX_LEVELS],  *ARapW[MAX_LEVELS];
+  TH1F *FPseudGJ[MAX_LEVELS],   *FPseudCS[MAX_LEVELS];
+  TH1F *BPseudGJ[MAX_LEVELS],   *BPseudCS[MAX_LEVELS];
+  TH1F *FPseudBoost[MAX_LEVELS],*FPseudW[MAX_LEVELS];
+  TH1F *BPseudBoost[MAX_LEVELS],*BPseudW[MAX_LEVELS];
   TProfile *cosCS3_diffsq_vs_cosCS0;
-  TH1F *FMBoostCut[NUM_REC_LEVELS][6];
-  TH1F *BMBoostCut[NUM_REC_LEVELS][6];
-  TH1F *AsymMBoostCut[NUM_REC_LEVELS][6];
+  TH1F *FMBoostCut[MAX_LEVELS][6];
+  TH1F *BMBoostCut[MAX_LEVELS][6];
+  TH1F *AsymMBoostCut[MAX_LEVELS][6];
 
   // histos used to get the mistag parameterizations
   TH1F *h_mass_dil[2];
@@ -138,9 +137,13 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
 
   TH1F *h_cos_theta_true, *h_cos_theta_cs_acc;
   TH1F *h_cos_theta_cs, *h_cos_theta_cs_fixed;
+  TH1F *h_cos_theta_cs_rec;
   TH1F *h_b_mass, *h_f_mass, *h_b_smass, *h_f_smass;
   TH1F *h_gen_sig[2];
   TH2F *h2_rap_cos_d[2];
+  TH2F *h2_rap_cos_d_uncut[2];
+  TH2F *h2_rap_cos_d_rec;
+  TH1F *mistagProbEvents[2];
 
   // Data arrays for unbinned fits.  Fixed size arrays for now.
   // Order of the arrays: generated events, reconstructed events,
@@ -169,7 +172,7 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   edm::InputTag genMuons;
   VERBOSITY verbosity;
   std::string outputFileBase;
-  std::string genSample;
+  std::vector<std::string> genSampleFiles;
   double peakMass;
   bool onPeak;
   bool noFit;
@@ -178,6 +181,8 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   int numFits;
   int maxParamEvents;
   bool useCachedParams;
+  std::string paramCacheFile;
+  bool calcParamsOnly;
   bool internalBremOn;
   bool fixbIn1DFit;
   bool useCosTrueInFit;

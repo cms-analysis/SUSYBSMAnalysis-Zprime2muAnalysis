@@ -2701,7 +2701,8 @@ bool Zprime2muAnalysis::TriggerTranslator(const string& algo,
   const static bool debug = verbosity >= VERBOSITY_SIMPLE;
   ostringstream out;
 
-  if (debug) out << "TriggerTranslator, " << algo << ":\n";
+  if (debug) out << "TriggerTranslator, " << algo
+		 << " (event " << eventNum << "):\n";
 
   unsigned int muonsPass = 0;
   vector<zp2mu::Muon>::const_iterator pmu; //, pmu_prev;
@@ -2997,7 +2998,19 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
 				const edm::EventSetup& eSetup) {
   // could store the whole event/eventsetup object if needed
   eventNum = event.id().event();
+
+  // store the event weight
+  edm::Handle<double> hweight;
+  // JMTBAD replace try/catch with Handle::isValid() use after 1_7
+  try {
+    event.getByLabel("weight", hweight);
+    eventWeight = *hweight;
+  } catch (const cms::Exception& e) {
+    eventWeight = 1;
+  }
+
   storeMuons(event);
+
   // if the event is "interesting" and verbosity is set such that
   // we aren't already dumping all events, dump the event
   if (verbosity == VERBOSITY_NONE && eventIsInteresting()) {

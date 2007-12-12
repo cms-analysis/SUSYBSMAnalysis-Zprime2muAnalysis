@@ -46,8 +46,12 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
   virtual void endJob();
 
+  virtual bool eventIsInteresting();
+
   // keep track of the event number for printing out
   int eventNum;
+  // and store the event weight
+  double eventWeight;
 
   void InitROOT();
 
@@ -199,8 +203,6 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 			std::vector<zp2mu::DiMuon>& diMuons);
   void addBremCandidates(std::vector<zp2mu::DiMuon>& diMuons, 
 			 const bool debug = false);
-
-  bool eventIsInteresting();
 
  protected:  // the muons need to be accessible from our derived classes
   std::vector<zp2mu::Muon> allMuons[MAX_LEVELS];

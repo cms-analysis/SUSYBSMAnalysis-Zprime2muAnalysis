@@ -1,4 +1,5 @@
 block Zprime2muAnalysisCommon = {
+  untracked int32 verbosity = 0
   bool doingHiggs = false
   bool doingElectrons = false
   bool generatedOnly = false

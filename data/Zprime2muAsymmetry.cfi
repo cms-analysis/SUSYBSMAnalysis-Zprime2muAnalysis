@@ -3,9 +3,6 @@ include "SUSYBSMAnalysis/Zprime2muAnalysis/data/Zprime2muAnalysisCommon.cff"
 module Zprime2muAsymmetry = Zprime2muAsymmetry {
   using Zprime2muAnalysisCommon
 
-  // verbosity controls the amount of debug information dumped
-  // see the VERBOSITY enum in Zprime2muAsymmetry.h for levels
-  untracked int32 verbosity = 1 // = VERBOSITY_SIMPLE
   // if noFit is true, only make the histograms -- useful for getting
   // the recSigma information for above
   bool noFit = false
@@ -43,3 +40,7 @@ module Zprime2muAsymmetry = Zprime2muAsymmetry {
   
   string dataSet = "Zssm1000"
 }
+
+// verbosity controls the amount of debug information dumped
+// see the VERBOSITY enum in Zprime2muAsymmetry.h for levels
+replace Zprime2muAsymmetry.verbosity = 1 // = VERBOSITY_SIMPLE

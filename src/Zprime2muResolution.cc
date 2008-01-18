@@ -178,6 +178,13 @@ void Zprime2muResolution::BookResHistos() {
 				   peakMass);
     }
 
+    string titl = str_level[i] + ", all muons";
+    SumPtR03[i][0] = new TH1F(nameHist("SumPtR03", i, 0).c_str(),
+			      str_level[i].c_str(), 30, 0, 30);
+    titl = str_level[i] + ", w/ opp-sign dimuon";
+    SumPtR03[i][1] = new TH1F(nameHist("SumPtR03", i, 1).c_str(),
+			      titl.c_str(), 30, 0, 30);
+
     // Main kinematic variables for opp-sign dileptons and
     // muons associated with opp-sign dileptons
     if (i == 1) {
@@ -641,6 +648,7 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 
   // Get origin of generated muons.
   for (pmu = allMuons[0].begin(); pmu != allMuons[0].end(); pmu++) {
+    //Origin[0]->Fill(getOrigin(pmu->genMotherId()), eventWeight);
     Origin[0]->Fill(getOrigin(pmu->genMotherId()));
   }
 
@@ -810,10 +818,17 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	    SignOfDil[0]->Fill(1.);
 	  }
 	  // Get origin of generated muons.
+	  //Origin[1]->Fill(getOrigin(pdi->muPlus().genMotherId()), eventWeight);
+	  //Origin[1]->Fill(getOrigin(pdi->muMinus().genMotherId()), eventWeight);
 	  Origin[1]->Fill(getOrigin(pdi->muPlus().genMotherId()));
 	  Origin[1]->Fill(getOrigin(pdi->muMinus().genMotherId()));
 	}
 	else if (i_rec <= l3) NumDilVsRec->Fill(i_rec+1);
+
+	if (passTrigger()) {
+	  SumPtR03[i_rec][1]->Fill(pdi->muPlus().sumPtR03());
+	  SumPtR03[i_rec][1]->Fill(pdi->muMinus().sumPtR03());
+	}
 
 	if (debug) {
 	  LogTrace("Zprime2muResolution") << str_level[i_rec] << " values:";
@@ -1414,6 +1429,8 @@ void Zprime2muResolution::fillMuonHistos(const int rec, const bool debug) {
     MuonPtVsEta[rec]->Fill(lVect.Eta(), lVect.Pt());
     MuonPVsEta[rec]->Fill( lVect.Eta(), lVect.P() );
 
+    SumPtR03[rec][0]->Fill(pmu->sumPtR03());
+
     if (debug)
       LogTrace("Zprime2muResolution") << setprecision(5) << pmu->id() << "| "
 				      << setw(4) << pmu->charge() << "  | "
@@ -1499,6 +1516,8 @@ void Zprime2muResolution::fillDilResHistos(const bool debug) {
     // Highest mass reconstructed at various trigger levels and by various
     // off-line fitting algorithms
     if (n_dil > 0) {
+      //DilMassComp[rec][0]->Fill(diMuons[0].dimuV().M(), eventWeight);
+      //DilMassComp[rec][1]->Fill(diMuons[0].resV().M(), eventWeight);
       DilMassComp[rec][0]->Fill(diMuons[0].dimuV().M());
       DilMassComp[rec][1]->Fill(diMuons[0].resV().M());
     }
@@ -1731,6 +1750,8 @@ void Zprime2muResolution::getHistosFromFile() {
       histoFile->GetObject(nameHist("PtVsEta", i, j).c_str(), PtVsEta[i][j]);
       histoFile->GetObject(nameHist("MuMVsMuP", i, j).c_str(), MuMVsMuP[i][j]);
     }
+    for (int j = 0; j < 2; j++)
+      histoFile->GetObject(nameHist("SumPtR03", i, j).c_str(), SumPtR03[i][j]);
   }
   histoFile->GetObject("Eta4muons", Eta4muons);
   histoFile->GetObject("Pt4muons", Pt4muons);
@@ -1869,6 +1890,8 @@ void Zprime2muResolution::WriteHistos() {
       PtVsEta[i][j]->Write();
       MuMVsMuP[i][j]->Write();
     }
+    for (int j = 0; j < 2; j++)
+      SumPtR03[i][j]->Write();
   }
   Eta4muons->Write();
   Pt4muons->Write();
@@ -2014,6 +2037,8 @@ void Zprime2muResolution::DeleteHistos(){
       delete PtVsEta[i][j];
       delete MuMVsMuP[i][j];
     }
+    for (int j = 0; j < 2; j++)
+      delete SumPtR03[i][j];
   }
   delete Eta4muons;
   delete Pt4muons;
@@ -3285,6 +3310,25 @@ void Zprime2muResolution::DrawResHistos(){
   ratio[1][5]->SetMinimum(-0.1); 
   ratio[1][5]->SetMaximum(0.5); 
   ratio[1][5]->Draw();
+  c1->Update();
+
+  ps->NewPage();
+  c1->Clear();
+  c1->cd(0);
+  delete title; title = new TPaveLabel(0.1,0.94,0.9,0.98,
+				       "#Sigma Pt (#DeltaR < 0.3)");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+  pad[page]->Draw();
+  pad[page]->Divide(2,5);
+  for (int i = 0; i < 5; i++) {
+    for (int j = 0; j < 2; j++) {
+      pad[page]->cd(i*2+j+1);
+      SumPtR03[i+lgmr][j]->Draw();
+    }
+  }
   c1->Update();
 
   if (doingHiggs) {

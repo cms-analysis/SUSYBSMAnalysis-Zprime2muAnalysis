@@ -23,6 +23,7 @@
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonTrackLinks.h"
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
+#include "DataFormats/RecoCandidate/interface/RecoChargedCandidateFwd.h"
 #include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
 #include "DataFormats/SiStripDetId/interface/StripSubdetector.h"
 #include "DataFormats/TrackingRecHit/interface/TrackingRecHit.h"
@@ -789,7 +790,13 @@ void Zprime2muAnalysis::storeOfflineMuons(const edm::Event& event,
       int seedIndex = matchStandAloneMuon(muon->standAloneMuon());
       bool isStored = storeOfflineMuon(imu, irec, theTrack, tkTrack, muTrack,
 				       seedIndex);
-      if (isStored) imu++;
+      if (isStored) {
+	// set sumpt here instead of having to pass it or the entire
+	// reco::Muon to storeOfflineMuon()
+	if (muon->isIsolationValid())
+	  allMuons[irec][imu].setSumPtR03(muon->getIsolationR03().sumPt);
+	imu++;
+      }
     }
   }
 }

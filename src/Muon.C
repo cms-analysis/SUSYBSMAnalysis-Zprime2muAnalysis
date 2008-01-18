@@ -60,6 +60,8 @@ namespace zp2mu {
     }
 
     thePhoton.SetPxPyPzE(0., 0., 0., 0.);
+
+    theSumPtR03 = 0;
   }
 
   /** returns id of the closest muon at rec. level = level. */
@@ -233,6 +235,8 @@ namespace zp2mu {
       }
 
       thePhoton = rhs.thePhoton;
+
+      theSumPtR03 = rhs.theSumPtR03;
     }
     return *this;
   }
@@ -320,7 +324,8 @@ namespace zp2mu {
 	output << "   Closest photon: (" << rhs.closestPhoton().Px()
 	       << ", "                   << rhs.closestPhoton().Py()
 	       << ", "                   << rhs.closestPhoton().Pz()
-	       << "; "                   << rhs.closestPhoton().E() << ")";
+	       << "; "                   << rhs.closestPhoton().E() << ")" << endl;
+	output << "   Sum pT (dR<0.3): " << rhs.sumPtR03();
       }
       output << endl;
     }

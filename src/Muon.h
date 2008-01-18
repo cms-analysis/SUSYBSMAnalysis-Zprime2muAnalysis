@@ -157,6 +157,9 @@ namespace zp2mu {
     /** returns 4-momentum of the closest photon candidate. */
     inline TLorentzVector closestPhoton() const {return thePhoton;}
 
+    /** returns sumPt of tracks in cone of dR=0.3. */
+    inline double sumPtR03() const { return theSumPtR03; }
+
     // Derived quantities
     /** returns error on Pt. */
     double errPt() const;
@@ -260,6 +263,8 @@ namespace zp2mu {
     /** sets 4-momentum of the closest photon candidate. */
     inline void setClosestPhoton(const TLorentzVector & ph) {thePhoton = ph;}
 
+    inline void setSumPtR03(const double sumpt) { theSumPtR03 = sumpt; }
+
     // Overloaded operators:
     Muon& operator = (const Muon&);
     /* 
@@ -311,6 +316,8 @@ namespace zp2mu {
     // tracker (cm)
 
     TLorentzVector thePhoton; // 4-momentum of the closest photon candidate
+    
+    double theSumPtR03;  // sum Pt of tracks in cone of dR < 0.3
   };
 }
 

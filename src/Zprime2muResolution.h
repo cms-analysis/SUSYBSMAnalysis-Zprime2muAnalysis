@@ -54,6 +54,7 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   TH1F *EventsInAccFailed, *L1TrigPassSingleMu, *L1TrigFailSingleMu;
   TH2F *L1TrigFailMu2VsMu1, *L1TrigPassMu2VsMu1;
   TH1F *L2MuonHits, *L3TrackerHits, *GMRMuonHits[3], *GMRChi2dof[3];
+  TH1F *SumPtR03[MAX_LEVELS+1][2];
   TH1F *NMuons[NUM_REC_LEVELS][4], *NumDilVsRec, *SignOfDil[NUM_REC_LEVELS];
   TH1F *MuonEta[MAX_LEVELS+1], *MuonRap[MAX_LEVELS+1], *MuonPhi[MAX_LEVELS+1];
   TH1F *MuonPt[MAX_LEVELS+1], *MuonPz[MAX_LEVELS+1], *MuonP[MAX_LEVELS+1];

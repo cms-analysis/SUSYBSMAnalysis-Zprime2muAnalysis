@@ -1173,13 +1173,15 @@ void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
   }
 
   // Dump all muon vectors
-  bool debug = verbosity >= VERBOSITY_SIMPLE;
-  if (debug) dumpEvent(true, true, true, true, true);
+  if (verbosity >= VERBOSITY_SIMPLE) dumpEvent(true, true, true, true, true);
   
   // Construct opposite-sign dileptons out of lists of muons.
   // Pass ref. to Event only to save true resonance; need to think of a better
   // solution?
+  bool debug = verbosity > VERBOSITY_SIMPLE;
   makeAllDileptons(event, debug);
+  if (verbosity >= VERBOSITY_SIMPLE) dumpDiMuonMasses();
+
 }
 
 // Cocktail of tracks from various reconstructors.  Two possibilities:
@@ -1734,8 +1736,6 @@ void Zprime2muAnalysis::makeAllDileptons(const edm::Event& event,
     if (rec < MAX_LEVELS)       addBremCandidates(allDiMuons[rec], debug);
     else if (rec == MAX_LEVELS) addBremCandidates(bestDiMuons, debug);
   }
-
-  if (debug) dumpDiMuonMasses();
 }
 
 void Zprime2muAnalysis::makeDileptons(const int rec, const bool debug) {
@@ -1864,9 +1864,15 @@ Zprime2muAnalysis::makeDileptons(const int rec,
 
     for (pmu = muons.begin(); pmu != muons.end()-1; pmu++) {
 
+      if (pmu->pt() <= 20.) continue;
+      if (pmu->sumPtR03() > 10.) continue;
+
       vmu1.SetPtEtaPhiM(pmu->pt(), pmu->eta(), pmu->phi(), MUMASS);
 
       for (qmu = pmu+1; qmu != muons.end(); qmu++) {
+
+	if (qmu->pt() <= 20.) continue;
+	if (qmu->sumPtR03() > 10.) continue;
 
 	if (qmu->charge() != pmu->charge()) {
 

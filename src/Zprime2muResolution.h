@@ -46,9 +46,11 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   void DeleteHistos();
 
   void DrawResHistos();
+  void DrawAcceptance();
 
   // roughly sorted by order booked, and in what booking fcn
   // booked in BookResHistos()
+  TH1F *GenMassAllEvents, *GenMassInAccept;
   TH1F *Origin[2];
   TH1F *TrigResult[NUM_REC_LEVELS][3], *TrigMass[NUM_REC_LEVELS][3];
   TH1F *EventsInAccFailed, *L1TrigPassSingleMu, *L1TrigFailSingleMu;

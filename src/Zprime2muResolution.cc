@@ -67,6 +67,15 @@ inline string nameHist(const char* s, int i, int j = -1) {
 }
 
 void Zprime2muResolution::BookResHistos() {
+  // Acceptance studies.
+  GenMassAllEvents = new TH1F("GenMassAllEvents",
+			      "Gen mass, all events", 24, 200., 5000.);
+  GenMassInAccept  = new TH1F("GenMassInAccept",
+			      "Gen mass, events in acceptance",
+			      24, 200., 5000.);
+  GenMassAllEvents->Sumw2();
+  GenMassInAccept->Sumw2();
+
   // Origin of muons
   Origin[0] = new TH1F("Origin0","Particle Id of Mother of all mu's", 20, 0, 20);
   Origin[1] = new TH1F("Origin1","Particle Id of Mother of opp-sign dilepton mu's",
@@ -535,19 +544,15 @@ void Zprime2muResolution::BookDilResHistos(){
   // Dilepton mass spectra:
   //  - dilepton only (i=0);
   //  - dilepton plus nearby photon candidates (i=1).
-  int nbins = binSize;
   double mass_min = lowerMassWin;
   double mass_max = upperMassWin;
   for (int i = lgen; i <= MAX_LEVELS; i++) {
+    if (i == l1 || i == l2) mass_min = 0.;
+    else                    mass_min = lowerMassWin;
     for (int j = 0; j < 2; j++) {
-      if (i == l1 || i == l2) {
-	DilMassComp[i][j] = new TH1F(nameHist("DilMassComp", i, j).c_str(), str_level[i].c_str(), nbins,
-				     0., mass_max);
-      }
-      else {
-	DilMassComp[i][j] = new TH1F(nameHist("DilMassComp", i, j).c_str(), str_level[i].c_str(), nbins,
-				     mass_min, mass_max);
-      }
+      DilMassComp[i][j] =
+	new TH1F(nameHist("DilMassComp", i, j).c_str(), str_level[i].c_str(),
+		 binSize, mass_min, mass_max);
     }
   }
 
@@ -645,6 +650,16 @@ void Zprime2muResolution::calcResolution(const bool debug) {
   vector<zp2mu::Muon>::const_iterator   pmu;
   vector<zp2mu::DiMuon>::const_iterator pdi;
   vector<zp2mu::DiMuon> diMuon;
+
+  // Fill histograms for acceptance studies.
+  diMuon = allDiMuons[lgen];
+  gen_mass = diMuon[0].dimuV().M(); // (in GeV)
+  GenMassAllEvents->Fill(gen_mass);
+  // Check whether both muons are inside the full eta coverage.
+  if (fabs(diMuon[0].muPlus().eta())  < ETA_CUT &&
+      fabs(diMuon[0].muMinus().eta()) < ETA_CUT) {
+    GenMassInAccept->Fill(gen_mass);
+  }
 
   // Get origin of generated muons.
   for (pmu = allMuons[0].begin(); pmu != allMuons[0].end(); pmu++) {
@@ -1695,6 +1710,8 @@ int Zprime2muResolution::getOrigin(const int motherId) {
 
 void Zprime2muResolution::getHistosFromFile() {
   // JMTBAD there is undoubtedly a better way to to this...
+  histoFile->GetObject("GenMassAllEvents", GenMassAllEvents);
+  histoFile->GetObject("GenMassInAccept", GenMassInAccept);
   histoFile->GetObject("EventsInAccFailed", EventsInAccFailed);
   histoFile->GetObject("L1TrigFailSingleMu", L1TrigFailSingleMu);
   histoFile->GetObject("L1TrigFailMu2VsMu1", L1TrigFailMu2VsMu1);
@@ -1835,6 +1852,8 @@ void Zprime2muResolution::getHistosFromFile() {
 
 void Zprime2muResolution::WriteHistos() {
   // ResHistos
+  GenMassAllEvents->Write();
+  GenMassInAccept->Write();
   EventsInAccFailed->Write();
   L1TrigFailSingleMu->Write();
   L1TrigFailMu2VsMu1->Write();
@@ -1982,6 +2001,8 @@ void Zprime2muResolution::WriteHistos() {
 
 void Zprime2muResolution::DeleteHistos(){
   // ResHistos
+  delete GenMassAllEvents;
+  delete GenMassInAccept;
   delete EventsInAccFailed;
   delete L1TrigFailSingleMu;
   delete L1TrigFailMu2VsMu1;
@@ -3321,6 +3342,7 @@ void Zprime2muResolution::DrawResHistos(){
   title->Draw();
   strpage << "- " << (++page) << " -";
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+  gStyle->SetOptLogy(1);
   pad[page]->Draw();
   pad[page]->Divide(2,5);
   for (int i = 0; i < 5; i++) {
@@ -3329,6 +3351,7 @@ void Zprime2muResolution::DrawResHistos(){
       SumPtR03[i+lgmr][j]->Draw();
     }
   }
+  gStyle->SetOptLogy(0);
   c1->Update();
 
   if (doingHiggs) {
@@ -3377,6 +3400,36 @@ void Zprime2muResolution::DrawResHistos(){
       delete ratio[i][j];
 }
 
+void Zprime2muResolution::DrawAcceptance() {
+  TCanvas *c1 = new TCanvas("c1", "", 0, 0, 500, 320);
+  TPostScript *eps = new TPostScript("accept_vs_mass.eps", 113);
+  eps->NewPage();
+  c1->Clear();
+  c1->cd(0);
+  gStyle->SetOptDate(0);
+  gStyle->SetOptStat(0);
+  TH1F* accept;
+  accept = (TH1F*)GenMassAllEvents->Clone();
+  accept->SetTitle("");
+  accept->Divide(GenMassInAccept, GenMassAllEvents, 1., 1.);
+  for (int ibin = 1; ibin <= accept->GetNbinsX(); ibin++) {
+    edm::LogInfo("Zprime2muResolution")
+      << "ibin = " << ibin
+      << " mass = " << accept->GetXaxis()->GetBinCenter(ibin)
+      << " acceptance = " << accept->GetBinContent(ibin);
+  }
+  accept->SetMinimum(0.0);
+  accept->SetMaximum(1.05);
+  accept->GetXaxis()->SetTitle("M#mu^{+}#mu^{-} (GeV)");
+  accept->GetYaxis()->SetTitle("Acceptance");
+  accept->Draw("E");
+  c1->Update();
+  eps->Close();
+  delete accept;
+  delete eps;
+  delete c1;
+}
+
 void Zprime2muResolution::analyze(const edm::Event& event, 
 				  const edm::EventSetup& eSetup) {
   // don't bother reading any events if we're getting the histos from
@@ -3402,5 +3455,6 @@ void Zprime2muResolution::endJob() {
   }
 
   DrawResHistos();
+  //DrawAcceptance();
   histoFile->Close();
 }

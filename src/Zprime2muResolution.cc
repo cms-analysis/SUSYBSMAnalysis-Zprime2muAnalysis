@@ -441,12 +441,31 @@ void Zprime2muResolution::BookEffHistos() {
 
   RecMass[0][0] = new TH1F("RecMass00", "Gen mass, gen, all",  27, 0., maxTrigMass);
   RecMass[0][1] = new TH1F("RecMass01", "Gen mass, gen, in acceptance", 27, 0., maxTrigMass);
+  RecMass[0][2] = new TH1F("RecMass02", "placeholder",  27, 0., maxTrigMass);
   RecMass[1][0] = new TH1F("RecMass10", "Gen mass, L3, 2mu",   27, 0., maxTrigMass);
   RecMass[1][1] = new TH1F("RecMass11", "Gen mass, L3, dimu",  27, 0., maxTrigMass);
+  RecMass[1][2] = new TH1F("RecMass12", "Gen mass, L3, 2mu, w/ cuts",  27, 0., maxTrigMass);
   RecMass[2][0] = new TH1F("RecMass20", "Gen mass, GMR, 2mu",  27, 0., maxTrigMass);
   RecMass[2][1] = new TH1F("RecMass21", "Gen mass, GMR, dimu", 27, 0., maxTrigMass);
+  RecMass[2][2] = new TH1F("RecMass22", "Gen mass, GMR, 2mu, w/ cuts",  27, 0., maxTrigMass);
   RecMass[3][0] = new TH1F("RecMass30", "Gen mass, TMR, 2mu",  27, 0., maxTrigMass);
   RecMass[3][1] = new TH1F("RecMass31", "Gen mass, TMR, dimu", 27, 0., maxTrigMass);
+  RecMass[3][2] = new TH1F("RecMass32", "Gen mass, TMR, 2mu, w/ cuts",  27, 0., maxTrigMass);
+
+  const string locsubs[4] = {"Barrel","Overlap","Endcap","Outside"};
+  vector<string> loctitles;
+  for (int i = 0; i < 4; i++)
+    for (int j = i; j < 4; j++) {
+      loctitles.push_back(locsubs[i] + "-" + locsubs[j]);
+    }
+  for (int i = 0; i < 2; i++) {
+    for (int j = 0; j < 10; j++) {
+      string title;
+      if (i == 0) title = loctitles[j] + ", 2mu";
+      else title = loctitles[j] + ", dimu";
+      RecMassByLoc[i][j] = new TH1F(nameHist("RecMassByLoc", i, 9).c_str(), title.c_str(),  27, 0., maxTrigMass);
+    }
+  }
 
   // Define errors
   for (int i = lgen; i <= MAX_LEVELS; i++) {
@@ -455,10 +474,14 @@ void Zprime2muResolution::BookEffHistos() {
     EffVsPt[i]->Sumw2();
   }
   for (int i = 0; i < 4; i++) {
-    for (int j = 0; j < 2; j++) {
+    for (int j = 0; j < 3; j++) {
       RecMass[i][j]->Sumw2();
     }
   }
+
+  for (int i = 0; i < 2; i++)
+    for (int j = 0; j < 10; j++)
+      RecMassByLoc[i][j]->Sumw2();
 }
 
 void Zprime2muResolution::BookPtResHistos() {
@@ -840,7 +863,7 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	}
 	else if (i_rec <= l3) NumDilVsRec->Fill(i_rec+1);
 
-	if (passTrigger()) {
+	if (!doingElectrons && i_rec >= lgmr && passTrigger()) {
 	  SumPtR03[i_rec][1]->Fill(pdi->muPlus().sumPtR03());
 	  SumPtR03[i_rec][1]->Fill(pdi->muMinus().sumPtR03());
 	}
@@ -1086,8 +1109,10 @@ void Zprime2muResolution::fillEffHistos() {
 
   // Dimuon reconstruction efficiencies
   double gen_mass = -999.;
+  int wheredi = 0;
   if (allDiMuons[lgen].size() == 1) { // one generated dimuon
     gen_mass = allDiMuons[lgen][0].dimuV().M()/1000.; // (in TeV)
+    wheredi = int(whereIsDimuon(allDiMuons[lgen][0]));
     RecMass[0][0]->Fill(gen_mass);
 
     // Events with both muons inside the full eta coverage, and passing
@@ -1099,6 +1124,7 @@ void Zprime2muResolution::fillEffHistos() {
   }
 
   if (passTrigger()) {
+
     if (allMuons[l3].size() > 1)     // At least two muons found by L3
       RecMass[1][0]->Fill(gen_mass);
     if (allDiMuons[l3].size() > 0)   // Opposite-sign dimuon found by L3
@@ -1109,8 +1135,31 @@ void Zprime2muResolution::fillEffHistos() {
       RecMass[2][1]->Fill(gen_mass);
     if (bestMuons.size() > 1)        // At least two muons found by TMR
       RecMass[3][0]->Fill(gen_mass);
-    if (bestDiMuons.size() > 0)      // Opposite-sign dimuon found by TMR
+    if (bestDiMuons.size() > 0) {      // Opposite-sign dimuon found by TMR 
       RecMass[3][1]->Fill(gen_mass);
+      RecMassByLoc[1][wheredi]->Fill(gen_mass);
+    }
+
+    // Count the number of muons that pass cuts at OPT level
+    int passCut = 0;
+    for (int z = 1; z <= 3; z++) {
+      passCut = 0;
+      const vector<zp2mu::Muon>& mus
+	= z < 3 ? allMuons[z == 1 ? l3 : lgmr] : bestMuons;
+      vector<zp2mu::Muon>::const_iterator pmu;
+      for (pmu = mus.begin(); pmu != mus.end(); pmu++) {
+	if (!muonIsCut(*pmu)) passCut++;
+	if (passCut > 1) break;
+      }
+
+      if (passCut > 1)
+	RecMass[z][2]->Fill(gen_mass);
+    }
+      
+    // Fill this also separately for barrel, endcap, overlap region
+    // combinations, at least two muons passing cuts
+    if (passCut > 1)
+      RecMassByLoc[0][wheredi]->Fill(gen_mass);
   }
 }
 
@@ -1444,7 +1493,8 @@ void Zprime2muResolution::fillMuonHistos(const int rec, const bool debug) {
     MuonPtVsEta[rec]->Fill(lVect.Eta(), lVect.Pt());
     MuonPVsEta[rec]->Fill( lVect.Eta(), lVect.P() );
 
-    SumPtR03[rec][0]->Fill(pmu->sumPtR03());
+    if (!doingElectrons) 
+      SumPtR03[rec][0]->Fill(pmu->sumPtR03());
 
     if (debug)
       LogTrace("Zprime2muResolution") << setprecision(5) << pmu->id() << "| "
@@ -1725,8 +1775,11 @@ void Zprime2muResolution::getHistosFromFile() {
   histoFile->GetObject("L3TrackerHits", L3TrackerHits);
   histoFile->GetObject("NumDilVsRec", NumDilVsRec);
   for (int i = 0; i < 4; i++)
-    for (int j = 0; j < 2; j++)
+    for (int j = 0; j < 3; j++)
       histoFile->GetObject(nameHist("RecMass", i, j).c_str(), RecMass[i][j]);
+  for (int i = 0; i < 2; i++)
+    for (int j = 0; j < 10; j++)
+      histoFile->GetObject(nameHist("RecMassByLoc", i,j).c_str(), RecMassByLoc[i][j]);
   for (int i = 0; i <= MAX_LEVELS; i++) {
     histoFile->GetObject(nameHist("EffVsEta", i).c_str(), EffVsEta[i]);
     histoFile->GetObject(nameHist("EffVsPhi", i).c_str(), EffVsPhi[i]);
@@ -1867,8 +1920,11 @@ void Zprime2muResolution::WriteHistos() {
   L3TrackerHits->Write();
   NumDilVsRec->Write();
   for (int i = 0; i < 4; i++)
-    for (int j = 0; j < 2; j++)
+    for (int j = 0; j < 3; j++)
       RecMass[i][j]->Write();
+  for (int i = 0; i < 2; i++)
+    for (int j = 0; j < 10; j++)
+      RecMassByLoc[i][j]->Write();
   for (int i = 0; i <= MAX_LEVELS; i++) {
     EffVsEta[i]->Write();
     EffVsPhi[i]->Write();
@@ -2016,8 +2072,11 @@ void Zprime2muResolution::DeleteHistos(){
   delete L3TrackerHits;
   delete NumDilVsRec;
   for (int i = 0; i < 4; i++)
-    for (int j = 0; j < 2; j++)
+    for (int j = 0; j < 3; j++)
       delete RecMass[i][j];
+  for (int i = 0; i < 2; i++)
+    for (int j = 0; j < 10; j++)
+      delete RecMassByLoc[i][j];
   for (int i = 0; i <= MAX_LEVELS; i++) {
     delete EffVsEta[i];
     delete EffVsPhi[i];
@@ -2438,8 +2497,8 @@ void Zprime2muResolution::DrawResHistos(){
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   gStyle->SetOptStat(110010);
   pad[page]->Draw();
-  pad[page]->Divide(3,3);
-  TH1F *efftot[4], *eff2mu[4], *effdimu[4];
+  pad[page]->Divide(3,4);
+  TH1F *efftot[4], *eff2mu[4], *effdimu[4], *eff2mucuts[4];
   string level;
   for (int i = 1; i < 4; i++) {
     if (i == 1)      level = "L3";
@@ -2466,8 +2525,19 @@ void Zprime2muResolution::DrawResHistos(){
     eff2mu[i]->Draw();  eff2mu[i]->Draw("samehisto");
 
     // "Off-line" efficiency to find opposite-sign dimuon, relative to events
-    // in acceptance and accepted by the L1/HLT triggers.
+    // in acceptance and accepted by the L1/HLT triggers, and with two muons
+    // passing cuts.
     pad[page]->cd(i+6);  gPad->SetGrid(1);
+    eff2mucuts[i] = (TH1F*)RecMass[i][1]->Clone();
+    histtitle = "Dimuon w/ cuts efficiency vs mass, " + level;
+    eff2mucuts[i]->SetTitle(histtitle.c_str());
+    eff2mucuts[i]->Divide(RecMass[i][1], RecMass[i][2], 1., 1., "B");
+    eff2mucuts[i]->SetMinimum(0.70);  eff2mucuts[i]->SetMaximum(1.02);
+    eff2mucuts[i]->Draw();  eff2mucuts[i]->Draw("samehisto");
+
+    // "Off-line" efficiency to find opposite-sign dimuon, relative to events
+    // in acceptance and accepted by the L1/HLT triggers.
+    pad[page]->cd(i+9);  gPad->SetGrid(1);
     effdimu[i] = (TH1F*)RecMass[i][1]->Clone();
     histtitle = "Dimuon efficiency vs mass, " + level;
     effdimu[i]->SetTitle(histtitle.c_str());
@@ -2479,8 +2549,42 @@ void Zprime2muResolution::DrawResHistos(){
   for (int i = 1; i < 4; i++) {
     delete efftot[i];
     delete eff2mu[i];
+    delete eff2mucuts[i];
     delete effdimu[i];
   }
+
+  // Opposite-sign efficiencies as a function of dimuon mass,
+  // separated by where the muons are
+  ps->NewPage();
+  c1->Clear();
+  c1->cd(0);
+  delete title; title = new TPaveLabel(0.1,0.94,0.9,0.98,"Opposite-sign Reconstruction Efficiency (OPT)");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+  gStyle->SetOptStat(110010);
+  pad[page]->Draw();
+  pad[page]->Divide(2,5);
+  TH1F *effdimusep[10];
+  ostringstream out;
+  out << "Opp-sign efficiency:\n";
+  for (int i = 0; i < 10; i++) {
+    pad[page]->cd(i+1);  gPad->SetGrid(1);
+    effdimusep[i] = (TH1F*)RecMassByLoc[1][i]->Clone();
+    out << RecMassByLoc[1][i]->GetTitle()
+	<< ": " << RecMassByLoc[1][i]->Integral()
+	<< "/"  << RecMassByLoc[0][i]->Integral() << " = " 
+	<< RecMassByLoc[1][i]->Integral()/RecMassByLoc[0][i]->Integral()
+	<< endl;
+    effdimusep[i]->Divide(RecMassByLoc[1][i], RecMassByLoc[0][i], 1., 1., "B");
+    effdimusep[i]->SetMinimum(0.80);  effdimusep[i]->SetMaximum(1.02);
+    effdimusep[i]->Draw();  effdimusep[i]->Draw("samehisto");
+  }
+  edm::LogInfo("Zprime2muResolution") << out.str();
+  c1->Update();
+  for (int i = 0; i < 10; i++)
+    delete effdimusep[i];
 
   // Number of Dileptons with opposite sign and like sign
   char *genlabel[3] = {"total #","# found w/ eta cut"};

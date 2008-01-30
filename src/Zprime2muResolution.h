@@ -82,7 +82,8 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   TH2F *L2EtaResScat, *L2PhiResScat, *L2PtResScat;
   // booked in BookEffHistos()
   TH1F *EffVsEta[MAX_LEVELS+1], *EffVsPhi[MAX_LEVELS+1], *EffVsPt[MAX_LEVELS+1];
-  TH1F *RecMass[4][2];
+  TH1F *RecMass[4][3];
+  TH1F *RecMassByLoc[2][10];
   // booked in BookPtResHistos()
   TProfile *ResidualPt[6];
   TH1F *MuInvPRes[2][3], *MuInvPtRes[2][3], *MuPtDiff[2];

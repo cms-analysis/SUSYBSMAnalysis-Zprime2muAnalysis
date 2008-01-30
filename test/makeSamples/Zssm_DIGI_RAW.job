@@ -17,13 +17,14 @@ setenv NEVENTS -1
 #setenv WORKDIR `pwd`
 
 # setenv SAMPLE dy_above200;  setenv FIRSTPU      0
- setenv SAMPLE dy_above400;  setenv FIRSTPU  25000
+  setenv SAMPLE dy_above400;  setenv FIRSTPU  25000
 # setenv SAMPLE dy_above1000; setenv FIRSTPU  50000
 # setenv SAMPLE dy_above1500; setenv FIRSTPU  75000
 # setenv SAMPLE dy_above2000; setenv FIRSTPU 100000
 # setenv SAMPLE dy_above3000; setenv FIRSTPU 125000
 
 # setenv SAMPLE Zssm1000_fm;  setenv FIRSTPU 150000
+# setenv SAMPLE Zssm1500_fm;  setenv FIRSTPU 150000
 # setenv SAMPLE Zssm3000_fm;  setenv FIRSTPU 175000
 # setenv SAMPLE Zssm5000_fm;  setenv FIRSTPU 200000
 # setenv SAMPLE Zpsi1000_fm;  setenv FIRSTPU 225000

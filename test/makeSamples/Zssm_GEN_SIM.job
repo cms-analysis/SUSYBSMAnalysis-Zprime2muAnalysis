@@ -1,7 +1,7 @@
 #!/bin/tcsh
 #BSUB -q 2nw
 #BSUB -J Zssm3000
-#BSUB -o /afs/cern.ch/user/t/tucker/scratch0/Zssm2mu_GEN_SIM_%J.lis
+#BSUB -o /afs/cern.ch/user/t/tucker/scratch0/Zp2mu_GEN_SIM_%J.lis
 
 # to do:
 # change job name
@@ -20,6 +20,9 @@ setenv CMSSW_VERS CMSSW_1_6_7
 setenv WRITE_TO_CASTOR true
 setenv NEVENTS 1000
 
+setenv MODEL Zssm
+#setenv MODEL Zpsi
+
 # setenv SAMPLE dy_above200;  setenv FIRSTPU      0
 # setenv SAMPLE dy_above400;  setenv FIRSTPU  25000
 # setenv SAMPLE dy_above1000; setenv FIRSTPU  50000
@@ -28,7 +31,8 @@ setenv NEVENTS 1000
 # setenv SAMPLE dy_above3000; setenv FIRSTPU 125000
 
 # setenv SAMPLE Zssm1000_fm;  setenv FIRSTPU 150000
- setenv SAMPLE Zssm3000_fm;  setenv FIRSTPU 175000
+# setenv SAMPLE Zssm1500_fm;  setenv FIRSTPU 150000
+  setenv SAMPLE Zssm3000_fm;  setenv FIRSTPU 175000
 # setenv SAMPLE Zssm5000_fm;  setenv FIRSTPU 200000
 # setenv SAMPLE Zpsi1000_fm;  setenv FIRSTPU 225000
 # setenv SAMPLE Zpsi3000_fm;  setenv FIRSTPU 250000
@@ -63,29 +67,61 @@ cd ${SRCDIR}
 eval `scramv1 runtime -csh`
 cd ${WORKDIR}
 
+if (${MODEL} == "Zpsi") then 
+  setenv ZPCOUPLINGS '\
+        # Couplings: first generation\
+	"PARU(121)=  0.        ! vd",\
+	"PARU(122)= -0.506809  ! ad",\
+	"PARU(123)=  0.        ! vu",\
+	"PARU(124)= -0.506809  ! au",\
+	"PARU(125)=  0.        ! ve",\
+	"PARU(126)= -0.506809  ! ae",\
+	"PARU(127)= -0.253405  ! vnu",\
+	"PARU(128)= -0.253405  ! anu",\
+        # Couplings: second generation\
+	"PARJ(180)=  0.        ! vd",\
+	"PARJ(181)= -0.506809  ! ad",\
+	"PARJ(182)=  0.        ! vu",\
+	"PARJ(183)= -0.506809  ! au",\
+	"PARJ(184)=  0.        ! ve",\
+	"PARJ(185)= -0.506809  ! ae",\
+	"PARJ(186)= -0.253405  ! vnu",\
+	"PARJ(187)= -0.253405  ! anu",\
+        # Couplings: third generation\
+	"PARJ(188)=  0.        ! vd",\
+	"PARJ(189)= -0.506809  ! ad",\
+	"PARJ(190)=  0.        ! vu",\
+	"PARJ(191)= -0.506809  ! au",\
+	"PARJ(192)=  0.        ! ve",\
+	"PARJ(193)= -0.506809  ! ae",\
+	"PARJ(194)= -0.253405  ! vnu",\
+	"PARJ(195)= -0.253405  ! anu",'
+else
+  setenv ZPCOUPLINGS ""
+endif
+
 echo '************** GEN-SIM **************'
-cat > Zssm2mu_GEN_SIM.cfg <<EOF
+cat >! Zp2mu_GEN_SIM.cfg <<EOF
 # Configuration file for production of Z'-->mu+ mu-.
 # Zprime2mu part is translation to CMSSW language of control cards used
 # in PYTHIA and CMKIN since 2002; the rest is standard.
 process Sim = {
-  # initialize MessageLogger
-  include "FWCore/MessageService/data/MessageLogger.cfi"
-  
-  # initialize random number seeds
-  #include "Configuration/StandardSequences/data/SimulationRandomNumberGeneratorSeeds.cff"
-  service = RandomNumberGeneratorService {
-    untracked uint32 sourceSeed = 98765432
-    PSet moduleSeeds = {
-      untracked uint32 VtxSmeared = 123456789
-      untracked uint32 g4SimHits  = 11
-      untracked uint32 mix        = 12345
-    }
-  }
-  
+
   untracked PSet maxEvents = {untracked int32 input = ${NEVENTS}}
-  
-  # event generation
+
+  # Initialize MessageLogger
+  include "FWCore/MessageService/data/MessageLogger.cfi"
+
+  # Initialize random number seeds
+  include "Configuration/ReleaseValidation/data/Services.cff"
+
+  untracked PSet options = {
+    include "FWCore/Framework/test/cmsExceptionsFatalOption.cff"
+    untracked bool wantSummary = true
+    untracked bool makeTriggerResults = true
+  }
+
+  # Event generation
   source = PythiaSource { 
     # to printout pythia event record (call pylist)
     untracked int32 pythiaPylistVerbosity = 0
@@ -104,7 +140,7 @@ process Sim = {
       
       vstring Zprime2mu = {
 	"MSEL = 21            ! generate Zprime according to ISUB=141",
-        # Treatment of Z'0/Z0/gamma interference
+        # Treatment of Z'/Z0/gamma interference
 #	"MSTP(44) = 2         ! only Z0 included",
 #	"MSTP(44) = 3         ! only Zprime included",
 #	"MSTP(44) = 4         ! only Z0/gamma interference included",
@@ -115,11 +151,13 @@ process Sim = {
 #	"CKIN(1) =   40.      ! lower mass limit",
 #	"CKIN(1) =  200.      ! lower mass limit",
 #	"CKIN(1) =  400.      ! ",
+# 	"CKIN(1) =  600.      ! ",
 #	"CKIN(1) = 1000.      ! ",
 	"CKIN(1) = 1500.      ! ",
 #	"CKIN(1) = 2000.      ! ",
 #	"CKIN(1) = 3000.      ! ",
 #	"CKIN(2) =  500.      ! upper mass limit",
+	${ZPCOUPLINGS}
         # Decay modes
 	"MDME(289,1) = 0      ! d + dbar",
 	"MDME(290,1) = 0      ! u + ubar",
@@ -147,7 +185,7 @@ process Sim = {
     }
   }
   
-  # simulation parameters
+  # Simulation parameters
   include "Configuration/StandardSequences/data/Simulation.cff"
   include "Configuration/StandardSequences/data/VtxSmearedGauss.cff"
   include "Configuration/StandardSequences/data/MixingNoPileUp.cff"
@@ -156,30 +194,40 @@ process Sim = {
   include "SimGeneral/HepPDTESSource/data/pythiapdt.cfi"
   include "PhysicsTools/HepMCCandAlgos/data/genParticleCandidates.cfi"
   
+  # Produces the ~same output as PYLIST. Works on GenParticleCandidates.
+  module printTree = ParticleListDrawer {
+    untracked int32 maxEventsToPrint = 10
+  }
+
   # Event output
   include "Configuration/EventContent/data/EventContent.cff"
   module GEN-SIM = PoolOutputModule {
-    untracked string fileName = "rfio:${OUTDIR}/${ROOTFILE}"
+#    untracked string fileName = "rfio:${OUTDIR}/${ROOTFILE}"
+    untracked string fileName = "gensim.root"
     using FEVTSIMEventContent
     untracked PSet dataset = {
 	untracked string dataTier = "GEN-SIM"
     }
   }
-  
-  path p = {psim, genParticleCandidates}
+
+  path p = {psim, genParticleCandidates} #, printTree}
   #path p = {VtxSmeared, genParticleCandidates}
+  
   endpath outpath = {GEN-SIM}
 }
 EOF
-#cmsRun Zssm2mu_GEN_SIM.cfg >& ${LOGFILE}
-cmsRun Zssm2mu_GEN_SIM.cfg
+#cmsRun Zp2mu_GEN_SIM.cfg >& ${LOGFILE}
+cmsRun Zp2mu_GEN_SIM.cfg
 if ($? != 0) then
-  echo ' CMSSW (Zssm2mu_GEN_SIM) exited with error code'
+  echo ' CMSSW (Zp2mu_GEN_SIM) exited with error code'
   exit 1
 endif
 ls
 
-rfdir ${OUTDIR}
+if (${WRITE_TO_CASTOR} == true) then
+  rfcp gensim.root ${OUTDIR}/${SAMPLE}_GEN_SIM.root
+  rfdir ${OUTDIR}
+endif
 
 echo
 echo  --------------------------

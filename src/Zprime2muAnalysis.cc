@@ -1525,8 +1525,15 @@ bool Zprime2muAnalysis::findClosestId(const int rec, const zp2mu::Muon& muon,
     return returnValue;
   } 
 
-  vector<zp2mu::Muon>::const_iterator pmu;
-  for (pmu = allMuons[rec].begin(); pmu != allMuons[rec].end(); pmu++) {
+  // if we are doingElectrons, at gen level only compare to the
+  // first two electrons (the true PYTHIA electrons)
+  unsigned maxN = rec == lgen && doingElectrons ? 2 : allMuons[rec].size();
+
+  //vector<zp2mu::Muon>::const_iterator pmu;
+  //for (pmu = allMuons[rec].begin(); pmu != allMuons[rec].end(); pmu++) {
+  for (unsigned imu = 0; imu < maxN; imu++) {
+    const zp2mu::Muon* pmu = &allMuons[rec][imu];
+
     if (rec == lgen && pmu->pt() < 1.) continue;
     if (debug) {
       ostringstream out;
@@ -1863,16 +1870,12 @@ Zprime2muAnalysis::makeDileptons(const int rec,
   if (rec > 0 && muons.size() > 1) {
 
     for (pmu = muons.begin(); pmu != muons.end()-1; pmu++) {
-
-      if (pmu->pt() <= 20.) continue;
-      if (pmu->sumPtR03() > 10.) continue;
+      if (muonIsCut(*pmu)) continue;
 
       vmu1.SetPtEtaPhiM(pmu->pt(), pmu->eta(), pmu->phi(), MUMASS);
 
       for (qmu = pmu+1; qmu != muons.end(); qmu++) {
-
-	if (qmu->pt() <= 20.) continue;
-	if (qmu->sumPtR03() > 10.) continue;
+	if (muonIsCut(*qmu)) continue;
 
 	if (qmu->charge() != pmu->charge()) {
 
@@ -3005,6 +3008,56 @@ bool Zprime2muAnalysis::eventIsInteresting() {
       return true;
   }
   return false;
+}
+
+unsigned Zprime2muAnalysis::muonIsCut(const zp2mu::Muon& muon) {
+  // Checks our defined cut methods and returns a bitmap of which
+  // passed. This can be directly used as a comparison, since if no
+  // cuts are made, then the return value is 0 == false; otherwise it
+  // is > 0 == true.
+  unsigned retval = 0;
+  if (!doingElectrons) {
+    if (muon.pt() <= 20.)     retval |= 0x01;
+    if (muon.sumPtR03() > 10) retval |= 0x02;
+  }
+  return retval;
+}
+
+WhereMuon Zprime2muAnalysis::whereIsMuon(const zp2mu::Muon& muon) {
+  // Helper method to return a code based on where the muon is in the
+  // muon system by eta; in the barrel, in the overlap region, in the
+  // endcap, or outside acceptance (nominally 2.4).
+  double abseta = fabs(muon.eta());
+  if      (abseta < 0.9) return W_BARREL;
+  else if (abseta < 1.2) return W_OVERLAP;
+  else if (abseta < 2.4) return W_ENDCAP;
+  else                   return W_OUTSIDE;
+}
+
+WhereDimuon Zprime2muAnalysis::whereIsDimuon(const zp2mu::DiMuon& dimuon) {
+  // Helper method to return a code based on where the muons of a
+  // dimuon are in the muon system (using the above whereIsMuon method
+  // definitions of location).
+  WhereMuon wmup = whereIsMuon(dimuon.muPlus());
+  WhereMuon wmum = whereIsMuon(dimuon.muMinus());
+  // get a unique ordering so testing below is easier
+  if (int(wmup) > int(wmum)) {
+    WhereMuon tmp = wmup;
+    wmup = wmum;
+    wmum = tmp;
+  }
+
+  if      (wmup == W_BARREL  && wmum == W_BARREL)   return W_BARRELBARREL;
+  else if (wmup == W_BARREL  && wmum == W_OVERLAP)  return W_BARRELOVERLAP;
+  else if (wmup == W_BARREL  && wmum == W_ENDCAP)   return W_BARRELENDCAP;
+  else if (wmup == W_BARREL  && wmum == W_OUTSIDE)  return W_BARRELOUTSIDE;
+  else if (wmup == W_OVERLAP && wmum == W_OVERLAP)  return W_OVERLAPOVERLAP;
+  else if (wmup == W_OVERLAP && wmum == W_ENDCAP)   return W_OVERLAPENDCAP;
+  else if (wmup == W_OVERLAP && wmum == W_OUTSIDE)  return W_OVERLAPOUTSIDE;
+  else if (wmup == W_ENDCAP  && wmum == W_ENDCAP)   return W_ENDCAPENDCAP;
+  else if (wmup == W_ENDCAP  && wmum == W_OUTSIDE)  return W_ENDCAPOUTSIDE;
+  else //if (wmup == W_OUTSIDE && wmum == W_OUTSIDE)
+    return W_OUTSIDEOUTSIDE;
 }
 
 void Zprime2muAnalysis::analyze(const edm::Event& event,

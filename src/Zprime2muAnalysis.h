@@ -37,6 +37,12 @@ namespace reco {class GenParticleCandidate;}
 enum VERBOSITY { VERBOSITY_NONE, VERBOSITY_SIMPLE,
 		 VERBOSITY_LOTS, VERBOSITY_TOOMUCH };
 
+enum WhereMuon { W_BARREL=0, W_OVERLAP, W_ENDCAP, W_OUTSIDE }; 
+enum WhereDimuon { W_BARRELBARREL=0, W_BARRELOVERLAP, W_BARRELENDCAP, W_BARRELOUTSIDE,
+		   W_OVERLAPOVERLAP, W_OVERLAPENDCAP, W_OVERLAPOUTSIDE,
+		   W_ENDCAPENDCAP, W_ENDCAPOUTSIDE,
+		   W_OUTSIDEOUTSIDE };
+
 class Zprime2muAnalysis : public edm::EDAnalyzer {
  public:
   explicit Zprime2muAnalysis(const edm::ParameterSet&);
@@ -47,6 +53,10 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   virtual void endJob();
 
   virtual bool eventIsInteresting();
+  virtual unsigned muonIsCut(const zp2mu::Muon& muon);
+  
+  WhereMuon whereIsMuon(const zp2mu::Muon& muon);
+  WhereDimuon whereIsDimuon(const zp2mu::DiMuon& muon);
 
   // keep track of the event number for printing out
   int eventNum;

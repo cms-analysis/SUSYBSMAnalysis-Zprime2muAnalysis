@@ -53,7 +53,7 @@ setenv MODEL Zssm
 # setenv PU PU2x33
 # setenv PU PU34
 
-setenv SRCDIR /afs/cern.ch/user/t/tucker/private/${CMSSW_VERS}
+setenv SRCDIR /afs/cern.ch/user/t/tucker/scratch0/${CMSSW_VERS}
 setenv OUTDIR /castor/cern.ch/user/t/tucker/${CMSSW_VERS}
 
 setenv ROOTFILE ${SAMPLE}_GEN_SIM.root
@@ -114,6 +114,7 @@ process Sim = {
 
   # Initialize random number seeds
   include "Configuration/ReleaseValidation/data/Services.cff"
+  #replace RandomNumberGeneratorService.sourceSeed = 12191982
 
   untracked PSet options = {
     include "FWCore/Framework/test/cmsExceptionsFatalOption.cff"

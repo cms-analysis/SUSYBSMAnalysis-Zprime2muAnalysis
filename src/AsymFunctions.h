@@ -10,6 +10,7 @@
 
 extern bool correctMistags;
 extern bool doingGravFit;
+extern bool calculateMistag;
 extern const bool useMistagHist;
 extern bool asymDebug;
 extern double mistag_pars[6];
@@ -88,8 +89,8 @@ double calcPhiCSAnal(double px_mum, double py_mum, double px_mup,
 		       double phi_dil, double mass_dil, bool debug);
 void calcCSQuantities(TLorentzVector v_dil, TLorentzVector v_mum, 
 		      double &cos_theta_cs, double &phi_cs, bool debug);
-double mistagProb(double rap, double cos);
-double mistagProbVsRap(double rap);
+double mistagProb(double rap, double cos, double mass);
+double mistagProbVsRap(double rap, double mass);
 double mistagProbVsPtRap(double pT, double rap);
 double mistagProbVsCos(double cos);
 double mistagProbVsPL(double pL);

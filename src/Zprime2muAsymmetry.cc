@@ -57,7 +57,8 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
 
   // verbosity controls the amount of debugging information printed;
   // levels are defined in an enum
-  verbosity = VERBOSITY(config.getUntrackedParameter<int>("verbosity", 1));
+  verbosity = VERBOSITY(config.getUntrackedParameter<int>("verbosity",
+							  VERBOSITY_LITTLE));
 
   // turn off the fit and only make the histograms -- useful to get the
   // recSigma information from the asymHistos.ps
@@ -112,6 +113,10 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   correctMistags = doingGravFit || artificialCosCS || useCosTrueInFit ? false :
     config.getParameter<bool>("correctMistags");
 
+  // whether to use the calculation of the mistag probability omega(y,M)
+  // instead of the parameterization obtained from the MC
+  calculateMistag = config.getParameter<bool>("calculateMistag");
+
   // get the parameters specific to the data sample on which we are running
   string dataSet = config.getParameter<string>("dataSet");
   edm::ParameterSet dataSetConfig =
@@ -123,10 +128,10 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   peakMass = dataSetConfig.getParameter<double>("peakMass");
 
   // let the asymFitManager take care of setting mass_type, etc.
-  asymFitManager.setConstants(dataSetConfig, onPeak);
+  asymFitManager.setConstants(dataSetConfig, onPeak, peakMass);
 
   // turn on/off the fit prints in AsymFunctions
-  asymDebug = verbosity >= VERBOSITY_SIMPLE;
+  asymDebug = verbosity >= VERBOSITY_LITTLE;
 
   ostringstream out;
   out << "------------------------------------------------------------\n"
@@ -152,6 +157,10 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   out << "peak\n";
   if (!correctMistags) out << "NOT ";
   out << "Correcting for mistags in data using probabilistic method\n";
+  if (calculateMistag && correctMistags)
+    out << "Calculating mistag probability on event-by-event basis\n";
+  else
+    out << "Obtaining mistag probability from parameterization\n";
   if (!internalBremOn) out << "NOT ";
   out << "Correcting for bremsstrahlung in parameterization sample\n";
   if (fixbIn1DFit) out << "Fixing b = 1.0 in 1-D fits\n";
@@ -249,6 +258,8 @@ void Zprime2muAsymmetry::bookFitHistos() {
 				 25, 0, 0.5);
   mistagProbEvents[1] = new TH1F("mistagRec", "mistag prob, rec. events",
 				 25, 0, 0.5);
+  mistagProbEvents[2] = new TH1F("mistagRec", "mistag prob (calculated), rec. events",
+                                 25, 0, 0.5);
 
   h_genCosNoCut      = new TH1F("h_genCosNoCut", "Dil Gen cos_cs (all)",
 				20, -1., 1.);
@@ -490,6 +501,8 @@ void Zprime2muAsymmetry::makeFakeData(int nEvents, double A_FB, double b) {
   // asymetry and rapiditiy pdfs
   TF1* f_cos = new TF1("f_cos", asym_3_PDF, -1., 1., 3);
   TF1* f_rap = new TF1("f_rap", yDistRTC, -3.5, 3.5);
+  TF1* f_mass = new TF1("f_mass", massDist,
+			asymFitManager.fit_win(0), asymFitManager.fit_win(1));
 
   // Set desired asymmetry values
   f_cos->SetParameters(1., A_FB, b);
@@ -500,10 +513,11 @@ void Zprime2muAsymmetry::makeFakeData(int nEvents, double A_FB, double b) {
     fake_rap[i] = rap;
     double cos_true = f_cos->GetRandom();
     fake_cos_true[i] = cos_true;
+    double mass = f_mass->GetRandom();
 
     // Get probability for mistag from rapidity and cos_true
-    double w_rap = mistagProbVsRap(rap);
-    double w = mistagProb(rap, cos_true);
+    double w_rap = mistagProbVsRap(rap, mass);
+    double w = mistagProb(rap, cos_true, mass);
 
     // Generate random number, if random number is less than total mistag
     // probability take cos_cs to have opposite sign from cos_true.
@@ -667,7 +681,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 	h2_rap_cos_d[0]->Fill(data.cos_cs, data.rapidity);
 	h2_rap_cos_d[1]->Fill(data.cos_true, data.rapidity);
 
-	double w = mistagProb(data.rapidity, data.cos_cs);
+	double w = mistagProb(data.rapidity, data.cos_cs, data.mass);
 	mistagProbEvents[0]->Fill(w);
       }
     }
@@ -819,7 +833,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
       h_cos_theta_cs_rec->Fill(rec_cos_cs);
       h2_rap_cos_d_rec->Fill(rec_cos_cs, rec_rap);
 
-      double w = mistagProb(rec_rap, rec_cos_cs);
+      double w = mistagProb(rec_rap, rec_cos_cs, recV.M());
       mistagProbEvents[1]->Fill(w);
 
       // if we get exactly one generated dimuon and one reconstructed
@@ -1410,7 +1424,7 @@ void Zprime2muAsymmetry::fillParamHistos(bool fakeData) {
     fwlite::Handle<reco::CandidateCollection> genParticles;
     genParticles.getByLabel(ev, "genParticleCandidates");
 
-    if (verbosity >= VERBOSITY_SIMPLE && jentry % 1000 == 0)
+    if (verbosity >= VERBOSITY_LITTLE && jentry % 1000 == 0)
       LogTrace("fillParamHistos") << "fillParamHistos: " << jentry
 				  << " events processed";
 
@@ -2634,7 +2648,7 @@ void Zprime2muAsymmetry::fitAsymmetry() {
     else if (fitType == GRAV_GG)
       fit_announce << " (gg)";
     fit_announce << " using " << asymFitManager.getPDFName();
-    if (verbosity >= VERBOSITY_SIMPLE)
+    if (verbosity >= VERBOSITY_LITTLE)
       edm::LogVerbatim("fitAsymmetry") << endl << fit_announce.str() << endl;
 
     fit_data.clear();
@@ -2695,7 +2709,7 @@ void Zprime2muAsymmetry::fitAsymmetry() {
       asymFitManager.setPDF(AsymFitManager::GRAV);
       
     double logML;
-    unbfitter->unbinnedFitExec("f_recmd", "", n2fit, fit_data, weights, logML);
+    int cov_status = unbfitter->unbinnedFitExec("f_recmd", "", n2fit, fit_data, weights, logML);
       
     double* covmat = unbfitter->getFitter()->GetCovarianceMatrix();
     int npar = ((TFMultiD*)gROOT->GetFunction("f_recmd"))->GetNpar();
@@ -2731,7 +2745,8 @@ void Zprime2muAsymmetry::fitAsymmetry() {
 	    << " +/- " << eparab << endl
 	    << "-2*log_ML = " << setprecision(6) << -2.*logML << endl
 	    << "covariance matrix:\n" << covMatrix.str()
-	    << "correlation coefficient: " << rho << "\n\n"; 
+	    << "correlation coefficient: " << rho << endl
+ 	    << "covariance matrix status: " << cov_status << "\n\n";
     outfile.flush();
 
     delete f_recmd;
@@ -2795,7 +2810,7 @@ void Zprime2muAsymmetry::drawFitHistos() {
   title->Draw();
   strpage << "- " << (++page) << " -";
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-  gStyle->SetOptDate(1);
+  //gStyle->SetOptDate(1);
   pad[page]->Draw();
   pad[page]->Divide(2,3);
   for (int i = 0; i < 6; i++) {
@@ -2814,7 +2829,7 @@ void Zprime2muAsymmetry::drawFitHistos() {
   title->Draw();
   strpage << "- " << (++page) << " -";
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-  gStyle->SetOptDate(1);
+  //gStyle->SetOptDate(1);
   pad[page]->Draw();
   pad[page]->Divide(2,3);
   for (int i = 0; i < 6; i++) {
@@ -2851,7 +2866,7 @@ void Zprime2muAsymmetry::drawFitHistos() {
     title->Draw();
     strpage << "- " << (++page) << " -";
     t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-    gStyle->SetOptDate(1);
+    //gStyle->SetOptDate(1);
     pad[page]->Draw();
     pad[page]->Divide(2,3);
     for (int i = 0; i < 6; i++) {
@@ -2885,7 +2900,7 @@ void Zprime2muAsymmetry::drawFitHistos() {
     title->Draw();
     strpage << "- " << (++page) << " -";
     t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-    gStyle->SetOptDate(1);
+    //gStyle->SetOptDate(1);
     pad[page]->Draw();
     pad[page]->Divide(2,3);
     for (int i = 0; i < 6; i++) {
@@ -2919,7 +2934,7 @@ void Zprime2muAsymmetry::drawFitHistos() {
     title->Draw();
     strpage << "- " << (++page) << " -";
     t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-    gStyle->SetOptDate(1);
+    //gStyle->SetOptDate(1);
     pad[page]->Draw();
     pad[page]->Divide(1,2);
     pad[page]->cd(1);
@@ -2936,7 +2951,7 @@ void Zprime2muAsymmetry::drawFitHistos() {
     title->Draw();
     strpage << "- " << (++page) << " -";
     t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-    gStyle->SetOptDate(1);
+    //gStyle->SetOptDate(1);
     pad[page]->Draw();
     pad[page]->Divide(1,2);
     pad[page]->cd(1);
@@ -2953,7 +2968,7 @@ void Zprime2muAsymmetry::drawFitHistos() {
     title->Draw();
     strpage << "- " << (++page) << " -";
     t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-    gStyle->SetOptDate(1);
+    //gStyle->SetOptDate(1);
     pad[page]->Draw();
     pad[page]->Divide(1,3);
     pad[page]->cd(1);
@@ -3532,8 +3547,9 @@ void Zprime2muAsymmetry::deleteHistos() {
     delete h_gen_sig[i];
     delete h2_rap_cos_d[i];
     delete h2_rap_cos_d_uncut[i];
-    delete mistagProbEvents[i];
   }
+  for (int i = 0; i < 3; i++)
+    delete mistagProbEvents[i];
   delete h_genCosNoCut;
   for (int i = 0; i < 6; i++) {
     delete AsymFitHistoGen[i];

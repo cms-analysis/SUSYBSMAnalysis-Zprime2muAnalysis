@@ -143,7 +143,7 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   TH2F *h2_rap_cos_d[2];
   TH2F *h2_rap_cos_d_uncut[2];
   TH2F *h2_rap_cos_d_rec;
-  TH1F *mistagProbEvents[2];
+  TH1F *mistagProbEvents[3];
 
   // Data arrays for unbinned fits.  Fixed size arrays for now.
   // Order of the arrays: generated events, reconstructed events,

@@ -25,6 +25,7 @@ using namespace std;
 // const access
 bool correctMistags;
 bool doingGravFit;
+bool calculateMistag;
 const bool useMistagHist = false;
 bool asymDebug;
 
@@ -131,7 +132,7 @@ double asym_mistag_PDF(double *x, double *pars) {
   double cos = x[0];
   double neg_cos = -cos;
   double w = 0.;
-  if (correctMistags) { w = mistagProb(rap, cos); }
+  if (correctMistags) { w = mistagProb(rap, cos, asymFitManager.peak_mass()); }
   double func = (1. - w)*asym_3_PDF(&cos, pars) + 
     w*asym_3_PDF(&neg_cos, pars);
 
@@ -239,7 +240,10 @@ double asym2D(double *x, double *par) {
 
   double cos_cs = x[0];
   double neg_cos_cs = -x[0];
-  double rap    = x[1];
+  double rap = x[1];
+  //double mass = x[2]; // passed in just for mistagProb; will not be fit to.
+  // JMTBAD fake the mass for the 2D fit for now
+  double mass = asymFitManager.peak_mass();
   //double pL     = x[2];
   //double qpL    = x[3];
   //double pT     = x[4];
@@ -252,7 +256,7 @@ double asym2D(double *x, double *par) {
   double w = 0.;
   // A Few options for calculating mistag probability:
   // 1. Default version using rapidity and cos_cs
-  if (correctMistags) { w = mistagProb(rap, cos_cs); }
+  if (correctMistags) { w = mistagProb(rap, cos_cs, mass); }
   // 2. Most precise version using quark and dilepton pL
   //if (correctMistags) { w = mistagProbVsPL(qpL, pL); }
   // 3. Version using dilepton pT and rap
@@ -808,7 +812,7 @@ double asym6D(double *x, double *par) {
   double cos_cs = data.cos_cs;
 
   double w = 0.;
-  if (correctMistags) { w = mistagProb(fabs(rap), cos_cs); }
+  if (correctMistags) { w = mistagProb(fabs(rap), cos_cs, mass); }
   //if (correctMistags) { w = mistagProbVsRap(fabs(rap)); }
 
   double neg_cos_cs = -data.cos_cs;
@@ -1754,7 +1758,7 @@ double calcEta(double pt, double rap, double mass, bool debug) {
 
 //=============================================================================
 
-double mistagProb(double rap, double cos) {
+double mistagProb(double rap, double cos, double mass) {
   //Option to use either parameterizations or 2D histogram
   const bool debug = false;
   double prob;
@@ -1779,7 +1783,7 @@ double mistagProb(double rap, double cos) {
     }
   }
   else {
-    double prob_v_rap = mistagProbVsRap(rap);
+    double prob_v_rap = mistagProbVsRap(rap, mass);
     double prob_v_cos = mistagProbVsCos(cos);
     prob = prob_v_rap + prob_v_cos - 2.*prob_v_rap*prob_v_cos;
     if (debug)
@@ -1790,7 +1794,10 @@ double mistagProb(double rap, double cos) {
   return prob;
 }
 
-double mistagProbVsRap(double rap) {
+double mistagProbVsRap(double rap, double mass) {
+  if (calculateMistag && mass > 0) 
+    return asymFitManager.mistagCalc->omega(rap, mass);
+
   // Compute mistag probability as function of y
   double absy = fabs(rap);
   double prob;

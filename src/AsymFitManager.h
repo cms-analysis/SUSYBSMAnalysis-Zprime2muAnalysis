@@ -6,6 +6,7 @@
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/Exception.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/MistagCalc.h"
 
 // forward declare for AsymFunctions.h
 class AsymFitManager;
@@ -39,7 +40,18 @@ class AsymFitManager;
 
 class AsymFitManager {
  public:
-  void setConstants(const edm::ParameterSet& pset, bool onPeak) {
+  AsymFitManager() {
+    // initialize the mistag calculation using CTEQ6L pdfs with a
+    // nominal cms energy of 14 TeV
+    mistagCalc = new MistagCalc(14000, "cteq6l.LHpdf");
+  }
+
+  ~AsymFitManager() {
+    delete mistagCalc;
+  }
+
+  void setConstants(const edm::ParameterSet& pset, bool onPeak,
+		    double peakMass) {
     _mass_type = pset.getParameter<int>("massDistType");
     _max_rap = pset.getParameter<double>("maxRapidity");
     _max_pt = pset.getParameter<double>("maxPt");
@@ -47,6 +59,7 @@ class AsymFitManager {
     fitWinType += (onPeak ? "OnPeak" : "OffPeak");
     _fit_win = pset.getParameter<std::vector<double> >(fitWinType);
     _gen_win = pset.getParameter<std::vector<double> >("genWindow");
+    _peak_mass = peakMass;
     _rec_sigma = pset.getParameter<std::vector<double> >("recSigma");
 
     // JMTBAD *sigh*
@@ -93,6 +106,7 @@ class AsymFitManager {
   const double* b_lim_arr() const { return _b_lim; }
   double limit_low(unsigned int i) const { return _limit_low[i]; }
   double limit_upp(unsigned int i) const { return _limit_upp[i]; }
+  double peak_mass() const { return _peak_mass; }
 
   // accessors for specific rec sigmas
   double recSigmaCosCS() const { return _rec_sigma[SIGMA_COSCS]; }
@@ -134,6 +148,8 @@ class AsymFitManager {
   enum RECSIGMA { SIGMA_COSCS, SIGMA_RAP, SIGMA_PT,
 		  SIGMA_PHI, SIGMA_MASS, SIGMA_PHICS };
 
+  MistagCalc* mistagCalc;
+
  private:
   // mass_type values: 1 = falling exponential, 2 = lorentzian peak, 3 = 1+2
   int _mass_type;
@@ -141,6 +157,7 @@ class AsymFitManager {
   double _max_pt;
   std::vector<double> _fit_win;
   std::vector<double> _gen_win;
+  double _peak_mass;
   // These sigma are the reconstructed - generated for dilepton pt, rap, mass, 
   // phi, cos_cs, and phi_cs.  They are taken from DY generated above 1 TeV.
   // order: cos_cs, rapidity, pT, phi, mass, phi_cs (see above enum)

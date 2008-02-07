@@ -35,6 +35,9 @@ module Zprime2muAsymmetry = Zprime2muAsymmetry {
   bool artificialCosCS = false
   // whether to use the probabilistic mistag correction
   bool correctMistags = true
+  // whether to use the calculation of the mistag prob instead of
+  // the parameterization
+  bool calculateMistag = true
 
   include "SUSYBSMAnalysis/Zprime2muAnalysis/data/AsymmetryDataSets.cff"
   
@@ -42,5 +45,5 @@ module Zprime2muAsymmetry = Zprime2muAsymmetry {
 }
 
 // verbosity controls the amount of debug information dumped
-// see the VERBOSITY enum in Zprime2muAsymmetry.h for levels
-replace Zprime2muAsymmetry.verbosity = 1 // = VERBOSITY_SIMPLE
+// see the VERBOSITY enum in Zprime2muAnalysis.h for levels
+replace Zprime2muAsymmetry.verbosity = 1 // = VERBOSITY_LITTLE

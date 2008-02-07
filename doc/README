@@ -263,6 +263,9 @@ To check out the package:
    cd CMSSW_1_6_7/src
    project CMSSW
    cvs co -r V00-00-04 SUSYBSMAnalysis/Zprime2muAnalysis
+   # next is needed for fwlite::ChainEvent to read from CASTOR,
+   # but the unit test will fail; OK for our purposes
+   cvs co -r V00-07-00 DataFormats/FWLite
 
 To compile:
 

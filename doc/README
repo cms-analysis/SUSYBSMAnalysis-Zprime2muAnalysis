@@ -40,20 +40,20 @@ levels of reconstruction) and the assembling of dimuons.
 
 The .cfg files in the test/ subdirectory illustrate usage of these
 modules; default parameters for each module are specified in the .cfi
-and .cff files in the data/ subdirectory.  As in the .cfg files, in general
-these modules take as input EDM ROOT files with fully-reconstructed
-(i.e. GEN-SIM-DIGI-RECO-L1 all performed) Z' --> mu- mu+ events.  Some
-sample files are available at /castor/cern.ch/user/t/tucker/CMSSW_1_6_0.
-At the time being, the package has been written and tested to work with
-version 1_6_0 of CMSSW.  The tag V00-00-03 should be used.  Module-specific
+and .cff files in the data/ subdirectory.  As in the .cfg files, in
+general these modules take as input EDM ROOT files with
+fully-reconstructed (i.e. GEN-SIM-DIGI-L1-HLT-RECO all performed)
+gamma*/Z0/Z' --> l- l+ events (with l=e,mu).  Some sample files are
+available at /castor/cern.ch/user/t/tucker/CMSSW_1_6_7.  At the time
+being, the package has been written and tested to work with version
+1_6_7 of CMSSW.  The tag V00-00-04 should be used.  Module-specific
 instructions follow.
 
 Zprime2muAnalysis
 -----------------
 In data/Zprime2muAnalysisCommon.cff one can find a set of InputTags
 defining which collections of reco objects are to be used from the
-input ROOT file; these may be changed if necessary. HLT selection
-has not been updated since ORCA times and is currently disabled. There are
+input ROOT file; these may be changed if necessary. There are
 a few flags of interest:
 
   doingElectrons:    switch to using electron collections instead of muons
@@ -68,6 +68,8 @@ a few flags of interest:
                      AOD; this overrides generatedOnly, reconstructedOnly,
                      and useOtherMuonRecos with the values false, true, and
                      false, respectively.
+  useTriggerInfo:    whether to examine the L1/HLT information present in
+                     the file (not available for electrons).
 
 Zprime2muResolution
 -------------------
@@ -85,38 +87,62 @@ the Zssm1000 PSet contains parameters appropriate for examining a SSM
 Z' at 1 TeV.)  Ignoring the more self-explanatory parameters, the user
 must specify:
 
-  genSample:    an EDM ROOT file with many events from which the code
-                obtains parameterizations for the relevant variables.
-  massDistType: what form the pdf for the invariant mass distribution
-                should take; for example, if the data is Drell-Yan
-                continuum, the user specifies 1 for a falling exponential
-                fit.
-  recSigma:     the sigma of the Gaussians used in the smear which
-                simulates detector resolution; these are obtained from
-                the plots on the last two pages of fitHistos.*.ps
-                (which is written by the code).
+  genSampleFiles: EDM ROOT files with many events from which the code
+                  obtains parameterizations for the relevant variables.
+  massDistType:   what form the pdf for the invariant mass distribution
+                  should take; for example, if the data is Drell-Yan
+                  continuum, the user specifies 1 for a falling
+                  exponential fit.
+  recSigma:       the sigma of the Gaussians used in the smear which
+                  simulates detector resolution; these are obtained from
+                  the plots on the last two pages of fitHistos.*.ps
+                  (which is written by the code).
 
 Then, the dataSet parameter must be changed to the appropriate PSet
 name. Other parameters that can be changed are:
 
-  verbosity:      control the level of debug information dumped;
-                  current levels are 0-3 (0 being none, and 3 being
-                  too much);
-  noFit:          only produce histograms of the data, and do not
-                  actually perform any fit; useful for getting the
-                  plots to obtain the recSigma information above;
-  onlyEvalLLR:    if true, do not do the full fit on the data, but
-                  evaluate the log-likelihood ratios, useful for spin
-                  discrimination studies (currently disabled);
-  fitType:        a magic number which determines the form of the
-                  cos_theta_cs pdf used in the fit or evaluation of
-                  the likelihood ratio;
-  numFits:        how many of the fits to do (default is all 6, which
-                  are combinations of generated or reconstructed data,
-                  and detector resolution simulation via smearing or
-                  not);
-  maxParamEvents: a way to cap the number of events read from
-                  genSample; useful if using all events is overkill
+  verbosity:       control the level of debug information dumped;
+                   current levels are 0-3 (0 being none, and 3 being
+                   too much);
+  noFit:           only produce histograms of the data, and do not
+                   actually perform any fit; useful for getting the
+                   plots to obtain the recSigma information above;
+  onlyEvalLLR:     if true, do not do the full fit on the data, but
+                   evaluate the log-likelihood ratios, useful for spin
+                   discrimination studies (currently disabled);
+  fitType:         a magic number which determines the form of the
+                   cos_theta_cs pdf used in the fit or evaluation of
+                   the likelihood ratio;
+  numFits:         how many of the fits to do (default is all 6, which
+                   are combinations of generated or reconstructed data,
+                   and detector resolution simulation via smearing or
+                   not);
+  maxParamEvents:  a way to cap the number of events read from
+                   genSample, useful if using all events is overkill;
+  useCachedParams: flag to enable using the cached parameterization that
+                   exists in the file specified by the parameter
+                   paramCacheFile, instead of re-calculating the
+                   parameterization;
+  paramCacheFile:  a ROOT filename in which the parameterization
+                   calculation will store its quantities;
+  calcParamsOnly:  if enabled, the job will only calculate the
+                   parameterization and exit;
+  onPeak:          whether to use the on-peak fit window or the off-peak
+                   one (see the data set parameters in
+                   AsymmetryDataSets.cff);
+  internalBremOn:  whether bremsstrahlung was turned on for the generated
+                   events;
+  fixbIn1DFit:     whether to fix b to the "true" value of 1.0 in the
+                   simple 1-D fits, so that the only parameter is A_FB
+  useCosTrueInFit: whether to cheat and use MC truth for cos(theta) in
+                   the full-blown 2-D/6-D fits for diagnostic purposes;
+  artificialCosCS: whether to correct the calculated cos_cs values for
+                   mistagging using MC truth;
+  correctMistags:  whether to bother using the mistagging probability
+                   in the fit at all;
+  calculateMistag: whether to calculate the mistag probability omega(y,M)
+                   on an event-by-event basis rather than using the
+                   parameterization omega(y).
 
 Once the config is set, after running the cmsRun job there will be
 various files written to the current directory. These contain various
@@ -181,8 +207,6 @@ be modified in the "normal" job.  Notable exceptions are:
 - intLumi.  Defines the integrated luminosity (in inv. fb) for which the
   user wishes to calculate the mass reach.
 
-
-
 The code contains several pre-defined parameterizations used in the
 fits, such as of the background slope and of the invariant mass
 resolution.  The exact values of the parameters depend on several
@@ -198,31 +222,34 @@ method).
 
 The output of the job consists of various dumps in Zprime.out, and two
 ps files.  Zmodelmass_sig_back.ps contains signal-vs-background plots;
-mass_fits.ps stores the results of the fits (notably various significance
-distributions), and some goodness-of-fit distributions for S+B and B-only
-hypotheses.
+mass_fits.ps stores the results of the fits (notably various
+significance distributions), and some goodness-of-fit distributions
+for S+B and B-only hypotheses.
 
 Electron Extension
 ------------------
-The code has been updated to handle electrons in addition to muons.  In 
-particular, a boolean switch "doingElectrons" that is defined in 
-data/Zprime2muAnalysisCommon.cff can be flipped to true to run over electrons
-instead of muons.  The default of this switch is false.  When flipped to true,
-the generator/simulator level "Muon" object is filled just as before, only with
-a switch in the PID to 13 to 11.  New functions have been written to support
-the filling of the reconstructed level "Muon" object from the offline
-PixelMatchGsfElectron electron candidates, and, of course, these functions are
-called when the switch is flipped to true.
+The code has been updated to handle electrons in addition to muons.
+In particular, a boolean switch "doingElectrons" that is defined in
+data/Zprime2muAnalysisCommon.cff can be flipped to true to run over
+electrons instead of muons.  The default of this switch is false.
+When flipped to true, the generator/simulator level "Muon" object is
+filled just as before, only with a switch in the PID to 13 to 11.  New
+functions have been written to support the filling of the
+reconstructed level "Muon" object from the offline
+PixelMatchGsfElectron electron candidates, and, of course, these
+functions are called when the switch is flipped to true.
 
-After the filling of the "Muon" objects, the flow of the code is nearly identical
-to the muon case.  The only exceptions occur in the Zprime2muAnalysis module:
-In the muon chain considerable muon selection occurs, whereas a lot of this
-selection does not occur in the electron chain.  (The code inputs many different
-classes of muon candidates, whereas it inputs only offline PixelMatchGsfElectron
-electron candidates.  It is suggested that the standard HEEP tools that are under
-development be used before this code for most of the electron selection).
-Similarly, the module produces many different dilepton collections in the muon
-mode, whereas it does not in the electron mode.  
+After the filling of the "Muon" objects, the flow of the code is
+nearly identical to the muon case.  The only exceptions occur in the
+Zprime2muAnalysis module: In the muon chain considerable muon
+selection occurs, whereas a lot of this selection does not occur in
+the electron chain.  (The code inputs many different classes of muon
+candidates, whereas it inputs only offline PixelMatchGsfElectron
+electron candidates.  It is suggested that the standard HEEP tools
+that are under development be used before this code for most of the
+electron selection).  Similarly, the module produces many different
+dilepton collections in the muon mode, whereas it does not in the
+electron mode.
 
 To run in the electron mode:  Change "doingElectrons = false" to 
 "doingElectrons = true" in data/Zprime2muAnalysisCommon.cff 
@@ -232,10 +259,10 @@ Step-by-step instructions
 
 To check out the package:
 
-   scramv1 project CMSSW CMSSW_1_6_0
-   cd CMSSW_1_6_0/src
+   scramv1 project CMSSW CMSSW_1_6_7
+   cd CMSSW_1_6_7/src
    project CMSSW
-   cvs co -r V00-00-03 SUSYBSMAnalysis/Zprime2muAnalysis
+   cvs co -r V00-00-04 SUSYBSMAnalysis/Zprime2muAnalysis
 
 To compile:
 

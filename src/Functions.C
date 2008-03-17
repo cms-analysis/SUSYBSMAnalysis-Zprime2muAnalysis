@@ -375,12 +375,7 @@ double mass_resolution(double *x, double *par) {
   // "Long term" misalignment, both low-lumi and high-lumu pile-up.
   // if (mass < 447.) sigma =           1.3e-4*mass - 1.25e-7*mass*mass;
   // else             sigma = 0.02751 + 1.258e-5*mass;
-
-  // Resolution in CMSSW_1_3_1 (ideal alignment) looks rather similar to
-  // that in ORCA_6_3_1 (too bad!), so just use 6_3_1 parameterization for
-  // now.  We should re-tune in the future.
-  sigma = 0.0131 + 2.16e-5*mass - 1.46e-9*mass*mass;
-
+  //
   // ORCA_6_3_1
   // Parameterization below is the result of fitting the mean values of
   // (M_rec - M_gen)/M_gen at four points ((M_gen +/- 3*FWHM) at 0.4, 1, 3
@@ -390,6 +385,31 @@ double mass_resolution(double *x, double *par) {
   // GMR resolution:   0.020,  0.043,  0.106,  0.130
   // sigma = 0.0131 + 2.16e-5*mass - 1.46e-9*mass*mass; // TMR
   // sigma = 0.00037 + 4.85e-5*mass - 4.52e-9*mass*mass; // GMR
+
+  // Resolution in CMSSW_1_3_1 (ideal alignment) looks rather similar to
+  // that in ORCA_6_3_1 (too bad!), so just use 6_3_1 parameterization for
+  // now.  We should re-tune in the future.
+  // sigma = 0.0131 + 2.16e-5*mass - 1.46e-9*mass*mass;
+
+  // Numbers for 100pb-1 misalignment scenario in CMSSW_1_6_7:
+  // Mass value (GeV):   300,    600,    1000,   1500,   2000,   2500,   3000
+  // Resolution:        0.036   0.062,  0.081,  0.105,  0.122,  0.137,  0.165
+  // Uncertainty:       0.001   0.001,  0.001,  0.001,  0.001,  0.002,  0.003
+  /* To obtain parameterization:
+     double x[7] = {300., 600., 1000., 1500., 2000., 2500., 3000.}
+     double y[7] = {0.036, 0.062, 0.081, 0.105, 0.122, 0.137, 0.165}
+     double ex[7] = {0., 0., 0., 0., 0., 0., 0.}
+     double ey[7] = {0.001, 0.001, 0.001, 0.001, 0.001, 0.002, 0.003}
+     TGraph *gre = new TGraphErrors(7, x, y, ex, ey)
+     gre->Fit("pol2")
+
+     To plot, fill x, y, ex, and ey arrays as above, and then:
+     TGraph *gre = new TGraphErrors(7, x, y, ex, ey)
+     gre->Draw("A*")
+     TF1 *f1 = new TF1("f1", "0.01967+6.857e-5*x-8.074e-9*x*x", 200., 3500.)
+     f1->Draw("same")
+  */
+  sigma = 0.0197 + 6.86e-5*mass - 8.07e-9*mass*mass;
 
   sigma *= mass;
   return sigma;
@@ -430,6 +450,11 @@ double lorengauPlusExpbckgNorm(double *x, double *par) {
   bool renorm_sig = false, renorm_bkg = false;
   const  double mass_min =  400.; // for 1 TeV
   const  double mass_max = 1600.;
+  // const  double mass_min = 1000.; // for 1.5 TeV
+  // const  double mass_min =  600.;
+  // const  double mass_max = 2200.;
+  // const  double mass_min = 1000.; // for 2 TeV
+  // const  double mass_max = 3000.;
   // const  double mass_min = 1500.; // for 3 TeV
   // const  double mass_max = 4500.;
   // const  double mass_min = 3000.; // for 5 TeV

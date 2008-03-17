@@ -3,7 +3,10 @@ include "SUSYBSMAnalysis/Zprime2muAnalysis/data/Zprime2muAnalysisCommon.cff"
 module Zprime2muMassReach = Zprime2muMassReach {
   using Zprime2muAnalysisCommon
 
+  untracked string psFile = "mass_fits.ps"
+
   bool   DYEvents       = false // set to use Drell-Yan only
+  bool   BackgroundFit  = false // set to fit background slope
   bool   GenuineEvents  = true  // set to use genuine sim. events
   bool   GMR            = false // set to use GMR instead of "best" reco
   bool   useL3Muons     = false // set to use L3 muons instead of GMR ones

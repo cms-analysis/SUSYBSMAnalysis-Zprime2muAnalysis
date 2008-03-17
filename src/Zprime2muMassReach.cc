@@ -39,9 +39,17 @@ int    Zprime2muMassReach::fit_sid[NF] = {0};
 const double Zprime2muMassReach::fwhm_over_sigma = 2.*sqrt(2.*log(2.));
 
 Zprime2muMassReach::Zprime2muMassReach(const edm::ParameterSet& config) 
-  : Zprime2muAnalysis(config), fileNum(-1)
+  : Zprime2muAnalysis(config), eventNum(0), fileNum(-1)
 {
+  // verbosity controls the amount of debugging information printed;
+  // levels are defined in an enum
+  verbosity = VERBOSITY(config.getUntrackedParameter<int>("verbosity", 1));
+
+  // Postscript file with mass reach plots.
+  psFile    = config.getUntrackedParameter<string>("psFile", "mass_fits.ps");
+
   kDYEvents       = config.getParameter<bool>("DYEvents");
+  kBackgroundFit  = config.getParameter<bool>("BackgroundFit");
   kGenuineEvents  = config.getParameter<bool>("GenuineEvents");
   kGMR            = config.getParameter<bool>("GMR");
   useL3Muons      = config.getParameter<bool>("useL3Muons");
@@ -70,6 +78,7 @@ Zprime2muMassReach::Zprime2muMassReach(const edm::ParameterSet& config)
   upperGenMass = dataSetConfig.getParameter<vector<double> >("upperGenMass");
   XSec         = dataSetConfig.getParameter<vector<double> >("XSec");
   KFactor      = dataSetConfig.getParameter<vector<double> >("KFactor");
+  effFilter    = dataSetConfig.getParameter<vector<double> >("effFilter");
   nGenEvents   = dataSetConfig.getParameter<vector<unsigned int> >("nGenEvents");
 
   bookMassHistos();
@@ -92,18 +101,20 @@ void Zprime2muMassReach::analyze(const edm::Event& event,
   // no way of getting at the current filename or even which file
   // number we're on! (See the HN thread
   // https://hypernews.cern.ch/HyperNews/CMS/get/edmFramework/500.html
-  // .) So, for now we do a hacky trick: we keep track of the file
-  // number by noticing when the event number is reset to 1.  This
-  // will only work for simulated data files! In real data, event
-  // numbers will be meaningful and will not be necessarily sequential
-  // or start at 1 in a file.
+  // .) So, for now we do a hacky trick: we count events and augment the file
+  // number when the number of events reaches some pre-defined value.
+  // The total number of events in each sample must therefore be known
+  // beforehand (and defined in the nGenEvents[fileNum] array).
   //
   // Or: can we set the run # (e.g., = 0,1,2) in the edm root files
   // when we generate them? that would at least deal with the hocus
   // pocus of watching the event number for a reset...
-  eventNum = event.id().event();
-  if (eventNum == 1)
+  if (eventNum == 0) {
     fileNum++;
+    edm::LogInfo("Zprime2muMassReach") << "\n New sample type found. \n";
+  }
+  eventNum++;
+  if (static_cast<unsigned int>(eventNum) == nGenEvents[fileNum]) eventNum = 0;
 
   if (fileNum < 0 || fileNum > 2)
     throw cms::Exception("MassReach") << "+++ invalid fileNum! +++\n";
@@ -129,7 +140,8 @@ void Zprime2muMassReach::endJob() {
   if (resModel == "Zssm" || resModel == "Zpsi" || resModel == "Zeta" ||
       resModel == "Zchi" || resModel == "Zlrm" || resModel == "Zalrm") {
     // 1, 3, and 5 TeV Z's
-    if (resMassId == 1000 || resMassId == 3000 || resMassId == 5000) {
+    if (resMassId == 1000 || resMassId == 1500 || resMassId == 2000 ||
+	resMassId == 3000 || resMassId == 5000) {
       avail = true;
     }
   }
@@ -257,10 +269,11 @@ void Zprime2muMassReach::fillMassArrays() {
   // Reconstructed dimuons: "best" by default, GMR optional
   vector<zp2mu::DiMuon> recdi;
 
-  if(!doingElectrons){
-  if (kGMR) recdi = allDiMuons[useL3Muons ? l3 : lgmr];
-  else      recdi = bestDiMuons;
-  }else{
+  if(!doingElectrons) {
+    if (kGMR) recdi = allDiMuons[useL3Muons ? l3 : lgmr];
+    else      recdi = bestDiMuons;
+  }
+  else {
     recdi= bestDiMuons;
   }
 
@@ -293,7 +306,7 @@ void Zprime2muMassReach::scaleMassHistos() {
 
   for (unsigned int i = 0; i < 3; i++) {
     if (XSec[i] > 0.)
-      scale = XSec[i]*KFactor[i]*intLumi/nGenEvents[i];
+      scale = XSec[i]*KFactor[i]*intLumi/(nGenEvents[i]/effFilter[i]);
     else
       scale = 1.;
 
@@ -690,6 +703,12 @@ void Zprime2muMassReach::bookMassFitHistos() {
   if (resMassId == 1000) {
     mean_min =  800.; mean_max = 1200.; fwhm_max =  100.;
   }
+  else if (resMassId == 1500) {
+    mean_min = 1000.; mean_max = 2000.; fwhm_max =  200.;
+  }
+  else if (resMassId == 2000) {
+    mean_min = 1000.; mean_max = 3000.; fwhm_max =  400.;
+  }
   else if (resMassId == 3000) {
     mean_min = 2500.; mean_max = 3500.; fwhm_max =  500.;
   }
@@ -847,12 +866,14 @@ void Zprime2muMassReach::fitMass() {
       return;
     }
     // XSec is sigma*Br of a sample
-    w[idx] = (XSec[fit_sid[idx]]*KFactor[fit_sid[idx]])/
-             (XSec[fit_sid[0]]*KFactor[fit_sid[0]]);
+    w[idx] =
+      (XSec[fit_sid[idx]]*KFactor[fit_sid[idx]]*effFilter[fit_sid[idx]])/
+      (XSec[fit_sid[0]]*KFactor[fit_sid[0]]*effFilter[fit_sid[0]]);
     LogTrace("fitMass")
       << "fitMass(): file # " << idx // << " is " << SAMPLES[fit_sid[idx]]
       << "; sigma*Br = " << XSec[fit_sid[idx]] << " fb"
       << "; Kfactor = " << KFactor[fit_sid[idx]]
+      << "; effFilter = " << effFilter[fit_sid[idx]]
       << "; weight = " << w[idx];
   }
 
@@ -913,7 +934,8 @@ void Zprime2muMassReach::fitMass() {
 
   // Poisson means for numbers of generated and reconstructed events.
   // The latter one is used only when kGenuineEvents is false.
-  double pmean_gen = XSec[fit_sid[0]]*KFactor[fit_sid[0]]*intLumi;
+  double pmean_gen =
+    XSec[fit_sid[0]]*KFactor[fit_sid[0]]*effFilter[fit_sid[0]]*intLumi;
   double pmean_rec = pmean_gen*eff;
 
   // Modify random generator seed if required.  The seed is set to the current
@@ -942,7 +964,7 @@ void Zprime2muMassReach::fitMass() {
       // Use genuine simulated events
 
       for (int idx = 0; idx < NF; idx++) {
-	//ngen[idx] = nGenEvents[0]; // if use entire available data samples
+	//ngen[idx] = nGenEvents[1]; // if use entire available data samples
 	if (idx == 0) ngen[0]   = gRandom->Poisson(pmean_gen);
 	else          ngen[idx] = ngen[0];
 
@@ -1251,18 +1273,14 @@ double Zprime2muMassReach::unbinnedMassFit(int nentries,
       fmass_unb->SetParameters(0.5,     100.,  2500.,  bkgslope,      5.07);
     }
     else if (fittype == "lorgau_expbg") {
-      // Old ORCA numbers.  GMR numbers are for the old exp function.
-      if (resMassId == 1000) {      // for 1 TeV
-	if (kGMR) bkgslope = -0.006842;
-	else      bkgslope = -2.00; // low lumi "first data"
+      if (resMassId == 1000 || resMassId == 1500 || resMassId == 2000) {
+	bkgslope = -2.00;           // for 1, 1.5 and 2 TeV
       }
       else if (resMassId == 3000) { // for 3 TeV
-	if (kGMR) bkgslope = -0.002596;
-	else      bkgslope = -1.993;
+	bkgslope = -1.993;
       }
       else if (resMassId == 5000) { // for 5 TeV
-	if (kGMR) bkgslope = -0.001938;
-	else      bkgslope = -2.064;
+	bkgslope = -2.064;
       }
       int npar = 5;
 // JMTBAD should these different "Extended Maximum Likelihood" options
@@ -1275,14 +1293,18 @@ double Zprime2muMassReach::unbinnedMassFit(int nentries,
 #ifndef EML_2
       fmass_unb->SetParNames("SigFr", "FWHM", "Mean", "BckgSlope", "BckgInt");
 #else
-      fmass_unb->SetParNames("Nsig", "FWHM", "Mean", "BckgSlope", "BckgInt");
+      fmass_unb->SetParNames("Nsig",  "FWHM", "Mean", "BckgSlope", "BckgInt");
 #endif
       if (resMassId == 1000)
-	fmass_unb->SetParameters(0.5,   100.,   900.,  bkgslope,     1.);
+	fmass_unb->SetParameters(0.5,   100.,   900.,  bkgslope,   1.);
+      else if (resMassId == 1500)
+	fmass_unb->SetParameters(0.5,   100.,  1500.,  bkgslope,   1.);
+      else if (resMassId == 2000)
+	fmass_unb->SetParameters(0.5,   100.,  2000.,  bkgslope,   1.);
       else if (resMassId == 3000)
-	fmass_unb->SetParameters(0.5,   300.,  2500.,  bkgslope,     11.2);
+	fmass_unb->SetParameters(0.5,   300.,  2500.,  bkgslope,   11.2);
       else if (resMassId == 5000)
-	fmass_unb->SetParameters(0.5,   300.,  4500.,  bkgslope,     1.);
+	fmass_unb->SetParameters(0.5,   300.,  4500.,  bkgslope,   1.);
 #if defined(EML_1) || defined(EML_2)
       fmass_unb->SetParameter(5, 1.);
 #ifdef EML_1
@@ -1294,9 +1316,9 @@ double Zprime2muMassReach::unbinnedMassFit(int nentries,
 #endif
     }
 
-    // Fix the slope of the background
-    // if (!bckgonly) // Uncomment if fitting DY to get the slope
-    fmass_unb->FixParameter(3, bkgslope);
+    // Fix the slope of the background, except when fitting DY to get the slope
+    if (!kBackgroundFit || (kBackgroundFit && !bckgonly))
+      fmass_unb->FixParameter(3, bkgslope);
 
     // Integral of the background function in a chosen mass range
     TF1 *fbkg = new TF1("fbkg", expBckg, mass_min, mass_max, 3);
@@ -1337,11 +1359,15 @@ double Zprime2muMassReach::unbinnedMassFit(int nentries,
       // Fix FWHM if required
       if (kFixedFWHM) {
 	if      (resMassId == 1000) fmass_unb->FixParameter(1,  30.);
+	else if (resMassId == 1500) fmass_unb->FixParameter(1,  45.);
+	else if (resMassId == 2000) fmass_unb->FixParameter(1,  60.);
 	else if (resMassId == 3000) fmass_unb->FixParameter(1, 100.);
 	else if (resMassId == 5000) fmass_unb->FixParameter(1, 150.);
       }
       else {
 	if      (resMassId == 1000) fmass_unb->SetParLimits(1,  1.,  200.);
+	else if (resMassId == 1500) fmass_unb->SetParLimits(1,  5.,  500.);
+	else if (resMassId == 2000) fmass_unb->SetParLimits(1, 10.,  500.);
 	else if (resMassId == 3000) fmass_unb->SetParLimits(1, 30., 1000.);
 	else if (resMassId == 5000) fmass_unb->SetParLimits(1, 50., 1000.);
       }
@@ -1349,6 +1375,8 @@ double Zprime2muMassReach::unbinnedMassFit(int nentries,
       // Fix mean mass if required
       if (kFixedMass) {
 	if      (resMassId == 1000) fmass_unb->FixParameter(2, 1000.);
+	else if (resMassId == 1500) fmass_unb->FixParameter(2, 1500.);
+	else if (resMassId == 2000) fmass_unb->FixParameter(2, 2000.);
 	else if (resMassId == 3000) fmass_unb->FixParameter(2, 3000.);
 	else if (resMassId == 5000) fmass_unb->FixParameter(2, 4900.);
       }
@@ -1494,7 +1522,7 @@ int Zprime2muMassReach::unbinnedFitExec(const Char_t *funcname,
   // Small interface
   bool useW = false;
   const int nevents = events.size();
-  const int MAXSIZE = 2000;
+  const int MAXSIZE = 10000;
   double data[MAXSIZE] = {0.}, wght[MAXSIZE] = {0.};
   double *nulldata2 = 0; // won't need second data array of fitter
   double *nulldata3 = 0; // won't need third  data array of fitter
@@ -1810,8 +1838,10 @@ void Zprime2muMassReach::analyzeUnbinnedMassFits(
 	  fbinned->SetParLimits(2, 50., 1000.);
 	  fbinned->SetParLimits(3, mass_min, mass_max);
 	}
-	// if (!bckgonly) // Uncomment if fitting DY to get the slope
-	fbinned->FixParameter(4, par_sum[4]); // fixed from Drell-Yan
+	// Fix the slope of the background, except when fitting DY to get
+	// the slope.
+	if (!kBackgroundFit || (kBackgroundFit && !bckgonly))
+	  fbinned->FixParameter(4, par_sum[4]); // fixed from Drell-Yan
 	fbinned->FixParameter(5, par_sum[5]); // fixed from Drell-Yan
 	LogTrace("analyzeUMF")
 	  << "Binned ML fit, fit option: " << fittype << ", "
@@ -1887,7 +1917,10 @@ void Zprime2muMassReach::drawUnbinnedMassFitsHistos() {
   //gStyle->SetOptFit(0);
   //gStyle->SetOptStat(0);
 
-  TPostScript *ps = new TPostScript("mass_fits.ps", 111);
+  ostringstream strmass;
+  strmass << resMassId;
+  string psfile = resModel + strmass.str() + "_" + psFile;
+  TPostScript *ps = new TPostScript(psfile.c_str(), 111);
   ps->NewPage();
   c1->Clear();
   c1->cd(0);

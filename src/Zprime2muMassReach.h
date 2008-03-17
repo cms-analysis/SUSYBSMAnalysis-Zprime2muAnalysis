@@ -13,7 +13,7 @@
 // max number of files for mass fits
 const int NF = 2;
 // max size of arrays for unbinned fits
-const int MASS_FIT_ARRAY_SIZE = 10000;
+const int MASS_FIT_ARRAY_SIZE = 20000;
 
 // Auxilliary structure containing event information: invariant mass and weight
 struct evt {
@@ -71,11 +71,15 @@ class Zprime2muMassReach : public Zprime2muAnalysis {
 
   enum FILETYPE { SIGNAL, BKG1, BKG2 };
 
-  int eventNum;
+  int eventNum; // sequential in the sample, not the real event number
   int fileNum;
 
   // Configuration parameters:
+  VERBOSITY   verbosity;
+  std::string psFile;
+
   bool kDYEvents;
+  bool kBackgroundFit;
   bool kGenuineEvents;
   bool kGMR;
   bool useL3Muons;
@@ -99,6 +103,7 @@ class Zprime2muMassReach : public Zprime2muAnalysis {
   std::vector<double> upperGenMass;
   std::vector<double> XSec;
   std::vector<double> KFactor;
+  std::vector<double> effFilter;
   std::vector<unsigned int> nGenEvents;
  
   // Fixed size arrays for now.

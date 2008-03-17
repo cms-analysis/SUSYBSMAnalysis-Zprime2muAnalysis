@@ -1,5 +1,5 @@
-
-PSet Zssm1000  = {
+# Physics TDR parameters.
+PSet Zssm1000_PTDR = {
     # Model name and its id (true peak mass).
     string  resModel  = "Zssm"
     uint32  resMassId = 1000
@@ -18,9 +18,123 @@ PSet Zssm1000  = {
     # K-factors.  Currently use the mass-average value of QCD NNLO/LO K-factor,
     # 1.35 +/- 0.05, calculated by M. Schmitt (SUSY/BSM meeting, Dec.16, 2005).
     vdouble KFactor    = { 1.35, 1.35, 1.35 }
-    # Number of *generated* events in each sample.  Used for normalization
-    # of histograms.
+    # Filter efficiency.
+    vdouble effFilter  = { 1.,   1.,   1.   }
+    # Number of *generated* events in each sample.  Used to switch between
+    # samples, and for normalization of histograms.
     vuint32 nGenEvents = { 1000, 1000, 1000 }
+}
+
+# CMSSW_1_6_X parameters.
+PSet Zssm1000 = {
+    # Model name and its id (true peak mass).
+    string  resModel  = "Zssm"
+    uint32  resMassId = 1000
+    # Number of bins and mass window for plots.
+    # uint32  nBins   = 22
+    # vdouble massWin = { 500., 1600. }
+    uint32  nBins   = 24
+    vdouble massWin = { 400., 1600. }
+    # Lower and upper mass limits, used to pre-select events based on
+    # true dimuon masses to avoid double-counting.
+    # Order of GenMass and other arrays: signal, bckg #1, bckg #2
+    # (see doc/README). 
+    #- For Drell-Yan
+    #vdouble lowerGenMass = {   400.,   500.,  200. }
+    #vdouble upperGenMass = { 99999., 99999.,  500. }
+    #- For signal
+    vdouble lowerGenMass = {   400.,   400.,  200. }
+    vdouble upperGenMass = { 99999., 99999.,  400. }
+    # Production cross-section times branching ratio, in fb (PYTHIA 6.409,
+    # CTEQ5L)
+    vdouble XSec       = { 624.,  100., 2558. }
+    # K-factors.  Currently use the mass-average value of QCD NNLO/LO K-factor,
+    # 1.35 +/- 0.05, calculated by M. Schmitt (SUSY/BSM meeting, Dec.16, 2005).
+    vdouble KFactor    = { 1.35,  1.35,  1.35 }
+    # Filter efficiency.
+    vdouble effFilter  = { 1.,   0.777,  0.587}
+    # Number of *generated* events in each sample.  Used to switch between
+    # samples, and for normalization of histograms.
+    #- For Drell-Yan fits
+    # vuint32 nGenEvents = { 1000, 10000, 10000 }
+    #- For signal fits
+    vuint32 nGenEvents = { 10000,  1000, 10000 }
+}
+
+PSet Zpsi1000 = {
+    string  resModel  = "Zpsi"
+    uint32  resMassId = 1000
+    uint32  nBins   = 24
+    vdouble massWin = { 400., 1600. }
+    vdouble lowerGenMass = {   400.,   400.,  200. }
+    vdouble upperGenMass = { 99999., 99999.,  400. }
+    vdouble XSec       = { 362.,   100.,  2558. }
+    vdouble KFactor    = { 1.35,   1.35,  1.35 }
+    vdouble effFilter  = { 1.,     0.777, 0.587 }
+    vuint32 nGenEvents = { 10000,  1000,  10000 }
+}
+
+PSet Zssm1500 = {
+    string  resModel  = "Zssm"
+    uint32  resMassId = 1500
+    # uint32  nBins   = 24
+    # vdouble massWin = { 1000., 2200. }
+    uint32  nBins   = 32
+    vdouble massWin = { 600., 2200. }
+    # vdouble lowerGenMass = {  1000.,  1000.,  500. }
+    # vdouble upperGenMass = { 99999., 99999., 1000. }
+    vdouble lowerGenMass = {   600.,   600., 400. }
+    vdouble upperGenMass = { 99999., 99999., 600. }
+    vdouble XSec       = { 120.3,  50.6,  220. }
+    vdouble KFactor    = { 1.35,   1.35,  1.35 }
+    vdouble effFilter  = { 1.,     1.,    0.777 }
+    #vuint32 nGenEvents = { 10000,  1000,  10000 }
+    vuint32 nGenEvents = { 2000,  2000, 2000 }
+}
+
+PSet Zpsi1500 = {
+    string  resModel  = "Zpsi"
+    uint32  resMassId = 1500
+    # uint32  nBins   = 24
+    # vdouble massWin = { 1000., 2200. }
+    # vdouble lowerGenMass = {  1000.,  1000.,  500. }
+    # vdouble upperGenMass = { 99999., 99999., 1000. }
+    # vdouble XSec       = { 31.0,   6.6,   100. }
+    uint32  nBins   = 32
+    vdouble massWin = { 600., 2200. }
+    vdouble lowerGenMass = {   600.,   600., 400. }
+    vdouble upperGenMass = { 99999., 99999., 600. }
+    vdouble XSec       = {  75.4,  50.6,  220. }
+    vdouble KFactor    = { 1.35,   1.35,  1.35 }
+    vdouble effFilter  = { 1.,     1.,    0.777 }
+    #vuint32 nGenEvents = { 10000,  1000,  10000 }
+    vuint32 nGenEvents = { 2000,  2000, 2000 }
+}
+
+PSet Zssm2000 = {
+    string  resModel  = "Zssm"
+    uint32  resMassId = 2000
+    uint32  nBins   = 20
+    vdouble massWin = { 1000., 3000. }
+    vdouble lowerGenMass = {  1000.,  1000.,  500. }
+    vdouble upperGenMass = { 99999., 99999., 1000. }
+    vdouble XSec       = { 25.0,   6.6,   100. }
+    vdouble KFactor    = { 1.35,   1.35,  1.35 }
+    vdouble effFilter  = { 1.,     1.,    0.777 }
+    vuint32 nGenEvents = { 10000,  1000,  10000 }
+}
+
+PSet Zpsi2000 = {
+    string  resModel  = "Zpsi"
+    uint32  resMassId = 2000
+    uint32  nBins   = 20
+    vdouble massWin = { 1000., 3000. }
+    vdouble lowerGenMass = {  1000.,  1000.,  500. }
+    vdouble upperGenMass = { 99999., 99999., 1000. }
+    vdouble XSec       = { 12.9,   6.6,   100. }
+    vdouble KFactor    = { 1.35,   1.35,  1.35 }
+    vdouble effFilter  = { 1.,     1.,    0.777 }
+    vuint32 nGenEvents = { 10000,  1000,  10000 }
 }
 
 PSet Zssm3000 = {

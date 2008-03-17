@@ -6,6 +6,14 @@ PSet DY40 = {
   double maxTrigMass = 0.3 # in TeV
 }
 
+PSet DY200 = {
+  double peakMass = 200.0
+  double lowerMassWin = 0.0
+  double upperMassWin = 1000.0
+  int32 binSize = 50
+  double maxTrigMass = 5.4
+}
+
 PSet DY500 = {
   double peakMass = 500.0
   double lowerMassWin = 0.0
@@ -19,6 +27,30 @@ PSet Zp1000 = {
   double lowerMassWin = 400.0
   double upperMassWin = 1600.0
   int32 binSize = 24
+  double maxTrigMass = 5.4
+}
+
+PSet Zp1500 = {
+  double peakMass = 1500.0
+  double lowerMassWin = 1000.0
+  double upperMassWin = 2000.0
+  int32 binSize = 20
+  double maxTrigMass = 5.4
+}
+
+PSet Zp2000 = {
+  double peakMass = 2000.0
+  double lowerMassWin = 1000.0
+  double upperMassWin = 3000.0
+  int32 binSize = 20
+  double maxTrigMass = 5.4
+}
+
+PSet Zp2500 = {
+  double peakMass = 2500.0
+  double lowerMassWin = 1500.0
+  double upperMassWin = 4000.0
+  int32 binSize = 25
   double maxTrigMass = 5.4
 }
 

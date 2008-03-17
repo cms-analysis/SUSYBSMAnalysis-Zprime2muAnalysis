@@ -33,6 +33,7 @@
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
+//#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/tdrstyle.h"
 
 using namespace std;
 
@@ -190,7 +191,11 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
     hltPaths.push_back("HLT2MuonNonIso");
   }
 
+  // Our preferred style.
   InitROOT();
+  // Physics TDR style.
+  // TH1::AddDirectory(false);
+  // setTDRStyle();
 }
 
 Zprime2muAnalysis::~Zprime2muAnalysis() {

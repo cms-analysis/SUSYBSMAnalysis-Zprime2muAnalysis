@@ -3526,7 +3526,7 @@ void Zprime2muResolution::DrawAcceptance() {
   accept->SetMaximum(1.05);
   accept->GetXaxis()->SetTitle("M#mu^{+}#mu^{-} (GeV)");
   accept->GetYaxis()->SetTitle("Acceptance");
-  accept->Draw("E");
+  accept->Draw("histo");
   c1->Update();
   eps->Close();
   delete accept;

@@ -169,7 +169,6 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   std::vector<double> angDist;
 
   // config file parameters
-  edm::InputTag genMuons;
   VERBOSITY verbosity;
   std::string outputFileBase;
   std::vector<std::string> genSampleFiles;

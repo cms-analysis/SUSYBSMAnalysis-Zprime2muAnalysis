@@ -67,6 +67,8 @@ inline string nameHist(const char* s, int i, int j = -1) {
 }
 
 void Zprime2muResolution::BookResHistos() {
+  const double pi = TMath::Pi();
+
   // Acceptance studies.
   GenMassAllEvents = new TH1F("GenMassAllEvents",
 			      "Gen mass, all events", 24, 200., 5000.);
@@ -169,7 +171,7 @@ void Zprime2muResolution::BookResHistos() {
   for (int i = 0; i <= MAX_LEVELS; i++) {
     MuonEta[i] = new TH1F(nameHist("MuonEta", i).c_str(), "Eta", 100, -5.,  5. );
     MuonRap[i] = new TH1F(nameHist("MuonRap", i).c_str(), "Y",   100, -5.,  5. );
-    MuonPhi[i] = new TH1F(nameHist("MuonPhi", i).c_str(), "Phi", 100,  0.,  6.3);
+    MuonPhi[i] = new TH1F(nameHist("MuonPhi", i).c_str(), "Phi", 100,  -pi, pi);
     if (i==1) {
       MuonPt[i] = new TH1F(nameHist("MuonPt", i).c_str(), "Pt", 100,  0.,  150.);
       MuonPz[i] = new TH1F(nameHist("MuonPz", i).c_str(), "Pz", 100,  0.,  800.);
@@ -226,9 +228,9 @@ void Zprime2muResolution::BookResHistos() {
       new TH1F(nameHist("AllDilMass", i).c_str(), tit.c_str(), 50, 0., upperMassWin);
 
     MuMVsMuP[i][0] = new TH2F(nameHist("MuMVsMuP", i, 0).c_str(),"Eta of mu- vs mu+", 100, -3, 3, 100, -3, 3);
-    MuMVsMuP[i][1] = new TH2F(nameHist("MuMVsMuP", i, 1).c_str(),"Phi of mu- vs mu+", 100, 0, 6.28,100,0,6.28);
+    MuMVsMuP[i][1] = new TH2F(nameHist("MuMVsMuP", i, 1).c_str(),"Phi of mu- vs mu+", 100, -pi, pi, 100, -pi, pi);
     for (int j = 0; j < 3; j++) {
-      Phi[i][j]      = new TH1F(nameHist("Phi", i, j).c_str(), "Phi",       100, 0., 6.3);
+      Phi[i][j]      = new TH1F(nameHist("Phi", i, j).c_str(), "Phi",       100, -pi, pi);
       PVsEta[i][j]   = new TProfile(nameHist("PVsEta", i, j).c_str(), "P vs Eta",  50, -6., 6.);
       PtVsEta[i][j]  = new TProfile(nameHist("PtVsEta", i, j).c_str(), "Pt vs Eta", 50, -6., 6.);
       Eta[i][j]      = new TH1F(nameHist("Eta", i, j).c_str(), "Eta",          100, -5., 5.);
@@ -306,11 +308,11 @@ void Zprime2muResolution::BookResHistos() {
   }
 
   GenPhiResVsPhi[0] = new TProfile("GenPhiResVsPhi0", "|L1 phi - Gen phi| vs Gen phi",
-				   25, 0., 6.3, -0.1,  0.1);
+				   25, -pi, pi, -0.1,  0.1);
   GenPhiResVsPhi[1] = new TProfile("GenPhiResVsPhi1", "|L2 phi - Gen phi| vs Gen phi",
-				   25, 0., 6.3, -0.1,  0.1);
+				   25, -pi, pi, -0.1,  0.1);
   GenPhiResVsPhi[2] = new TProfile("GenPhiResVsPhi2", "|L3 phi - Gen phi| vs Gen phi",
-				   25, 0., 6.3, -0.01, 0.01);
+				   25, -pi, pi, -0.01, 0.01);
 
   GenInvPtRes[0] = new TH1F("GenInvPtRes0", "(L1 1/Pt - Gen 1/Pt)/(Gen 1/Pt)", 100,
 			    -.6*peakMass/140.,
@@ -353,9 +355,9 @@ void Zprime2muResolution::BookResHistos() {
   GenEtaResScat[0] = new TH2F("GenEtaResScat0", "L1 Eta vs Gen Eta", 100, -3, 3, 100, -3, 3);
   GenEtaResScat[1] = new TH2F("GenEtaResScat1", "L2 Eta vs Gen Eta", 100, -3, 3, 100, -3, 3);
   GenEtaResScat[2] = new TH2F("GenEtaResScat2", "L3 Eta vs Gen Eta", 100, -3, 3, 100, -3, 3);
-  GenPhiResScat[0]=new TH2F("GenPhiResScat0", "L1 Phi vs Gen Phi", 100, 0, 6.3, 100, 0, 6.3);
-  GenPhiResScat[1]=new TH2F("GenPhiResScat1", "L2 Phi vs Gen Phi", 100, 0, 6.3, 100, 0, 6.3);
-  GenPhiResScat[2]=new TH2F("GenPhiResScat2", "L3 Phi vs Gen Phi", 100, 0, 6.3, 100, 0, 6.3);
+  GenPhiResScat[0]=new TH2F("GenPhiResScat0", "L1 Phi vs Gen Phi", 100, -pi, pi, 100, -pi, pi);
+  GenPhiResScat[1]=new TH2F("GenPhiResScat1", "L2 Phi vs Gen Phi", 100, -pi, pi, 100, -pi, pi);
+  GenPhiResScat[2]=new TH2F("GenPhiResScat2", "L3 Phi vs Gen Phi", 100, -pi, pi, 100, -pi, pi);
   GenPtResScat[0]  = new TH2F("GenPtResScat0", "L1 Pt vs Gen Pt",
 			      100, 0., peakMass, 100, 0., 200.);
   GenPtResScat[1]  = new TH2F("GenPtResScat1", "L2 Pt vs Gen Pt",
@@ -411,8 +413,8 @@ void Zprime2muResolution::BookResHistos() {
 
   L1EtaResScat[0] = new TH2F("L1EtaResScat0", "L2 Eta vs L1 Eta", 100, -3, 3, 100, -3, 3);
   L1EtaResScat[1] = new TH2F("L1EtaResScat1", "L3 Eta vs L1 Eta", 100, -3, 3, 100, -3, 3);
-  L1PhiResScat[0] = new TH2F("L1PhiResScat0", "L2 Phi vs L1 Phi", 100, 0, 6.3, 100, 0, 6.3);
-  L1PhiResScat[1] = new TH2F("L1PhiResScat1", "L3 Phi vs L1 Phi", 100, 0, 6.3, 100, 0, 6.3);
+  L1PhiResScat[0] = new TH2F("L1PhiResScat0", "L2 Phi vs L1 Phi", 100, -pi, pi, 100, -pi, pi);
+  L1PhiResScat[1] = new TH2F("L1PhiResScat1", "L3 Phi vs L1 Phi", 100, -pi, pi, 100, -pi, pi);
   L1PtResScat[0]  = new TH2F("L1PtResScat0", "L2 Pt vs L1 Pt", 100, 0., 200.,
 			     100, 0., peakMass);
   L1PtResScat[1]  = new TH2F("L1PtResScat1", "L3 Pt vs L1 Pt", 100, 0., 200.,
@@ -423,18 +425,19 @@ void Zprime2muResolution::BookResHistos() {
   L2PtDiff = new TH1F("L2PtDiff", "L3 Pt - L2 Pt",   100,
 		      -.6*peakMass, .6*peakMass);
   L2EtaResScat = new TH2F("L2EtaResScat", "L3 Eta vs L2 Eta", 100, -3,  3,  100, -3, 3);
-  L2PhiResScat = new TH2F("L2PhiResScat", "L3 Phi vs L2 Phi", 100,  0, 6.3,  100, 0, 6.3);
+  L2PhiResScat = new TH2F("L2PhiResScat", "L3 Phi vs L2 Phi", 100,  -pi, pi,  100, -pi, pi);
   L2PtResScat  = new TH2F("L2PtResScat", "L3 Pt vs L2 Pt", 100, 0., peakMass,
 			  100, 0., peakMass);
 }
 
 void Zprime2muResolution::BookEffHistos() {
+  const double pi = TMath::Pi();
   string tit;
   for (int i = lgen; i <= MAX_LEVELS; i++) {
     tit = "Gen eta, " + str_level[i] + " muons";
     EffVsEta[i] = new TH1F(nameHist("EffVsEta", i).c_str(), tit.c_str(), 50, -2.5, 2.5);
     tit = "Gen phi, " + str_level[i] + " muons";
-    EffVsPhi[i] = new TH1F(nameHist("EffVsPhi", i).c_str(), tit.c_str(), 63,  0.,  6.3);
+    EffVsPhi[i] = new TH1F(nameHist("EffVsPhi", i).c_str(), tit.c_str(), 63,  -pi, pi);
     tit = "Gen pT, "  + str_level[i] + " muons";
     EffVsPt[i]  = new TH1F(nameHist("EffVsPt", i).c_str(), tit.c_str(), 35,  0., 3500.);
   }
@@ -667,28 +670,22 @@ void Zprime2muResolution::BookChargeResHistos() {
 //         Fill resolution histograms for L1, L2, and L3 values
 //-----------------------------------------------------------------------------
 void Zprime2muResolution::calcResolution(const bool debug) {
-  bool   accept2_4 = false, accept2_1 = false;
-  double phival, gen_mass = -999.;
-  TLorentzVector tempV;
-  vector<zp2mu::Muon>::const_iterator   pmu;
-  vector<zp2mu::DiMuon>::const_iterator pdi;
-  vector<zp2mu::DiMuon> diMuon;
+  bool accept2_4 = false, accept2_1 = false;
+  double gen_mass = -999.;
+  unsigned idi;
+  LeptonRefVector::const_iterator plep;
+  reco::CandidateCollection::const_iterator pdi;
 
   // Fill histograms for acceptance studies.
-  diMuon = allDiMuons[lgen];
-  gen_mass = diMuon[0].dimuV().M(); // (in GeV)
+  gen_mass = allDileptons[lgen][0].mass(); // (in GeV)
   GenMassAllEvents->Fill(gen_mass);
   // Check whether both muons are inside the full eta coverage.
-  if (fabs(diMuon[0].muPlus().eta())  < ETA_CUT &&
-      fabs(diMuon[0].muMinus().eta()) < ETA_CUT) {
+  if (numDaughtersInAcc(allDileptons[lgen][0], ETA_CUT) >= 2)
     GenMassInAccept->Fill(gen_mass);
-  }
 
-  // Get origin of generated muons.
-  for (pmu = allMuons[0].begin(); pmu != allMuons[0].end(); pmu++) {
-    //Origin[0]->Fill(getOrigin(pmu->genMotherId()), eventWeight);
-    Origin[0]->Fill(getOrigin(pmu->genMotherId()));
-  }
+  // Get origin of generated leptons.
+  for (plep = allLeptons[lgen].begin(); plep != allLeptons[lgen].end(); plep++)
+    Origin[0]->Fill(getOrigin(motherId(*plep)));
 
   // some additional plots for improved diagnostics
   fillEffHistos();
@@ -697,7 +694,7 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 
   for (int i_rec = 0; i_rec < NUM_REC_LEVELS; i_rec++) {
     // Total number of muons found in each level of reconstruction.
-    NMuons[i_rec][0]->Fill((double)allMuons[i_rec].size());
+    NMuons[i_rec][0]->Fill((double)allLeptons[i_rec].size());
   }
 
   for (int i_rec = 0; i_rec <= MAX_LEVELS; i_rec++) {
@@ -707,28 +704,23 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 
   // Main loop over generated, L1, L2, L3 and off-line information.
   for (int i_rec = 0; i_rec <= MAX_LEVELS; i_rec++) {
-
-    if (i_rec < MAX_LEVELS) diMuon = allDiMuons[i_rec];
-    else if (i_rec == MAX_LEVELS) diMuon = bestDiMuons;
+    const reco::CandidateCollection& dileptons = getDileptons(i_rec);
 
     if (i_rec == 0) {
-      if (diMuon.size() == 1) { // one di-muon at generation
-	gen_mass = diMuon[0].dimuV().M()/1000.; // (in TeV)
+      if (dileptons.size() == 1) { // one di-muon at generation
+	gen_mass = dileptons[0].mass()/1000.; // (in TeV)
 	// Check whether both muons are inside the full eta coverage.
-	if (fabs(diMuon[0].muPlus().eta())  < ETA_CUT &&
-	    fabs(diMuon[0].muMinus().eta()) < ETA_CUT) {
+	if (numDaughtersInAcc(dileptons[0], ETA_CUT) >= 2) {
 	  accept2_4 = true;
 	  // At least one muon is in the limited muon trigger acceptance.
-	  if (fabs(diMuon[0].muPlus().eta())  < TRIGGER_ETA_CUT[l1] ||
-	      fabs(diMuon[0].muMinus().eta()) < TRIGGER_ETA_CUT[l1]) {
+	  if (numDaughtersInAcc(dileptons[0], TRIGGER_ETA_CUT[l1]) >= 1)
 	    accept2_1 = true;
-	  }
 	}
       }
       else {
 	if (!doingHiggs && !reconstructedOnly)
 	  edm::LogWarning("Zprime2muResolution")
-	    << "+++ Warning in calcResolution: " << diMuon.size()
+	    << "+++ Warning in calcResolution: " << dileptons.size()
 	    << " generated dimuons found! +++\n";
       }
     }
@@ -757,52 +749,53 @@ void Zprime2muResolution::calcResolution(const bool debug) {
       // Check what happens to useful events (both mu's in acceptance)
       if (accept2_4 && !decision) {
 	EventsInAccFailed->Fill((double)i_rec);
-	NMuons[i_rec][3]->Fill((double)allMuons[i_rec].size());
+	NMuons[i_rec][3]->Fill((double)allLeptons[i_rec].size());
       }
 
       // More info for L1
       if (i_rec == l1) {
 	if (decision) {
-	  if (allMuons[i_rec].size() == 1)
-	    L1TrigPassSingleMu->Fill(allMuons[i_rec][0].pt());
-	  else if (allMuons[i_rec].size() == 2)
-	    L1TrigPassMu2VsMu1->Fill(allMuons[i_rec][0].pt(),
-				     allMuons[i_rec][1].pt());
+	  if (allLeptons[i_rec].size() == 1)
+	    L1TrigPassSingleMu->Fill(allLeptons[i_rec][0]->pt());
+	  else if (allLeptons[i_rec].size() == 2)
+	    L1TrigPassMu2VsMu1->Fill(allLeptons[i_rec][0]->pt(),
+				     allLeptons[i_rec][1]->pt());
 	}
 	else {
-	  if (allMuons[i_rec].size() == 1)
-	    L1TrigFailSingleMu->Fill(allMuons[i_rec][0].pt());
-	  else if (allMuons[i_rec].size() == 2)
-	    L1TrigFailMu2VsMu1->Fill(allMuons[i_rec][0].pt(),
-				     allMuons[i_rec][1].pt());
+	  if (allLeptons[i_rec].size() == 1)
+	    L1TrigFailSingleMu->Fill(allLeptons[i_rec][0]->pt());
+	  else if (allLeptons[i_rec].size() == 2)
+	    L1TrigFailMu2VsMu1->Fill(allLeptons[i_rec][0]->pt(),
+				     allLeptons[i_rec][1]->pt());
 	}
       }
     }
 
-    // Number of muon hits at Level-2
     if (i_rec == l2) {
-      for (pmu = allMuons[l2].begin(); pmu != allMuons[l2].end(); pmu++) {
-	L2MuonHits->Fill(pmu->nmuHits());
-      }
+      // Number of muon hits at Level-2
+      for (plep = allLeptons[l2].begin(); plep != allLeptons[l2].end(); plep++)
+	L2MuonHits->Fill(nHits(*plep, HITS_MU));
     }
-    // Number of tracker (silicon + pixel) hits at Level-3
-    if (i_rec == l3) {
-      for (pmu = allMuons[l3].begin(); pmu != allMuons[l3].end(); pmu++) {
-	L3TrackerHits->Fill(pmu->npixHits() + pmu->nsilHits());
-      }
+    else if (i_rec == l3) {
+      // Number of tracker (silicon + pixel) hits at Level-3
+      for (plep = allLeptons[l3].begin(); plep != allLeptons[l3].end(); plep++)
+	L3TrackerHits->Fill(nHits(*plep, HITS_TRK));
     }
+
     // Number of muon hits and chi2/d.o.f. for off-line (GMR) muons.
     // Unfortunately, the number of muon hits includes RPC hits, and there
     // seems to be no way to subtract them.
     if (i_rec == lgmr) {
-      for (pmu = allMuons[lgmr].begin(); pmu != allMuons[lgmr].end(); pmu++) {
-	int muHits = pmu->nmuHits();
-	double chi2dof = pmu->chi2()/pmu->dof();
-	if (fabs(pmu->eta()) < 0.9) {
+      for (plep = allLeptons[lgmr].begin(); plep != allLeptons[lgmr].end(); plep++) {
+	int muHits = nHits(*plep, HITS_MU);
+	const reco::TrackBaseRef& tk = getMainTrack(*plep);
+	double chi2dof = tk->chi2()/tk->ndof();
+	double eta = fabs((*plep)->eta());
+	if (eta < 0.9) {
 	  GMRMuonHits[0]->Fill(muHits); // barrel
 	  GMRChi2dof[0]->Fill(chi2dof);
 	}
-	else if (fabs(pmu->eta()) < 1.2) {
+	else if (eta < 1.2) {
 	  GMRMuonHits[1]->Fill(muHits); // overlap
 	  GMRChi2dof[1]->Fill(chi2dof);
 	}
@@ -817,25 +810,26 @@ void Zprime2muResolution::calcResolution(const bool debug) {
     if (i_rec <= l3 && cutTrig[i_rec] && !decision) break;
 
     // Total number of muons for events passing the Trigger.
-    if (i_rec <= l3) NMuons[i_rec][2]->Fill((double)allMuons[i_rec].size());
+    if (i_rec <= l3) NMuons[i_rec][2]->Fill((double)allLeptons[i_rec].size());
 
     // Fill histos with opposite sign and same sign dileptons
     if (i_rec > lgen && i_rec <= l3) fillSignOfDilepton(i_rec, debug);
 
     // If an opposite-sign dilepton is found, fill histos.  A dilepton
     // should always be found at the generated level.
-    for (pdi = diMuon.begin(); pdi != diMuon.end(); pdi++) {
+    for (idi = 0, pdi = dileptons.begin(); pdi != dileptons.end(); pdi++, idi++) {
 
       //if (i_rec == 3) dumpDilEvents(2, i_rec, *pdi);
 
       // Fill mass histograms for all dileptons found, before we apply
       // the "off-line" track quality cuts.
-      if (i_rec <= l3) AllDilMass[i_rec]->Fill(pdi->dimuV().M());
+      if (i_rec <= l3) AllDilMass[i_rec]->Fill(pdi->mass());
       if (i_rec == l3) {
-	if (diMuon.size() == allDiMuons[0].size())
+	if (dileptons.size() == allDileptons[lgen].size())
+	  // JMTBAD rely on ordering
 	  AllDilMassRes->
-	    Fill(pdi->dimuV().M()-allDiMuons[0][pdi->id()].dimuV().M());
-	if (!reconstructedOnly && allDiMuons[0].size() <= 0)
+	    Fill(pdi->mass() - allDileptons[lgen][idi].mass());
+	if (!reconstructedOnly && allDileptons[lgen].size() <= 0)
 	  edm::LogWarning("Zprime2muResolution")
 	    << "+++ Warning: no dilepton in the MC! +++\n";
       }
@@ -843,7 +837,7 @@ void Zprime2muResolution::calcResolution(const bool debug) {
       // Check the "off-line" track quality and apply the cuts
       int qcut_mum = 0, qcut_mup = 0; // quality cut number
       if (DO_QCUTS ?
-	  dilQCheck(*pdi, QSEL, qcut_mum, qcut_mup, debug) : true) {
+	  dilQCheck(*pdi, QSEL, qcut_mum, qcut_mup) : true) {
   
 	// Keep track of the number of opposite-sign dileptons found
 	// at each level of reconstruction.
@@ -856,17 +850,19 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	    SignOfDil[0]->Fill(1.);
 	  }
 	  // Get origin of generated muons.
-	  //Origin[1]->Fill(getOrigin(pdi->muPlus().genMotherId()), eventWeight);
-	  //Origin[1]->Fill(getOrigin(pdi->muMinus().genMotherId()), eventWeight);
-	  Origin[1]->Fill(getOrigin(pdi->muPlus().genMotherId()));
-	  Origin[1]->Fill(getOrigin(pdi->muMinus().genMotherId()));
+	  for (unsigned ilep = 0; ilep < pdi->numberOfDaughters(); ilep++)
+	    Origin[1]->Fill(getOrigin(motherId(dileptonDaughter(*pdi, ilep))));
 	}
 	else if (i_rec <= l3) NumDilVsRec->Fill(i_rec+1);
-
-	if (!doingElectrons && i_rec >= lgmr && passTrigger()) {
-	  SumPtR03[i_rec][1]->Fill(pdi->muPlus().sumPtR03());
-	  SumPtR03[i_rec][1]->Fill(pdi->muMinus().sumPtR03());
-	}
+	
+	// Plot sum Pt in cone of dR=0.3 for dilepton leptons
+	if (!doingElectrons && i_rec >= lgmr && passTrigger())
+	  for (unsigned ilep = 0; ilep < pdi->numberOfDaughters(); ilep++) {
+	    const reco::Muon& mu
+	      = toConcrete<reco::Muon>(dileptonDaughter(*pdi, ilep));
+	    if (mu.isIsolationValid())
+	      SumPtR03[i_rec][1]->Fill(mu.getIsolationR03().sumPt);
+	  }
 
 	if (debug) {
 	  LogTrace("Zprime2muResolution") << str_level[i_rec] << " values:";
@@ -880,151 +876,131 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 
 	// Get number of muons in events with dilepton.
 	if (i_rec <= l3)
-	  NMuons[i_rec][1]->Fill((double)allMuons[i_rec].size());
+	  NMuons[i_rec][1]->Fill((double)allLeptons[i_rec].size());
 
 	// Dilepton invariant mass.
-	DilMass[i_rec]->Fill(pdi->dimuV().M());
-	DilMassVsEta[i_rec]->Fill(pdi->dimuV().Eta(),    pdi->dimuV().M());
-	DilMassVsY[i_rec]->Fill(pdi->dimuV().Rapidity(), pdi->dimuV().M());
+	DilMass[i_rec]->Fill(pdi->mass());
+	DilMassVsEta[i_rec]->Fill(pdi->eta(), pdi->mass());
+	DilMassVsY[i_rec]->Fill(pdi->rapidity(), pdi->mass());
 
-	TLorentzVector vmum, vmup;
-	zp2mu::Muon mum = pdi->muMinus();
-	zp2mu::Muon mup = pdi->muPlus();
-	vmum.SetPtEtaPhiM(mum.pt(), mum.eta(), mum.phi(), MUMASS);
-	vmup.SetPtEtaPhiM(mup.pt(), mup.eta(), mup.phi(), MUMASS);
+	const reco::CandidateBaseRef& mum = dileptonDaughterByCharge(*pdi, -1);
+	const reco::CandidateBaseRef& mup = dileptonDaughterByCharge(*pdi, +1);
 
 	// A few mu- vs mu+ scatter plots
-	MuMVsMuP[i_rec][0]->Fill(vmup.Eta(), vmum.Eta());
-	MuMVsMuP[i_rec][1]->Fill(mup.phi(),  mum.phi());
-	MuMVsMuP[i_rec][2]->Fill(vmup.Pt(),  vmum.Pt());
+	MuMVsMuP[i_rec][0]->Fill(mup->eta(), mum->eta());
+	MuMVsMuP[i_rec][1]->Fill(mup->phi(), mum->phi()); // JMTBAD phi
+	MuMVsMuP[i_rec][2]->Fill(mup->pt(),  mum->pt());
 
 	// Loop over "particle types": 0 stands for mu-, 1 - for mu+,
 	// 2 - for opposite sign dilepton.
 	for (int i_part = 0; i_part < 3; i_part++) {
-
+	  const reco::Candidate* cand = 0;
 	  // Split histos into mu-, and mu+, and dilepton.
-	  if (i_part == 0)      tempV = vmum;
-	  else if (i_part == 1) tempV = vmup;
-	  else if (i_part == 2) tempV = pdi->dimuV();
+	  if (i_part == 0)      cand = &*mum;
+	  else if (i_part == 1) cand = &*mup;
+	  else if (i_part == 2) cand = &*pdi;
 
 	  if (debug) {
 	    std::ostringstream strstrm;
 	    strstrm << setprecision(5) << i_part << "| ";
 	    if (i_part == 0)
-	      strstrm << setw(4) << mum.charge() << "  | ";
+	      strstrm << setw(4) << mum->charge() << "  | ";
 	    else if (i_part == 1)
-	      strstrm << setw(4) << mup.charge() << "  | ";
+	      strstrm << setw(4) << mup->charge() << "  | ";
 	    else
 	      strstrm                        << "      | ";
-	    strstrm << endl << tempV;
+	    strstrm << endl << cand->p4();
 	    LogTrace("Zprime2muAnalysis") << strstrm.str();
 	  }
 
-	  // Shift phi range from (-pi; pi) to (0; 2*pi).
-	  if (tempV.Phi() < 0.)
-	    phival = tempV.Phi() + 2.*TMath::Pi();
-	  else
-	    phival = tempV.Phi();
+	  Eta[i_rec][i_part]->Fill(cand->eta());
+	  Phi[i_rec][i_part]->Fill(cand->phi());
+	  P[i_rec][i_part]->Fill(cand->p());
+	  Pt[i_rec][i_part]->Fill(cand->pt());
+	  Pz[i_rec][i_part]->Fill(fabs(cand->pz()));
+	  Rapidity[i_rec][i_part]->Fill(cand->rapidity());
+	  PVsEta[i_rec][i_part]->Fill(cand->eta(), cand->p());
+	  PtVsEta[i_rec][i_part]->Fill(cand->eta(), cand->pt());
 
-	  Eta[i_rec][i_part]->Fill(tempV.Eta());
-	  Phi[i_rec][i_part]->Fill(phival);
-	  P[i_rec][i_part]->Fill(tempV.P());
-	  Pt[i_rec][i_part]->Fill(tempV.Pt());
-	  Pz[i_rec][i_part]->Fill(abs(tempV.Pz()));
-	  Rapidity[i_rec][i_part]->Fill(tempV.Rapidity());
-	  PVsEta[i_rec][i_part]->Fill(tempV.Eta(),  tempV.P());
-	  PtVsEta[i_rec][i_part]->Fill(tempV.Eta(), tempV.Pt());
-
-	  int id = pdi->id();
+	  //int id = pdi->id();
 	  // Calculate the resolution of each rec muon.
 	  if (i_rec > 0 && i_part < 2) {
-	    zp2mu::Muon murec, mugen, mul1, mul2;
-
 	    // Compare with generated values.
-	    if (diMuon.size() == allDiMuons[0].size()) {
-	      if (i_part == 0) {
-		murec = mum;
-		mugen = allDiMuons[0][id].muMinus();
-	      }
-	      else {
-		murec = mup;
-		mugen = allDiMuons[0][id].muPlus();
-	      }
-	      // Make sure the tracks are reasonably close together.
+	    if (dileptons.size() == allDileptons[lgen].size()) {
+	      const reco::CandidateBaseRef& murec = i_part == 0 ? mum : mup;
+	      int charge = i_part == 0 ? -1 : 1;
+	      const reco::CandidateBaseRef& mugen =
+		dileptonDaughterByCharge(allDileptons[lgen][idi], charge);
+
+	       // Make sure the tracks are reasonably close together.
 	      if (matchTracks(murec, mugen)) {
 		// Fill resolution histos.
-		double pres = murec.p()/mugen.p() - 1.;
-		EtaRes[i_rec]->Fill(murec.eta()-mugen.eta());
-		PhiRes[i_rec]->Fill(murec.phi()-mugen.phi());
-		PtDiff[i_rec]->Fill(murec.pt()-mugen.pt());
+		double pres = murec->p()/mugen->p() - 1.;
+		EtaRes[i_rec]->Fill(murec->eta()-mugen->eta());
+		PhiRes[i_rec]->Fill(murec->phi()-mugen->phi());
+		PtDiff[i_rec]->Fill(murec->pt()-mugen->pt());
 		PRes[i_rec]->Fill(pres);
-		PResVsP[i_rec]->Fill(mugen.p(), pres*pres);
+		PResVsP[i_rec]->Fill(mugen->p(), pres*pres);
 		if (i_rec <= l3) {
-		  GenPhiResVsPhi[i_rec-1]->Fill(mugen.phi(),
-						fabs(murec.phi()-mugen.phi()));
-		  GenInvPtRes[i_rec-1]->Fill(((1./murec.pt())-(1./mugen.pt()))
-					     /(1./mugen.pt()));
-		  //GenInvPtResVsPt[i_rec-1]->Fill(mugen.pt(),
-		  //      (fabs(1./murec.pt()-1./mugen.pt()))/(1./mugen.pt()));
-		  GenInvPtResVsPt[i_rec-1]->Fill(mugen.pt(),
-						 (fabs(murec.pt()-mugen.pt()))/(mugen.pt()));
-		  GenInvPRes[i_rec-1]->Fill(mugen.p()/murec.p() - 1.);
-		  GenPResVsPt[i_rec-1]->Fill(mugen.pt(), fabs(pres));
-		  GenInvPResVsPt[i_rec-1]->Fill(mugen.pt(),
-						fabs(mugen.p()/murec.p()-1.));
-		  GenEtaResScat[i_rec-1]->Fill(mugen.eta(), murec.eta());
-		  GenPhiResScat[i_rec-1]->Fill(mugen.phi(), murec.phi());
-		  GenPtResScat[i_rec-1]->Fill(mugen.pt(),   murec.pt());
+		  GenPhiResVsPhi[i_rec-1]->Fill(mugen->phi(),
+						fabs(murec->phi()-mugen->phi()));
+		  GenInvPtRes[i_rec-1]->Fill(((1./murec->pt())-(1./mugen->pt()))
+					     /(1./mugen->pt()));
+		  //GenInvPtResVsPt[i_rec-1]->Fill(mugen->pt(),
+		  //      (fabs(1./murec->pt()-1./mugen->pt()))/(1./mugen->pt()));
+		  GenInvPtResVsPt[i_rec-1]->Fill(mugen->pt(),
+						 (fabs(murec->pt()-mugen->pt()))/(mugen->pt()));
+		  GenInvPRes[i_rec-1]->Fill(mugen->p()/murec->p() - 1.);
+		  GenPResVsPt[i_rec-1]->Fill(mugen->pt(), fabs(pres));
+		  GenInvPResVsPt[i_rec-1]->Fill(mugen->pt(),
+						fabs(mugen->p()/murec->p()-1.));
+		  GenEtaResScat[i_rec-1]->Fill(mugen->eta(), murec->eta());
+		  GenPhiResScat[i_rec-1]->Fill(mugen->phi(), murec->phi());
+		  GenPtResScat[i_rec-1]->Fill(mugen->pt(),   murec->pt());
 		}
 	      }
 	    }
 
 	    if ((i_rec == l2 || i_rec == l3) &&
-		diMuon.size() == allDiMuons[1].size()) {
+		dileptons.size() == allDileptons[l1].size()) {
 	      // Compare rec 2 and rec 3 values with rec 1 values.
-	      if (i_part == 0) {
-		murec = mum;
-		mul1  = allDiMuons[1][id].muMinus();
-	      }
-	      else {
-		murec = mup;
-		mul1  = allDiMuons[1][id].muPlus();
-	      }
+	      const reco::CandidateBaseRef& murec = i_part == 0 ? mum : mup;
+	      int charge = i_part == 0 ? -1 : 1;
+	      const reco::CandidateBaseRef& mul1 =
+		dileptonDaughterByCharge(allDileptons[l1][idi], charge);
+
 	      if (matchTracks(murec, mul1)) {
 		// Fill resolution histos.
-		L1EtaRes[i_rec-2]->Fill(murec.eta()-mul1.eta());
-		L1PhiRes[i_rec-2]->Fill(murec.phi()-mul1.phi());
-		L1PtDiff[i_rec-2]->Fill(murec.pt() -mul1.pt());
-		L1EtaResScat[i_rec-2]->Fill(mul1.eta(), murec.eta());
-		L1PhiResScat[i_rec-2]->Fill(mul1.phi(), murec.phi());
-		L1PtResScat[i_rec-2]->Fill(mul1.pt(),   murec.pt());
+		L1EtaRes[i_rec-2]->Fill(murec->eta()-mul1->eta());
+		L1PhiRes[i_rec-2]->Fill(murec->phi()-mul1->phi());
+		L1PtDiff[i_rec-2]->Fill(murec->pt() -mul1->pt());
+		L1EtaResScat[i_rec-2]->Fill(mul1->eta(), murec->eta());
+		L1PhiResScat[i_rec-2]->Fill(mul1->phi(), murec->phi());
+		L1PtResScat[i_rec-2]->Fill(mul1->pt(),   murec->pt());
 	      }
-	      if (i_rec == l3 && diMuon.size() == allDiMuons[2].size()) {
+	      if (i_rec == l3 && dileptons.size() == allDileptons[l2].size()) {
 		// Compare rec 2 with rec 3 values.
-		if (i_part == 0) {
-		  murec = mum;
-		  mul2  = allDiMuons[2][id].muMinus();
-		}
-		else {
-		  murec = mup;
-		  mul2  = allDiMuons[2][id].muPlus();
-		}
+		const reco::CandidateBaseRef& murec = i_part == 0 ? mum : mup;
+		int charge = i_part == 0 ? -1 : 1;
+		const reco::CandidateBaseRef& mul2 =
+		  dileptonDaughterByCharge(allDileptons[l2][idi], charge);
+
 		if (matchTracks(murec, mul2)) {
-		  L2EtaRes->Fill(murec.eta()-mul2.eta());
-		  L2PhiRes->Fill(murec.phi()-mul2.phi());
-		  L2PtDiff->Fill(murec.pt() -mul2.pt());
-		  L2EtaResScat->Fill(mul2.eta(), murec.eta());
-		  L2PhiResScat->Fill(mul2.phi(), murec.phi());
-		  L2PtResScat->Fill(mul2.pt(),   murec.pt());
+		  L2EtaRes->Fill(murec->eta()-mul2->eta());
+		  L2PhiRes->Fill(murec->phi()-mul2->phi());
+		  L2PtDiff->Fill(murec->pt() -mul2->pt());
+		  L2EtaResScat->Fill(mul2->eta(), murec->eta());
+		  L2PhiResScat->Fill(mul2->phi(), murec->phi());
+		  L2PtResScat->Fill(mul2->pt(),   murec->pt());
 		}
 	      }
 	    }
 	  }
 	  // Opposite-sign dileptons
 	  else if ((i_rec > 0 && i_rec <= l3) && i_part == 2) {
-	    if (diMuon.size() == allDiMuons[0].size()) {
-	      double genmass = allDiMuons[0][id].dimuV().M();
-	      double dM   = tempV.M() - genmass;
+	    if (dileptons.size() == allDileptons[lgen].size()) {
+	      double genmass = allDileptons[lgen][idi].mass();
+	      double dM   = cand->mass() - genmass;
 	      double dMoM = dM/genmass;
 	      GenDilMassRes[i_rec-1]->Fill(dM);
 	      GenDilMassFrRes[i_rec-1]->Fill(dMoM);
@@ -1041,26 +1017,29 @@ void Zprime2muResolution::calcResolution(const bool debug) {
   fillDilResHistos(debug);
 
   if (doingHiggs) { //SAMPLE_INDEX == kH4mu130) { // H -> ZZ* -> 4mu.
-    if (allDiMuons[0].size() != 2) // generated
+    if (allDileptons[lgen].size() != 2) // generated
       edm::LogWarning("Zprime2muResolution") 
-	<< "+++ Warning: " << allDiMuons[0].size()
+	<< "+++ Warning: " << allDileptons[lgen].size()
 	<< " generated dilepton(s) were found +++\n"; 
     else {
-      ZonDilMass[0]->Fill(allDiMuons[0][0].dimuV().M());
-      ZofDilMass[0]->Fill(allDiMuons[0][1].dimuV().M());
+      ZonDilMass[0]->Fill(allDileptons[lgen][0].mass());
+      ZofDilMass[0]->Fill(allDileptons[lgen][1].mass());
     }
-    for (pdi = allDiMuons[0].begin(); pdi != allDiMuons[0].end(); pdi++) {
-      Eta4muons->Fill(pdi->muPlus().eta());
-      Eta4muons->Fill(pdi->muMinus().eta());
-      Pt4muons->Fill(pdi->muPlus().pt());
-      Pt4muons->Fill(pdi->muMinus().pt());
+    for (pdi = allDileptons[lgen].begin(); pdi != allDileptons[lgen].end();
+	 pdi++) {
+      const reco::CandidateBaseRef& mum = dileptonDaughterByCharge(*pdi, -1);
+      const reco::CandidateBaseRef& mup = dileptonDaughterByCharge(*pdi, +1);
+      Eta4muons->Fill(mup->eta());
+      Eta4muons->Fill(mum->eta());
+      Pt4muons->Fill(mup->pt());
+      Pt4muons->Fill(mum->pt());
     }
 
     // For events passing the trigger
     if (passTrigger()) {
-      if (allDiMuons[l3].size() >= 2) { // HLT
-	ZonDilMass[3]->Fill(allDiMuons[l3][0].dimuV().M());
-	ZofDilMass[3]->Fill(allDiMuons[l3][1].dimuV().M());
+      if (allDileptons[l3].size() >= 2) { // HLT
+	ZonDilMass[3]->Fill(allDileptons[l3][0].mass());
+	ZofDilMass[3]->Fill(allDileptons[l3][1].mass());
       }
     }
   }
@@ -1070,34 +1049,37 @@ void Zprime2muResolution::fillEffHistos() {
   // Efficiency to reconstruct muons from Z' decays at various trigger 
   // levels and by various off-line reconstructors.  L1/HLT efficiencies
   // are not included.
-  vector<zp2mu::Muon>::const_iterator pmu;
+  unsigned ilep, jlep;
   double gen_eta, gen_phi, gen_pt;
 
   // Efficiency for single muons
-  for (pmu = allMuons[lgen].begin(); pmu != allMuons[lgen].end(); pmu++) {
-    if (isResonance(pmu->genMotherId())) {
-      gen_eta = pmu->eta();
-      gen_phi = pmu->phi();
-      gen_pt  = pmu->pt();
+  for (ilep = 0; ilep < allLeptons[lgen].size(); ilep++) {
+    const reco::CandidateBaseRef& lep = allLeptons[lgen][ilep];
+    if (isResonance(motherId(lep))) {
+      gen_eta = lep->eta();
+      gen_phi = lep->phi();
+      gen_pt  = lep->pt();
 
       EffVsEta[0]->Fill(gen_eta);
       EffVsPhi[0]->Fill(gen_phi);
       EffVsPt[0]->Fill(gen_pt);
 
       for (int i = l1; i < MAX_LEVELS; i++) {
-	// if (passTrigger(i) && pmu->closestId(i) >= 0) {
-	if (pmu->closestId(i) >= 0) {
+	const int closestId = getLepExtra(lep).closestMatch(i);
+	// if (passTrigger(i) && closestId >= 0) {
+	if (closestId >= 0) {
 	  EffVsEta[i]->Fill(gen_eta);
 	  EffVsPhi[i]->Fill(gen_phi);
 	  EffVsPt[i]->Fill(gen_pt);
 	}
       }
-      for (vector<zp2mu::Muon>::const_iterator pbest = bestMuons.begin();
-	   pbest != bestMuons.end(); pbest++) {
-	int rec_level = pbest->recLevel();
-	zp2mu::Muon recmu = muonRef(rec_level, pbest->closestId(rec_level));
-	if (pmu->closestId(rec_level) >= 0 &&
-	    pmu->closestId(rec_level) == recmu.id()) {
+
+      for (jlep = 0; jlep < bestLeptons.size(); jlep++) {
+	const reco::CandidateBaseRef& best = bestLeptons[jlep];
+	const int rec_level = recLevel(best);
+	const reco::CandidateBaseRef& match = closestLepton(best, rec_level);
+	const int closestId = getLepExtra(lep).closestMatch(rec_level);
+	if (closestId >= 0 && closestId == id(match)) {
 	  EffVsEta[MAX_LEVELS]->Fill(gen_eta);
 	  EffVsPhi[MAX_LEVELS]->Fill(gen_phi);
 	  EffVsPt[MAX_LEVELS]->Fill(gen_pt);
@@ -1110,45 +1092,43 @@ void Zprime2muResolution::fillEffHistos() {
   // Dimuon reconstruction efficiencies
   double gen_mass = -999.;
   int wheredi = 0;
-  if (allDiMuons[lgen].size() == 1) { // one generated dimuon
-    gen_mass = allDiMuons[lgen][0].dimuV().M()/1000.; // (in TeV)
-    wheredi = int(whereIsDimuon(allDiMuons[lgen][0]));
+  if (allDileptons[lgen].size() == 1) { // one generated dimuon
+    gen_mass = allDileptons[lgen][0].mass()/1000.; // (in TeV)
+    wheredi = int(whereIsDilepton(allDileptons[lgen][0]));
     RecMass[0][0]->Fill(gen_mass);
 
     // Events with both muons inside the full eta coverage, and passing
     // the trigger
-    if (fabs(allDiMuons[lgen][0].muPlus().eta())  < ETA_CUT &&
-	fabs(allDiMuons[lgen][0].muMinus().eta()) < ETA_CUT) {
-      if (passTrigger()) RecMass[0][1]->Fill(gen_mass);
-    }
+    if (passTrigger() &&
+	numDaughtersInAcc(allDileptons[lgen][0], ETA_CUT) >= 2)
+      RecMass[0][1]->Fill(gen_mass);
   }
 
   if (passTrigger()) {
-
-    if (allMuons[l3].size() > 1)     // At least two muons found by L3
+    if (allLeptons[l3].size() > 1)     // At least two muons found by L3
       RecMass[1][0]->Fill(gen_mass);
-    if (allDiMuons[l3].size() > 0)   // Opposite-sign dimuon found by L3
+    if (allDileptons[l3].size() > 0)   // Opposite-sign dimuon found by L3
       RecMass[1][1]->Fill(gen_mass);
-    if (allMuons[lgmr].size() > 1)   // At least two muons found by GMR
+    if (allLeptons[lgmr].size() > 1)   // At least two muons found by GMR
       RecMass[2][0]->Fill(gen_mass);
-    if (allDiMuons[lgmr].size() > 0) // Opposite-sign dimuon found by GMR
+    if (allDileptons[lgmr].size() > 0) // Opposite-sign dimuon found by GMR
       RecMass[2][1]->Fill(gen_mass);
-    if (bestMuons.size() > 1)        // At least two muons found by TMR
+    if (bestLeptons.size() > 1)        // At least two muons found by TMR
       RecMass[3][0]->Fill(gen_mass);
-    if (bestDiMuons.size() > 0) {      // Opposite-sign dimuon found by TMR 
+    if (bestDileptons.size() > 0) {    // Opposite-sign dimuon found by TMR
       RecMass[3][1]->Fill(gen_mass);
       RecMassByLoc[1][wheredi]->Fill(gen_mass);
     }
 
-    // Count the number of muons that pass cuts at OPT level
+    // Count the number of leptons that pass cuts at OPT level
     int passCut = 0;
     for (int z = 1; z <= 3; z++) {
       passCut = 0;
-      const vector<zp2mu::Muon>& mus
-	= z < 3 ? allMuons[z == 1 ? l3 : lgmr] : bestMuons;
-      vector<zp2mu::Muon>::const_iterator pmu;
-      for (pmu = mus.begin(); pmu != mus.end(); pmu++) {
-	if (!muonIsCut(*pmu)) passCut++;
+      const LeptonRefVector& leps
+	= z < 3 ? allLeptons[z == 1 ? l3 : lgmr] : bestLeptons;
+      LeptonRefVector::const_iterator plep;
+      for (plep = leps.begin(); plep != leps.end(); plep++) {
+	if (!leptonIsCut(*plep)) passCut++;
 	if (passCut > 1) break;
       }
 
@@ -1157,7 +1137,7 @@ void Zprime2muResolution::fillEffHistos() {
     }
       
     // Fill this also separately for barrel, endcap, overlap region
-    // combinations, at least two muons passing cuts
+    // combinations, at least two leptons passing cuts
     if (passCut > 1)
       RecMassByLoc[0][wheredi]->Fill(gen_mass);
   }
@@ -1165,28 +1145,24 @@ void Zprime2muResolution::fillEffHistos() {
 
 void Zprime2muResolution::fillPtResHistos(const bool debug) {
   // Function to fill histos of pt resolutions.
-  int idh, gen_id, tracker_id, gmr_id, fms_id, bar_end;
-  double gen_pt, gen_p, gen_eta, residual, pt_pull;
-  zp2mu::Muon genmu, tkmu, gmrmu, fmsmu;
-  vector<zp2mu::Muon> muons;
-  vector<zp2mu::Muon>::const_iterator pmu;
+  double gen_pt, gen_p, gen_eta, residual, pt_pull, tmperr;
+  unsigned ilep;
 
   // Inverse momentum and 1/pT resolution for GMR and TMR, separately for
   // barrel, endcap, and their overlap.
   if (passTrigger()) { // event passed the trigger
     for (int i = 0; i < 2; i++) {
-      if (i == 0)      muons = allMuons[lgmr];
-      else if (i == 1) muons = bestMuons;
-      for (pmu = muons.begin(); pmu != muons.end(); pmu++) {
-	gen_id = pmu->matchedId(lgen); // Generated muon closest to rec muon
-	if (gen_id != -999) {
-	  genmu = muonRef(lgen, gen_id);
-
-	  gen_eta = genmu.eta();
-	  gen_p   = genmu.p();
-	  gen_pt  = genmu.pt();
-	  double invpres = gen_p/pmu->p() - 1.;
-	  double invptres = gen_pt/pmu->pt() - 1.;
+      const LeptonRefVector& leptons = i == 0 ? allLeptons[lgmr] : bestLeptons;
+      for (ilep = 0; ilep < leptons.size(); ilep++) {
+	const reco::CandidateBaseRef& lep = leptons[ilep];
+	// Find the generated muon closest to the reconstructed muon.
+	const reco::CandidateBaseRef& gen_lep = matchedLepton(lep, lgen);
+	if (!gen_lep.isNull()) {
+	  gen_eta = gen_lep->eta();
+	  gen_p   = gen_lep->p();
+	  gen_pt  = gen_lep->pt();
+	  double invpres = gen_p/lep->p() - 1.;
+	  double invptres = gen_pt/lep->pt() - 1.;
 	  // if (gen_p > 1700. && gen_p < 2300.) {
 	  if (fabs(gen_eta) < 0.9) { // barrel
 	    MuInvPRes[i][0]->Fill(invpres);
@@ -1209,50 +1185,48 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
   // First plot histos of 1/pT resolution vs eta for a given muon.  Here
   // residual = ((1/PtL3)-(1/pT[0]))/(1/pT[0]).  We want to compare this
   // with the histogram given in pg. 27 of the Muon TDR.
-  for (pmu = bestMuons.begin(); pmu != bestMuons.end(); pmu++) {
-    if (pmu->pt() < 100.) continue;
-    gen_id = pmu->matchedId(lgen);
-    if (gen_id != -999) {
-      genmu   = muonRef(lgen, gen_id);
-      gen_pt  = genmu.pt();
-      gen_eta = genmu.eta();
+  for (ilep = 0; ilep < bestLeptons.size(); ilep++) {
+    const reco::CandidateBaseRef& lep = bestLeptons[ilep];
+    if (lep->pt() < 100.) continue;
+    // Find the generated muon closest to the reconstructed muon.
+    const reco::CandidateBaseRef& gen_lep = matchedLepton(lep, lgen);
+    if (!gen_lep.isNull()) {
+      gen_pt  = gen_lep->pt();
+      gen_eta = gen_lep->eta();
       //if ((gen_pt > 800) && (gen_pt < 1200)) {
 	//if ((fabs(gen_eta) > 1.2) && (fabs(gen_eta) < 2.1)) {
 	//if ((fabs(gen_eta) > 0.9) && (fabs(gen_eta) < 1.2)) {
 	//if (fabs(gen_eta) < 0.9) {
-	MuPtDiff[1]->Fill(pmu->pt() - gen_pt);
+	MuPtDiff[1]->Fill(lep->pt() - gen_pt);
 	//}
       //}
     }
   }
 
-  for (pmu = allMuons[l3].begin(); pmu != allMuons[l3].end(); pmu++) {
-
-    // matchStudy(*pmu);
+  for (ilep = 0; ilep < allLeptons[l3].size(); ilep++) {
+    const reco::CandidateBaseRef& lep = allLeptons[l3][ilep];
+    // matchStudy(lep);
 
     // Only look at events where reconstructed pT > 100 GeV.
-    if (pmu->pt() < 100.) continue;
+    if (lep->pt() < 100.) continue;
 
-    // Get index of the generated muon closest to the L3 muon.  The function
-    // will return -999 if track was not found.
-    gen_id = pmu->matchedId(lgen);
-    if (gen_id != -999) {
-      genmu = muonRef(lgen, gen_id);
-
+    // Find the generated muon closest to the L3 muon.
+    const reco::CandidateBaseRef& gen_lep = matchedLepton(lep, lgen);
+    if (!gen_lep.isNull()) {
       // Calculation of 1/pT residual.
-      gen_eta  = genmu.eta();
-      gen_pt   = genmu.pt();
-      residual = (1./pmu->pt() - 1./gen_pt)/(1./gen_pt);
+      gen_pt  = gen_lep->pt();
+      gen_eta = gen_lep->eta();
+      residual = (1./lep->pt() - 1./gen_pt)/(1./gen_pt);
       //if ((gen_pt > 800) && (gen_pt < 1200)) {
 	//if ((fabs(gen_eta) > 1.2) && (fabs(gen_eta) < 2.1)) {
 	//if ((fabs(gen_eta) > 0.9) && (fabs(gen_eta) < 1.2)) {
         //if (fabs(gen_eta) < 0.9) {
-      MuPtDiff[0]->Fill(pmu->pt() - gen_pt);
+      MuPtDiff[0]->Fill(lep->pt() - gen_pt);
         //}
       //}
 
       // Split histograms into gen_pt < 10, 25, 50, 75, 100, 1000.
-      idh = -1;
+      int idh = -1;
       if (gen_pt < 10.)        idh = 0;
       else if (gen_pt < 25.)   idh = 1;
       else if (gen_pt < 50.)   idh = 2;
@@ -1263,10 +1237,10 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
 
       if (debug) {
 	LogTrace("Zprime2muResolution")
-	  << " l3 muon = "         << pmu->id()
-	  << " closest genmuon = " << genmu.id();
+	  << " l3 muon = "         << id(lep)
+	  << " closest genmuon = " << id(gen_lep);
 	LogTrace("Zprime2muResolution")
-	  << "   Ptgen: "  << gen_pt  << " Pt3: " << pmu->pt()
+	  << "   Ptgen: "  << gen_pt  << " Pt3: " << lep->pt()
 	  << " Etagen: "   << gen_eta << " Residual: " << residual;
       }
     }
@@ -1278,94 +1252,93 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
   // muons first.
   if (!passTrigger()) return;
 
-  for (pmu = allMuons[l3].begin(); pmu != allMuons[l3].end(); pmu++) {
+  for (ilep = 0; ilep < allLeptons[l3].size(); ilep++) {
+    const reco::CandidateBaseRef& lep = allLeptons[l3][ilep];
     // Only look at events where reconstructed pT > 100 GeV.
-    if (pmu->pt() < 100.) continue;
+    if (lep->pt() < 100.) continue;
 
     // Get generated muon closest to the L3 muon.  This gen muon will be used
     // for comparison to all fits.
-    gen_id = pmu->matchedId(lgen);
+    const reco::CandidateBaseRef& gen_lep = matchedLepton(lep, lgen);
 
     // Find corresponding tracker-only, FMS and GMR tracks
-    tracker_id = pmu->matchedId(ltk);
-    fms_id     = pmu->matchedId(lfms);
-    gmr_id     = pmu->matchedId(lgmr);
+    const reco::CandidateBaseRef& tk_lep = matchedLepton(lep, ltk);
+    const reco::CandidateBaseRef& fms_lep = matchedLepton(lep, lfms);
+    const reco::CandidateBaseRef& gmr_lep = matchedLepton(lep, lgmr);
 
     // Fill only for muons that have tracker-only and FMS tracks, and
     // are matched to the generated tracks
-    if (gen_id != -999 && tracker_id != -999 && fms_id != -999) {
-
-      genmu  = muonRef(lgen, gen_id);
-      gen_pt = genmu.pt();
+    if (!gen_lep.isNull() && !tk_lep.isNull() && !fms_lep.isNull()) {
+      gen_pt = gen_lep->pt();
+      int bar_end;
 
       // Residual and pulls for on-line and off-line reconstructions.
       // separate each fit by barrel or endcap
-      if (abs(pmu->eta()) < ENDCAP_BARREL_CUT) bar_end = 0;
+      if (abs(lep->eta()) < ENDCAP_BARREL_CUT) bar_end = 0;
       else bar_end = 1;
-      if (pmu->pt() > 0.) {
-	residual  = (1./pmu->pt() - 1./gen_pt)/(1./gen_pt);
+      if (lep->pt() > 0.) {
+	residual  = (1./lep->pt() - 1./gen_pt)/(1./gen_pt);
 	TotInvPtRes[0]->Fill(residual);
 	InvPtRes[0][bar_end]->Fill(residual);
-	if (pmu->errInvPt() > 0.) {
-	  pt_pull = (1./pmu->pt() - 1./gen_pt)/pmu->errInvPt();
+	if ((tmperr = invPtError(lep)) > 0.) {
+	  pt_pull = (1./lep->pt() - 1./gen_pt)/tmperr;
 	  TotInvPtPull[0]->Fill(pt_pull);
 	  InvPtPull[0][bar_end]->Fill(pt_pull);
 	}
       }
 
       // Residual and pulls for tracker-only fit.
-      tkmu = muonRef(ltk, tracker_id);
-      if (abs(tkmu.eta()) < ENDCAP_BARREL_CUT) bar_end = 0;
+      if (abs(tk_lep->eta()) < ENDCAP_BARREL_CUT) bar_end = 0;
       else bar_end = 1;
-      if (tkmu.pt() > 0.) {
-	residual  = (1./tkmu.pt() - 1./gen_pt)/(1./gen_pt);
+      if (tk_lep->pt() > 0.) {
+	residual  = (1./tk_lep->pt() - 1./gen_pt)/(1./gen_pt);
 	TotInvPtRes[1]->Fill(residual);
 	InvPtRes[1][bar_end]->Fill(residual);
-	if (tkmu.errInvPt() > 0.) {
-	  pt_pull = (1./tkmu.pt() - 1./gen_pt)/tkmu.errInvPt();
+	if ((tmperr = invPtError(tk_lep)) > 0.) {
+	  pt_pull = (1./tk_lep->pt() - 1./gen_pt)/tmperr;
 	  TotInvPtPull[1]->Fill(pt_pull);
 	  InvPtPull[1][bar_end]->Fill(pt_pull);
 	}
       }
 
+      if (!gmr_lep.isNull()) {
       // Residual and pulls for internal-seeded GMR.
-      if (gmr_id != -999) {
-	gmrmu = muonRef(lgmr, gmr_id);
-	if (abs(gmrmu.eta()) < ENDCAP_BARREL_CUT) bar_end = 0;
+	if (abs(gmr_lep->eta()) < ENDCAP_BARREL_CUT) bar_end = 0;
 	else bar_end = 1;
-	if (gmrmu.pt() > 0.) {
-	  residual  = (1./gmrmu.pt() - 1./gen_pt)/(1./gen_pt);
+	if (gmr_lep->pt() > 0.) {
+	  residual  = (1./gmr_lep->pt() - 1./gen_pt)/(1./gen_pt);
 	  InvPtRes[3][bar_end]->Fill(residual);
-	  if (gmrmu.errInvPt() > 0.) {
-	    pt_pull = (1./gmrmu.pt() - 1./gen_pt)/gmrmu.errInvPt();
+	  if ((tmperr = invPtError(gmr_lep)) > 0.) {
+	    pt_pull = (1./gmr_lep->pt() - 1./gen_pt)/tmperr;
 	    InvPtPull[3][bar_end]->Fill(pt_pull);
 	  }
 	}
       }
 
+#if 0 // JMTBAD no forward measurement 
       // pT measurement at outer surface of tracker.
       // (Should not be the default)
-      if (pmu->forwardPt() > 0.) {
-	residual  = (1./pmu->forwardPt()-1./gen_pt)/(1./gen_pt);
+      if (lep->forwardPt() > 0.) {
+	residual  = (1./lep->forwardPt()-1./gen_pt)/(1./gen_pt);
 	TotInvPtRes[3]->Fill(residual);
-	if (pmu->errForwardInvPt() > 0.) {
-	  pt_pull = (1./pmu->forwardPt()-1./gen_pt)/pmu->errForwardInvPt();
+	if (lep->errForwardInvPt() > 0.) {
+	  pt_pull = (1./lep->forwardPt()-1./gen_pt)/lep->errForwardInvPt();
 	  TotInvPtPull[3]->Fill(pt_pull);
 	}
       }
+#endif
 
       // Residual and pulls using the innermost muon hit for
       // pT measurement.  This is alleged to be the best measurement
       // of pT in the detector.
-      fmsmu = muonRef(lfms, fms_id);
-      if (abs(fmsmu.eta()) < ENDCAP_BARREL_CUT) bar_end = 0;
+      if (abs(fms_lep->eta()) < ENDCAP_BARREL_CUT) bar_end = 0;
       else bar_end = 1;
-      if (fmsmu.pt() > 0.) {
-	residual  = (1./fmsmu.pt() - 1./gen_pt)/(1./gen_pt);
+      if (fms_lep->pt() > 0.) {
+	residual  = (1./fms_lep->pt() - 1./gen_pt)/(1./gen_pt);
 	TotInvPtRes[2]->Fill(residual);
 	InvPtRes[2][bar_end]->Fill(residual);
-	if (fmsmu.errInvPt() > 0.) {
-	  pt_pull = (1./fmsmu.pt() - 1./gen_pt)/fmsmu.errInvPt();
+	if ((tmperr = invPtError(fms_lep)) > 0.) {
+	  pt_pull = (1./fms_lep->pt() - 1./gen_pt)/tmperr;
 	  TotInvPtPull[2]->Fill(pt_pull);
 	  InvPtPull[2][bar_end]->Fill(pt_pull);
 	}
@@ -1374,29 +1347,23 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
   }
 }
 
+// This function makes histos of the difference between charge assignment
+// for various levels of reconstruction.
 void Zprime2muResolution::fillChargeResHistos(const bool debug) {
-  // This function makes histos of the difference between charge assignment
-  // for various levels of reconstruction.
-  int gen_id;
-  int deltaQ, idh;
-  zp2mu::Muon genmu;
-  vector<zp2mu::Muon>::const_iterator pmu;
-
   // Loop over all reconstructed levels.
-  for (int rec = l1; rec < MAX_LEVELS; rec++) {
-
-    // Loop over all muons at a given level
-    for (pmu = allMuons[rec].begin(); pmu != allMuons[rec].end(); pmu++) {
-
+  for (int rec = l1; rec <= MAX_LEVELS; rec++) {
+    const LeptonRefVector& leptons = getLeptons(rec);
+    for (unsigned ilep = 0; ilep < leptons.size(); ilep++) {
       // Find charge of closest gen muon and store difference in histogram
-      gen_id = pmu->matchedId(lgen);
-      if (gen_id != -999) {
-	genmu = muonRef(lgen, gen_id);
-	deltaQ = pmu->charge() - genmu.charge();
+      const reco::CandidateBaseRef& lep = leptons[ilep];
+      const reco::CandidateBaseRef& gen_lep = matchedLepton(lep, lgen);
+      if (!gen_lep.isNull()) {
+	int deltaQ = lep->charge() - gen_lep->charge();
 	QRes[rec]->Fill(deltaQ);
-	if (rec <= l3) {
-	  double pt = pmu->pt();
-	  double p  = pmu->p();
+	if (rec <= l3 && rec < MAX_LEVELS) {
+	  double pt = lep->pt();
+	  double p  = lep->p();
+	  int idh;
 	  if      (deltaQ == 0)      idh =  0; // correct charge assignment
 	  else if (abs(deltaQ) == 2) idh =  1; // wrong assignment
 	  else throw cms::Exception("Zprime2muResolution")
@@ -1408,36 +1375,9 @@ void Zprime2muResolution::fillChargeResHistos(const bool debug) {
 	}
 	if (debug) {
 	  LogTrace("Zprime2muResolution")
-	    << "Charge at rec level " << rec << ": " << pmu->charge()
-	    << ", Closest Gen: " << genmu.charge();
+	    << "Charge at rec level " << rec << ": " << lep->charge()
+	    << ", Closest Gen: " << gen_lep->charge();
 	}
-      }
-    }
-  }
-
-  // Same for TMR muons
-  for (pmu = bestMuons.begin(); pmu != bestMuons.end(); pmu++) {
-    gen_id = pmu->matchedId(lgen);
-    if (gen_id != -999) {
-      genmu = muonRef(lgen, gen_id);
-      deltaQ = pmu->charge() - genmu.charge();
-      QRes[MAX_LEVELS]->Fill(deltaQ);
-#ifdef IF_NEEDED
-      double pt = pmu->pt();
-      double p  = pmu->p();
-      if      (deltaQ == 0)      idh =  0; // correct charge assignment
-      else if (abs(deltaQ) == 2) idh =  1; // wrong assignment
-      else throw cms::Exception("Zprime2muResolution")
-	<< "+++ Impossible deltaQ in fillChargeResHistos() +++\n";
-      QResVsPt[MAX_LEVELS][idh]->Fill(pt);
-      QResVsInvPt[MAX_LEVELS][idh]->Fill(1./pt);
-      QResVsP[MAX_LEVELS][idh]->Fill(p);
-      QResVsInvP[MAX_LEVELS][idh]->Fill(1./p);
-#endif
-      if (debug) {
-	LogTrace("Zprime2muResolution")
-	  << "Charge at for best muons: " << pmu->charge()
-	  << ", Closest Gen: " << genmu.charge();
       }
     }
   }
@@ -1448,9 +1388,6 @@ void Zprime2muResolution::fillMuonHistos(const int rec, const bool debug) {
   // for all muons for all levels of reconstruction.
   // Inputs: rec   = level of reconstruction
   //         debug = print statements
-
-  TLorentzVector lVect;
-  double phival;
 
   if (rec > MAX_LEVELS) {
     throw cms::Exception("Zprime2muResolution")
@@ -1468,38 +1405,30 @@ void Zprime2muResolution::fillMuonHistos(const int rec, const bool debug) {
     LogTrace("Zprime2muResolution") << out.str();
   }
 
-  // Loop over all muons
-  vector<zp2mu::Muon>& muons = allMuons[rec];
-  if (rec == MAX_LEVELS) muons = bestMuons;
+  const LeptonRefVector& leptons = getLeptons(rec);
+  
+  for (unsigned ilep = 0; ilep < leptons.size(); ilep++) {
+    const reco::CandidateBaseRef& lep = leptons[ilep];
 
-  vector<zp2mu::Muon>::const_iterator pmu;
-  for (pmu = muons.begin(); pmu != muons.end(); pmu++) {
+    MuonEta[rec]->Fill(lep->eta());
+    MuonRap[rec]->Fill(lep->rapidity());
+    MuonPhi[rec]->Fill(lep->phi());
+    MuonPt[rec]->Fill(lep->pt());
+    MuonPz[rec]->Fill(abs(lep->pz()));
+    MuonP[rec]->Fill(lep->p());
+    MuonPtVsEta[rec]->Fill(lep->eta(), lep->pt());
+    MuonPVsEta[rec]->Fill( lep->eta(), lep->p() );
 
-    // Use TLorentzVector for easier access to variables such as Pz.
-    lVect.SetPtEtaPhiM(pmu->pt(), pmu->eta(), pmu->phi(), MUMASS);
-
-    // Special circumstances for phi
-    if (lVect.Phi() < 0.)
-      phival = lVect.Phi() + 2.*TMath::Pi();
-    else
-      phival = lVect.Phi();
-
-    MuonEta[rec]->Fill(lVect.Eta());
-    MuonRap[rec]->Fill(lVect.Rapidity());
-    MuonPhi[rec]->Fill(phival);
-    MuonPt[rec]->Fill(lVect.Pt());
-    MuonPz[rec]->Fill(abs(lVect.Pz()));
-    MuonP[rec]->Fill(lVect.P());
-    MuonPtVsEta[rec]->Fill(lVect.Eta(), lVect.Pt());
-    MuonPVsEta[rec]->Fill( lVect.Eta(), lVect.P() );
-
-    if (!doingElectrons) 
-      SumPtR03[rec][0]->Fill(pmu->sumPtR03());
+    if (!doingElectrons && rec >= lgmr) {
+      const reco::Muon& mu = toConcrete<reco::Muon>(lep);
+      if (mu.isIsolationValid())
+	SumPtR03[rec][0]->Fill(mu.getIsolationR03().sumPt);
+    }
 
     if (debug)
-      LogTrace("Zprime2muResolution") << setprecision(5) << pmu->id() << "| "
-				      << setw(4) << pmu->charge() << "  | "
-				      << endl << lVect;
+      LogTrace("Zprime2muResolution") << setprecision(5) << id(lep) << "| "
+				      << setw(4) << lep->charge() << "  | "
+				      << endl << lep->p4();
   }
 }
 
@@ -1511,100 +1440,87 @@ void Zprime2muResolution::fillSignOfDilepton(const int rec, const bool debug) {
   //         debug        = true for print statements
 
   int total_charge = 0;
-  int nMuons = 0;
-  vector<zp2mu::Muon>::const_iterator pmu;
+  int nLeptons = int(allLeptons[rec].size());
+  LeptonRefVector::const_iterator plep;
+  ostringstream out;
 
   // Only enter routine if there are 2 or more muons.
   // Add up total charge of all muons.
-  if (allMuons[rec].size() > 1) {
-    for (pmu = allMuons[rec].begin(); pmu != allMuons[rec].end(); pmu++) {
-      total_charge += pmu->charge();
-      nMuons++;
-    }
+  if (nLeptons < 2) return;
 
-    if (debug) {
-      	LogTrace("Zprime2muResolution")
-	  << "In fillSignOfDilepton routine: rec level = " << rec 
-	  << " numMuons = " << nMuons << " total_charge = " << total_charge;
-    }
-
-    if (nMuons < 2) return;
-
-    // If total charge is equal to number of muons, then positive dilepton
-    // could be found
-    if (total_charge == nMuons) {
-      SignOfDil[rec]->Fill(2.);
-      if (debug)
- 	LogTrace("Zprime2muResolution") << "positive same-sign dilepton found";
-    }
-
-    // If total charge is equal to -(number of muons), then negative dilepton
-    // could be found
-    else if (total_charge == -nMuons) {
-      SignOfDil[rec]->Fill(1.);
-      if (debug)
- 	LogTrace("Zprime2muResolution") << "negative same-sign dilepton found";
-    }
-
-    // Otherwise opposite sign dilepton was found
-    else {
-      SignOfDil[rec]->Fill(0.);
-      if (debug)
-	LogTrace("Zprime2muResolution") << "opposite-sign dilepton found";
-    }
+  for (plep = allLeptons[rec].begin(); plep != allLeptons[rec].end(); plep++)
+    total_charge += (*plep)->charge();
+  
+  if (debug)
+    out << "fillSignOfDilepton: rec level = " << rec
+	<< " numLeptons = " << nLeptons
+	<< " total_charge = " << total_charge << "; ";
+  
+  // If total charge is equal to number of muons, then positive dilepton
+  // could be found
+  if (total_charge == nLeptons) {
+    SignOfDil[rec]->Fill(2.);
+    if (debug) out << "positive same-sign dilepton found";
   }
+  // If total charge is equal to -(number of muons), then negative dilepton
+  // could be found
+  else if (total_charge == -nLeptons) {
+    SignOfDil[rec]->Fill(1.);
+    if (debug) out << "negative same-sign dilepton found";
+  }
+  // Otherwise opposite sign dilepton was found
+  else {
+    SignOfDil[rec]->Fill(0.);
+    if (debug) out << "opposite-sign dilepton found";
+  }
+
+  if (debug) LogTrace("fillSignOfDilepton") << out.str();
 }
 
 void Zprime2muResolution::fillDilResHistos(const bool debug) {
   // Histograms to compare dilepton mass resolution between various fits.
-  unsigned int n_gen = 0;
-  vector<zp2mu::DiMuon> diMuons;
-  TLorentzVector genDimuV, recDimuV, genResV, recResV;
+  unsigned int n_gen = allDileptons[lgen].size();
 
-  double mass_min = peakMass - 0.1*peakMass;
-  double mass_max = peakMass + 0.1*peakMass;
+  LorentzVector genDimuV, recDimuV, genResV, recResV;
+
+  const double mass_min = peakMass - 0.1*peakMass;
+  const double mass_max = peakMass + 0.1*peakMass;
 
   // Search for dileptons at all trigger levels and for all off-line
   // reconstruction methods.
   for (int rec = 0; rec <= MAX_LEVELS; rec++) {
-
     // Check whether the event passed the trigger.
     if (rec >= l1 && rec <= l3) {
       if (cutTrig[rec] && !passTrigger(rec)) return;
     }
 
-    if      (rec <  MAX_LEVELS) diMuons = allDiMuons[rec];
-    else if (rec == MAX_LEVELS) diMuons = bestDiMuons;
-
-    unsigned int n_dil = diMuons.size();
+    const reco::CandidateCollection& dileptons = getDileptons(rec);
+    unsigned int n_dil = dileptons.size();
 
     // Highest mass reconstructed at various trigger levels and by various
     // off-line fitting algorithms
     if (n_dil > 0) {
-      //DilMassComp[rec][0]->Fill(diMuons[0].dimuV().M(), eventWeight);
-      //DilMassComp[rec][1]->Fill(diMuons[0].resV().M(), eventWeight);
-      DilMassComp[rec][0]->Fill(diMuons[0].dimuV().M());
-      DilMassComp[rec][1]->Fill(diMuons[0].resV().M());
+      DilMassComp[rec][0]->Fill(dileptons[0].mass());
+      DilMassComp[rec][1]->Fill(resV(rec, 0).mass());
     }
 
-    if (rec == lgen) {
-      n_gen = n_dil;
-      continue;
-    }
+    // Only continue on to calculate resolutions if considering
+    // reconstructed dileptons.
+    if (rec == lgen) continue;
 
     for (unsigned int i_dil = 0; i_dil < n_dil; i_dil++) {
       // Very poor match of dileptons; needs to be improved!
       if (n_dil == n_gen) {
 	// Invariant mass resolution calculated relative to the mass
 	// reconstructed from GEANT muons.
-	genDimuV = allDiMuons[0][i_dil].dimuV();
-	recDimuV = diMuons[i_dil].dimuV();
-	genResV  = allDiMuons[0][i_dil].resV();
-	recResV  = diMuons[i_dil].resV();
-	double geant_mass  = genDimuV.M();
-	double pythia_mass = genResV.M();
-	double dil_mass    = recDimuV.M();
-	double res_mass    = recResV.M();
+	genDimuV = allDileptons[lgen][i_dil].p4();
+	recDimuV = dileptons[i_dil].p4();
+	genResV  = resV(lgen, i_dil);
+	recResV  = resV(rec,  i_dil);
+	double geant_mass  = genDimuV.mass();
+	double pythia_mass = genResV.mass();
+	double dil_mass    = recDimuV.mass();
+	double res_mass    = recResV.mass();
 
 	// Extra smearing; only for tests!
 	// Modify random generator seed if required.  The seed is set to
@@ -1639,32 +1555,27 @@ void Zprime2muResolution::fillDilResHistos(const bool debug) {
 	// of their individual pT's.  They say this resulted in 30% decrease
 	// in the RMS of the inv. mass distribution.
 	if (rec == MAX_LEVELS) {
-	  // Calculated reweighted pT.
-	  zp2mu::Muon mup = diMuons[i_dil].muPlus();
-	  zp2mu::Muon mum = diMuons[i_dil].muMinus();
-	  double pTp = mup.pt();
-	  double pTm = mum.pt();
+	  // Calculate reweighted pT.
+	  const reco::CandidateBaseRef& mum
+	    = dileptonDaughterByCharge(dileptons[i_dil], -1);
+	  const reco::CandidateBaseRef& mup
+	    = dileptonDaughterByCharge(dileptons[i_dil], +1);
+	  double pTp = mup->pt();
+	  double pTm = mum->pt();
 	  double wp  = 1./pTp/(1./pTp + 1./pTm);
 	  double wm  = 1./pTm/(1./pTp + 1./pTm);
 	  double pTw = pTp*wp + pTm*wm;
-	  mup.setPt(pTw);
-	  mum.setPt(pTw);
 	  // LogTrace("Zprime2muResolution")
           //   << "pTp = " << pTp << " pTm = " << pTm
 	  //   << " wp = " << wp << " wm = " << wm
 	  //   << " pTw = " << pTw << " " << 2./(1./pTp + 1./pTm);
 
 	  // Construct new dimuon and calculate its mass.
-	  TLorentzVector vmup, vmum, vdil;
-	  vmup.SetPtEtaPhiM(mup.pt(), mup.eta(), mup.phi(), MUMASS);
-	  vmum.SetPtEtaPhiM(mum.pt(), mum.eta(), mum.phi(), MUMASS);
+	  LorentzVector vmup, vmum, vdil;
+	  SetP4M(vmup, pTw, mup->phi(), mup->p(), mup->theta(), leptonMass);
+	  SetP4M(vmum, pTw, mum->phi(), mum->p(), mum->theta(), leptonMass);
 	  vdil = vmup + vmum;
-	  zp2mu::DiMuon thisDiMu;
-	  thisDiMu.fill(true, i_dil, rec);
-	  thisDiMu.setMuPlus(mup);
-	  thisDiMu.setMuMinus(mum);
-	  thisDiMu.setDimuV(vdil);
-	  double D0mass = thisDiMu.dimuV().M();
+	  double D0mass = vdil.mass();
 	  // LogTrace("Zprime2muResolution") << " Gen mass = " << geant_mass
 	  //      << " rec mass = " << recDimuV.M()
 	  //      << " D0 mass = " << D0mass;
@@ -1681,7 +1592,7 @@ void Zprime2muResolution::fillDilResHistos(const bool debug) {
 
 	// The pT resolution is nicer; there is only one peak, but it is
 	// still antisymmetric.
-	DilPtRes[rec]->Fill((recDimuV.Pt() - genDimuV.Pt())/genDimuV.Pt());
+	DilPtRes[rec]->Fill((recDimuV.pt() - genDimuV.pt())/genDimuV.pt());
       }
     }
   }
@@ -1691,24 +1602,24 @@ void Zprime2muResolution::fillDilResHistos(const bool debug) {
   // looking at events in the tail of Drell-Yan dimuon invariant mass
   // distribution.
   int qcut_mum = 0, qcut_mup = 0;
-  if (bestDiMuons.size() > 0) {
+  if (bestDileptons.size() > 0) {
     if (DO_QCUTS ? 
-	dilQCheck(bestDiMuons[0], QSEL, qcut_mum, qcut_mup, debug) : true) {
-
+	dilQCheck(bestDileptons[0], QSEL, qcut_mum, qcut_mup) : true) {
       // Require the reconstructed dilepton invariant mass be above a
       // certain mass value ("tail" of Drell-Yan distributions).
-      double recm = bestDiMuons[0].resV().M(); // highest mass dilepton
+      double recm = resV(MAX_LEVELS, 0).mass(); // highest mass dilepton
       if (recm >= mass_min) {
-
-	zp2mu::Muon mum = bestDiMuons[0].muMinus();
-	zp2mu::Muon mup = bestDiMuons[0].muPlus();
-	double err_pt_neg = mum.errPt()/mum.pt();
-	double err_pt_pos = mup.errPt()/mup.pt();
+	const reco::CandidateBaseRef& mum
+	  = dileptonDaughterByCharge(bestDileptons[0], -1);
+	const reco::CandidateBaseRef& mup
+	  = dileptonDaughterByCharge(bestDileptons[0], +1);
+	double err_pt_neg = ptError(mum)/mum->pt();
+	double err_pt_pos = ptError(mup)/mup->pt();
 
 	// Fill histos of relative pT error for mu+ vs mu- for two types of
 	// dileptons.
-	if (allDiMuons[lgen].size() > 0) {
-	  double genm = allDiMuons[lgen][0].resV().M();
+	if (allDileptons[lgen].size() > 0) {
+	  double genm = resV(lgen, 0).mass();
 
 	  if ((recm-genm)/genm > 0.1) {
 	    MuPVsMuM[0]->Fill(err_pt_neg, err_pt_pos);
@@ -1759,7 +1670,7 @@ int Zprime2muResolution::getOrigin(const int motherId) {
 }
 
 void Zprime2muResolution::getHistosFromFile() {
-  // JMTBAD there is undoubtedly a better way to to this...
+  // JMTBAD there is undoubtedly a better way to do this...
   histoFile->GetObject("GenMassAllEvents", GenMassAllEvents);
   histoFile->GetObject("GenMassInAccept", GenMassInAccept);
   histoFile->GetObject("EventsInAccFailed", EventsInAccFailed);
@@ -1905,8 +1816,6 @@ void Zprime2muResolution::getHistosFromFile() {
 
 void Zprime2muResolution::WriteHistos() {
   // ResHistos
-  GenMassAllEvents->Write();
-  GenMassInAccept->Write();
   EventsInAccFailed->Write();
   L1TrigFailSingleMu->Write();
   L1TrigFailMu2VsMu1->Write();
@@ -3449,12 +3358,11 @@ void Zprime2muResolution::DrawResHistos(){
   gStyle->SetOptLogy(1);
   pad[page]->Draw();
   pad[page]->Divide(2,5);
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 5; i++)
     for (int j = 0; j < 2; j++) {
       pad[page]->cd(i*2+j+1);
       SumPtR03[i+lgmr][j]->Draw();
     }
-  }
   gStyle->SetOptLogy(0);
   c1->Update();
 

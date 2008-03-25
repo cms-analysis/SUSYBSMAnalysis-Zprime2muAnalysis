@@ -2,13 +2,22 @@
 <use name=root>
 <use name=rootmath>
 <use name=lhapdf>
-<use name=FWCore/Framework>
-<use name=Foundation/PluginManager>
-<use name=FWCore/ParameterSet>
-<use name=SimDataFormats/HepMCProduct>
-<use name=SimDataFormats/Track>
+
 <use name=DataFormats/EgammaCandidates>
+<use name=DataFormats/FWLite>
 <use name=DataFormats/HepMCCandidate>
 <use name=DataFormats/L1Trigger>
-<use name=DataFormats/FWLite>
+<use name=DataFormats/MuonReco>
+
+<use name=Foundation/PluginManager>
+
+<use name=FWCore/Framework>
+<use name=FWCore/ParameterSet>
+
+<use name=PhysicsTools/CandUtils>
+
+<use name=SimDataFormats/HepMCProduct>
+<use name=SimDataFormats/Track>
+
+//<flags CXXFLAGS="-O0 -g -DDEBUG">
 <flags EDM_PLUGIN=1>

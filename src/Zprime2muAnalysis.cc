@@ -1,3 +1,7 @@
+// JMTBAD todos
+// unify passing debug v defining
+// sanity checks on rec level, muon # values
+
 //
 // Authors: Jason Mumford, Jordan Tucker, Slava Valuev, UCLA
 //
@@ -15,8 +19,13 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
+#include "DataFormats/Candidate/interface/CandMatchMap.h"
+#include "DataFormats/Candidate/interface/CompositeCandidate.h"
+#include "DataFormats/Candidate/interface/ShallowCloneCandidate.h"
+
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/DetId/interface/DetId.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticleCandidate.h"
 #include "DataFormats/HLTReco/interface/HLTFilterObject.h"
 #include "DataFormats/L1GlobalMuonTrigger/interface/L1MuGMTExtendedCand.h"
 #include "DataFormats/Math/interface/Vector.h"
@@ -29,13 +38,30 @@
 #include "DataFormats/TrackingRecHit/interface/TrackingRecHit.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 
-#include "DataFormats/HepMCCandidate/interface/GenParticleCandidate.h"
+#include "PhysicsTools/CandUtils/interface/AddFourMomenta.h"
+//#include "PhysicsTools/UtilAlgos/interface/AnySelector.h"
+//#include "PhysicsTools/UtilAlgos/interface/AnyPairSelector.h"
+//#include "PhysicsTools/CandUtils/interface/CandCombiner.h"
+//#include "PhysicsTools/Utilities/interface/deltaR.h"
+//#include "PhysicsTools/Utilities/interface/deltaPhi.h"
+namespace reco {
+// JMTBAD delta* functions are in reco namespace and in PhysicsTools
+// in newer releases
+#include "DataFormats/Math/interface/deltaR.h"
+#include "DataFormats/Math/interface/deltaPhi.h"
+}
+
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/LeptonExtra.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
 //#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/tdrstyle.h"
 
 using namespace std;
+
+//-----------------------------------------------------------------------------
+//                         Hard-coded parameters
+//-----------------------------------------------------------------------------
 
 // minimum pT value for all muons
 const double Zprime2muAnalysis::PTMIN = 1e-3;
@@ -106,6 +132,10 @@ const double Zprime2muAnalysis::TRACKERQCUT[NUM_Q_SETS][NUM_TRACKER_CUTS] =
 // Activate Trigger cuts at levels:                gen    L1     L2     L3
 bool Zprime2muAnalysis::cutTrig[NUM_REC_LEVELS] = {true,  true,  true,  true};
 
+//-----------------------------------------------------------------------------
+//                     Configuration and driver methods
+//-----------------------------------------------------------------------------
+
 Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config) 
   : eventNum(-1) {
   // verbosity controls the amount of debugging information printed;
@@ -151,28 +181,34 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
 
   // input tags for the reco collections we need
   l1ParticleMap   = config.getParameter<edm::InputTag>("l1ParticleMap");
-  l1Muons         = config.getParameter<edm::InputTag>("l1Muons");
-  hltResults = config.getParameter<edm::InputTag>("hltResults");
-  l2Muons = config.getParameter<edm::InputTag>("hltL2Muons");
-  l3Muons = config.getParameter<edm::InputTag>("hltL3Muons");
+  hltResults      = config.getParameter<edm::InputTag>("hltResults");
+  photons         = config.getParameter<edm::InputTag>("photons");
   standAloneMuons = config.getParameter<edm::InputTag>("standAloneMuons");
-  genMuons = config.getParameter<edm::InputTag>("genMuons");
-  globalMuons = config.getParameter<edm::InputTag>("globalMuons");
-  globalMuonsFMS = config.getParameter<edm::InputTag>("globalMuonsFMS");
-  globalMuonsPMR = config.getParameter<edm::InputTag>("globalMuonsPMR");
-  photons = config.getParameter<edm::InputTag>("photons");
-  pixelMatchGsfElectrons
-    = config.getParameter<edm::InputTag>("pixelMatchGsfElectrons");
+
+  if (doingElectrons) {
+    // JMTBAD preserve the order until L1/HLT electrons are implemented
+    inputs = config.getParameter<vector<edm::InputTag> >("elInputs");
+    while (int(inputs.size()) < MAX_LEVELS)
+      inputs.push_back(edm::InputTag());
+    inputs[lgmr] = inputs[l1];
+    inputs[l1] = edm::InputTag();
+  }
+  else
+    inputs = config.getParameter<vector<edm::InputTag> >("muInputs");
+
+  if (int(inputs.size()) < MAX_LEVELS) {
+    edm::LogWarning("") << "inputs.size() < MAX_LEVELS; padding it";
+    while (int(inputs.size()) < MAX_LEVELS)
+      inputs.push_back(edm::InputTag());
+  }
 
   if (doingElectrons) {
     leptonFlavor = 11;
-    // ELECTRON mass in GeV/c^2
-    MUMASS = 0.000511;
+    leptonMass = 0.000511;
   }
   else {
     leptonFlavor = 13;
-    // muon mass in GeV/c^2
-    MUMASS = 0.10566;
+    leptonMass = 0.10566;
 
     // Level-1 paths we want to use for the trigger decision.
     l1paths.push_back(l1extra::L1ParticleMap::kSingleMu7);
@@ -198,14 +234,74 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   // setTDRStyle();
 }
 
-Zprime2muAnalysis::~Zprime2muAnalysis() {
+void Zprime2muAnalysis::analyze(const edm::Event& event,
+				const edm::EventSetup& eSetup) {
+  clearValues();
+
+  // could store the whole event/eventsetup object if needed
+  eventNum = event.id().event();
+  
+  if (!doingElectrons) {
+    storeL1Decision(event);
+    storeHLTDecision(event);
+  }
+
+  // Store the STA muons for use in matching L3/offline muons
+  event.getByLabel(standAloneMuons, seedTracks);
+
+  // Store the reconstructed photons to recover brems
+  event.getByLabel(photons, photonCollection);
+
+  for (int irec = 0; irec < MAX_LEVELS; irec++) {
+    // At each rec level, store the lepton CandidateBaseRefs and make an
+    // "extras" object for each.
+    if (!storeLeptons(event, irec)) continue;
+    storeLepExtras(irec);
+
+    // Store the photon match maps (just pick them up from the event).
+    storePhotonMatches(event, irec);
+  }
+
+  // Now that all seed indices are set (in storeLepExtras()), store
+  // the same-seed and closest match info.
+  matchLeptons();
+
+  // Store the "best" leptons, picking them according to the selected
+  // cocktail method.
+  findBestLeptons();
+
+  // Make dileptons out of the leptons at each rec level (including
+  // the "best" leptons), adding in photons to make the resonance
+  // four-vector.
+  for (int irec = 0; irec <= MAX_LEVELS; irec++) {
+    makeDileptons(irec);
+    addBremCandidates(irec);
+  }
+
+  // Also store the true generator-level resonance
+  addTrueResonance(event);
+
+  // Dump the event if appropriate.
+  if (verbosity >= VERBOSITY_SIMPLE || eventIsInteresting()) {
+    dumpEvent(true,true,true,true,true);
+    dumpDileptonMasses();
+  }
+
+  // Compare official and homemade trigger decisions.
+  if (!doingElectrons)
+    compareTrigDecision(event);
 }
+
+////////////////////////////////////////////////////////////////////
+// Initialization
+////////////////////////////////////////////////////////////////////
 
 void Zprime2muAnalysis::InitROOT() {
   TH1::AddDirectory(false);
   gROOT->SetStyle("Plain");
   gStyle->SetFillColor(0);
-  gStyle->SetOptDate();
+  // JMTBAD re-enable this
+  //  gStyle->SetOptDate();
   gStyle->SetOptStat(111111);
   gStyle->SetOptFit(1111);
   gStyle->SetPadTickX(1);
@@ -222,824 +318,130 @@ void Zprime2muAnalysis::InitROOT() {
 }
 
 void Zprime2muAnalysis::clearValues() {
+  for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
+    allLeptons[i_rec].clear();
+    lepExtra[i_rec].clear();
+    allDileptons[i_rec].clear();
+    dileptonResonances[i_rec].clear();
+  }
+
+  bestLeptons.clear();
+  bestDileptons.clear();
+  dileptonResonances[MAX_LEVELS].clear();
+
   for (int i_rec = 0; i_rec < NUM_REC_LEVELS; i_rec++) {
     passTrig[i_rec] = true;
     trigWord[i_rec] = 0;
   }
-  for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
-    searchedDileptons[i_rec] = false;
-    allMuons[i_rec].clear();
-    allDiMuons[i_rec].clear();
-  }
-  bestMuons.clear();
-  bestDiMuons.clear();
 }
 
-// Store generated muons.
-// JMTBAD we store info in our own Muon
-// classes, since for now, we want to store things not available in
-// some of the reco:: classes (e.g. an "id" number of our own, etc.) 
-// also, because of the deriving hierarchy, it is hard to lump
-// gracefully reco::GenParticleCandidates, reco::Muons, l1Muons, etc
-// so for now, hack out and reuse the Muon, DiMuon classes this has
-// the side-effect of making the dilepton reconstruction under our
-// control... but: There are existing modules that can do all sorts of
-// selection on the HepMCProduct -- picking only muons, filtering by
-// minimum pT, etc. -- so that we don't have to iterate over all
-// candidates ourselves.  The facility also exists to make candidate
-// dimuons... useful later?  see
-// https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideCandidateModules
-// and
-// https://twiki.cern.ch/twiki/bin/view/CMS/WorkBookGenParticleCandidate
-void Zprime2muAnalysis::storeGeneratedMuons(const edm::Event& event) {
-  static bool debug = verbosity >= VERBOSITY_LOTS;
-  int imu = 0;
+////////////////////////////////////////////////////////////////////
+// Storing leptons/dileptons
+////////////////////////////////////////////////////////////////////
 
-  // JMTBAD as far as I can see, GenParticleCandidateProducer doesn't
-  // preserve anything like a PYTHIA line index for easy
-  // distinguishing of, say in the case of H->ZZ->4mu, which Z the
-  // muon came from (is there an == operator?). use "raw" HepMCProduct
-  // for now, which has this in the form of a decay vertex id
-  // basic info on how to use at 
-  // https://twiki.cern.ch/twiki/bin/view/CMS/WorkBookGeneration and
-  // http://lcgapp.cern.ch/project/simu/HepMC/refman/HepMC.2.00.02/annotated.html
-
-  // Generated particles (i.e. PYTHIA).
-  edm::Handle<reco::CandidateCollection> genParticles;
-  event.getByLabel("genParticleCandidates", genParticles);
-
-  // Simulated tracks (i.e. GEANT particles).
-  edm::Handle<edm::SimTrackContainer> simtracks;
-  if (doingGeant4)
-    event.getByLabel("g4SimHits", simtracks);
-
-  if (debug)
-    LogTrace("storeGeneratedMuons") << "\n";  
-
-  // First, we loop over generated (PYTHIA) particles and take all muons.
-  // Next, we loop over GEANT particles and add extra muons produced in
-  // secondary interactions and decays (not in PYTHIA).  The reason for
-  // doing it this way instead of getting *all* muons from GEANT list
-  // is that apparently only particles within a certain eta range
-  // (|eta| < 5 or so) are saved in GEANT container (why?), and a
-  // fraction of muons from high-mass resonance decays would not be found.
-  int idx = -1;
-  for (reco::CandidateCollection::const_iterator ipl = genParticles->begin();
-       ipl != genParticles->end(); ipl++) {
-    idx++;
-    if ((ipl)->status() == 1) { // skip documentation lines
-      int id = (ipl)->pdgId();
-      if (abs(id) != leptonFlavor) continue;
-      const reco::Particle::Vector& pmu = (ipl)->momentum();
-      int charge = -id/abs(id);
-      if (debug)
-	LogTrace("storeGeneratedMuons")
-	  << "Generated muon: pt = " << pmu.Rho() << " eta = " << pmu.Eta()
-	  << " q = " << charge << " ind = " << idx;
-
-      // Find its mother and grandmother.
-      const reco::Candidate* genmuon = (&*ipl);
-      int motherInd = 0;
-      int motherId  = 0, grandmaId = 0;
-      while (motherInd == 0) {
-	const reco::Candidate* mother = genmuon->mother();
-	if (mother == 0) {
-	  edm::LogWarning("storeGeneratedMuons")
-	    << "+++ empty mother for particle #" << idx << " +++\n";
-	  break;
-	}
-	else {
-	  int mId = mother->pdgId();
-
-	  // This loop recovers the functionality of barcode() method.
-	  int mother_idx = -1;
-	  for (unsigned int j = 0; j < genParticles->size(); ++j) {
-	    const reco::Candidate* ref = &((*genParticles)[j]);
-	    if (mother->px() == ref->px() && mother->py() == ref->py() &&
-		mother->pz() == ref->pz() &&
-		mother->status() == ref->status() && mId == ref->pdgId()) {
-	      mother_idx = j;
-	      break;
-	    }
-	  }
-
-	  if (debug) 
-	    LogTrace("storeGeneratedMuons")
-	      << "Mother: id = " << mId << " pt = "
-	      << mother->momentum().Rho() << " M = " << mother->mass()
-	      << " line = " << mother_idx;
-	  // If muon's mother is a muon, go up the decay chain.  This is
-	  // mainly to avoid stopping at muons in documentation lines,
-	  // which are declared to be ancestors of muons produced in
-	  // hard interaction (i.e., ancestors of themselves).
-	  if (abs(mId) == leptonFlavor) { 
-	    genmuon = mother;
-	  }
-	  else {
-	    motherInd = mother_idx;
-	    motherId  = mId;
-
-	    // Also look for the muon's grandmother so we can
-	    // sort by type (gg/qqbar) for graviton stuff.
-	    std::vector<const reco::Candidate*> grandmas;
-            for (unsigned int igm = 0; igm != mother->numberOfMothers(); igm++) 
-	      grandmas.push_back(mother->mother(igm)); 
-
-	    // Could loop over list of parents, but assume
-	    // that using the first grandma (q/qbar or g) works
-	    // just as well as the other.
-	    const reco::Candidate* grandma = grandmas[0];
-	    if (grandma != 0) {
-	      grandmaId = grandma->pdgId();
-	    }
-	    break;
-	  }
-	}
-      }
-
-      if (motherInd == 0) {
-	edm::LogWarning("storeGeneratedMuons")
-	  << "+++ cannot find motherId for particle #" << idx << " +++\n";
-
-	for (reco::CandidateCollection::const_iterator ipl = genParticles->begin();
-	     ipl != genParticles->end(); ipl++) {
-	  edm::LogWarning("storeGeneratedMuons")
-	    << "Status = "  << (ipl)->status()
-	    << " id = "     << (ipl)->pdgId()
-	    << " line = "   << idx
-	    << " pT = "     << (ipl)->momentum().Rho()
-	    << " eta = "    << (ipl)->momentum().Eta()
-	    << " M = "      << (ipl)->mass();
-	}
-      }
-
-      zp2mu::Muon thisMu;
-      thisMu.fill(1, imu, lgen, charge,
-		  pmu.phi(), pmu.eta(), pmu.rho(),  pmu.R());
-      thisMu.setMotherId(motherId);
-      thisMu.setMotherLine(motherInd);
-      thisMu.setGrandmaId(grandmaId);
-      thisMu.setVertexXYZ((*ipl).vx(), (*ipl).vy(), (*ipl).vz()); 
-      allMuons[lgen].push_back(thisMu);
-      imu++;
-    }
-  }
-
-  if (doingGeant4) {
-    // Add GEANT muons which were not in PYTHIA list.
-    for (edm::SimTrackContainer::const_iterator isimtrk = simtracks->begin();
-	 isimtrk != simtracks->end(); ++isimtrk) {
-      // Store only muons above a certain pT threshold.
-      if (abs(isimtrk->type()) == leptonFlavor) {
-	//HepMC::FourVector pmu = (*cand)->momentum();
-	const CLHEP::HepLorentzVector& pmu = isimtrk->momentum();
-	float pt  = pmu.perp();
-	if (pt > PTMIN) {
-	  int pythiaInd = isimtrk->genpartIndex();
-
-	  if (pythiaInd != -1) continue; // Skip PYTHIA muons
-
-	  float eta = pmu.pseudoRapidity();
-	  int charge = static_cast<int>(isimtrk->charge());
-	  if (debug)
-	    LogTrace("storeGeneratedMuons")
-	      << "Simulated muon: pt = " << pt << " eta = " << eta
-	      << " q = " << charge << " ind = " << pythiaInd;
-
-	  zp2mu::Muon thisMu;
-	  thisMu.fill(1, imu, lgen, charge,
-		      pmu.phi(), pmu.eta(), pmu.perp(), pmu.rho());
-	  allMuons[lgen].push_back(thisMu);
-	  imu++;
-	}
-	else {
-	  edm::LogWarning("storeGeneratedMuons")
-	    << "skipping Gen muon with pT = " << pt << " p = " << pmu.rho()
-	    << " eta " << pmu.eta();
-	}
-      }
-    }
-  }
-}
-
-// JMTBAD ptError has disappeared? 
-// http://cms.cern.ch/iCMS/jsp/openfile.jsp?type=NOTE&year=2006&files=NOTE2006_001.pdf
-// but read:
-// https://hypernews.cern.ch/HyperNews/CMS/get/recoTracking/150.html?inline=-1
-// (incorrect formula that doesn't include covariance that I found in the lxr, too)
-
-// so: utility function to calculate error on 1/pt from the covariance matrix
-// actually stored in the track info
-template <typename TrackType>
-double Zprime2muAnalysis::invPtError(const TrackType& track) {
-  // pt = sqrt(px^2 + py^2)
-  //    = cos(lambda) * q / qoverp
-  // with qoverp = q/|p|
-
-  double qoverp = track->qoverp();
-  double lambda = track->lambda();
-  double q = track->charge();
-
-  // need the derivatives to propagate error
-  double dpt_dlambda = -sin(lambda)*q/qoverp;
-  double dpt_dqoverp = -cos(lambda)*q/qoverp/qoverp;
-
-  const int i_lambda = reco::TrackBase::i_lambda;
-  const int i_qoverp = reco::TrackBase::i_qoverp;
-
-  // use standard error propagation formula
-  double var_pt =
-    track->covariance(i_lambda, i_lambda)   * dpt_dlambda * dpt_dlambda +
-    track->covariance(i_qoverp, i_qoverp)   * dpt_dqoverp * dpt_dqoverp +
-    2*track->covariance(i_lambda, i_qoverp) * dpt_dlambda * dpt_dqoverp;
-
-  double sig_pt = sqrt(var_pt);
-  double pt = track->pt();
-
-  // further propagate the error to 1/pt
-  double sig_invpt = 1/pt/pt*sig_pt;
-  return sig_invpt;
-}
-
-// JMTBAD calculate error on p ourselves, too
-template <typename TrackType>
-double Zprime2muAnalysis::invPError(const TrackType& track) {
-  // dumb identity:
-  // p = q / qoverp
-  // dp_dqoverp = - q/qoverp^2
-
-  double qoverp = track->qoverp();
-  double q = track->charge();
-  
-  double sig_p = track->qoverpError() * q/qoverp/qoverp;
-  if (sig_p < 0) sig_p = -sig_p;
-
-  // further propagate the error to 1/p
-  double p = track->p();
-  double sig_invp = 1/p/p*sig_p;
-  return sig_invp;
-}
-
-// Return the index into the standAloneMuons collection seedTracks that
-// this Muon's standAloneMuon (passed in as track) most closely matches 
-// -- use to mock up seedIndex
-// JMTBAD there's probably a better way to do this, since the collections for
-// GMR, TK, FMS, PMR all seem sorted in the same way
-int Zprime2muAnalysis::matchStandAloneMuon(const reco::TrackRef& track,
-					   bool relaxedMatch) {
-  const static bool debug = verbosity >= VERBOSITY_TOOMUCH;
-
-  if (!seedTracks.isValid())
-    throw cms::Exception("matchStandAloneMuon")
-      << "+++ seed collection not set! +++\n";
-
-  int closest_ndx = -1;
-  double min_mag2 = 1e99;
-  const double MAX_MAG2 = 1; // more than enough for a comparison between doubles
-  int ndx = 0;
-  ostringstream out;
-  if (debug)
-    out << "Matching with stand-alone muons:\n"
-	<< "Track to match:\ncharge = " << track->charge()
-	<< " p = " << track->momentum() << endl
-	<< "Stand-alone muons:\n";
-  for (reco::TrackCollection::const_iterator seedmu = seedTracks->begin();
-       seedmu != seedTracks->end(); seedmu++) {
-    if (debug)
-      out << "charge = " << seedmu->charge()
-	  << " p = " << seedmu->momentum();
-    if (seedmu->charge() == track->charge()) {
-      // calling mag2 results in complaints from the linker, even though I'm linking
-      // against ROOT... grr
-      double mag2 = (seedmu->momentum() - track->momentum()).mag2();
-      if (debug) out << " mag2: " << mag2;
-      if (mag2 < min_mag2) {
-	closest_ndx = ndx;
-	min_mag2 = mag2;
-      }
-    }
-    if (debug) out << endl;
-    ndx++;
-  }
-
-  if (debug)
-    LogTrace("matchStandAloneMuon") << out.str();
-
-  if (min_mag2 > MAX_MAG2 && !relaxedMatch) {
-    edm::LogWarning("matchStandAloneMuon")
-      << "could not match stand-alone muon!\n"
-      << "muon 3-momentum p = " << track->momentum();
-    return -999;
-  }
-  else
-    return closest_ndx;
-}
-
-// utility function to match muons from same vertex
-//
-bool Zprime2muAnalysis::haveSameVertex(const zp2mu::Muon& lhs, const zp2mu::Muon& rhs) const {
-  return ( (lhs.vertex() - rhs.vertex()).R() < 1e-6 );
-
-}
-
-bool Zprime2muAnalysis::haveSameVertex(const zp2mu::Muon& lhs, const math::XYZPoint& rhs) const {
-  return ( (lhs.vertex() - rhs).R() < 1e-6 );
-
-}
-
-// check if a GenParticleCandidate is a mother of 2 zp2mu::Muons 
-// temporary fix to work as checking barcode
-
-bool Zprime2muAnalysis::isMotherOf(const reco::GenParticleCandidate& particle, const zp2mu::Muon& mup, const zp2mu::Muon& mum) const {
-  if ( particle.numberOfDaughters() < 2 ) return false;
-  if ( particle.charge() != 0 ) return false; 
-
-  bool mupOK = false;
-  bool mumOK = false;
-
-  for (unsigned int igd = 0; igd != particle.numberOfDaughters(); igd++) {
-      if ( abs(particle.daughter(igd)->pdgId()) != leptonFlavor ) continue;
-      if ( particle.daughter(igd)->pdgId() == int(leptonFlavor) ) {
-         math::XYZVector mom = particle.daughter(igd)->momentum();
-         if ( (fabs(mom.Eta() - mum.eta()) < 1e-5)
-            &&(fabs(mom.Phi() - mum.phi()) < 1e-5)
-            &&(fabs(mom.Rho() - mum.pt()) < 1e-5) ) mumOK = true;
-      }
-      if ( particle.daughter(igd)->pdgId() != -int(leptonFlavor) ) {
-         math::XYZVector mom = particle.daughter(igd)->momentum();
-         if ( (fabs(mom.Eta() - mup.eta()) < 1e-5)
-            &&(fabs(mom.Phi() - mup.phi()) < 1e-5)
-            &&(fabs(mom.Rho() - mup.pt()) < 1e-5) ) mupOK = true;
-      }
-  }
-  return ( mupOK && mumOK );
-}
-
-void Zprime2muAnalysis::storeL1Muons(const edm::Event& event) {
-  const static bool debug = (verbosity >= VERBOSITY_LOTS);
-
-  // Get Level-1 Global Muon Trigger muons.
-  edm::Handle<l1extra::L1MuonParticleCollection> l1MuColl;
-  event.getByLabel(l1Muons, l1MuColl);
-  if (debug) LogTrace("storeL1Muons")
-    << "Number of Level-1 muons: " << l1MuColl->size();
- 
-  l1extra::L1MuonParticleCollection::const_iterator muItr;
-  int imu = 0;
-  for (muItr = l1MuColl->begin(); muItr != l1MuColl->end(); ++muItr) {
-    const L1MuGMTExtendedCand& gmtMu = muItr->gmtMuonCand();
-    if (debug) LogTrace(" ")
-      << "   L1 mu #" << imu << " q = " << muItr->charge()
-      << " p = (" << muItr->px() << ", " << muItr->py()
-      << ", " << muItr->pz() << ", " << muItr->energy()
-      << ") pt = " << muItr->pt() << "\n"
-      << "    eta = " << muItr->eta() << " phi = " << muItr->phi() 
-      << " iso = " << muItr->isIsolated() << " mip = " << muItr->isMip()
-      << " fwd = " << muItr->isForward() << " rpc = " << muItr->isRPC()
-      << " quality = " << gmtMu.quality();
-
-    if (muItr->pt() > PTMIN) {
-      zp2mu::Muon thisMu;
-      thisMu.fill(1, imu, l1, muItr->charge(), muItr->phi(), muItr->eta(),
-		  muItr->pt(), muItr->p());
-      thisMu.setQuality(gmtMu.quality());
-      allMuons[l1].push_back(thisMu);
-      imu++;
-    }
-    else {
-      edm::LogWarning("storeL1Muons")
-	<< "Event " << eventNum
-	<< ": skipping L1 muon with pT = " << muItr->pt()
-	<< " p = " << muItr->p() << " eta = " << muItr->eta() << "\n";
-    }
-  }
-}
-
-void Zprime2muAnalysis::storeL2Muons(const edm::Event& event) {
-  const static bool debug = (verbosity >= VERBOSITY_LOTS);
-
-  edm::Handle<reco::RecoChargedCandidateCollection> l2MuColl;
+bool Zprime2muAnalysis::storeLeptons(const edm::Event& event,
+				     const int rec) {
+  edm::Handle<edm::View<reco::Candidate> > hview;
   try {
-    event.getByLabel(l2Muons, l2MuColl);
+    event.getByLabel(inputs[rec], hview);
   } catch (const cms::Exception& e) {
-    if (passTrig[l2])
-      throw e;
-    else {
-      edm::LogWarning("storeL2Muons")
-	<< "No collection '" << l2Muons
-	<< "' in event and event did not pass the L2 trigger, "
-	<< "continuing execution";
-      return;
-    }
+  //if (hview.failedToGet()) {
+    edm::LogWarning("storeLeptons") << "No leptons found at rec level "
+				    << rec << "; skipping it";
+    return false;
   }
 
-  if (debug) LogTrace("storeL2Muons")
-    << "Number of Level-2 muons: " << l2MuColl->size();
-
-  reco::RecoChargedCandidateCollection::const_iterator muItr;
-  int imu = 0;
-  for (muItr = l2MuColl->begin(); muItr != l2MuColl->end(); ++muItr) {
-    reco::TrackRef theTrack = muItr->track();
-    if (debug) {
-      LogTrace("storeL2Muons")
-	<< "   L2 mu #" << imu << " q = " << muItr->charge()
-	<< " p = (" << muItr->px() << ", " << muItr->py()
-	<< ", " << muItr->pz() << ", " << muItr->energy() << ")\n"
-	<< "     pt = " << muItr->pt() << " eta = " << muItr->eta()
-	<< " phi = " << muItr->phi();
-      // mimic what HLTMuonPrefilter does for pt cut
-      double ptLx = theTrack->pt();
-      double err0 = theTrack->error(0);
-      double abspar0 = fabs(theTrack->parameter(0));
-      // convert 50% efficiency threshold to 90% efficiency threshold
-      if (abspar0>0) ptLx += 3.9*err0/abspar0*ptLx;
-      LogTrace("storeL2Muons")
-	<< "     ptLx: " << ptLx << " err0: " << err0 << " abspar0: " << abspar0;
-    }
-
-    if (muItr->pt() > PTMIN) {
-      zp2mu::Muon thisMu;
-      thisMu.fill(1, imu, l2, muItr->charge(), muItr->phi(), muItr->eta(),
-		  muItr->pt(), muItr->p());
-      thisMu.setHits(0, 0, theTrack->recHitsSize());
-      thisMu.setDof(int(theTrack->ndof()));
-      thisMu.setChi2(theTrack->chi2());
-      thisMu.setEInvPt(invPtError(theTrack));
-      thisMu.setEInvP(invPError(theTrack));
-      allMuons[l2].push_back(thisMu);
-      imu++;
-    }
-    else {
-      edm::LogWarning("storeL2Muons")
-	<< "Event " << eventNum
-	<< ": skipping L2 muon with pT = " << muItr->pt()
-	<< " p = " << muItr->p() << " eta = " << muItr->eta() << "\n";
-    }
-  }
-}
-
-// Fill a vector of Level-3 muons.
-// JMTBAD this is duplicate code as in storeOfflineMuons, except that
-// "muons" is a MuonTrackLinksCollection. to avoid duplicating code,
-// would have to play with templates (a lot).
-void Zprime2muAnalysis::storeL3Muons(const edm::Event& event) {
-  const static bool debug = verbosity >= VERBOSITY_LOTS;
-
-  edm::Handle<reco::MuonTrackLinksCollection> muons;
-  try {
-    event.getByLabel(l3Muons, muons);
-  } catch (const cms::Exception& e) {
-    if (passTrig[l3])
-      throw e;
-    else {
-      edm::LogWarning("storeL3Muons")
-	<< "No collection '" << l3Muons
-	<< "' in event and event did not pass the L3 trigger, "
-	<< "continuing execution";
-      return;
-    }
-  }
-
-  int imu = 0;
-  ostringstream out;
-  if (debug)
-    out << "Number of Level-3 muons: " << muons->size() << endl;
-
-  for (reco::MuonTrackLinksCollection::const_iterator muon = muons->begin();
-       muon != muons->end(); muon++) {
-    // Null references to combined, tracker-only, and standalone muon tracks.
-    reco::TrackRef theTrack;
-    reco::TrackRef tkTrack, tk;
-    reco::TrackRef muTrack;
-
-    theTrack = muon->globalTrack();
-    // JMTBAD for some reason, the tracker track here is a track with 
-    // opposite charge! don't use it
-    tkTrack  = muon->trackerTrack();
-    muTrack  = muon->standAloneTrack();
-
-    if (debug) {
-      out << "   L3 mu #" << imu << ":\n"
-	  << "     theTrack: q=" << theTrack->charge()
-	  << " p=" << theTrack->momentum() << endl
-	  << "     tkTrack:  q=" << tkTrack->charge()
-	  << " p=" << tkTrack->momentum() << endl
-	  << "     muTrack:  q=" << muTrack->charge()
-	  << " p=" << muTrack->momentum() << endl
-	  << "     pt = " << theTrack->pt() << " eta = " << theTrack->eta()
-	  << " phi = " << theTrack->phi() << endl
-	  << "     vertex: (" << theTrack->vx() << ", " 
-	  << theTrack->vy() << ", " << theTrack->vz() << ")\n";
-      // what HLTMuonPrefilter does for pt cut
-      double ptLx = theTrack->pt();
-      double err0 = theTrack->error(0);
-      double abspar0 = fabs(theTrack->parameter(0));
-      // convert 50% efficiency threshold to 90% efficiency threshold
-      if (abspar0>0) ptLx += 2.2*err0/abspar0*ptLx;
-      out << "     ptLx: " << ptLx << endl;
-    }
-    
-    
-    // Do the rest only if theTrack is not empty.
-    if (theTrack.isNonnull()) {
-      // seedIndex is now the index into the standAloneMuon track
-      // collection
-      // do a relaxed match since the l2 muon in "muTrack" will have a
-      // slightly different momentum than the offline stand-alone
-      // muons
-      int seedIndex = matchStandAloneMuon(muTrack, true);
-      bool isStored = storeOfflineMuon(imu, l3, theTrack, tk, muTrack,
-				       seedIndex);
-      if (isStored) imu++;
-    }
-  }
-
-  if (debug)
-    LogTrace("storeL3Muons") << out.str();
-}
-
-// Fill a vector of off-line muons.
-//  whichMuons is one of the InputTags we stored earlier, e.g. globalMuonsFMS
-//    for the muons fit using the tracker+first muon station
-//  irec is our rec level (e.g. lfms)
-//  trackerOnly dictates whether to use the track reconstructed with tracker
-//    information only (default false)
-void Zprime2muAnalysis::storeOfflineMuons(const edm::Event& event, 
-					  const edm::InputTag& whichMuons,
-					  RECLEVEL irec, bool trackerOnly) {
-  edm::Handle<reco::MuonCollection> muons;
-  event.getByLabel(whichMuons, muons);
-
-  int imu = 0;
-  for (reco::MuonCollection::const_iterator muon = muons->begin();
-       muon != muons->end(); muon++) {
-    // Null references to combined, tracker-only, and standalone muon tracks.
-    reco::TrackRef theTrack;
-    reco::TrackRef tkTrack;
-    reco::TrackRef muTrack;
-
-    // Fill (some of) them depending on the flag.
-    if (trackerOnly) {
-      theTrack = muon->track();
-      tkTrack  = theTrack;
-    }
-    else {
-      theTrack = muon->combinedMuon();
-      tkTrack  = muon->track();
-      muTrack  = muon->standAloneMuon();
-    }
-
-    // Do the rest only if theTrack is not empty.
-    if (theTrack.isNonnull()) {
-      // seedIndex is now the index into the standAloneMuon track collection
-      int seedIndex = matchStandAloneMuon(muon->standAloneMuon());
-      bool isStored = storeOfflineMuon(imu, irec, theTrack, tkTrack, muTrack,
-				       seedIndex);
-      if (isStored) {
-	// set sumpt here instead of having to pass it or the entire
-	// reco::Muon to storeOfflineMuon()
-	if (muon->isIsolationValid())
-	  allMuons[irec][imu].setSumPtR03(muon->getIsolationR03().sumPt);
-	imu++;
-      }
-    }
-  }
-}
-
-void Zprime2muAnalysis::storePixelMatchGsfElectrons(const edm::Event& event,
-						    const edm::InputTag& whichMuons,
-						    RECLEVEL irec, bool trackerOnly) {
-  edm::Handle<reco::PixelMatchGsfElectronCollection> muons;
-  event.getByLabel(whichMuons, muons);
-  int imu = 0;
-
-  for (reco::PixelMatchGsfElectronCollection::const_iterator muon = muons->begin();
-       muon != muons->end(); muon++) {
-
-    reco::PixelMatchGsfElectron theElectron = *(muon);
-
-    bool isStored = storePixelMatchGsfElectron(imu, irec, theElectron);
-    if (isStored) imu++;
-  }
-}
-
-bool Zprime2muAnalysis::storeOfflineMuon(const int imu, const RECLEVEL irec,
-					 const reco::TrackRef& theTrack,
-					 const reco::TrackRef& tkTrack,
-					 const reco::TrackRef& muTrack,
-					 const int seedIndex) {
-  bool isStored = false;
-
-  // Skip muons with non-positive number of dof.
-  // JMTBAD is this still relevant (does GMR keep muons with dof < 0?)
-  if (theTrack->ndof() <= 0) {
-    edm::LogWarning("storeOfflineMuon")
-      << "muon's dof is " << theTrack->ndof() << "; skipping it";
-    return isStored;
-  }
-
-  // Use momentum measured at vertex (taken from the interaction point).
-  // JMTBAD assume this is what the reco people did in storing the momentum
-  // in the muon class
-  double pt = theTrack->pt();
-  if (pt > PTMIN) {
-    zp2mu::Muon thisMu;
-    thisMu.fill(1, imu, irec, theTrack->charge(), theTrack->phi(),
-		theTrack->eta(), pt, theTrack->p());
-    
-    if (!usingAODOnly) {
-      int nRecHits = theTrack->recHitsSize();
-      int nPixHits = 0, nSilHits = 0, nMuonHits = 0;
-      // loop over all the rechits and count how many are in the pixels and
-      // how many are in the strips
-      for (trackingRecHit_iterator trh = theTrack->recHitsBegin();
-	   trh != theTrack->recHitsEnd(); trh++) {
-	DetId did = (*trh)->geographicalId();
-	DetId::Detector det = did.det();
-	if (det == DetId::Tracker) {
-	  int subdetId = did.subdetId();
-	  // trying not to use magic numbers -- but pixel subdets are 1 and 2,
-	  // strip subdets are 3-6
-	  switch (subdetId) {
-	  case StripSubdetector::TIB:
-	  case StripSubdetector::TOB:
-	  case StripSubdetector::TID:
-	  case StripSubdetector::TEC:
-	    nSilHits++;
-	    break;
-	  case PixelSubdetector::PixelBarrel:
-	  case PixelSubdetector::PixelEndcap:
-	    nPixHits++;
-	    break;
-	  default:
-	    edm::LogWarning("storeOfflineMuon")
-	      << "unknown subid for TrackingRecHit";
-	  }
-	}
-	else if (det == DetId::Muon)
-	  nMuonHits++;
-      }
-      // redundant check, hopefully
-      if (nPixHits + nSilHits + nMuonHits != nRecHits)
-	edm::LogWarning("storeOfflineMuon")
-	  << "TrackingRecHits from outside the tracker or muon systems!";
-      // last arg is sum of pixel, sil. and muon hits
-      thisMu.setHits(nPixHits, nSilHits, nRecHits);
-    }
-
-
-    // JMTBAD ndof for TrackBase is a double...
-    thisMu.setDof(int(theTrack->ndof()));
-    thisMu.setChi2(theTrack->chi2());
-
-    // seedIndex is now the index into the standAloneMuon track collection
-    thisMu.setSeed(seedIndex);
-
-    // JMTBAD backward fit?
-    //thisMu.setBackChi2((*il3).BackChi2());
-
-    if (tkTrack.isNonnull()) {
-      // JMTBAD difference between forward and backward?
-      thisMu.setTrackerChi2(tkTrack->chi2(), 0);
-      thisMu.setTrackerPt(tkTrack->pt());
-      // store eInvPt also for the muon reconstructed in the tracker alone
-      thisMu.setETrackerInvPt(invPtError(tkTrack));
-    }
-
-    if (muTrack.isNonnull()) {
-      thisMu.setMuonFitChi2(muTrack->chi2(), 0);
-      thisMu.setMuonFitPt(muTrack->pt());
-      // store eInvPt also for the standalone muon (just muon systems)
-      thisMu.setEMuonFitInvPt(invPtError(muTrack));
-    }
-
-    // JMTBAD forward fit
-    //thisMu.setForwardPt((*il3).ForwardPt());
-    //thisMu.setEForwardInvPt((*il3).ForwardEInvPt());
-
-    thisMu.setEInvPt(invPtError(theTrack));
-    thisMu.setEInvP(invPError(theTrack));
-
-    // set the vertex found by the track fit
-    thisMu.setVertexXYZ(theTrack->vx(), theTrack->vy(), theTrack->vz());
-    if (!usingAODOnly)
-      thisMu.setTrackerXYZ(theTrack->innerPosition().X(),
-			   theTrack->innerPosition().Y(),
-			   theTrack->innerPosition().Z());
-
-    if (verbosity >= VERBOSITY_LOTS)
-      LogTrace(" ") << "irec = " << irec;
-    TLorentzVector photon = findClosestPhoton(theTrack);
-    thisMu.setClosestPhoton(photon);
-
-    allMuons[irec].push_back(thisMu);
-    isStored = true;
-  }
-  else {
-    edm::LogWarning("storeOfflineMuon")
-      << "skipping muon at rec level " << irec << " with pT = " << pt
-      << " p = " << theTrack->p() << " eta " << theTrack->eta();
-  }
-
-  return isStored;
-}
-
-bool Zprime2muAnalysis::storePixelMatchGsfElectron(const int imu, const RECLEVEL irec,
-						   const reco::PixelMatchGsfElectron& theElectron) {
-  bool isStored=false;
-
-  // Skip electrons with non-positive number of dof.
-  // JMTBAD is this still relevant (does GMR keep muons with dof < 0?)
-  
-  reco::GsfTrackRef theTrack = theElectron.gsfTrack();
-
-  if (theTrack->ndof() <= 0) {
-    edm::LogWarning("storeOfflineElectron")
-      << "muon's dof is " << theTrack->ndof() << "; skipping it";
-    return isStored;
-  }
-
-  // Use momentum measured at vertex (taken from the interaction point).
-  // JMTBAD assume this is what the reco people did in storing the momentum
-  // in the muon class
-
-  //pixelMatchGsfElectrons have much better et than pt measurement... Thus use et in lieu of pt
-  double pt = theElectron.pt();
-
-  if (pt > PTMIN) {
-    zp2mu::Muon thisMu;
-    thisMu.fill(1, imu, irec, theTrack->charge(), theElectron.phi(),
-		theElectron.eta(), theElectron.pt(), theElectron.p());
-
-    if (!usingAODOnly) {
-      int nRecHits = theTrack->recHitsSize();
-      int nPixHits = 0, nSilHits = 0, nEcalHits = 0;
-      // loop over all the rechits and count how many are in the pixels and
-      // how many are in the strips
-      for (trackingRecHit_iterator trh = theTrack->recHitsBegin();
-	   trh != theTrack->recHitsEnd(); trh++) {
-	DetId did = (*trh)->geographicalId();
-	DetId::Detector det = did.det();
-	if (det == DetId::Tracker) {
-	  int subdetId = did.subdetId();
-	  // trying not to use magic numbers -- but pixel subdets are 1 and 2,
-	  // strip subdets are 3-6
-	  switch (subdetId) {
-	  case StripSubdetector::TIB:
-	  case StripSubdetector::TOB:
-	  case StripSubdetector::TID:
-	  case StripSubdetector::TEC:
-	    nSilHits++;
-	    break;
-	  case PixelSubdetector::PixelBarrel:
-	  case PixelSubdetector::PixelEndcap:
-	    nPixHits++;
-	    break;
-	  default:
-	    edm::LogWarning("storeOfflineElectron")
-	      << "unknown subid for TrackingRecHit";
-	  }
-	}
-	else if (det == DetId::Ecal)
-	  nEcalHits++;
-      }
+  edm::View<reco::Candidate> lepCandView = *hview;
+  const unsigned nlep = lepCandView.size();
+  unsigned ilep;
    
-      // redundant check, hopefully
-      if (nPixHits + nSilHits + nEcalHits != nRecHits)
-	edm::LogWarning("storeOfflineElectron")
-	  << "TrackingRecHits from outside the tracker or ECAL systems!";
-      // last arg is sum of pixel, sil. and muon hits
-      thisMu.setHits(nPixHits, nSilHits, nRecHits);
+  // Sort the refs by descending momentum magnitude. (RefVector does
+  // not have a sort() that would delegate function calls to its
+  // product, nor does it have an operator[] that works as an lvalue,
+  // so sort using an auxillary array of indices.)
+  vector<unsigned> sortIndices;
+
+  // Don't bother sorting generator-level leptons.
+  if (rec != lgen) {
+    // Initialize the current order of the indices.
+    for (ilep = 0; ilep < nlep; ilep++)
+      sortIndices.push_back(ilep);
+
+    // Insertion-sort the indices according to the momentum magnitude of
+    // the corresponding lepton.
+    for (int i = 1; i < int(nlep); i++) {
+      int ndx = i;
+      double p = lepCandView[i].p();
+      int j = i - 1;
+      while (j >= 0 && p > lepCandView[sortIndices[j]].p()) {
+	sortIndices[j+1] = sortIndices[j];
+	j--;
+      }
+      sortIndices[j+1] = ndx;
     }
-
-    // JMTBAD ndof for TrackBase is a double...
-    thisMu.setDof(int(theTrack->ndof()));
-    thisMu.setChi2(theTrack->chi2());
-
-    thisMu.setEInvPt(invPtError(theTrack));
-    thisMu.setEInvP(invPError(theTrack));
-
-    // set the vertex found by the track fit
-    thisMu.setVertexXYZ(theElectron.vx(), theElectron.vy(), theElectron.vz());
-    if (!usingAODOnly)
-      thisMu.setTrackerXYZ(theTrack->innerPosition().X(),
-			   theTrack->innerPosition().Y(),
-			   theTrack->innerPosition().Z());
-
-    allMuons[irec].push_back(thisMu);
-    isStored = true;
   }
-  else {
-    edm::LogWarning("storeOfflineElectron")
-      << "skipping electron at rec level " << irec << " with pT = " << pt
-      << " p = " << theElectron.p() << " eta " << theElectron.eta();
+
+  // Store CandidateBaseRefs in the order we just found.
+  for (ilep = 0; ilep < nlep; ilep++) {
+    unsigned jlep = rec == lgen ? ilep : sortIndices[ilep];
+    // don't cut on pt at gen level
+    if (lepCandView[jlep].pt() > PTMIN)
+      allLeptons[rec].push_back(lepCandView.refAt(jlep));
   }
-  
-  return isStored;
+
+  // Cache the product ids for each collection so we can look up the
+  // rec level from the CandidateBaseRef.
+  int key = int(lepCandView.id().id());
+  if (recLevelMap.find(key) == recLevelMap.end())
+    recLevelMap[key] = rec;
+
+  return true;
 }
 
-template <typename TrackType>
-TLorentzVector Zprime2muAnalysis::findClosestPhoton(const TrackType& theTrack) {
+void Zprime2muAnalysis::storeLepExtras(const int rec) {
+  const unsigned nlep = allLeptons[rec].size();
+  // Set the vectors to equal length since we are going to
+  // random-access the lepExtra vector below based on the
+  // CandidateBaseRef's index.
+  if (lepExtra[rec].capacity() < nlep)
+    lepExtra[rec].resize(nlep);
+  for (unsigned ilep = 0; ilep < nlep; ilep++) {
+    const reco::CandidateBaseRef& cand = allLeptons[rec][ilep];
+    zp2mu::LeptonExtra lepEx(id(cand), rec);
+      
+    if (rec >= l3) {
+      const reco::RecoCandidate& mu
+	= toConcrete<reco::RecoCandidate>(*cand);
+
+      // no multiple collections for electrons, so no "seed index"
+      // nor a closest photon (would be double counting)
+      if (!doingElectrons) {
+	lepEx.setSeedIndex(matchStandAloneMuon(mu.standAloneMuon(), true));
+	LorentzVector ph = findClosestPhoton(mu.combinedMuon());
+	lepEx.setClosestPhoton(ph);
+      }
+    }
+
+    // Store the extra object in the extras vector, indexed by
+    // CandidateBaseRef.key() (i.e. the index into the original lepton
+    // collection).
+    lepExtra[rec][id(cand)] = lepEx;
+  }
+}
+
+void Zprime2muAnalysis::storePhotonMatches(const edm::Event& event,
+					   const int rec) {
+  /*
+  const string base = "match";
+  edm::Handle<reco::CandMatchMap> matchMap;
+  const string label = base + str_level_short[rec] + "Ph";
+  event.getByLabel(label, matchMap);
+  photonMatchMap[rec] = *matchMap;
+  */
+}
+
+template <typename TrackType> reco::Particle::LorentzVector
+Zprime2muAnalysis::findClosestPhoton(const TrackType& theTrack) const {
   static bool debug = verbosity >= VERBOSITY_LOTS;
   
   if (!photonCollection.isValid())
@@ -1055,6 +457,7 @@ TLorentzVector Zprime2muAnalysis::findClosestPhoton(const TrackType& theTrack) {
   ostringstream out;
   if (debug) out << "Search for closest photon for track eta = "
 		 << muon_eta << " phi = " << muon_phi << ":\n";
+  
   for (reco::PhotonCollection::const_iterator iph = photonCollection->begin();
        iph != photonCollection->end(); iph++) {
 
@@ -1066,7 +469,7 @@ TLorentzVector Zprime2muAnalysis::findClosestPhoton(const TrackType& theTrack) {
 
     double phot_eta = thePhoton.eta();
     double phot_phi = thePhoton.phi();
-    double dist = deltaR(muon_eta, muon_phi, phot_eta, phot_phi);
+    double dist = reco::deltaR(muon_eta, muon_phi, phot_eta, phot_phi);
 
     if (debug)
       out  << "  Photon: eta = " << phot_eta << " phi = " << phot_phi
@@ -1080,178 +483,845 @@ TLorentzVector Zprime2muAnalysis::findClosestPhoton(const TrackType& theTrack) {
 
   if (debug) {
     out << " Closest photon: eta = " << phclos.eta() << " phi = " << phclos.phi()
-	<< " px = " << phclos.px() << " py = " << phclos.py()
-	<< " pz = " << phclos.pz() << " energy = " << phclos.e()
-	<< " dR  = " << phdist;
+	<< " p4 = " << phclos << " dR  = " << phdist;
     LogTrace("findClosestPhoton") << out.str();
   }
 
-  TLorentzVector photon(phclos.px(), phclos.py(), phclos.pz(), phclos.e());
-  return photon;
+  return phclos;
 }
 
-double Zprime2muAnalysis::deltaR(const double eta1, const double phi1,
-				 const double eta2, const double phi2) const {
-  double dEta = eta1 - eta2;
-  double dPhi = fabs(phi1 - phi2);
-  while (dPhi > M_PI) dPhi -= 2*M_PI;
-  return sqrt(dEta*dEta + dPhi*dPhi);
-}
+int Zprime2muAnalysis::matchStandAloneMuon(const reco::TrackRef& track,
+					   bool relaxedMatch) const {
+  //JMTBAD there's probably a
+  // better way to do this, since the collections for GMR, TK, FMS,
+  // PMR all seem sorted in the same way
+  const static bool debug = verbosity >= VERBOSITY_LOTS;
 
-// Take the info from the event and store the generated muons and
-// muons at various levels of reconstruction in our own vectors for
-// sorting and producing dileptons
-// does the duty of what was done in MuExAnalysis::initialize()
-void Zprime2muAnalysis::storeMuons(const edm::Event& event) {
-  clearValues();
+  relaxedMatch = true;
+
+  if (!seedTracks.isValid())
+    throw cms::Exception("matchStandAloneMuon")
+      << "+++ seed collection not set! +++\n";
+
+  int closest_ndx = -1;
+  double min_mag2 = 1e99;
+  const double MAX_MAG2 = 1; // more than enough for a comparison between doubles
+  int ndx = 0;
+  ostringstream out;
+  if (debug)
+    out << "Matching with stand-alone muons:\n"
+	<< "  Track to match:\n"
+	<< "    charge = " << track->charge()
+	<< " p = " << track->momentum() << endl
+	<< "  Stand-alone muons:\n";
   
-  // Generated particles: GEANT and PYTHIA info
-  storeGeneratedMuons(event);
+  for (reco::TrackCollection::const_iterator seedmu = seedTracks->begin();
+       seedmu != seedTracks->end(); seedmu++) {
+    if (debug)
+      out << "    charge = " << seedmu->charge()
+	  << " p = " << seedmu->momentum();
+    if (seedmu->charge() == track->charge()) {
+      // calling mag2 results in complaints from the linker, even though I'm linking
+      // against ROOT... grr
+      double mag2 = (seedmu->momentum() - track->momentum()).mag2();
+      if (debug) out << " mag2: " << mag2;
+      if (mag2 < min_mag2) {
+	closest_ndx = ndx;
+	min_mag2 = mag2;
+      }
+    }
+    if (debug) out << endl;
+    ndx++;
+  }
 
-  if (!generatedOnly) {
-    // Store handles to the stand-alone track and photon collections
-    // so that we don't have to pass them into storeL3/OfflineMuons
-    // so many times.
+  if (debug) out << "  Closest is ndx = " << closest_ndx;
 
-    // we want to look at the standalone tracks as seeds for the different
-    // reconstructed muons -- can use the index into the collection as a 
-    // seedIndex?
-    // JMTBAD switch to the actual L2 muon tracks? 
-    event.getByLabel(standAloneMuons, seedTracks);
+  if (debug)
+    LogTrace("matchStandAloneMuon") << out.str();
 
-    // Get collection of "corrected" (calibrated?) photons.
-    event.getByLabel(photons, photonCollection);
+  if (min_mag2 > MAX_MAG2 && !relaxedMatch) {
+    edm::LogWarning("matchStandAloneMuon")
+      << "could not match stand-alone muon!\n"
+      << "muon 3-momentum p = " << track->momentum();
+    return -999;
+  }
+  else
+    return closest_ndx;
+}
+
+void Zprime2muAnalysis::matchLeptons() {
+  // Only consider a match to be found if both deltaPhi and deltaEta
+  // are EACH less than .5.
+  // JMTBAD this is to reproduce behavior of old code which used a
+  // rectangle in eta-phi space instead of a circle -- replace cut to
+  // one on deltaR?
+  const double maxMinDist = 0.5;
+
+  for (int irec = 0; irec < MAX_LEVELS; irec++) {
+    for (unsigned ilep = 0; ilep < allLeptons[irec].size(); ilep++) {
+      const reco::CandidateBaseRef& iref = allLeptons[irec][ilep];
+      zp2mu::LeptonExtra& iex = getLepExtra(iref);
+
+      for (int jrec = 0; jrec < MAX_LEVELS; jrec++) {
+	// The case irec == jrec is already taken care of in
+	// LeptonExtra's constructor.
+	if (irec == jrec) continue;
+
+	double minDist = 1e99;
+	int closestLep = -999;
+
+	// Watch out for duplicate seed indices.
+	bool foundSameSeed = false;
+	int seedLep = -999;
+
+	// if we are doingElectrons, at gen level only compare to the
+	// first two electrons (the true PYTHIA electrons)
+	// JMTBAD for muons too?
+	unsigned maxN = 
+	  doingElectrons && jrec == lgen ? 2 : allLeptons[jrec].size();
+
+	for (unsigned jlep = 0; jlep < maxN; jlep++) {
+	  const reco::CandidateBaseRef& jref = allLeptons[jrec][jlep];
+	  if (jrec == lgen && allLeptons[jrec][jlep]->pt() < 1)
+	    continue; // skip leptons with too low pt
+
+	  const zp2mu::LeptonExtra& jex = getLepExtra(jref);
+
+	  //double dist = reco::deltaR(iref, jref);
+	  double dphi = fabs(reco::deltaPhi(iref->phi(), jref->phi()));
+	  double deta = fabs(iref->eta() - jref->eta());
+	  if (dphi < maxMinDist && deta < maxMinDist) {
+	    double dist = sqrt(dphi*dphi + deta*deta);
+	    if (dist < minDist) {
+	      minDist = dist;
+	      closestLep = jex.id();
+	    }
+	  }
+
+	  if (irec >= l3 && jrec >= l3 && iex.seedIndex() == jex.seedIndex()) {
+	    if (!foundSameSeed) {
+	      foundSameSeed = true;
+	      seedLep = jex.id();
+	    }
+	    else {
+	      /*
+	      edm::LogWarning("sameSeedMatch")
+		<< "found at least one duplicate match for level "
+		<< irec << " -> " << jrec
+		<< " with seed index " << iex.seedIndex();
+	      */
+	    }
+	  }
+	}
+
+	iex.setClosestMatch(closestLep, jrec);
+	iex.setSeedMatch(seedLep, jrec);
+      }
+    }
+  }
+}
+
+reco::CompositeCandidate*
+Zprime2muAnalysis::newDilepton(const reco::CandidateBaseRef& dau1,
+			       const reco::CandidateBaseRef& dau2) {
+  reco::CompositeCandidate* dil = new reco::CompositeCandidate;
+  dil->addDaughter(reco::ShallowCloneCandidate(reco::CandidateBaseRef(dau1)));
+  dil->addDaughter(reco::ShallowCloneCandidate(reco::CandidateBaseRef(dau2)));
+  AddFourMomenta addP4;
+  addP4.set(*dil);
+  //dil->setP4(dau1->polarP4() + dau2->polarP4());
+  //dil->setCharge(dau1->charge() + dau2->charge());
+  return dil;
+}
+
+void
+Zprime2muAnalysis::RemoveDileptonOverlap(reco::CandidateCollection& dileptons) {
+  reco::CandidateCollection::iterator pdi, qdi;
+  for (pdi = dileptons.begin(); pdi != dileptons.end() - 1;) {
+    for (qdi = pdi+1; qdi != dileptons.end(); qdi++) {
+      const reco::CandidateBaseRef pm = dileptonDaughterByCharge(*pdi, -1);
+      const reco::CandidateBaseRef pp = dileptonDaughterByCharge(*pdi, +1);
+      const reco::CandidateBaseRef qm = dileptonDaughterByCharge(*qdi, -1);
+      const reco::CandidateBaseRef qp = dileptonDaughterByCharge(*qdi, +1);
+      if (id(pm) == id(qm) || id(pp) == id(qp)) {
+	dileptons.erase(qdi);
+	pdi = dileptons.begin(); // reset pointers and restart
+	break;
+      }
+      else {
+	pdi++;
+      }
+    }
+  }
+}
+
+void Zprime2muAnalysis::makeDileptons(const int rec) {
+  const static bool debug = verbosity >= VERBOSITY_SIMPLE;
+  
+  const LeptonRefVector& leptons = getLeptons(rec);
+
+  if (leptons.size() < 2) {
+    if (debug)
+      LogTrace("makeDileptons")
+	<< "Only " << leptons.size() << " at level " << rec
+	<< ", refusing to try making dileptons!";
+    return;
+  }
+
+  // Don't use getDileptons() since we want non-const access.
+  reco::CandidateCollection& dileptons
+    = rec == MAX_LEVELS ? bestDileptons : allDileptons[rec];
+
+  // Dileptons search in reconstructed muons.  First consider all
+  // possible combinations of mu+ and mu-.
+  const int totalCharge = 0;
+  LeptonRefVector::const_iterator plep, qlep;
+  for (plep = leptons.begin(); plep != leptons.end() - 1; plep++)
+    for (qlep = plep+1; qlep != leptons.end(); qlep++)
+      if ((*qlep)->charge() + (*plep)->charge() == totalCharge) {
+	if (rec == lgen) {
+	  // For generator-level dileptons, make sure we pick up the
+	  // actual leptons from the resonance -- leptons with the
+	  // same mother that has a PDG id of one of the resonances we
+	  // care about.
+	  const reco::Candidate* mom = sameMother(*plep, *qlep);
+	  if (!mom || !isResonance(mom->pdgId()))
+	    continue;
+	}
+	// Apply cuts at levels of reconstruction above
+	// generator-level.
+	else if (leptonIsCut(*plep) || leptonIsCut(*qlep))
+	  continue;
+
+	dileptons.push_back(newDilepton(*plep, *qlep));
+      }
+
+  if (debug)
+    LogTrace("makeDileptons") << "Reconstructed " << dileptons.size()
+			      << " dileptons at rec level " << rec;
+
+  // If H -> ZZ* -> 4mu, sort dileptons to look for two highest-mass ones.
+  // If Z' or G*, do nothing because all muons were sorted from the highest
+  // P to the lowest, and therefore the very first dimuon is already made
+  // of two highest P muons.
+  if (doingHiggs && dileptons.size() > 1)
+    dileptons.sort(reverse_mass_sort());
+
+  if (rec > 0 && dileptons.size() > 1) {
+    RemoveDileptonOverlap(dileptons);
+
+    // Store only 1 dilepton for Z' and G*, and two highest mass dileptons
+    // for H -> ZZ* -> 4 mu.
+    const unsigned maxKept = doingHiggs ? MAX_DILEPTONS : 1;
+    if (dileptons.size() > maxKept)
+      dileptons.erase(dileptons.begin() + maxKept, dileptons.end());
+  }
+}
+
+void Zprime2muAnalysis::addBremCandidates(const int rec) {
+  const static bool debug = verbosity >= VERBOSITY_LOTS;
+
+  // Do nothing for generator-level dimuons; already done in
+  // addTrueResonance().
+  if (rec == lgen)
+    return;
+
+  const double dRmax = 0.1;
+
+  ostringstream out;
+  if (debug) out << "addBremCandidates, rec level " << rec << ":\n";
+
+  const reco::CandidateCollection& dileptons = getDileptons(rec);
+
+  for (unsigned idi = 0; idi != dileptons.size(); idi++) {
+    const reco::Candidate& dil = dileptons[idi];
+    LorentzVector p4 = dil.p4();
+    if (debug)
+      out << " Dilepton #" << idi << " p4 = " << p4 << endl;
+
+    // No way to improve measurement at Level-1 and Level-2
+    if (rec != l1 && rec != l2) {
+      vector<LorentzVector> photonP4s;
+
+      for (unsigned idau = 0; idau < dil.numberOfDaughters(); idau++) {
+	const reco::CandidateBaseRef& dau = dileptonDaughter(dil, idau);
+	LorentzVector photonP4 = closestPhoton(dau);
+	if (debug) out << "  Considering photon " << photonP4
+		       << " from daughter " << dau->p4();
+	
+	if (photonP4.energy() > 0) {
+	  double dR = reco::deltaR(dau->p4(), photonP4);
+	  if (debug) out << "; its dR = " << dR;
+
+	  if (dR < dRmax) {
+	    bool addedAlready = false;
+	    // Make sure we don't add the same photon twice.
+	    for (unsigned iph = 0; iph < photonP4s.size(); iph++) {
+	      const LorentzVector diff = photonP4s[iph] - photonP4;
+	      if (diff.P() < 0.001) {
+		addedAlready = true;
+		break;
+	      }
+	    }
+	    
+	    if (!addedAlready) {
+	      if (debug) out << "; adding it";
+	      photonP4s.push_back(photonP4);
+	      p4 += photonP4;
+	    }
+	    else {
+	      if (debug) out << "; already added, skipping it";
+	    }
+	  }
+	}
+	else {
+	  if (debug) out << "; no photon";
+	}
+
+	if (debug) out << endl;
+      }	      
+    }
+
+    dileptonResonances[rec].push_back(p4);
+
+    if (debug) 
+      out << " Include brem candidate(s) at level " << rec
+	  << ": inv. mass w/o photons = " << dil.mass()
+	  << "; w/  = " << p4.mass();
+  }
+
+  if (debug) LogTrace("addBremCandidates") << out.str();
+}
+
+void Zprime2muAnalysis::addTrueResonance(const edm::Event& event) {
+  const static bool debug = verbosity >= VERBOSITY_LOTS;
+  
+  for (unsigned idi = 0; idi < allDileptons[lgen].size(); idi++) {
+    const reco::Candidate& dil = allDileptons[lgen][idi];
+    const reco::Candidate* mom = sameMother(dileptonDaughter(dil, 0),
+					    dileptonDaughter(dil, 1));
     
-    if (!doingElectrons) {
-      if (useTriggerInfo) {
-	// Level-1.
-	storeL1Muons(event);
-	storeL1Decision(event);
-	// HLT 
-	storeHLTDecision(event);
-	storeL2Muons(event);
-	storeL3Muons(event);
-	compareHLTDecision();
-      }
-      // off-line muons reconstructed with GlobalMuonProducer
-      storeOfflineMuons(event, globalMuons, lgmr);
-      // store the muons using the tracker-only tracks
-      storeOfflineMuons(event, globalMuons, ltk, true);
-      if (useOtherMuonRecos) {
-	// muons using tracker+first muon station
-	storeOfflineMuons(event, globalMuonsFMS, lfms);
-	// muons using the PickyMuonReconstructor
-	storeOfflineMuons(event, globalMuonsPMR, lpmr);
-      }
-    }
-    else {
-      storePixelMatchGsfElectrons(event, pixelMatchGsfElectrons, lgmr);
-    }
+    LorentzVector p4;
+
+    // Take true resonance from PYTHIA only if generated mu+ and mu-
+    // originated from the same resonance, otherwise just use the
+    // dilepton p4.
+    // SV: same approach as in ORCA, but perhaps needs some thinking.
+    if (mom)
+      p4 = mom->p4();
+    else
+      p4 = dil.p4();
+    
+    dileptonResonances[lgen].push_back(p4);
+
+    if (debug)
+      LogTrace("addTrueResonance")
+	<< "MC resonance: dimuon inv. mass = " << dil.mass()
+	<< "; true inv. mass = " << p4;
   }
-
-  if (!useTriggerInfo || doingElectrons) {
-    // Events always pass Level-1 and HLT triggers till they get implemented.
-    for (int itrig = l1; itrig <= l3; itrig++) {
-      passTrig[itrig] = true;
-      trigWord[itrig] = 1;
-    }
-  }
-
-  // Sort the list of found muons using overloaded criteria.
-  // (by momentum magnitude)
-  for (int irec = 1; irec < MAX_LEVELS; irec++) {
-    if (allMuons[irec].size() > 1) {
-      sort(allMuons[irec].begin(), allMuons[irec].end(),
-	   greater<zp2mu::BaseMuon>());
-    }
-  }
-
-  // Find closest (and same seed, if available) muons among the generated
-  // muons and at other rec. levels.
-  matchAllMuons();
-
-  // Select the "best"-reconstructed muons from the four available options
-  // and sort them.
-  bestMuons = findBestMuons();
-  if (bestMuons.size() > 1) {
-    sort(bestMuons.begin(), bestMuons.end(), greater<zp2mu::BaseMuon>());
-  }
-
-  // Dump all muon vectors
-  if (verbosity >= VERBOSITY_SIMPLE) dumpEvent(true, true, true, true, true);
-  
-  // Construct opposite-sign dileptons out of lists of muons.
-  // Pass ref. to Event only to save true resonance; need to think of a better
-  // solution?
-  bool debug = verbosity > VERBOSITY_SIMPLE;
-  makeAllDileptons(event, debug);
-  if (verbosity >= VERBOSITY_SIMPLE) dumpDiMuonMasses();
-
 }
 
-// Cocktail of tracks from various reconstructors.  Two possibilities:
-// Piotr's tune (default) or Norbert's tune.  Both are available in CMSSW
-// starting with 1_4_0_pre2, so we could switch to official versions once
-// we start using 1_4_0 (after making sure that they agree with our version).
-vector<zp2mu::Muon> Zprime2muAnalysis::findBestMuons() {
-  bool debug = verbosity >= VERBOSITY_SIMPLE;
+////////////////////////////////////////////////////////////////////
+// Using trigger info
+////////////////////////////////////////////////////////////////////
 
-  vector<zp2mu::Muon> tmpV;
+void Zprime2muAnalysis::storeL1Decision(const edm::Event& event) {
+  const static bool debug = (verbosity >= VERBOSITY_SIMPLE);
 
+  // Get Level-1 decisions for trigger paths we are interested in.
+  edm::Handle<l1extra::L1ParticleMapCollection> l1MapColl;
+  event.getByLabel(l1ParticleMap, l1MapColl);
+
+  if (!l1MapColl.isValid()) {
+    edm::LogWarning("storeL1Decision")
+      << "L1ParticleMapCollection with label [" << l1ParticleMap.encode()
+      << "] not found!" << std::endl;
+    return;
+  }
+
+  if (debug) LogTrace("storeL1Decision") << "storeL1Decision:";
+
+  // Loop over chosen paths, check trigger decisions, and save them into
+  // "trigbits".
+  unsigned int trigbits = 0;
+  int nl1paths = l1paths.size();
+  for (int ipath = 0; ipath < nl1paths; ipath++) {
+    const l1extra::L1ParticleMap& thisMap = (*l1MapColl)[l1paths[ipath]];
+    bool fired = thisMap.triggerDecision();
+    if (fired) trigbits = trigbits | (1 << ipath);
+    if (debug) LogTrace("storeL1Decision")
+      << "  " << thisMap.triggerName() << " (index " << l1paths[ipath]
+      << "): decision " << fired;
+  }
+
+  if (debug)
+    LogTrace("storeL1Decision") << " L1 official trigbits: " << trigbits;
+
+  trigWord[l1] = trigbits;
+  passTrig[l1] = (trigbits != 0);
+}
+
+void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
+  const static bool debug = (verbosity >= VERBOSITY_SIMPLE);
+  ostringstream out;
+
+  // Getting the result of the entire HLT path is done easily with the
+  // TriggerResults object, however to get at the separate decisions
+  // for L2 and L3 we have to do a little hacky magic.
+
+  // Try to get the HLT TriggerResults object now, before
+  // trying to get the HLTFilterObjectWithRefs below
+  // so that if there is no HLT information in the file, 
+  // getByLabel will go ahead and throw an exception.
+  edm::Handle<edm::TriggerResults> hltRes;
+  event.getByLabel(hltResults, hltRes);
+  edm::TriggerNames hltTrigNames;
+  hltTrigNames.init(*hltRes);
+
+  if (debug) out << "storeHLTDecision:\n";
+
+  // Extract L2 and L3 decisions by seeing if the corresponding
+  // HLTFilterObjectWithRefs exists and seeing how many muons it holds.
+  for (unsigned int lvl = 0; lvl < 2; lvl++) {
+    unsigned int l = l2 + lvl;
+    unsigned int trigbits = 0;
+    for (unsigned int ipath = 0; ipath < hltModules[lvl].size(); ipath++) {
+      const string& trigName = hltModules[lvl][ipath];
+      edm::Handle<reco::HLTFilterObjectWithRefs> hltFilterObjs;
+
+      bool fired = true;
+      try {
+	event.getByLabel(trigName, hltFilterObjs);
+      }
+      catch (const cms::Exception& e) {
+	fired = false;
+      }
+
+      // There may be an HLTFilterObject in the event even if the
+      // trigger did not accept; the real check is to make sure that
+      // the minimum number of muons for the trigger was met.
+      const unsigned int minNMuons = ipath + 1;
+      if (fired && hltFilterObjs->size() < minNMuons)
+	fired = false;	  
+	
+      if (debug)
+	out << "  " << trigName
+	    << ": decision = " << fired << endl;
+
+      if (fired) {
+	trigbits = trigbits | (1 << ipath);
+
+	if (debug) {
+	  out << "  " << trigName << " filter result muons:\n";
+	  reco::HLTFilterObjectWithRefs::const_iterator muItr;
+	  int imu = 0;
+	  for (muItr = hltFilterObjs->begin(); muItr != hltFilterObjs->end();
+	       muItr++) {
+	    out << "    #" << imu++ << " q = " << muItr->charge()
+		<< " p = (" << muItr->px() << ", " << muItr->py()
+		<< ", " << muItr->pz() << ", " << muItr->energy() << ")\n"
+		<< "     pt = " << muItr->pt() << " eta = " << muItr->eta()
+		<< " phi = " << muItr->phi() << endl;
+	  }
+	}
+      }
+    }
+
+    trigWord[l] = trigbits;
+    passTrig[l] = (trigbits != 0);
+    out << "  trigWord[l" << l << "]: " << trigWord[l] << endl;
+  }
+    
+  // Check that the official full HLT path decisions agree with
+  // what we extracted for the official L3 decision.
+  unsigned int hlt_trigbits = 0;
+  for (unsigned int i = 0; i < hltPaths.size(); i++) {
+    int ndx = hltTrigNames.triggerIndex(hltPaths[i]);
+    bool fired = hltRes->accept(ndx);
+    if (debug)
+      out << " HLT path #" << ndx << ": " << hltPaths[i]
+	  << " decision = " << fired << endl;
+    if (fired) hlt_trigbits |= 1 << i;
+  }
+  if (hlt_trigbits != trigWord[l3]) {
+    edm::LogWarning("storeHLTDecision")
+      << "+++ Warning: official HLT"
+      << " decision disagrees with extracted L3 decision:"
+      << " official HLT: " << hlt_trigbits
+      << " extracted L3: " << trigWord[l3] << " +++";
+      
+    if (verbosity == VERBOSITY_NONE)
+      dumpEvent(false, true, true, true, false);
+  }
+
+  if (debug) LogTrace("storeHLTDecision") << out.str();
+}
+
+bool Zprime2muAnalysis::TriggerTranslator(const string& algo,
+					  const unsigned int lvl,
+					  const unsigned int nmu) const {
+  // See https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideMuonHLT
+  // https://twiki.cern.ch/twiki/bin/view/CMS/L1TriggerTableHLTExercise
+  // L1 Quality codes are still the same, but we are suggested to use the 
+  // methods useInSingleMuonTrigger() etc. instead of using the quality
+  // code directly:
+  // https://twiki.cern.ch/twiki/bin/view/CMS/GMTEmulator
+
+  // Arrays are first-indexed by trigger level then by the number of
+  // muons required.
+  const unsigned int l = lvl - 1;
+  const unsigned int n = nmu - 1;
+
+  // these are for L = 10^{32}
+  const double ptMin[3][2] = {
+    { 7, 3},
+    {16, 3},
+    {16, 3}
+  };
+  const double etaMax[3] = { 2.5, 2.5, 2.5 };
+  // 28/10/2007: in CMSSW_1_6_0, requirement is just that 
+  // the vertex be < 200 microns from the beam axis, i.e. 
+  // sqrt(vx**2+vy**2) < 0.02
+  const double dxy2Max[3] = { 9999, 9999, 0.02*0.02 };
+  const double dzMax[3] = { 9999, 9999, 9999 };
+  const double nSigmaPt[3] = { 0, 3.9, 2.2 };
+  // 12/05/2004: a muon must have more than 5 pixel plus silicon hits in
+  // the tracker (DAQ TDR, p. 306).
+  //const int minHits[3] = { 0, 0, 6 };
+  // 28/10/2007: for CMSSW_1_6_0, min hits is 0
+  // JMTBAD no hit counts in the AOD anyway...
+  const int minHits[3] = { 0, 0, 0 };
+
+  // Check if the algorithm string passed in is one we recognized.
+  // String value is not currently used, but will be used in the
+  // future to differentiate between, e.g., Iso and NonIso triggers.
+  if (algo != "L1_SingleMu7" &&
+      algo != "L1_DoubleMu3" &&
+      algo != "SingleMuNoIsoL2PreFiltered" && 
+      algo != "SingleMuNoIsoL3PreFiltered" &&
+      algo != "DiMuonNoIsoL2PreFiltered" && 
+      algo != "DiMuonNoIsoL3PreFiltered") {
+    edm::LogWarning("TriggerTranslator")
+      << "+++ unrecognized algorithm " << algo << "! +++";
+    return false;
+  }
+
+  const static bool debug = verbosity >= VERBOSITY_SIMPLE;
+  ostringstream out;
+
+  if (debug) out << "TriggerTranslator, " << algo << ":\n";
+
+  unsigned int muonsPass = 0;
+  //vector<zp2mu::Muon>::const_iterator pmu; //, pmu_prev;
+
+  //vector<double> zvtx;
+  //vector<double>::const_iterator pvtx;
+  for (unsigned imu = 0; imu < allLeptons[lvl].size(); imu++) {
+    const reco::CandidateBaseRef& mu = allLeptons[lvl][imu];
+    reco::TrackRef tk;
+    if (lvl < l3)
+      tk = mu->get<reco::TrackRef>();
+    else
+      tk = mu->get<reco::TrackRef, reco::CombinedMuonTag>();
+
+    // JMTBAD HLTMuonPrefilter cuts not on pt but on what they call ptLx
+    // nSigmaPt[l1] = 0, so ptLx(l1) = pt(l1), but safeguard against
+    // accidentally setting nSigmaPt[l1] != 0:
+    double ptLx;
+    if (lvl == l1)
+      ptLx = mu->pt();
+    else
+      ptLx = (1 + nSigmaPt[l]*invPError(tk)*mu->p())*mu->pt();
+    if (debug)
+      out << "  mu #" << id(mu)
+	  << " pt: " << mu->pt() << " ptLx: " << ptLx << " (cut: " << ptMin[l][n] 
+	  << ") eta: " << mu->eta() << " (cut: " << etaMax[l] << ")\n";
+    bool pass = ptLx >= ptMin[l][n] && fabs(mu->eta()) <= etaMax[l];
+    // don't bother evaluating the other constraints if they aren't set
+    if (dxy2Max[l] != 9999) {
+      double vx = mu->vx();
+      double vy = mu->vy();
+      pass = pass && vx*vx + vy*vy < dxy2Max[l];
+    }
+    if (dzMax[l] != 9999) {
+      pass = pass && fabs(mu->vz()) < dzMax[l];
+    }
+    if (minHits[l] != 0) {
+      // JMTBAD switch to reco::Track::numberOfValidHits()
+      pass = pass && nHits(mu, HITS_TRK) > minHits[l];
+    }
+    if (pass) {
+      // here check extra stuff depending on the trigger algorithm
+      bool passExtra = true;
+
+      if (lvl == l1) {
+	int quality
+	  = toConcrete<l1extra::L1MuonParticle>(mu).gmtMuonCand().quality();
+	// In single muon trigger, GMT uses only muons with quality > 3.
+	// In dimuon trigger, GMT uses muons with quality = 3 and 5-7.
+	if ((nmu == 1 && quality < 4) ||
+	    (nmu == 2 && (quality < 3 || quality == 4)))
+	  passExtra = false;
+      }
+      /*
+      // JMTBAD disabled for now, not currently in HLT
+      else if (lvl == l3 && nmu == 2) {
+        for (unsigned jmu = 0; jmu < allLeptons[lvl].size(); jmu++) {
+	  const reco::CandidateBaseRef& mu_prev = allLeptons[lvl][jmu];
+          // Skip ghost tracks (see p. 308 of DAQ TDR)
+	  if (fabs(mu->eta() - mu_prev->eta()) < 0.01 &&
+	      fabs(mu->phi() - mu_prev->phi()) < 0.05 &&
+	      fabs(mu->pt()  - mu_prev->pt())  < 0.1) passExtra = false;
+	}
+      }
+      */
+
+      if (passExtra)
+	muonsPass++;
+    }
+
+    if (muonsPass == nmu)
+      break;
+  }
+
+  bool result;
+  if (debug) out << "  TriggerTranslator result for " << algo << ": ";
+  if (muonsPass >= nmu) {
+    out << "pass!";
+    result = true;
+  }
+  else {
+    out << "fail!";
+    result = false;
+  }
+  if (debug) LogTrace("TriggerTranslator") << out.str();
+
+  return result;
+}
+
+void Zprime2muAnalysis::compareTrigDecision(const edm::Event& event,
+					    bool old) const {
+  const static bool debug = (verbosity >= VERBOSITY_SIMPLE);
+  ostringstream out;
+
+  if (debug) out << "compareTrigDecision:\n";
+
+  edm::Handle<l1extra::L1ParticleMapCollection> l1MapColl;
+  event.getByLabel(l1ParticleMap, l1MapColl);
+
+  for (unsigned int lvl = l1; lvl <= l3; lvl++) {
+    unsigned homemade_trigbits = 0;
+    unsigned npaths = lvl == l1 ? l1paths.size() : hltModules[lvl-l2].size();
+    for (unsigned ipath = 0; ipath < npaths; ipath++) {
+      const string& trigName = lvl > l1 ? hltModules[lvl-l2][ipath]
+	: (*l1MapColl)[l1paths[ipath]].triggerName();
+
+      // Try to emulate HLT algorithms.
+      bool fired = TriggerTranslator(trigName, lvl, ipath+1);
+      
+      // If the event passes, set the corresponding bit in trigbits.
+      if (fired) homemade_trigbits = homemade_trigbits | (1 << ipath);
+      if (debug)
+	out << "  " << trigName << " (homemade): decision = " << fired << endl;
+    }
+
+    // "Official" muon HLTs are calculated only when corresponding
+    // previous levels gave OK, while we calculate the decision for a
+    // given level regardless of previous levels' decisions.
+    if (lvl >= l2)
+      homemade_trigbits &= trigWord[l1];
+    if (lvl >= l3)
+      homemade_trigbits &= trigWord[l2];
+    // Compare official and homemade decisions.
+    if (homemade_trigbits != trigWord[lvl]) {
+      edm::LogWarning("compareTrigDecision")
+	<< "+++ Warning: official L" << lvl
+	<< " decision disagrees with homemade decision:"
+	<< " official: " << trigWord[lvl]
+	<< " homemade: " << homemade_trigbits << " +++";
+      
+      if (verbosity == VERBOSITY_NONE)
+	dumpEvent(false, true, true, true, false);
+    }
+  }
+
+  if (debug) LogTrace("compareTrigDecision") << out.str();
+}
+
+////////////////////////////////////////////////////////////////////
+// Picking "best" leptons
+////////////////////////////////////////////////////////////////////
+
+const reco::CandidateBaseRef&
+Zprime2muAnalysis::NorbertsCocktail(const reco::CandidateBaseRef& trk,
+				    const bool debug) const {
+  const reco::CandidateBaseRef& gmr = sameSeedLepton(trk, lgmr);
+  const reco::CandidateBaseRef& fms = sameSeedLepton(trk, lfms);
+  const reco::CandidateBaseRef& pmr = sameSeedLepton(trk, lpmr);
+  int result = 0;
+
+  bool trkValid = !trk.isNull();
+  bool gmrValid = !pmr.isNull();
+  bool fmsValid = !fms.isNull();
+  bool pmrValid = !pmr.isNull();
+
+  double prob0 = 0.0, prob1 = 0.0, prob2 = 0.0, prob3 = 0.0;
+  if (trkValid) prob0 = cumulativeChiSquare(trk);
+  if (gmrValid) prob1 = cumulativeChiSquare(gmr);
+  if (fmsValid) prob2 = cumulativeChiSquare(fms);
+  if (pmrValid) prob3 = cumulativeChiSquare(pmr);
+
+  if (gmrValid) result = lgmr;
+  if (!gmrValid && pmrValid) result = lpmr;
+  
+  if (gmrValid && pmrValid && ((prob1 - prob3) > 0.05)) result = lpmr;
+
+  if (trkValid && !gmrValid && !fmsValid && !pmrValid) {
+    return trk;
+  }
+  if (trkValid && fmsValid && fabs(prob2 - prob0) > 30.) {
+    return trk;
+  }
+
+  if (!gmrValid && !pmrValid && fmsValid) result = lfms;
+
+  bool tminValid = false;
+  double probmin = 0.0;
+  if (gmrValid && pmrValid) {
+    probmin = prob3; tminValid = pmrValid;
+    if (prob1 < prob3){ probmin = prob1; tminValid = gmrValid; }
+  }
+  else if (!pmrValid && gmrValid) { 
+    probmin = prob1; tminValid = gmrValid;
+  }
+  else if (!gmrValid && pmrValid) {
+    probmin = prob3; tminValid = pmrValid;
+  }
+  if (tminValid && fmsValid && ((probmin - prob2) > 3.5)) {
+    result = lfms;
+  }
+
+  if (debug)
+    LogTrace("NorbertsCocktail")
+      << " Event " << eventNum << " Probabilities: trk = " << prob0
+      << "; gmr = " << prob1 << "; fms = " << prob2 << "; pmr = " << prob3
+      << "; result = " << result;
+
+  if      (result == ltk)  return trk;
+  else if (result == lgmr) return gmr;
+  else if (result == lfms) return fms;
+  else if (result == lpmr) return pmr;
+  else                     return invalidRef;
+}
+
+const reco::CandidateBaseRef&
+Zprime2muAnalysis::PiotrsCocktail(const reco::CandidateBaseRef& trk,
+				  const bool debug) const {
+  const reco::CandidateBaseRef& fms = sameSeedLepton(trk, lfms);
+  const reco::CandidateBaseRef& pmr = sameSeedLepton(trk, lpmr);
+  int result = 0;
+
+  bool trkValid = !trk.isNull();
+  bool fmsValid = !fms.isNull();
+  bool pmrValid = !pmr.isNull();
+
+  double prob_trk = 1000.0, prob_fms = 1000.0, prob_pmr = 1000.0;
+
+  if (trkValid) prob_trk = cumulativeChiSquare(trk);
+  if (fmsValid) prob_fms = cumulativeChiSquare(fms);
+  if (pmrValid) prob_pmr = cumulativeChiSquare(pmr);
+
+  if (fmsValid && !pmrValid) {
+    //if (trkValid && prob_fms - prob_trk > 30.) result = ltk;
+    //else                                       result = lfms;
+    result = lfms;
+  }
+  else if (!fmsValid && pmrValid) {
+    result = lpmr;
+    //if (trkValid && prob_pmr - prob_trk > 30.) result = ltk;
+  }
+  else if (fmsValid && pmrValid) {
+    if (prob_fms - prob_pmr > 0.9) result = lpmr;
+    //else {
+    //  if (trkValid && prob_fms - prob_trk > 30.) result = ltk;
+    //  else                                       result = lfms;
+    //}
+    else result = lfms;
+  }
+
+  if (debug)
+    LogTrace("PiotrsCocktail")
+      << " Event " << eventNum << " Probabilities: trk = " << prob_trk
+      << "; fms = " << prob_fms << "; pmr = " << prob_pmr
+      << "; result = " << result;
+
+  if      (result == ltk)  return trk;
+  else if (result == lfms) return fms;
+  else if (result == lpmr) return pmr;
+  else                     return invalidRef;
+}
+
+void Zprime2muAnalysis::findBestLeptons() {
+  // Both Norbert's and Piotr's cocktails are available in
+  // CMSSW starting with 1_4_0_pre2, so we could switch to official
+  // versions once we make sure that they agree with our version.
+  const static bool debug = verbosity >= VERBOSITY_SIMPLE;
+
+  unsigned int imu;
   if (doingElectrons || !useOtherMuonRecos ) {
     // just have one set of electrons to look at in this case 
     // or if
     // the other muon reconstructors are not available, just use the
     // default GMR muons
-    tmpV = allMuons[lgmr];
+    for (imu = 0; imu < allLeptons[lgmr].size(); imu++)
+      bestLeptons.push_back(allLeptons[lgmr][imu]);
   }
   else {
-    vector<zp2mu::Muon>::const_iterator pmu;
     static int ntrk = 0, ngmr = 0, nfms = 0, npmr = 0, ngpr = 0, ntot = 0;
 
     // Start with tracker-only tracks, as Norbert does.
-    for (pmu = allMuons[ltk].begin(); pmu != allMuons[ltk].end(); pmu++) {
-      zp2mu::Muon trkmu, gmrmu, fmsmu, pmrmu;
-      int gmr_id = pmu->sameSeedId(lgmr);
-      int fms_id = pmu->sameSeedId(lfms);
-      int pmr_id = pmu->sameSeedId(lpmr);
-      trkmu = *pmu;
-      if (gmr_id != -999) gmrmu = muonRef(lgmr, gmr_id);
-      if (fms_id != -999) fmsmu = muonRef(lfms, fms_id);
-      if (pmr_id != -999) pmrmu = muonRef(lpmr, pmr_id);
-      //zp2mu::Muon bestMu = NorbertsCocktail(trkmu, gmrmu, fmsmu, pmrmu, debug);
-      zp2mu::Muon bestMu = PiotrsCocktail(trkmu, fmsmu, pmrmu, debug);
+    for (imu = 0; imu < allLeptons[ltk].size(); imu++) {
+      const reco::CandidateBaseRef& trkMu = allLeptons[ltk][imu];
+      //const reco::CandidateBaseRef& bestMu = NorbertsCocktail(trkMu, debug);
+      const reco::CandidateBaseRef& bestMu = PiotrsCocktail(trkMu, debug);
+
       if (debug) {
-	if (bestMu == trkmu) {
-	  ntrk++; LogTrace("findBestMuons") << "  --> select Tracker only";
+	if (!bestMu.isNull()) {
+	  int picked = recLevel(bestMu);
+	  if (picked == ltk) {
+	    ntrk++; LogTrace("findBestMuons") << "  --> select Tracker only";
+	  }
+	  else if (picked = lgmr) {
+	    ngmr++; LogTrace("findBestMuons") << "  --> select GMR";
+	    const reco::CandidateBaseRef& pmrMu = sameSeedLepton(trkMu, lpmr);
+	    if (!pmrMu.isNull() &&
+		fabs(bestMu->phi() - pmrMu->phi()) < 0.001 &&
+		fabs(bestMu->eta() - pmrMu->eta()) < 0.001 &&
+		fabs(bestMu->pt()  - pmrMu->pt()) < 0.001)
+	      ngpr++;
+	  }
+	  else if (picked == lfms) {
+	    nfms++; LogTrace("findBestMuons") << "  --> select TPFMS";
+	  }
+	  else if (picked == lpmr) {
+	    npmr++; LogTrace("findBestMuons") << "  --> select PMR";
+	  }
+	  else {
+	    throw cms::Exception("findBestMuons") << "+++ Unknown outcome! +++\n";
+	  }
 	}
-	else if (bestMu == gmrmu) {
-	  ngmr++; LogTrace("findBestMuons") << "  --> select GMR";
-	  if (gmrmu.isValid() && pmrmu.isValid() &&
-	      fabs(gmrmu.phi() - pmrmu.phi()) < 0.001 &&
-	      fabs(gmrmu.eta() - pmrmu.eta()) < 0.001 &&
-	      fabs(gmrmu.pt()  - pmrmu.pt()) < 0.001) ngpr++;
-	}
-	else if (bestMu == fmsmu) {
-	  nfms++; LogTrace("findBestMuons") << "  --> select TPFMS";
-	}
-	else if (bestMu == pmrmu) {
-	  npmr++; LogTrace("findBestMuons") << "  --> select PMR";
-	}
-	else if (!bestMu.isValid()) {
+	else { // i.e. an invalid result
 	  ntot--; edm::LogWarning("findBestMuons") << "  --> reject muon\n";
-	}
-	else {
-	  throw cms::Exception("findBestMuons") << "+++ Unknown outcome! +++\n";
 	}
 	ntot++;
       }
-      if (bestMu.isValid()) {
-	tmpV.push_back(bestMu);
-      }
+
+      if (!bestMu.isNull())
+	bestLeptons.push_back(bestMu);
     }
+
     // Fractions of events from different reconstructors.
-    if (debug && (eventNum%1000 == 0 && eventNum > 0)) {
+    if (debug && (eventNum % 1000 == 0 && eventNum > 0)) {
       LogTrace("findBestMuons")
 	<< "\nfindBestMuons summary: "
 	<< "TO: "    << ntrk/double(ntot) << "; GMR: " << ngmr/double(ntot)
@@ -1259,406 +1329,782 @@ vector<zp2mu::Muon> Zprime2muAnalysis::findBestMuons() {
       LogTrace("findBestMuons")
 	<< "GMR=PMR: " << ((ngmr > 0) ? ngpr/double(ngmr) : 0);
     }
-  }
-  
-  return tmpV;
-}
 
-zp2mu::Muon Zprime2muAnalysis::NorbertsCocktail(const zp2mu::Muon& trk,
-						const zp2mu::Muon& gmr,
-						const zp2mu::Muon& fms,
-						const zp2mu::Muon& pmr,
-						const bool debug) const {
-  zp2mu::Muon result;
-
-  double prob0 = 0.0, prob1 = 0.0, prob2 = 0.0, prob3 = 0.0;
-  if (trk.isValid()) {
-    Genfun::CumulativeChiSquare myCumulativeChiSquare(trk.dof());
-    prob0 = -log(1.-myCumulativeChiSquare(trk.chi2()));
-  }
-  if (gmr.isValid()) {
-    Genfun::CumulativeChiSquare myCumulativeChiSquare(gmr.dof());
-    prob1 = -log(1.-myCumulativeChiSquare(gmr.chi2()));
-  }
-  if (fms.isValid()) {
-    Genfun::CumulativeChiSquare myCumulativeChiSquare(fms.dof());
-    prob2 = -log(1.-myCumulativeChiSquare(fms.chi2()));
-  }
-  if (pmr.isValid()) {
-    Genfun::CumulativeChiSquare myCumulativeChiSquare(pmr.dof());
-    prob3 = -log(1.-myCumulativeChiSquare(pmr.chi2()));
-  }
-
-  if (debug) {
-    LogTrace("NorbertsCocktail")
-      << " Event " << eventNum << " Probabilities: trk = " << prob0
-      << "; gmr = " << prob1 << "; fms = " << prob2 << "; pmr = " << prob3;
-  }
-
-  if (gmr.isValid()) result = gmr;
-  if (!gmr.isValid() && pmr.isValid()) result = pmr;
-  
-  if (gmr.isValid() && pmr.isValid() && ((prob1 - prob3) > 0.05)) result = pmr;
-
-  if (trk.isValid() && !gmr.isValid() && !fms.isValid() && !pmr.isValid()) {
-    result = trk;
-    return result;
-  }
-  if (trk.isValid() && fms.isValid() && fabs(prob2 - prob0) > 30.) {
-    result = trk;
-    return result;
-  }
-
-  if (!gmr.isValid() && !pmr.isValid() && fms.isValid()) result = fms;
-
-  zp2mu::Muon tmin;
-  double probmin = 0.0;
-  if (gmr.isValid() && pmr.isValid()) {
-    probmin = prob3; tmin = pmr;
-    if (prob1 < prob3) { probmin = prob1; tmin = gmr; }
-  }
-  else if (!pmr.isValid() && gmr.isValid()) { 
-    probmin = prob1; tmin = gmr; 
-  }
-  else if (!gmr.isValid() && pmr.isValid()) {
-    probmin = prob3; tmin = pmr; 
-  }
-  if (tmin.isValid() && fms.isValid() && ((probmin - prob2) > 3.5)) {
-    result = fms;
-  }
-
-  return result;
-}
-
-// Piotr's version.
-zp2mu::Muon Zprime2muAnalysis::PiotrsCocktail(const zp2mu::Muon& trk,
-					      const zp2mu::Muon& fms,
-					      const zp2mu::Muon& pmr,
-					      const bool debug) const {
-  zp2mu::Muon result;
-  double prob_trk = 1000.0, prob_fms = 1000.0, prob_pmr = 1000.0;
-
-  if (trk.isValid()) {
-    Genfun::CumulativeChiSquare myCumulativeChiSquare(trk.dof());
-    prob_trk = -log(1.-myCumulativeChiSquare(trk.chi2()));
-  }
-  if (fms.isValid()) {
-    Genfun::CumulativeChiSquare myCumulativeChiSquare(fms.dof());
-    prob_fms = -log(1.-myCumulativeChiSquare(fms.chi2()));
-  }
-  if (pmr.isValid()) {
-    Genfun::CumulativeChiSquare myCumulativeChiSquare(pmr.dof());
-    prob_pmr = -log(1.-myCumulativeChiSquare(pmr.chi2()));
-  }
-  if (debug) {
-    LogTrace("PiotrsCocktail")
-      << " Event " << eventNum << " Probabilities: trk = " << prob_trk
-      << "; fms = " << prob_fms << "; pmr = " << prob_pmr;
-  }
-
-  if (fms.isValid() && !pmr.isValid()) {
-    //if (trk.isValid() && prob_fms - prob_trk > 30.) result = trk;
-    //else                                            result = fms;
-    result = fms;
-  }
-  else if (!fms.isValid() && pmr.isValid()) {
-    result = pmr;
-    //if (trk.isValid() && prob_pmr - prob_trk > 30.) result = trk;
-  }
-  else if (fms.isValid() && pmr.isValid()) {
-    if (prob_fms - prob_pmr > 0.9) result = pmr;
-    //else {
-    //  if (trk.isValid() && prob_fms - prob_trk > 30.) result = trk;
-    //  else                                            result = fms;
-    //}
-    else result = fms;
-  }
-
-  return result;
-}
-
-
-//-----------------------------------------------------------------------------
-//          Proximity match for generated and reconstructed tracks
-//-----------------------------------------------------------------------------
-bool Zprime2muAnalysis::matchEta(const double eta1, const double eta2, 
-				 double *eta_diff) {
-
-  const static bool debug = verbosity >= VERBOSITY_TOOMUCH;
-
-  *eta_diff = abs(eta1-eta2);
-  // if (debug)
-  // LogTrace("Zprime2muAnalysis") << "Eta1-Eta2: " << *eta_diff;
-
-  // See if the difference in eta is less than or equal to .5
-  if (*eta_diff <= .5) {
-    if (debug)
-      LogTrace("matchEta")
-	<< "Eta Match!  Difference is: " << *eta_diff;
-    return true;
-  }
-  else{
-    return false;
+    // Since bestLeptons is not a CandidateBaseRefVector but just a
+    // std::vector of CandidateBaseRefs, we can use the standard sort
+    // function.
+    sort(bestLeptons.begin(), bestLeptons.end(), reverse_momentum_sort());
   }
 }
 
-bool Zprime2muAnalysis::matchPhi(const double phi1, const double phi2, 
-				 double *phi_diff) {
+////////////////////////////////////////////////////////////////////
+// Lepton/dilepton rec level utility functions
+////////////////////////////////////////////////////////////////////
 
-  // See if difference in phi is less than or equal to .5 rad.
-
-  const static bool debug = verbosity >= VERBOSITY_TOOMUCH;
-
-  *phi_diff = abs(phi1-phi2);
-  if (debug)
-    LogTrace("matchPhi") << "phi1 : " << phi1 << " phi2 : " << phi2;
-
-  // Compensate for two measurements near 0;
-  if (*phi_diff > TMath::Pi())
-    *phi_diff = abs((2.*TMath::Pi())-*phi_diff);
-
-  if (*phi_diff <= .5) {
-    if (debug)
-      LogTrace("matchPhi") << "Phi Match!  Diff: " << *phi_diff;
-    return true;
-  }
-  else{
-    return false;
-  }
+int Zprime2muAnalysis::id(const reco::CandidateRef& cand) const {
+  return cand.index();
 }
 
-bool Zprime2muAnalysis::matchEtaAndPhi(const double eta1, const double eta2,
-				       const double phi1, const double phi2,
-				       double *match_diff) {
-
-  // See if eta and phi match for the 2 tracks.
-  bool debug = false;
-  double eta_diff = 999., phi_diff = 999.;
-
-  bool isMatch = matchEta(eta1, eta2, &eta_diff) &&
-                   matchPhi(phi1, phi2, &phi_diff);
-
-  // Compute this value to give an estimate of how close 2 tracks are
-  *match_diff = sqrt((phi_diff*phi_diff)+(eta_diff*eta_diff));
-
-  if (isMatch) {
-    if (debug)
-      LogTrace("matchEtaAndPhi") << "Match!  Diff: " << *match_diff;
-    return true;
-  }
-  else {
-    if (debug)
-      LogTrace("matchEtaAndPhi")
-	<< "No Match! ------   Diff: " << *match_diff;
-    return false;
-  }
+int Zprime2muAnalysis::id(const reco::CandidateBaseRef& cand) const {
+  return cand.key();
 }
 
-bool Zprime2muAnalysis::matchTracks(const zp2mu::Muon& muon1, 
-				    const zp2mu::Muon& muon2,
-				    const bool debug) {
-  // See if tracks corresponding to mu+ and mu- at different reconstruction
-  // recs correspond to each other by making an eta and phi match.
-  bool   returnValue = false;
-  double match_diff = 999.;
-
-  if (muon1.isValid() == false) {
-    edm::LogError("matchTracks") 
-      << "+++ muon1 does not exist! +++\n";
-    return returnValue;
-  }
-  if (muon2.isValid() == false) {
-    edm::LogError("matchTracks")
-      << "+++ muon2 does not exist! +++\n";
-    return returnValue;
-  }
-
-  if (debug) {
-    ostringstream out;
-    out << "For muons " << muon1.id() << " (rec = " << muon1.recLevel()
-	<< ") and "     << muon2.id() << " (rec = " << muon2.recLevel()
-	<< ")" << endl;
-    out << "muon1 eta: " << setw(7) << muon1.eta()
-	<< "      phi: " << setw(7) << muon1.phi() << endl;
-    out << "muon2 eta: " << setw(7) << muon2.eta()
-	<< "      phi: " << setw(7) << muon2.phi();
-    LogTrace("matchTracks") << out.str();
-  }
-
-  if (matchEtaAndPhi(muon1.eta(), muon2.eta(),
-		     muon1.phi(), muon2.phi(), &match_diff)) {
-    if (debug)
-      LogTrace("matchTracks") << "Match is a success!";
-    returnValue = true;
-  }
-  else {
-    if (debug)
-      LogTrace("matchTracks") << "Match is NOT a success!";
-  }
-  return returnValue;
+int Zprime2muAnalysis::recLevel(const reco::CandidateBaseRef& cand) const {
+  map<int,int>::const_iterator c = recLevelMap.find(cand.id().id());
+  if (c != recLevelMap.end()) return c->second;
+  else return -1;
 }
 
-bool Zprime2muAnalysis::findClosestId(const int rec, const zp2mu::Muon& muon,
-				      int *closest_id, const bool debug) {
-  // rec:   reconstruction level of muon to be matched to a given muon.
-  // muon:  reference to a given muon.
-  // returns: true/false and the index of the rec muon which is the closest
-  // in eta and phi to a given muon.
-
-  bool returnValue = false;
-  double  match_diff = 999., match_mindiff = 999.;
-  *closest_id = -999;
-
-  if (rec < lgen || rec >= MAX_LEVELS) {
-    edm::LogError("findClosestId")
-      << "+++ Unknown rec. level = " << rec << " +++\n";
-    return returnValue;
-  }
-  if (muon.isValid() == false) {
-    edm::LogError("findClosestId") 
-      << "+++ muon does not exist! +++\n";
-    return returnValue;
-  }
-  if (muon.closestId(rec) >= 0) {
-    edm::LogError("findClosestId")
-      << "+++ this muon already has a matched muon #"
-      << muon.closestId(rec) << " at level " << rec << "! +++\n";
-    return returnValue;
-  } 
-  if (muon.recLevel() == lgen && muon.pt() < 1.) {
-    // pT of a generated muon is too low to try to match
-    return returnValue;
-  } 
-
-  // if we are doingElectrons, at gen level only compare to the
-  // first two electrons (the true PYTHIA electrons)
-  unsigned maxN = rec == lgen && doingElectrons ? 2 : allMuons[rec].size();
-
-  //vector<zp2mu::Muon>::const_iterator pmu;
-  //for (pmu = allMuons[rec].begin(); pmu != allMuons[rec].end(); pmu++) {
-  for (unsigned imu = 0; imu < maxN; imu++) {
-    const zp2mu::Muon* pmu = &allMuons[rec][imu];
-
-    if (rec == lgen && pmu->pt() < 1.) continue;
-    if (debug) {
-      ostringstream out;
-      out << "For muon " << muon.id() << "----------------------------\n";
-      out << "rec_a eta: " << muon.eta() << "   phi: " << muon.phi() << endl;
-      out << "rec_b eta: " << pmu->eta() << "   phi: " << pmu->phi();
-      LogTrace("findClosestId") << out.str();
+int Zprime2muAnalysis::recLevel(const reco::Candidate& dil) const {
+  int rec = -1;
+  for (unsigned ilep = 0; ilep < dil.numberOfDaughters(); ilep++) {
+    int r = recLevel(dileptonDaughter(dil, ilep));
+    if (rec >= 0) {
+      if (r != rec)
+	return lbest;
     }
+    else
+      rec = r;
+  }
+  return rec;
+}  
 
-    // If the tracks lie within a certain region, store the value
-    // of the match difference (eta_diff * phi_diff).
-    if (matchEtaAndPhi(muon.eta(), pmu->eta(),
-		       muon.phi(), pmu->phi(), &match_diff)) {
-      if (debug) LogTrace("findClosestId") << "Match is a success!";
-      returnValue = true;
-      // If the match is closer than before, store the id of a muon.
-      if (match_diff < match_mindiff) {
-	*closest_id = pmu->id();
-	match_mindiff = match_diff;
-	if (debug) {
-	  LogTrace("findClosestId")
-	    << "match_diff: " << match_diff << " for muon #" << *closest_id;
-	}
-      }
-    }
+const Zprime2muAnalysis::LeptonRefVector&
+Zprime2muAnalysis::getLeptons(const int rec) const {
+  checkRecLevel(rec, "getLeptons");
+  return rec < MAX_LEVELS ? allLeptons[rec] : bestLeptons;
+}
+
+const reco::CandidateCollection&
+Zprime2muAnalysis::getDileptons(const int rec) const {
+  checkRecLevel(rec, "getDileptons");
+  return rec < MAX_LEVELS ? allDileptons[rec] : bestDileptons;
+}
+
+zp2mu::LeptonExtra&
+Zprime2muAnalysis::getLepExtra(const reco::CandidateBaseRef& cand) {
+  return lepExtra[recLevel(cand)][id(cand)];
+}
+
+const zp2mu::LeptonExtra&
+Zprime2muAnalysis::getLepExtra(const reco::CandidateBaseRef& cand) const {
+  return lepExtra[recLevel(cand)][id(cand)];
+}
+
+const Zprime2muAnalysis::LorentzVector&
+Zprime2muAnalysis::closestPhoton(const reco::CandidateBaseRef& cand) const {
+  /*
+  const int level = recLevel(cand);
+  reco::CandMatchMap::const_iterator c = photonMatchMap[level].find(cand);
+  if (c != photonMatchMap[level].end())
+    return photonMatchMap[level][cand]->p4();
+  else return LorentzVector(); // a zero vector
+  */
+  const zp2mu::LeptonExtra& lepEx = getLepExtra(cand);
+  return lepEx.closestPhoton();
+}
+
+////////////////////////////////////////////////////////////////////
+// Lepton/dilepton matching
+////////////////////////////////////////////////////////////////////
+
+const reco::CandidateBaseRef&
+Zprime2muAnalysis::matchLepton(const reco::CandidateBaseRef& lep,
+			       const int level,
+			       int whichMatch) const {
+  checkRecLevel(level, "matchLepton");
+  // If the same level was requested, go ahead and return the same
+  // lepton.
+  if (level == recLevel(lep)) return lep;
+
+  const zp2mu::LeptonExtra& lepEx = getLepExtra(lep);
+  
+  int id;
+  if (whichMatch < 0) {
+    int closestId = lepEx.closestMatch(level);
+    if (level <= l2)
+      id = closestId;
     else {
-      if (debug)
-	LogTrace("findClosestId") << "Match is NOT a success!";
-    }
+      int sameId = lepEx.seedMatch(level);
+      if (sameId >= 0)
+	id = sameId;
+      else
+	id = closestId;
+    }	  
   }
-  return returnValue;
+  else
+    id = whichMatch == 1 ? lepEx.seedMatch(level) : lepEx.closestMatch(level);
+
+  if (id == -999 || id < 0 || id > int(allLeptons[level].size()))
+    return invalidRef;
+
+  for (unsigned int ilep = 0; ilep < allLeptons[level].size(); ilep++)
+    if (getLepExtra(allLeptons[level][ilep]).id() == id)
+      return allLeptons[level][ilep];
+    
+  return invalidRef;
 }
 
-// Find the seed of the alternate fit which matches the seed of the
-// principle fit.  This function can only compare different high level
-// fits (not Gen, L1, or L2).
-bool Zprime2muAnalysis::findSameSeedId(const int rec, const zp2mu::Muon& muon, 
-				       int *sameseed_id, const bool debug) {
-  // rec:   reconstruction level of muon to be matched to a given muon.
-  // muon:  reference to a given muon.
-  // returns: true/false and the index of the rec muon which has the same
-  // seed as a given muon.
+const reco::CandidateBaseRef&
+Zprime2muAnalysis::closestLepton(const reco::CandidateBaseRef& lep,
+				 const int level) const {
+  return matchLepton(lep, level, 0);
+}
 
-  bool returnValue = false;
-  *sameseed_id = -999;
+const reco::CandidateBaseRef&
+Zprime2muAnalysis::sameSeedLepton(const reco::CandidateBaseRef& lep,
+				  const int level) const {
+  return matchLepton(lep, level, 1);
+}
 
-  if (rec < l3 || rec >= MAX_LEVELS) {
-    edm::LogError("findSameSeedId")
-      << "+++ Invalid rec. level = " << rec << " +++\n";
-    return returnValue;
+const reco::CandidateBaseRef&
+Zprime2muAnalysis::matchedLepton(const reco::CandidateBaseRef& lep,
+				 const int level) const {
+  return matchLepton(lep, level, -1);
+}
+
+bool Zprime2muAnalysis::matchDilepton(const reco::Candidate& dil,
+				      const int level,
+				      const reco::Candidate* newdil) const {
+  const reco::CandidateBaseRef& lepp
+    = matchedLepton(dileptonDaughterByCharge(dil, +1), level);
+  const reco::CandidateBaseRef& lepm
+    = matchedLepton(dileptonDaughterByCharge(dil, -1), level);
+  int idp = id(lepp), idm = id(lepm);
+  
+  // look for a dilepton at that level which has the same two leptons
+  const reco::CandidateCollection& dileptons = getDileptons(level);
+  for (unsigned idi = 0; idi < dileptons.size(); idi++)
+    if (id(dileptonDaughterByCharge(dileptons[idi], +1)) == idp &&
+	id(dileptonDaughterByCharge(dileptons[idi], -1)) == idm) {
+      newdil = &dileptons[idi];
+      return true;
+    }
+  return false;
+}
+
+////////////////////////////////////////////////////////////////////
+// Generator-level utility functions
+////////////////////////////////////////////////////////////////////
+
+void Zprime2muAnalysis::SetP4M(reco::Particle::LorentzVector& v,
+	    double pt, double phi, double p, double theta, double m) const {
+  v.SetCoordinates(pt*cos(phi), pt*sin(phi), p*cos(theta), sqrt(p*p + m*m));
+}
+
+const reco::Candidate*
+Zprime2muAnalysis::mother(const reco::CandidateBaseRef& cand) const {
+  int pId = cand->pdgId();
+  const reco::Candidate* mom = cand->mother();
+  while (mom != 0 && mom->pdgId() == pId)
+    mom = mom->mother();
+  return mom;
+}
+  
+int Zprime2muAnalysis::motherId(const reco::CandidateBaseRef& cand) const {
+  const reco::Candidate* mom = mother(cand);
+  if (mom != 0) return mom->pdgId();
+  else return 0;
+  /*    throw cms::Exception("motherId")
+        << "+++ cannot find mother for particle! pdgId: " << pId
+        << " status: " << cand->status() << " +++\n";*/
+}
+
+int Zprime2muAnalysis::grandmotherId(const reco::CandidateBaseRef& cand) const {
+  const reco::Candidate *mom = mother(cand);
+  if (mom == 0) return 0;
+  const reco::Candidate *gm = mom->mother();
+  if (gm != 0) return gm->pdgId();
+  else return 0;
+  /* throw cms::Exception("grandmotherId")
+     << "+++ cannot find grandmother for particle! pdgId: " << p->pdgId()
+     << " status: " << cand->status() 
+     << " mother pdgId: " << mId << " status: " << mom->status() << " +++\n";*/
+}
+ 
+const reco::Candidate*
+Zprime2muAnalysis::sameMother(const reco::CandidateBaseRef& cand1,
+			      const reco::CandidateBaseRef& cand2) const {
+  const reco::Candidate* m1 = mother(cand1);
+  const reco::Candidate* m2 = mother(cand2);
+
+  bool sameMother = m1 != 0 && m2 != 0 && m1 == m2;
+  //m1->pdgId() == m2->pdgId() &&
+  //m1->status() == m2->status() && m1->p4() == m2->p4();
+
+  if (sameMother) return m1;
+  else return 0;
+}
+
+bool Zprime2muAnalysis::isResonance(int pdgId) const {
+  // Z', Z0/gamma*, G, or G*
+  return pdgId == 32 || pdgId == 23 || pdgId == 39 || pdgId == 5000039;
+}
+
+////////////////////////////////////////////////////////////////////
+// Track utility functions
+////////////////////////////////////////////////////////////////////
+
+reco::TrackBaseRef
+Zprime2muAnalysis::getMainTrack(const reco::CandidateBaseRef& cand) const {
+  const int rec = recLevel(cand);
+  if (doingElectrons)
+    return reco::TrackBaseRef(cand->get<reco::GsfTrackRef>());
+  else if (rec == l2)
+    return reco::TrackBaseRef(cand->get<reco::TrackRef>());
+  else if (rec >= l3)
+    return reco::TrackBaseRef(cand->get<reco::TrackRef,
+			      reco::CombinedMuonTag>());
+  else
+    return reco::TrackBaseRef(); // an invalid ref
+}
+
+template <typename TrackType>
+double Zprime2muAnalysis::pError(const TrackType& track) const {
+  // dumb identity:
+  // p = q / qoverp
+  // dp_dqoverp = - q/qoverp^2
+
+  const double qoverp = track->qoverp();
+  const double q = track->charge();
+  
+  double sig_p = track->qoverpError() * q/qoverp/qoverp;
+  if (sig_p < 0) sig_p = -sig_p;
+  return sig_p;
+}
+
+template <typename TrackType>
+double Zprime2muAnalysis::ptError(const TrackType& track) const {
+  return track->ptError();
+}
+
+template <typename TrackType>
+double Zprime2muAnalysis::invPtError(const TrackType& tk) const {
+  return invError(tk->pt(), tk->ptError());
+}
+  
+template <typename TrackType>
+double Zprime2muAnalysis::invPError(const TrackType& tk) const {
+  return invError(tk->p(), pError(tk));
+}
+
+double Zprime2muAnalysis::ptError(const reco::CandidateBaseRef& cand) const {
+  return getMainTrack(cand)->ptError();
+}
+
+double Zprime2muAnalysis::pError(const reco::CandidateBaseRef& cand) const {
+  return pError(getMainTrack(cand));
+}
+
+double Zprime2muAnalysis::invPtError(const reco::CandidateBaseRef& cand) const {
+  return invPtError(getMainTrack(cand));
+}
+
+double Zprime2muAnalysis::invPError(const reco::CandidateBaseRef& cand) const {
+  return invPError(getMainTrack(cand));
+}
+
+template <typename TrackType>
+void Zprime2muAnalysis::numSubDetHits(const TrackType& theTrack,
+				      int& nPixHits, int& nSilHits,
+				      int& nOtherHits,
+				      DetId::Detector otherDet) const {
+  nPixHits = nSilHits = nOtherHits = 0;
+
+  if (theTrack.isNull()) {
+    edm::LogError("numSubDetHits")
+      << "theTrack is a null reference!";
+    return;
   }
-  if (muon.isValid() == false) {
-    edm::LogError("findSameSeedId") << "+++ muon does not exist! +++\n";
-    return returnValue;
-  }
-  if (muon.recLevel() < l3) {
-    edm::LogError("findSameSeedId")
-      << "+++ Invalid rec. level = " << muon.recLevel() << " of muon +++\n";
-    return returnValue;
-  }
-  if (muon.sameSeedId(rec) >= 0) {
-    edm::LogError("findSameSeedId")
-      << "+++ this muon already has a matched muon #"
-      << muon.sameSeedId(rec) << " at level " << rec << "! +++\n";
-    return returnValue;
-  } 
-
-  // Get seed of principle muon.
-  int princ_seed = muon.seedIndex();
-
-  // Loop over all seeds of alternative fit and look for matching seed.
-  vector<zp2mu::Muon>::const_iterator pmu;
-  for (pmu = allMuons[rec].begin(); pmu != allMuons[rec].end(); pmu++) {
-    if (pmu->seedIndex() == princ_seed) {
-      returnValue = true;
-      *sameseed_id = pmu->id();
-      if (debug) {
-	LogTrace("findSameSeedId")
-	  << "Principle muon index = " << muon.id()
-	  << ", same seed muon index = " << *sameseed_id
-	  << ", their seeds = " << princ_seed;
+    
+  int nRecHits = theTrack->recHitsSize();
+  // loop over all the rechits and count how many are in the pixels and
+  // how many are in the strips
+  for (trackingRecHit_iterator trh = theTrack->recHitsBegin();
+       trh != theTrack->recHitsEnd(); trh++) {
+    DetId did = (*trh)->geographicalId();
+    DetId::Detector det = did.det();
+    if (det == DetId::Tracker) {
+      int subdetId = did.subdetId();
+      // trying not to use magic numbers -- but pixel subdets are 1 and 2,
+      // strip subdets are 3-6
+      switch (subdetId) {
+      case StripSubdetector::TIB:
+      case StripSubdetector::TOB:
+      case StripSubdetector::TID:
+      case StripSubdetector::TEC:
+	nSilHits++;
+	break;
+      case PixelSubdetector::PixelBarrel:
+      case PixelSubdetector::PixelEndcap:
+	nPixHits++;
+	break;
+      default:
+	edm::LogWarning("numSubDetHits")
+	  << "unknown subid for TrackingRecHit";
       }
-      return returnValue;
     }
+    else if (det == otherDet) // DetId::Muon, DetId::Ecal
+      nOtherHits++;
   }
-  if (debug)
-    LogTrace("findSameSeedId") << "No seed match!";
-  return returnValue;
+  // redundant check, hopefully
+  if (nPixHits + nSilHits + nOtherHits != nRecHits)
+    edm::LogWarning("numSubDetHits")
+      << "TrackingRecHits from outside the tracker or 'other' systems!";
 }
 
-void Zprime2muAnalysis::matchAllMuons(const bool debug) {
-  // For every muon at every rec. level, look for the same seed and
-  // closest muons at other rec. levels, and assign the id's of found
-  // muons to the appropriate members of the Muon class.
-  // The seed info is not available for generated, L1 and L2 muons, so only
-  // look for a closest muon.  For muons at other levels, look for both the
-  // same seed and the closest muon.
-  int closest_id, sameseed_id;
-  vector<zp2mu::Muon>::iterator pmu;
+int Zprime2muAnalysis::nHits(const reco::CandidateBaseRef& cand, 
+			     const int type) const {
+  const int rec = recLevel(cand);
+  const reco::TrackBaseRef tk = getMainTrack(cand);
+  if (type == HITS_ALL || (rec == l2 && type == HITS_OTH))
+    return tk->recHitsSize();
+  else if (rec >= l3) {
+    int pix, sil, oth;
+    if (doingElectrons)
+      numSubDetHits(tk, pix, sil, oth, DetId::Ecal);
+    else
+      numSubDetHits(tk, pix, sil, oth, DetId::Muon);
+    if      (type == HITS_OTH) return oth;
+    else if (type == HITS_TRK) return pix + sil;
+    else if (type == HITS_PIX) return pix;
+    else if (type == HITS_SIL) return sil;
+  }
+  // return nonsensical number of hits if the above logic failed
+  return -1;
+}
 
-  for (int irec = MAX_LEVELS-1; irec >= lgen; irec--) {
-    for (pmu = allMuons[irec].begin(); pmu != allMuons[irec].end(); pmu++) {
-      for (int jrec = lgen; jrec < MAX_LEVELS; jrec++) {
-	if (jrec != irec) {
-	  if (findClosestId(jrec, *pmu, &closest_id, debug)) {
-	    pmu->setClosestId(jrec, closest_id);
-	  }
-	  if (irec > l2 && jrec > l2 &&
-	      findSameSeedId(jrec, *pmu, &sameseed_id, debug)) {
-	    pmu->setSameSeedId(jrec, sameseed_id);
-	  }
-	}
-	else {
-	  pmu->setClosestId(jrec,  pmu->id()); // its own id
-	  if (irec > l2 && jrec > l2) pmu->setSameSeedId(jrec, pmu->id());
-	}
-      }
+bool Zprime2muAnalysis::matchTracks(const reco::CandidateBaseRef& cand1,
+				    const reco::CandidateBaseRef& cand2) const {
+  return fabs(reco::deltaPhi(cand1->phi(), cand2->phi())) < .5 &&
+    fabs(cand1->eta() - cand2->eta()) < .5;
+}
+
+double
+Zprime2muAnalysis::ptLx(const reco::TrackRef& theTrack, const int rec) const {
+  static const double nSigma[3] = { 0, 3.9, 2.2 };
+  if (rec < l1 || rec > l3) {
+    edm::LogError("ptLx") << "cannot compute ptLx for generated/offline muons!";
+    return 0;
+  }
+  double ptLx = theTrack->pt();
+  double err0 = theTrack->error(0);
+  double abspar0 = fabs(theTrack->parameter(0));
+  if (abspar0>0) ptLx += nSigma[rec-1]*err0/abspar0*ptLx;
+  return ptLx;
+}
+
+double
+Zprime2muAnalysis::cumulativeChiSquare(const reco::CandidateBaseRef& mu) const {
+  const reco::TrackRef& track = toConcrete<reco::Muon>(mu).combinedMuon();
+  Genfun::CumulativeChiSquare myCumulativeChiSquare(int(track->ndof()));
+  return -log(1.-myCumulativeChiSquare(track->chi2()));
+}
+
+////////////////////////////////////////////////////////////////////
+// Dilepton utility functions
+////////////////////////////////////////////////////////////////////
+
+const Zprime2muAnalysis::LorentzVector&
+Zprime2muAnalysis::resV(const int rec, const int idil) const {
+  checkRecLevel(rec, "resV");
+  return dileptonResonances[rec][idil];
+}
+
+int Zprime2muAnalysis::numDaughtersInAcc(const reco::Candidate& dil,
+					 const double etaCut) const {
+  int count = 0;
+  for (unsigned ilep = 0; ilep < dil.numberOfDaughters(); ilep++)
+    if (fabs(dil.daughter(ilep)->eta()) < etaCut)
+      count++;
+  return count;
+}
+
+const reco::CandidateBaseRef
+Zprime2muAnalysis::dileptonDaughter(const reco::Candidate& dil,
+				    const unsigned i) const {
+  if (i < 0 || i >= dil.numberOfDaughters())
+    return reco::CandidateBaseRef(); // an invalid reference
+  return dil.daughter(i)->masterClone();
+}
+
+const reco::CandidateBaseRef
+Zprime2muAnalysis::dileptonDaughterByCharge(const reco::Candidate& dil,
+					    const int charge) const {
+  for (unsigned ilep = 0; ilep < dil.numberOfDaughters(); ilep++) {
+    if (dil.daughter(ilep)->charge() == charge)
+      return dileptonDaughter(dil, ilep);
+  }
+  return reco::CandidateBaseRef(); // an invalid reference
+}
+
+////////////////////////////////////////////////////////////////////
+// Print-outs
+////////////////////////////////////////////////////////////////////
+
+void Zprime2muAnalysis::dumpLepton(ostream& output,
+				   reco::CandidateBaseRef cand) const {
+  // Make sure we're looking at the master ref (to handle shallow
+  // clones which are daughters of dileptons).
+  if (cand->hasMasterClone())
+    cand = cand->masterClone().castTo<reco::CandidateBaseRef>();
+
+  const int level = recLevel(cand);
+  const zp2mu::LeptonExtra& candEx = getLepExtra(cand);
+
+  string str_lvl = " ";
+  if (level >= 0 && level < MAX_LEVELS) str_lvl = str_level_short[level];
+  else if (level == lbest)              str_lvl = "BEST";
+  output << str_lvl
+	 << " #"          << setw(1) << candEx.id()
+	 << "  Q: "       << setw(2) << cand->charge();
+
+  if (level == lgen) {
+    //const reco::GenParticleCandidate& genmu
+    //  = toConcrete<reco::GenParticleCandidate>(cand);
+    // JMTBAD fake motherline for tkdiff
+    output << " Origin: " << setw(4) << motherId(cand)
+	   << "/"         << setw(4) << 0 //(candEx.id() < 2 ? 6 : 0) // rhs.genMotherLine()
+	   << " Phi: "    << setw(7) << setprecision(4) << cand->phi()
+	   << " Eta: "    << setw(7) << setprecision(4) << cand->eta()
+	   << " Pt: "     << setw(7) << setprecision(5) << cand->pt()
+	   << " P: "      << setw(7) << setprecision(5) << cand->p()
+	   << endl;
+  }
+  else if (level == l1) {
+    const l1extra::L1MuonParticle& l1mu
+      = toConcrete<l1extra::L1MuonParticle>(cand);
+    output << " Quality: "<< setw(2) << l1mu.gmtMuonCand().quality()
+	   << " Phi: "    << setw(7) << setprecision(4) << cand->phi()// + 0.0218
+	   << " Eta: "    << setw(7) << setprecision(4) << cand->eta()
+	   << " Pt: "     << setw(7) << setprecision(5) << cand->pt()
+	   << " P: "      << setw(7) << setprecision(5) << cand->p()
+	   << endl;
+  }
+  else if (level == l2) {
+    const reco::TrackBaseRef& tk = getMainTrack(cand);
+    output << " Phi: "      << setw(8) << setprecision(4) << cand->phi()
+	   << "      Eta: " << setw(8) << setprecision(4) << cand->eta()
+	   << endl;
+    output << "   Muhits: "    << setw(3) << nHits(cand, HITS_OTH)
+	   << "   Chi2/Ndof: " << setw(8) << setprecision(4) << tk->chi2()
+	   << "/"              << setw(2) << tk->ndof() << endl;
+    output << "   P:     " << setw(7) << setprecision(5) << cand->p()
+	   << " +/- " << pError(tk)
+	   << "   "
+	   << "   Pt:    " << setw(7) << setprecision(5) << cand->pt()
+	   << " +/- " << ptError(tk)
+	   << endl;
+  }
+  else {
+    const reco::RecoCandidate& lep = toConcrete<reco::RecoCandidate>(cand);
+    const reco::TrackBaseRef glbtrk = getMainTrack(cand);
+    reco::TrackRef tktrk, statrk;
+    double sumptr03 = 0;
+    if (!doingElectrons) {
+      tktrk = lep.track();
+      statrk = lep.standAloneMuon();
+      const reco::Muon& mu = toConcrete<reco::Muon>(cand);
+      if (mu.isIsolationValid()) sumptr03 = mu.getIsolationR03().sumPt;
     }
+    
+    output << " Phi: "      << setw(8) << setprecision(4) << cand->phi()
+	   << "      Eta: " << setw(8) << setprecision(4) << cand->eta()
+	   << endl;
+    output << "   Pixhits: " << setw(3) << nHits(cand, HITS_PIX)
+	   << " Silhits: "   << setw(3) << nHits(cand, HITS_SIL)
+	   << " Rechits: "   << setw(3) << nHits(cand, HITS_ALL)
+	   << " Seed: "      << setw(3) << candEx.seedIndex()
+	   << endl;
+    output << "   Closest  :";
+    for (int i = 0; i < MAX_LEVELS; i++) {
+      output << setw(5) << candEx.closestMatch(i)
+	     << "(" << str_level_short[i] << ")";
+    }
+    output << endl;
+    output << "   Same-seed:";
+    for (int i = 0; i < MAX_LEVELS; i++) {
+      int match = candEx.seedMatch(i);
+      output << setw(5) << match << "(" << str_level_short[i] << ")";
+    }
+    output << endl;
+    output << "   P:          " << setw(7) << setprecision(5) << cand->p();
+    if (!glbtrk.isNull()) 
+      output << " +/- "    << pError(glbtrk);
+    output << endl;
+    output << "   Pt:         " << setw(7) << cand->pt();
+    if (!glbtrk.isNull())
+      output << " +/- "    << ptError(glbtrk)
+	     << "   Chi2/Ndof: "  << setw(11) << glbtrk->chi2()
+	     << "/"        << setw(2) << glbtrk->ndof();
+    output << endl;
+    output << "   Forward Pt: " << setw(7) << 0 //rhs.forwardPt()
+	   << " +/- "    << 0 //rhs.errForwardPt()
+	   << "   Back Chi2: "  << setw(11) << 0 //rhs.backChi2()
+	   << endl;
+    double tkpt, tkpterr, tkchi2;
+    if (tktrk.isNull() || doingElectrons)
+      tkpt = tkpterr = tkchi2 = 0;
+    else {
+      tkpt = tktrk->pt();
+      tkpterr = ptError(tktrk);
+      tkchi2 = tktrk->chi2();
+    }
+    output << "   Tracker Pt: " << setw(7) << tkpt << " +/- " << tkpterr
+	   << "   Tracker Chi2: " << setw(8) << tkchi2 << endl;
+    double stapt, stapterr, stachi2;
+    if (statrk.isNull() || doingElectrons)
+      stapt = stapterr = stachi2 = 0;
+    else {
+      stapt = statrk->pt();
+      stapterr = ptError(statrk);
+      stachi2 = statrk->chi2();
+    }
+    output << "   MuonFit Pt: " << setw(7) << stapt
+	   << " +/- " << stapterr
+	   << "   MuonFit Chi2: " << setw(8) << stachi2 << endl;
+    output << "   Tracker Chi2 diff.: " << setw(7) << 0 // rhs.trackerChi2Diff()
+	   << "   MuonFit Chi2 diff.: " << setw(7) << 0 // rhs.muonFitChi2Diff()
+	   << endl;
+    if (!glbtrk.isNull()) {
+      output << "   Vertex position: " << setw(11) << cand->vx() 
+	     << " "                    << setw(11) << cand->vy() 
+	     << " "                    << setw(11) << cand->vz() << endl;
+      output << "   Track. position: " << setw(11) << glbtrk->innerPosition().X()
+	     << " "                    << setw(11) << glbtrk->innerPosition().Y()
+	     << " "                    << setw(11) << glbtrk->innerPosition().Z()
+	     << endl;
+    }
+
+    output << "   Closest photon: " << closestPhoton(cand)
+	   << "   Sum pT (dR<0.3): " << sumptr03 << endl;
+
   }
 }
+
+void Zprime2muAnalysis::dumpDileptonMasses() const {
+  ostringstream out;
+
+  out << "Dilepton masses at levels  ";
+  for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
+    out << " " << i_rec;
+    if (i_rec < MAX_LEVELS-1) out << "      ";
+  }
+
+  out << setw(6) << setprecision(5);
+  for (unsigned int i_dil = 0; i_dil < MAX_DILEPTONS; i_dil++) {
+    out << "\n Dilepton # " << i_dil << "; dimu mass: ";
+    for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
+      if (allDileptons[i_rec].size() > i_dil)
+	out << allDileptons[i_rec][i_dil].mass();
+      else
+	out << " ---  ";
+      if (i_rec < MAX_LEVELS-1) out << ", ";
+    }
+    out << "\n";
+
+    out << "                res mass: ";
+    for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
+      if (dileptonResonances[i_rec].size() > i_dil)
+	out << dileptonResonances[i_rec][i_dil].mass();
+      else
+	out << " ---  ";
+      if (i_rec < MAX_LEVELS-1) out << ", ";
+    }
+  }
+
+  /*
+    // JMTBAD before 17X LorentzVectors are stored in XYZT instead of
+    // PtEtaPhiM rep; this leads to slightly different numbers in the
+    // above (and below, where the mass should be exactly that of the
+    // muon mass)
+
+  for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++)
+    if (allDileptons[i_rec].size() >= 1)
+      out << "\n 4vecs: " << allDileptons[i_rec][0].p4() << allDileptons[i_rec][0].p4().mag()
+	  << " " << dileptonDaughterByCharge(allDileptons[i_rec][0], -1)->p4()	  << " " << dileptonDaughterByCharge(allDileptons[i_rec][0], -1)->p4().mag()
+	  << " " << dileptonDaughterByCharge(allDileptons[i_rec][0], +1)->p4()	  << " " << dileptonDaughterByCharge(allDileptons[i_rec][0], +1)->p4().mag() << endl;
+  */
+
+  LogTrace("dumpDileptonMasses") << out.str();
+}
+
+void Zprime2muAnalysis::dumpDilQuality() const {
+  // JMTBAD not implemented
+}
+
+void Zprime2muAnalysis::dumpEvent(const bool printGen, const bool printL1,
+				   const bool printL2, const bool printL3,
+				   const bool printBest) const {
+  unsigned imu;
+  int irec;
+  ostringstream out;
+  out << "\n******************************** Event " << eventNum << endl;
+  for (irec = 0; irec < MAX_LEVELS; irec++) {
+    if (irec == 0 && !printGen ||
+	irec == 1 && !printL1 ||
+	irec == 2 && !printL2 ||
+	irec >= 3 && !printL3) continue;
+    if (irec >= l3)
+      out << endl;
+    for (imu = 0; imu < allLeptons[irec].size(); imu++)
+      dumpLepton(out, allLeptons[irec][imu]);
+  }
+  if (printBest) {
+    out << "\nBest off-line muons: \n";
+    for (imu = 0; imu < bestLeptons.size(); imu++)
+      dumpLepton(out, bestLeptons[imu]);
+  }
+  LogTrace("") << out.str();
+}
+
+////////////////////////////////////////////////////////////////////
+// Quality cuts
+////////////////////////////////////////////////////////////////////
+
+bool Zprime2muAnalysis::TrackQCheck(const reco::CandidateBaseRef& lepton,
+				    const int qsel, int& ncut) const {
+  // JMTBAD not implemented
+  return true;
+}
+
+bool Zprime2muAnalysis::dilQCheck(const reco::Candidate& dilepton,
+				  const int qsel, int& ncut_mum,
+				  int& ncut_mup) const {
+  // JMTBAD not implemented
+  return true;
+}
+
+////////////////////////////////////////////////////////////////////
+// Trigger decision queries
+////////////////////////////////////////////////////////////////////
+
+bool Zprime2muAnalysis::passTrigger(const int irec) const {
+  if (irec < 0 || irec > l3) {
+    throw cms::Exception("Zprime2muAnalysis")
+      << "+++ passTrigger error: L" << irec << " trigger is unknown +++\n";
+  }
+
+  return passTrig[irec];
+}
+
+bool Zprime2muAnalysis::passTrigger() const {
+  unsigned int decision = 1;
+
+  for (int itrig = l1; itrig <= l3; itrig++) {
+    decision *= trigWord[itrig];
+  }
+  return (decision != 0);
+}
+
+////////////////////////////////////////////////////////////////////
+// Lepton/dilepton acceptance
+////////////////////////////////////////////////////////////////////
+
+Zprime2muAnalysis::WhereLepton
+Zprime2muAnalysis::whereIsLepton(const reco::CandidateBaseRef& lepton) {
+  double abseta = fabs(lepton->eta());
+  if (doingElectrons) {
+    // JMTBAD are these numbers taken from ECAL TDR applicable/useful?
+    if      (abseta < 1.48)  return W_BARREL;
+    else if (abseta < 3.0)   return W_ENDCAP;
+    else                     return W_OUTSIDE;
+  }
+  else {
+    if      (abseta < 0.9) return W_BARREL;
+    else if (abseta < 1.2) return W_OVERLAP;
+    else if (abseta < 2.4) return W_ENDCAP;
+    else                   return W_OUTSIDE;
+  }
+}
+
+Zprime2muAnalysis::WhereDilepton
+Zprime2muAnalysis::whereIsDilepton(const reco::Candidate& dil) {
+  WhereLepton wlep1 = whereIsLepton(dileptonDaughter(dil, 0));
+  WhereLepton wlep2 = whereIsLepton(dileptonDaughter(dil, 1));
+  // get a unique ordering so testing below is easier
+  if (int(wlep1) > int(wlep2)) {
+    WhereLepton tmp = wlep1;
+    wlep1 = wlep2;
+    wlep2 = tmp;
+  }
+
+  if      (wlep1 == W_BARREL  && wlep2 == W_BARREL)   return W_BARRELBARREL;
+  else if (wlep1 == W_BARREL  && wlep2 == W_OVERLAP)  return W_BARRELOVERLAP;
+  else if (wlep1 == W_BARREL  && wlep2 == W_ENDCAP)   return W_BARRELENDCAP;
+  else if (wlep1 == W_BARREL  && wlep2 == W_OUTSIDE)  return W_BARRELOUTSIDE;
+  else if (wlep1 == W_OVERLAP && wlep2 == W_OVERLAP)  return W_OVERLAPOVERLAP;
+  else if (wlep1 == W_OVERLAP && wlep2 == W_ENDCAP)   return W_OVERLAPENDCAP;
+  else if (wlep1 == W_OVERLAP && wlep2 == W_OUTSIDE)  return W_OVERLAPOUTSIDE;
+  else if (wlep1 == W_ENDCAP  && wlep2 == W_ENDCAP)   return W_ENDCAPENDCAP;
+  else if (wlep1 == W_ENDCAP  && wlep2 == W_OUTSIDE)  return W_ENDCAPOUTSIDE;
+  else //if (wlep1 == W_OUTSIDE && wlep2 == W_OUTSIDE)
+    return W_OUTSIDEOUTSIDE;
+}
+
+////////////////////////////////////////////////////////////////////
+// Analysis level function (cuts, etc.)
+////////////////////////////////////////////////////////////////////
+
+bool Zprime2muAnalysis::eventIsInteresting() {
+  return false;
+  bool result = false;
+  if (bestDileptons.size() > 0) {
+    const reco::Candidate& dil = bestDileptons[0];
+    if (dil.mass() > 800)
+      result = true;
+    const reco::CandidateBaseRef mum = dileptonDaughterByCharge(dil, -1);
+    const reco::CandidateBaseRef mup = dileptonDaughterByCharge(dil, +1);
+    if (fabs(mum->phi() - mup->phi()) < .4)
+      result = true;
+  }
+
+  if (result)
+    edm::LogInfo("Zprime2muAnalysis") << "'Interesting' event found!";
+
+  return result;
+}
+
+unsigned Zprime2muAnalysis::leptonIsCut(const reco::CandidateBaseRef& lepton) {
+  unsigned retval = 0;
+  
+  if (doingElectrons) {
+    // JMTBAD no cuts yet implemented for electrons
+  }
+  else {
+    // pT cut of 20 GeV
+    if (lepton->pt() <= 20.)
+      retval |= 0x01;
+
+    // sum pT in cone of dR=0.3 cut of 10 GeV
+    if (recLevel(lepton) >= lgmr) {
+      const reco::Muon& muon = toConcrete<reco::Muon>(lepton);
+      if (muon.isIsolationValid() && muon.getIsolationR03().sumPt > 10)
+	retval |= 0x02;
+    }
+  }
+
+  return retval;
+}
+
+/*
+ostream& operator<<(ostream& out, const TLorentzVector& vect) {
+  out << setw(7) << vect.Eta() << " | " << setw(7) << vect.Phi() << " | "
+      << setw(7) << vect.P()   << " | " << setw(7) << vect.Pt()  << " | " 
+      << setw(7) << vect.Pz()  << " | " << setw(7) << vect.Rapidity() << " | "
+      << setw(6) << vect.M();
+  return out;
+}
+*/
+
+ostream& operator<<(ostream& out, const TLorentzVector& vect) {
+  out << "(" << vect.X() << "," << vect.Y() << "," << vect.Z() << "," << vect.E() << ")";
+  return out;
+}
+
+#if 0
+
+// JMTBAD methods still to port?
 
 void Zprime2muAnalysis::matchStudy(const zp2mu::Muon& muon) {
   // Test routine, which compares match by seed with match in phi and eta.
@@ -1725,354 +2171,6 @@ int Zprime2muAnalysis::findMatchedDiMuonId(const int rec,
     }
   }
   return matched_id;
-}
-
-//-----------------------------------------------------------------------------
-//        Construct opposite-sign dileptons out of a list of muons
-//-----------------------------------------------------------------------------
-void Zprime2muAnalysis::makeAllDileptons(const edm::Event& event,
-					 const bool debug) {
-  // Try to make dileptons at all levels of reconstruction.
-  for (int rec = 0; rec < MAX_LEVELS; rec++) {
-    makeDileptons(rec, debug);
-  }
-
-  // Try to construct "best" dileptons from the best-reconstructed muons.
-  if (!bestMuons.empty()) bestDiMuons = makeDileptons(lbest, bestMuons, debug);
-
-  // Save true MC resonance for comparisons.
-  addTrueResonance(event, allDiMuons[lgen]);
-
-  // Include 4-momentum of close-by photon candidates.
-  for (int rec = l1; rec <= MAX_LEVELS; rec++) {
-    if (rec < MAX_LEVELS)       addBremCandidates(allDiMuons[rec], debug);
-    else if (rec == MAX_LEVELS) addBremCandidates(bestDiMuons, debug);
-  }
-}
-
-void Zprime2muAnalysis::makeDileptons(const int rec, const bool debug) {
-  if (rec < 0 || rec >= MAX_LEVELS) {
-    throw cms::Exception("makeDileptons")
-      << "+++ Unknown rec. level = " << rec << " +++\n";
-  }
-
-  if (searchedDileptons[rec]) {
-    edm::LogWarning("makeDileptons")
-      << "+++ dileptons for rec. level " << rec
-      << " were already looked for +++\n";
-    return;
-  }
-
-  vector<zp2mu::Muon>& muons = allMuons[rec];
-
-  allDiMuons[rec] = makeDileptons(rec, muons, debug);
-
-  // Reset dilepton id's.
-  for (unsigned int i_dil = 0; i_dil < allDiMuons[rec].size(); i_dil++) {
-    allDiMuons[rec][i_dil].setId(i_dil);
-  }
-
-  // Keep track of the fact that we have done the search already.
-  searchedDileptons[rec] = true;
-}
-
-vector<zp2mu::DiMuon> 
-Zprime2muAnalysis::makeDileptons(const int rec,
-				 const vector<zp2mu::Muon>& muons,
-				 const bool debug) {
-  unsigned int i_dil, n_dil = 0;
-  TLorentzVector vmu1, vmu2, vdil;
-  vector<zp2mu::DiMuon> diMuons;
-  vector<zp2mu::Muon>::const_iterator pmu, qmu;
-  vector<zp2mu::DiMuon>::iterator pdi;
-
-  if (debug) {
-    LogTrace("makeDileptons")
-      << "=======================================================";
-    LogTrace("makeDileptons") << "Dilepton search for rec: " << rec;
-  }
-
-  // In the special case of the generated dilepton, we will use the actual
-  // muons that were produced by the resonance.  In order to do this, we make
-  // sure that the muons have a mother ID equal to the ID of the resonance.
-  if (rec == 0 && muons.size() > 1) {
-   // int idx[MAX_DILEPTONS]; //CL: determine by vertex pos instead of barcode
-
-    math::XYZPoint vertexs[MAX_DILEPTONS];
-    for (pmu = muons.begin(); pmu != muons.end(); pmu++) {
-      int pid = pmu->genMotherId();
-      if (isResonance(pid)) {
-	bool isnewdil = true;
-	int  idxdil = -999;
-	for (i_dil = 0; i_dil < n_dil; i_dil++) {
-//	  if (pmu->genMotherLine() == idx[i_dil]) { //FIXME
-	  if (haveSameVertex((*pmu), vertexs[i_dil])) { 
-	    idxdil = i_dil;
-	    isnewdil = false;
-	    break;
-	  }
-	}
-	// Encounter this mother Id for the first time
-	if (isnewdil && n_dil < MAX_DILEPTONS) {
-	  zp2mu::DiMuon thisDiMu;
-	  thisDiMu.fill(true, n_dil, 0);
-	  diMuons.push_back(thisDiMu);
-	  idxdil = n_dil;
-//	  idx[idxdil] = pmu->genMotherLine();
-	  vertexs[idxdil] = pmu->vertex();
-	  n_dil++;
-	}
-
-	if (idxdil > -999) {
-	  if (pmu->charge() == 1 &&
-	      diMuons[idxdil].muPlus().isValid() == false) {
-	    diMuons[idxdil].setMuPlus(*pmu);
-	  }
-	  else if (pmu->charge() == -1 &&
-		   diMuons[idxdil].muMinus().isValid() == false) {
-	    diMuons[idxdil].setMuMinus(*pmu);
-	  }
-	  else {
-	    throw cms::Exception("makeDileptons")
-	      << "+++" << "index_pos[0][" << idxdil << "] = "
-	      << diMuons[idxdil].muPlus().isValid()
-	      << "index_neg[0][" << idxdil << "] = "
-	      << diMuons[idxdil].muMinus().isValid()
-	      << "  charge = " << pmu->charge() << " +++\n";
-	  }
-	}
-      }
-    }
-
-    for (pdi = diMuons.begin(); pdi != diMuons.end();) {
-      if (pdi->muPlus().isValid()  == false ||
-	  pdi->muMinus().isValid() == false) {
-	edm::LogWarning("makeDileptons")
-	  << "+++ dilepton # " << pdi->id()
-	  << " at level " << rec << " is made of "
-	  << (pdi->muPlus().isValid()  ? "valid" : "invalid") << " mu+ and " 
-	  << (pdi->muMinus().isValid() ? "valid" : "invalid") << " mu-;"
-	  << " removing it +++\n";
-	if (debug) {
-	  dumpEvent(true, false, false, false, false);
-	}
-	pdi = diMuons.erase(pdi); // points to the next element
-      }
-      else {
-	zp2mu::Muon mup = pdi->muPlus();
-	zp2mu::Muon mum = pdi->muMinus();
-	vmu1.SetPtEtaPhiM(mup.pt(), mup.eta(), mup.phi(), MUMASS);
-	vmu2.SetPtEtaPhiM(mum.pt(), mum.eta(), mum.phi(), MUMASS);
-	vdil = vmu1 + vmu2;
-	pdi->setDimuV(vdil);
-	pdi++;
-      }
-    }
-  }
-
-  // Dileptons search in reconstructed muons.  First consider all possible
-  // combinations of mu+ and mu-.
-  if (rec > 0 && muons.size() > 1) {
-
-    for (pmu = muons.begin(); pmu != muons.end()-1; pmu++) {
-      if (muonIsCut(*pmu)) continue;
-
-      vmu1.SetPtEtaPhiM(pmu->pt(), pmu->eta(), pmu->phi(), MUMASS);
-
-      for (qmu = pmu+1; qmu != muons.end(); qmu++) {
-	if (muonIsCut(*qmu)) continue;
-
-	if (qmu->charge() != pmu->charge()) {
-
-	  vmu2.SetPtEtaPhiM(qmu->pt(), qmu->eta(), qmu->phi(), MUMASS);
-	  vdil = vmu1 + vmu2;
-
-	  zp2mu::DiMuon thisDiMu;
-	  thisDiMu.fill(true, n_dil, rec);
-	  if (pmu->charge() == 1) {
-	    thisDiMu.setMuPlus(*pmu);
-	    thisDiMu.setMuMinus(*qmu);
-	  }
-	  else {
-	    thisDiMu.setMuMinus(*pmu);
-	    thisDiMu.setMuPlus(*qmu);
-	  }
-	  thisDiMu.setDimuV(vdil);
-	  diMuons.push_back(thisDiMu);
-	  n_dil++;
-	}
-      }
-    }
-  } 
-
-  // If H -> ZZ* -> 4mu, sort dileptons to look for two highest-mass ones.
-  // If Z' or G*, do nothing because all muons were sorted from the highest
-  // P to the lowest, and therefore the very first dimuon is already made
-  // of two highest P muons.
-  if (doingHiggs) {
-    // Sort the list of found dileptons using overloaded criteria.
-    if (diMuons.size() > 1) {
-      sort(diMuons.begin(), diMuons.end(), greater<zp2mu::DiMuon>());
-    }
-  }
-
-  if (rec > 0 && diMuons.size() > 1) {
-    // If more than one dilepton was formed, we accept only those containing
-    // distinct muons.  Again, the preference is given to higher mass
-    // dilepton over lower mass dilepton.
-    for (pdi = diMuons.begin(); pdi != diMuons.end()-1;) {
-      vector<zp2mu::DiMuon>::iterator qdi;
-      for (qdi = pdi+1; qdi != diMuons.end(); qdi++) {
-	if (qdi->muMinus().id() == pdi->muMinus().id() ||
-	    qdi->muPlus().id()  == pdi->muPlus().id()) {
-	  //if ((*qdi) == (*pdi)) { // use overloaded ==
-	  diMuons.erase(qdi);
-	  pdi = diMuons.begin(); // reset pointers and restart
-	  break;
-	}
-	else {
-	  pdi++;
-	}
-      }
-    }
-
-    // Store only 1 dilepton for Z' and G*, and two highest mass dileptons
-    // for H -> ZZ* -> 4 mu.
-    if (doingHiggs) {
-      if (diMuons.size() > MAX_DILEPTONS) {
-	diMuons.erase(diMuons.begin() + MAX_DILEPTONS, diMuons.end());
-      }
-    }
-    else {
-      if (diMuons.size() > 1) {
-	diMuons.erase(diMuons.begin() + 1, diMuons.end());
-      }
-    }
-  }
-
-  if (debug) {
-    for (pdi = diMuons.begin(); pdi != diMuons.end(); pdi++) {
-      LogTrace("makeDileptons")
-	<< "Dilepton #" << pdi->id()
-	<< " is found for muon+ #" << pdi->muPlus().id()
-	<< " and muon- #"          << pdi->muMinus().id()
-	<< "; its mass: "          << setprecision(5) << pdi->dimuV().M();
-    }
-  }
-
-  return diMuons;
-}
-
-void Zprime2muAnalysis::addTrueResonance(const edm::Event& event,
-					 vector<zp2mu::DiMuon>& diMuons) {
-  bool debug = verbosity >= VERBOSITY_LOTS;
-
-  // Generated particles (i.e. PYTHIA).
-  edm::Handle<reco::CandidateCollection> genParticles;
-  event.getByLabel("genParticleCandidates", genParticles);
-
-  for (vector<zp2mu::DiMuon>::iterator pdi = diMuons.begin();
-       pdi != diMuons.end(); pdi++) {
-
-    // Check that the dimuon is indeed the generated one.
-    int rec = pdi->recLevel();
-    if (rec != lgen)
-      throw cms::Exception("addTrueResonance")
-	<< "+++ Invalid rec. level = " << rec << " +++\n";
-
-    // Take true resonance from PYTHIA only if generated mu+ and mu-
-    // originated from the same resonance.
-    // SV: same approach as in ORCA, but perhaps needs some thinking.
-    if (pdi->muPlus().genMotherLine() == pdi->muMinus().genMotherLine()) {
-      //if ( haveSameVertex(pdi->muPlus(), pdi->muMinus()) ) {
-
-      int idx = -1;
-      for (reco::CandidateCollection::const_iterator ipl = genParticles->begin();
-	   ipl != genParticles->end(); ipl++) {
-	idx++;
-
-	if (idx == pdi->muPlus().genMotherLine()) {
-	//if ( isMotherOf((*(dynamic_cast<const reco::GenParticleCandidate*>(&*ipl))), pdi->muPlus(), pdi->muMinus()) ) { //FIXME
-	  pdi->setResV(TLorentzVector((ipl)->p4().x(),
-				      (ipl)->p4().y(),
-				      (ipl)->p4().z(),
-				      (ipl)->p4().t()));
-	  if (debug) LogTrace("addTrueResonance")
-	    << "Resonance: id = " << (ipl)->pdgId() << " line = " << idx
-	    << " M = " << (ipl)->mass();
-	  break;
-	}
-      }
-    }
-    else {
-      // Just use dimuon mass.
-      pdi->setResV(pdi->dimuV());
-    }
-
-    if (debug) {
-      LogTrace("addTrueResonance")
-	<< "MC resonance: dimuon inv. mass = " << pdi->dimuV().M()
-	<< "; true inv. mass = " << pdi->resV().M();
-    }
-  }
-}
-
-// If there is a photon candidate at the phi-eta distance dRmax from 
-// either of the muons, combine its 4-momentum with that of the dimuon
-// and put the result into dimuon's TLorentzVector theResV.
-void Zprime2muAnalysis::addBremCandidates(vector<zp2mu::DiMuon>& diMuons,
-					  const bool debug) {
-  const double dRmax = 0.1;
-  TLorentzVector vmu1, vmu2;
-
-  vector<zp2mu::DiMuon>::iterator pdi;
-  for (pdi = diMuons.begin(); pdi != diMuons.end(); pdi++) {
-    int rec = pdi->recLevel();
-
-    if (rec == lgen) {
-      // Do nothing; work done in addTrueResonance()
-      return;
-    }
-    else if (rec == l1 || rec == l2) {
-      // No way to improve measurement at Level-1 and Level-2
-      pdi->setResV(pdi->dimuV());
-    }
-    else {
-      zp2mu::Muon mup = pdi->muPlus();
-      zp2mu::Muon mum = pdi->muMinus();
-      vmu1.SetPtEtaPhiM(mup.pt(), mup.eta(), mup.phi(), MUMASS);
-      vmu2.SetPtEtaPhiM(mum.pt(), mum.eta(), mum.phi(), MUMASS);
-
-      TLorentzVector vph1 = mup.closestPhoton();
-      double dr1 = 999.;
-      if (vph1.E() > 0.) dr1 = vmu1.DeltaR(vph1);
-
-      TLorentzVector vph2 = mum.closestPhoton();
-      double dr2 = 999.;
-      if (vph2.E() > 0.) dr2 = vmu2.DeltaR(vph2);
-
-      bool add_ph1 = false, add_ph2 = false;
-      if (dr1 < dRmax) {add_ph1 = true;}
-
-      if (dr2 < dRmax &&
-	  (add_ph1 == false ||
-	   (fabs(vph2.Px()-vph1.Px()) > 0.001 &&
-	    fabs(vph2.Py()-vph1.Py()) > 0.001 &&
-	    fabs(vph2.Pz()-vph1.Pz()) > 0.001))) {add_ph2 = true;}
-
-      TLorentzVector vres = pdi->dimuV();
-      if (add_ph1) {vres += vph1;}
-      if (add_ph2) {vres += vph2;}
-      pdi->setResV(vres);
-    }
-
-    if (debug) {
-      LogTrace("addBremCandidates")
-	<< "Include brem candidate(s) at level " << rec
-	<< ": inv. mass w/o photons = " << pdi->dimuV().M()
-	<< "; w/  = " << pdi->resV().M();
-    }
-  }
 }
 
 //-----------------------------------------------------------------------------
@@ -2398,87 +2496,6 @@ bool Zprime2muAnalysis::dilQCheck(const zp2mu::DiMuon& dimuon, const int qsel,
 	  TrackQCheck(dimuon.muPlus(),  qsel, ncut_mup, debug));
 }
 
-//-----------------------------------------------------------------------------
-//                           Print-out methods
-//-----------------------------------------------------------------------------
-void Zprime2muAnalysis::dumpEvent(const bool printGen, const bool printL1,
-				  const bool printL2,  const bool printL3,
-				  const bool printBest) const {
-
-  vector<zp2mu::Muon>::const_iterator pmu;
-
-  ostringstream out;
-
-  out << "\n******************************** Event " << eventNum << "\n";
-  
-  
-  if (printGen)
-    for (pmu = allMuons[0].begin(); pmu != allMuons[0].end(); pmu++) {
-      out << *pmu;
-    }
-  
-
-  if (printL1)
-    for (pmu = allMuons[l1].begin(); pmu != allMuons[1].end(); pmu++) {
-      out << *pmu;
-    }
-
-  if (printL2) 
-    for (pmu = allMuons[l2].begin(); pmu != allMuons[2].end(); pmu++) {
-      out << *pmu;
-    }
-
-  if (printL3) 
-    for (int rec = l3; rec < MAX_LEVELS; rec++){
-      out << endl;
-      for (pmu = allMuons[rec].begin(); pmu != allMuons[rec].end(); pmu++) {
-	out << *pmu;
-      }
-    }
-
-  if (printBest){ 
-    out << "\nBest off-line muons: \n";
-    for (pmu = bestMuons.begin(); pmu != bestMuons.end(); pmu++) {
-      out << *pmu;
-    }
-  }
-
-  LogTrace("dumpEvent") << out.str();
-}
-
-void Zprime2muAnalysis::dumpDiMuonMasses() const {
-
-  ostringstream out;
-  out << "Dilepton masses at levels  ";
-  for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
-    out << " " << i_rec;
-    if (i_rec < MAX_LEVELS-1) out << "      ";
-  }
-
-  out << setw(6) << setprecision(5);
-  for (unsigned int i_dil = 0; i_dil < MAX_DILEPTONS; i_dil++) {
-    out << "\n Dilepton # " << i_dil << "; dimu mass: ";
-    for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
-      if (allDiMuons[i_rec].size() > i_dil)
-	out << allDiMuons[i_rec][i_dil].dimuV().M();
-      else
-	out << " ---  ";
-      if (i_rec < MAX_LEVELS-1) out << ", ";
-    }
-    out << "\n";
-
-    out << "                res mass: ";
-    for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
-      if (allDiMuons[i_rec].size() > i_dil)
-	out << allDiMuons[i_rec][i_dil].resV().M();
-      else
-	out << " ---  ";
-      if (i_rec < MAX_LEVELS-1) out << ", ";
-    }
-  }
-  LogTrace("dumpDiMuonMasses") << out.str();
-}
-
 void Zprime2muAnalysis::dumpDilQuality() {
   // Dumps to help analyze discrepancies between generated and reconstructed
   // dileptons.  Dump shows differences between various fits.
@@ -2610,497 +2627,4 @@ void Zprime2muAnalysis::dumpDilQuality() {
   LogTrace("dumpDilQuality") << strstrm.str();
 }
 
-zp2mu::Muon& Zprime2muAnalysis::muonRef(const int rec, const int id) {
-  // Access method which returns reference to the muon with muonId=id.
-
-  if (rec < 0 || rec >= MAX_LEVELS) {
-    throw cms::Exception("muonRef")
-      << "+++ Unknown rec. level " << rec << " +++\n";
-  }
-
-  vector<zp2mu::Muon>::iterator pmu;
-  for (pmu = allMuons[rec].begin(); pmu != allMuons[rec].end(); pmu++)
-    if (pmu->id() == id)
-      return (*pmu);
-
-  // if execution gets to here, we haven't found the muon; throw
-  throw cms::Exception("muonRef") << "+++ muonRef not found! +++\n";
-}
-
-zp2mu::DiMuon& Zprime2muAnalysis::dimuonRef(const int rec, const int id) {
-  // Access method which returns reference to the dimuon with dimuonId=id.
-
-  if (rec < 0 || rec >= MAX_LEVELS) {
-    throw cms::Exception("dimuonRef")
-      << "+++ Unknown rec. level " << rec << " +++\n";
-  }
-
-  vector<zp2mu::DiMuon>::iterator pdi;
-  for (pdi = allDiMuons[rec].begin(); pdi != allDiMuons[rec].end(); pdi++)
-    if (pdi->id() == id)
-      return (*pdi);
-
-  // if execution gets to here, we haven't found the dimuon; throw
-  throw cms::Exception("dimuonRef") << "+++ dimuonRef not found! +++\n";
-}
-
-//-----------------------------------------------------------------------------
-//                                 Trigger
-//-----------------------------------------------------------------------------
-
-bool Zprime2muAnalysis::passTrigger(const int irec) {
-
-  if (irec < 0 || irec > l3) {
-    throw cms::Exception("Zprime2muAnalysis")
-      << "+++ passTrigger error: L" << irec << " trigger is unknown +++\n";
-  }
-
-  return passTrig[irec];
-}
-
-bool Zprime2muAnalysis::passTrigger() {
-  unsigned int decision = 1;
-
-  for (int itrig = l1; itrig <= l3; itrig++) {
-    decision *= trigWord[itrig];
-  }
-  return (decision != 0);
-}
-
-
-bool Zprime2muAnalysis::TriggerTranslator(const string& algo,
-					  const unsigned int lvl,
-					  const unsigned int nmu) {
-  // Function to translate the algorithm algo defined for trigger level lvl,
-  // requiring nmu muons (e.g. single or dimuon trigger).
-  // See https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideMuonHLT
-  // https://twiki.cern.ch/twiki/bin/view/CMS/L1TriggerTableHLTExercise
-  // L1 Quality codes are still the same, but we are suggested to use the 
-  // methods useInSingleMuonTrigger() etc. instead of using the quality
-  // code directly:
-  // https://twiki.cern.ch/twiki/bin/view/CMS/GMTEmulator
-
-  // Arrays are first-indexed by trigger level then by the number of
-  // muons required.
-  const unsigned int l = lvl - 1;
-  const unsigned int n = nmu - 1;
-
-  // these are for L = 10^{32}
-  const double ptMin[3][2] = {
-    { 7, 3},
-    {16, 3},
-    {16, 3}
-  };
-  const double etaMax[3] = { 2.5, 2.5, 2.5 };
-  // 28/10/2007: in CMSSW_1_6_0, requirement is just that 
-  // the vertex be < 200 microns from the beam axis, i.e. 
-  // sqrt(vx**2+vy**2) < 0.02
-  const double dxy2Max[3] = { 9999, 9999, 0.02*0.02 };
-  const double dzMax[3] = { 9999, 9999, 9999 };
-  const double nSigmaPt[3] = { 0, 3.9, 2.2 };
-  // 12/05/2004: a muon must have more than 5 pixel plus silicon hits in
-  // the tracker (DAQ TDR, p. 306).
-  //const int minHits[3] = { 0, 0, 6 };
-  // 28/10/2007: for CMSSW_1_6_0, min hits is 0
-  // JMTBAD no hit counts in the AOD anyway...
-  const int minHits[3] = { 0, 0, 0 };
-
-  // Check if the algorithm string passed in is one we recognized.
-  // String value is not currently used, but will be used in the
-  // future to differentiate between, e.g., Iso and NonIso triggers.
-  if (algo != "L1_SingleMu7" &&
-      algo != "L1_DoubleMu3" &&
-      algo != "SingleMuNoIsoL2PreFiltered" && 
-      algo != "SingleMuNoIsoL3PreFiltered" &&
-      algo != "DiMuonNoIsoL2PreFiltered" && 
-      algo != "DiMuonNoIsoL3PreFiltered") {
-    edm::LogWarning("TriggerTranslator")
-      << "+++ unrecognized algorithm " << algo << "! +++";
-    return false;
-  }
-
-  const static bool debug = verbosity >= VERBOSITY_SIMPLE;
-  ostringstream out;
-
-  if (debug) out << "TriggerTranslator, " << algo
-		 << " (event " << eventNum << "):\n";
-
-  unsigned int muonsPass = 0;
-  vector<zp2mu::Muon>::const_iterator pmu; //, pmu_prev;
-  //vector<double> zvtx;
-  //vector<double>::const_iterator pvtx;
-
-  for (pmu = allMuons[lvl].begin(); pmu != allMuons[lvl].end(); pmu++) {
-    // JMTBAD HLTMuonPrefilter cuts not on pt but on what they call ptLx
-    // nSigmaPt[l1] = 0, so ptLx(l1) = pt(l1), but safeguard against
-    // accidentally setting nSigmaPt[l1] != 0:
-    double ptLx;
-    if (lvl == l1)
-      ptLx = pmu->pt();
-    else
-      ptLx = (1 + nSigmaPt[l]*pmu->errInvP()*pmu->p())*pmu->pt();
-    if (debug)
-      out << "  mu #" << pmu->id()
-	  << " pt: " << pmu->pt() << " ptLx: " << ptLx << " (cut: " << ptMin[l][n] 
-	  << ") eta: " << pmu->eta() << " (cut: " << etaMax[l] << ")\n";
-    bool pass = ptLx >= ptMin[l][n] && fabs(pmu->eta()) <= etaMax[l];
-    // don't bother evaluating the other constraints if they aren't set
-    if (dxy2Max[l] != 9999) {
-      double vx = pmu->vertexXYZ(0);
-      double vy = pmu->vertexXYZ(1);
-      pass = pass && vx*vx + vy*vy < dxy2Max[l];
-    }
-    if (dzMax[l] != 9999) {
-      pass = pass && fabs(pmu->vertexXYZ(2)) < dzMax[l];
-    }
-    if (minHits[l] != 0) {
-      // JMTBAD switch to reco::Track::numberOfValidHits()
-      pass && (pmu->npixHits() + pmu->nsilHits()) > minHits[l];
-    }
-    if (pass) {
-      // here check extra stuff depending on the trigger algorithm
-      bool passExtra = true;
-
-      if (lvl == l1) {
-	int quality = pmu->l1Quality();
-	// In single muon trigger, GMT uses only muons with quality > 3.
-	// In dimuon trigger, GMT uses muons with quality = 3 and 5-7.
-	if ((nmu == 1 && quality < 4) || (nmu == 2 && (quality < 3 || quality == 4)))
-	  passExtra = false;
-      }
-      /*
-      // JMTBAD disabled for now, not currently in HLT
-      else if (lvl == l3 && nmu == 2) {
-	for (pmu_prev = allMuons[lvl].begin(); pmu_prev != pmu; pmu_prev++) {
-          // Skip ghost tracks (see p. 308 of DAQ TDR)
-	  if (fabs(pmu->eta() - pmu_prev->eta()) < 0.01 &&
-	      fabs(pmu->phi() - pmu_prev->phi()) < 0.05 &&
-	      fabs(pmu->pt()  - pmu_prev->pt())  < 0.1) passExtra = false;
-	}
-      }
-      */
-
-      if (passExtra)
-	muonsPass++;
-    }
-
-    if (muonsPass == nmu)
-      break;
-  }
-
-  bool result;
-  if (debug) out << "  TriggerTranslator result for " << algo << ": ";
-  if (muonsPass >= nmu) {
-    out << "pass!";
-    result = true;
-  }
-  else {
-    out << "fail!";
-    result = false;
-  }
-  if (debug) LogTrace("TriggerTranslator") << out.str();
-
-  return result;
-}
-
-void Zprime2muAnalysis::storeL1Decision(const edm::Event& event) {
-  const static bool debug = (verbosity >= VERBOSITY_SIMPLE);
-
-  // Get Level-1 decisions for trigger paths we are interested in.
-  edm::Handle<l1extra::L1ParticleMapCollection> l1MapColl;
-  event.getByLabel(l1ParticleMap, l1MapColl);
-
-  if (!l1MapColl.isValid()) {
-    edm::LogWarning("storeL1Decision")
-      << "L1ParticleMapCollection with label [" << l1ParticleMap.encode()
-      << "] not found!" << std::endl;
-    return;
-  }
-
-  if (debug) LogTrace("storeL1Decision") << "storeL1Decision:";
-
-  // Loop over chosen paths, check trigger decisions, and save them into
-  // "trigbits".
-  unsigned int trigbits = 0;
-  unsigned int homemade_trigbits = 0;
-  int nl1paths = l1paths.size();
-  for (int ipath = 0; ipath < nl1paths; ipath++) {
-    const l1extra::L1ParticleMap& thisMap = (*l1MapColl)[l1paths[ipath]];
-    bool fired = thisMap.triggerDecision();
-    if (fired) trigbits = trigbits | (1 << ipath);
-    if (debug) LogTrace("storeL1Decision")
-      << "  " << thisMap.triggerName() << " (index " << l1paths[ipath]
-      << "): decision " << fired;
-
-    // Also try to emulate GMT algorithms.
-    if (TriggerTranslator(thisMap.triggerName(), l1, ipath+1)) {
-      // If the event passes, set the corresponding bit in trigbits.
-      homemade_trigbits = homemade_trigbits | (1 << ipath);
-      if (debug)
-	LogTrace("storeL1Decision")
-	  << "  " << thisMap.triggerName() << " (homemade): decision " << fired;
-    }
-  }
-
-  if (debug)
-    LogTrace("storeL1Decision") << " L1 official trigbits: " << trigbits
-				<< " homemade: " << homemade_trigbits;
-  trigWord[l1] = trigbits;
-  passTrig[l1] = (trigbits != 0);
-
-  // Compare official and homemade decisions.
-  if (homemade_trigbits != trigbits) {
-    edm::LogWarning("storeL1Decision")
-      << "+++ Warning: official L1 decision disagrees with homemade decision "
-      << "in event # " << eventNum << ": official: " << trigWord[l1]
-      << " homemade: " << trigbits << " +++";
-    if (verbosity == VERBOSITY_NONE)
-      dumpEvent(true, true, false, false, false);
-  }
-}
-
-void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
-  const static bool debug = (verbosity >= VERBOSITY_SIMPLE);
-  ostringstream out;
-
-  // Getting the result of the entire HLT path is done easily with the
-  // TriggerResults object, however to get at the separate decisions
-  // for L2 and L3 we have to do a little hacky magic.
-
-  // Try to get the HLT TriggerResults object now, before
-  // trying to get the HLTFilterObjectWithRefs below
-  // so that if there is no HLT information in the file, 
-  // getByLabel will go ahead and throw an exception.
-  edm::Handle<edm::TriggerResults> hltRes;
-  event.getByLabel(hltResults, hltRes);
-  edm::TriggerNames hltTrigNames;
-  hltTrigNames.init(*hltRes);
-
-  if (debug) out << "storeHLTDecision:\n";
-
-  // Extract L2 and L3 decisions by seeing if the corresponding
-  // HLTFilterObjectWithRefs exists and seeing how many muons it holds.
-  for (unsigned int lvl = 0; lvl < 2; lvl++) {
-    unsigned int l = l2 + lvl;
-    unsigned int trigbits = 0;
-    for (unsigned int ipath = 0; ipath < hltModules[lvl].size(); ipath++) {
-      const string& trigName = hltModules[lvl][ipath];
-      edm::Handle<reco::HLTFilterObjectWithRefs> hltFilterObjs;
-
-      bool fired = true;
-      try {
-	event.getByLabel(trigName, hltFilterObjs);
-      }
-      catch (const cms::Exception& e) {
-	fired = false;
-      }
-
-      // There may be an HLTFilterObject in the event even if the
-      // trigger did not accept; the real check is to make sure that
-      // the minimum number of muons for the trigger was met.
-      const unsigned int minNMuons = ipath + 1;
-      if (fired && hltFilterObjs->size() < minNMuons)
-	fired = false;	  
-	
-      if (debug)
-	out << "  " << trigName
-	    << ": decision = " << fired << endl;
-
-      if (fired) {
-	trigbits = trigbits | (1 << ipath);
-
-	if (debug) {
-	  out << "  " << trigName << " filter result muons:\n";
-	  reco::HLTFilterObjectWithRefs::const_iterator muItr;
-	  int imu = 0;
-	  for (muItr = hltFilterObjs->begin(); muItr != hltFilterObjs->end();
-	       muItr++) {
-	    out << "    #" << imu++ << " q = " << muItr->charge()
-		<< " p = (" << muItr->px() << ", " << muItr->py()
-		<< ", " << muItr->pz() << ", " << muItr->energy() << ")\n"
-		<< "     pt = " << muItr->pt() << " eta = " << muItr->eta()
-		<< " phi = " << muItr->phi() << endl;
-	  }
-	}
-      }
-    }
-
-    trigWord[l] = trigbits;
-    passTrig[l] = (trigbits != 0);
-    out << "  trigWord[l" << l << "]: " << trigWord[l] << endl;
-  }
-    
-  // Check that the official full HLT path decisions agree with
-  // what we extracted for the official L3 decision.
-  unsigned int hlt_trigbits = 0;
-  for (unsigned int i = 0; i < hltPaths.size(); i++) {
-    int ndx = hltTrigNames.triggerIndex(hltPaths[i]);
-    bool fired = hltRes->accept(ndx);
-    if (debug)
-      out << " HLT path #" << ndx << ": " << hltPaths[i]
-	  << " decision = " << fired << endl;
-    if (fired) hlt_trigbits |= 1 << i;
-  }
-  if (hlt_trigbits != trigWord[l3]) {
-    edm::LogWarning("storeHLTDecision")
-      << "+++ Warning: official HLT"
-      << " decision disagrees with extracted L3 decision:"
-      << " official HLT: " << hlt_trigbits
-      << " extracted L3: " << trigWord[l3] << " +++";
-      
-    if (verbosity == VERBOSITY_NONE)
-      dumpEvent(false, true, true, true, false);
-  }
-
-  if (debug) LogTrace("storeHLTDecision") << out.str();
-}
-
-void Zprime2muAnalysis::compareHLTDecision() {
-  const static bool debug = (verbosity >= VERBOSITY_SIMPLE);
-  ostringstream out;
-
-  if (debug) out << "compareHLTDecision:\n";
-
-  for (unsigned int lvl = 0; lvl < 2; lvl++) {
-    unsigned int l = l2 + lvl;
-    unsigned int homemade_trigbits = 0;
-    for (unsigned int ipath = 0; ipath < hltModules[lvl].size(); ipath++) {
-      const string& trigName = hltModules[lvl][ipath];
-
-      // Try to emulate HLT algorithms.
-      bool fired = TriggerTranslator(hltModules[lvl][ipath], l, ipath+1);
-	  
-      // If the event passes, set the corresponding bit in trigbits.
-      if (fired) homemade_trigbits = homemade_trigbits | (1 << ipath);
-      if (debug)
-	out << "  " << trigName << " (homemade): decision = " << fired << endl;
-    }
-
-    // "Official" muon HLTs are calculated only when corresponding
-    // previous levels gave OK, while we calculate the decision for a
-    // given level regardless of previous levels' decisions.
-    if (l >= l2)
-      homemade_trigbits &= trigWord[l1];
-    if (l >= l3)
-      homemade_trigbits &= trigWord[l2];
-    // Compare official and homemade decisions.
-    if (homemade_trigbits != trigWord[l]) {
-      edm::LogWarning("compareHLTDecision")
-	<< "+++ Warning: official L" << l
-	<< " decision disagrees with homemade decision:"
-	<< " official: " << trigWord[l]
-	<< " homemade: " << homemade_trigbits << " +++";
-      
-      if (verbosity == VERBOSITY_NONE)
-	dumpEvent(false, true, true, true, false);
-    }
-  }
-    
-  if (debug) LogTrace("compareHLTDecision") << out.str();
-}
-  
-
-bool Zprime2muAnalysis::eventIsInteresting() {
-  return false;
-
-  if (bestDiMuons.size() > 0) {
-    const zp2mu::DiMuon& dimu = bestDiMuons[0];
-    if (dimu.resV().M() > 800)
-      return true;
-    const zp2mu::Muon& mum = dimu.muMinus();
-    const zp2mu::Muon& mup = dimu.muMinus();
-    if (fabs(mum.phi() - mup.phi()) < .33)
-      return true;
-  }
-  return false;
-}
-
-unsigned Zprime2muAnalysis::muonIsCut(const zp2mu::Muon& muon) {
-  // Checks our defined cut methods and returns a bitmap of which
-  // passed. This can be directly used as a comparison, since if no
-  // cuts are made, then the return value is 0 == false; otherwise it
-  // is > 0 == true.
-  unsigned retval = 0;
-  if (!doingElectrons) {
-    if (muon.pt() <= 20.)     retval |= 0x01;
-    if (muon.sumPtR03() > 10) retval |= 0x02;
-  }
-  return retval;
-}
-
-WhereMuon Zprime2muAnalysis::whereIsMuon(const zp2mu::Muon& muon) {
-  // Helper method to return a code based on where the muon is in the
-  // muon system by eta; in the barrel, in the overlap region, in the
-  // endcap, or outside acceptance (nominally 2.4).
-  double abseta = fabs(muon.eta());
-  if      (abseta < 0.9) return W_BARREL;
-  else if (abseta < 1.2) return W_OVERLAP;
-  else if (abseta < 2.4) return W_ENDCAP;
-  else                   return W_OUTSIDE;
-}
-
-WhereDimuon Zprime2muAnalysis::whereIsDimuon(const zp2mu::DiMuon& dimuon) {
-  // Helper method to return a code based on where the muons of a
-  // dimuon are in the muon system (using the above whereIsMuon method
-  // definitions of location).
-  WhereMuon wmup = whereIsMuon(dimuon.muPlus());
-  WhereMuon wmum = whereIsMuon(dimuon.muMinus());
-  // get a unique ordering so testing below is easier
-  if (int(wmup) > int(wmum)) {
-    WhereMuon tmp = wmup;
-    wmup = wmum;
-    wmum = tmp;
-  }
-
-  if      (wmup == W_BARREL  && wmum == W_BARREL)   return W_BARRELBARREL;
-  else if (wmup == W_BARREL  && wmum == W_OVERLAP)  return W_BARRELOVERLAP;
-  else if (wmup == W_BARREL  && wmum == W_ENDCAP)   return W_BARRELENDCAP;
-  else if (wmup == W_BARREL  && wmum == W_OUTSIDE)  return W_BARRELOUTSIDE;
-  else if (wmup == W_OVERLAP && wmum == W_OVERLAP)  return W_OVERLAPOVERLAP;
-  else if (wmup == W_OVERLAP && wmum == W_ENDCAP)   return W_OVERLAPENDCAP;
-  else if (wmup == W_OVERLAP && wmum == W_OUTSIDE)  return W_OVERLAPOUTSIDE;
-  else if (wmup == W_ENDCAP  && wmum == W_ENDCAP)   return W_ENDCAPENDCAP;
-  else if (wmup == W_ENDCAP  && wmum == W_OUTSIDE)  return W_ENDCAPOUTSIDE;
-  else //if (wmup == W_OUTSIDE && wmum == W_OUTSIDE)
-    return W_OUTSIDEOUTSIDE;
-}
-
-void Zprime2muAnalysis::analyze(const edm::Event& event,
-				const edm::EventSetup& eSetup) {
-  // could store the whole event/eventsetup object if needed
-  eventNum = event.id().event();
-
-  // store the event weight
-  edm::Handle<double> hweight;
-  // JMTBAD replace try/catch with Handle::isValid() use after 1_7
-  try {
-    event.getByLabel("weight", hweight);
-    eventWeight = *hweight;
-  } catch (const cms::Exception& e) {
-    eventWeight = 1;
-  }
-
-  storeMuons(event);
-
-  // if the event is "interesting" and verbosity is set such that
-  // we aren't already dumping all events, dump the event
-  if (verbosity == VERBOSITY_NONE && eventIsInteresting()) {
-    edm::LogInfo("Zprime2muAnalysis") << "'Interesting' event found!";
-    dumpEvent(true, true, true, true, true);
-    dumpDiMuonMasses();
-  }
-}
-
-void Zprime2muAnalysis::beginJob(const edm::EventSetup& eSetup) {
-}
-
-void Zprime2muAnalysis::endJob() {
-}
-
-ostream& operator<<(ostream& out, const TLorentzVector& vect) {
-  out << setw(7) << vect.Eta() << " | " << setw(7) << vect.Phi() << " | "
-      << setw(7) << vect.P()   << " | " << setw(7) << vect.Pt()  << " | " 
-      << setw(7) << vect.Pz()  << " | " << setw(7) << vect.Rapidity() << " | "
-      << setw(6) << vect.M();
-  return out;
-}
+#endif

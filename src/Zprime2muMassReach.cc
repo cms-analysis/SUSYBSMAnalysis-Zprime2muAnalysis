@@ -39,7 +39,7 @@ int    Zprime2muMassReach::fit_sid[NF] = {0};
 const double Zprime2muMassReach::fwhm_over_sigma = 2.*sqrt(2.*log(2.));
 
 Zprime2muMassReach::Zprime2muMassReach(const edm::ParameterSet& config) 
-  : Zprime2muAnalysis(config), eventNum(0), fileNum(-1)
+  : Zprime2muAnalysis(config), eventCount(0), fileNum(-1)
 {
   // verbosity controls the amount of debugging information printed;
   // levels are defined in an enum
@@ -109,12 +109,12 @@ void Zprime2muMassReach::analyze(const edm::Event& event,
   // Or: can we set the run # (e.g., = 0,1,2) in the edm root files
   // when we generate them? that would at least deal with the hocus
   // pocus of watching the event number for a reset...
-  if (eventNum == 0) {
+  if (eventCount == 0) {
     fileNum++;
     edm::LogInfo("Zprime2muMassReach") << "\n New sample type found. \n";
   }
-  eventNum++;
-  if (static_cast<unsigned int>(eventNum) == nGenEvents[fileNum]) eventNum = 0;
+  eventCount++;
+  if (static_cast<unsigned int>(eventCount) == nGenEvents[fileNum]) eventCount = 0;
 
   if (fileNum < 0 || fileNum > 2)
     throw cms::Exception("MassReach") << "+++ invalid fileNum! +++\n";
@@ -187,8 +187,8 @@ void Zprime2muMassReach::dilMassPlots(const bool debug) {
   // Fill GenDilMass here if you want ALL generated events; uncomment Fill
   // in if-statement below if you want gen. mass plot only for events
   // with a reconstructed mu+mu- pair.
-  if (allDiMuons[lgen].size() > 0) {
-    genm = allDiMuons[lgen][0].resV().M();
+  if (allDileptons[lgen].size() > 0) {
+    genm = resV(lgen, 0).mass();
     GenDilMass[fileNum]->Fill(genm);
   }
 
@@ -196,23 +196,24 @@ void Zprime2muMassReach::dilMassPlots(const bool debug) {
   if (!passTrigger()) return;
 
   // "Off-line" dileptons in events passing the trigger and quality cuts
-  vector<zp2mu::DiMuon> diMuons;
+  int rec;
   for (int i = 0; i < 2; i++) {
-    if(!doingElectrons){
-      if (i == 0)      diMuons = allDiMuons[useL3Muons ? l3 : lgmr];
-      else if (i == 1) diMuons = bestDiMuons;
+    if (!doingElectrons) {
+      if (i == 0)      rec = useL3Muons ? l3 : lgmr;
+      else if (i == 1) rec = lbest;
     }
-    else{
-      if (i == 0)      diMuons = allDiMuons[lgmr];
-      else if (i == 1) diMuons = bestDiMuons;
+    else {
+      if (i == 0)      rec = lgmr;
+      else if (i == 1) rec = lbest;
     }
+    const reco::CandidateCollection& dileptons = getDileptons(rec);
 
-    if (diMuons.size() > 0) {
+    if (dileptons.size() > 0) {
       if (DO_QCUTS ?
-	  dilQCheck(diMuons[0], QSEL, qcut_mum, qcut_mup, debug) : true) {
-	recm = diMuons[0].resV().M(); // highest mass dilepton
-	if (allDiMuons[lgen].size() > 0) {
-	  genm = allDiMuons[lgen][0].resV().M();
+	  dilQCheck(dileptons[0], QSEL, qcut_mum, qcut_mup) : true) {
+	recm = resV(rec, 0).mass(); // highest mass dilepton
+	if (allDileptons[lgen].size() > 0) {
+	  genm = resV(lgen, 0).mass();
 	  // Fill generated mass plot only for those events in which
 	  // TMR dilepton was found.
 	  // if (i == 1) GenDilMass->Fill(genm);
@@ -250,11 +251,9 @@ void Zprime2muMassReach::fillMassArrays() {
   }
 
   // True mass
-  vector<zp2mu::DiMuon> gendi = allDiMuons[lgen];
-  vector<zp2mu::DiMuon>::const_iterator pdi;
-  for (pdi = gendi.begin(); pdi != gendi.end(); pdi++) {
+  for (unsigned idi = 0; idi < allDileptons[lgen].size(); idi++) {
     if (nfit_genmass_used[idx] < MASS_FIT_ARRAY_SIZE) {
-      fit_genmass[idx][nfit_genmass_used[idx]] = pdi->resV().M();
+      fit_genmass[idx][nfit_genmass_used[idx]] = resV(lgen, idi).mass();
       fit_genevent[idx][nfit_genmass_used[idx]] = eventNum;
       nfit_genmass_used[idx]++;
     }
@@ -267,22 +266,21 @@ void Zprime2muMassReach::fillMassArrays() {
   if (!passTrigger()) return;
 
   // Reconstructed dimuons: "best" by default, GMR optional
-  vector<zp2mu::DiMuon> recdi;
-
-  if(!doingElectrons) {
-    if (kGMR) recdi = allDiMuons[useL3Muons ? l3 : lgmr];
-    else      recdi = bestDiMuons;
+  int rec;
+  if (!doingElectrons) {
+    if (kGMR) rec = useL3Muons ? l3 : lgmr;
+    else      rec = lbest;
   }
-  else {
-    recdi= bestDiMuons;
-  }
+  else
+    rec = lbest;
+  const reco::CandidateCollection& recdi = getDileptons(rec);
 
-  for (pdi = recdi.begin(); pdi != recdi.end(); pdi++) {
+  for (unsigned idi = 0; idi < recdi.size(); idi++) {
     // Check the "off-line" track quality and apply the cuts
     int qcut_mum = 0, qcut_mup = 0;
-    if (DO_QCUTS ? dilQCheck(*pdi, QSEL, qcut_mum, qcut_mup) : true) {
+    if (DO_QCUTS ? dilQCheck(recdi[idi], QSEL, qcut_mum, qcut_mup) : true) {
       if (nfit_recmass_used[idx] < MASS_FIT_ARRAY_SIZE) {
-	fit_recmass[idx][nfit_recmass_used[idx]] = pdi->resV().M();
+	fit_recmass[idx][nfit_recmass_used[idx]] = resV(rec, idi).mass();
 
 	// TESTS ONLY!!!
 	//double epsil = 0.042;

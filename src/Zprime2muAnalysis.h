@@ -1,72 +1,84 @@
-#ifndef ZP2MUANALYSIS_H
-#define ZP2MUANALYSIS_H
+#ifndef ZP2MUANALYSISNEW_H
+#define ZP2MUANALYSISNEW_H
 
+#include <iosfwd>
 #include <vector>
 #include <string>
+
+#include "TLorentzVector.h"
 
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "DataFormats/L1Trigger/interface/L1ParticleMap.h"
-#include "DataFormats/TrackReco/interface/Track.h"
-#include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
+#include "DataFormats/Candidate/interface/CandMatchMap.h"
+#include "DataFormats/Candidate/interface/Candidate.h"
+#include "DataFormats/Candidate/interface/CandidateFwd.h"
+#include "DataFormats/Candidate/interface/CompositeCandidate.h"
+
+#include "DataFormats/Common/interface/AssociationMap.h"
+#include "DataFormats/Common/interface/OneToOne.h"
+#include "DataFormats/Common/interface/OwnVector.h"
+
 #include "DataFormats/EgammaCandidates/interface/Photon.h"
 #include "DataFormats/EgammaCandidates/interface/PhotonFwd.h"
 #include "DataFormats/EgammaCandidates/interface/PixelMatchGsfElectron.h"
 
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Muon.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DiMuon.h"
+#include "DataFormats/DetId/interface/DetId.h"
+#include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticleCandidate.h"
+#include "DataFormats/L1Trigger/interface/L1ParticleMap.h"
+#include "DataFormats/MuonReco/interface/Muon.h"
+#include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
 
-// details about the number of reconstruction levels stored
-const int NUM_REC_LEVELS = 4;
-const int MAX_LEVELS = zp2mu::REC_LEVELS;
-enum RECLEVEL { lgen, l1, l2, l3, lgmr, ltk, lfms, lpmr, lbest = 99 };
-const std::string str_level[] = {
-  "Gen", " L1", " L2", " L3", "GMR", "Tracker-only", "TPFMS", "PMR", "OPT"
-};
+#include "DataFormats/TrackReco/interface/Track.h"
+#include "DataFormats/TrackReco/interface/TrackFwd.h"
+
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/LeptonExtra.h"
+
+namespace reco {
+  // JMTBAD this is included in 170 and above
+  typedef edm::RefToBase<reco::Track> TrackBaseRef;
+}
 
 // details about the number of quality cuts available
+// JMTBAD which are not actually available yet
 const int NUM_Q_SETS       = 8;
 const int NUM_L2_CUTS      = 4;
 const int NUM_L3_CUTS      = 9;
 const int NUM_TRACKER_CUTS = 4;
 
-namespace reco {class GenParticleCandidate;}
-
-enum VERBOSITY { VERBOSITY_NONE, VERBOSITY_LITTLE,
-		 VERBOSITY_SIMPLE,
-		 VERBOSITY_LOTS, VERBOSITY_TOOMUCH };
-
-enum WhereMuon { W_BARREL=0, W_OVERLAP, W_ENDCAP, W_OUTSIDE }; 
-enum WhereDimuon { W_BARRELBARREL=0, W_BARRELOVERLAP, W_BARRELENDCAP, W_BARRELOUTSIDE,
-		   W_OVERLAPOVERLAP, W_OVERLAPENDCAP, W_OVERLAPOUTSIDE,
-		   W_ENDCAPENDCAP, W_ENDCAPOUTSIDE,
-		   W_OUTSIDEOUTSIDE };
-
 class Zprime2muAnalysis : public edm::EDAnalyzer {
  public:
   explicit Zprime2muAnalysis(const edm::ParameterSet&);
-  virtual ~Zprime2muAnalysis();
+  virtual ~Zprime2muAnalysis() {}
 
-  virtual void beginJob(const edm::EventSetup&);
+  virtual void beginJob(const edm::EventSetup&) {}
+  virtual void endJob() {}
+
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
-  virtual void endJob();
 
-  virtual bool eventIsInteresting();
-  virtual unsigned muonIsCut(const zp2mu::Muon& muon);
+ protected:
+  // Verbosity levels.
+  enum VERBOSITY { VERBOSITY_NONE, VERBOSITY_SIMPLE,
+		   VERBOSITY_LOTS, VERBOSITY_TOOMUCH };
+
+  // Type of hits to count in nHits().
+  enum HITSTYPE { HITS_OTH=1, HITS_MU=1, HITS_EL=1,
+		  HITS_TRK, HITS_PIX, HITS_SIL, HITS_ALL };
+
+  // Lepton location codes, used by whereIs(Di)Lepton() methods.
+  enum WhereLepton { W_BARREL=0, W_OVERLAP, W_ENDCAP, W_OUTSIDE };
+  enum WhereDilepton { W_BARRELBARREL=0, W_BARRELOVERLAP,  W_BARRELENDCAP,
+		       W_BARRELOUTSIDE,  W_OVERLAPOVERLAP, W_OVERLAPENDCAP, 
+		       W_OVERLAPOUTSIDE, W_ENDCAPENDCAP,   W_ENDCAPOUTSIDE,
+		       W_OUTSIDEOUTSIDE };
   
-  WhereMuon whereIsMuon(const zp2mu::Muon& muon);
-  WhereDimuon whereIsDimuon(const zp2mu::DiMuon& muon);
+  // Some convenient typedefs.
+  typedef reco::Particle::LorentzVector LorentzVector;
+  typedef std::vector<reco::CandidateBaseRef> LeptonRefVector;
 
-  // keep track of the event number for printing out
-  int eventNum;
-  // and store the event weight
-  double eventWeight;
-
-  void InitROOT();
-
-  double MUMASS;
+  // Hard-coded parameters defined in the .cc file.
   static const double PTMIN;
   static const unsigned int MAX_DILEPTONS;
   static const double ETA_CUT;
@@ -82,158 +94,501 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // config file parameters
   bool doingHiggs; // determines whether one or two dimuons are kept
   bool generatedOnly; // whether only to look at generated muons
-  bool reconstructedOnly; // whether only to look at reconstructed muons
+  bool reconstructedOnly; // whether only to look at generated muons
   bool doingElectrons; // determines whether to run on muons or electrons
   bool doingGeant4; // whether to look at Geant4 particles
   bool useOtherMuonRecos; // whether to use other muons (FMS, PMR, etc)
   bool usingAODOnly; // whether not to use things in RECO tier
   bool useTriggerInfo; // whether to look for trigger info in the input file
 
-  // Track quality studies and optimization.
-  bool TrackQCheck(const zp2mu::Muon& muon, const int qsel,
-		   int& ncut, const bool debug = false);
-  bool dilQCheck(const zp2mu::DiMuon& dimuon, const int qsel,
-		 int& ncut_mum, int& ncut_mup,
-		 const bool debug = false);
-
-  // General
-  zp2mu::Muon& muonRef(const int rec, const int id);
-  zp2mu::DiMuon& dimuonRef(const int rec, const int id);
-
-  // Print-outs
-  void dumpEvent(const bool printGen, const bool printL1 = false, 
-		 const bool printL2 = false, const bool printL3 = false,
-		 const bool printBest = false) const;
-  void dumpDiMuonMasses() const;
-  void dumpDilQuality();
-
-  // Methods for matching muon tracks at different rec levels
-  bool matchEta(const double eta1, const double eta2,
-		double *eta_diff);
-  bool matchPhi(const double phi1, const double phi2,
-		double *phi_diff);
-  bool matchEtaAndPhi(const double eta1, const double eta2,
-		      const double phi1, const double phi2,
-		      double *match_diff);
-  bool matchTracks(const zp2mu::Muon& muon1, const zp2mu::Muon& muon2,
-		   const bool debug = false);
-  bool findClosestId(const int rec,  const zp2mu::Muon& muon, int *closest_id,
-		     const bool debug = false);
-  bool findSameSeedId(const int rec, const zp2mu::Muon& muon, int *sameseed_id,
-		      const bool debug = false);
-  void matchAllMuons(const bool debug = false);
-  void matchStudy(const zp2mu::Muon& muon);
-  int findMatchedDiMuonId(const int rec, const zp2mu::DiMuon& dimuon,
-			  const bool debug = false);
-
-  bool passTrigger(const int irec);
-  bool passTrigger();
-
-  bool isResonance(int pid) {
-    // Z', Z0/gamma*, G, or G*
-    return pid == 32 || pid == 23 || pid == 39 || pid == 5000039;
-  }
-
- private:
-  VERBOSITY verbosity;
-  edm::Handle<reco::TrackCollection> seedTracks;
-  edm::Handle<reco::PhotonCollection> photonCollection;
+  // Keep track of the event number for printing out.
+  int eventNum;
   
-  void clearValues();
-  void storeGeneratedMuons(const edm::Event&);
-  void storeL1Muons(const edm::Event& event);
-  void storeL2Muons(const edm::Event& event);
-  void storeL3Muons(const edm::Event& event);
-  bool TriggerTranslator(const std::string& algo, const unsigned int lvl, 
-			 const unsigned int nmu);
-  void storeL1Decision(const edm::Event& event);
-  void storeHLTDecision(const edm::Event& event);
-  void compareHLTDecision();
-  void storeOfflineMuons(const edm::Event&, const edm::InputTag& whichMuons,
-			 RECLEVEL irec, bool trackerOnly=false);
-  bool storeOfflineMuon(const int imu, const RECLEVEL irec,
-			const reco::TrackRef& theTrack,
-			const reco::TrackRef& tkTrack,
-			const reco::TrackRef& muTrack,
-			const int seedIndex);
-  bool storePixelMatchGsfElectron(const int imu, const RECLEVEL irec,
-				  const reco::PixelMatchGsfElectron& theElectron);
-  void storePixelMatchGsfElectrons(const edm::Event&, const edm::InputTag& whichMuons,
-				   RECLEVEL irec, bool trackerOnly=false);
-  void storeMuons(const edm::Event&);
+  // Basic quantities for the chosen lepton (muon or electron).
+  unsigned int leptonFlavor; // PDG ID
+  double leptonMass;         // in GeV/c^2
 
-  std::vector<zp2mu::Muon> findBestMuons();
-  zp2mu::Muon NorbertsCocktail(const zp2mu::Muon& trk, const zp2mu::Muon& gmr,
-			       const zp2mu::Muon& fms, const zp2mu::Muon& pmr,
-			       const bool debug) const;
-  zp2mu::Muon PiotrsCocktail(const zp2mu::Muon& trk, const zp2mu::Muon& fms,
-			     const zp2mu::Muon& pmr, const bool debug) const;
-
-  template <typename TrackType>
-    TLorentzVector findClosestPhoton(const TrackType& muonTrack);
-  double deltaR(const double eta1, const double phi1,
-		const double eta2, const double phi2) const;
-
-  // utility functions needed to calculate error on 1/Pt, 1/P since such
-  // methods do not exist in reco::Track as of now
-  template <typename TrackType> double invPtError(const TrackType& track);
-  template <typename TrackType> double invPError(const TrackType& track);
-
-  // utility function to match standalone muons (to match seeds)
-  int matchStandAloneMuon(const reco::TrackRef& track,
-			  bool relaxedMatch=false);
-
-  // utility function to match muons from same vertex
-  bool haveSameVertex(const zp2mu::Muon& , const zp2mu::Muon&) const;
-
-  // utility function to match muons from same vertex
-  bool haveSameVertex(const zp2mu::Muon& , const math::XYZPoint&) const;
-
-  bool isMotherOf(const reco::GenParticleCandidate&, const zp2mu::Muon&, const zp2mu::Muon&) const;
-
-  edm::InputTag l1ParticleMap;
-  edm::InputTag l1Muons;
-  edm::InputTag hltResults;
-  edm::InputTag l2Muons;
-  edm::InputTag l3Muons;
-  edm::InputTag standAloneMuons;
-  edm::InputTag genMuons;
-  edm::InputTag globalMuons;
-  edm::InputTag globalMuonsFMS;
-  edm::InputTag globalMuonsPMR;
-  edm::InputTag photons;
-  edm::InputTag pixelMatchGsfElectrons;
-
-  // Methods to build up dileptons from stored muons
-  void makeAllDileptons(const edm::Event& event, const bool debug = false);
-  void makeDileptons(const int rec, const bool debug = false);
-  std::vector<zp2mu::DiMuon> makeDileptons(const int rec, 
-				     const std::vector<zp2mu::Muon>& muons,
-				     const bool debug = false);
-  void addTrueResonance(const edm::Event& event, 
-			std::vector<zp2mu::DiMuon>& diMuons);
-  void addBremCandidates(std::vector<zp2mu::DiMuon>& diMuons, 
-			 const bool debug = false);
-
- protected:  // the muons need to be accessible from our derived classes
-  std::vector<zp2mu::Muon> allMuons[MAX_LEVELS];
-  std::vector<zp2mu::Muon> bestMuons;
-
-  bool searchedDileptons[MAX_LEVELS];
-  std::vector<zp2mu::DiMuon> allDiMuons[MAX_LEVELS];
-  std::vector<zp2mu::DiMuon> bestDiMuons;
-
-  bool passTrig[NUM_REC_LEVELS];
-  unsigned int trigWord[NUM_REC_LEVELS];
-
-  unsigned int leptonFlavor;
-
+  // Trigger path information.
   std::vector<l1extra::L1ParticleMap::L1TriggerType> l1paths;
   std::vector<std::string> hltModules[2]; // in order: L2, L3
   std::vector<std::string> hltPaths;
 
+  // Trigger results.
+  bool passTrig[NUM_REC_LEVELS];
+  unsigned int trigWord[NUM_REC_LEVELS];
+
+  // The lepton collections, stored as CandidateBaseRefs.
+  // bestLeptons, at least, cannot be a CandidateBaseRefVector since we
+  // want to mix CandidateBaseRefs from different collections with
+  // different product ids. So be consistent and make the rest of the
+  // lepton collections not CandidateBaseRefVectors.
+  LeptonRefVector allLeptons[MAX_LEVELS];
+  LeptonRefVector bestLeptons;
+
+  // The dilepton collections, stored as CompositeCandidates in an
+  // OwnVector (for compatibility with CandCombiner, if we switch to
+  // using it.)
+  reco::CandidateCollection allDileptons[MAX_LEVELS];
+  reco::CandidateCollection bestDileptons;
+
+  // Store separately the "resonance" four-vectors, i.e. leptons plus
+  // photons, since the four-vectors in allDileptons are from just
+  // leptons. dileptonResonances[MAX_LEVELS] are bestDileptons'
+  // resonances.
+  std::vector<LorentzVector> dileptonResonances[MAX_LEVELS+1];
+  
+  // Map product IDs from CandidateBaseRef to whatever rec level we
+  // choose.
+  std::map<int,int> recLevelMap;
+  
+  // Map lepton CandidateBaseRefs to photon ones.
+  reco::CandMatchMap photonMatchMap[MAX_LEVELS];
+
+  // Store objects containing extra info for each lepton (id, rec
+  // level, closest and same-seed info.) Switch to CandMatchMaps if
+  // CandMatcher is broken out from the EDProducer module as it is
+  // written now.
+  std::vector<zp2mu::LeptonExtra> lepExtra[MAX_LEVELS];
+
+  // An invalid CandidateBaseRef so that some of the methods above can
+  // return by reference and still be able to return a null reference.
+  reco::CandidateBaseRef invalidRef;
+
+ private:
+  VERBOSITY verbosity;
+  edm::InputTag l1ParticleMap;
+  edm::InputTag hltResults;
+  edm::InputTag standAloneMuons;
+  edm::InputTag photons;
+  std::vector<edm::InputTag> inputs;
+
+  edm::Handle<reco::TrackCollection> seedTracks;
+  edm::Handle<reco::PhotonCollection> photonCollection;
+
+  ////////////////////////////////////////////////////////////////////
+  // Initialization
+  ////////////////////////////////////////////////////////////////////
+
+  // Initialize ROOT settings to how we like them.
+  void InitROOT();
+
+  // Make sure all the various lepton vectors and trigger bitmaps,
+  // etc., are cleared.
+  void clearValues();
+
+  ////////////////////////////////////////////////////////////////////
+  // Storing leptons/dileptons
+  ////////////////////////////////////////////////////////////////////
+
+  // Store a sorted vector of CandidateBaseRefs to leptons at level rec,
+  // returning a success flag.
+  bool storeLeptons(const edm::Event& event, const int rec);
+
+  // Make a new LeptonExtra object for every muon, and store the id (=
+  // index into the collection), the rec level, the seed index, and
+  // the closest photon. The first two are redundant and can be
+  // retrieved from just the lepton CandidateBaseRef objects using
+  // accessor functions id() and recLevel() above.
+  void storeLepExtras(const int rec);
+
+  // Store the photon match map for this rec level's leptons. (Not
+  // currently used, with the photon being stored in the LeptonExtra
+  // object.)
+  void storePhotonMatches(const edm::Event& event, const int rec);
+
+  // Find the closest photon to the track (in delta R).
+  template <typename TrackType> LorentzVector
+    findClosestPhoton(const TrackType& track) const;
+
+  // Return the index into the standAloneMuons collection staTracks
+  // that this Muon's standAloneMuon (passed in as track) most closely
+  // matches -- use to mock up seedIndex.
+  int matchStandAloneMuon(const reco::TrackRef& track,
+			  bool relaxedMatch=false) const;
+
+  // Store closest matches for all muons at all rec levels, and store
+  // same-seed matches for all muons and all pairs of different rec
+  // levels above and including L3.
+  void matchLeptons();
+
+  // Construct a new dilepton from the two specified lepton
+  // candidates, using AddFourMomenta to set up the dilepton.
+  reco::CompositeCandidate* newDilepton(const reco::CandidateBaseRef& dau1,
+					const reco::CandidateBaseRef& dau2);
+
+  // Prune a dilepton collection: if more than one dilepton was
+  // formed, we accept only those containing distinct leptons. The
+  // preference is given to higher mass dilepton over lower mass
+  // dilepton (i.e. to the earlier dilepton in the current sort
+  // order).
+  void RemoveDileptonOverlap(reco::CandidateCollection& dileptons);
+
+  // Consider all possible combinations of l+ and l-, and form
+  // dilepton candidates. 
+  void makeDileptons(const int rec);
+
+  // If there is a photon candidate at the phi-eta distance dRmax from 
+  // either of the leptons, combine its 4-momentum with that of the dilepton
+  // and store it in the collection of resonance vectors.
+  void addBremCandidates(const int rec);
+
+  // Instead of adding brem candidates for the generator-level
+  // dilepton, take the true resonance value from e.g. PYTHIA.
+  void addTrueResonance(const edm::Event& event);
+
+  ////////////////////////////////////////////////////////////////////
+  // Using trigger info
+  ////////////////////////////////////////////////////////////////////
+
+  // Get Level-1 decisions for trigger paths we are interested in,
+  // storing them in a bitmap.
+  void storeL1Decision(const edm::Event& event);
+  // Same idea, but for levels 2 and 3 of the HLT.
+  void storeHLTDecision(const edm::Event& event);
+
+  // Function to translate the algorithm algo defined for trigger
+  // level lvl, requiring nmu muons (e.g. single or dimuon trigger),
+  // and return whether we judge the event to pass the trigger at this
+  // level for this algorithm.
+  bool TriggerTranslator(const std::string& algo, const unsigned int lvl, 
+			 const unsigned int nmu) const;
+
+  // Use TriggerTranslator to compare the "official" decisions stored
+  // by store*Decision with what we calculate.
+  void compareTrigDecision(const edm::Event& event, bool old=false) const;
+  
+  ////////////////////////////////////////////////////////////////////
+  // Picking "best" leptons
+  ////////////////////////////////////////////////////////////////////
+
+  // Our implementation of Norbert's cocktail method for picking muons
+  // from the various TeV muon reconstructors; returns a reference to
+  // the one picked.
+  const reco::CandidateBaseRef&
+    NorbertsCocktail(const reco::CandidateBaseRef& trk,
+		     const bool debug) const;
+
+  // Same, but for Piotr's cocktail.
+  const reco::CandidateBaseRef&
+    PiotrsCocktail(const reco::CandidateBaseRef& trk,
+					  const bool debug) const;
+
+  // A driver routine which uses the cocktail methods above to pick
+  // "best" leptons (only implemented for muons).
+  void findBestLeptons();
+
+ protected:
+  ////////////////////////////////////////////////////////////////////
+  // Lepton/dilepton rec level utility functions
+  ////////////////////////////////////////////////////////////////////
+
+  // Return a unique id for the lepton cand (currently implemented by
+  // the reference's index into the collection).
+  int id(const reco::CandidateRef& cand) const;
+  int id(const reco::CandidateBaseRef& cand) const;
+
+  // Translate the Ref's product id to one of our rec levels, using the
+  // cached map.
+  int recLevel(const reco::CandidateBaseRef& cand) const;
+
+  // Get the rec level for a dilepton, making sure that either all the
+  // daughter leptons have the same rec level, or else returning lbest,
+  // (since a "best" dilepton can be made up of leptons at different rec
+  // levels).
+  int recLevel(const reco::Candidate& cand) const;
+
+  // Provide uniform access to allLeptons and bestLeptons by returning a
+  // reference to the appropriate collection.
+  const LeptonRefVector& getLeptons(const int rec) const;
+
+  // Same as getLeptons() but for dileptons.
+  const reco::CandidateCollection& getDileptons(const int rec) const;
+
+  // Access to the LeptonExtra object associated with the lepton cand
+  // (which stores closest and same-seed match info, closest photon,
+  // etc.)...
+  // in non-const format,
+  zp2mu::LeptonExtra&
+    getLepExtra(const reco::CandidateBaseRef& cand);
+  // and in const format.
+  const zp2mu::LeptonExtra&
+    getLepExtra(const reco::CandidateBaseRef& cand) const;
+  
+  // Get the four-vector of the closest photon found for cand
+  // (retrieve it from the LeptonExtra object).
+  const LorentzVector& closestPhoton(const reco::CandidateBaseRef& cand) const;
+
+  ////////////////////////////////////////////////////////////////////
+  // Lepton/dilepton matching
+  ////////////////////////////////////////////////////////////////////
+
+  // Search for the lepton at the specified rec level which is either
+  // the closest or same-seed match to the lepton specified, returning
+  // an invalid reference if not found (if the id was = -999 or an
+  // invalid rec level). whichMatch = 0 for closest match, 1 for
+  // same-seed match, and -1 to pick the "best" match, i.e. same-seed if
+  // available, and closest if not.  Not meant to be called directly;
+  // use one of the three methods closestLepton, sameSeedLepton, and
+  // matchedLepton.
+  const reco::CandidateBaseRef&
+    matchLepton(const reco::CandidateBaseRef& lep,
+		const int level,
+		int whichMatch) const;
+
+  // Const access to lep's closest match (in delta R) at another rec level.
+  const reco::CandidateBaseRef&
+    closestLepton(const reco::CandidateBaseRef& lep,
+		  const int level) const;
+
+  // Const access to lep's same-seed match at another rec level.
+  const reco::CandidateBaseRef&
+    sameSeedLepton(const reco::CandidateBaseRef& lep,
+		   const int level) const;
+
+  // Const access to lep's "best" match (defined above) at another rec
+  // level.
+  const reco::CandidateBaseRef&
+    matchedLepton(const reco::CandidateBaseRef& lep,
+		  const int level) const;
+
+  // Try to find the dilepton at the new rec level that has the same
+  // two leptons as dil. Return success, and return the other dilepton in
+  // newdil.
+  bool matchDilepton(const reco::Candidate& dil,
+		     const int level,
+		     const reco::Candidate* newdil) const;
+
+  ////////////////////////////////////////////////////////////////////
+  // Generator-level utility functions
+  ////////////////////////////////////////////////////////////////////
+
+  // Work around Cartesian v. polar coordinates for LorentzVectors for now.
+  void SetP4M(reco::Particle::LorentzVector& v,
+	      double pt, double phi, double p,
+	      double theta, double mass) const;
+
+  // Return the lepton cand's mother. If cand's mother is the same
+  // lepton but before brem, go up the decay chain (what we call the
+  // "non-brem mother"). This is mainly to avoid stopping at leptons
+  // in documentation lines, which are declared to be ancestors of
+  // muons produced in hard interaction (i.e., ancestors of
+  // themselves).
+  const reco::Candidate* mother(const reco::CandidateBaseRef& cand) const;
+
+  // Return the PDG id of the non-brem mother of cand. If the mother
+  // pointer isn't valid, return pdgId = 0.
+  int motherId(const reco::CandidateBaseRef& cand) const;
+  
+  // Return the PDG id of the grandmother of cand (i.e. a quark or
+  // antiquark, or a gluon). If the mother or grandmother pointer isn't
+  // valid, return pdgId = 0.
+  int grandmotherId(const reco::CandidateBaseRef& cand) const;
+
+  // If cand1 and cand2 have the same non-brem mothers, return a
+  // pointer to the mother candidate, else return null.
+  const reco::Candidate* sameMother(const reco::CandidateBaseRef& cand1,
+				    const reco::CandidateBaseRef& cand2) const;
+
+  // Test to see if the pdg ID is that of a resonance we want to
+  // analyze, currently one of Z0 (i.e. Drell-Yan), Z', or G*.
+  bool isResonance(int pid) const;
+
+  ////////////////////////////////////////////////////////////////////
+  // Track utility functions
+  ////////////////////////////////////////////////////////////////////
+
+  // Get the "main" track associated with the lepton. The definition
+  // of "main" depends on the lepton type and its rec level. For electrons,
+  // only the GsfTrack is appropriate for now. For muons at each rec level:
+  //   L2: return the muon system track
+  //   L3 or higher: return the combined track (tracker+muon system)
+  // If something doesn't make sense (e.g. requesting an L1 track for
+  // which a Track is not reconstructed), return an invalid reference.
+  reco::TrackBaseRef getMainTrack(const reco::CandidateBaseRef& cand) const;
+
+  // There is no pError() in Track/TrackBase; calculate error on p
+  // ourselves from error on qoverp().
+  template <typename TrackType> double pError(const TrackType& cand) const;
+  // There is a ptError() in Track/TrackBase but for symmetry with the
+  // above let's have another.
+  template <typename TrackType> double ptError(const TrackType& cand) const;
+  
+  // Propagate inverse errors...
+  double invError(double val, double err) const { return 1/val/val*err; } 
+  // ... to 1/pT
+  template <typename TrackType> double invPtError(const TrackType& tk) const;
+  // ... and 1/p
+  template <typename TrackType> double invPError(const TrackType& tk) const;
+
+  // Provide the same track error methods to be called directly on
+  // candidates, for convenience.
+  double ptError(const reco::CandidateBaseRef& cand) const;
+  double pError(const reco::CandidateBaseRef& cand) const;
+  double invPtError(const reco::CandidateBaseRef& cand) const;
+  double invPError(const reco::CandidateBaseRef& cand) const;
+  
+  // Return by reference the number of rec hits counted by pixel,
+  // silicon, and "other-system", which could be the muon system or
+  // the ecal for electrons.
+  template <typename TrackType>
+    void numSubDetHits(const TrackType& theTrack,
+		       int& nPixHits, int& nSilHits, int& nOtherHits,
+		       DetId::Detector otherDet) const;
+
+  // Get the number of hits on the appropriate track (specified by
+  // type using the codes HITS_* above) depending on the lepton type
+  // and rec level.
+  int nHits(const reco::CandidateBaseRef& cand, const int type) const;
+
+  // Return whether cand1 and cand2 are "close"; instead of a circle
+  // in eta-phi space, we look at a square .5 on a side.
+  bool matchTracks(const reco::CandidateBaseRef& cand1,
+		   const reco::CandidateBaseRef& cand2) const;
+
+  // Mimic what HLTMuonPrefilter does for pt cut: convert 50%
+  // efficiency threshold to 90% efficiency threshold.
+  double ptLx(const reco::TrackRef& theTrack, const int rec) const;
+
+  // Simplify usage of chi2 prob for tracks (used in selecting "best"
+  // muons).
+  double cumulativeChiSquare(const reco::CandidateBaseRef& mu) const;
+
+  ////////////////////////////////////////////////////////////////////
+  // Dilepton utility functions
+  ////////////////////////////////////////////////////////////////////
+
+  // Get the "resonance" four-vector, i.e. the dilepton four-vector
+  // plus any associated photons.
+  const LorentzVector& resV(const int rec, const int idil) const;
+
+  // Count the number of daughters the dilepton has in the specified
+  // acceptance in eta.
+  int numDaughtersInAcc(const reco::Candidate& dil, const double etaCut) const;
+
+  // Return a reference to the ith daughter lepton of the dilepton, or
+  // an invalid reference if i is out of bounds.
+  const reco::CandidateBaseRef
+    dileptonDaughter(const reco::Candidate& dil,
+		     const unsigned i) const;
+
+  // Return a reference to the daughter lepton of the dilepton with
+  // specified charge (if it is a same-sign dilepton, will return the
+  // first one found), or else an invalid reference if not found.
+  const reco::CandidateBaseRef
+    dileptonDaughterByCharge(const reco::Candidate& dil,
+			     const int charge) const;
+
+  ////////////////////////////////////////////////////////////////////
+  // Print-outs
+  ////////////////////////////////////////////////////////////////////
+
+  // Print out all the relevant information about the lepton; but this
+  // method is just as useful as documentation on how to access this
+  // information.
+  void dumpLepton(std::ostream& output, reco::CandidateBaseRef cand) const;
+
+  // Dump the masses of the dileptons formed at each level of
+  // reconstruction.
+  void dumpDileptonMasses() const;
+
+  // Dump all quality information about a dilepton's daughter lepton's
+  // tracks.
+  void dumpDilQuality() const;
+
+  // Dump the event, printing out the specified information at each
+  // level of lepton reconstruction.
+  void dumpEvent(const bool printGen = false, const bool printL1 = false,
+                 const bool printL2 = false, const bool printL3 = false,
+                 const bool printBest = false) const;
+
+  ////////////////////////////////////////////////////////////////////
+  // Quality cuts
+  ////////////////////////////////////////////////////////////////////
+
+  // Quality cuts on tracks, not yet implemented.
+  bool TrackQCheck(const reco::CandidateBaseRef& lepton, const int qsel,
+		   int& ncut) const;
+
+  // Apply the above track quality cuts to each of the daughters of
+  // the dilepton, not yet implemented.
+  bool dilQCheck(const reco::Candidate& dilepton, const int qsel,
+		 int& ncut_mum, int& ncut_mup) const;
+
+  ////////////////////////////////////////////////////////////////////
+  // Trigger
+  ////////////////////////////////////////////////////////////////////
+
+  // Return whether the event passed the trigger at irec level.
+  bool passTrigger(const int irec) const;
+
+  // Return whether the event passed the entire trigger (L1+HLT).
+  bool passTrigger() const;
+
+  ////////////////////////////////////////////////////////////////////
+  // Lepton/dilepton acceptance
+  ////////////////////////////////////////////////////////////////////
+
+  // Helper method to return a code (one of the W_* ones above) based
+  // on where the lepton is in the muon system by eta; in the barrel,
+  // in the overlap region, in the endcap, or outside acceptance
+  // (nominally 2.4).
+  // JMTBAD are the codes for electrons useful?
+  WhereLepton whereIsLepton(const reco::CandidateBaseRef& lepton);
+
+  // Helper method to return a code based on where the leptons of a
+  // dilepton are in the lepton system (using the above whereIsLepton method
+  // definitions of location).
+  WhereDilepton whereIsDilepton(const reco::Candidate& dil);
+
+  ////////////////////////////////////////////////////////////////////
+  // Analysis level function (cuts, etc.)
+  ////////////////////////////////////////////////////////////////////
+
+  // Return whether the event is "interesting", used in determining
+  // whether to override the verbosity level for dumping the event.
+  bool eventIsInteresting();
+
+  // Checks our defined cut methods and returns a bitmap of which
+  // passed. This can be directly used as a comparison, since if no
+  // cuts are made, then the return value is 0 == false; otherwise it
+  // is > 0 == true.
+  unsigned leptonIsCut(const reco::CandidateBaseRef& lepton);
 };
 
-ostream& operator<<(ostream& out, const TLorentzVector& vect);
+// Sorting functors.
+struct reverse_momentum_sort {
+  bool operator()(const reco::Candidate& lhs, const reco::Candidate& rhs) const {
+    return lhs.p() > rhs.p();
+  }
+  bool operator()(const reco::CandidateBaseRef& lhs, const reco::CandidateBaseRef& rhs) const {
+    return lhs->p() > rhs->p();
+  }
+};
+
+struct reverse_mass_sort {
+  bool operator()(const reco::Candidate& lhs, const reco::Candidate& rhs) const {
+    return lhs.mass() > rhs.mass();
+  }
+};
+
+// Functions to cast base types of Candidates to concrete derived types
+// e.g. to a reco::Muon.
+template <typename T>
+inline const T& toConcrete(const reco::Candidate& cand) {
+  return *dynamic_cast<const T*>(&cand);
+}
+
+template <typename T>
+inline const T& toConcrete(const reco::CandidateRef& cand) {
+  return *dynamic_cast<const T*>(&*cand);
+}
+
+template <typename T>
+inline const T& toConcrete(const reco::CandidateBaseRef& cand) {
+  return *dynamic_cast<const T*>(&*cand);
+}
+
+// For pretty-printing TLorentzVectors.
+std::ostream& operator<<(std::ostream& out, const TLorentzVector& vect);
 
 #endif // ZP2MUANALYSIS_H

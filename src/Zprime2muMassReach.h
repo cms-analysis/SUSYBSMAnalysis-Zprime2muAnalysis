@@ -71,7 +71,7 @@ class Zprime2muMassReach : public Zprime2muAnalysis {
 
   enum FILETYPE { SIGNAL, BKG1, BKG2 };
 
-  int eventNum; // sequential in the sample, not the real event number
+  int eventCount; // sequential event counter (not the official event number!)
   int fileNum;
 
   // Configuration parameters:

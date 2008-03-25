@@ -1,5 +1,4 @@
 block Zprime2muAnalysisCommon = {
-  untracked int32 verbosity = 0
   bool doingHiggs = false
   bool doingElectrons = false
   bool generatedOnly = false
@@ -11,16 +10,89 @@ block Zprime2muAnalysisCommon = {
   #InputTag genMuons = source
   InputTag genMuons = VtxSmeared
   InputTag l1ParticleMap = l1extraParticleMap
-  InputTag l1Muons = l1extraParticles
   # every process puts a TriggerResults product into the event;
   # pick the HLT one
   InputTag hltResults = TriggerResults::HLT
-  InputTag hltL2Muons = hltL2MuonCandidates
-  InputTag hltL3Muons = hltL3Muons # get the TrackLinksCollection for this one
-  InputTag globalMuons = muons
-  InputTag globalMuonsFMS = muonsFMS
-  InputTag globalMuonsPMR = muonsPMR
   InputTag standAloneMuons = standAloneMuons:UpdatedAtVtx
   InputTag photons = correctedPhotons
-  InputTag pixelMatchGsfElectrons = pixelMatchGsfElectrons
+
+  VInputTag muInputs = {
+    muCandGN,
+    muCandL1, #    l1extraParticles,
+    hltL2MuonCandidates,
+    muCandL3, #    hltL3MuonCandidates,
+    muons,
+    muCandTK, #    muonsTK,
+    muonsFMS,
+    muonsPMR
+  }
+
+  # for now, Zprime2muAnalysis knows to put
+  # pixelMatchGsfElectrons in the right spot (in the same rec level as
+  # GMR muons).
+  VInputTag elInputs = { elCandGN, pixelMatchGsfElectrons }
 }
+
+module simParticleCandidates = GenCandsFromSimTracksProducer {
+  InputTag src = g4SimHits
+}
+
+path simCands = { simParticleCandidates }
+
+#################################################
+
+module genMuons = CandSelector {
+  InputTag src = genParticleCandidates
+  string cut = "abs(pdgId) = 13 & status = 1" # & pt > 0.001"
+}
+
+module simMuons = CandSelector {
+  InputTag src = simParticleCandidates
+  string cut = "abs(pdgId) = 13 & status = 1" # & pt > 0.001"
+}
+
+path makeMuonGenCandidates = { genMuons, simMuons }
+
+module muCandGN = CandMerger {
+  VInputTag src = { genMuons, simMuons }
+}
+
+module muCandL1 = L1MuonSanitizer {
+  InputTag src = l1extraParticles
+}
+
+module muCandL3 = L3MuonSanitizer {
+  InputTag src = hltL3Muons
+}
+
+module muCandTK = TrackerOnlyMuonProducer {
+  InputTag src = muons
+}
+
+sequence makeMuonCandidates = { 
+  genMuons, simMuons, muCandGN, muCandL1, muCandL3, muCandTK
+}
+
+#################################################
+
+module genElectrons = CandSelector {
+  InputTag src = genParticleCandidates
+  string cut = "abs(pdgId) = 11 & status = 1" #& pt > 0.001"
+}
+
+module simElectrons = CandSelector {
+  InputTag src = simParticleCandidates
+  string cut = "abs(pdgId) = 11 & status = 1" #& pt > 0.001"
+}
+
+module elCandGN = CandMerger {
+  VInputTag src = { genElectrons, simElectrons }
+}
+
+sequence makeElectronCandidates = {
+  genElectrons, simElectrons, elCandGN 
+}
+
+#################################################
+
+path makeCandidates = { makeMuonCandidates, makeElectronCandidates }

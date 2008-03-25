@@ -3,6 +3,7 @@ include "SUSYBSMAnalysis/Zprime2muAnalysis/data/Zprime2muAnalysisCommon.cff"
 module Zprime2muResolution = Zprime2muResolution {
   using Zprime2muAnalysisCommon
   
+  untracked int32 verbosity = 1
   untracked string outputFile = "muon_resolution.ps"
   untracked string histoFile = "resolution_histos.root"
   untracked bool useHistosFromFile = false

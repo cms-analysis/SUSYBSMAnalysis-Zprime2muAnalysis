@@ -1,0 +1,26 @@
+<use name=FWCore/Framework>
+<use name=FWCore/ParameterSet>
+
+<library file=GenCandsFromSimTracksProducer.cc name=GenCandsFromSimTracksProducer>
+  <use name=DataFormats/HepMCCandidate>
+  <use name=DataFormats/RecoCandidate>
+  <use name=SimDataFormats/HepMCProduct>
+  <use name=SimDataFormats/Track>
+</library>
+
+<library file=L1MuonSanitizer.cc name=L1MuonSanitizer>
+  <use name=DataFormats/RecoCandidate>
+  <use name=DataFormats/L1Trigger>
+</library>
+
+<library file=L3MuonSanitizer.cc name=L3MuonSanitizer>
+  <use name=DataFormats/RecoCandidate>
+  <use name=DataFormats/MuonReco>
+</library>
+
+<library file=TrackerOnlyMuonProducer.cc name=TrackerOnlyMuonProducer>
+  <use name=DataFormats/RecoCandidate>
+  <use name=DataFormats/MuonReco>
+</library>
+
+<flags CXXFLAGS="-O0 -g -DDEBUG">

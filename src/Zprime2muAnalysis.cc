@@ -300,8 +300,7 @@ void Zprime2muAnalysis::InitROOT() {
   TH1::AddDirectory(false);
   gROOT->SetStyle("Plain");
   gStyle->SetFillColor(0);
-  // JMTBAD re-enable this
-  //  gStyle->SetOptDate();
+  gStyle->SetOptDate();
   gStyle->SetOptStat(111111);
   gStyle->SetOptFit(1111);
   gStyle->SetPadTickX(1);

@@ -676,12 +676,15 @@ void Zprime2muResolution::calcResolution(const bool debug) {
   LeptonRefVector::const_iterator plep;
   reco::CandidateCollection::const_iterator pdi;
 
-  // Fill histograms for acceptance studies.
-  gen_mass = allDileptons[lgen][0].mass(); // (in GeV)
-  GenMassAllEvents->Fill(gen_mass);
-  // Check whether both muons are inside the full eta coverage.
-  if (numDaughtersInAcc(allDileptons[lgen][0], ETA_CUT) >= 2)
-    GenMassInAccept->Fill(gen_mass);
+  if (allDileptons[lgen].size() > 0) {
+    // JMTBAD fill the histograms for every dil in the event?
+    // Fill histograms for acceptance studies.
+    gen_mass = allDileptons[lgen][0].mass(); // (in GeV)
+    GenMassAllEvents->Fill(gen_mass);
+    // Check whether both muons are inside the full eta coverage.
+    if (numDaughtersInAcc(allDileptons[lgen][0], ETA_CUT) >= 2)
+      GenMassInAccept->Fill(gen_mass);
+  }
 
   // Get origin of generated leptons.
   for (plep = allLeptons[lgen].begin(); plep != allLeptons[lgen].end(); plep++)

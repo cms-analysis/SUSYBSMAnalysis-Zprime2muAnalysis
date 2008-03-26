@@ -9,55 +9,180 @@ Authors: Robert Cousins
 
 Electron Extension Contributor: Jeremy Werner (Princeton)
 
-
 Zprime2muAnalysis consists of several analysis modules intended for
 studying high-mass resonances.
 
-Zprime2muAnalysis:   fills vectors of muons, constructs dimuons, calculates
-                     invariant mass and other quantities.  This is the base
-                     class for the other modules, so its code is called
-                     in each of them.
+Zprime2muAnalysis:   fills vectors of leptons, constructs dileptons,
+                     calculates invariant mass and other quantities. This is
+                     the base class for the other modules, so its code is
+                     called in each of them.
 
 Zprime2muResolution: calculates resolutions (mass, phi, eta, etc.) of
-                     the muon fits at different levels of reconstruction
+                     the lepton fits at different levels of reconstruction
                      and plots them.
 
 Zprime2muAsymmetry:  performs 6D unbinned maximum-likelihood fits to measure
                      the forward-backward asymmetry (A_{FB}) for Drell-Yan
                      and Z' events, for both generated and reconstructed
-                     muons (see CMS NOTE 2005/022).
+                     leptons (see CMS NOTE 2005/022).
 
 Zprime2muMassReach:  performs unbinned maximum-likelihood fits to measure
-                     signal and background contribution and calculates
-                     the discovery potential for a given integrated
-                     luminosity (see CMS NOTE 2006/062).
+                     signal and background contribution to the dilepton
+                     spectrum and calculates the discovery potential for a
+                     given integrated luminosity (see CMS NOTE 2006/062).
 
 As mentioned above, Zprime2muAnalysis is not intended to be run
-separately, except for debugging purposes.  In this case it will dump
+separately, except for debugging purposes. In this case it will dump
 to the appropriate MessageLogger destination various messages
-concerning the selection of muons (either generated, or at various
-levels of reconstruction) and the assembling of dimuons.
+concerning the selection of leptons (either generated, or at various
+levels of reconstruction) and the assembling of dileptons.
 
 The .cfg files in the test/ subdirectory illustrate usage of these
 modules; default parameters for each module are specified in the .cfi
-and .cff files in the data/ subdirectory.  As in the .cfg files, in
+and .cff files in the data/ subdirectory. As in the .cfg files, in
 general these modules take as input EDM ROOT files with
 fully-reconstructed (i.e. GEN-SIM-DIGI-L1-HLT-RECO all performed)
-gamma*/Z0/Z' --> l- l+ events (with l=e,mu).  Some sample files are
-available at /castor/cern.ch/user/t/tucker/CMSSW_1_6_7.  At the time
-being, the package has been written and tested to work with version
-1_6_7 of CMSSW.  The tag V00-00-04 should be used.  Module-specific
-instructions follow.
+gamma*/Z0/Z'/G/G* --> l- l+ events (with l=e,mu). Some sample files
+are available at /castor/cern.ch/user/t/tucker/CMSSW_1_6_7.
 
-Zprime2muAnalysis
------------------
-In data/Zprime2muAnalysisCommon.cff one can find a set of InputTags
-defining which collections of reco objects are to be used from the
-input ROOT file; these may be changed if necessary. There are
-a few flags of interest:
+At the time this documentation was updated, the package has been
+tested to work with version 1_6_11 of CMSSW. The tag V00-01-00 should
+be used. With this new release, we have abandoned our private
+BaseMuon/Muon/DiMuon classes in favor of using directly the standard
+AnalysisTools classes (reco::Candidate and all its derived classes,
+including those of the PAT).
+
+While much of the base class Zprime2muAnalysis along with its provided
+interface for accessing the (di)lepton four-vectors and other data has
+changed, the bulk of the logic in the derived classes has remained the
+same, as has the physics. The rest of this document is devoted to
+details of how the standard AnalysisTools classes are used, how the
+data can be accessed by customers of the base class,
+Zprime2muAnalysis, and how the three included analysis modules,
+Resolution, Asymmetry, and MassReach, can be configured and run.
+
+
+Philosophy
+----------
+
+Inside the base class Zprime2muAnalysis, leptons are stored at
+different levels of reconstruction ("rec levels"), of which there are
+currently eight defined. These were originally for dealing with
+different levels of muon reconstruction:
+
+  - generated muons (GEN),
+  - Level-1, Level-2, and Level-3 of the muon trigger system (L1, L2, L3),
+  - globally-reconstructed muons (GMR),
+  - tracker-only (TK),
+  - tracker-plus-first-muon-station (FMS),
+  - muons reconstructed "pickily" (PMR),
+  - and "best" muons, chosen from the previous four options on a
+    muon-by-muon basis using some track goodness-of-fit criteria (OPT).
+
+The last four options are designed to deal with showering TeV muons,
+for which GMR is not the best choice for reconstruction. When running
+in electron mode, some of these rec levels are no longer appropriate,
+and are simply left empty. In particular, only generated and
+GSF-matched electrons are currently implemented, the latter of which
+is placed in the GMR rec level (which is thus duplicated exactly at
+the OPT rec level).
+
+data/Zprime2muAnalysisCommon.cff organizes the various input
+collections of leptons, first running any AnalysisTools modules to
+produce, select, merge, or sort the collections needed for the various
+levels of reconstruction of both muons and electrons. The VInputTags
+muInputs and elInputs then match input collections to the right rec
+levels (although for electrons, since L1/HLT results are currently not
+used in this package, it is easier to skip them in the config file and
+let the code know where to put them for now).
+
+The input collections thus defined (whether CandidateCollections,
+MuonCollections, or any other vector of objects deriving from
+reco::Candidate) are accessed in the code using edm::View. In the
+class, we store references to leptons as vectors of
+reco::CandidateBaseRef objects:
+
+  // excerpt from Zprime2muAnalysis.h
+  typedef std::vector<reco::CandidateBaseRef> LeptonRefVector;
+     ...
+  LeptonRefVector allLeptons[MAX_LEVELS];
+  LeptonRefVector bestLeptons;
+
+one vector for each rec level. (CandidateBaseRefs were chosen over
+CandidateRefs and vector<CandidateBaseRef> over CandidateBaseRefVector
+for technical reasons documented in code comments.)
+
+After the leptons are stored, matching between rec levels (especially
+to MC truth) and matching closest photons is done in the code. We
+chose to do this instead of using the available AnalysisTools matching
+tools since, with eight rec levels, it proved cumbersome to define
+matches between leptons at each pair of rec levels and matches between
+each rec level of leptons and photons in the configuration files. 8*8
+(not 8*7, since an AssociationMap has no easy inverse mapping)
+module invocations to define the matching between lepton rec
+levels alone would be needed. Instead we do the matching internally and
+store the results in a LeptonExtra object of our own. If CandMatcher were
+separated from the configuration file level and made into a stand-alone
+object that could be used at the code level inside for loops, that would
+ameliorate the situation greatly, and provide compatibility with the
+standard matching tools.
+
+Dileptons are constructed and as reco::CompositeCandidates, pruned of
+overlap (if two dileptons share a lepton, preference is given to the
+dilepton of higher invariant mass), and stored in
+reco::CandidateCollections (one collection at each rec level). An
+attempt is made to recover energy loss from bremmed photons at GMR rec
+level and higher by adding in the four-vectors of each of the leptons'
+closest photons, found in the matching step above. The resulting
+"resonance" four-vector, however, is not stored in the
+CompositeCandidate object, but is stored separately in order to enable
+comparisons of the two in derived analysis modules such as
+Zprime2muResolution. These resonance four-vectors are stored simply:
+one vector of LorentzVectors for each reconstruction level.
+
+Trigger information is also stored, but only for the few muon trigger
+paths we have implemented. The "official" results are compared to a
+homemade implementation for trigger studies.
+
+All of the above dumps helpful debugging information to the
+MessageLogger, depending on the level of the verbosity flag; see its
+discussion below.
+
+
+Accessing this data in code
+---------------------------
+
+All of the methods which implement the above are declared private to
+the base class Zprime2muAnalysis, but there are a number of methods
+accessible from derived classes. The main documentation for these
+exists in Zprime2muAnalysis.h, in the sections starting with
+"Lepton/dilepton rec level utility functions". Examples of their use
+are in the method dumpLepton() (which besides dumping debugging info,
+was written for documentation purposes), and in the existing analysis
+classes, Asymmetry, Resolution, and MassReach.
+
+
+Configuring Zprime2muAnalysis
+-----------------------------
+
+There are quite a few flags and parameters of interest, which can be
+set either editing data/*.cff or (preferably) in the config file using
+the replace syntax. E.g. when running Zprime2muResolution, one might
+put the following line in the cfg file:
+
+  replace Zprime2muResolution.verbosity = 2
+
+There are some flags common to all modules (since they are used by the
+base class Zprime2muAnalysis):
 
   doingElectrons:    switch to using electron collections instead of muons
                      (see below section, "Electron Extension").
+  constructGenDil:   whether to allow construction of generator-level
+                     dileptons from generated leptons -- default behavior
+                     is no, and to take the actual resonance from the PYTHIA
+                     event record, but if there is none, as is the case in
+                     some COMPHEP-generated samples, then the code will not
+                     find any generated dilepton unless this is set.
   generatedOnly:     whether only to bother with generator-level information.
   reconstructedOnly: likewise, whether only to bother with reconstructed
                      information.
@@ -71,15 +196,19 @@ a few flags of interest:
   useTriggerInfo:    whether to examine the L1/HLT information present in
                      the file (not available for electrons).
 
+
 Zprime2muResolution
 -------------------
+
 The user defines the mass range for the histograms to be produced,
 and the number of bins.  The user inputs the ROOT file(s) to be analyzed,
 runs the cmsRun job, and various plots are produced in the current
 directory in muon_resolution.ps.
 
+
 Zprime2muAsymmetry
 ------------------
+
 Here there are a few knobs for the user to turn.  Depending on the Z'
 model and mass one wishes to study, an appropriate PSet such as the
 ones in data/AsymmetryDataSets.cff must be specified.  (For example,
@@ -170,8 +299,10 @@ histograms of the data and the result of the fit. (In the filename,
     contains the mistag parameter information and the results of the
     fits (A_{FB} and errors).
 
+
 Zprime2muMassReach
 ------------------
+
 The user is supposed to provide three input files.  The first one is
 signal (full-interference Z'), the other two are backgrounds.  The
 first background sample is the Drell-Yan generated in the same mass
@@ -226,47 +357,38 @@ mass_fits.ps stores the results of the fits (notably various
 significance distributions), and some goodness-of-fit distributions
 for S+B and B-only hypotheses.
 
+
 Electron Extension
 ------------------
-The code has been updated to handle electrons in addition to muons.
-In particular, a boolean switch "doingElectrons" that is defined in
-data/Zprime2muAnalysisCommon.cff can be flipped to true to run over
-electrons instead of muons.  The default of this switch is false.
-When flipped to true, the generator/simulator level "Muon" object is
-filled just as before, only with a switch in the PID to 13 to 11.  New
-functions have been written to support the filling of the
-reconstructed level "Muon" object from the offline
-PixelMatchGsfElectron electron candidates, and, of course, these
-functions are called when the switch is flipped to true.
 
-After the filling of the "Muon" objects, the flow of the code is
-nearly identical to the muon case.  The only exceptions occur in the
-Zprime2muAnalysis module: In the muon chain considerable muon
-selection occurs, whereas a lot of this selection does not occur in
-the electron chain.  (The code inputs many different classes of muon
-candidates, whereas it inputs only offline PixelMatchGsfElectron
-electron candidates.  It is suggested that the standard HEEP tools
-that are under development be used before this code for most of the
-electron selection).  Similarly, the module produces many different
-dilepton collections in the muon mode, whereas it does not in the
-electron mode.
+The flow of the code when running in electron mode is nearly identical
+to the muon case.  The only exceptions occur in the Zprime2muAnalysis
+module: In the muon chain considerable muon selection occurs, whereas
+a lot of this selection does not occur in the electron chain.  (The
+code inputs many different classes of muon candidates, whereas it
+inputs only offline PixelMatchGsfElectron electron candidates.  It is
+suggested that the standard HEEP tools that are under development be
+used before this code for most of the electron selection.)  Similarly,
+the module produces many different dilepton collections in the muon
+mode, whereas it does not in the electron mode.
 
 To run in the electron mode:  Change "doingElectrons = false" to 
 "doingElectrons = true" in data/Zprime2muAnalysisCommon.cff 
+
 
 Step-by-step instructions
 -------------------------
 
 To check out the package:
 
-   scramv1 project CMSSW CMSSW_1_6_7
-   cd CMSSW_1_6_7/src
+   scramv1 project CMSSW CMSSW_1_6_11
+   cd CMSSW_1_6_11/src
    project CMSSW
-   cvs co -r V00-00-04 SUSYBSMAnalysis/Zprime2muAnalysis
+   cvs co -r V00-01-00 SUSYBSMAnalysis/Zprime2muAnalysis
    # next is needed for fwlite::ChainEvent to read from CASTOR,
    # but the unit test will fail; OK for our purposes
    cvs co -r V00-07-00 DataFormats/FWLite
-
+   
 To compile:
 
    eval `scramv1 runtime -csh`
@@ -277,4 +399,3 @@ To run (where the .cfg can be any of the 4 .cfg files in /test):
 
    cd ../test
    cmsRun testZprime2muResolution.cfg
-

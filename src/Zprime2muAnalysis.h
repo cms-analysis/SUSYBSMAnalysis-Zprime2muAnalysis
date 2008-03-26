@@ -91,27 +91,61 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   static const double TRACKERQCUT[NUM_Q_SETS][NUM_TRACKER_CUTS];
   static bool cutTrig[NUM_REC_LEVELS];
 
-  // config file parameters
-  bool doingHiggs; // determines whether one or two dimuons are kept
-  bool generatedOnly; // whether only to look at generated muons
-  bool reconstructedOnly; // whether only to look at generated muons
-  bool doingElectrons; // determines whether to run on muons or electrons
-  bool doingGeant4; // whether to look at Geant4 particles
-  bool useOtherMuonRecos; // whether to use other muons (FMS, PMR, etc)
-  bool usingAODOnly; // whether not to use things in RECO tier
-  bool useTriggerInfo; // whether to look for trigger info in the input file
-
-  // Keep track of the event number for printing out.
-  int eventNum;
+  ////////////////////////////////////////////////////////////////////
+  // Parameters read or determined from the config file:
+  ////////////////////////////////////////////////////////////////////
   
-  // Basic quantities for the chosen lepton (muon or electron).
+  // whether we are looking at electrons instead of muons;
+  bool doingElectrons;
+
+  // determines whether one or two dileptons are kept (useful for
+  // H->ZZ studies);
+  bool doingHiggs;
+
+  // whether to allow construction of generator-level dileptons from
+  // generated leptons -- default behavior is no, and to take the
+  // actual resonance from the PYTHIA event record, but if there is
+  // none as is the case in some COMPHEP-generated samples, then the
+  // code will not find any generated dilepton unless this parameter
+  // is true;
+  bool constructGenDil;
+
+  // whether to look at only generator-level muons (i.e. don't bother
+  // trying to store globalMuons, standAloneMuons, etc);
+  bool generatedOnly;
+
+  // whether to look at Geant4 particles in addition to Pythia particles;
+  bool doingGeant4;
+
+  // whether to look at only reconstructed muons (as in the real data sets);
+  bool reconstructedOnly;
+
+  // whether to include the extra muon reconstructors (FMS, PMR, etc);
+  bool useOtherMuonRecos;
+
+  // if the input file is only AOD, then don't use EDProducts that are
+  // included only in the full RECO tier;
+  bool usingAODOnly;
+
+  // whether trigger information is supposed to be present in the
+  // input file;
+  bool useTriggerInfo;
+
+  // basic quantities for the chosen lepton (muon or electron);
   unsigned int leptonFlavor; // PDG ID
   double leptonMass;         // in GeV/c^2
 
-  // Trigger path information.
+  // and trigger path information.
   std::vector<l1extra::L1ParticleMap::L1TriggerType> l1paths;
   std::vector<std::string> hltModules[2]; // in order: L2, L3
   std::vector<std::string> hltPaths;
+
+  ////////////////////////////////////////////////////////////////////
+  // Event data
+  ////////////////////////////////////////////////////////////////////
+  
+  // Keep track of the event number for printing out.
+  int eventNum;
 
   // Trigger results.
   bool passTrig[NUM_REC_LEVELS];
@@ -155,6 +189,8 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   reco::CandidateBaseRef invalidRef;
 
  private:
+  // verbosity controls the amount of debugging information printed;
+  // levels are defined using the VERBOSITY_* codes above
   VERBOSITY verbosity;
   edm::InputTag l1ParticleMap;
   edm::InputTag hltResults;

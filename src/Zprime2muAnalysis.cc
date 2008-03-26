@@ -132,37 +132,25 @@ const double Zprime2muAnalysis::TRACKERQCUT[NUM_Q_SETS][NUM_TRACKER_CUTS] =
 // Activate Trigger cuts at levels:                gen    L1     L2     L3
 bool Zprime2muAnalysis::cutTrig[NUM_REC_LEVELS] = {true,  true,  true,  true};
 
-//-----------------------------------------------------------------------------
-//                     Configuration and driver methods
-//-----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////
+// Configuration and driver methods
+////////////////////////////////////////////////////////////////////
 
 Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config) 
   : eventNum(-1) {
-  // verbosity controls the amount of debugging information printed;
-  // levels are defined in an enum
   verbosity = VERBOSITY(config.getUntrackedParameter<int>("verbosity", 0));
-
-  // JMTBAD probably a better way to check this
+  doingElectrons = config.getParameter<bool>("doingElectrons");
   doingHiggs = config.getParameter<bool>("doingHiggs");
-
-  // whether to look at only generator-level muons (i.e. don't bother
-  // trying to store globalMuons, standAloneMuons, etc)
+  constructGenDil = config.getParameter<bool>("constructGenDil");
   generatedOnly = config.getParameter<bool>("generatedOnly");
-
-  //whether to look at Geant4 particles in addition to Pythia particles
   doingGeant4 = config.getParameter<bool>("doingGeant4");
-
-  // whether to look at only reconstructed muons (as in the real data sets)
   reconstructedOnly = config.getParameter<bool>("reconstructedOnly");
-
-  // whether to include the extra muon reconstructors (FMS, PMR, etc)
   useOtherMuonRecos = config.getParameter<bool>("useOtherMuonRecos");
-
-  // if the input file is only AOD, then don't use EDProducts that are
-  // included only in the full RECO tier
   usingAODOnly = config.getParameter<bool>("usingAODOnly");
+  useTriggerInfo = config.getParameter<bool>("useTriggerInfo");
+
   // no generator-level information or other TeV muon reconstructors
-  // available in the AOD
+  // available in the AOD (yet)
   if (usingAODOnly) {
     reconstructedOnly = true;
     useOtherMuonRecos = false;
@@ -171,13 +159,6 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
 
   if (generatedOnly || reconstructedOnly)
     doingGeant4 = false;
-
-  // whether we are looking at electrons instead of muons
-  doingElectrons = config.getParameter<bool>("doingElectrons");
-
-  // whether trigger information is supposed to be present in the
-  // input file
-  useTriggerInfo = config.getParameter<bool>("useTriggerInfo");
 
   // input tags for the reco collections we need
   l1ParticleMap   = config.getParameter<edm::InputTag>("l1ParticleMap");
@@ -679,13 +660,16 @@ void Zprime2muAnalysis::makeDileptons(const int rec) {
     for (qlep = plep+1; qlep != leptons.end(); qlep++)
       if ((*qlep)->charge() + (*plep)->charge() == totalCharge) {
 	if (rec == lgen) {
-	  // For generator-level dileptons, make sure we pick up the
-	  // actual leptons from the resonance -- leptons with the
-	  // same mother that has a PDG id of one of the resonances we
-	  // care about.
-	  const reco::Candidate* mom = sameMother(*plep, *qlep);
-	  if (!mom || !isResonance(mom->pdgId()))
-	    continue;
+	  // For generator-level dileptons, unless we are told to do
+	  // otherwise by the "constructGenDil" parameter, make
+	  // sure we pick up the actual leptons from the resonance --
+	  // leptons with the same mother that has a PDG id of one of
+	  // the resonances we care about.
+	  if (!constructGenDil) {
+	    const reco::Candidate* mom = sameMother(*plep, *qlep);
+	    if (!mom || !isResonance(mom->pdgId()))
+	      continue;
+	  }
 	}
 	// Apply cuts at levels of reconstruction above
 	// generator-level.
@@ -700,13 +684,10 @@ void Zprime2muAnalysis::makeDileptons(const int rec) {
 			      << " dileptons at rec level " << rec;
 
   // If H -> ZZ* -> 4mu, sort dileptons to look for two highest-mass ones.
-  // If Z' or G*, do nothing because all muons were sorted from the highest
-  // P to the lowest, and therefore the very first dimuon is already made
-  // of two highest P muons.
-  if (doingHiggs && dileptons.size() > 1)
+  if (dileptons.size() > 1)
     dileptons.sort(reverse_mass_sort());
 
-  if (rec > 0 && dileptons.size() > 1) {
+  if (dileptons.size() > 1) {
     RemoveDileptonOverlap(dileptons);
 
     // Store only 1 dilepton for Z' and G*, and two highest mass dileptons
@@ -795,28 +776,79 @@ void Zprime2muAnalysis::addBremCandidates(const int rec) {
 void Zprime2muAnalysis::addTrueResonance(const edm::Event& event) {
   const static bool debug = verbosity >= VERBOSITY_LOTS;
   
-  for (unsigned idi = 0; idi < allDileptons[lgen].size(); idi++) {
+  unsigned ndil = allDileptons[lgen].size();
+  if (ndil == 0) {
+    edm::LogWarning("addTrueResonance")
+      << "No generated resonance found in the event!";
+    return;
+  }
+
+  ostringstream out;
+  out << "addTrueResonance:\n";
+
+  for (unsigned idi = 0; idi < ndil; idi++) {
     const reco::Candidate& dil = allDileptons[lgen][idi];
     const reco::Candidate* mom = sameMother(dileptonDaughter(dil, 0),
 					    dileptonDaughter(dil, 1));
-    
+
     LorentzVector p4;
 
     // Take true resonance from PYTHIA only if generated mu+ and mu-
     // originated from the same resonance, otherwise just use the
     // dilepton p4.
     // SV: same approach as in ORCA, but perhaps needs some thinking.
-    if (mom)
+    if (mom && isResonance(mom->pdgId())) {
+      if (debug) out << "  Found mother resonance; taking its four-vector...\n";
       p4 = mom->p4();
+    }
+    else if (constructGenDil) {
+      p4 = dil.p4();
+      // If we are allowed to construct the generated dilepton, go and
+      // add in the bremmed final-state photons. We obviously cannot
+      // use here the reconstructed photons as in addBremCandidates().
+      // We could also just add the four-vectors of the documentation
+      // leptons. Stick with the former for now.
+      if (debug) out << "  Allowed to construct generator-level dilepton,"
+		     << " finding final-state brem photons...\n";
+      for (unsigned dau = 0; dau < dil.numberOfDaughters(); dau++) {
+	 // Look at the documentation lines for the leptons, and find
+	 // their daughter photons if any.
+	const reco::Candidate* docLepton
+	  = dileptonDaughter(dil, dau)->mother();
+	out << "   Doc lepton: pdgId: " << setw(3) << docLepton->pdgId() 
+	    << " status: " << docLepton->status()
+	    << " ndau: " << docLepton->numberOfDaughters()
+	    << " p4: " << docLepton->p4() << endl;
+	// If docLepton isn't really a documentation line, or it only
+	// has one daughter (the final-state lepton we just came
+	// from), never mind.
+	unsigned nsis = docLepton->numberOfDaughters();
+	if (docLepton->status() == 3 && nsis > 1) {
+	  // docMom's daughters are potentially our lepton's sister photons.
+	  for (unsigned isis = 0; isis < nsis; isis++) {
+	    const reco::Candidate* sis = docLepton->daughter(isis);
+	    out << "   Sister: pdgId: " << sis->pdgId()
+		<< " status: " << sis->status()
+		<< " p4: " << sis->p4();
+	    if (sis->status() == 1 && sis->pdgId() == 22) {
+	      out << ". Found sister photon!";
+	      p4 += sis->p4();
+	    }
+	    out << endl;
+	  }
+	}
+      }
+    }
     else
       p4 = dil.p4();
     
     dileptonResonances[lgen].push_back(p4);
 
-    if (debug)
-      LogTrace("addTrueResonance")
-	<< "MC resonance: dimuon inv. mass = " << dil.mass()
-	<< "; true inv. mass = " << p4;
+    if (debug) {
+      out << " MC resonance: dimuon inv. mass = " << dil.mass()
+	  << "; true inv. mass = " << p4.mass();
+      LogTrace("addTrueResonance") << out.str();
+    }
   }
 }
 

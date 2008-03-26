@@ -1,12 +1,24 @@
+####################################################################
+## Module configuration parameters
+####################################################################
+
 block Zprime2muAnalysisCommon = {
-  bool doingHiggs = false
+  ####################################################################
+  ## Analysis configuration 
+  ####################################################################
   bool doingElectrons = false
+  bool doingHiggs = false
+  bool constructGenDil = false
   bool generatedOnly = false
-  bool reconstructedOnly = false
   bool doingGeant4 = true
+  bool reconstructedOnly = false
   bool useOtherMuonRecos = true
   bool usingAODOnly = false
   bool useTriggerInfo = true
+
+  ####################################################################
+  ## Input tags for particles/trigger paths
+  ####################################################################
   #InputTag genMuons = source
   InputTag genMuons = VtxSmeared
   InputTag l1ParticleMap = l1extraParticleMap
@@ -15,14 +27,17 @@ block Zprime2muAnalysisCommon = {
   InputTag hltResults = TriggerResults::HLT
   InputTag standAloneMuons = standAloneMuons:UpdatedAtVtx
   InputTag photons = correctedPhotons
-
+ 
+  ####################################################################
+  ## Input tags for leptons at the different rec levels (in order)
+  ####################################################################
   VInputTag muInputs = {
     muCandGN,
-    muCandL1, #    l1extraParticles,
+    muCandL1, # l1extraParticles
     hltL2MuonCandidates,
-    muCandL3, #    hltL3MuonCandidates,
+    muCandL3, # hltL3MuonCandidates,
     muons,
-    muCandTK, #    muonsTK,
+    muCandTK, # muonsTK,
     muonsFMS,
     muonsPMR
   }
@@ -33,13 +48,15 @@ block Zprime2muAnalysisCommon = {
   VInputTag elInputs = { elCandGN, pixelMatchGsfElectrons }
 }
 
+####################################################################
+## Produce/clone/copy/whatever the needed lepton collections
+####################################################################
+
 module simParticleCandidates = GenCandsFromSimTracksProducer {
   InputTag src = g4SimHits
 }
 
 path simCands = { simParticleCandidates }
-
-#################################################
 
 module genMuons = CandSelector {
   InputTag src = genParticleCandidates
@@ -57,14 +74,22 @@ module muCandGN = CandMerger {
   VInputTag src = { genMuons, simMuons }
 }
 
+# "Sanitize" the L1 muons, i.e. shift their phi values from the bin
+# edge to the bin center (an offset of 0.0218 rad).
 module muCandL1 = L1MuonSanitizer {
   InputTag src = l1extraParticles
 }
 
+# "Sanitize" the L3 muons, i.e. make up reco::Muons from
+# reco::MuonTrackLinks (the hltL3MuonCandidates drop some of the extra
+# track information, while the MuonTrackLinksCollection hltL3Muons
+# appropriately has links to all 3 tracks)
 module muCandL3 = L3MuonSanitizer {
   InputTag src = hltL3Muons
 }
 
+# Make tracker-only reco::Muons out of the tracker tracks in the muons
+# collection.
 module muCandTK = TrackerOnlyMuonProducer {
   InputTag src = muons
 }

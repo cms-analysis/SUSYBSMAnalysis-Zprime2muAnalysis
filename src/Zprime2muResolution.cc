@@ -3461,6 +3461,8 @@ void Zprime2muResolution::beginJob(const edm::EventSetup& eSetup) {
 }
 
 void Zprime2muResolution::endJob() {
+  Zprime2muAnalysis::endJob();
+
   // JMTBAD make sure we're cd'ed into our histoFile, else ROOT tries
   // to write to one of the input files
   if (!useHistosFromFile) {

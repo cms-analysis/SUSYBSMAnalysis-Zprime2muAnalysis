@@ -54,7 +54,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   virtual ~Zprime2muAnalysis() {}
 
   virtual void beginJob(const edm::EventSetup&) {}
-  virtual void endJob() {}
+  virtual void endJob();
 
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
 
@@ -122,6 +122,9 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 
   // whether to include the extra muon reconstructors (FMS, PMR, etc);
   bool useOtherMuonRecos;
+
+  // whether to use the TMR cocktail or Piotr's
+  bool useTMRforBest;
 
   // if the input file is only AOD, then don't use EDProducts that are
   // included only in the full RECO tier;
@@ -297,17 +300,17 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // Picking "best" leptons
   ////////////////////////////////////////////////////////////////////
 
-  // Our implementation of Norbert's cocktail method for picking muons
-  // from the various TeV muon reconstructors; returns a reference to
-  // the one picked.
+  // Our implementation of cocktail methods for picking muons from the
+  // various TeV muon reconstructors (either TMR, picking between
+  // tracker-only and tracker+first muon station, or Piotr's, picking
+  // between those two and also PMR); returns a reference to the one
+  // picked.
   const reco::CandidateBaseRef&
-    NorbertsCocktail(const reco::CandidateBaseRef& trk,
-		     const bool debug) const;
+    cocktailMuon(const reco::CandidateBaseRef& trk,
+		 const bool doTMR, const bool debug) const;
 
-  // Same, but for Piotr's cocktail.
-  const reco::CandidateBaseRef&
-    PiotrsCocktail(const reco::CandidateBaseRef& trk,
-					  const bool debug) const;
+  // Keep some statistics on what the cocktail picked.
+  int best_ntrk, best_ngmr, best_nfms, best_npmr, best_ngpr, best_ntot;
 
   // A driver routine which uses the cocktail methods above to pick
   // "best" leptons (only implemented for muons).

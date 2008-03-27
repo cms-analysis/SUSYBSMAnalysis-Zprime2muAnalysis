@@ -146,6 +146,7 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   doingGeant4 = config.getParameter<bool>("doingGeant4");
   reconstructedOnly = config.getParameter<bool>("reconstructedOnly");
   useOtherMuonRecos = config.getParameter<bool>("useOtherMuonRecos");
+  useTMRforBest = config.getParameter<bool>("useTMRforBest");
   usingAODOnly = config.getParameter<bool>("usingAODOnly");
   useTriggerInfo = config.getParameter<bool>("useTriggerInfo");
 
@@ -213,6 +214,21 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   // Physics TDR style.
   // TH1::AddDirectory(false);
   // setTDRStyle();
+
+  // Clear out the cocktail statistics.
+  best_ntrk = best_ngmr = best_nfms = best_npmr = best_ngpr = best_ntot = 0;
+}
+
+void Zprime2muAnalysis::endJob() {
+  if (verbosity >= VERBOSITY_SIMPLE) {
+    // Dump statistics on fractions of events from different
+    // reconstructors picked by the cocktail.
+    edm::LogInfo("findBestLeptons")
+      << "findBestLeptons summary: "
+      << "TO: "    << best_ntrk/double(best_ntot) << "; GMR: " << best_ngmr/double(best_ntot)
+      << "; FMS: " << best_nfms/double(best_ntot) << "; PMR: " << best_npmr/double(best_ntot)
+      << "; GMR=PMR: " << (best_ngmr > 0 ? best_ngpr/double(best_ngmr) : 0);
+  }
 }
 
 void Zprime2muAnalysis::analyze(const edm::Event& event,
@@ -624,8 +640,11 @@ Zprime2muAnalysis::RemoveDileptonOverlap(reco::CandidateCollection& dileptons) {
       const reco::CandidateBaseRef qm = dileptonDaughterByCharge(*qdi, -1);
       const reco::CandidateBaseRef qp = dileptonDaughterByCharge(*qdi, +1);
       if (id(pm) == id(qm) || id(pp) == id(qp)) {
+	// If either lepton is shared, remove the second dilepton
+	// (i.e. the one with lower invariant mass since we have
+	// sorted the vector already), reset pointers and restart.
 	dileptons.erase(qdi);
-	pdi = dileptons.begin(); // reset pointers and restart
+	pdi = dileptons.begin();
 	break;
       }
       else {
@@ -1184,70 +1203,8 @@ void Zprime2muAnalysis::compareTrigDecision(const edm::Event& event,
 ////////////////////////////////////////////////////////////////////
 
 const reco::CandidateBaseRef&
-Zprime2muAnalysis::NorbertsCocktail(const reco::CandidateBaseRef& trk,
-				    const bool debug) const {
-  const reco::CandidateBaseRef& gmr = sameSeedLepton(trk, lgmr);
-  const reco::CandidateBaseRef& fms = sameSeedLepton(trk, lfms);
-  const reco::CandidateBaseRef& pmr = sameSeedLepton(trk, lpmr);
-  int result = 0;
-
-  bool trkValid = !trk.isNull();
-  bool gmrValid = !pmr.isNull();
-  bool fmsValid = !fms.isNull();
-  bool pmrValid = !pmr.isNull();
-
-  double prob0 = 0.0, prob1 = 0.0, prob2 = 0.0, prob3 = 0.0;
-  if (trkValid) prob0 = cumulativeChiSquare(trk);
-  if (gmrValid) prob1 = cumulativeChiSquare(gmr);
-  if (fmsValid) prob2 = cumulativeChiSquare(fms);
-  if (pmrValid) prob3 = cumulativeChiSquare(pmr);
-
-  if (gmrValid) result = lgmr;
-  if (!gmrValid && pmrValid) result = lpmr;
-  
-  if (gmrValid && pmrValid && ((prob1 - prob3) > 0.05)) result = lpmr;
-
-  if (trkValid && !gmrValid && !fmsValid && !pmrValid) {
-    return trk;
-  }
-  if (trkValid && fmsValid && fabs(prob2 - prob0) > 30.) {
-    return trk;
-  }
-
-  if (!gmrValid && !pmrValid && fmsValid) result = lfms;
-
-  bool tminValid = false;
-  double probmin = 0.0;
-  if (gmrValid && pmrValid) {
-    probmin = prob3; tminValid = pmrValid;
-    if (prob1 < prob3){ probmin = prob1; tminValid = gmrValid; }
-  }
-  else if (!pmrValid && gmrValid) { 
-    probmin = prob1; tminValid = gmrValid;
-  }
-  else if (!gmrValid && pmrValid) {
-    probmin = prob3; tminValid = pmrValid;
-  }
-  if (tminValid && fmsValid && ((probmin - prob2) > 3.5)) {
-    result = lfms;
-  }
-
-  if (debug)
-    LogTrace("NorbertsCocktail")
-      << " Event " << eventNum << " Probabilities: trk = " << prob0
-      << "; gmr = " << prob1 << "; fms = " << prob2 << "; pmr = " << prob3
-      << "; result = " << result;
-
-  if      (result == ltk)  return trk;
-  else if (result == lgmr) return gmr;
-  else if (result == lfms) return fms;
-  else if (result == lpmr) return pmr;
-  else                     return invalidRef;
-}
-
-const reco::CandidateBaseRef&
-Zprime2muAnalysis::PiotrsCocktail(const reco::CandidateBaseRef& trk,
-				  const bool debug) const {
+Zprime2muAnalysis::cocktailMuon(const reco::CandidateBaseRef& trk,
+				const bool doTMR, const bool debug) const {
   const reco::CandidateBaseRef& fms = sameSeedLepton(trk, lfms);
   const reco::CandidateBaseRef& pmr = sameSeedLepton(trk, lpmr);
   int result = 0;
@@ -1262,7 +1219,15 @@ Zprime2muAnalysis::PiotrsCocktail(const reco::CandidateBaseRef& trk,
   if (fmsValid) prob_fms = cumulativeChiSquare(fms);
   if (pmrValid) prob_pmr = cumulativeChiSquare(pmr);
 
-  if (fmsValid && !pmrValid) {
+  if (doTMR && trkValid && fmsValid) {
+    // If we're doing the TMR cocktail, only choose between
+    // tracker-only and tracker+first muon station.
+    if (prob_fms - prob_trk > 30)
+      result = ltk;
+    else
+      result = lfms;
+  }
+  else if (fmsValid && !pmrValid) {
     //if (trkValid && prob_fms - prob_trk > 30.) result = ltk;
     //else                                       result = lfms;
     result = lfms;
@@ -1284,7 +1249,7 @@ Zprime2muAnalysis::PiotrsCocktail(const reco::CandidateBaseRef& trk,
     LogTrace("PiotrsCocktail")
       << " Event " << eventNum << " Probabilities: trk = " << prob_trk
       << "; fms = " << prob_fms << "; pmr = " << prob_pmr
-      << "; result = " << result;
+      << "; result = " << (doTMR ? "(TMR choice only) " : "") << result;
 
   if      (result == ltk)  return trk;
   else if (result == lfms) return fms;
@@ -1293,72 +1258,54 @@ Zprime2muAnalysis::PiotrsCocktail(const reco::CandidateBaseRef& trk,
 }
 
 void Zprime2muAnalysis::findBestLeptons() {
-  // Both Norbert's and Piotr's cocktails are available in
-  // CMSSW starting with 1_4_0_pre2, so we could switch to official
-  // versions once we make sure that they agree with our version.
   const static bool debug = verbosity >= VERBOSITY_SIMPLE;
 
   unsigned int imu;
-  if (doingElectrons || !useOtherMuonRecos ) {
-    // just have one set of electrons to look at in this case 
-    // or if
+  if (doingElectrons || !useOtherMuonRecos) {
+    // just have one set of electrons to look at in this case, or if
     // the other muon reconstructors are not available, just use the
     // default GMR muons
     for (imu = 0; imu < allLeptons[lgmr].size(); imu++)
       bestLeptons.push_back(allLeptons[lgmr][imu]);
   }
   else {
-    static int ntrk = 0, ngmr = 0, nfms = 0, npmr = 0, ngpr = 0, ntot = 0;
-
-    // Start with tracker-only tracks, as Norbert does.
+    // Start with tracker-only tracks.
     for (imu = 0; imu < allLeptons[ltk].size(); imu++) {
       const reco::CandidateBaseRef& trkMu = allLeptons[ltk][imu];
-      //const reco::CandidateBaseRef& bestMu = NorbertsCocktail(trkMu, debug);
-      const reco::CandidateBaseRef& bestMu = PiotrsCocktail(trkMu, debug);
-
+      const reco::CandidateBaseRef& bestMu =
+	cocktailMuon(trkMu, useTMRforBest, debug);
       if (debug) {
 	if (!bestMu.isNull()) {
 	  int picked = recLevel(bestMu);
 	  if (picked == ltk) {
-	    ntrk++; LogTrace("findBestMuons") << "  --> select Tracker only";
+	    best_ntrk++; LogTrace("findBestMuons") << "  --> select Tracker only";
 	  }
-	  else if (picked = lgmr) {
-	    ngmr++; LogTrace("findBestMuons") << "  --> select GMR";
+	  else if (picked == lgmr) {
+	    best_ngmr++; LogTrace("findBestMuons") << "  --> select GMR";
 	    const reco::CandidateBaseRef& pmrMu = sameSeedLepton(trkMu, lpmr);
 	    if (!pmrMu.isNull() &&
 		fabs(bestMu->phi() - pmrMu->phi()) < 0.001 &&
 		fabs(bestMu->eta() - pmrMu->eta()) < 0.001 &&
 		fabs(bestMu->pt()  - pmrMu->pt()) < 0.001)
-	      ngpr++;
+	      best_ngpr++;
 	  }
 	  else if (picked == lfms) {
-	    nfms++; LogTrace("findBestMuons") << "  --> select TPFMS";
+	    best_nfms++; LogTrace("findBestMuons") << "  --> select TPFMS";
 	  }
 	  else if (picked == lpmr) {
-	    npmr++; LogTrace("findBestMuons") << "  --> select PMR";
+	    best_npmr++; LogTrace("findBestMuons") << "  --> select PMR";
 	  }
 	  else {
 	    throw cms::Exception("findBestMuons") << "+++ Unknown outcome! +++\n";
 	  }
+	  best_ntot++;
 	}
-	else { // i.e. an invalid result
-	  ntot--; edm::LogWarning("findBestMuons") << "  --> reject muon\n";
-	}
-	ntot++;
+	else // i.e. an invalid result
+	  edm::LogWarning("findBestMuons") << "  --> reject muon\n";
       }
 
       if (!bestMu.isNull())
 	bestLeptons.push_back(bestMu);
-    }
-
-    // Fractions of events from different reconstructors.
-    if (debug && (eventNum % 1000 == 0 && eventNum > 0)) {
-      LogTrace("findBestMuons")
-	<< "\nfindBestMuons summary: "
-	<< "TO: "    << ntrk/double(ntot) << "; GMR: " << ngmr/double(ntot)
-	<< "; FMS: " << nfms/double(ntot) << "; PMR: " << npmr/double(ntot);
-      LogTrace("findBestMuons")
-	<< "GMR=PMR: " << ((ngmr > 0) ? ngpr/double(ngmr) : 0);
     }
 
     // Since bestLeptons is not a CandidateBaseRefVector but just a

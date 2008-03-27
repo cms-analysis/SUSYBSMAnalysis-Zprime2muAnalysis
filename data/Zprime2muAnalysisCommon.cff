@@ -1,55 +1,5 @@
 ####################################################################
-## Module configuration parameters
-####################################################################
-
-block Zprime2muAnalysisCommon = {
-  ####################################################################
-  ## Analysis configuration 
-  ####################################################################
-  bool doingElectrons = false
-  bool doingHiggs = false
-  bool constructGenDil = false
-  bool generatedOnly = false
-  bool doingGeant4 = true
-  bool reconstructedOnly = false
-  bool useOtherMuonRecos = true
-  bool usingAODOnly = false
-  bool useTriggerInfo = true
-
-  ####################################################################
-  ## Input tags for particles/trigger paths
-  ####################################################################
-  #InputTag genMuons = source
-  InputTag genMuons = VtxSmeared
-  InputTag l1ParticleMap = l1extraParticleMap
-  # every process puts a TriggerResults product into the event;
-  # pick the HLT one
-  InputTag hltResults = TriggerResults::HLT
-  InputTag standAloneMuons = standAloneMuons:UpdatedAtVtx
-  InputTag photons = correctedPhotons
- 
-  ####################################################################
-  ## Input tags for leptons at the different rec levels (in order)
-  ####################################################################
-  VInputTag muInputs = {
-    muCandGN,
-    muCandL1, # l1extraParticles
-    hltL2MuonCandidates,
-    muCandL3, # hltL3MuonCandidates,
-    muons,
-    muCandTK, # muonsTK,
-    muonsFMS,
-    muonsPMR
-  }
-
-  # for now, Zprime2muAnalysis knows to put
-  # pixelMatchGsfElectrons in the right spot (in the same rec level as
-  # GMR muons).
-  VInputTag elInputs = { elCandGN, pixelMatchGsfElectrons }
-}
-
-####################################################################
-## Produce/clone/copy/whatever the needed lepton collections
+## Produce/clone/copy/do whatever to the needed muon collections
 ####################################################################
 
 module simParticleCandidates = GenCandsFromSimTracksProducer {
@@ -98,7 +48,9 @@ sequence makeMuonCandidates = {
   genMuons, simMuons, muCandGN, muCandL1, muCandL3, muCandTK
 }
 
-#################################################
+####################################################################
+## Same for the electrons
+####################################################################
 
 module genElectrons = CandSelector {
   InputTag src = genParticleCandidates
@@ -118,6 +70,64 @@ sequence makeElectronCandidates = {
   genElectrons, simElectrons, elCandGN 
 }
 
-#################################################
+####################################################################
+## Make all the candidates defined in the sequences above
+####################################################################
 
 path makeCandidates = { makeMuonCandidates, makeElectronCandidates }
+
+####################################################################
+## Module configuration parameters
+####################################################################
+
+block Zprime2muAnalysisCommon = {
+  ####################################################################
+  ## Analysis configuration 
+  ####################################################################
+  bool doingElectrons = false
+  bool doingHiggs = false
+  bool constructGenDil = false
+  bool generatedOnly = false
+  bool doingGeant4 = true
+  bool reconstructedOnly = false
+  bool useOtherMuonRecos = true
+  bool useTMRforBest = false
+  bool usingAODOnly = false
+  bool useTriggerInfo = true
+
+  ####################################################################
+  ## Input tags for particles/trigger paths
+  ####################################################################
+  InputTag genMuons = VtxSmeared # source
+  InputTag l1ParticleMap = l1extraParticleMap
+  # every process puts a TriggerResults product into the event;
+  # pick the HLT one
+  InputTag hltResults = TriggerResults::HLT
+  # stand-alone muons are used as "seeds" to try to match the various
+  # levels of global reconstruction
+  InputTag standAloneMuons = standAloneMuons:UpdatedAtVtx
+  # reconstructed photons to try to recover brem losses
+  InputTag photons = correctedPhotons
+ 
+  ####################################################################
+  ## Input tags for leptons at the different rec levels (in order)
+  ####################################################################
+  VInputTag muInputs = {
+    muCandGN,
+    muCandL1, # l1extraParticles
+    hltL2MuonCandidates,
+    muCandL3, # hltL3MuonCandidates,
+    muons,
+    muCandTK, # muonsTK,
+    muonsFMS,
+    muonsPMR
+  }
+
+  # Zprime2muAnalysis knows to put pixelMatchGsfElectrons in the right
+  # spot (i.e., in the same rec level as GMR muons).
+  VInputTag elInputs = {
+    elCandGN,
+    pixelMatchGsfElectrons
+  }
+}
+

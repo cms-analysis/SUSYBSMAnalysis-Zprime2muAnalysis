@@ -392,7 +392,7 @@ To check out the package:
 To compile:
 
    eval `scramv1 runtime -csh`
-   cd SUSYBSMAnalysis/Zprime2muAnalysis/src
+   cd SUSYBSMAnalysis/Zprime2muAnalysis
    scramv1 b
 
 To run (where the .cfg can be any of the 4 .cfg files in /test):

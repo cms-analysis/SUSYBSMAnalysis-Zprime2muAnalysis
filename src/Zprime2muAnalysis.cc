@@ -139,6 +139,7 @@ bool Zprime2muAnalysis::cutTrig[NUM_REC_LEVELS] = {true,  true,  true,  true};
 Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config) 
   : eventNum(-1) {
   verbosity = VERBOSITY(config.getUntrackedParameter<int>("verbosity", 0));
+  dateHistograms = config.getUntrackedParameter<bool>("dateHistograms");
   doingElectrons = config.getParameter<bool>("doingElectrons");
   doingHiggs = config.getParameter<bool>("doingHiggs");
   constructGenDil = config.getParameter<bool>("constructGenDil");
@@ -280,7 +281,7 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
 
   // Dump the event if appropriate.
   if (verbosity >= VERBOSITY_SIMPLE || eventIsInteresting()) {
-    dumpEvent(true,true,true,true,true);
+    dumpEvent(true,true,true,true,true,true);
     dumpDileptonMasses();
   }
 
@@ -297,7 +298,8 @@ void Zprime2muAnalysis::InitROOT() {
   TH1::AddDirectory(false);
   gROOT->SetStyle("Plain");
   gStyle->SetFillColor(0);
-  gStyle->SetOptDate();
+  if (dateHistograms)
+    gStyle->SetOptDate();
   gStyle->SetOptStat(111111);
   gStyle->SetOptFit(1111);
   gStyle->SetPadTickX(1);
@@ -594,18 +596,27 @@ void Zprime2muAnalysis::matchLeptons() {
 	    }
 	  }
 
+	  // If we gave up setting the seed index (see below), don't
+	  // look at seeds any more.
+	  if (foundSameSeed && seedLep < 0)
+	    continue;
+
 	  if (irec >= l3 && jrec >= l3 && iex.seedIndex() == jex.seedIndex()) {
 	    if (!foundSameSeed) {
 	      foundSameSeed = true;
 	      seedLep = jex.id();
 	    }
 	    else {
-	      /*
+	      // If we find two or more leptons with the same seed
+	      // index at the target rec level, then give up; set the
+	      // seed index invalid but leave "foundSameSeed" true as
+	      // a flag to us above.
 	      edm::LogWarning("sameSeedMatch")
-		<< "found at least one duplicate match for level "
-		<< irec << " -> " << jrec
-		<< " with seed index " << iex.seedIndex();
-	      */
+		<< "In event " << eventNum
+		<< ", found at least one duplicate match for level "
+                << irec << " -> " << jrec << " with seed index "
+		<< iex.seedIndex() << "; invalidating";
+	      seedLep = -999;
 	    }
 	  }
 	}
@@ -1856,6 +1867,14 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
 
     output << "   Closest photon: " << closestPhoton(cand)
 	   << "   Sum pT (dR<0.3): " << sumptr03 << endl;
+    if (!doingElectrons)
+      output << "                             p4: " << cand->p4() << endl
+	     << "   Combined track: charge: " << setw(2) << glbtrk->charge()
+	     << " p: " << glbtrk->momentum() << endl
+	     << " Standalone track: charge: " << setw(2) << statrk->charge()
+	     << " p: " << statrk->momentum() << endl
+	     << "    Tracker track: charge: " << setw(2) << tktrk->charge()
+	     << " p: " << tktrk->momentum() << endl;
 
   }
 }
@@ -1912,12 +1931,25 @@ void Zprime2muAnalysis::dumpDilQuality() const {
 }
 
 void Zprime2muAnalysis::dumpEvent(const bool printGen, const bool printL1,
-				   const bool printL2, const bool printL3,
-				   const bool printBest) const {
+				  const bool printL2, const bool printL3,
+				  const bool printBest,
+				  const bool printSeeds) const {
   unsigned imu;
   int irec;
   ostringstream out;
+
   out << "\n******************************** Event " << eventNum << endl;
+
+  if (printSeeds && seedTracks.isValid()) {
+    out << "Stand-alone tracks (offline muon system fit), used as seeds:\n";
+
+    unsigned i = 0;
+    for (reco::TrackCollection::const_iterator seedmu = seedTracks->begin();
+	 seedmu != seedTracks->end(); seedmu++, i++)
+      out << "  #" << setw(3) << i << " charge: " << setw(2) << seedmu->charge()
+	  << " p: " << seedmu->momentum() << endl;
+  }
+
   for (irec = 0; irec < MAX_LEVELS; irec++) {
     if (irec == 0 && !printGen ||
 	irec == 1 && !printL1 ||

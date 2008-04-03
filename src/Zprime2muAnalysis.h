@@ -95,6 +95,9 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // Parameters read or determined from the config file:
   ////////////////////////////////////////////////////////////////////
   
+  // whether to date the histogram output postscript pages
+  bool dateHistograms;
+
   // whether we are looking at electrons instead of muons;
   bool doingElectrons;
 
@@ -538,7 +541,8 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // level of lepton reconstruction.
   void dumpEvent(const bool printGen = false, const bool printL1 = false,
                  const bool printL2 = false, const bool printL3 = false,
-                 const bool printBest = false) const;
+                 const bool printBest = false,
+		 const bool printSeeds = false) const;
 
   ////////////////////////////////////////////////////////////////////
   // Quality cuts

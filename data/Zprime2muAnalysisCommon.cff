@@ -84,6 +84,7 @@ block Zprime2muAnalysisCommon = {
   ####################################################################
   ## Analysis configuration 
   ####################################################################
+  untracked bool dateHistograms = true
   bool doingElectrons = false
   bool doingHiggs = false
   bool constructGenDil = false

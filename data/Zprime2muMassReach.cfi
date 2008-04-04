@@ -3,6 +3,7 @@ include "SUSYBSMAnalysis/Zprime2muAnalysis/data/Zprime2muAnalysisCommon.cff"
 module Zprime2muMassReach = Zprime2muMassReach {
   using Zprime2muAnalysisCommon
 
+  untracked int32 verbosity = 1
   untracked string psFile = "mass_fits.ps"
 
   bool   DYEvents       = false // set to use Drell-Yan only

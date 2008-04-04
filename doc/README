@@ -397,5 +397,5 @@ To compile:
 
 To run (where the .cfg can be any of the 4 .cfg files in /test):
 
-   cd ../test
+   cd test
    cmsRun testZprime2muResolution.cfg

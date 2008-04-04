@@ -194,7 +194,10 @@ process Sim = {
   # Produces genParticleCandidates from HepMC products
   include "SimGeneral/HepPDTESSource/data/pythiapdt.cfi"
   include "PhysicsTools/HepMCCandAlgos/data/genParticleCandidates.cfi"
-  
+  # Produce genParticles too (for now), the new format available
+  # starting 1_6_8, 1_8_X
+  include "PhysicsTools/HepMCCandAlgos/data/genParticles.cfi"
+
   # Produces the ~same output as PYLIST. Works on GenParticleCandidates.
   module printTree = ParticleListDrawer {
     untracked int32 maxEventsToPrint = 10

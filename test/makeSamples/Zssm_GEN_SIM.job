@@ -50,11 +50,14 @@ setenv MODEL Zssm
 # setenv SAMPLE Zalrm3000_fm; setenv FIRSTPU 110000
 # setenv SAMPLE Zalrm5000_fm; setenv FIRSTPU 135000
 
+#setenv SAMPLE SingleMuP3000
+
 # setenv PU PU2x33
 # setenv PU PU34
 
-setenv SRCDIR /afs/cern.ch/user/t/tucker/scratch0/${CMSSW_VERS}
+setenv SRCDIR /afs/cern.ch/user/t/tucker/private/${CMSSW_VERS}
 setenv OUTDIR /castor/cern.ch/user/t/tucker/${CMSSW_VERS}
+#setenv WORKDIR /tmp/tucker
 
 setenv ROOTFILE ${SAMPLE}_GEN_SIM.root
 setenv LOGFILE  ${SAMPLE}_GEN_SIM.out
@@ -185,7 +188,21 @@ process Sim = {
       }
     }
   }
-  
+
+  /*source = FlatRandomEGunSource {
+    untracked PSet PGunParameters = {
+      untracked vint32 PartID = { 13 }
+      untracked double MinEta = 0.9
+      untracked double MaxEta = 2.4
+      untracked double MinPhi = -3.14159265358979323846 # in radians
+      untracked double MaxPhi =  3.14159265358979323846
+      untracked double MinE  = 3000.
+      untracked double MaxE  = 3000.
+    }
+    untracked bool AddAntiParticle = true # back-to-back particles
+    untracked int32 Verbosity = 0
+  }*/
+
   # Simulation parameters
   include "Configuration/StandardSequences/data/Simulation.cff"
   include "Configuration/StandardSequences/data/VtxSmearedGauss.cff"
@@ -196,7 +213,7 @@ process Sim = {
   include "PhysicsTools/HepMCCandAlgos/data/genParticleCandidates.cfi"
   # Produce genParticles too (for now), the new format available
   # starting 1_6_8, 1_8_X
-  include "PhysicsTools/HepMCCandAlgos/data/genParticles.cfi"
+  #include "PhysicsTools/HepMCCandAlgos/data/genParticles.cfi"
 
   # Produces the ~same output as PYLIST. Works on GenParticleCandidates.
   module printTree = ParticleListDrawer {

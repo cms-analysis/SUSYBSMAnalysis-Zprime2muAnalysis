@@ -58,7 +58,7 @@ PSet Zssm1000 = {
     #- For Drell-Yan fits
     # vuint32 nGenEvents = { 1000, 10000, 10000 }
     #- For signal fits
-    vuint32 nGenEvents = { 10000,  1000, 10000 }
+    vuint32 nGenEvents = { 1000,  1000, 1000 }
 }
 
 PSet Zpsi1000 = {

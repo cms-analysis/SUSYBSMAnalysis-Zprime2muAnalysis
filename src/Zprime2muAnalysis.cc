@@ -1,7 +1,3 @@
-// JMTBAD todos
-// unify passing debug v defining
-// sanity checks on rec level, muon # values
-
 //
 // Authors: Jason Mumford, Jordan Tucker, Slava Valuev, UCLA
 //
@@ -25,9 +21,10 @@
 
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/DetId/interface/DetId.h"
-#include "DataFormats/HepMCCandidate/interface/GenParticleCandidate.h"
 #include "DataFormats/HLTReco/interface/HLTFilterObject.h"
 #include "DataFormats/L1GlobalMuonTrigger/interface/L1MuGMTExtendedCand.h"
+#include "DataFormats/Math/interface/deltaR.h"
+#include "DataFormats/Math/interface/deltaPhi.h"
 #include "DataFormats/Math/interface/Vector.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonTrackLinks.h"
@@ -42,18 +39,9 @@
 //#include "PhysicsTools/UtilAlgos/interface/AnySelector.h"
 //#include "PhysicsTools/UtilAlgos/interface/AnyPairSelector.h"
 //#include "PhysicsTools/CandUtils/interface/CandCombiner.h"
-//#include "PhysicsTools/Utilities/interface/deltaR.h"
-//#include "PhysicsTools/Utilities/interface/deltaPhi.h"
-namespace reco {
-// JMTBAD delta* functions are in reco namespace and in PhysicsTools
-// in newer releases
-#include "DataFormats/Math/interface/deltaR.h"
-#include "DataFormats/Math/interface/deltaPhi.h"
-}
 
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/LeptonExtra.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
 //#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/tdrstyle.h"
 
@@ -254,15 +242,11 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
     // At each rec level, store the lepton CandidateBaseRefs and make an
     // "extras" object for each.
     if (!storeLeptons(event, irec)) continue;
-    storeLepExtras(irec);
-
-    // Store the photon match maps (just pick them up from the event).
-    storePhotonMatches(event, irec);
   }
 
-  // Now that all seed indices are set (in storeLepExtras()), store
-  // the same-seed and closest match info.
-  matchLeptons();
+  // Get all the match maps from the event (produced by an earlier
+  // module).
+  storeMatchMaps(event);
 
   // Store the "best" leptons, picking them according to the selected
   // cocktail method.
@@ -318,7 +302,6 @@ void Zprime2muAnalysis::InitROOT() {
 void Zprime2muAnalysis::clearValues() {
   for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
     allLeptons[i_rec].clear();
-    lepExtra[i_rec].clear();
     allDileptons[i_rec].clear();
     dileptonResonances[i_rec].clear();
   }
@@ -352,7 +335,7 @@ bool Zprime2muAnalysis::storeLeptons(const edm::Event& event,
   edm::View<reco::Candidate> lepCandView = *hview;
   const unsigned nlep = lepCandView.size();
   unsigned ilep;
-   
+
   // Sort the refs by descending momentum magnitude. (RefVector does
   // not have a sort() that would delegate function calls to its
   // product, nor does it have an operator[] that works as an lvalue,
@@ -396,233 +379,33 @@ bool Zprime2muAnalysis::storeLeptons(const edm::Event& event,
   return true;
 }
 
-void Zprime2muAnalysis::storeLepExtras(const int rec) {
-  const unsigned nlep = allLeptons[rec].size();
-  // Set the vectors to equal length since we are going to
-  // random-access the lepExtra vector below based on the
-  // CandidateBaseRef's index.
-  if (lepExtra[rec].capacity() < nlep)
-    lepExtra[rec].resize(nlep);
-  for (unsigned ilep = 0; ilep < nlep; ilep++) {
-    const reco::CandidateBaseRef& cand = allLeptons[rec][ilep];
-    zp2mu::LeptonExtra lepEx(id(cand), rec);
-      
-    if (rec >= l3) {
-      const reco::RecoCandidate& mu
-	= toConcrete<reco::RecoCandidate>(*cand);
+void Zprime2muAnalysis::storeMatchMaps(const edm::Event& event) {
+  edm::Handle<reco::CandViewMatchMap> matchMap;
+  edm::Handle<vector<int> > seeds;
+  for (int i = 0; i < MAX_LEVELS; i++) {
+    // Store the photon match maps (which only exist for global fit
+    // leptons).
+    if (i >= l3) {
+      event.getByLabel("leptonMatches", "photon" + str_level_short[i],
+		       matchMap);
+      photonMatchMap[i] = *matchMap;
 
-      // no multiple collections for electrons, so no "seed index"
-      // nor a closest photon (would be double counting)
-      if (!doingElectrons) {
-	lepEx.setSeedIndex(matchStandAloneMuon(mu.standAloneMuon(), true));
-	LorentzVector ph = findClosestPhoton(mu.combinedMuon());
-	lepEx.setClosestPhoton(ph);
-      }
+      event.getByLabel("leptonMatches", "seed" + str_level_short[i], seeds);
+      seedIndices[i] = *seeds;
     }
 
-    // Store the extra object in the extras vector, indexed by
-    // CandidateBaseRef.key() (i.e. the index into the original lepton
-    // collection).
-    lepExtra[rec][id(cand)] = lepEx;
-  }
-}
+    for (int j = 0; j < MAX_LEVELS; j++) {
+      // Don't bother storing an identity map.
+      if (i == j) continue;
 
-void Zprime2muAnalysis::storePhotonMatches(const edm::Event& event,
-					   const int rec) {
-  /*
-  const string base = "match";
-  edm::Handle<reco::CandMatchMap> matchMap;
-  const string label = base + str_level_short[rec] + "Ph";
-  event.getByLabel(label, matchMap);
-  photonMatchMap[rec] = *matchMap;
-  */
-}
-
-template <typename TrackType> reco::Particle::LorentzVector
-Zprime2muAnalysis::findClosestPhoton(const TrackType& theTrack) const {
-  static bool debug = verbosity >= VERBOSITY_LOTS;
-  
-  if (!photonCollection.isValid())
-    throw cms::Exception("findClosestPhoton")
-      << "+++ photonCollection not set! +++\n";
-
-  double phdist = 999.0;
-  reco::Particle::LorentzVector phclos; // 4-momentum of the closest PhotonCandidate
-
-  double muon_eta = theTrack->eta();
-  double muon_phi = theTrack->phi();
-
-  ostringstream out;
-  if (debug) out << "Search for closest photon for track eta = "
-		 << muon_eta << " phi = " << muon_phi << ":\n";
-  
-  for (reco::PhotonCollection::const_iterator iph = photonCollection->begin();
-       iph != photonCollection->end(); iph++) {
-
-    reco::Photon thePhoton(*iph);
-
-    // Photon direction can be improved by taking into account precise
-    // position of the primary vertex - leave for later.
-    // thePhoton.setVertex(vtx);
-
-    double phot_eta = thePhoton.eta();
-    double phot_phi = thePhoton.phi();
-    double dist = reco::deltaR(muon_eta, muon_phi, phot_eta, phot_phi);
-
-    if (debug)
-      out  << "  Photon: eta = " << phot_eta << " phi = " << phot_phi
-	   << " energy = " << thePhoton.energy() << " dR = " << dist << endl;
-
-    if (dist < phdist) {
-      phclos = thePhoton.p4();
-      phdist = dist;
-    }
-  }
-
-  if (debug) {
-    out << " Closest photon: eta = " << phclos.eta() << " phi = " << phclos.phi()
-	<< " p4 = " << phclos << " dR  = " << phdist;
-    LogTrace("findClosestPhoton") << out.str();
-  }
-
-  return phclos;
-}
-
-int Zprime2muAnalysis::matchStandAloneMuon(const reco::TrackRef& track,
-					   bool relaxedMatch) const {
-  //JMTBAD there's probably a
-  // better way to do this, since the collections for GMR, TK, FMS,
-  // PMR all seem sorted in the same way
-  const static bool debug = verbosity >= VERBOSITY_LOTS;
-
-  relaxedMatch = true;
-
-  if (!seedTracks.isValid())
-    throw cms::Exception("matchStandAloneMuon")
-      << "+++ seed collection not set! +++\n";
-
-  int closest_ndx = -1;
-  double min_mag2 = 1e99;
-  const double MAX_MAG2 = 1; // more than enough for a comparison between doubles
-  int ndx = 0;
-  ostringstream out;
-  if (debug)
-    out << "Matching with stand-alone muons:\n"
-	<< "  Track to match:\n"
-	<< "    charge = " << track->charge()
-	<< " p = " << track->momentum() << endl
-	<< "  Stand-alone muons:\n";
-  
-  for (reco::TrackCollection::const_iterator seedmu = seedTracks->begin();
-       seedmu != seedTracks->end(); seedmu++) {
-    if (debug)
-      out << "    charge = " << seedmu->charge()
-	  << " p = " << seedmu->momentum();
-    if (seedmu->charge() == track->charge()) {
-      // calling mag2 results in complaints from the linker, even though I'm linking
-      // against ROOT... grr
-      double mag2 = (seedmu->momentum() - track->momentum()).mag2();
-      if (debug) out << " mag2: " << mag2;
-      if (mag2 < min_mag2) {
-	closest_ndx = ndx;
-	min_mag2 = mag2;
-      }
-    }
-    if (debug) out << endl;
-    ndx++;
-  }
-
-  if (debug) out << "  Closest is ndx = " << closest_ndx;
-
-  if (debug)
-    LogTrace("matchStandAloneMuon") << out.str();
-
-  if (min_mag2 > MAX_MAG2 && !relaxedMatch) {
-    edm::LogWarning("matchStandAloneMuon")
-      << "could not match stand-alone muon!\n"
-      << "muon 3-momentum p = " << track->momentum();
-    return -999;
-  }
-  else
-    return closest_ndx;
-}
-
-void Zprime2muAnalysis::matchLeptons() {
-  // Only consider a match to be found if both deltaPhi and deltaEta
-  // are EACH less than .5.
-  // JMTBAD this is to reproduce behavior of old code which used a
-  // rectangle in eta-phi space instead of a circle -- replace cut to
-  // one on deltaR?
-  const double maxMinDist = 0.5;
-
-  for (int irec = 0; irec < MAX_LEVELS; irec++) {
-    for (unsigned ilep = 0; ilep < allLeptons[irec].size(); ilep++) {
-      const reco::CandidateBaseRef& iref = allLeptons[irec][ilep];
-      zp2mu::LeptonExtra& iex = getLepExtra(iref);
-
-      for (int jrec = 0; jrec < MAX_LEVELS; jrec++) {
-	// The case irec == jrec is already taken care of in
-	// LeptonExtra's constructor.
-	if (irec == jrec) continue;
-
-	double minDist = 1e99;
-	int closestLep = -999;
-
-	// Watch out for duplicate seed indices.
-	bool foundSameSeed = false;
-	int seedLep = -999;
-
-	// if we are doingElectrons, at gen level only compare to the
-	// first two electrons (the true PYTHIA electrons)
-	// JMTBAD for muons too?
-	unsigned maxN = 
-	  doingElectrons && jrec == lgen ? 2 : allLeptons[jrec].size();
-
-	for (unsigned jlep = 0; jlep < maxN; jlep++) {
-	  const reco::CandidateBaseRef& jref = allLeptons[jrec][jlep];
-	  if (jrec == lgen && allLeptons[jrec][jlep]->pt() < 1)
-	    continue; // skip leptons with too low pt
-
-	  const zp2mu::LeptonExtra& jex = getLepExtra(jref);
-
-	  //double dist = reco::deltaR(iref, jref);
-	  double dphi = fabs(reco::deltaPhi(iref->phi(), jref->phi()));
-	  double deta = fabs(iref->eta() - jref->eta());
-	  if (dphi < maxMinDist && deta < maxMinDist) {
-	    double dist = sqrt(dphi*dphi + deta*deta);
-	    if (dist < minDist) {
-	      minDist = dist;
-	      closestLep = jex.id();
-	    }
-	  }
-
-	  // If we gave up setting the seed index (see below), don't
-	  // look at seeds any more.
-	  if (foundSameSeed && seedLep < 0)
-	    continue;
-
-	  if (irec >= l3 && jrec >= l3 && iex.seedIndex() == jex.seedIndex()) {
-	    if (!foundSameSeed) {
-	      foundSameSeed = true;
-	      seedLep = jex.id();
-	    }
-	    else {
-	      // If we find two or more leptons with the same seed
-	      // index at the target rec level, then give up; set the
-	      // seed index invalid but leave "foundSameSeed" true as
-	      // a flag to us above.
-	      edm::LogWarning("sameSeedMatch")
-		<< "In event " << eventNum
-		<< ", found at least one duplicate match for level "
-                << irec << " -> " << jrec << " with seed index "
-		<< iex.seedIndex() << "; invalidating";
-	      seedLep = -999;
-	    }
-	  }
-	}
-
-	iex.setClosestMatch(closestLep, jrec);
-	iex.setSeedMatch(seedLep, jrec);
+      // Store closest and by-seed match maps (the latter only
+      // existing for global fits).
+      string sublabel = str_level_short[i] + str_level_short[j];
+      event.getByLabel("leptonMatches", "closest" + sublabel, matchMap);
+      closestMatchMap[i][j] = *matchMap;
+      if (i >= l3 && j >= l3) {
+	event.getByLabel("leptonMatches", "seed" + sublabel, matchMap);
+	seedMatchMap[i][j] = *matchMap;
       }
     }
   }
@@ -760,7 +543,7 @@ void Zprime2muAnalysis::addBremCandidates(const int rec) {
 		       << " from daughter " << dau->p4();
 	
 	if (photonP4.energy() > 0) {
-	  double dR = reco::deltaR(dau->p4(), photonP4);
+	  double dR = deltaR(dau->p4(), photonP4);
 	  if (debug) out << "; its dR = " << dR;
 
 	  if (dR < dRmax) {
@@ -1331,10 +1114,14 @@ void Zprime2muAnalysis::findBestLeptons() {
 ////////////////////////////////////////////////////////////////////
 
 int Zprime2muAnalysis::id(const reco::CandidateRef& cand) const {
+  if (cand.isNull())
+    return -999;
   return cand.index();
 }
 
 int Zprime2muAnalysis::id(const reco::CandidateBaseRef& cand) const {
+  if (cand.isNull())
+    return -999;
   return cand.key();
 }
 
@@ -1358,6 +1145,13 @@ int Zprime2muAnalysis::recLevel(const reco::Candidate& dil) const {
   return rec;
 }  
 
+void
+Zprime2muAnalysis::checkRecLevel(const int level, const char* name) const {
+  if (level < 0 || level > MAX_LEVELS)
+    throw cms::Exception(name)
+      << "invalid level " << level << " in " << name << "!\n";
+}
+
 const Zprime2muAnalysis::LeptonRefVector&
 Zprime2muAnalysis::getLeptons(const int rec) const {
   checkRecLevel(rec, "getLeptons");
@@ -1370,27 +1164,22 @@ Zprime2muAnalysis::getDileptons(const int rec) const {
   return rec < MAX_LEVELS ? allDileptons[rec] : bestDileptons;
 }
 
-zp2mu::LeptonExtra&
-Zprime2muAnalysis::getLepExtra(const reco::CandidateBaseRef& cand) {
-  return lepExtra[recLevel(cand)][id(cand)];
-}
-
-const zp2mu::LeptonExtra&
-Zprime2muAnalysis::getLepExtra(const reco::CandidateBaseRef& cand) const {
-  return lepExtra[recLevel(cand)][id(cand)];
-}
-
-const Zprime2muAnalysis::LorentzVector&
+Zprime2muAnalysis::LorentzVector
 Zprime2muAnalysis::closestPhoton(const reco::CandidateBaseRef& cand) const {
-  /*
-  const int level = recLevel(cand);
-  reco::CandMatchMap::const_iterator c = photonMatchMap[level].find(cand);
-  if (c != photonMatchMap[level].end())
-    return photonMatchMap[level][cand]->p4();
-  else return LorentzVector(); // a zero vector
-  */
-  const zp2mu::LeptonExtra& lepEx = getLepExtra(cand);
-  return lepEx.closestPhoton();
+  int level = recLevel(cand);
+  // No closest photon for non-global fits.
+  if (level < l3)
+    return LorentzVector();
+  const reco::CandViewMatchMap& mm = photonMatchMap[level];
+  // If no closest photon found, return a zero four-vector.
+  if (mm.find(cand) == mm.end())
+    return LorentzVector();
+  else
+    return mm[cand]->p4();
+}
+
+int Zprime2muAnalysis::seedIndex(const reco::CandidateBaseRef& cand) const {
+  return seedIndices[recLevel(cand)][id(cand)];
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -1401,35 +1190,32 @@ const reco::CandidateBaseRef&
 Zprime2muAnalysis::matchLepton(const reco::CandidateBaseRef& lep,
 			       const int level,
 			       int whichMatch) const {
-  checkRecLevel(level, "matchLepton");
-  // If the same level was requested, go ahead and return the same
-  // lepton.
-  if (level == recLevel(lep)) return lep;
+  int oldlevel = recLevel(lep);
 
-  const zp2mu::LeptonExtra& lepEx = getLepExtra(lep);
-  
-  int id;
-  if (whichMatch < 0) {
-    int closestId = lepEx.closestMatch(level);
-    if (level <= l2)
-      id = closestId;
-    else {
-      int sameId = lepEx.seedMatch(level);
-      if (sameId >= 0)
-	id = sameId;
-      else
-	id = closestId;
-    }	  
+  if (oldlevel == level)
+    return lep;
+
+  bool canMatchSeed = oldlevel >= l3 && level >= l3;
+  bool doSeed;
+
+  if (whichMatch == 0)
+    doSeed = false;
+  else if (whichMatch == 1) {
+    if (!canMatchSeed) return invalidRef;
+    doSeed = true;
   }
   else
-    id = whichMatch == 1 ? lepEx.seedMatch(level) : lepEx.closestMatch(level);
+    doSeed = canMatchSeed;
 
-  if (id == -999 || id < 0 || id > int(allLeptons[level].size()))
-    return invalidRef;
-
-  for (unsigned int ilep = 0; ilep < allLeptons[level].size(); ilep++)
-    if (getLepExtra(allLeptons[level][ilep]).id() == id)
-      return allLeptons[level][ilep];
+  const reco::CandViewMatchMap& mm = doSeed ? seedMatchMap[oldlevel][level]
+                                         : closestMatchMap[oldlevel][level];
+  if (mm.find(lep) != mm.end())
+    return mm[lep];
+  else if (whichMatch == -1 && doSeed) {
+    const reco::CandViewMatchMap& cmm = closestMatchMap[oldlevel][level];
+    if (cmm.find(lep) != cmm.end())
+      return cmm[lep];
+  }
     
   return invalidRef;
 }
@@ -1665,7 +1451,7 @@ int Zprime2muAnalysis::nHits(const reco::CandidateBaseRef& cand,
 
 bool Zprime2muAnalysis::matchTracks(const reco::CandidateBaseRef& cand1,
 				    const reco::CandidateBaseRef& cand2) const {
-  return fabs(reco::deltaPhi(cand1->phi(), cand2->phi())) < .5 &&
+  return fabs(deltaPhi(cand1->phi(), cand2->phi())) < .5 &&
     fabs(cand1->eta() - cand2->eta()) < .5;
 }
 
@@ -1739,13 +1525,12 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
     cand = cand->masterClone().castTo<reco::CandidateBaseRef>();
 
   const int level = recLevel(cand);
-  const zp2mu::LeptonExtra& candEx = getLepExtra(cand);
 
   string str_lvl = " ";
   if (level >= 0 && level < MAX_LEVELS) str_lvl = str_level_short[level];
   else if (level == lbest)              str_lvl = "BEST";
   output << str_lvl
-	 << " #"          << setw(1) << candEx.id()
+	 << " #"          << setw(1) << id(cand)
 	 << "  Q: "       << setw(2) << cand->charge();
 
   if (level == lgen) {
@@ -1803,18 +1588,18 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
     output << "   Pixhits: " << setw(3) << nHits(cand, HITS_PIX)
 	   << " Silhits: "   << setw(3) << nHits(cand, HITS_SIL)
 	   << " Rechits: "   << setw(3) << nHits(cand, HITS_ALL)
-	   << " Seed: "      << setw(3) << candEx.seedIndex()
+	   << " Seed: "      << setw(3) << seedIndex(cand)
 	   << endl;
     output << "   Closest  :";
     for (int i = 0; i < MAX_LEVELS; i++) {
-      output << setw(5) << candEx.closestMatch(i)
+      output << setw(5) << id(closestLepton(cand, i))
 	     << "(" << str_level_short[i] << ")";
     }
     output << endl;
     output << "   Same-seed:";
     for (int i = 0; i < MAX_LEVELS; i++) {
-      int match = candEx.seedMatch(i);
-      output << setw(5) << match << "(" << str_level_short[i] << ")";
+      output << setw(5) << id(sameSeedLepton(cand, i))
+	     << "(" << str_level_short[i] << ")";
     }
     output << endl;
     output << "   P:          " << setw(7) << setprecision(5) << cand->p();
@@ -1940,7 +1725,7 @@ void Zprime2muAnalysis::dumpEvent(const bool printGen, const bool printL1,
 
   out << "\n******************************** Event " << eventNum << endl;
 
-  if (printSeeds && seedTracks.isValid()) {
+  if (printSeeds && seedTracks.isValid() && seedTracks->size() > 0) {
     out << "Stand-alone tracks (offline muon system fit), used as seeds:\n";
 
     unsigned i = 0;

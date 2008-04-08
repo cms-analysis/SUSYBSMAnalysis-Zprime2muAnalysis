@@ -23,4 +23,8 @@
   <use name=DataFormats/MuonReco>
 </library>
 
+<library file=LeptonAssociator.cc name=LeptonAssociator>
+  <use name=DataFormats/RecoCandidate>
+</library>
+
 <flags CXXFLAGS="-O0 -g -DDEBUG">

@@ -132,3 +132,14 @@ block Zprime2muAnalysisCommon = {
   }
 }
 
+####################################################################
+## Do all the matching -- between each pair of rec levels (including
+## MC), to seed leptons (for global fits), and to photons
+####################################################################
+
+module leptonMatches = LeptonAssociator { 
+  using Zprime2muAnalysisCommon
+}
+
+path matching = { leptonMatches }
+

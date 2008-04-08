@@ -1068,7 +1068,7 @@ void Zprime2muResolution::fillEffHistos() {
       EffVsPt[0]->Fill(gen_pt);
 
       for (int i = l1; i < MAX_LEVELS; i++) {
-	const int closestId = getLepExtra(lep).closestMatch(i);
+	const int closestId = id(closestLepton(lep, i));
 	// if (passTrigger(i) && closestId >= 0) {
 	if (closestId >= 0) {
 	  EffVsEta[i]->Fill(gen_eta);
@@ -1081,7 +1081,7 @@ void Zprime2muResolution::fillEffHistos() {
 	const reco::CandidateBaseRef& best = bestLeptons[jlep];
 	const int rec_level = recLevel(best);
 	const reco::CandidateBaseRef& match = closestLepton(best, rec_level);
-	const int closestId = getLepExtra(lep).closestMatch(rec_level);
+	const int closestId = id(closestLepton(lep, rec_level)); 
 	if (closestId >= 0 && closestId == id(match)) {
 	  EffVsEta[MAX_LEVELS]->Fill(gen_eta);
 	  EffVsPhi[MAX_LEVELS]->Fill(gen_phi);

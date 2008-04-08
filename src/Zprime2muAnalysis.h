@@ -34,8 +34,6 @@
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/LeptonExtra.h"
-
 namespace reco {
   // JMTBAD this is included in 170 and above
   typedef edm::RefToBase<reco::Track> TrackBaseRef;
@@ -48,6 +46,17 @@ const int NUM_L2_CUTS      = 4;
 const int NUM_L3_CUTS      = 9;
 const int NUM_TRACKER_CUTS = 4;
 
+// details about the number of rec levels stored, their names, etc.
+const int NUM_REC_LEVELS = 4;
+const int MAX_LEVELS = 8;
+enum RecLevel { lgen, l1, l2, l3, lgmr, ltk, lfms, lpmr, lbest };
+const std::string str_level[MAX_LEVELS+1] = {
+  "Gen", " L1", " L2", " L3", "GMR", "Tracker-only", "TPFMS", "PMR", "OPT"
+};
+const std::string str_level_short[MAX_LEVELS+1] = {
+  "GN", "L1", "L2", "L3", "GR", "TK", "FS", "PR", "BS"
+};
+
 class Zprime2muAnalysis : public edm::EDAnalyzer {
  public:
   explicit Zprime2muAnalysis(const edm::ParameterSet&);
@@ -57,6 +66,8 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   virtual void endJob();
 
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
+
+  static const double PTMIN;
 
  protected:
   // Verbosity levels.
@@ -79,7 +90,6 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   typedef std::vector<reco::CandidateBaseRef> LeptonRefVector;
 
   // Hard-coded parameters defined in the .cc file.
-  static const double PTMIN;
   static const unsigned int MAX_DILEPTONS;
   static const double ETA_CUT;
   static const double ENDCAP_BARREL_CUT;
@@ -182,13 +192,24 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   std::map<int,int> recLevelMap;
   
   // Map lepton CandidateBaseRefs to photon ones.
-  reco::CandMatchMap photonMatchMap[MAX_LEVELS];
+  reco::CandViewMatchMap photonMatchMap[MAX_LEVELS];
 
-  // Store objects containing extra info for each lepton (id, rec
-  // level, closest and same-seed info.) Switch to CandMatchMaps if
-  // CandMatcher is broken out from the EDProducer module as it is
-  // written now.
-  std::vector<zp2mu::LeptonExtra> lepExtra[MAX_LEVELS];
+  // Store seed indices for global fits (indexed in the vector by
+  // id(cand)).
+  std::vector<int> seedIndices[MAX_LEVELS];
+
+  // Store an AssociationMap for each rec level which maps leptons to
+  // leptons at other rec levels, matching by closest in delta R. (We
+  // are wasteful, not using entries for which the rec levels are
+  // equal, but storage is easier this way.)
+  reco::CandViewMatchMap closestMatchMap[MAX_LEVELS][MAX_LEVELS];
+
+  // Store an AssociationMap for each rec level of global fits
+  // (i.e. L3 and above), matching by "seed" lepton. (Currently only
+  // meaningful for muons, and we are even more wasteful than before,
+  // in addition not using entries for which rec levels are less than
+  // l3.)
+  reco::CandViewMatchMap seedMatchMap[MAX_LEVELS][MAX_LEVELS];
 
   // An invalid CandidateBaseRef so that some of the methods above can
   // return by reference and still be able to return a null reference.
@@ -226,32 +247,10 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // returning a success flag.
   bool storeLeptons(const edm::Event& event, const int rec);
 
-  // Make a new LeptonExtra object for every muon, and store the id (=
-  // index into the collection), the rec level, the seed index, and
-  // the closest photon. The first two are redundant and can be
-  // retrieved from just the lepton CandidateBaseRef objects using
-  // accessor functions id() and recLevel() above.
-  void storeLepExtras(const int rec);
-
-  // Store the photon match map for this rec level's leptons. (Not
-  // currently used, with the photon being stored in the LeptonExtra
-  // object.)
-  void storePhotonMatches(const edm::Event& event, const int rec);
-
-  // Find the closest photon to the track (in delta R).
-  template <typename TrackType> LorentzVector
-    findClosestPhoton(const TrackType& track) const;
-
-  // Return the index into the standAloneMuons collection staTracks
-  // that this Muon's standAloneMuon (passed in as track) most closely
-  // matches -- use to mock up seedIndex.
-  int matchStandAloneMuon(const reco::TrackRef& track,
-			  bool relaxedMatch=false) const;
-
-  // Store closest matches for all muons at all rec levels, and store
-  // same-seed matches for all muons and all pairs of different rec
-  // levels above and including L3.
-  void matchLeptons();
+  // Store the match maps for this event: the matching between all
+  // pairs of rec levels ("closest" matching), the matching between
+  // all global fits ("seed" matching), and closest photon matches.
+  void storeMatchMaps(const edm::Event& event);
 
   // Construct a new dilepton from the two specified lepton
   // candidates, using AddFourMomenta to set up the dilepton.
@@ -339,6 +338,10 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // levels).
   int recLevel(const reco::Candidate& cand) const;
 
+  // Perform a sanity check on the rec level passed, throwing an
+  // exception if it is out of range.
+  void checkRecLevel(const int level, const char* name) const;
+
   // Provide uniform access to allLeptons and bestLeptons by returning a
   // reference to the appropriate collection.
   const LeptonRefVector& getLeptons(const int rec) const;
@@ -346,19 +349,12 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // Same as getLeptons() but for dileptons.
   const reco::CandidateCollection& getDileptons(const int rec) const;
 
-  // Access to the LeptonExtra object associated with the lepton cand
-  // (which stores closest and same-seed match info, closest photon,
-  // etc.)...
-  // in non-const format,
-  zp2mu::LeptonExtra&
-    getLepExtra(const reco::CandidateBaseRef& cand);
-  // and in const format.
-  const zp2mu::LeptonExtra&
-    getLepExtra(const reco::CandidateBaseRef& cand) const;
-  
-  // Get the four-vector of the closest photon found for cand
-  // (retrieve it from the LeptonExtra object).
-  const LorentzVector& closestPhoton(const reco::CandidateBaseRef& cand) const;
+  // Get the four-vector of the closest photon found for cand.
+  LorentzVector closestPhoton(const reco::CandidateBaseRef& cand) const;
+
+  // Get the seed index (i.e. the index into the stand-alone muon
+  // collection) of the candidate.
+  int seedIndex(const reco::CandidateBaseRef& cand) const;
 
   ////////////////////////////////////////////////////////////////////
   // Lepton/dilepton matching

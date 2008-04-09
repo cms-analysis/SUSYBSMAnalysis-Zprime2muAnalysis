@@ -20,16 +20,6 @@
 
 const int FIT_ARRAY_SIZE = 50000;// max size of arrays for unbinned fits. 
 
-// a class for passing around the needed generator-level momenta easily
-struct GenMomenta {
-  math::XYZTLorentzVector res;
-  math::XYZTLorentzVector mum;
-  math::XYZTLorentzVector mup;
-  math::XYZTLorentzVector mum_noib;
-  math::XYZTLorentzVector mup_noib;
-  math::XYZTLorentzVector quark;
-};
-
 class Zprime2muAsymmetry : public Zprime2muAnalysis {
  public:
   explicit Zprime2muAsymmetry(const edm::ParameterSet&);
@@ -65,10 +55,6 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   void fillFitData(const edm::Event& event);
   void dumpFitData();
 
-  // JMTBAD GenKineAna methods... to be moved
-  bool getGenerated4Vectors(const reco::CandidateCollection& ,
-			    unsigned int eventNum,
-			    GenMomenta& genMom);
   bool computeFitQuantities(const reco::CandidateCollection&, 
 			    int eventNum, AsymFitData& data);
 

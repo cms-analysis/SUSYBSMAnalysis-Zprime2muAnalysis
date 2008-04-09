@@ -238,11 +238,17 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   // Store the reconstructed photons to recover brems
   event.getByLabel(photons, photonCollection);
 
-  for (int irec = 0; irec < MAX_LEVELS; irec++) {
-    // At each rec level, store the lepton CandidateBaseRefs and make an
-    // "extras" object for each.
-    if (!storeLeptons(event, irec)) continue;
-  }
+  // Store a reference to the generator-level particle collection.
+  edm::Handle<reco::CandidateCollection> genp;
+  event.getByLabel("genParticleCandidates", genp);
+  genParticles = &*genp;
+  
+  // Store the particles from the resonant interaction especially.
+  storeInteractionParticles(*genParticles, eventNum, intParticles);
+
+  // At each rec level, store the lepton CandidateBaseRefs.
+  for (int irec = 0; irec < MAX_LEVELS; irec++)
+    storeLeptons(event, irec);
 
   // Get all the match maps from the event (produced by an earlier
   // module).
@@ -679,7 +685,7 @@ void Zprime2muAnalysis::storeL1Decision(const edm::Event& event) {
   if (!l1MapColl.isValid()) {
     edm::LogWarning("storeL1Decision")
       << "L1ParticleMapCollection with label [" << l1ParticleMap.encode()
-      << "] not found!" << std::endl;
+      << "] not found!" << endl;
     return;
   }
 
@@ -1103,7 +1109,7 @@ void Zprime2muAnalysis::findBestLeptons() {
     }
 
     // Since bestLeptons is not a CandidateBaseRefVector but just a
-    // std::vector of CandidateBaseRefs, we can use the standard sort
+    // vector of CandidateBaseRefs, we can use the standard sort
     // function.
     sort(bestLeptons.begin(), bestLeptons.end(), reverse_momentum_sort());
   }
@@ -1314,6 +1320,205 @@ Zprime2muAnalysis::sameMother(const reco::CandidateBaseRef& cand1,
 bool Zprime2muAnalysis::isResonance(int pdgId) const {
   // Z', Z0/gamma*, G, or G*
   return pdgId == 32 || pdgId == 23 || pdgId == 39 || pdgId == 5000039;
+}
+
+// Store the generator-level momenta for the particles in the resonant
+// interaction from the MC record (assuming the event was of the form
+// q qbar -> resonance -> l+l-); return success as a bool. The returned
+// momenta include the true resonance, the final-state (after-brem)
+// l-l+, the muons before bremsstrahlung, and the quark that entered
+// the hard interaction.
+bool Zprime2muAnalysis::storeInteractionParticles(
+	                        const reco::CandidateCollection& genParticles, 
+				int eventNum,
+				InteractionParticles& ip) const{
+  static const bool debug = verbosity >= VERBOSITY_TOOMUCH;
+  ostringstream out;
+
+  // Zero out the pointers to trap errors later.
+  ip.genQuark = 0; 
+  ip.genResonance = 0;
+  ip.genLepPlus = 0;
+  ip.genLepMinus = 0;
+  ip.genLepPlusNoIB = 0;
+  ip.genLepMinusNoIB = 0;
+
+  // Count the total number of quarks entering the hard interaction.
+  int iq = 0;
+
+  // Loop over all particles stored in the current event.
+  if (debug) out << "Looking for interaction quark:\n";
+  reco::CandidateCollection::const_iterator p = genParticles.begin();
+  for ( ; p != genParticles.end(); p++) {
+    if (debug)
+      out << "id: " << p->pdgId() << " status: " << p->status() << endl;
+
+    if (p->status() == 3) {
+      // Documentation lines.  We look for partons that enter the hard
+      // interaction.  Their "mothers" are the partons that initiate parton
+      // showers; the "mothers" of the "mothers" are primary protons, always
+      // on lines 1 and 2.
+      const reco::Candidate* mother = p->mother();
+      if (mother != 0) {
+	const reco::Candidate* grandmother = mother->mother();
+	if (grandmother != 0 && grandmother->pdgId() == 2212) {
+	  int id = p->pdgId();
+	  if (id >= 1 && id <= 6) {
+	    if (debug) out << "  quark in hard interaction found!\n";
+	    iq++;
+	    ip.genQuark = &*p;
+	  } 
+	}
+	else {
+	  if (debug) out << "  grandmother invalid!\n";
+        }
+      }
+    }
+  } 
+
+  if (debug) LogDebug("storeInteractionParticles") << out.str();
+  out.str("");
+
+  if (iq != 1) { 
+    edm::LogWarning("storeInteractionParticles")
+      << "+++ Found " << iq << " quarks in the hard interaction;"
+      << " skip the event # " << eventNum << " +++\n";
+    return false;
+  }
+
+  // Find the resonance and its decay products.
+  p = genParticles.begin();
+  for ( ; p != genParticles.end(); p++) {
+    // Look for resonance in documentation lines since the one in the
+    // main body of event listing has no end vertex and no
+    // descendants.
+    int pid = p->pdgId();
+    if (p->status() == 3 && isResonance(pid)) {
+      if (debug)
+	out << "Resonance found, id: " << p->pdgId() << endl;
+
+      if (ip.genResonance == 0)
+	ip.genResonance = &*p;
+      else
+	throw cms::Exception("storeInteractionParticles")
+	  << "+++ Second generated resonance found in event # " << eventNum
+	  << "! +++\n";
+
+      if (debug) out << ip.genResonance ;
+
+      // Resonance children are leptons before bremsstrahlung and the
+      // resonance itself (??).  Use them later to get leptons before
+      // brem.
+      const reco::GenParticleCandidate* ppp =
+	dynamic_cast<const reco::GenParticleCandidate*>(&*p);
+      size_t ResChildren_size = ppp->numberOfDaughters();
+
+      if (debug) {
+	out << "Children:\n";
+	for (unsigned int ic = 0; ic < ResChildren_size; ic++)
+	  out << " " <<  ppp->daughter(ic) << endl;
+	out << "Leptons before brem:\n";
+      }
+
+      // Look for the pre-brem leptons, (hepmc says these have status
+      // 3).
+      for (unsigned int ic = 0; ic < ResChildren_size; ic++) {
+	if (ppp->daughter(ic)->status() == 3) {
+	  if (ppp->daughter(ic)->pdgId() == int(leptonFlavor)) {
+	    if (ip.genLepMinusNoIB == 0)
+	      ip.genLepMinusNoIB = ppp->daughter(ic);
+	    else
+	      throw cms::Exception("storeInteractionParticles")
+		<< "+++ Second before-brem l- found in resonance decay "
+		<< "in event # " << eventNum << "! +++\n";
+
+	    if (debug) out << ip.genLepMinusNoIB << endl;
+	  }
+	  else if (ppp->daughter(ic)->pdgId() == -int(leptonFlavor)) {
+	    if (ip.genLepPlusNoIB == 0)
+	      ip.genLepPlusNoIB = ppp->daughter(ic);
+	    else
+	      throw cms::Exception("storeInteractionParticles")
+		<< "+++ Second before-brem l+ found in resonance decay "
+		<< "in event # " << eventNum << "! +++\n";
+
+	    if (debug) out << ip.genLepPlusNoIB << endl;
+	  }
+	}
+      }
+
+      // Z' descendants also include final-state muons and photons produced
+      // by initial-state muons.
+      // CL: add up to granddaughter, enough?
+      typedef vector<const reco::Candidate*> CandidateVector;
+      CandidateVector ResDescendants;
+      CandidateVector ResGrandChildren;
+      for (unsigned int ida = 0; ida != p->numberOfDaughters(); ida++)
+	ResDescendants.push_back(p->daughter(ida));
+
+      CandidateVector::const_iterator id = ResDescendants.begin();
+      for ( ; id != ResDescendants.end(); id++) {
+        if ((*id)->numberOfDaughters() == 0)
+	  continue;
+        for (unsigned igdd = 0; igdd < (*id)->numberOfDaughters(); igdd++)
+	  ResGrandChildren.push_back((*id)->daughter(igdd));
+      }
+      ResDescendants.insert(ResDescendants.end(),
+			    ResGrandChildren.begin(), ResGrandChildren.end());
+
+      if (debug) {
+	out << "Descendants:\n";
+	for (id = ResDescendants.begin(); id != ResDescendants.end(); id++)
+	  out << *id << endl;
+
+	out << "Stable leptons:\n";
+      }
+
+      for (id = ResDescendants.begin(); id != ResDescendants.end(); id++) {
+	if ((*id)->status() == 1) {
+	  if ((*id)->pdgId() == int(leptonFlavor)) {
+	    if (ip.genLepMinus == 0)
+	      ip.genLepMinus = *id;
+	    else
+	      throw cms::Exception("storeInteractionParticles")
+		<< "+++ Second mu- found in resonance decay in event # "
+		<< eventNum << "! +++\n";
+
+	    if (debug) out << ip.genLepMinus << endl;
+	  }
+	  else if ((*id)->pdgId() == -int(leptonFlavor)) {
+	    if (ip.genLepPlus == 0)
+	      ip.genLepPlus = *id;
+	    else
+	      throw cms::Exception("storeInteractionParticles")
+		<< "+++ Second mu+ found in resonance decay in event # "
+		<< eventNum << "! +++\n";
+
+	    if (debug) out << ip.genLepPlus;
+	  }
+	}
+      }
+      // Do not break for now...
+    }
+  }
+
+  if (debug) LogDebug("storeInteractionParticles") << out.str();
+
+  if (ip.genResonance == 0) {
+    edm::LogWarning("storeInteractionParticles")
+      << " +++ There is no resonance generated in event # "
+      << eventNum << "! +++\n";
+    return false;
+  }
+  if (ip.genLepPlus == 0 || ip.genLepMinus == 0 ||
+      ip.genLepMinusNoIB == 0 || ip.genLepPlusNoIB == 0) {
+    edm::LogWarning("storeInteractionParticles")
+      << " +++ At least one lepton from resonance decay is not found in event"
+      << " #" << eventNum << "! +++\n";
+    return false;
+  }
+
+  return true;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -1894,6 +2099,13 @@ ostream& operator<<(ostream& out, const TLorentzVector& vect) {
 
 ostream& operator<<(ostream& out, const TLorentzVector& vect) {
   out << "(" << vect.X() << "," << vect.Y() << "," << vect.Z() << "," << vect.E() << ")";
+  return out;
+}
+
+ostream& operator<<(ostream& out, const reco::Candidate* par) {
+  out << "GenParticle: " << " id:" << par->pdgId()
+      << " p4: " << par->p4() << " status:" << par->status()
+      << " vertex:" << par->vertex();
   return out;
 }
 

@@ -57,6 +57,17 @@ const std::string str_level_short[MAX_LEVELS+1] = {
   "GN", "L1", "L2", "L3", "GR", "TK", "FS", "PR", "BS"
 };
 
+// A simple class for passing around the generator-level particles
+// from the resonant interaction.
+struct InteractionParticles {
+  const reco::Candidate* genQuark;
+  const reco::Candidate* genResonance;
+  const reco::Candidate* genLepPlus;
+  const reco::Candidate* genLepMinus;
+  const reco::Candidate* genLepPlusNoIB;
+  const reco::Candidate* genLepMinusNoIB;
+};
+
 class Zprime2muAnalysis : public edm::EDAnalyzer {
  public:
   explicit Zprime2muAnalysis(const edm::ParameterSet&);
@@ -166,6 +177,18 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // Trigger results.
   bool passTrig[NUM_REC_LEVELS];
   unsigned int trigWord[NUM_REC_LEVELS];
+
+  // Keep the collection of generator-level particles around; it is
+  // used in many places.
+  const reco::CandidateCollection* genParticles;
+
+  // Stored information from the MC record about the hard interaction,
+  // which is assumed to be of the form q qbar -> resonance ->
+  // l+l-. Store the quark, the resonance, the final-state leptons,
+  // and the leptons before bremsstrahlung (the last two that are
+  // suffixed with NoIB). We explicitly assume that there is only one
+  // resonance per event.
+  InteractionParticles intParticles;
 
   // The lepton collections, stored as CandidateBaseRefs.
   // bestLeptons, at least, cannot be a CandidateBaseRefVector since we
@@ -431,6 +454,15 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // analyze, currently one of Z0 (i.e. Drell-Yan), Z', or G*.
   bool isResonance(int pid) const;
 
+  // Store the generator-level momenta for the particles in the resonant
+  // interaction from the MC record (assuming the event was of the form
+  // q qbar -> resonance -> l+l-); return success as a bool. The returned
+  // momenta include the true resonance, the final-state (after-brem)
+  // l-l+, the muons before bremsstrahlung, and the quark that entered
+  // the hard interaction.
+  bool storeInteractionParticles(const reco::CandidateCollection& genParticles,
+				 int eventNum, InteractionParticles& ip) const;
+
   ////////////////////////////////////////////////////////////////////
   // Track utility functions
   ////////////////////////////////////////////////////////////////////
@@ -627,7 +659,8 @@ inline const T& toConcrete(const reco::CandidateBaseRef& cand) {
   return *dynamic_cast<const T*>(&*cand);
 }
 
-// For pretty-printing TLorentzVectors.
+// For pretty-printing.
 std::ostream& operator<<(std::ostream& out, const TLorentzVector& vect);
+std::ostream& operator<<(std::ostream& out, const reco::Candidate& par);
 
 #endif // ZP2MUANALYSIS_H

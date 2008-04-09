@@ -1548,227 +1548,6 @@ void Zprime2muAsymmetry::fillParamHistos(bool fakeData) {
 			      << " events processed";
 }
 
-ostream& operator<<(ostream& out, const HepMC::GenParticle* p) {
-  out << " line: " << p->barcode() << " ID:" << p->pdg_id()
-      << " (P,E)=" << p->momentum().px() << "," << p->momentum().py()
-      << "," << p->momentum().pz() << "," << p->momentum().e()
-      << " status:" << p->status();
-  return out;
-}
-
-// JMTBAD move this up to Zprime2muAnalysis!
-// Get the generator-level momenta for the Z' resonance from the MC
-// values and return them in a helper struct; return success as a bool
-// the returned momenta include the true resonance (res),
-// the final-state (after-brem) mu-/mu+ (mum/mup),
-// the muons before bremsstrahlung (mu?_noib),
-// and the quark that entered the hard interaction (quark).
-bool Zprime2muAsymmetry::getGenerated4Vectors(
-			      const reco::CandidateCollection& genParticles,
-			      unsigned int eventNum,
-			      GenMomenta& genMom) {
-  bool debug = verbosity >= VERBOSITY_TOOMUCH;
-
-  // These are pointers (and not arrays/vectors) because we explicitly assume
-  // that there is one and only resonance in the record.
-  const reco::Candidate* quark = 0;
-  const reco::Candidate* Res = 0;
-  const reco::Candidate* Mup = 0;
-  const reco::Candidate* Mum = 0;
-  const reco::Candidate* Mup_noib = 0;
-  const reco::Candidate* Mum_noib = 0;
-
-  // Total number of quarks entering the hard interaction.
-  int iq = 0;
-  
-  // Loop over all particles stored in the current event.
-  for (reco::CandidateCollection::const_iterator p = genParticles.begin();
-       p != genParticles.end(); p++) {
-
-    if (debug)
-    LogDebug("getGenerated4Vectors")
-        << "id = " << p->pdgId() << " status = " << p->status();
-//CL	<< " end vtx " << p->end_vertex()
-//CL	<< " prod vtx " << p->production_vertex();
-
-    if (p->status() == 3) {
-    // Documentation lines.  We look for partons that enter the hard
-    // interaction.  Their "mothers" are the partons that initiate parton
-    // showers; the "mothers" of the "mothers" are primary protons, always
-    // on lines 1 and 2.
-      const reco::Candidate* mother = p->mother();
-
-      if (mother != 0) {
-	const reco::Candidate* grandmother = mother->mother();
-	if (grandmother != 0  &&
-	    (grandmother->pdgId() == 2212 )) { //FIXME
-	  int id = p->pdgId();
-	  if (id >= 1 && id <= 6) {
-	    if (debug)
-	      LogDebug("getGenerated4Vectors")
-		<< " quark in hard interaction found at line "
-		//<< (*p)->barcode()
-		<< "; id = " << id;
-	    iq++;
-	    quark = (&*p);
-	  } 
-	} else {
-           if (debug)
-           LogDebug("getGenerated4Vectors")
-             << " grand mother invalid ";
-        }
-      }
-    }
-  } 
-
-  if (iq != 1) { 
-    edm::LogWarning("getGenerated4Vectors")
-      << "+++ There were " << iq << " quarks in the hard interaction;"
-      << " skip the event # " << eventNum << " +++\n";
-    return false;
-  }
-  //hKFQuark->Fill(quark->pdg_id());
-
-  // Main loop, to find resonance and its decay products.
-  for (reco::CandidateCollection::const_iterator p = genParticles.begin();
-       p != genParticles.end(); p++) {
-    // Look for resonance in documentation lines since the one in the
-    // main body of event listing has no end vertex and no
-    // descendants.
-    int pid = p->pdgId();
-    if (p->status() == 3 && isResonance(pid)) {
-      if (debug)
-	LogDebug("getGenerated4Vectors") << "Resonance found with PDG id "
-					 << p->pdgId();
-      if (Res == 0) Res = (&*p);
-      else {
-	throw cms::Exception("getGenerated4Vectors")
-	  << "+++ Second generated resonance found in event # " << eventNum
-	  << "! +++\n";
-      }
-      if (debug) LogDebug("getGenerated4Vectors") << print(*Res);
-
-      // Resonance children are muons before bremsstrahlung and the
-      // resonance itself (??).  Use them later to get muons before
-      // brem.
-      const reco::GenParticleCandidate* ppp =
-	dynamic_cast<const reco::GenParticleCandidate*>(&*p);
-      size_t ResChildren_size = ppp->numberOfDaughters();
-
-      if (debug) {
-	LogDebug("getGenerated4Vectors") << "Children:";
-	for (unsigned int ic = 0; ic < ResChildren_size; ic++) {
-	  if (debug)
-	    LogDebug("getGenerated4Vectors") << print(*ppp->daughter(ic));
-	}
-      }
-
-      if (debug)
-	LogDebug("getGenerated4Vectors") << "Mus before brem:";
-      for (unsigned int ic = 0; ic < ResChildren_size; ic++) {
-	// look for the muons before brem, and store them
-	// (hepmc says these mus have status 3)
-	if (ppp->daughter(ic)->status() == 3) {
-	  if (ppp->daughter(ic)->pdgId() == int(leptonFlavor)) {
-	    if (Mum_noib == 0) Mum_noib = ppp->daughter(ic);
-	    else {
-	      throw cms::Exception("getGenerated4Vectors")
-		<< "+++ Second before-brem mu- found in resonance decay "
-		<< "in event # " << eventNum << "! +++\n";
-	    }
-	    if (debug) LogDebug("getGenerated4Vectors") << print(*Mum_noib);
-	  }
-	  else if (ppp->daughter(ic)->pdgId() == -int(leptonFlavor)) {
-	    if (Mup_noib == 0) Mup_noib = ppp->daughter(ic);
-	    else {
-	      throw cms::Exception("getGenerated4Vectors")
-		<< "+++ Second before-brem mu+ found in resonance decay "
-		<< "in event # " << eventNum << "! +++\n";
-	    }
-	    if (debug) LogDebug("getGenerated4Vectors") << print(*Mup_noib);
-	  }
-	}
-      }
-      // Z' descendants also include final-state muons and photons produced
-      // by initial-state muons.
-      std::vector<const reco::Candidate*> ResDescendants;
-
-      // CL: add up to granddaughter, enough?
-      for (unsigned int ida = 0; ida != p->numberOfDaughters(); ida++) {
-	ResDescendants.push_back(p->daughter(ida));
-      } 
-      std::vector<const reco::Candidate*> ResGrandChildren;
-
-      std::vector<const reco::Candidate*>::const_iterator idaug;
-      for (idaug = ResDescendants.begin(); idaug != ResDescendants.end();
-	   idaug++) {
-        if ((*idaug)->numberOfDaughters() == 0) continue;
-        for (unsigned int igdd = 0; igdd != (*idaug)->numberOfDaughters();
-	     igdd++) {
-	  ResGrandChildren.push_back((*idaug)->daughter(igdd));
-        }
-      }
-      ResDescendants.insert(ResDescendants.end(),
-			    ResGrandChildren.begin(), ResGrandChildren.end());
-
-      std::vector<const reco::Candidate*>::const_iterator id;
-      if (debug) {
-	LogDebug("getGenerated4Vectors") << "Descendants:";
-	for (id = ResDescendants.begin(); id != ResDescendants.end(); id++) {
-	  if (debug) LogDebug("getGenerated4Vectors") << print(**id);
-	}
-      }
-      if (debug)
-	LogDebug("getGenerated4Vectors") << "Stable mus:";
-      for (id = ResDescendants.begin(); id != ResDescendants.end(); id++) {
-	if ((*id)->status() == 1) {
-	  if ((*id)->pdgId() == int(leptonFlavor)) {
-	    if (Mum == 0) Mum = (*id);
-	    else {
-	      throw cms::Exception("getGenerated4Vectors")
-		<< "+++ Second mu- found in resonance decay in event # "
-		<< eventNum << "! +++\n";
-	    }
-	    if (debug) LogDebug("getGenerated4Vectors") << print(*Mum);
-	  }
-	  else if ((*id)->pdgId() == -int(leptonFlavor)) {
-	    if (Mup == 0) Mup = (*id);
-	    else {
-	      throw cms::Exception("getGenerated4Vectors")
-		<< "+++ Second mu+ found in resonance decay in event # "
-		<< eventNum << "! +++\n";
-	    }
-	    if (debug) LogDebug("getGenerated4Vectors") << print(*Mup);
-	  }
-	}
-      }
-      // Do not break for now...
-    }
-  }
-
-  if (Res == 0) {
-    edm::LogWarning("getGenerated4Vectors")
-      << " +++ There is no resonance generated in event # "
-      << eventNum << "! +++\n";
-    return false;
-  }
-  if (Mup == 0 || Mum == 0 || Mum_noib == 0 || Mup_noib == 0) {
-    edm::LogWarning("getGenerated4Vectors")
-      << " +++ At least one muon from resonance decay is not found in event # "
-      << eventNum << "! +++\n";
-    return false;
-  }
-
-  // return the 4-vectors in the structure provided
-  genMom.res = Res->p4();
-  genMom.mum = Mum->p4();
-  genMom.mup = Mup->p4();
-  genMom.mum_noib = Mum_noib->p4();
-  genMom.mup_noib = Mup_noib->p4();
-  genMom.quark = quark->p4();
-  return true;
-}
-
 // This routine calculates the quantities to be used in the multiple
 // dimension fit. Variables used in the fit are stored in the
 // structure "data" returned by reference.  The flag "internalBremOn",
@@ -1776,10 +1555,10 @@ bool Zprime2muAsymmetry::getGenerated4Vectors(
 bool Zprime2muAsymmetry::computeFitQuantities(const reco::CandidateCollection& genParticles, 
 					      int eventNum,
 					      AsymFitData& data) {
-  bool debug = verbosity >= VERBOSITY_TOOMUCH;
+  static const bool debug = verbosity >= VERBOSITY_TOOMUCH;
 
-  GenMomenta genMom;
-  if (!getGenerated4Vectors(genParticles, eventNum, genMom))
+  InteractionParticles ip;
+  if (!storeInteractionParticles(genParticles, eventNum, ip))
     return false;
 
   // Copy the four-vectors into TLorentzVectors, since our code uses
@@ -1787,19 +1566,19 @@ bool Zprime2muAsymmetry::computeFitQuantities(const reco::CandidateCollection& g
   TLorentzVector v_dil, v_mum, v_mup, v_muq;
   TLorentzVector v_my_dil, v_my_mum, v_my_mup;
 
-  v_muq.SetPxPyPzE(genMom.quark.x(), genMom.quark.y(), genMom.quark.z(),
-		   genMom.quark.e());
+  v_muq.SetPxPyPzE(ip.genQuark->p4().x(), ip.genQuark->p4().y(), ip.genQuark->p4().z(),
+		   ip.genQuark->p4().e());
   if (internalBremOn) {
-    v_my_mum.SetPxPyPzE(genMom.mum.x(), genMom.mum.y(), genMom.mum.z(),
-			genMom.mum.e());
-    v_my_mup.SetPxPyPzE(genMom.mup.x(), genMom.mup.y(), genMom.mup.z(),
-			genMom.mup.e());
+    v_my_mum.SetPxPyPzE(ip.genLepMinus->p4().x(), ip.genLepMinus->p4().y(),
+			ip.genLepMinus->p4().z(), ip.genLepMinus->p4().e());
+    v_my_mup.SetPxPyPzE(ip.genLepPlus->p4().x(), ip.genLepPlus->p4().y(),
+			ip.genLepPlus->p4().z(), ip.genLepPlus->p4().e());
   } 
   else {
-    v_my_mum.SetPxPyPzE(genMom.mum_noib.x(), genMom.mum_noib.y(),
-			genMom.mum_noib.z(), genMom.mum_noib.e());
-    v_my_mup.SetPxPyPzE(genMom.mup_noib.x(), genMom.mup_noib.y(),
-			genMom.mup_noib.z(), genMom.mup_noib.e());
+    v_my_mum.SetPxPyPzE(ip.genLepMinusNoIB->p4().x(), ip.genLepMinusNoIB->p4().y(),
+			ip.genLepMinusNoIB->p4().z(), ip.genLepMinusNoIB->p4().e());
+    v_my_mup.SetPxPyPzE(ip.genLepPlusNoIB->p4().x(), ip.genLepPlusNoIB->p4().y(),
+			ip.genLepPlusNoIB->p4().z(), ip.genLepPlusNoIB->p4().e());
   }
 
   // The 4-vector for the dimuon
@@ -1817,8 +1596,8 @@ bool Zprime2muAsymmetry::computeFitQuantities(const reco::CandidateCollection& g
   // Cosine theta^* between mu- and the quark in the Z' CMS frame ("true"
   // cos theta^*).
   // JMTBAD calculated by calcCosThetaTrue above already
-  //math::XYZTLorentzVector mum_star = LorentzBoost(genMom.res, genMom.mum);
-  //math::XYZTLorentzVector quark_star = LorentzBoost(genMom.res, genMom.quark);
+  //math::XYZTLorentzVector mum_star = LorentzBoost(ip.genMom.res, ip.genMom.mum);
+  //math::XYZTLorentzVector quark_star = LorentzBoost(ip.genMom.res, ip.genMom.quark);
   //float gen_cos_true = cosTheta(mum_star, quark_star);
   
   data.cos_cs = calcCosThetaCSAnal(v_my_mum.Pz(), v_my_mum.E(),
@@ -1835,9 +1614,9 @@ bool Zprime2muAsymmetry::computeFitQuantities(const reco::CandidateCollection& g
   // other direction.  translating from kir_anal.F, we looked at the
   // dilepton formed from adding the muon final-state four-vectors
   // (i.e., we ignored small effect of any brem):
-  // data.mistag_true = (v_my_dil.Pz()*genMom.quark.z() < 0) ? 1 : 0;
+  // data.mistag_true = (v_my_dil.Pz()*ip.genQuark->p4().z() < 0) ? 1 : 0;
   // but, since we have the true resonance four-vector:
-  data.mistag_true = (genMom.res.z()*genMom.quark.z() < 0) ? 1 : 0;
+  data.mistag_true = (ip.genResonance->p4().z()*ip.genQuark->p4().z() < 0) ? 1 : 0;
   // alternatively, we've mistagged if the signs of cos_cs and
   // cos_true are different
   data.mistag_cs = (data.cos_cs/data.cos_true > 0) ? 0 : 1;
@@ -3651,15 +3430,4 @@ void Zprime2muAsymmetry::deleteHistos() {
   delete h2_pL_mistag_prob;
   delete h2_cos_cs_vs_true;
   delete h2_pTrap_mistag_prob;
-}
-
-string Zprime2muAsymmetry::print(const reco::Candidate& par) const {
-  stringstream out;
-  out << "GenParticle: "
-      << " ID:" << par.pdgId()
-      << " (P,E)=" << par.p4().x() << "," << par.p4().y()
-      << "," << par.p4().z() << "," << par.p4().t()
-      << " Stat:" << par.status()
-      << " Vertex:" << par.vertex();
-  return out.str();
 }

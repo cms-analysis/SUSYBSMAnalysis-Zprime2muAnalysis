@@ -10,6 +10,7 @@
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
 
 #include "DataFormats/Candidate/interface/CandMatchMap.h"
 #include "DataFormats/Candidate/interface/Candidate.h"
@@ -33,6 +34,8 @@
 
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
+
+#include "PhysicsTools/UtilAlgos/interface/TFileService.h"
 
 namespace reco {
   // JMTBAD this is included in 170 and above
@@ -60,6 +63,9 @@ const std::string str_level_short[MAX_LEVELS+1] = {
 // A simple class for passing around the generator-level particles
 // from the resonant interaction.
 struct InteractionParticles {
+  InteractionParticles() : genQuark(0), genResonance(0),
+			   genLepPlus(0), genLepMinus(0),
+			   genLepPlusNoIB(0), genLepMinusNoIB(0) {}
   const reco::Candidate* genQuark;
   const reco::Candidate* genResonance;
   const reco::Candidate* genLepPlus;
@@ -238,6 +244,9 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // return by reference and still be able to return a null reference.
   reco::CandidateBaseRef invalidRef;
 
+  // A handle to the TFileService for convenience.
+  edm::Service<TFileService> fs;
+
  private:
   // verbosity controls the amount of debugging information printed;
   // levels are defined using the VERBOSITY_* codes above
@@ -342,6 +351,18 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   void findBestLeptons();
 
  protected:
+  ////////////////////////////////////////////////////////////////////
+  // General utility functions
+  ////////////////////////////////////////////////////////////////////
+
+  // Build a string containing a name for a histogram -- useful inside
+  // loops when booking histos.
+  std::string nameHist(const char* s, int i, int j = -1) {
+    std::string x = std::string(s) + char(i + 48);
+    if (j >= 0) x += char(j + 48);
+    return x;
+  }
+
   ////////////////////////////////////////////////////////////////////
   // Lepton/dilepton rec level utility functions
   ////////////////////////////////////////////////////////////////////

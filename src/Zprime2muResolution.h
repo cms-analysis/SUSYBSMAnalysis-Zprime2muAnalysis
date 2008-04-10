@@ -17,9 +17,7 @@ class Zprime2muResolution : public Zprime2muAnalysis {
  public:
   explicit Zprime2muResolution(const edm::ParameterSet&);
   ~Zprime2muResolution();
-
-  // public:
-  void beginJob(const edm::EventSetup&);
+  void beginJob(const edm::EventSetup& eSetup);
   void analyze(const edm::Event&, const edm::EventSetup&);
   void endJob();
 
@@ -42,8 +40,6 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   int getOrigin(const int motherId);
 
   void getHistosFromFile();
-  void WriteHistos();
-  void DeleteHistos();
 
   void DrawResHistos();
   void DrawAcceptance();

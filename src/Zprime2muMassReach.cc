@@ -86,8 +86,6 @@ Zprime2muMassReach::Zprime2muMassReach(const edm::ParameterSet& config)
 }
 
 Zprime2muMassReach::~Zprime2muMassReach() {
-  deleteMassHistos();
-  deleteMassFitHistos();
 }
 
 void Zprime2muMassReach::analyze(const edm::Event& event, 
@@ -163,20 +161,15 @@ void Zprime2muMassReach::bookMassHistos() {
   double xmin = massWin[0];
   double xmax = massWin[1];
   for (unsigned int i = 0; i < 3; i++) {
-    GenDilMass[i] = new TH1F("", "True Dilepton Mass",
-			     nBins, xmin, xmax);
-    HltDilMass[i] = new TH1F("", "Reconstructed (GMR) Dilepton Mass", 
-			     nBins, xmin, xmax);
-    OffDilMass[i] = new TH1F("", "Reconstructed (best) Dilepton Mass", 
-			     nBins, xmin, xmax);
-  }
-}
-
-void Zprime2muMassReach::deleteMassHistos() {
-  for (unsigned int i = 0; i < 3; i++) {
-    delete GenDilMass[i];
-    delete HltDilMass[i];
-    delete OffDilMass[i];
+    GenDilMass[i] = fs->make<TH1F>(nameHist("GenDilMass", i).c_str(),
+				   "True Dilepton Mass",
+				   nBins, xmin, xmax);
+    HltDilMass[i] = fs->make<TH1F>(nameHist("HltDilMass", i).c_str(),
+				   "Reconstructed (GMR) Dilepton Mass",
+				   nBins, xmin, xmax);
+    OffDilMass[i] = fs->make<TH1F>(nameHist("OffDilMass", i).c_str(),
+				   "Reconstructed (best) Dilepton Mass",
+				   nBins, xmin, xmax);
   }
 }
 
@@ -679,22 +672,19 @@ void Zprime2muMassReach::drawMassHistos() {
 
 void Zprime2muMassReach::bookMassFitHistos() {
   // Generated and reconstructed mass histo
-  GenMassFitData = new TH1F("", "Generated mass",     100,
-			    massWin[0], massWin[1]);
-  RecMassFitData = new TH1F("", "Reconstructed mass", 100,
-			    massWin[0], massWin[1]);
+  GenMassFitData = fs->make<TH1F>("GenMassFitData", "Generated mass",     100, massWin[0], massWin[1]);
+  RecMassFitData = fs->make<TH1F>("RecMassFitData", "Reconstructed mass", 100, massWin[0], massWin[1]);
   GenMassFitData->Sumw2(); // needed for Kolmogorov-Smirnov tests
   RecMassFitData->Sumw2();
 
   if (kSmoothedSample) {
-    RecMassFitDataSmoothed = new TH1F("", "Smoothed rec. mass", 100,
-				      massWin[0], massWin[1]);
+    RecMassFitDataSmoothed = fs->make<TH1F>("RecMassFitDataSmoothed", "Smoothed rec. mass", 100, massWin[0], massWin[1]);
     RecMassFitDataSmoothed->Sumw2();
   }
 
   // Signal fraction, mean and FWHM
-  GenMassFitSigFr  = new TH1F("", "Fraction of signal events", 100, 0., 1.);
-  RecMassFitSigFr  = new TH1F("", "Fraction of signal events", 100, 0., 1.);
+  GenMassFitSigFr  = fs->make<TH1F>("GenMassFitSigFr", "Fraction of signal events", 100, 0., 1.);
+  RecMassFitSigFr  = fs->make<TH1F>("RecMassFitSigFr", "Fraction of signal events", 100, 0., 1.);
 
   double mean_min = 0, mean_max = 10000.;
   double fwhm_min = 0, fwhm_max =  1000.;
@@ -713,108 +703,56 @@ void Zprime2muMassReach::bookMassFitHistos() {
   else if (resMassId == 5000) {
     mean_min = 3000.; mean_max = 7000.; fwhm_max = 1000.;
   }
-  GenMassFitMean = new TH1F("", "Signal mean", 100, mean_min, mean_max);
-  RecMassFitMean = new TH1F("", "Signal mean", 100, mean_min, mean_max);
-  GenMassFitFwhm = new TH1F("", "Signal FWHM", 100, fwhm_min, fwhm_max);
-  RecMassFitFwhm = new TH1F("", "Signal FWHM", 100, fwhm_min, fwhm_max);
+  GenMassFitMean = fs->make<TH1F>("GenMassFitMean", "Signal mean", 100, mean_min, mean_max);
+  RecMassFitMean = fs->make<TH1F>("RecMassFitMean", "Signal mean", 100, mean_min, mean_max);
+  GenMassFitFwhm = fs->make<TH1F>("GenMassFitFwhm", "Signal FWHM", 100, fwhm_min, fwhm_max);
+  RecMassFitFwhm = fs->make<TH1F>("RecMassFitFwhm", "Signal FWHM", 100, fwhm_min, fwhm_max);
 
   // Number of signal and background events
-  GenMassFitNevtTot = new TH1F("Nevt_all_gen", "Nevt_all", 100, 0., 25.);
-  GenMassFitNsigTot = new TH1F("Nsig_all_gen", "Nsig_all", 100, 0., 10.);
-  GenMassFitNbkgTot = new TH1F("Nbkg_all_gen", "Nbkg_all", 100, 0., 10.);
+  GenMassFitNevtTot = fs->make<TH1F>("Nevt_all_gen", "Nevt_all", 100, 0., 25.);
+  GenMassFitNsigTot = fs->make<TH1F>("Nsig_all_gen", "Nsig_all", 100, 0., 10.);
+  GenMassFitNbkgTot = fs->make<TH1F>("Nbkg_all_gen", "Nbkg_all", 100, 0., 10.);
 
-  RecMassFitNevtTot = new TH1F("Nevt_all_rec", "Nevt_all", 100, 0., 50.);
-  RecMassFitNsigTot = new TH1F("Nsig_all_rec", "Nsig_all", 100, 0., 50.);
-  RecMassFitNbkgTot = new TH1F("Nbkg_all_rec", "Nbkg_all", 100, 0., 50.);
+  RecMassFitNevtTot = fs->make<TH1F>("Nevt_all_rec", "Nevt_all", 100, 0., 50.);
+  RecMassFitNsigTot = fs->make<TH1F>("Nsig_all_rec", "Nsig_all", 100, 0., 50.);
+  RecMassFitNbkgTot = fs->make<TH1F>("Nbkg_all_rec", "Nbkg_all", 100, 0., 50.);
 
-  GenMassFitNobs = new TH1F("Nobs_gen", "Nobs", 100, 0., 25.); // observed
-  GenMassFitNfit = new TH1F("Nfit_gen", "Nfit", 100, 0., 25.); // fitted
-  GenMassFitNsig = new TH1F("Nsig_gen", "Nsig", 100, 0., 25.);
-  GenMassFitNbkg = new TH1F("Nbkg_gen", "Nbkg", 100, 0., 10.);
+  GenMassFitNobs = fs->make<TH1F>("Nobs_gen", "Nobs", 100, 0., 25.); // observed
+  GenMassFitNfit = fs->make<TH1F>("Nfit_gen", "Nfit", 100, 0., 25.); // fitted
+  GenMassFitNsig = fs->make<TH1F>("Nsig_gen", "Nsig", 100, 0., 25.);
+  GenMassFitNbkg = fs->make<TH1F>("Nbkg_gen", "Nbkg", 100, 0., 10.);
 
-  RecMassFitNobs = new TH1F("Nobs_rec", "Nobs", 100, 0., 25.);
-  RecMassFitNfit = new TH1F("Nfit_rec", "Nfit", 100, 0., 25.);
-  RecMassFitNsig = new TH1F("Nsig_rec", "Nsig", 100, 0., 25.);
-  RecMassFitNbkg = new TH1F("Nbkg_rec", "Nbkg", 100, 0., 10.);
+  RecMassFitNobs = fs->make<TH1F>("Nobs_rec", "Nobs", 100, 0., 25.);
+  RecMassFitNfit = fs->make<TH1F>("Nfit_rec", "Nfit", 100, 0., 25.);
+  RecMassFitNsig = fs->make<TH1F>("Nsig_rec", "Nsig", 100, 0., 25.);
+  RecMassFitNbkg = fs->make<TH1F>("Nbkg_rec", "Nbkg", 100, 0., 10.);
 
   // Kolmogorov-Smirnov goodness-of-fit test
-  GenMassFitKSDistSig = new TH1F("DistSig_gen", "DistSig", 100, 0., 1.);
-  GenMassFitKSDistBkg = new TH1F("DistBkg_gen", "DistBkg", 100, 0., 1.);
-  RecMassFitKSDistSig = new TH1F("DistSig_rec", "DistSig", 100, 0., 1.);
-  RecMassFitKSDistBkg = new TH1F("DistBkg_rec", "DistBkg", 100, 0., 1.);
+  GenMassFitKSDistSig = fs->make<TH1F>("DistSig_gen", "DistSig", 100, 0., 1.);
+  GenMassFitKSDistBkg = fs->make<TH1F>("DistBkg_gen", "DistBkg", 100, 0., 1.);
+  RecMassFitKSDistSig = fs->make<TH1F>("DistSig_rec", "DistSig", 100, 0., 1.);
+  RecMassFitKSDistBkg = fs->make<TH1F>("DistBkg_rec", "DistBkg", 100, 0., 1.);
 
-  GenMassFitKSProbSig = new TH1F("ProbSig_gen", "ProbSig", 100, 0., 1.);
-  GenMassFitKSProbBkg = new TH1F("ProbBkg_gen", "ProbBkg", 100, 0., 1.);
-  RecMassFitKSProbSig = new TH1F("ProbSig_rec", "ProbSig", 100, 0., 1.);
-  RecMassFitKSProbBkg = new TH1F("ProbBkg_rec", "ProbBkg", 100, 0., 1.);
+  GenMassFitKSProbSig = fs->make<TH1F>("ProbSig_gen", "ProbSig", 100, 0., 1.);
+  GenMassFitKSProbBkg = fs->make<TH1F>("ProbBkg_gen", "ProbBkg", 100, 0., 1.);
+  RecMassFitKSProbSig = fs->make<TH1F>("ProbSig_rec", "ProbSig", 100, 0., 1.);
+  RecMassFitKSProbBkg = fs->make<TH1F>("ProbBkg_rec", "ProbBkg", 100, 0., 1.);
 
   // Counting and likelihood significances
-  GenMassFitSc1  = new TH1F("Sc1_gen",  "Sc1",  100, 0., 50.);
-  GenMassFitSc2  = new TH1F("Sc2_gen",  "Sc2",  100, 0., 25.);
-  GenMassFitSc12 = new TH1F("Sc12_gen", "Sc12", 100, 0., 25.);
-  GenMassFitScl  = new TH1F("ScL_gen",  "ScL",  100, 0., 25.);
-  GenMassFitSl2  = new TH1F("SL_gen",   "SL",   100, 0., 25.);
+  GenMassFitSc1  = fs->make<TH1F>("Sc1_gen",  "Sc1",  100, 0., 50.);
+  GenMassFitSc2  = fs->make<TH1F>("Sc2_gen",  "Sc2",  100, 0., 25.);
+  GenMassFitSc12 = fs->make<TH1F>("Sc12_gen", "Sc12", 100, 0., 25.);
+  GenMassFitScl  = fs->make<TH1F>("ScL_gen",  "ScL",  100, 0., 25.);
+  GenMassFitSl2  = fs->make<TH1F>("SL_gen",   "SL",   100, 0., 25.);
 
   double smax = 25.;
   if      (resMassId == 3000) smax = 15.;
   else if (resMassId == 5000) smax = 10.;
-  RecMassFitSc1  = new TH1F("Sc1_rec",  "Sc1",  100, 0., smax);
-  RecMassFitSc2  = new TH1F("Sc2_rec",  "Sc2",  100, 0., smax);
-  RecMassFitSc12 = new TH1F("Sc12_rec", "Sc12", 100, 0., smax);
-  RecMassFitScl  = new TH1F("ScL_rec",  "ScL",  100, 0., smax);
-  RecMassFitSl2  = new TH1F("SL_rec",   "SL",   100, 0., smax);
-}
-
-void Zprime2muMassReach::deleteMassFitHistos() {
-  delete GenMassFitData;
-  delete RecMassFitData;
-
-  if (kSmoothedSample)
-    delete RecMassFitDataSmoothed;
-
-  delete GenMassFitSigFr;
-  delete GenMassFitMean;
-  delete GenMassFitFwhm;
-  delete RecMassFitSigFr;
-  delete RecMassFitMean;
-  delete RecMassFitFwhm;
-
-  delete GenMassFitNevtTot;
-  delete GenMassFitNsigTot;
-  delete GenMassFitNbkgTot;
-  delete RecMassFitNevtTot;
-  delete RecMassFitNsigTot;
-  delete RecMassFitNbkgTot;
-
-  delete GenMassFitNobs;
-  delete GenMassFitNfit;
-  delete GenMassFitNsig;
-  delete GenMassFitNbkg;
-  delete RecMassFitNobs;
-  delete RecMassFitNfit;
-  delete RecMassFitNsig;
-  delete RecMassFitNbkg;
-
-  delete GenMassFitKSDistSig;
-  delete GenMassFitKSDistBkg;
-  delete RecMassFitKSDistSig;
-  delete RecMassFitKSDistBkg;
-
-  delete GenMassFitKSProbSig;
-  delete GenMassFitKSProbBkg;
-  delete RecMassFitKSProbSig;
-  delete RecMassFitKSProbBkg;
-
-  delete GenMassFitSc1;
-  delete GenMassFitSc2;
-  delete GenMassFitSc12;
-  delete GenMassFitScl;
-  delete GenMassFitSl2;
-  delete RecMassFitSc1;
-  delete RecMassFitSc2;
-  delete RecMassFitSc12;
-  delete RecMassFitScl;
-  delete RecMassFitSl2;
+  RecMassFitSc1  = fs->make<TH1F>("Sc1_rec",  "Sc1",  100, 0., smax);
+  RecMassFitSc2  = fs->make<TH1F>("Sc2_rec",  "Sc2",  100, 0., smax);
+  RecMassFitSc12 = fs->make<TH1F>("Sc12_rec", "Sc12", 100, 0., smax);
+  RecMassFitScl  = fs->make<TH1F>("ScL_rec",  "ScL",  100, 0., smax);
+  RecMassFitSl2  = fs->make<TH1F>("SL_rec",   "SL",   100, 0., smax);
 }
 
 void Zprime2muMassReach::fitMass() {
@@ -1753,7 +1691,7 @@ void Zprime2muMassReach::analyzeUnbinnedMassFits(
     // if (!bckgonly && nbkg > 1.) kExpPlots = true;
 
     // if (kExpPlots) {
-    TH1F *massHisto = new TH1F("", htitle.c_str(), nbins, mass_min, mass_max);
+    TH1F *massHisto = fs->make<TH1F>("massHisto", htitle.c_str(), nbins, mass_min, mass_max);
     vector<evt>::const_iterator p;
     for (p = events.begin(); p != events.end(); p++) {
       massHisto->Fill(p->mass, p->weight);
@@ -2234,6 +2172,7 @@ void Zprime2muMassReach::drawUnbinnedMassFitsHistos() {
 #endif
 
   // Save a few histos to a file
+  // JMTBAD can this go away? we're already saving these
   TFile *fout = new TFile("sign.root", "RECREATE");
 
   RecMassFitNevtTot->Write();

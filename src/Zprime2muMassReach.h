@@ -47,13 +47,11 @@ class Zprime2muMassReach : public Zprime2muAnalysis {
 
  private:
   void bookMassHistos();
-  void deleteMassHistos();
   void dilMassPlots(bool debug=false);
   void fillMassArrays();
   void scaleMassHistos();
   void drawMassHistos();
   void bookMassFitHistos();
-  void deleteMassFitHistos();
   void fitMass();
   double unbinnedMassFit(int nentries, double *mass_data,
 			 double *weight, const std::string fittype,

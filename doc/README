@@ -46,7 +46,7 @@ gamma*/Z0/Z'/G/G* --> l- l+ events (with l=e,mu). Some sample files
 are available at /castor/cern.ch/user/t/tucker/CMSSW_1_6_7.
 
 At the time this documentation was updated, the package has been
-tested to work with version 1_6_11 of CMSSW. The tag V00-01-00 should
+tested to work with version 1_6_11 of CMSSW. The tag V00-01-01 should
 be used. With this new release, we have abandoned our private
 BaseMuon/Muon/DiMuon classes in favor of using directly the standard
 AnalysisTools classes (reco::Candidate and all its derived classes,
@@ -112,22 +112,23 @@ one vector for each rec level. (CandidateBaseRefs were chosen over
 CandidateRefs and vector<CandidateBaseRef> over CandidateBaseRefVector
 for technical reasons documented in code comments.)
 
-After the leptons are stored, matching between rec levels (especially
-to MC truth) and matching closest photons is done in the code. We
-chose to do this instead of using the available AnalysisTools matching
-tools since, with eight rec levels, it proved cumbersome to define
-matches between leptons at each pair of rec levels and matches between
-each rec level of leptons and photons in the configuration files. 8*8
-(not 8*7, since an AssociationMap has no easy inverse mapping)
-module invocations to define the matching between lepton rec
-levels alone would be needed. Instead we do the matching internally and
-store the results in a LeptonExtra object of our own. If CandMatcher were
-separated from the configuration file level and made into a stand-alone
-object that could be used at the code level inside for loops, that would
-ameliorate the situation greatly, and provide compatibility with the
-standard matching tools.
+Matching between rec levels (especially to MC truth) and matching
+closest photons is done in our own code in the module
+LeptonAssociator, but stored in the same manner as the official
+matching packages (i.e., in AssociationMaps). We chose to do this
+instead of using the available AnalysisTools matching tools since,
+with eight rec levels, it proved cumbersome to define matches between
+leptons at each pair of rec levels and matches between each rec level
+of leptons and photons in the configuration files. 8*8 (not 8*7, since
+an AssociationMap has no easy inverse mapping) module invocations to
+define the matching between lepton rec levels alone would be
+needed. If CandMatcher were separated from the configuration file
+level and made into a stand-alone object that could be used at the
+code level inside for loops, that would ameliorate the situation
+greatly, and allow the standard matching tools to be used while
+allowing easy maintenance.
 
-Dileptons are constructed and as reco::CompositeCandidates, pruned of
+Dileptons are constructed as reco::CompositeCandidates, pruned of
 overlap (if two dileptons share a lepton, preference is given to the
 dilepton of higher invariant mass), and stored in
 reco::CandidateCollections (one collection at each rec level). An
@@ -138,7 +139,8 @@ closest photons, found in the matching step above. The resulting
 CompositeCandidate object, but is stored separately in order to enable
 comparisons of the two in derived analysis modules such as
 Zprime2muResolution. These resonance four-vectors are stored simply:
-one vector of LorentzVectors for each reconstruction level.
+one vector of LorentzVectors for each reconstruction level, in the
+same order as the dileptons.
 
 Trigger information is also stored, but only for the few muon trigger
 paths we have implemented. The "official" results are compared to a
@@ -200,10 +202,12 @@ base class Zprime2muAnalysis):
 Zprime2muResolution
 -------------------
 
-The user defines the mass range for the histograms to be produced,
-and the number of bins.  The user inputs the ROOT file(s) to be analyzed,
+The user defines the mass range for the histograms to be produced, and
+the number of bins.  The user inputs the ROOT file(s) to be analyzed,
 runs the cmsRun job, and various plots are produced in the current
-directory in muon_resolution.ps.
+directory in muon_resolution.ps. (See the below section on "histogram
+dumping" for details about how to get at the histograms, and to run
+this code in parallel.)
 
 
 Zprime2muAsymmetry
@@ -358,7 +362,7 @@ significance distributions), and some goodness-of-fit distributions
 for S+B and B-only hypotheses.
 
 
-Electron Extension
+Electron extension
 ------------------
 
 The flow of the code when running in electron mode is nearly identical
@@ -376,6 +380,38 @@ To run in the electron mode:  Change "doingElectrons = false" to
 "doingElectrons = true" in data/Zprime2muAnalysisCommon.cff 
 
 
+Histogram dumping
+-----------------
+
+The histograms produced by the code are output in postscript files
+by the code itself. This makes it slightly cumbersome to
+change the histogram drawing options. To allow easy extraction of the
+histograms, we use the TFileService to automatically write histos to
+the specified .root file (defined in data/Zprime2muAnalysisCommon.cff,
+the default value being "zp2mu_histos.root"). Histograms for
+e.g. Zprime2muResolution wind up in a TDirectory of the same name
+inside the .root file; see their names in the main code to find the
+desired histogram. 
+
+Implementation detail: ROOT automatically deletes the histograms
+associated with the file that TFileService creates when the file is
+closed, so no explicit delete statements are needed in the code.
+
+Warning: every time you run the code, TFileService will clobber the
+.root file specified. Therefore the .root file must be copied out of
+the way if it is to be saved.
+
+For Zprime2muResolution, whose output is lots of histograms, this
+enables easy parallelization: run Zprime2muResolution jobs with CRAB,
+retrieve the zp2mu_histos_X.root files, and hadd to merge them into a
+single .root file of histograms.  To get the monolithic postscript
+file for the merged collection, re-run one job of Zprime2muResolution
+with parameter useHistosFromFile set to true, and with parameter
+histoFile set to the filename of the merged .root file. Then the code
+will take the histograms from the merged file and draw the postscript,
+bypassing the reading of any events in the analyzer.
+
+
 Step-by-step instructions
 -------------------------
 
@@ -384,7 +420,7 @@ To check out the package:
    scramv1 project CMSSW CMSSW_1_6_11
    cd CMSSW_1_6_11/src
    project CMSSW
-   cvs co -r V00-01-00 SUSYBSMAnalysis/Zprime2muAnalysis
+   cvs co -r V00-01-01 SUSYBSMAnalysis/Zprime2muAnalysis
    # next is needed for fwlite::ChainEvent to read from CASTOR,
    # but the unit test will fail; OK for our purposes
    cvs co -r V00-07-00 DataFormats/FWLite

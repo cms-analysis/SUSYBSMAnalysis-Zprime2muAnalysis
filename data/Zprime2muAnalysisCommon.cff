@@ -143,3 +143,11 @@ module leptonMatches = LeptonAssociator {
 
 path matching = { leptonMatches }
 
+####################################################################
+## Include the TFileService so that histograms get stored to a root
+## file automatically.
+####################################################################
+
+service = TFileService { 
+  string fileName = "zp2mu_histos.root"
+}

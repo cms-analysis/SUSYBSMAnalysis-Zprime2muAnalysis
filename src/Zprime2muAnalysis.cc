@@ -285,7 +285,6 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
 ////////////////////////////////////////////////////////////////////
 
 void Zprime2muAnalysis::InitROOT() {
-  TH1::AddDirectory(false);
   gROOT->SetStyle("Plain");
   gStyle->SetFillColor(0);
   if (dateHistograms)

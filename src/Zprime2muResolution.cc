@@ -23,7 +23,7 @@
 using namespace std;
 
 Zprime2muResolution::Zprime2muResolution(const edm::ParameterSet& config) 
-  : Zprime2muAnalysis(config)
+  : Zprime2muAnalysis(config), histoFile(0)
 {
   outputFile = config.getUntrackedParameter<string>("outputFile");
 
@@ -45,7 +45,6 @@ Zprime2muResolution::Zprime2muResolution(const edm::ParameterSet& config)
     getHistosFromFile();
   }
   else {
-    histoFile = new TFile(fn.c_str(), "RECREATE");
     BookResHistos();
     BookEffHistos();
     BookPtResHistos();
@@ -55,60 +54,82 @@ Zprime2muResolution::Zprime2muResolution(const edm::ParameterSet& config)
 }
 
 Zprime2muResolution::~Zprime2muResolution() {
-  if (!useHistosFromFile)
-    DeleteHistos();
-  delete histoFile;
+  if (useHistosFromFile) {
+    histoFile->Close();
+    delete histoFile;
+  }
 }
 
-inline string nameHist(const char* s, int i, int j = -1) {
-  string x = string(s) + char(i + 48);
-  if (j >= 0) x += char(j + 48);
-  return x;
+void Zprime2muResolution::beginJob(const edm::EventSetup& eSetup) {
+  if (useHistosFromFile) {
+    DrawResHistos();
+    // We're done, so stop running and don't waste time reading events.
+    // JMTBAD Is there a better way to stop running than to throw an
+    // exception?
+    throw cms::Exception("Zprime2muResolution") 
+      << "using histos from file; done.\n";
+  }
+}
+
+void Zprime2muResolution::analyze(const edm::Event& event, 
+				  const edm::EventSetup& eSetup) {
+  // Delegate filling our muon vectors to the parent class.
+  Zprime2muAnalysis::analyze(event, eSetup);
+
+  // Fill resolution histos.
+  calcResolution();
+}
+
+void Zprime2muResolution::endJob() {
+  Zprime2muAnalysis::endJob();
+
+  DrawResHistos();
+  //DrawAcceptance();
 }
 
 void Zprime2muResolution::BookResHistos() {
   const double pi = TMath::Pi();
 
   // Acceptance studies.
-  GenMassAllEvents = new TH1F("GenMassAllEvents",
-			      "Gen mass, all events", 24, 200., 5000.);
-  GenMassInAccept  = new TH1F("GenMassInAccept",
-			      "Gen mass, events in acceptance",
-			      24, 200., 5000.);
+  GenMassAllEvents = fs->make<TH1F>("GenMassAllEvents",
+				    "Gen mass, all events", 24, 200., 5000.);
+  GenMassInAccept  = fs->make<TH1F>("GenMassInAccept",
+				    "Gen mass, events in acceptance",
+				    24, 200., 5000.);
   GenMassAllEvents->Sumw2();
   GenMassInAccept->Sumw2();
 
   // Origin of muons
-  Origin[0] = new TH1F("Origin0","Particle Id of Mother of all mu's", 20, 0, 20);
-  Origin[1] = new TH1F("Origin1","Particle Id of Mother of opp-sign dilepton mu's",
-		       20, 0, 20);
+  Origin[0] = fs->make<TH1F>("Origin0","Particle Id of Mother of all mu's", 20, 0, 20);
+  Origin[1] = fs->make<TH1F>("Origin1","Particle Id of Mother of opp-sign dilepton mu's",
+			     20, 0, 20);
 
   // Trigger decisions
-  TrigResult[0][0] = new TH1F("TrigResult00", "Gen, all events",        5, 0., 5.);
-  TrigResult[1][0] = new TH1F("TrigResult10", "L1 trigger, all events", 5, 0., 5.);
-  TrigResult[2][0] = new TH1F("TrigResult20", "L2 trigger, all events", 5, 0., 5.);
-  TrigResult[3][0] = new TH1F("TrigResult30", "L3 trigger, all events", 5, 0., 5.);
-  TrigResult[0][1] = new TH1F("TrigResult01", "Gen, #eta < 2.4",        5, 0., 5.);
-  TrigResult[1][1] = new TH1F("TrigResult11","L1 trigger, #eta < 2.4",  5, 0., 5.);
-  TrigResult[2][1] = new TH1F("TrigResult21","L2 trigger, #eta < 2.4",  5, 0., 5.);
-  TrigResult[3][1] = new TH1F("TrigResult31","L3 trigger, #eta < 2.4",  5, 0., 5.);
-  TrigResult[0][2] = new TH1F("TrigResult02", "Gen, #eta < 2.1",        5, 0., 5.);
-  TrigResult[1][2] = new TH1F("TrigResult12","L1 trigger, #eta < 2.1",  5, 0., 5.);
-  TrigResult[2][2] = new TH1F("TrigResult22","L2 trigger, #eta < 2.1",  5, 0., 5.);
-  TrigResult[3][2] = new TH1F("TrigResult32","L3 trigger, #eta < 2.1",  5, 0., 5.);
+  TrigResult[0][0] = fs->make<TH1F>("TrigResult00", "Gen, all events",        5, 0., 5.);
+  TrigResult[1][0] = fs->make<TH1F>("TrigResult10", "L1 trigger, all events", 5, 0., 5.);
+  TrigResult[2][0] = fs->make<TH1F>("TrigResult20", "L2 trigger, all events", 5, 0., 5.);
+  TrigResult[3][0] = fs->make<TH1F>("TrigResult30", "L3 trigger, all events", 5, 0., 5.);
+  TrigResult[0][1] = fs->make<TH1F>("TrigResult01", "Gen, #eta < 2.4",        5, 0., 5.);
+  TrigResult[1][1] = fs->make<TH1F>("TrigResult11","L1 trigger, #eta < 2.4",  5, 0., 5.);
+  TrigResult[2][1] = fs->make<TH1F>("TrigResult21","L2 trigger, #eta < 2.4",  5, 0., 5.);
+  TrigResult[3][1] = fs->make<TH1F>("TrigResult31","L3 trigger, #eta < 2.4",  5, 0., 5.);
+  TrigResult[0][2] = fs->make<TH1F>("TrigResult02", "Gen, #eta < 2.1",        5, 0., 5.);
+  TrigResult[1][2] = fs->make<TH1F>("TrigResult12","L1 trigger, #eta < 2.1",  5, 0., 5.);
+  TrigResult[2][2] = fs->make<TH1F>("TrigResult22","L2 trigger, #eta < 2.1",  5, 0., 5.);
+  TrigResult[3][2] = fs->make<TH1F>("TrigResult32","L3 trigger, #eta < 2.1",  5, 0., 5.);
 
-  TrigMass[0][0] = new TH1F("TrigMass00", "Gen mass, Gen, all events", 27, 0., maxTrigMass);
-  TrigMass[1][0] = new TH1F("TrigMass10", "Gen mass, L1, all events",  27, 0., maxTrigMass);
-  TrigMass[2][0] = new TH1F("TrigMass20", "Gen mass, L2, all events",  27, 0., maxTrigMass);
-  TrigMass[3][0] = new TH1F("TrigMass30", "Gen mass, L3, all events",  27, 0., maxTrigMass);
-  TrigMass[0][1] = new TH1F("TrigMass01", "Gen mass, Gen, #eta < 2.4", 27, 0., maxTrigMass);
-  TrigMass[1][1] = new TH1F("TrigMass11", "Gen mass, L1, #eta < 2.4",  27, 0., maxTrigMass);
-  TrigMass[2][1] = new TH1F("TrigMass21", "Gen mass, L2, #eta < 2.4",  27, 0., maxTrigMass);
-  TrigMass[3][1] = new TH1F("TrigMass31", "Gen mass, L3, #eta < 2.4",  27, 0., maxTrigMass);
-  TrigMass[0][2] = new TH1F("TrigMass02", "Gen mass, Gen, #eta < 2.1", 27, 0., maxTrigMass);
-  TrigMass[1][2] = new TH1F("TrigMass12", "Gen mass, L1, #eta < 2.1",  27, 0., maxTrigMass);
-  TrigMass[2][2] = new TH1F("TrigMass22", "Gen mass, L2, #eta < 2.1",  27, 0., maxTrigMass);
-  TrigMass[3][2] = new TH1F("TrigMass32", "Gen mass, L3, #eta < 2.1",  27, 0., maxTrigMass);
+  TrigMass[0][0] = fs->make<TH1F>("TrigMass00", "Gen mass, Gen, all events", 27, 0., maxTrigMass);
+  TrigMass[1][0] = fs->make<TH1F>("TrigMass10", "Gen mass, L1, all events",  27, 0., maxTrigMass);
+  TrigMass[2][0] = fs->make<TH1F>("TrigMass20", "Gen mass, L2, all events",  27, 0., maxTrigMass);
+  TrigMass[3][0] = fs->make<TH1F>("TrigMass30", "Gen mass, L3, all events",  27, 0., maxTrigMass);
+  TrigMass[0][1] = fs->make<TH1F>("TrigMass01", "Gen mass, Gen, #eta < 2.4", 27, 0., maxTrigMass);
+  TrigMass[1][1] = fs->make<TH1F>("TrigMass11", "Gen mass, L1, #eta < 2.4",  27, 0., maxTrigMass);
+  TrigMass[2][1] = fs->make<TH1F>("TrigMass21", "Gen mass, L2, #eta < 2.4",  27, 0., maxTrigMass);
+  TrigMass[3][1] = fs->make<TH1F>("TrigMass31", "Gen mass, L3, #eta < 2.4",  27, 0., maxTrigMass);
+  TrigMass[0][2] = fs->make<TH1F>("TrigMass02", "Gen mass, Gen, #eta < 2.1", 27, 0., maxTrigMass);
+  TrigMass[1][2] = fs->make<TH1F>("TrigMass12", "Gen mass, L1, #eta < 2.1",  27, 0., maxTrigMass);
+  TrigMass[2][2] = fs->make<TH1F>("TrigMass22", "Gen mass, L2, #eta < 2.1",  27, 0., maxTrigMass);
+  TrigMass[3][2] = fs->make<TH1F>("TrigMass32", "Gen mass, L3, #eta < 2.1",  27, 0., maxTrigMass);
 
   // Define errors
   for (int i_rec = 0; i_rec < NUM_REC_LEVELS; i_rec++) {
@@ -117,158 +138,158 @@ void Zprime2muResolution::BookResHistos() {
     }
   }
 
-  EventsInAccFailed  = new TH1F("EventsInAccFailed", "Events in acc., failed", 5, 0., 5.);
-  L1TrigFailSingleMu = new TH1F("L1TrigFailSingleMu", "pT, failed 1mu L1", 25, 0., 25.);
-  L1TrigFailMu2VsMu1 = new TH2F("L1TrigFailMu2VsMu1", "pT mu2 vs pT mu1, failed di-mu L1",
-				25, 0., 25., 25, 0., 25.);
-  L1TrigPassSingleMu = new TH1F("L1TrigPassSingleMu", "pT, passed 1mu L1", 25, 0., 25.);
-  L1TrigPassMu2VsMu1 = new TH2F("L1TrigPassMu2VsMu1", "pT mu2 vs pT mu1, passed di-mu L1",
-				25, 0., 25., 25, 0., 25.);
+  EventsInAccFailed  = fs->make<TH1F>("EventsInAccFailed", "Events in acc., failed", 5, 0., 5.);
+  L1TrigFailSingleMu = fs->make<TH1F>("L1TrigFailSingleMu", "pT, failed 1mu L1", 25, 0., 25.);
+  L1TrigFailMu2VsMu1 = fs->make<TH2F>("L1TrigFailMu2VsMu1", "pT mu2 vs pT mu1, failed di-mu L1",
+				      25, 0., 25., 25, 0., 25.);
+  L1TrigPassSingleMu = fs->make<TH1F>("L1TrigPassSingleMu", "pT, passed 1mu L1", 25, 0., 25.);
+  L1TrigPassMu2VsMu1 = fs->make<TH2F>("L1TrigPassMu2VsMu1", "pT mu2 vs pT mu1, passed di-mu L1",
+				      25, 0., 25., 25, 0., 25.);
 
-  L2MuonHits    = new TH1F("L2MuonHits", "Muon hits, Level-2", 25, 0., 25.);
-  L3TrackerHits = new TH1F("L3TrackerHits", "Tracker hits (pixel+silicon), Level-3",
-			   25, 0., 25.);
-  GMRMuonHits[0]= new TH1F("GMRMuonHits0", "Muon hits, GMR, barrel",  25, 0., 25.);
-  GMRMuonHits[1]= new TH1F("GMRMuonHits1", "Muon hits, GMR, overlap", 25, 0., 25.);
-  GMRMuonHits[2]= new TH1F("GMRMuonHits2", "Muon hits, GMR, endcap",  25, 0., 25.);
-  GMRChi2dof[0] = new TH1F("GMRChi2dof0", "Chi2/d.o.f., GMR, barrel",  100, 0., 5.);
-  GMRChi2dof[1] = new TH1F("GMRChi2dof1", "Chi2/d.o.f., GMR, overlap", 100, 0., 5.);
-  GMRChi2dof[2] = new TH1F("GMRChi2dof2", "Chi2/d.o.f., GMR, endcap",  100, 0., 5.);
+  L2MuonHits    = fs->make<TH1F>("L2MuonHits", "Muon hits, Level-2", 25, 0., 25.);
+  L3TrackerHits = fs->make<TH1F>("L3TrackerHits", "Tracker hits (pixel+silicon), Level-3",
+				 25, 0., 25.);
+  GMRMuonHits[0]= fs->make<TH1F>("GMRMuonHits0", "Muon hits, GMR, barrel",  25, 0., 25.);
+  GMRMuonHits[1]= fs->make<TH1F>("GMRMuonHits1", "Muon hits, GMR, overlap", 25, 0., 25.);
+  GMRMuonHits[2]= fs->make<TH1F>("GMRMuonHits2", "Muon hits, GMR, endcap",  25, 0., 25.);
+  GMRChi2dof[0] = fs->make<TH1F>("GMRChi2dof0", "Chi2/d.o.f., GMR, barrel",  100, 0., 5.);
+  GMRChi2dof[1] = fs->make<TH1F>("GMRChi2dof1", "Chi2/d.o.f., GMR, overlap", 100, 0., 5.);
+  GMRChi2dof[2] = fs->make<TH1F>("GMRChi2dof2", "Chi2/d.o.f., GMR, endcap",  100, 0., 5.);
 
   // Muons per event
-  NMuons[0][0] = new TH1F("NMuons00", "Muons/Event, Gen", 10, 0, 10);
-  NMuons[1][0] = new TH1F("NMuons10", "Muons/Event, L1",  10, 0, 10);
-  NMuons[2][0] = new TH1F("NMuons20", "Muons/Event, L2",  10, 0, 10);
-  NMuons[3][0] = new TH1F("NMuons30", "Muons/Event, L3",  10, 0, 10);
-  NMuons[0][1] = new TH1F("NMuons01", "Muons/Event (w/ opp-sign dilepton), Gen",
-			  10, 0, 10);
-  NMuons[1][1] = new TH1F("NMuons11", "Muons/Event (w/ opp-sign dilepton), L1",
-			  10, 0, 10);
-  NMuons[2][1] = new TH1F("NMuons21", "Muons/Event (w/ opp-sign dilepton), L2",
-			  10, 0, 10);
-  NMuons[3][1] = new TH1F("NMuons31", "Muons/Event (w/ opp-sign dilepton), L3",
-			  10, 0, 10);
-  NMuons[0][2] = new TH1F("NMuons02", "Muons/Event, Gen, triggered", 10, 0., 10.);
-  NMuons[1][2] = new TH1F("NMuons12", "Muons/Event, L1, triggered",  10, 0., 10.);
-  NMuons[2][2] = new TH1F("NMuons22", "Muons/Event, L2, triggered",  10, 0., 10.);
-  NMuons[3][2] = new TH1F("NMuons32", "Muons/Event, L3, triggered",  10, 0., 10.);
-  NMuons[0][3] = new TH1F("NMuons03", "Muons/Event in acc., Gen, failed", 10, 0., 10.);
-  NMuons[1][3] = new TH1F("NMuons13", "Muons/Event in acc., L1, failed",  10, 0., 10.);
-  NMuons[2][3] = new TH1F("NMuons23", "Muons/Event in acc., L2, failed",  10, 0., 10.);
-  NMuons[3][3] = new TH1F("NMuons33", "Muons/Event in acc., L3, failed",  10, 0., 10.);
-  NumDilVsRec  = new TH1F("NumDilVsRec", "Events w/ opp-sign dilepton vs Rec Level",
-			   5, 0,  5);
-  SignOfDil[0] = new TH1F("SignOfDil0", "Number of opp-sign dileptons, Gen",
-			  2, 0,  2);
-  SignOfDil[1] = new TH1F("SignOfDil1", "Number of opp-sign, like-sign dileptons, L1",
-			  3, 0,  3);
-  SignOfDil[2] = new TH1F("SignOfDil2", "Number of opp-sign, like-sign dileptons, L2",
-			  3, 0,  3);
-  SignOfDil[3] = new TH1F("SignOfDil3", "Number of opp-sign, like-sign dileptons, L3",
-			  3, 0,  3);
+  NMuons[0][0] = fs->make<TH1F>("NMuons00", "Muons/Event, Gen", 10, 0, 10);
+  NMuons[1][0] = fs->make<TH1F>("NMuons10", "Muons/Event, L1",  10, 0, 10);
+  NMuons[2][0] = fs->make<TH1F>("NMuons20", "Muons/Event, L2",  10, 0, 10);
+  NMuons[3][0] = fs->make<TH1F>("NMuons30", "Muons/Event, L3",  10, 0, 10);
+  NMuons[0][1] = fs->make<TH1F>("NMuons01", "Muons/Event (w/ opp-sign dilepton), Gen",
+				10, 0, 10);
+  NMuons[1][1] = fs->make<TH1F>("NMuons11", "Muons/Event (w/ opp-sign dilepton), L1",
+				10, 0, 10);
+  NMuons[2][1] = fs->make<TH1F>("NMuons21", "Muons/Event (w/ opp-sign dilepton), L2",
+				10, 0, 10);
+  NMuons[3][1] = fs->make<TH1F>("NMuons31", "Muons/Event (w/ opp-sign dilepton), L3",
+				10, 0, 10);
+  NMuons[0][2] = fs->make<TH1F>("NMuons02", "Muons/Event, Gen, triggered", 10, 0., 10.);
+  NMuons[1][2] = fs->make<TH1F>("NMuons12", "Muons/Event, L1, triggered",  10, 0., 10.);
+  NMuons[2][2] = fs->make<TH1F>("NMuons22", "Muons/Event, L2, triggered",  10, 0., 10.);
+  NMuons[3][2] = fs->make<TH1F>("NMuons32", "Muons/Event, L3, triggered",  10, 0., 10.);
+  NMuons[0][3] = fs->make<TH1F>("NMuons03", "Muons/Event in acc., Gen, failed", 10, 0., 10.);
+  NMuons[1][3] = fs->make<TH1F>("NMuons13", "Muons/Event in acc., L1, failed",  10, 0., 10.);
+  NMuons[2][3] = fs->make<TH1F>("NMuons23", "Muons/Event in acc., L2, failed",  10, 0., 10.);
+  NMuons[3][3] = fs->make<TH1F>("NMuons33", "Muons/Event in acc., L3, failed",  10, 0., 10.);
+  NumDilVsRec  = fs->make<TH1F>("NumDilVsRec", "Events w/ opp-sign dilepton vs Rec Level",
+				5, 0,  5);
+  SignOfDil[0] = fs->make<TH1F>("SignOfDil0", "Number of opp-sign dileptons, Gen",
+				2, 0,  2);
+  SignOfDil[1] = fs->make<TH1F>("SignOfDil1", "Number of opp-sign, like-sign dileptons, L1",
+				3, 0,  3);
+  SignOfDil[2] = fs->make<TH1F>("SignOfDil2", "Number of opp-sign, like-sign dileptons, L2",
+				3, 0,  3);
+  SignOfDil[3] = fs->make<TH1F>("SignOfDil3", "Number of opp-sign, like-sign dileptons, L3",
+				3, 0,  3);
 
   // Main kinematic variables for all muons
   for (int i = 0; i <= MAX_LEVELS; i++) {
-    MuonEta[i] = new TH1F(nameHist("MuonEta", i).c_str(), "Eta", 100, -5.,  5. );
-    MuonRap[i] = new TH1F(nameHist("MuonRap", i).c_str(), "Y",   100, -5.,  5. );
-    MuonPhi[i] = new TH1F(nameHist("MuonPhi", i).c_str(), "Phi", 100,  -pi, pi);
+    MuonEta[i] = fs->make<TH1F>(nameHist("MuonEta", i).c_str(), "Eta", 100, -5.,  5. );
+    MuonRap[i] = fs->make<TH1F>(nameHist("MuonRap", i).c_str(), "Y",   100, -5.,  5. );
+    MuonPhi[i] = fs->make<TH1F>(nameHist("MuonPhi", i).c_str(), "Phi", 100,  -pi, pi);
     if (i==1) {
-      MuonPt[i] = new TH1F(nameHist("MuonPt", i).c_str(), "Pt", 100,  0.,  150.);
-      MuonPz[i] = new TH1F(nameHist("MuonPz", i).c_str(), "Pz", 100,  0.,  800.);
-      MuonP[i]  = new TH1F(nameHist("MuonP", i).c_str(), "P",  100, -5.,  800.);
-      MuonPVsEta[i]  = new TH2F(nameHist("MuonPVsEta", i).c_str(), "P vs Eta",  100, -6., 6., 100, 0., 1000);
-      MuonPtVsEta[i] = new TH2F(nameHist("MuonPtVsEta", i).c_str(), "Pt vs Eta", 100, -6., 6., 100, 0., 150);
+      MuonPt[i] = fs->make<TH1F>(nameHist("MuonPt", i).c_str(), "Pt", 100,  0.,  150.);
+      MuonPz[i] = fs->make<TH1F>(nameHist("MuonPz", i).c_str(), "Pz", 100,  0.,  800.);
+      MuonP[i]  = fs->make<TH1F>(nameHist("MuonP", i).c_str(), "P",  100, -5.,  800.);
+      MuonPVsEta[i]  = fs->make<TH2F>(nameHist("MuonPVsEta", i).c_str(), "P vs Eta",  100, -6., 6., 100, 0., 1000);
+      MuonPtVsEta[i] = fs->make<TH2F>(nameHist("MuonPtVsEta", i).c_str(), "Pt vs Eta", 100, -6., 6., 100, 0., 150);
     }
     else {
-      MuonPt[i] = new TH1F(nameHist("MuonPt", i).c_str(), "Pt", 100, 0.,    peakMass);
-      MuonPz[i] = new TH1F(nameHist("MuonPz", i).c_str(), "Pz", 100, 0., 2.*peakMass);
-      MuonP[i]  = new TH1F(nameHist("MuonP", i).c_str(), "P",  100, 0., 2.*peakMass);
-      MuonPVsEta[i]  = new TH2F(nameHist("MuonPVsEta", i).c_str(), "P vs Eta",  100, -6., 6., 100, 0., 
-				2.*peakMass);
-      MuonPtVsEta[i] = new TH2F(nameHist("MuonPtVsEta", i).c_str(), "Pt vs Eta", 100, -6., 6., 100, 0., 
-				   peakMass);
+      MuonPt[i] = fs->make<TH1F>(nameHist("MuonPt", i).c_str(), "Pt", 100, 0.,    peakMass);
+      MuonPz[i] = fs->make<TH1F>(nameHist("MuonPz", i).c_str(), "Pz", 100, 0., 2.*peakMass);
+      MuonP[i]  = fs->make<TH1F>(nameHist("MuonP", i).c_str(), "P",  100, 0., 2.*peakMass);
+      MuonPVsEta[i]  = fs->make<TH2F>(nameHist("MuonPVsEta", i).c_str(), "P vs Eta",  100, -6., 6., 100, 0., 
+				      2.*peakMass);
+      MuonPtVsEta[i] = fs->make<TH2F>(nameHist("MuonPtVsEta", i).c_str(), "Pt vs Eta", 100, -6., 6., 100, 0., 
+				      peakMass);
     }
 
     string titl = str_level[i] + ", all muons";
-    SumPtR03[i][0] = new TH1F(nameHist("SumPtR03", i, 0).c_str(),
-			      str_level[i].c_str(), 30, 0, 30);
+    SumPtR03[i][0] = fs->make<TH1F>(nameHist("SumPtR03", i, 0).c_str(),
+				    str_level[i].c_str(), 30, 0, 30);
     titl = str_level[i] + ", w/ opp-sign dimuon";
-    SumPtR03[i][1] = new TH1F(nameHist("SumPtR03", i, 1).c_str(),
-			      titl.c_str(), 30, 0, 30);
+    SumPtR03[i][1] = fs->make<TH1F>(nameHist("SumPtR03", i, 1).c_str(),
+				    titl.c_str(), 30, 0, 30);
 
     // Main kinematic variables for opp-sign dileptons and
     // muons associated with opp-sign dileptons
     if (i == 1) {
-      // AllDilMass[i] = new TH1F(nameHist("AllDilMass", i).c_str(), "Opp-sign Dilepton Mass before Q cuts",
+      // AllDilMass[i] = fs->make<TH1F>(nameHist("AllDilMass", i).c_str(), "Opp-sign Dilepton Mass before Q cuts",
       //			       100, 0, 1200);
-      DilMass[i]    = new TH1F(nameHist("DilMass", i).c_str(), "Opp-sign Dilepton Mass", 100, 0, 1200);
-      DilMassVsEta[i] = new TH2F(nameHist("DilMassVsEta", i).c_str(), "Dilepton Mass vs Eta", 50, -10., 10.,
-				 100, 0, 1200);
-      DilMassVsY[i] = new TH2F(nameHist("DilMassVsY", i).c_str(), "Dilepton Mass vs Y", 50, -5., 5., 100, 0,
-			       1200);
-      MuMVsMuP[i][2] = new TH2F(nameHist("MuMVsMuP", i, 2).c_str(),"Pt  of mu- vs mu+", 100,0, 150,100, 0,150);
+      DilMass[i]    = fs->make<TH1F>(nameHist("DilMass", i).c_str(), "Opp-sign Dilepton Mass", 100, 0, 1200);
+      DilMassVsEta[i] = fs->make<TH2F>(nameHist("DilMassVsEta", i).c_str(), "Dilepton Mass vs Eta", 50, -10., 10.,
+				       100, 0, 1200);
+      DilMassVsY[i] = fs->make<TH2F>(nameHist("DilMassVsY", i).c_str(), "Dilepton Mass vs Y", 50, -5., 5., 100, 0,
+				     1200);
+      MuMVsMuP[i][2] = fs->make<TH2F>(nameHist("MuMVsMuP", i, 2).c_str(),"Pt  of mu- vs mu+", 100,0, 150,100, 0,150);
     }
     else {
-      // AllDilMass[i] = new TH1F(nameHist("AllDilMass", i).c_str(), "Opp-sign Dilepton Mass before Q cuts",
+      // AllDilMass[i] = fs->make<TH1F>(nameHist("AllDilMass", i).c_str(), "Opp-sign Dilepton Mass before Q cuts",
       //		       binSize, lowerMassWin,
       //		       upperMassWin);
-      DilMass[i]    = new TH1F(nameHist("DilMass", i).c_str(), "Opp-sign Dilepton Mass",
-			       binSize, lowerMassWin,
-			       upperMassWin);
-      DilMassVsEta[i] = new TH2F(nameHist("DilMassVsEta", i).c_str(), "Dilepton Mass vs Eta", 50, -10., 10., 
-				 50, 0, upperMassWin);
-      DilMassVsY[i] = new TH2F(nameHist("DilMassVsY", i).c_str(), "Dilepton Mass vs Y", 50, -5., 5.,   50, 0, 
-			       upperMassWin);
-      MuMVsMuP[i][2] = new TH2F(nameHist("MuMVsMuP", i, 2).c_str(),"Pt  of mu- vs mu+",
-				100, 0., peakMass,
-				100, 0., peakMass);
+      DilMass[i]    = fs->make<TH1F>(nameHist("DilMass", i).c_str(), "Opp-sign Dilepton Mass",
+				     binSize, lowerMassWin,
+				     upperMassWin);
+      DilMassVsEta[i] = fs->make<TH2F>(nameHist("DilMassVsEta", i).c_str(), "Dilepton Mass vs Eta", 50, -10., 10., 
+				       50, 0, upperMassWin);
+      DilMassVsY[i] = fs->make<TH2F>(nameHist("DilMassVsY", i).c_str(), "Dilepton Mass vs Y", 50, -5., 5.,   50, 0, 
+				     upperMassWin);
+      MuMVsMuP[i][2] = fs->make<TH2F>(nameHist("MuMVsMuP", i, 2).c_str(),"Pt  of mu- vs mu+",
+				      100, 0., peakMass,
+				      100, 0., peakMass);
     }
     string tit = "Opp-sign Dilepton Mass, " + str_level[i];
     AllDilMass[i] =
-      new TH1F(nameHist("AllDilMass", i).c_str(), tit.c_str(), 50, 0., upperMassWin);
+      fs->make<TH1F>(nameHist("AllDilMass", i).c_str(), tit.c_str(), 50, 0., upperMassWin);
 
-    MuMVsMuP[i][0] = new TH2F(nameHist("MuMVsMuP", i, 0).c_str(),"Eta of mu- vs mu+", 100, -3, 3, 100, -3, 3);
-    MuMVsMuP[i][1] = new TH2F(nameHist("MuMVsMuP", i, 1).c_str(),"Phi of mu- vs mu+", 100, -pi, pi, 100, -pi, pi);
+    MuMVsMuP[i][0] = fs->make<TH2F>(nameHist("MuMVsMuP", i, 0).c_str(),"Eta of mu- vs mu+", 100, -3, 3, 100, -3, 3);
+    MuMVsMuP[i][1] = fs->make<TH2F>(nameHist("MuMVsMuP", i, 1).c_str(),"Phi of mu- vs mu+", 100, -pi, pi, 100, -pi, pi);
     for (int j = 0; j < 3; j++) {
-      Phi[i][j]      = new TH1F(nameHist("Phi", i, j).c_str(), "Phi",       100, -pi, pi);
-      PVsEta[i][j]   = new TProfile(nameHist("PVsEta", i, j).c_str(), "P vs Eta",  50, -6., 6.);
-      PtVsEta[i][j]  = new TProfile(nameHist("PtVsEta", i, j).c_str(), "Pt vs Eta", 50, -6., 6.);
-      Eta[i][j]      = new TH1F(nameHist("Eta", i, j).c_str(), "Eta",          100, -5., 5.);
-      Rapidity[i][j] = new TH1F(nameHist("Rapidity", i, j).c_str(), "y",            100, -5., 5.);
+      Phi[i][j]      = fs->make<TH1F>(nameHist("Phi", i, j).c_str(), "Phi",       100, -pi, pi);
+      PVsEta[i][j]   = fs->make<TProfile>(nameHist("PVsEta", i, j).c_str(), "P vs Eta",  50, -6., 6.);
+      PtVsEta[i][j]  = fs->make<TProfile>(nameHist("PtVsEta", i, j).c_str(), "Pt vs Eta", 50, -6., 6.);
+      Eta[i][j]      = fs->make<TH1F>(nameHist("Eta", i, j).c_str(), "Eta",          100, -5., 5.);
+      Rapidity[i][j] = fs->make<TH1F>(nameHist("Rapidity", i, j).c_str(), "y",            100, -5., 5.);
       if (j != 2) {
 	if (i == 1) { // mu+ and mu- at L1
-	  Pt[i][j] = new TH1F(nameHist("Pt", i, j).c_str(), "Pt", 100, 0., 200.);
-	  P[i][j]  = new TH1F(nameHist("P", i, j).c_str(), "P",  100, 0., 800.);
-	  Pz[i][j] = new TH1F(nameHist("Pz", i, j).c_str(), "Pz", 100, 0., 800.);
+	  Pt[i][j] = fs->make<TH1F>(nameHist("Pt", i, j).c_str(), "Pt", 100, 0., 200.);
+	  P[i][j]  = fs->make<TH1F>(nameHist("P", i, j).c_str(), "P",  100, 0., 800.);
+	  Pz[i][j] = fs->make<TH1F>(nameHist("Pz", i, j).c_str(), "Pz", 100, 0., 800.);
 	}
 	else {
-	  Pt[i][j] = new TH1F(nameHist("Pt", i, j).c_str(), "Pt", 100, 0.,    peakMass);
-	  P[i][j]  = new TH1F(nameHist("P", i, j).c_str(), "P",  100, 0., 2.*peakMass);
-	  Pz[i][j] = new TH1F(nameHist("Pz", i, j).c_str(), "Pz", 100, 0., 2.*peakMass);
+	  Pt[i][j] = fs->make<TH1F>(nameHist("Pt", i, j).c_str(), "Pt", 100, 0.,    peakMass);
+	  P[i][j]  = fs->make<TH1F>(nameHist("P", i, j).c_str(), "P",  100, 0., 2.*peakMass);
+	  Pz[i][j] = fs->make<TH1F>(nameHist("Pz", i, j).c_str(), "Pz", 100, 0., 2.*peakMass);
 	}
       }
       else { // Special range for dilepton values.
 	if (i==1) {
-	  Pt[i][j] = new TH1F(nameHist("Pt", i, j).c_str(), "Pt", 100, 0., 200.);
-	  P[i][j]  = new TH1F(nameHist("P", i, j).c_str(), "P",  100, 0., 800.);
-	  Pz[i][j] = new TH1F(nameHist("Pz", i, j).c_str(), "Pz", 100, 0., 800.);	
+	  Pt[i][j] = fs->make<TH1F>(nameHist("Pt", i, j).c_str(), "Pt", 100, 0., 200.);
+	  P[i][j]  = fs->make<TH1F>(nameHist("P", i, j).c_str(), "P",  100, 0., 800.);
+	  Pz[i][j] = fs->make<TH1F>(nameHist("Pz", i, j).c_str(), "Pz", 100, 0., 800.);	
 	}
 	else {
-	  Pt[i][j] = new TH1F(nameHist("Pt", i, j).c_str(), "Pt", 100, 0., .5*peakMass);
-	  P[i][j]  = new TH1F(nameHist("P", i, j).c_str(), "P",
-			      100, 0, 1000.+upperMassWin);
-	  Pz[i][j] = new TH1F(nameHist("Pz", i, j).c_str(), "Pz",
-			      100, 0, 1000.+upperMassWin);
+	  Pt[i][j] = fs->make<TH1F>(nameHist("Pt", i, j).c_str(), "Pt", 100, 0., .5*peakMass);
+	  P[i][j]  = fs->make<TH1F>(nameHist("P", i, j).c_str(), "P",
+				    100, 0, 1000.+upperMassWin);
+	  Pz[i][j] = fs->make<TH1F>(nameHist("Pz", i, j).c_str(), "Pz",
+				    100, 0, 1000.+upperMassWin);
 	}
       }
     }
   }
   for (int i = 0; i < NUM_REC_LEVELS; i++) {
-    ZonDilMass[i] = new TH1F(nameHist("ZonDilMass", i).c_str(), "Highest Z mass", 100, 0., 120.);
-    ZofDilMass[i] = new TH1F(nameHist("ZofDilMass", i).c_str(), "Second  Z mass", 100, 0., 120.);
+    ZonDilMass[i] = fs->make<TH1F>(nameHist("ZonDilMass", i).c_str(), "Highest Z mass", 100, 0., 120.);
+    ZofDilMass[i] = fs->make<TH1F>(nameHist("ZofDilMass", i).c_str(), "Second  Z mass", 100, 0., 120.);
   }
-  Eta4muons = new TH1F("Eta4muons", "Eta", 100, -5.,  5.);
-  Pt4muons  = new TH1F("Pt4muons", "pT",  100,  0.,100.);
+  Eta4muons = fs->make<TH1F>("Eta4muons", "Eta", 100, -5.,  5.);
+  Pt4muons  = fs->make<TH1F>("Pt4muons", "pT",  100,  0.,100.);
 
   // Differences between different levels of reconstruction
   for (int i = l1; i <= MAX_LEVELS; i++) {
@@ -278,156 +299,156 @@ void Zprime2muResolution::BookResHistos() {
     string tit_p   = "(" + str_level[i] + " P - Gen P)/(Gen P)";
     string tit_ppr = "(" + str_level[i] + " P - Gen P)/(Gen P) vs Gen P";
     if (i == l1) {
-      EtaRes[i] = new TH1F(nameHist("EtaRes", i).c_str(), tit_eta.c_str(), 100, -0.1,  0.1);
-      PhiRes[i] = new TH1F(nameHist("PhiRes", i).c_str(), tit_phi.c_str(), 100, -0.1,  0.1);
-      PtDiff[i] = new TH1F(nameHist("PtDiff", i).c_str(), tit_pt.c_str(),  100, 
-			   -700.-.2*peakMass,
-			   700.+.2*peakMass);
-      PRes[i]   = new TH1F(nameHist("PRes", i).c_str(), tit_p.c_str(),   100, -1., 1.);
-      PResVsP[i]= new TProfile(nameHist("PResVsP", i).c_str(), tit_ppr.c_str(), 50,
-			       0., upperMassWin, -1., 1.);
+      EtaRes[i] = fs->make<TH1F>(nameHist("EtaRes", i).c_str(), tit_eta.c_str(), 100, -0.1,  0.1);
+      PhiRes[i] = fs->make<TH1F>(nameHist("PhiRes", i).c_str(), tit_phi.c_str(), 100, -0.1,  0.1);
+      PtDiff[i] = fs->make<TH1F>(nameHist("PtDiff", i).c_str(), tit_pt.c_str(),  100, 
+				 -700.-.2*peakMass,
+				 700.+.2*peakMass);
+      PRes[i]   = fs->make<TH1F>(nameHist("PRes", i).c_str(), tit_p.c_str(),   100, -1., 1.);
+      PResVsP[i]= fs->make<TProfile>(nameHist("PResVsP", i).c_str(), tit_ppr.c_str(), 50,
+				     0., upperMassWin, -1., 1.);
     }
     else if (i == l2) {
-      EtaRes[i] = new TH1F(nameHist("EtaRes", i).c_str(), tit_eta.c_str(), 100, -0.01, 0.01);
-      PhiRes[i] = new TH1F(nameHist("PhiRes", i).c_str(), tit_phi.c_str(), 100, -0.01, 0.01);
-      PtDiff[i] = new TH1F(nameHist("PtDiff", i).c_str(), tit_pt.c_str(),  100,
-			-0.4*peakMass, 0.4*peakMass);
-      PRes[i]   = new TH1F(nameHist("PRes", i).c_str(), tit_p.c_str(),   100, -1., 1.);
-      PResVsP[i]= new TProfile(nameHist("PResVsP", i).c_str(), tit_ppr.c_str(), 50,
-			       0., upperMassWin, -1., 1.);
+      EtaRes[i] = fs->make<TH1F>(nameHist("EtaRes", i).c_str(), tit_eta.c_str(), 100, -0.01, 0.01);
+      PhiRes[i] = fs->make<TH1F>(nameHist("PhiRes", i).c_str(), tit_phi.c_str(), 100, -0.01, 0.01);
+      PtDiff[i] = fs->make<TH1F>(nameHist("PtDiff", i).c_str(), tit_pt.c_str(),  100,
+				 -0.4*peakMass, 0.4*peakMass);
+      PRes[i]   = fs->make<TH1F>(nameHist("PRes", i).c_str(), tit_p.c_str(),   100, -1., 1.);
+      PResVsP[i]= fs->make<TProfile>(nameHist("PResVsP", i).c_str(), tit_ppr.c_str(), 50,
+				     0., upperMassWin, -1., 1.);
     }
     else {
-      EtaRes[i] = new TH1F(nameHist("EtaRes", i).c_str(), tit_eta.c_str(), 100, -0.001,  0.001);
-      PhiRes[i] = new TH1F(nameHist("PhiRes", i).c_str(), tit_phi.c_str(), 100, -0.0005, 0.0005);
-      PtDiff[i] = new TH1F(nameHist("PtDiff", i).c_str(), tit_pt.c_str(),  100, 
-		        -0.1*peakMass, 0.1*peakMass);
-      PRes[i]   = new TH1F(nameHist("PRes", i).c_str(), tit_p.c_str(),   100, -0.3, 0.3);
-      PResVsP[i]= new TProfile(nameHist("PResVsP", i).c_str(), tit_ppr.c_str(), 50,
-			       0., upperMassWin, -0.3, 0.3);
+      EtaRes[i] = fs->make<TH1F>(nameHist("EtaRes", i).c_str(), tit_eta.c_str(), 100, -0.001,  0.001);
+      PhiRes[i] = fs->make<TH1F>(nameHist("PhiRes", i).c_str(), tit_phi.c_str(), 100, -0.0005, 0.0005);
+      PtDiff[i] = fs->make<TH1F>(nameHist("PtDiff", i).c_str(), tit_pt.c_str(),  100, 
+				 -0.1*peakMass, 0.1*peakMass);
+      PRes[i]   = fs->make<TH1F>(nameHist("PRes", i).c_str(), tit_p.c_str(),   100, -0.3, 0.3);
+      PResVsP[i]= fs->make<TProfile>(nameHist("PResVsP", i).c_str(), tit_ppr.c_str(), 50,
+				     0., upperMassWin, -0.3, 0.3);
     }
   }
 
-  GenPhiResVsPhi[0] = new TProfile("GenPhiResVsPhi0", "|L1 phi - Gen phi| vs Gen phi",
-				   25, -pi, pi, -0.1,  0.1);
-  GenPhiResVsPhi[1] = new TProfile("GenPhiResVsPhi1", "|L2 phi - Gen phi| vs Gen phi",
-				   25, -pi, pi, -0.1,  0.1);
-  GenPhiResVsPhi[2] = new TProfile("GenPhiResVsPhi2", "|L3 phi - Gen phi| vs Gen phi",
-				   25, -pi, pi, -0.01, 0.01);
+  GenPhiResVsPhi[0] = fs->make<TProfile>("GenPhiResVsPhi0", "|L1 phi - Gen phi| vs Gen phi",
+					 25, -pi, pi, -0.1,  0.1);
+  GenPhiResVsPhi[1] = fs->make<TProfile>("GenPhiResVsPhi1", "|L2 phi - Gen phi| vs Gen phi",
+					 25, -pi, pi, -0.1,  0.1);
+  GenPhiResVsPhi[2] = fs->make<TProfile>("GenPhiResVsPhi2", "|L3 phi - Gen phi| vs Gen phi",
+					 25, -pi, pi, -0.01, 0.01);
 
-  GenInvPtRes[0] = new TH1F("GenInvPtRes0", "(L1 1/Pt - Gen 1/Pt)/(Gen 1/Pt)", 100,
-			    -.6*peakMass/140.,
-			     .6*peakMass/140.);
-  GenInvPtRes[1] = new TH1F("GenInvPtRes1", "(L2 1/Pt - Gen 1/Pt)/(Gen 1/Pt)", 100, -2, 2);
-  GenInvPtRes[2] = new TH1F("GenInvPtRes2", "(L3 1/Pt - Gen 1/Pt)/(Gen 1/Pt)",
-			    100, -0.3, 0.3);
-  GenInvPtResVsPt[0] = new TProfile("GenInvPtResVsPt0",
-                        "(L1 1/pT - Gen 1/pT)/(Gen 1/pT) vs Gen pT",
-				    50, 0., peakMass,
-				    -.6*peakMass/140.,
-				     .6*peakMass/140.);
-  GenInvPtResVsPt[1] = new TProfile("GenInvPtResVsPt1",
-                        "(L2 1/pT - Gen 1/pT)/(Gen 1/pT) vs Gen pT",
-				    50, 0., peakMass, -2., 2.);
-  GenInvPtResVsPt[2] = new TProfile("GenInvPtResVsPt2",
-                        "(L3 1/pT - Gen 1/pT)/(Gen 1/pT) vs Gen pT",
-				    50, 0., peakMass, -0.3, 0.3);
+  GenInvPtRes[0] = fs->make<TH1F>("GenInvPtRes0", "(L1 1/Pt - Gen 1/Pt)/(Gen 1/Pt)", 100,
+				  -.6*peakMass/140.,
+				  .6*peakMass/140.);
+  GenInvPtRes[1] = fs->make<TH1F>("GenInvPtRes1", "(L2 1/Pt - Gen 1/Pt)/(Gen 1/Pt)", 100, -2, 2);
+  GenInvPtRes[2] = fs->make<TH1F>("GenInvPtRes2", "(L3 1/Pt - Gen 1/Pt)/(Gen 1/Pt)",
+				  100, -0.3, 0.3);
+  GenInvPtResVsPt[0] = fs->make<TProfile>("GenInvPtResVsPt0",
+					  "(L1 1/pT - Gen 1/pT)/(Gen 1/pT) vs Gen pT",
+					  50, 0., peakMass,
+					  -.6*peakMass/140.,
+					  .6*peakMass/140.);
+  GenInvPtResVsPt[1] = fs->make<TProfile>("GenInvPtResVsPt1",
+					  "(L2 1/pT - Gen 1/pT)/(Gen 1/pT) vs Gen pT",
+					  50, 0., peakMass, -2., 2.);
+  GenInvPtResVsPt[2] = fs->make<TProfile>("GenInvPtResVsPt2",
+					  "(L3 1/pT - Gen 1/pT)/(Gen 1/pT) vs Gen pT",
+					  50, 0., peakMass, -0.3, 0.3);
 
-  GenInvPRes[0] = new TH1F("GenInvPRes0", "(L1 1/P - Gen 1/P)/(Gen 1/P)", 100,
-			   -upperMassWin/200.,
-			    upperMassWin/200.);
-  GenInvPRes[1] = new TH1F("GenInvPRes1", "(L2 1/P - Gen 1/P)/(Gen 1/P)", 100, -2.,  2.);
-  GenInvPRes[2] = new TH1F("GenInvPRes2", "(L3 1/P - Gen 1/P)/(Gen 1/P)", 100, -0.3, 0.3);
-  GenPResVsPt[0] = new TProfile("GenPResVsPt0", "(L1 P - Gen P)/(Gen P) vs Gen pT",
-				50, 0., .6*peakMass, -1.,  1.);
-  GenPResVsPt[1] = new TProfile("GenPResVsPt1", "(L2 P - Gen P)/(Gen P) vs Gen pT",
-				50, 0., .6*peakMass, -1.,  1.);
-  GenPResVsPt[2] = new TProfile("GenPResVsPt2", "(L3 P - Gen P)/(Gen P) vs Gen pT",
-				50, 0., .7*peakMass, -0.3, 0.3);
-  GenInvPResVsPt[0] = new TProfile("GenInvPResVsPt0","(L1 1/P - Gen 1/P)/(Gen 1/P) vs Gen pT",
-				   50, 0., peakMass,
-				-upperMassWin/200.,
+  GenInvPRes[0] = fs->make<TH1F>("GenInvPRes0", "(L1 1/P - Gen 1/P)/(Gen 1/P)", 100,
+				 -upperMassWin/200.,
 				 upperMassWin/200.);
-  GenInvPResVsPt[1] = new TProfile("GenInvPResVsPt1","(L2 1/P - Gen 1/P)/(Gen 1/P) vs Gen pT",
-				   50, 0., peakMass, -2.,  2.);
-  GenInvPResVsPt[2] = new TProfile("GenInvPResVsPt2","(L3 1/P - Gen 1/P)/(Gen 1/P) vs Gen pT",
-				   50, 0., peakMass, -0.3, 0.3);
+  GenInvPRes[1] = fs->make<TH1F>("GenInvPRes1", "(L2 1/P - Gen 1/P)/(Gen 1/P)", 100, -2.,  2.);
+  GenInvPRes[2] = fs->make<TH1F>("GenInvPRes2", "(L3 1/P - Gen 1/P)/(Gen 1/P)", 100, -0.3, 0.3);
+  GenPResVsPt[0] = fs->make<TProfile>("GenPResVsPt0", "(L1 P - Gen P)/(Gen P) vs Gen pT",
+				      50, 0., .6*peakMass, -1.,  1.);
+  GenPResVsPt[1] = fs->make<TProfile>("GenPResVsPt1", "(L2 P - Gen P)/(Gen P) vs Gen pT",
+				      50, 0., .6*peakMass, -1.,  1.);
+  GenPResVsPt[2] = fs->make<TProfile>("GenPResVsPt2", "(L3 P - Gen P)/(Gen P) vs Gen pT",
+				      50, 0., .7*peakMass, -0.3, 0.3);
+  GenInvPResVsPt[0] = fs->make<TProfile>("GenInvPResVsPt0","(L1 1/P - Gen 1/P)/(Gen 1/P) vs Gen pT",
+					 50, 0., peakMass,
+					 -upperMassWin/200.,
+					 upperMassWin/200.);
+  GenInvPResVsPt[1] = fs->make<TProfile>("GenInvPResVsPt1","(L2 1/P - Gen 1/P)/(Gen 1/P) vs Gen pT",
+					 50, 0., peakMass, -2.,  2.);
+  GenInvPResVsPt[2] = fs->make<TProfile>("GenInvPResVsPt2","(L3 1/P - Gen 1/P)/(Gen 1/P) vs Gen pT",
+					 50, 0., peakMass, -0.3, 0.3);
 
-  GenEtaResScat[0] = new TH2F("GenEtaResScat0", "L1 Eta vs Gen Eta", 100, -3, 3, 100, -3, 3);
-  GenEtaResScat[1] = new TH2F("GenEtaResScat1", "L2 Eta vs Gen Eta", 100, -3, 3, 100, -3, 3);
-  GenEtaResScat[2] = new TH2F("GenEtaResScat2", "L3 Eta vs Gen Eta", 100, -3, 3, 100, -3, 3);
-  GenPhiResScat[0]=new TH2F("GenPhiResScat0", "L1 Phi vs Gen Phi", 100, -pi, pi, 100, -pi, pi);
-  GenPhiResScat[1]=new TH2F("GenPhiResScat1", "L2 Phi vs Gen Phi", 100, -pi, pi, 100, -pi, pi);
-  GenPhiResScat[2]=new TH2F("GenPhiResScat2", "L3 Phi vs Gen Phi", 100, -pi, pi, 100, -pi, pi);
-  GenPtResScat[0]  = new TH2F("GenPtResScat0", "L1 Pt vs Gen Pt",
-			      100, 0., peakMass, 100, 0., 200.);
-  GenPtResScat[1]  = new TH2F("GenPtResScat1", "L2 Pt vs Gen Pt",
-			      100, 0., peakMass,
-			      100, 0., peakMass);
-  GenPtResScat[2]  = new TH2F("GenPtResScat2", "L3 Pt vs Gen Pt",
-			      100, 0., peakMass,
-			      100, 0., peakMass);
-  AllDilMassRes = new TH1F("AllDilMassRes", "L3 Mass - Gen Mass, before Q cuts", 100, 
-			   -.2*peakMass,
-			   .2*peakMass);
-  GenDilMassRes[0] = new TH1F("GenDilMassRes0", "L1 Mass - Gen Mass", 100,
-			      -peakMass, peakMass);
-  GenDilMassRes[1] = new TH1F("GenDilMassRes1", "L2 Mass - Gen Mass", 100,
-			      -peakMass, peakMass);
-  GenDilMassRes[2] = new TH1F("GenDilMassRes2", "L3 Mass - Gen Mass", 100,
-			      -.2*peakMass,
-			       .2*peakMass);
-  GenDilMassFrRes[0] = new TH1F("GenDilMassFrRes0","(L1 Mass-Gen Mass)/(Gen Mass)",100,-1.,1.);
-  GenDilMassFrRes[1] = new TH1F("GenDilMassFrRes1","(L2 Mass-Gen Mass)/(Gen Mass)",100,-1.,1.);
-  GenDilMassFrRes[2] = new TH1F("GenDilMassFrRes2","(L3 Mass-Gen Mass)/(Gen Mass)",
-				100, -0.2, 0.2);
-  GenDilMassResScat[0] = new TProfile("GenDilMassResScat0", "L1-Gen Mass vs Gen Mass", 25, 0.,
-				      upperMassWin, 0., 
-			     peakMass*peakMass, " ");
-  GenDilMassResScat[1] = new TProfile("GenDilMassResScat1", "L2-Gen Mass vs Gen Mass", 25, 0.,
-			              upperMassWin, 0., 
-			     peakMass*peakMass, " ");
-  GenDilMassResScat[2] = new TProfile("GenDilMassResScat2", "L3-Gen Mass vs Gen Mass", 25, 0.,
-				      upperMassWin, 0., 
-			0.04*peakMass*peakMass, " ");
-  GenDilMassFrResScat[0] = new TProfile("GenDilMassFrResScat0",
-                            "(L1-Gen Mass)/(Gen Mass) vs Gen Mass",
-				   25, 0., upperMassWin, 
-					-1., 1., " ");
-  GenDilMassFrResScat[1] = new TProfile("GenDilMassFrResScat1",
-                            "(L2-Gen Mass)/(Gen Mass) vs Gen Mass",
-				   25, 0., upperMassWin, 
-					-1., 1., " ");
-  GenDilMassFrResScat[2] = new TProfile("GenDilMassFrResScat2",
-                            "(L3-Gen Mass)/(Gen Mass) vs Gen Mass",
-				   25, 0., upperMassWin, 
-					-0.2, 0.2, " ");
+  GenEtaResScat[0] = fs->make<TH2F>("GenEtaResScat0", "L1 Eta vs Gen Eta", 100, -3, 3, 100, -3, 3);
+  GenEtaResScat[1] = fs->make<TH2F>("GenEtaResScat1", "L2 Eta vs Gen Eta", 100, -3, 3, 100, -3, 3);
+  GenEtaResScat[2] = fs->make<TH2F>("GenEtaResScat2", "L3 Eta vs Gen Eta", 100, -3, 3, 100, -3, 3);
+  GenPhiResScat[0]=fs->make<TH2F>("GenPhiResScat0", "L1 Phi vs Gen Phi", 100, -pi, pi, 100, -pi, pi);
+  GenPhiResScat[1]=fs->make<TH2F>("GenPhiResScat1", "L2 Phi vs Gen Phi", 100, -pi, pi, 100, -pi, pi);
+  GenPhiResScat[2]=fs->make<TH2F>("GenPhiResScat2", "L3 Phi vs Gen Phi", 100, -pi, pi, 100, -pi, pi);
+  GenPtResScat[0]  = fs->make<TH2F>("GenPtResScat0", "L1 Pt vs Gen Pt",
+				    100, 0., peakMass, 100, 0., 200.);
+  GenPtResScat[1]  = fs->make<TH2F>("GenPtResScat1", "L2 Pt vs Gen Pt",
+				    100, 0., peakMass,
+				    100, 0., peakMass);
+  GenPtResScat[2]  = fs->make<TH2F>("GenPtResScat2", "L3 Pt vs Gen Pt",
+				    100, 0., peakMass,
+				    100, 0., peakMass);
+  AllDilMassRes = fs->make<TH1F>("AllDilMassRes", "L3 Mass - Gen Mass, before Q cuts", 100, 
+				 -.2*peakMass,
+				 .2*peakMass);
+  GenDilMassRes[0] = fs->make<TH1F>("GenDilMassRes0", "L1 Mass - Gen Mass", 100,
+				    -peakMass, peakMass);
+  GenDilMassRes[1] = fs->make<TH1F>("GenDilMassRes1", "L2 Mass - Gen Mass", 100,
+				    -peakMass, peakMass);
+  GenDilMassRes[2] = fs->make<TH1F>("GenDilMassRes2", "L3 Mass - Gen Mass", 100,
+				    -.2*peakMass,
+				    .2*peakMass);
+  GenDilMassFrRes[0] = fs->make<TH1F>("GenDilMassFrRes0","(L1 Mass-Gen Mass)/(Gen Mass)",100,-1.,1.);
+  GenDilMassFrRes[1] = fs->make<TH1F>("GenDilMassFrRes1","(L2 Mass-Gen Mass)/(Gen Mass)",100,-1.,1.);
+  GenDilMassFrRes[2] = fs->make<TH1F>("GenDilMassFrRes2","(L3 Mass-Gen Mass)/(Gen Mass)",
+				      100, -0.2, 0.2);
+  GenDilMassResScat[0] = fs->make<TProfile>("GenDilMassResScat0", "L1-Gen Mass vs Gen Mass", 25, 0.,
+					    upperMassWin, 0., 
+					    peakMass*peakMass, " ");
+  GenDilMassResScat[1] = fs->make<TProfile>("GenDilMassResScat1", "L2-Gen Mass vs Gen Mass", 25, 0.,
+					    upperMassWin, 0., 
+					    peakMass*peakMass, " ");
+  GenDilMassResScat[2] = fs->make<TProfile>("GenDilMassResScat2", "L3-Gen Mass vs Gen Mass", 25, 0.,
+					    upperMassWin, 0., 
+					    0.04*peakMass*peakMass, " ");
+  GenDilMassFrResScat[0] = fs->make<TProfile>("GenDilMassFrResScat0",
+					      "(L1-Gen Mass)/(Gen Mass) vs Gen Mass",
+					      25, 0., upperMassWin, 
+					      -1., 1., " ");
+  GenDilMassFrResScat[1] = fs->make<TProfile>("GenDilMassFrResScat1",
+					      "(L2-Gen Mass)/(Gen Mass) vs Gen Mass",
+					      25, 0., upperMassWin, 
+					      -1., 1., " ");
+  GenDilMassFrResScat[2] = fs->make<TProfile>("GenDilMassFrResScat2",
+					      "(L3-Gen Mass)/(Gen Mass) vs Gen Mass",
+					      25, 0., upperMassWin, 
+					      -0.2, 0.2, " ");
 
-  L1EtaRes[0] = new TH1F("L1EtaRes0", "L2 Eta - L1 Eta", 100, -0.1, 0.1);
-  L1EtaRes[1] = new TH1F("L1EtaRes1", "L3 Eta - L1 Eta", 100, -0.1, 0.1);
-  L1PhiRes[0] = new TH1F("L1PhiRes0", "L2 Phi - L1 Phi", 100, -0.1, 0.1);
-  L1PhiRes[1] = new TH1F("L1PhiRes1", "L3 Phi - L1 Phi", 100, -0.1, 0.1);
-  L1PtDiff[0] = new TH1F("L1PtDiff0", "L2 Pt - L1 Pt",   100, -200.,
-			 -200.+peakMass);
-  L1PtDiff[1] = new TH1F("L1PtDiff1", "L3 Pt - L1 Pt",   100, -150., 
-			 -150.+peakMass);
+  L1EtaRes[0] = fs->make<TH1F>("L1EtaRes0", "L2 Eta - L1 Eta", 100, -0.1, 0.1);
+  L1EtaRes[1] = fs->make<TH1F>("L1EtaRes1", "L3 Eta - L1 Eta", 100, -0.1, 0.1);
+  L1PhiRes[0] = fs->make<TH1F>("L1PhiRes0", "L2 Phi - L1 Phi", 100, -0.1, 0.1);
+  L1PhiRes[1] = fs->make<TH1F>("L1PhiRes1", "L3 Phi - L1 Phi", 100, -0.1, 0.1);
+  L1PtDiff[0] = fs->make<TH1F>("L1PtDiff0", "L2 Pt - L1 Pt",   100, -200.,
+			       -200.+peakMass);
+  L1PtDiff[1] = fs->make<TH1F>("L1PtDiff1", "L3 Pt - L1 Pt",   100, -150., 
+			       -150.+peakMass);
 
-  L1EtaResScat[0] = new TH2F("L1EtaResScat0", "L2 Eta vs L1 Eta", 100, -3, 3, 100, -3, 3);
-  L1EtaResScat[1] = new TH2F("L1EtaResScat1", "L3 Eta vs L1 Eta", 100, -3, 3, 100, -3, 3);
-  L1PhiResScat[0] = new TH2F("L1PhiResScat0", "L2 Phi vs L1 Phi", 100, -pi, pi, 100, -pi, pi);
-  L1PhiResScat[1] = new TH2F("L1PhiResScat1", "L3 Phi vs L1 Phi", 100, -pi, pi, 100, -pi, pi);
-  L1PtResScat[0]  = new TH2F("L1PtResScat0", "L2 Pt vs L1 Pt", 100, 0., 200.,
-			     100, 0., peakMass);
-  L1PtResScat[1]  = new TH2F("L1PtResScat1", "L3 Pt vs L1 Pt", 100, 0., 200.,
-			     100, 0., peakMass);
+  L1EtaResScat[0] = fs->make<TH2F>("L1EtaResScat0", "L2 Eta vs L1 Eta", 100, -3, 3, 100, -3, 3);
+  L1EtaResScat[1] = fs->make<TH2F>("L1EtaResScat1", "L3 Eta vs L1 Eta", 100, -3, 3, 100, -3, 3);
+  L1PhiResScat[0] = fs->make<TH2F>("L1PhiResScat0", "L2 Phi vs L1 Phi", 100, -pi, pi, 100, -pi, pi);
+  L1PhiResScat[1] = fs->make<TH2F>("L1PhiResScat1", "L3 Phi vs L1 Phi", 100, -pi, pi, 100, -pi, pi);
+  L1PtResScat[0]  = fs->make<TH2F>("L1PtResScat0", "L2 Pt vs L1 Pt", 100, 0., 200.,
+				   100, 0., peakMass);
+  L1PtResScat[1]  = fs->make<TH2F>("L1PtResScat1", "L3 Pt vs L1 Pt", 100, 0., 200.,
+				   100, 0., peakMass);
 
-  L2EtaRes = new TH1F("L2EtaRes", "L3 Eta - L2 Eta", 100, -0.025, 0.025);
-  L2PhiRes = new TH1F("L2PhiRes", "L3 Phi - L2 Phi", 100, -0.05,  0.05);
-  L2PtDiff = new TH1F("L2PtDiff", "L3 Pt - L2 Pt",   100,
-		      -.6*peakMass, .6*peakMass);
-  L2EtaResScat = new TH2F("L2EtaResScat", "L3 Eta vs L2 Eta", 100, -3,  3,  100, -3, 3);
-  L2PhiResScat = new TH2F("L2PhiResScat", "L3 Phi vs L2 Phi", 100,  -pi, pi,  100, -pi, pi);
-  L2PtResScat  = new TH2F("L2PtResScat", "L3 Pt vs L2 Pt", 100, 0., peakMass,
-			  100, 0., peakMass);
+  L2EtaRes = fs->make<TH1F>("L2EtaRes", "L3 Eta - L2 Eta", 100, -0.025, 0.025);
+  L2PhiRes = fs->make<TH1F>("L2PhiRes", "L3 Phi - L2 Phi", 100, -0.05,  0.05);
+  L2PtDiff = fs->make<TH1F>("L2PtDiff", "L3 Pt - L2 Pt",   100,
+			    -.6*peakMass, .6*peakMass);
+  L2EtaResScat = fs->make<TH2F>("L2EtaResScat", "L3 Eta vs L2 Eta", 100, -3,  3,  100, -3, 3);
+  L2PhiResScat = fs->make<TH2F>("L2PhiResScat", "L3 Phi vs L2 Phi", 100,  -pi, pi,  100, -pi, pi);
+  L2PtResScat  = fs->make<TH2F>("L2PtResScat", "L3 Pt vs L2 Pt", 100, 0., peakMass,
+				100, 0., peakMass);
 }
 
 void Zprime2muResolution::BookEffHistos() {
@@ -435,25 +456,25 @@ void Zprime2muResolution::BookEffHistos() {
   string tit;
   for (int i = lgen; i <= MAX_LEVELS; i++) {
     tit = "Gen eta, " + str_level[i] + " muons";
-    EffVsEta[i] = new TH1F(nameHist("EffVsEta", i).c_str(), tit.c_str(), 50, -2.5, 2.5);
+    EffVsEta[i] = fs->make<TH1F>(nameHist("EffVsEta", i).c_str(), tit.c_str(), 50, -2.5, 2.5);
     tit = "Gen phi, " + str_level[i] + " muons";
-    EffVsPhi[i] = new TH1F(nameHist("EffVsPhi", i).c_str(), tit.c_str(), 63,  -pi, pi);
+    EffVsPhi[i] = fs->make<TH1F>(nameHist("EffVsPhi", i).c_str(), tit.c_str(), 63,  -pi, pi);
     tit = "Gen pT, "  + str_level[i] + " muons";
-    EffVsPt[i]  = new TH1F(nameHist("EffVsPt", i).c_str(), tit.c_str(), 35,  0., 3500.);
+    EffVsPt[i]  = fs->make<TH1F>(nameHist("EffVsPt", i).c_str(), tit.c_str(), 35,  0., 3500.);
   }
 
-  RecMass[0][0] = new TH1F("RecMass00", "Gen mass, gen, all",  27, 0., maxTrigMass);
-  RecMass[0][1] = new TH1F("RecMass01", "Gen mass, gen, in acceptance", 27, 0., maxTrigMass);
-  RecMass[0][2] = new TH1F("RecMass02", "placeholder",  27, 0., maxTrigMass);
-  RecMass[1][0] = new TH1F("RecMass10", "Gen mass, L3, 2mu",   27, 0., maxTrigMass);
-  RecMass[1][1] = new TH1F("RecMass11", "Gen mass, L3, dimu",  27, 0., maxTrigMass);
-  RecMass[1][2] = new TH1F("RecMass12", "Gen mass, L3, 2mu, w/ cuts",  27, 0., maxTrigMass);
-  RecMass[2][0] = new TH1F("RecMass20", "Gen mass, GMR, 2mu",  27, 0., maxTrigMass);
-  RecMass[2][1] = new TH1F("RecMass21", "Gen mass, GMR, dimu", 27, 0., maxTrigMass);
-  RecMass[2][2] = new TH1F("RecMass22", "Gen mass, GMR, 2mu, w/ cuts",  27, 0., maxTrigMass);
-  RecMass[3][0] = new TH1F("RecMass30", "Gen mass, TMR, 2mu",  27, 0., maxTrigMass);
-  RecMass[3][1] = new TH1F("RecMass31", "Gen mass, TMR, dimu", 27, 0., maxTrigMass);
-  RecMass[3][2] = new TH1F("RecMass32", "Gen mass, TMR, 2mu, w/ cuts",  27, 0., maxTrigMass);
+  RecMass[0][0] = fs->make<TH1F>("RecMass00", "Gen mass, gen, all",  27, 0., maxTrigMass);
+  RecMass[0][1] = fs->make<TH1F>("RecMass01", "Gen mass, gen, in acceptance", 27, 0., maxTrigMass);
+  RecMass[0][2] = fs->make<TH1F>("RecMass02", "placeholder",  27, 0., maxTrigMass);
+  RecMass[1][0] = fs->make<TH1F>("RecMass10", "Gen mass, L3, 2mu",   27, 0., maxTrigMass);
+  RecMass[1][1] = fs->make<TH1F>("RecMass11", "Gen mass, L3, dimu",  27, 0., maxTrigMass);
+  RecMass[1][2] = fs->make<TH1F>("RecMass12", "Gen mass, L3, 2mu, w/ cuts",  27, 0., maxTrigMass);
+  RecMass[2][0] = fs->make<TH1F>("RecMass20", "Gen mass, GMR, 2mu",  27, 0., maxTrigMass);
+  RecMass[2][1] = fs->make<TH1F>("RecMass21", "Gen mass, GMR, dimu", 27, 0., maxTrigMass);
+  RecMass[2][2] = fs->make<TH1F>("RecMass22", "Gen mass, GMR, 2mu, w/ cuts",  27, 0., maxTrigMass);
+  RecMass[3][0] = fs->make<TH1F>("RecMass30", "Gen mass, TMR, 2mu",  27, 0., maxTrigMass);
+  RecMass[3][1] = fs->make<TH1F>("RecMass31", "Gen mass, TMR, dimu", 27, 0., maxTrigMass);
+  RecMass[3][2] = fs->make<TH1F>("RecMass32", "Gen mass, TMR, 2mu, w/ cuts",  27, 0., maxTrigMass);
 
   const string locsubs[4] = {"Barrel","Overlap","Endcap","Outside"};
   vector<string> loctitles;
@@ -466,7 +487,9 @@ void Zprime2muResolution::BookEffHistos() {
       string title;
       if (i == 0) title = loctitles[j] + ", 2mu";
       else title = loctitles[j] + ", dimu";
-      RecMassByLoc[i][j] = new TH1F(nameHist("RecMassByLoc", i, 9).c_str(), title.c_str(),  27, 0., maxTrigMass);
+      RecMassByLoc[i][j] =
+	fs->make<TH1F>(nameHist("RecMassByLoc", i, j).c_str(), title.c_str(),
+		       27, 0., maxTrigMass);
     }
   }
 
@@ -488,82 +511,82 @@ void Zprime2muResolution::BookEffHistos() {
 }
 
 void Zprime2muResolution::BookPtResHistos() {
-  ResidualPt[0] = new TProfile("ResidualPt0", "(delta 1/pT)/(1/pT) vs Eta, pT < 10",
-			       12, 0., 2.4, -10., 10.); // very long tails
-  ResidualPt[1] = new TProfile("ResidualPt1", "(delta 1/pT)/(1/pT) vs Eta, pT < 25",
-			       12, 0., 2.4, -10., 10.);
-  ResidualPt[2] = new TProfile("ResidualPt2", "(delta 1/pT)/(1/pT) vs Eta, pT < 50",
-			       12, 0., 2.4, -10., 10.);
-  ResidualPt[3] = new TProfile("ResidualPt3", "(delta 1/pT)/(1/pT) vs Eta, pT < 75",
-			       12, 0., 2.4, -10., 10.);
-  ResidualPt[4] = new TProfile("ResidualPt4", "(delta 1/pT)/(1/pT) vs Eta, pT < 100",
-			       12, 0., 2.4, -10., 10.);
-  ResidualPt[5] = new TProfile("ResidualPt5", "(delta 1/pT)/(1/pT) vs Eta, pT < 1000",
-			       12, 0., 2.4, -10., 10.);
+  ResidualPt[0] = fs->make<TProfile>("ResidualPt0", "(delta 1/pT)/(1/pT) vs Eta, pT < 10",
+				     12, 0., 2.4, -10., 10.); // very long tails
+  ResidualPt[1] = fs->make<TProfile>("ResidualPt1", "(delta 1/pT)/(1/pT) vs Eta, pT < 25",
+				     12, 0., 2.4, -10., 10.);
+  ResidualPt[2] = fs->make<TProfile>("ResidualPt2", "(delta 1/pT)/(1/pT) vs Eta, pT < 50",
+				     12, 0., 2.4, -10., 10.);
+  ResidualPt[3] = fs->make<TProfile>("ResidualPt3", "(delta 1/pT)/(1/pT) vs Eta, pT < 75",
+				     12, 0., 2.4, -10., 10.);
+  ResidualPt[4] = fs->make<TProfile>("ResidualPt4", "(delta 1/pT)/(1/pT) vs Eta, pT < 100",
+				     12, 0., 2.4, -10., 10.);
+  ResidualPt[5] = fs->make<TProfile>("ResidualPt5", "(delta 1/pT)/(1/pT) vs Eta, pT < 1000",
+				     12, 0., 2.4, -10., 10.);
 
   // 1/p resolution for GMR and TMR, separately for barrel, overlap and endcap.
-  MuInvPRes[0][0] = new TH1F("MuInvPRes00", "1/P res, GMR, barrel",  100, -0.3, 0.3);
-  MuInvPRes[0][1] = new TH1F("MuInvPRes01", "1/P res, GMR, overlap", 100, -0.3, 0.3);
-  MuInvPRes[0][2] = new TH1F("MuInvPRes02", "1/P res, GMR, endcap",  100, -0.3, 0.3);
+  MuInvPRes[0][0] = fs->make<TH1F>("MuInvPRes00", "1/P res, GMR, barrel",  100, -0.3, 0.3);
+  MuInvPRes[0][1] = fs->make<TH1F>("MuInvPRes01", "1/P res, GMR, overlap", 100, -0.3, 0.3);
+  MuInvPRes[0][2] = fs->make<TH1F>("MuInvPRes02", "1/P res, GMR, endcap",  100, -0.3, 0.3);
 
-  MuInvPRes[1][0] = new TH1F("MuInvPRes10", "1/P res, TMR, barrel",  100, -0.3, 0.3);
-  MuInvPRes[1][1] = new TH1F("MuInvPRes11", "1/P res, TMR, overlap", 100, -0.3, 0.3);
-  MuInvPRes[1][2] = new TH1F("MuInvPRes12", "1/P res, TMR, endcap",  100, -0.3, 0.3);
+  MuInvPRes[1][0] = fs->make<TH1F>("MuInvPRes10", "1/P res, TMR, barrel",  100, -0.3, 0.3);
+  MuInvPRes[1][1] = fs->make<TH1F>("MuInvPRes11", "1/P res, TMR, overlap", 100, -0.3, 0.3);
+  MuInvPRes[1][2] = fs->make<TH1F>("MuInvPRes12", "1/P res, TMR, endcap",  100, -0.3, 0.3);
 
   // 1/pT resolution for GMR and TMR, separately for barrel, overlap and endcap
-  MuInvPtRes[0][0] = new TH1F("MuInvPtRes00", "1/pT res, GMR, barrel",  100, -0.3, 0.3);
-  MuInvPtRes[0][1] = new TH1F("MuInvPtRes01", "1/pT res, GMR, overlap", 100, -0.3, 0.3);
-  MuInvPtRes[0][2] = new TH1F("MuInvPtRes02", "1/pT res, GMR, endcap",  100, -0.3, 0.3);
+  MuInvPtRes[0][0] = fs->make<TH1F>("MuInvPtRes00", "1/pT res, GMR, barrel",  100, -0.3, 0.3);
+  MuInvPtRes[0][1] = fs->make<TH1F>("MuInvPtRes01", "1/pT res, GMR, overlap", 100, -0.3, 0.3);
+  MuInvPtRes[0][2] = fs->make<TH1F>("MuInvPtRes02", "1/pT res, GMR, endcap",  100, -0.3, 0.3);
 
-  MuInvPtRes[1][0] = new TH1F("MuInvPtRes10", "1/pT res, TMR, barrel",  100, -0.3, 0.3);
-  MuInvPtRes[1][1] = new TH1F("MuInvPtRes11", "1/pT res, TMR, overlap", 100, -0.3, 0.3);
-  MuInvPtRes[1][2] = new TH1F("MuInvPtRes12", "1/pT res, TMR, endcap",  100, -0.3, 0.3);
+  MuInvPtRes[1][0] = fs->make<TH1F>("MuInvPtRes10", "1/pT res, TMR, barrel",  100, -0.3, 0.3);
+  MuInvPtRes[1][1] = fs->make<TH1F>("MuInvPtRes11", "1/pT res, TMR, overlap", 100, -0.3, 0.3);
+  MuInvPtRes[1][2] = fs->make<TH1F>("MuInvPtRes12", "1/pT res, TMR, endcap",  100, -0.3, 0.3);
 
   // pT res for all fits
-  MuPtDiff[0] = new TH1F("MuPtDiff0",  "L3 pT - Gen pT", 100, -1500., 1500.);
-  MuPtDiff[1] = new TH1F("MuPtDiff1", "TMR pT - Gen pT", 100, -1500., 1500.);
-  TotInvPtRes[0] = new TH1F("TotInvPtRes0", 
-			     "(L3 1/pT - Gen 1/pT)/(Gen 1/pT)", 100, -.5, .5);
-  TotInvPtRes[1] = new TH1F("TotInvPtRes1", "(Tracker Only 1/pT - Gen 1/pT)/(Gen 1/pT)", 
-			     100, -.5, .5);
+  MuPtDiff[0] = fs->make<TH1F>("MuPtDiff0",  "L3 pT - Gen pT", 100, -1500., 1500.);
+  MuPtDiff[1] = fs->make<TH1F>("MuPtDiff1", "TMR pT - Gen pT", 100, -1500., 1500.);
+  TotInvPtRes[0] = fs->make<TH1F>("TotInvPtRes0", 
+				  "(L3 1/pT - Gen 1/pT)/(Gen 1/pT)", 100, -.5, .5);
+  TotInvPtRes[1] = fs->make<TH1F>("TotInvPtRes1", "(Tracker Only 1/pT - Gen 1/pT)/(Gen 1/pT)", 
+				  100, -.5, .5);
   TotInvPtRes[2] = 
-    new TH1F("TotInvPtRes2", "(Tracker + 1 mu-station 1/pT - Gen 1/pT)/(Gen 1/pT)", 
-	     100, -.5, .5);
-  //TotInvPtRes[3] = new TH1F("TotInvPtRes3", "(ABCM 1/pT - Gen 1/pT)/(Gen 1/pT)", 
+    fs->make<TH1F>("TotInvPtRes2", "(Tracker + 1 mu-station 1/pT - Gen 1/pT)/(Gen 1/pT)", 
+		   100, -.5, .5);
+  //TotInvPtRes[3] = fs->make<TH1F>("TotInvPtRes3", "(ABCM 1/pT - Gen 1/pT)/(Gen 1/pT)", 
   //		    100, -.5, .5);
-  TotInvPtRes[3] = new TH1F("TotInvPtRes3", "(Outer 1/pT - Gen 1/pT)/(Gen 1/pT)", 
-			    100, -.5, .5);
+  TotInvPtRes[3] = fs->make<TH1F>("TotInvPtRes3", "(Outer 1/pT - Gen 1/pT)/(Gen 1/pT)", 
+				  100, -.5, .5);
   // 1/pT pull for all fits
-  TotInvPtPull[0] = new TH1F("TotInvPtPull0", "L3 1/pT Pull", 100, -10., 10.);
-  TotInvPtPull[1] = new TH1F("TotInvPtPull1", "Tracker Only 1/pT Pull", 100, -10., 10.);
-  TotInvPtPull[2] = new TH1F("TotInvPtPull2", "Tracker + 1 mu-station 1/pT Pull", 
-			     100, -10., 10.);
-  //TotInvPtPull[3] = new TH1F("TotInvPtPull3", "ABCM 1/pT Pull", 100, -10., 10.);
-  TotInvPtPull[3] = new TH1F("TotInvPtPull3", "Outer 1/pT Pull", 100, -10., 10.);
+  TotInvPtPull[0] = fs->make<TH1F>("TotInvPtPull0", "L3 1/pT Pull", 100, -10., 10.);
+  TotInvPtPull[1] = fs->make<TH1F>("TotInvPtPull1", "Tracker Only 1/pT Pull", 100, -10., 10.);
+  TotInvPtPull[2] = fs->make<TH1F>("TotInvPtPull2", "Tracker + 1 mu-station 1/pT Pull", 
+				   100, -10., 10.);
+  //TotInvPtPull[3] = fs->make<TH1F>("TotInvPtPull3", "ABCM 1/pT Pull", 100, -10., 10.);
+  TotInvPtPull[3] = fs->make<TH1F>("TotInvPtPull3", "Outer 1/pT Pull", 100, -10., 10.);
 
   // pT res for all fits (split up by barrel and endcap)
-  InvPtRes[0][0] = new TH1F("InvPtRes00", "eta < 1.04, L3", 100, -.3, .3); 
-  InvPtRes[0][1] = new TH1F("InvPtRes01", "eta > 1.04, L3", 100, -.3, .3); 
-  InvPtRes[1][0] = new TH1F("InvPtRes10", "eta < 1.04, Tracker Only", 100, -.3, .3); 
-  InvPtRes[1][1] = new TH1F("InvPtRes11", "eta > 1.04, Tracker Only", 100, -.3, .3); 
-  InvPtRes[2][0] = new TH1F("InvPtRes20", "eta < 1.04, Tracker + 1 mu-station",
-			    100, -.3, .3); 
-  InvPtRes[2][1] = new TH1F("InvPtRes21", "eta > 1.04, Tracker + 1 mu-station", 
-			    100, -.3, .3); 
-  InvPtRes[3][0] = new TH1F("InvPtRes30", "eta < 1.04, GMR", 100, -.3, .3); 
-  InvPtRes[3][1] = new TH1F("InvPtRes31", "eta > 1.04, GMR", 100, -.3, .3); 
+  InvPtRes[0][0] = fs->make<TH1F>("InvPtRes00", "eta < 1.04, L3", 100, -.3, .3); 
+  InvPtRes[0][1] = fs->make<TH1F>("InvPtRes01", "eta > 1.04, L3", 100, -.3, .3); 
+  InvPtRes[1][0] = fs->make<TH1F>("InvPtRes10", "eta < 1.04, Tracker Only", 100, -.3, .3); 
+  InvPtRes[1][1] = fs->make<TH1F>("InvPtRes11", "eta > 1.04, Tracker Only", 100, -.3, .3); 
+  InvPtRes[2][0] = fs->make<TH1F>("InvPtRes20", "eta < 1.04, Tracker + 1 mu-station",
+				  100, -.3, .3); 
+  InvPtRes[2][1] = fs->make<TH1F>("InvPtRes21", "eta > 1.04, Tracker + 1 mu-station", 
+				  100, -.3, .3); 
+  InvPtRes[3][0] = fs->make<TH1F>("InvPtRes30", "eta < 1.04, GMR", 100, -.3, .3); 
+  InvPtRes[3][1] = fs->make<TH1F>("InvPtRes31", "eta > 1.04, GMR", 100, -.3, .3); 
 
   // 1/pT pull for all fits (split up by barrel and endcap)
-  InvPtPull[0][0] = new TH1F("InvPtPull00", "eta < 1.04, L3", 100, -10., 10.); 
-  InvPtPull[0][1] = new TH1F("InvPtPull01", "eta > 1.04, L3", 100, -10., 10.); 
-  InvPtPull[1][0] = new TH1F("InvPtPull10", "eta < 1.04, Tracker Only", 100, -10., 10.); 
-  InvPtPull[1][1] = new TH1F("InvPtPull11", "eta > 1.04, Tracker Only", 100, -10., 10.);
-  InvPtPull[2][0] = new TH1F("InvPtPull20", "eta < 1.04, Tracker + 1 mu-station", 
-				100, -10., 10.); 
-  InvPtPull[2][1] = new TH1F("InvPtPull21", "eta > 1.04, Tracker + 1 mu-station", 
-				100, -10., 10.); 
-  InvPtPull[3][0] = new TH1F("InvPtPull30", "eta < 1.04, GMR", 100, -10., 10.); 
-  InvPtPull[3][1] = new TH1F("InvPtPull31", "eta > 1.04, GMR", 100, -10., 10.); 
+  InvPtPull[0][0] = fs->make<TH1F>("InvPtPull00", "eta < 1.04, L3", 100, -10., 10.); 
+  InvPtPull[0][1] = fs->make<TH1F>("InvPtPull01", "eta > 1.04, L3", 100, -10., 10.); 
+  InvPtPull[1][0] = fs->make<TH1F>("InvPtPull10", "eta < 1.04, Tracker Only", 100, -10., 10.); 
+  InvPtPull[1][1] = fs->make<TH1F>("InvPtPull11", "eta > 1.04, Tracker Only", 100, -10., 10.);
+  InvPtPull[2][0] = fs->make<TH1F>("InvPtPull20", "eta < 1.04, Tracker + 1 mu-station", 
+				   100, -10., 10.); 
+  InvPtPull[2][1] = fs->make<TH1F>("InvPtPull21", "eta > 1.04, Tracker + 1 mu-station", 
+				   100, -10., 10.); 
+  InvPtPull[3][0] = fs->make<TH1F>("InvPtPull30", "eta < 1.04, GMR", 100, -10., 10.); 
+  InvPtPull[3][1] = fs->make<TH1F>("InvPtPull31", "eta > 1.04, GMR", 100, -10., 10.); 
 }
 
 void Zprime2muResolution::BookDilResHistos(){
@@ -577,8 +600,8 @@ void Zprime2muResolution::BookDilResHistos(){
     else                    mass_min = lowerMassWin;
     for (int j = 0; j < 2; j++) {
       DilMassComp[i][j] =
-	new TH1F(nameHist("DilMassComp", i, j).c_str(), str_level[i].c_str(),
-		 binSize, mass_min, mass_max);
+	fs->make<TH1F>(nameHist("DilMassComp", i, j).c_str(), str_level[i].c_str(),
+		       binSize, mass_min, mass_max);
     }
   }
 
@@ -593,64 +616,64 @@ void Zprime2muResolution::BookDilResHistos(){
   for (int i = l1; i <= MAX_LEVELS; i++) {
     for (int j = 0; j < 6; j++) {
       if (i == l1 || i == l2) {
-	DilMassRes[i][j] = new TH1F(nameHist("DilMassRes", i, j).c_str(), str_level[i].c_str(), 100, -1.,  1.);
+	DilMassRes[i][j] = fs->make<TH1F>(nameHist("DilMassRes", i, j).c_str(), str_level[i].c_str(), 100, -1.,  1.);
       }
       else {
-	DilMassRes[i][j] = new TH1F(nameHist("DilMassRes", i, j).c_str(), str_level[i].c_str(), 100, -0.3, 0.3);
+	DilMassRes[i][j] = fs->make<TH1F>(nameHist("DilMassRes", i, j).c_str(), str_level[i].c_str(), 100, -0.3, 0.3);
       }
     }
   }
   for (int j = 0; j < 6; j++) {
-    DilMassRes[MAX_LEVELS+1][j] = new TH1F(nameHist("DilMassRes", MAX_LEVELS+1, j).c_str(), "TMR, D0 method",
-					   100, -0.3, 0.3);
+    DilMassRes[MAX_LEVELS+1][j] = fs->make<TH1F>(nameHist("DilMassRes", MAX_LEVELS+1, j).c_str(), "TMR, D0 method",
+						 100, -0.3, 0.3);
   }
 
   // Dilepton pT resolution
   DilPtRes[0] = 0;
   for (int i = l1; i <= MAX_LEVELS; i++) {
-    DilPtRes[i] = new TH1F(nameHist("DilPtRes", i).c_str(), str_level[i].c_str(), 100, -1., 4.);
+    DilPtRes[i] = fs->make<TH1F>(nameHist("DilPtRes", i).c_str(), str_level[i].c_str(), 100, -1., 4.);
   }
 
-  MuPVsMuM[0] = new TH2F("MuPVsMuM0", "pT Rel Error for dM > 0.1", 100, 0., 1.,
-			 100, 0., 1.);
-  MuPVsMuM[1] = new TH2F("MuPVsMuM1", "pT Rel Error for dM < 0.1", 100, 0., 1., 
-			 100, 0., 1.);
+  MuPVsMuM[0] = fs->make<TH2F>("MuPVsMuM0", "pT Rel Error for dM > 0.1", 100, 0., 1.,
+			       100, 0., 1.);
+  MuPVsMuM[1] = fs->make<TH2F>("MuPVsMuM1", "pT Rel Error for dM < 0.1", 100, 0., 1., 
+			       100, 0., 1.);
 }
 
 void Zprime2muResolution::BookChargeResHistos() {
   for (int i = l1; i <= MAX_LEVELS; i++) {
     string tit = str_level[i] + " charge - Gen charge";
-    QRes[i] = new TH1F(nameHist("QRes", i).c_str(), tit.c_str(), 7, -3.5, 3.5);
+    QRes[i] = fs->make<TH1F>(nameHist("QRes", i).c_str(), tit.c_str(), 7, -3.5, 3.5);
   }
 
-  QResVsPt[0][0] = new TH1F("QResVsPt00", "L1 pT, right charge", 50, 0., 150.);
-  QResVsPt[1][0] = new TH1F("QResVsPt10", "L2 pT, right charge", 50, 0., 500.);
-  QResVsPt[2][0] = new TH1F("QResVsPt20", "L3 pT, right charge", 50, 0., 500.);
-  QResVsPt[0][1] = new TH1F("QResVsPt01", "L1 pT, wrong charge", 50, 0., 150.);
-  QResVsPt[1][1] = new TH1F("QResVsPt11", "L2 pT, wrong charge", 50, 0., 500.);
-  QResVsPt[2][1] = new TH1F("QResVsPt21", "L3 pT, wrong charge", 50, 0., 500.);
-  QResVsInvPt[0][0] = new TH1F("QResVsInvPt00", "1/L1pT, right charge", 50, 0., 0.04);
-  QResVsInvPt[1][0] = new TH1F("QResVsInvPt10", "1/L2pT, right charge", 50, 0., 0.04);
-  QResVsInvPt[2][0] = new TH1F("QResVsInvPt20", "1/L3pT, right charge", 50, 0., 0.04);
-  QResVsInvPt[0][1] = new TH1F("QResVsInvPt01", "1/L1pT, wrong charge", 50, 0., 0.04);
-  QResVsInvPt[1][1] = new TH1F("QResVsInvPt11", "1/L2pT, wrong charge", 50, 0., 0.04);
-  QResVsInvPt[2][1] = new TH1F("QResVsInvPt21", "1/L3pT, wrong charge", 50, 0., 0.04);
-  QResVsP[0][0]  = new TH1F("QResVsP00", "L1 P, right charge", 50, 0., 750.);
-  QResVsP[1][0]  = new TH1F("QResVsP10", "L2 P, right charge", 50, 0., 
-			    upperMassWin);
-  QResVsP[2][0]  = new TH1F("QResVsP20", "L3 P, right charge", 50, 0., 
-			    upperMassWin);
-  QResVsP[0][1]  = new TH1F("QResVsP01", "L1 P, wrong charge", 50, 0., 750.);
-  QResVsP[1][1]  = new TH1F("QResVsP11", "L2 P, wrong charge", 50, 0., 
-			    upperMassWin);
-  QResVsP[2][1]  = new TH1F("QResVsP21", "L3 P, wrong charge", 50, 0., 
-			    upperMassWin);
-  QResVsInvP[0][0] = new TH1F("QResVsInvP00", "1/L1P, right charge", 50, 0., 0.02);
-  QResVsInvP[1][0] = new TH1F("QResVsInvP10", "1/L2P, right charge", 50, 0., 0.02);
-  QResVsInvP[2][0] = new TH1F("QResVsInvP20", "1/L3P, right charge", 50, 0., 0.02);
-  QResVsInvP[0][1] = new TH1F("QResVsInvP01", "1/L1P, wrong charge", 50, 0., 0.02);
-  QResVsInvP[1][1] = new TH1F("QResVsInvP11", "1/L2P, wrong charge", 50, 0., 0.02);
-  QResVsInvP[2][1] = new TH1F("QResVsInvP21", "1/L3P, wrong charge", 50, 0., 0.02);
+  QResVsPt[0][0] = fs->make<TH1F>("QResVsPt00", "L1 pT, right charge", 50, 0., 150.);
+  QResVsPt[1][0] = fs->make<TH1F>("QResVsPt10", "L2 pT, right charge", 50, 0., 500.);
+  QResVsPt[2][0] = fs->make<TH1F>("QResVsPt20", "L3 pT, right charge", 50, 0., 500.);
+  QResVsPt[0][1] = fs->make<TH1F>("QResVsPt01", "L1 pT, wrong charge", 50, 0., 150.);
+  QResVsPt[1][1] = fs->make<TH1F>("QResVsPt11", "L2 pT, wrong charge", 50, 0., 500.);
+  QResVsPt[2][1] = fs->make<TH1F>("QResVsPt21", "L3 pT, wrong charge", 50, 0., 500.);
+  QResVsInvPt[0][0] = fs->make<TH1F>("QResVsInvPt00", "1/L1pT, right charge", 50, 0., 0.04);
+  QResVsInvPt[1][0] = fs->make<TH1F>("QResVsInvPt10", "1/L2pT, right charge", 50, 0., 0.04);
+  QResVsInvPt[2][0] = fs->make<TH1F>("QResVsInvPt20", "1/L3pT, right charge", 50, 0., 0.04);
+  QResVsInvPt[0][1] = fs->make<TH1F>("QResVsInvPt01", "1/L1pT, wrong charge", 50, 0., 0.04);
+  QResVsInvPt[1][1] = fs->make<TH1F>("QResVsInvPt11", "1/L2pT, wrong charge", 50, 0., 0.04);
+  QResVsInvPt[2][1] = fs->make<TH1F>("QResVsInvPt21", "1/L3pT, wrong charge", 50, 0., 0.04);
+  QResVsP[0][0]  = fs->make<TH1F>("QResVsP00", "L1 P, right charge", 50, 0., 750.);
+  QResVsP[1][0]  = fs->make<TH1F>("QResVsP10", "L2 P, right charge", 50, 0., 
+				  upperMassWin);
+  QResVsP[2][0]  = fs->make<TH1F>("QResVsP20", "L3 P, right charge", 50, 0., 
+				  upperMassWin);
+  QResVsP[0][1]  = fs->make<TH1F>("QResVsP01", "L1 P, wrong charge", 50, 0., 750.);
+  QResVsP[1][1]  = fs->make<TH1F>("QResVsP11", "L2 P, wrong charge", 50, 0., 
+				  upperMassWin);
+  QResVsP[2][1]  = fs->make<TH1F>("QResVsP21", "L3 P, wrong charge", 50, 0., 
+				  upperMassWin);
+  QResVsInvP[0][0] = fs->make<TH1F>("QResVsInvP00", "1/L1P, right charge", 50, 0., 0.02);
+  QResVsInvP[1][0] = fs->make<TH1F>("QResVsInvP10", "1/L2P, right charge", 50, 0., 0.02);
+  QResVsInvP[2][0] = fs->make<TH1F>("QResVsInvP20", "1/L3P, right charge", 50, 0., 0.02);
+  QResVsInvP[0][1] = fs->make<TH1F>("QResVsInvP01", "1/L1P, wrong charge", 50, 0., 0.02);
+  QResVsInvP[1][1] = fs->make<TH1F>("QResVsInvP11", "1/L2P, wrong charge", 50, 0., 0.02);
+  QResVsInvP[2][1] = fs->make<TH1F>("QResVsInvP21", "1/L3P, wrong charge", 50, 0., 0.02);
 
   // Define errors
   for (int i_rec = l1; i_rec <= MAX_LEVELS; i_rec++) {
@@ -1673,451 +1696,158 @@ int Zprime2muResolution::getOrigin(const int motherId) {
 }
 
 void Zprime2muResolution::getHistosFromFile() {
+  TDirectory* histoDir = 0;
+  histoFile->GetObject("Zprime2muResolution", histoDir);
+  if (histoDir == 0)
+    throw cms::Exception("Zprime2muResolution")
+      << "getHistosFromFile failed; no TDirectory named Zprime2muResolution"
+      << " in the file!\n";
+
   // JMTBAD there is undoubtedly a better way to do this...
-  histoFile->GetObject("GenMassAllEvents", GenMassAllEvents);
-  histoFile->GetObject("GenMassInAccept", GenMassInAccept);
-  histoFile->GetObject("EventsInAccFailed", EventsInAccFailed);
-  histoFile->GetObject("L1TrigFailSingleMu", L1TrigFailSingleMu);
-  histoFile->GetObject("L1TrigFailMu2VsMu1", L1TrigFailMu2VsMu1);
-  histoFile->GetObject("L1TrigPassSingleMu", L1TrigPassSingleMu);
-  histoFile->GetObject("L1TrigPassMu2VsMu1", L1TrigPassMu2VsMu1);
-  histoFile->GetObject("L2MuonHits", L2MuonHits);
+  histoDir->GetObject("GenMassAllEvents", GenMassAllEvents);
+  histoDir->GetObject("GenMassInAccept", GenMassInAccept);
+  histoDir->GetObject("EventsInAccFailed", EventsInAccFailed);
+  histoDir->GetObject("L1TrigFailSingleMu", L1TrigFailSingleMu);
+  histoDir->GetObject("L1TrigFailMu2VsMu1", L1TrigFailMu2VsMu1);
+  histoDir->GetObject("L1TrigPassSingleMu", L1TrigPassSingleMu);
+  histoDir->GetObject("L1TrigPassMu2VsMu1", L1TrigPassMu2VsMu1);
+  histoDir->GetObject("L2MuonHits", L2MuonHits);
   for (int i = 0; i < 3; i++) {
-    histoFile->GetObject(nameHist("GMRMuonHits", i).c_str(), GMRMuonHits[i]);
-    histoFile->GetObject(nameHist("GMRChi2dof", i).c_str(), GMRChi2dof[i]);
+    histoDir->GetObject(nameHist("GMRMuonHits", i).c_str(), GMRMuonHits[i]);
+    histoDir->GetObject(nameHist("GMRChi2dof", i).c_str(), GMRChi2dof[i]);
   }
-  histoFile->GetObject("L3TrackerHits", L3TrackerHits);
-  histoFile->GetObject("NumDilVsRec", NumDilVsRec);
+  histoDir->GetObject("L3TrackerHits", L3TrackerHits);
+  histoDir->GetObject("NumDilVsRec", NumDilVsRec);
   for (int i = 0; i < 4; i++)
     for (int j = 0; j < 3; j++)
-      histoFile->GetObject(nameHist("RecMass", i, j).c_str(), RecMass[i][j]);
+      histoDir->GetObject(nameHist("RecMass", i, j).c_str(), RecMass[i][j]);
   for (int i = 0; i < 2; i++)
     for (int j = 0; j < 10; j++)
-      histoFile->GetObject(nameHist("RecMassByLoc", i,j).c_str(), RecMassByLoc[i][j]);
+      histoDir->GetObject(nameHist("RecMassByLoc", i,j).c_str(), RecMassByLoc[i][j]);
   for (int i = 0; i <= MAX_LEVELS; i++) {
-    histoFile->GetObject(nameHist("EffVsEta", i).c_str(), EffVsEta[i]);
-    histoFile->GetObject(nameHist("EffVsPhi", i).c_str(), EffVsPhi[i]);
-    histoFile->GetObject(nameHist("EffVsPt", i).c_str(), EffVsPt[i]);
+    histoDir->GetObject(nameHist("EffVsEta", i).c_str(), EffVsEta[i]);
+    histoDir->GetObject(nameHist("EffVsPhi", i).c_str(), EffVsPhi[i]);
+    histoDir->GetObject(nameHist("EffVsPt", i).c_str(), EffVsPt[i]);
   }
   for (int i = 0; i < NUM_REC_LEVELS; i++) {
     for (int j = 0; j < 3; j++) {
-      histoFile->GetObject(nameHist("TrigResult", i, j).c_str(), TrigResult[i][j]);
-      histoFile->GetObject(nameHist("TrigMass", i, j).c_str(), TrigMass[i][j]);
+      histoDir->GetObject(nameHist("TrigResult", i, j).c_str(), TrigResult[i][j]);
+      histoDir->GetObject(nameHist("TrigMass", i, j).c_str(), TrigMass[i][j]);
     }
     for (int j = 0; j < 4; j++)
-      histoFile->GetObject(nameHist("NMuons", i, j).c_str(), NMuons[i][j]);
-    histoFile->GetObject(nameHist("SignOfDil", i).c_str(), SignOfDil[i]);
-    histoFile->GetObject(nameHist("ZonDilMass", i).c_str(), ZonDilMass[i]);
-    histoFile->GetObject(nameHist("ZofDilMass", i).c_str(), ZofDilMass[i]);
+      histoDir->GetObject(nameHist("NMuons", i, j).c_str(), NMuons[i][j]);
+    histoDir->GetObject(nameHist("SignOfDil", i).c_str(), SignOfDil[i]);
+    histoDir->GetObject(nameHist("ZonDilMass", i).c_str(), ZonDilMass[i]);
+    histoDir->GetObject(nameHist("ZofDilMass", i).c_str(), ZofDilMass[i]);
   }
   for (int i = 0; i <= MAX_LEVELS; i++) {
-    histoFile->GetObject(nameHist("AllDilMass", i).c_str(), AllDilMass[i]);
-    histoFile->GetObject(nameHist("DilMass", i).c_str(), DilMass[i]);
-    histoFile->GetObject(nameHist("DilMassVsEta", i).c_str(), DilMassVsEta[i]);
-    histoFile->GetObject(nameHist("DilMassVsY", i).c_str(), DilMassVsY[i]);
-    histoFile->GetObject(nameHist("MuonEta", i).c_str(), MuonEta[i]);
-    histoFile->GetObject(nameHist("MuonPhi", i).c_str(), MuonPhi[i]);
-    histoFile->GetObject(nameHist("MuonRap", i).c_str(), MuonRap[i]);
-    histoFile->GetObject(nameHist("MuonP", i).c_str(), MuonP[i]);
-    histoFile->GetObject(nameHist("MuonPt", i).c_str(), MuonPt[i]);
-    histoFile->GetObject(nameHist("MuonPz", i).c_str(), MuonPz[i]);
-    histoFile->GetObject(nameHist("MuonPVsEta", i).c_str(), MuonPVsEta[i]);
-    histoFile->GetObject(nameHist("MuonPtVsEta", i).c_str(), MuonPtVsEta[i]);
+    histoDir->GetObject(nameHist("AllDilMass", i).c_str(), AllDilMass[i]);
+    histoDir->GetObject(nameHist("DilMass", i).c_str(), DilMass[i]);
+    histoDir->GetObject(nameHist("DilMassVsEta", i).c_str(), DilMassVsEta[i]);
+    histoDir->GetObject(nameHist("DilMassVsY", i).c_str(), DilMassVsY[i]);
+    histoDir->GetObject(nameHist("MuonEta", i).c_str(), MuonEta[i]);
+    histoDir->GetObject(nameHist("MuonPhi", i).c_str(), MuonPhi[i]);
+    histoDir->GetObject(nameHist("MuonRap", i).c_str(), MuonRap[i]);
+    histoDir->GetObject(nameHist("MuonP", i).c_str(), MuonP[i]);
+    histoDir->GetObject(nameHist("MuonPt", i).c_str(), MuonPt[i]);
+    histoDir->GetObject(nameHist("MuonPz", i).c_str(), MuonPz[i]);
+    histoDir->GetObject(nameHist("MuonPVsEta", i).c_str(), MuonPVsEta[i]);
+    histoDir->GetObject(nameHist("MuonPtVsEta", i).c_str(), MuonPtVsEta[i]);
     for (int j = 0; j < 3; j++) {
-      histoFile->GetObject(nameHist("Eta", i, j).c_str(), Eta[i][j]);
-      histoFile->GetObject(nameHist("Phi", i, j).c_str(), Phi[i][j]);
-      histoFile->GetObject(nameHist("Rapidity", i, j).c_str(), Rapidity[i][j]);
-      histoFile->GetObject(nameHist("P", i, j).c_str(), P[i][j]);
-      histoFile->GetObject(nameHist("Pt", i, j).c_str(), Pt[i][j]);
-      histoFile->GetObject(nameHist("Pz", i, j).c_str(), Pz[i][j]);
-      histoFile->GetObject(nameHist("PVsEta", i, j).c_str(), PVsEta[i][j]);
-      histoFile->GetObject(nameHist("PtVsEta", i, j).c_str(), PtVsEta[i][j]);
-      histoFile->GetObject(nameHist("MuMVsMuP", i, j).c_str(), MuMVsMuP[i][j]);
+      histoDir->GetObject(nameHist("Eta", i, j).c_str(), Eta[i][j]);
+      histoDir->GetObject(nameHist("Phi", i, j).c_str(), Phi[i][j]);
+      histoDir->GetObject(nameHist("Rapidity", i, j).c_str(), Rapidity[i][j]);
+      histoDir->GetObject(nameHist("P", i, j).c_str(), P[i][j]);
+      histoDir->GetObject(nameHist("Pt", i, j).c_str(), Pt[i][j]);
+      histoDir->GetObject(nameHist("Pz", i, j).c_str(), Pz[i][j]);
+      histoDir->GetObject(nameHist("PVsEta", i, j).c_str(), PVsEta[i][j]);
+      histoDir->GetObject(nameHist("PtVsEta", i, j).c_str(), PtVsEta[i][j]);
+      histoDir->GetObject(nameHist("MuMVsMuP", i, j).c_str(), MuMVsMuP[i][j]);
     }
     for (int j = 0; j < 2; j++)
-      histoFile->GetObject(nameHist("SumPtR03", i, j).c_str(), SumPtR03[i][j]);
+      histoDir->GetObject(nameHist("SumPtR03", i, j).c_str(), SumPtR03[i][j]);
   }
-  histoFile->GetObject("Eta4muons", Eta4muons);
-  histoFile->GetObject("Pt4muons", Pt4muons);
+  histoDir->GetObject("Eta4muons", Eta4muons);
+  histoDir->GetObject("Pt4muons", Pt4muons);
   for (int k = l1; k <= MAX_LEVELS; k++) {
-    histoFile->GetObject(nameHist("EtaRes", k).c_str(), EtaRes[k]);
-    histoFile->GetObject(nameHist("PhiRes", k).c_str(), PhiRes[k]);
-    histoFile->GetObject(nameHist("PtDiff", k).c_str(), PtDiff[k]);
-    histoFile->GetObject(nameHist("PRes", k).c_str(), PRes[k]);
-    histoFile->GetObject(nameHist("PResVsP", k).c_str(), PResVsP[k]);
+    histoDir->GetObject(nameHist("EtaRes", k).c_str(), EtaRes[k]);
+    histoDir->GetObject(nameHist("PhiRes", k).c_str(), PhiRes[k]);
+    histoDir->GetObject(nameHist("PtDiff", k).c_str(), PtDiff[k]);
+    histoDir->GetObject(nameHist("PRes", k).c_str(), PRes[k]);
+    histoDir->GetObject(nameHist("PResVsP", k).c_str(), PResVsP[k]);
   }
   for (int k=0; k<3; k++) {
-    histoFile->GetObject(nameHist("GenPhiResVsPhi", k).c_str(), GenPhiResVsPhi[k]);
-    histoFile->GetObject(nameHist("GenInvPtRes", k).c_str(), GenInvPtRes[k]);
-    histoFile->GetObject(nameHist("GenInvPtResVsPt", k).c_str(), GenInvPtResVsPt[k]);
-    histoFile->GetObject(nameHist("GenInvPRes", k).c_str(), GenInvPRes[k]);
-    histoFile->GetObject(nameHist("GenPResVsPt", k).c_str(), GenPResVsPt[k]);
-    histoFile->GetObject(nameHist("GenInvPResVsPt", k).c_str(), GenInvPResVsPt[k]);
-    histoFile->GetObject(nameHist("GenEtaResScat", k).c_str(), GenEtaResScat[k]);
-    histoFile->GetObject(nameHist("GenPhiResScat", k).c_str(), GenPhiResScat[k]);
-    histoFile->GetObject(nameHist("GenPtResScat", k).c_str(), GenPtResScat[k]);
-    histoFile->GetObject(nameHist("GenDilMassRes", k).c_str(), GenDilMassRes[k]);
-    histoFile->GetObject(nameHist("GenDilMassFrRes", k).c_str(), GenDilMassFrRes[k]);
-    histoFile->GetObject(nameHist("GenDilMassResScat", k).c_str(), GenDilMassResScat[k]);
-    histoFile->GetObject(nameHist("GenDilMassFrResScat", k).c_str(), GenDilMassFrResScat[k]);
+    histoDir->GetObject(nameHist("GenPhiResVsPhi", k).c_str(), GenPhiResVsPhi[k]);
+    histoDir->GetObject(nameHist("GenInvPtRes", k).c_str(), GenInvPtRes[k]);
+    histoDir->GetObject(nameHist("GenInvPtResVsPt", k).c_str(), GenInvPtResVsPt[k]);
+    histoDir->GetObject(nameHist("GenInvPRes", k).c_str(), GenInvPRes[k]);
+    histoDir->GetObject(nameHist("GenPResVsPt", k).c_str(), GenPResVsPt[k]);
+    histoDir->GetObject(nameHist("GenInvPResVsPt", k).c_str(), GenInvPResVsPt[k]);
+    histoDir->GetObject(nameHist("GenEtaResScat", k).c_str(), GenEtaResScat[k]);
+    histoDir->GetObject(nameHist("GenPhiResScat", k).c_str(), GenPhiResScat[k]);
+    histoDir->GetObject(nameHist("GenPtResScat", k).c_str(), GenPtResScat[k]);
+    histoDir->GetObject(nameHist("GenDilMassRes", k).c_str(), GenDilMassRes[k]);
+    histoDir->GetObject(nameHist("GenDilMassFrRes", k).c_str(), GenDilMassFrRes[k]);
+    histoDir->GetObject(nameHist("GenDilMassResScat", k).c_str(), GenDilMassResScat[k]);
+    histoDir->GetObject(nameHist("GenDilMassFrResScat", k).c_str(), GenDilMassFrResScat[k]);
   }
-  histoFile->GetObject("AllDilMassRes", AllDilMassRes);
+  histoDir->GetObject("AllDilMassRes", AllDilMassRes);
   for (int l=0; l<2; l++) {
-    histoFile->GetObject(nameHist("Origin", l).c_str(), Origin[l]);
-    histoFile->GetObject(nameHist("L1EtaRes", l).c_str(), L1EtaRes[l]);
-    histoFile->GetObject(nameHist("L1PhiRes", l).c_str(), L1PhiRes[l]);
-    histoFile->GetObject(nameHist("L1PtDiff", l).c_str(), L1PtDiff[l]);
-    histoFile->GetObject(nameHist("L1EtaResScat", l).c_str(), L1EtaResScat[l]);
-    histoFile->GetObject(nameHist("L1PhiResScat", l).c_str(), L1PhiResScat[l]);
-    histoFile->GetObject(nameHist("L1PtResScat", l).c_str(), L1PtResScat[l]);
+    histoDir->GetObject(nameHist("Origin", l).c_str(), Origin[l]);
+    histoDir->GetObject(nameHist("L1EtaRes", l).c_str(), L1EtaRes[l]);
+    histoDir->GetObject(nameHist("L1PhiRes", l).c_str(), L1PhiRes[l]);
+    histoDir->GetObject(nameHist("L1PtDiff", l).c_str(), L1PtDiff[l]);
+    histoDir->GetObject(nameHist("L1EtaResScat", l).c_str(), L1EtaResScat[l]);
+    histoDir->GetObject(nameHist("L1PhiResScat", l).c_str(), L1PhiResScat[l]);
+    histoDir->GetObject(nameHist("L1PtResScat", l).c_str(), L1PtResScat[l]);
   }
-  histoFile->GetObject("L2EtaRes", L2EtaRes);
-  histoFile->GetObject("L2PhiRes", L2PhiRes);
-  histoFile->GetObject("L2PtDiff", L2PtDiff);
-  histoFile->GetObject("L2EtaResScat", L2EtaResScat);
-  histoFile->GetObject("L2PhiResScat", L2PhiResScat);
-  histoFile->GetObject("L2PtResScat", L2PtResScat);
+  histoDir->GetObject("L2EtaRes", L2EtaRes);
+  histoDir->GetObject("L2PhiRes", L2PhiRes);
+  histoDir->GetObject("L2PtDiff", L2PtDiff);
+  histoDir->GetObject("L2EtaResScat", L2EtaResScat);
+  histoDir->GetObject("L2PhiResScat", L2PhiResScat);
+  histoDir->GetObject("L2PtResScat", L2PtResScat);
   for (int i = 0; i < 2; i++) {
-    histoFile->GetObject(nameHist("MuPtDiff", i).c_str(), MuPtDiff[i]);
+    histoDir->GetObject(nameHist("MuPtDiff", i).c_str(), MuPtDiff[i]);
     for (int j = 0; j < 3; j++) {
-      histoFile->GetObject(nameHist("MuInvPRes", i, j).c_str(), MuInvPRes[i][j]);
-      histoFile->GetObject(nameHist("MuInvPtRes", i, j).c_str(), MuInvPtRes[i][j]);
+      histoDir->GetObject(nameHist("MuInvPRes", i, j).c_str(), MuInvPRes[i][j]);
+      histoDir->GetObject(nameHist("MuInvPtRes", i, j).c_str(), MuInvPtRes[i][j]);
     }
   }
   for (int i_pt = 0; i_pt < 6; i_pt++)
-    histoFile->GetObject(nameHist("ResidualPt", i_pt).c_str(), ResidualPt[i_pt]);
+    histoDir->GetObject(nameHist("ResidualPt", i_pt).c_str(), ResidualPt[i_pt]);
   for (int i = 0; i < 4; i++) {
-    histoFile->GetObject(nameHist("TotInvPtRes", i).c_str(), TotInvPtRes[i]);
-    histoFile->GetObject(nameHist("TotInvPtPull", i).c_str(), TotInvPtPull[i]);
+    histoDir->GetObject(nameHist("TotInvPtRes", i).c_str(), TotInvPtRes[i]);
+    histoDir->GetObject(nameHist("TotInvPtPull", i).c_str(), TotInvPtPull[i]);
     for (int j = 0; j < 2; j++) {
-      histoFile->GetObject(nameHist("InvPtRes", i, j).c_str(), InvPtRes[i][j]);
-      histoFile->GetObject(nameHist("InvPtPull", i, j).c_str(), InvPtPull[i][j]);
+      histoDir->GetObject(nameHist("InvPtRes", i, j).c_str(), InvPtRes[i][j]);
+      histoDir->GetObject(nameHist("InvPtPull", i, j).c_str(), InvPtPull[i][j]);
     }
   }
   for (int i = 0; i <= MAX_LEVELS; i++) {
     for (int j = 0; j < 2; j++)
-      histoFile->GetObject(nameHist("DilMassComp", i, j).c_str(), DilMassComp[i][j]);
+      histoDir->GetObject(nameHist("DilMassComp", i, j).c_str(), DilMassComp[i][j]);
     if (i > 0) {
       for (int j = 0; j < 6; j++)
-	histoFile->GetObject(nameHist("DilMassRes", i, j).c_str(), DilMassRes[i][j]);
-      histoFile->GetObject(nameHist("DilPtRes", i).c_str(), DilPtRes[i]);
+	histoDir->GetObject(nameHist("DilMassRes", i, j).c_str(), DilMassRes[i][j]);
+      histoDir->GetObject(nameHist("DilPtRes", i).c_str(), DilPtRes[i]);
     }
   }
   for (unsigned int j = 0; j < 2; j++)
-    histoFile->GetObject(nameHist("MuPVsMuM", j).c_str(), MuPVsMuM[j]);
+    histoDir->GetObject(nameHist("MuPVsMuM", j).c_str(), MuPVsMuM[j]);
   for (int i = l1; i <= MAX_LEVELS; i++)
-    histoFile->GetObject(nameHist("QRes", i).c_str(), QRes[i]);
+    histoDir->GetObject(nameHist("QRes", i).c_str(), QRes[i]);
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < 2; j++) {
-      histoFile->GetObject(nameHist("QResVsPt", i, j).c_str(), QResVsPt[i][j]);
-      histoFile->GetObject(nameHist("QResVsInvPt", i, j).c_str(), QResVsInvPt[i][j]);
-      histoFile->GetObject(nameHist("QResVsP", i, j).c_str(), QResVsP[i][j]);
-      histoFile->GetObject(nameHist("QResVsInvP", i, j).c_str(), QResVsInvP[i][j]);
+      histoDir->GetObject(nameHist("QResVsPt", i, j).c_str(), QResVsPt[i][j]);
+      histoDir->GetObject(nameHist("QResVsInvPt", i, j).c_str(), QResVsInvPt[i][j]);
+      histoDir->GetObject(nameHist("QResVsP", i, j).c_str(), QResVsP[i][j]);
+      histoDir->GetObject(nameHist("QResVsInvP", i, j).c_str(), QResVsInvP[i][j]);
     }
   }
 }
 
-void Zprime2muResolution::WriteHistos() {
-  // ResHistos
-  EventsInAccFailed->Write();
-  L1TrigFailSingleMu->Write();
-  L1TrigFailMu2VsMu1->Write();
-  L1TrigPassSingleMu->Write();
-  L1TrigPassMu2VsMu1->Write();
-  L2MuonHits->Write();
-  for (int i = 0; i < 3; i++) {
-    GMRMuonHits[i]->Write();
-    GMRChi2dof[i]->Write();
-  }
-  L3TrackerHits->Write();
-  NumDilVsRec->Write();
-  for (int i = 0; i < 4; i++)
-    for (int j = 0; j < 3; j++)
-      RecMass[i][j]->Write();
-  for (int i = 0; i < 2; i++)
-    for (int j = 0; j < 10; j++)
-      RecMassByLoc[i][j]->Write();
-  for (int i = 0; i <= MAX_LEVELS; i++) {
-    EffVsEta[i]->Write();
-    EffVsPhi[i]->Write();
-    EffVsPt[i]->Write();
-  }
-  for (int i = 0; i < NUM_REC_LEVELS; i++) {
-    for (int j = 0; j < 3; j++) {
-      TrigResult[i][j]->Write();
-      TrigMass[i][j]->Write();
-    }
-    for (int j = 0; j < 4; j++)
-      NMuons[i][j]->Write();
-    SignOfDil[i]->Write();
-    ZonDilMass[i]->Write();
-    ZofDilMass[i]->Write();
-  }
-  for (int i = 0; i <= MAX_LEVELS; i++) {
-    AllDilMass[i]->Write();
-    DilMass[i]->Write();
-    DilMassVsEta[i]->Write();
-    DilMassVsY[i]->Write();
-    MuonEta[i]->Write();
-    MuonPhi[i]->Write();
-    MuonRap[i]->Write();
-    MuonP[i]->Write();
-    MuonPt[i]->Write();
-    MuonPz[i]->Write();
-    MuonPVsEta[i]->Write();
-    MuonPtVsEta[i]->Write();
-    for (int j = 0; j < 3; j++) {
-      Eta[i][j]->Write();
-      Phi[i][j]->Write();
-      Rapidity[i][j]->Write();
-      P[i][j]->Write();
-      Pt[i][j]->Write();
-      Pz[i][j]->Write();
-      PVsEta[i][j]->Write();
-      PtVsEta[i][j]->Write();
-      MuMVsMuP[i][j]->Write();
-    }
-    for (int j = 0; j < 2; j++)
-      SumPtR03[i][j]->Write();
-  }
-  Eta4muons->Write();
-  Pt4muons->Write();
-  for (int k = l1; k <= MAX_LEVELS; k++) {
-    EtaRes[k]->Write();
-    PhiRes[k]->Write();
-    PtDiff[k]->Write();
-    PRes[k]->Write();
-    PResVsP[k]->Write();
-  }
-  for (int k=0; k<3; k++) {
-    GenPhiResVsPhi[k]->Write();
-    GenInvPtRes[k]->Write();
-    GenInvPtResVsPt[k]->Write();
-    GenInvPRes[k]->Write();
-    GenPResVsPt[k]->Write();
-    GenInvPResVsPt[k]->Write();
-    GenEtaResScat[k]->Write();
-    GenPhiResScat[k]->Write();
-    GenPtResScat[k]->Write();
-    GenDilMassRes[k]->Write();
-    GenDilMassFrRes[k]->Write();
-    GenDilMassResScat[k]->Write();
-    GenDilMassFrResScat[k]->Write();
-  }
-  AllDilMassRes->Write();
-  for (int l=0; l<2; l++) {
-    Origin[l]->Write();
-    L1EtaRes[l]->Write();
-    L1PhiRes[l]->Write();
-    L1PtDiff[l]->Write();
-    L1EtaResScat[l]->Write();
-    L1PhiResScat[l]->Write();
-    L1PtResScat[l]->Write();
-  }
-  L2EtaRes->Write();
-  L2PhiRes->Write();
-  L2PtDiff->Write();
-  L2EtaResScat->Write();
-  L2PhiResScat->Write();
-  L2PtResScat->Write();
-  // end of ResHistos
-
-  // PtRes histos
-  for (int i = 0; i < 2; i++) {
-    MuPtDiff[i]->Write();
-    for (int j = 0; j < 3; j++) {
-      MuInvPRes[i][j]->Write();
-      MuInvPtRes[i][j]->Write();
-    }
-  }
-  for (int i_pt = 0; i_pt < 6; i_pt++)
-    ResidualPt[i_pt]->Write();
-  for (int i = 0; i < 4; i++) {
-    TotInvPtRes[i]->Write();
-    TotInvPtPull[i]->Write();
-    for (int j = 0; j < 2; j++) {
-      InvPtRes[i][j]->Write();
-      InvPtPull[i][j]->Write();
-    }
-  }
-
-  // DilRes histos
-  for (int i = 0; i <= MAX_LEVELS; i++) {
-    for (int j = 0; j < 2; j++)
-      DilMassComp[i][j]->Write();
-    if (i > 0) {
-      for (int j = 0; j < 6; j++)
-	DilMassRes[i][j]->Write();
-      DilPtRes[i]->Write();
-    }
-  }
-
-  for (unsigned int j = 0; j < 2; j++)
-    MuPVsMuM[j]->Write();
-
-  for (int i = l1; i <= MAX_LEVELS; i++)
-    QRes[i]->Write();
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 2; j++) {
-      QResVsPt[i][j]->Write();
-      QResVsInvPt[i][j]->Write();
-      QResVsP[i][j]->Write();
-      QResVsInvP[i][j]->Write();
-    }
-  }
-}
-
-void Zprime2muResolution::DeleteHistos(){
-  // ResHistos
-  delete GenMassAllEvents;
-  delete GenMassInAccept;
-  delete EventsInAccFailed;
-  delete L1TrigFailSingleMu;
-  delete L1TrigFailMu2VsMu1;
-  delete L1TrigPassSingleMu;
-  delete L1TrigPassMu2VsMu1;
-  delete L2MuonHits;
-  for (int i = 0; i < 3; i++) {
-    delete GMRMuonHits[i];
-    delete GMRChi2dof[i];
-  }
-  delete L3TrackerHits;
-  delete NumDilVsRec;
-  for (int i = 0; i < 4; i++)
-    for (int j = 0; j < 3; j++)
-      delete RecMass[i][j];
-  for (int i = 0; i < 2; i++)
-    for (int j = 0; j < 10; j++)
-      delete RecMassByLoc[i][j];
-  for (int i = 0; i <= MAX_LEVELS; i++) {
-    delete EffVsEta[i];
-    delete EffVsPhi[i];
-    delete EffVsPt[i];
-  }
-  for (int i = 0; i < NUM_REC_LEVELS; i++) {
-    for (int j = 0; j < 3; j++) {
-      delete TrigResult[i][j];
-      delete TrigMass[i][j];
-    }
-    for (int j = 0; j < 4; j++)
-      delete NMuons[i][j];
-    delete SignOfDil[i];
-    delete ZonDilMass[i];
-    delete ZofDilMass[i];
-  }
-  for (int i = 0; i <= MAX_LEVELS; i++) {
-    delete AllDilMass[i];
-    delete DilMass[i];
-    delete DilMassVsEta[i];
-    delete DilMassVsY[i];
-    delete MuonEta[i];
-    delete MuonPhi[i];
-    delete MuonRap[i];
-    delete MuonP[i];
-    delete MuonPt[i];
-    delete MuonPz[i];
-    delete MuonPVsEta[i];
-    delete MuonPtVsEta[i];
-    for (int j = 0; j < 3; j++) {
-      delete Eta[i][j];
-      delete Phi[i][j];
-      delete Rapidity[i][j];
-      delete P[i][j];
-      delete Pt[i][j];
-      delete Pz[i][j];
-      delete PVsEta[i][j];
-      delete PtVsEta[i][j];
-      delete MuMVsMuP[i][j];
-    }
-    for (int j = 0; j < 2; j++)
-      delete SumPtR03[i][j];
-  }
-  delete Eta4muons;
-  delete Pt4muons;
-  for (int k = l1; k <= MAX_LEVELS; k++) {
-    delete EtaRes[k];
-    delete PhiRes[k];
-    delete PtDiff[k];
-    delete PRes[k];
-    delete PResVsP[k];
-  }
-  for (int k=0; k<3; k++) {
-    delete GenPhiResVsPhi[k];
-    delete GenInvPtRes[k];
-    delete GenInvPtResVsPt[k];
-    delete GenInvPRes[k];
-    delete GenPResVsPt[k];
-    delete GenInvPResVsPt[k];
-    delete GenEtaResScat[k];
-    delete GenPhiResScat[k];
-    delete GenPtResScat[k];
-    delete GenDilMassRes[k];
-    delete GenDilMassFrRes[k];
-    delete GenDilMassResScat[k];
-    delete GenDilMassFrResScat[k];
-  }
-  delete AllDilMassRes;
-  for (int l=0; l<2; l++) {
-    delete Origin[l];
-    delete L1EtaRes[l];
-    delete L1PhiRes[l];
-    delete L1PtDiff[l];
-    delete L1EtaResScat[l];
-    delete L1PhiResScat[l];
-    delete L1PtResScat[l];
-  }
-  delete L2EtaRes;
-  delete L2PhiRes;
-  delete L2PtDiff;
-  delete L2EtaResScat;
-  delete L2PhiResScat;
-  delete L2PtResScat;
-  // end of ResHistos
-
-  // PtRes histos
-  for (int i = 0; i < 2; i++) {
-    delete MuPtDiff[i];
-    for (int j = 0; j < 3; j++) {
-      delete MuInvPRes[i][j];
-      delete MuInvPtRes[i][j];
-    }
-  }
-  for (int i_pt = 0; i_pt < 6; i_pt++)
-    delete ResidualPt[i_pt];
-  for (int i = 0; i < 4; i++) {
-    delete TotInvPtRes[i];
-    delete TotInvPtPull[i];
-    for (int j = 0; j < 2; j++) {
-      delete InvPtRes[i][j];
-      delete InvPtPull[i][j];
-    }
-  }
-
-  // DilRes histos
-  for (int i = 0; i <= MAX_LEVELS; i++) {
-    for (int j = 0; j < 2; j++)
-      delete DilMassComp[i][j];
-    for (int j = 0; j < 6; j++)
-      delete DilMassRes[i][j];
-    delete DilPtRes[i];
-  }
-
-  for (unsigned int j = 0; j < 2; j++)
-    delete MuPVsMuM[j];
-
-  for (int i = l1; i <= MAX_LEVELS; i++)
-    delete QRes[i];
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 2; j++) {
-      delete QResVsPt[i][j];
-      delete QResVsInvPt[i][j];
-      delete QResVsP[i][j];
-      delete QResVsInvP[i][j];
-    }
-  }
-}
-
-void Zprime2muResolution::DrawResHistos(){
+void Zprime2muResolution::DrawResHistos() {
   const string str_part[3] = {
     "(Opp-sign Dil) Mu-", "(Opp-sign Dil) Mu+", "Opp-sign Dilepton"
   };
@@ -2246,7 +1976,7 @@ void Zprime2muResolution::DrawResHistos(){
     pad[page]->cd(i+1);  GMRMuonHits[i]->Draw();
   }
   TH1F* GMRMuonHitsTot = (TH1F*)GMRMuonHits[0]->Clone();
-  GMRMuonHitsTot->SetNameTitle("", "Muon hits, GMR, total");
+  GMRMuonHitsTot->SetNameTitle("GMRMuonHitsTot", "Muon hits, GMR, total");
   GMRMuonHitsTot->Add(GMRMuonHits[0], GMRMuonHits[1], 1., 1.);
   GMRMuonHitsTot->Add(GMRMuonHitsTot, GMRMuonHits[2], 1., 1.);
   pad[page]->cd(4);  GMRMuonHitsTot->Draw();
@@ -2268,7 +1998,7 @@ void Zprime2muResolution::DrawResHistos(){
     pad[page]->cd(i+1);  GMRChi2dof[i]->Draw();
   }
   TH1F* GMRChi2dofTot = (TH1F*)GMRChi2dof[0]->Clone();
-  GMRChi2dofTot->SetNameTitle("", "Chi2/d.o.f., GMR, total");
+  GMRChi2dofTot->SetNameTitle("GMRChi2dofTot", "Chi2/d.o.f., GMR, total");
   GMRChi2dofTot->Add(GMRChi2dof[0], GMRChi2dof[1], 1., 1.);
   GMRChi2dofTot->Add(GMRChi2dofTot, GMRChi2dof[2], 1., 1.);
   pad[page]->cd(4);  GMRChi2dofTot->Draw();
@@ -2301,21 +2031,21 @@ void Zprime2muResolution::DrawResHistos(){
   // included.
   pad[page]->cd(1);  gPad->SetGrid(1);
   effeta = (TH1F*)EffVsEta[3]->Clone();
-  effeta->SetNameTitle("", "L3 muon efficiency vs eta");
+  effeta->SetNameTitle("effeta", "L3 muon efficiency vs eta");
   effeta->Divide(EffVsEta[3], EffVsEta[0], 1., 1., "B");
   effeta->SetMinimum(0.50);  effeta->SetMaximum(1.02);
   effeta->Draw();  effeta->Draw("samehisto");
   // Off-line muon reconstruction efficiency as a function of true phi.
   pad[page]->cd(2);  gPad->SetGrid(1);
   effphi = (TH1F*)EffVsPhi[3]->Clone();
-  effphi->SetNameTitle("", "L3 muon efficiency vs phi");
+  effphi->SetNameTitle("effphi", "L3 muon efficiency vs phi");
   effphi->Divide(EffVsPhi[3], EffVsPhi[0], 1., 1., "B");
   effphi->SetMinimum(0.50);  effphi->SetMaximum(1.02);
   effphi->Draw();  effphi->Draw("samehisto");
   // Off-line muon reconstruction efficiency as a function of true pT.
   pad[page]->cd(3);  gPad->SetGrid(1);
   effpt = (TH1F*)EffVsPt[3]->Clone();
-  effpt->SetNameTitle("", "L3 muon efficiency vs pT");
+  effpt->SetNameTitle("effpt", "L3 muon efficiency vs pT");
   effpt->Divide(EffVsPt[3], EffVsPt[0], 1., 1., "B");
   effpt->SetMinimum(0.50);  effpt->SetMaximum(1.02);
   effpt->Draw();  effpt->Draw("samehisto");
@@ -2775,13 +2505,13 @@ void Zprime2muResolution::DrawResHistos(){
     }
   }
   TH1F* MuInvPtResGMRTot = (TH1F*)MuInvPtRes[0][0]->Clone();
-  MuInvPtResGMRTot->SetNameTitle("", "1/pT res, GMR, total");
+  MuInvPtResGMRTot->SetNameTitle("MuInvPtResGMRTot", "1/pT res, GMR, total");
   MuInvPtResGMRTot->Add(MuInvPtRes[0][0], MuInvPtRes[0][1], 1., 1.);
   MuInvPtResGMRTot->Add(MuInvPtResGMRTot, MuInvPtRes[0][2], 1., 1.);
   pad[page]->cd(7);
   MuInvPtResGMRTot->Draw();  MuInvPtResGMRTot->Fit("gaus","Q");
   TH1F* MuInvPtResTMRTot = (TH1F*)MuInvPtRes[1][0]->Clone();
-  MuInvPtResTMRTot->SetNameTitle("", "1/pT res, TMR, total");
+  MuInvPtResTMRTot->SetNameTitle("MuInvPtResTMRTot", "1/pT res, TMR, total");
   MuInvPtResTMRTot->Add(MuInvPtRes[1][0], MuInvPtRes[1][1], 1., 1.);
   MuInvPtResTMRTot->Add(MuInvPtResTMRTot, MuInvPtRes[1][2], 1., 1.);
   pad[page]->cd(8);
@@ -2832,9 +2562,11 @@ void Zprime2muResolution::DrawResHistos(){
   for (int i_rec = l1; i_rec <= MAX_LEVELS; i_rec++) {
     histtitle = "Sqrt(Var((" + str_level[i_rec] + "-Gen P)/Gen P)) vs Gen P";
     nbins = PResVsP[i_rec]->GetNbinsX();
-    PResVsPMod[i_rec] = new TH1F("dp", histtitle.c_str(), nbins,
-				 PResVsP[i_rec]->GetXaxis()->GetXmin(),
-				 PResVsP[i_rec]->GetXaxis()->GetXmax());
+    PResVsPMod[i_rec] =
+      fs->make<TH1F>(nameHist("PResVsPMod", i_rec).c_str(),
+		     histtitle.c_str(), nbins,
+		     PResVsP[i_rec]->GetXaxis()->GetXmin(),
+		     PResVsP[i_rec]->GetXaxis()->GetXmax());
     for (int ibin = 1; ibin <= nbins; ibin++) {
       f_bin   = PResVsP[i_rec]->GetBinContent(ibin);
       ent_bin = PResVsP[i_rec]->GetBinEntries(ibin);
@@ -2920,13 +2652,13 @@ void Zprime2muResolution::DrawResHistos(){
     }
   }
   TH1F* MuInvPResGMRTot = (TH1F*)MuInvPRes[0][0]->Clone();
-  MuInvPResGMRTot->SetNameTitle("", "1/P res, GMR, total");
+  MuInvPResGMRTot->SetNameTitle("MuInvPResGMRTot", "1/P res, GMR, total");
   MuInvPResGMRTot->Add(MuInvPRes[0][0], MuInvPRes[0][1], 1., 1.);
   MuInvPResGMRTot->Add(MuInvPResGMRTot, MuInvPRes[0][2], 1., 1.);
   pad[page]->cd(7);
   MuInvPResGMRTot->Draw();  MuInvPResGMRTot->Fit("gaus","Q");
   TH1F* MuInvPResTMRTot = (TH1F*)MuInvPRes[1][0]->Clone();
-  MuInvPResTMRTot->SetNameTitle("", "1/P res, TMR, total");
+  MuInvPResTMRTot->SetNameTitle("MuInvPResTMRTot", "1/P res, TMR, total");
   MuInvPResTMRTot->Add(MuInvPRes[1][0], MuInvPRes[1][1], 1., 1.);
   MuInvPResTMRTot->Add(MuInvPResTMRTot, MuInvPRes[1][2], 1., 1.);
   pad[page]->cd(8);
@@ -3065,9 +2797,11 @@ void Zprime2muResolution::DrawResHistos(){
     ostringstream histname;
     histname << "Sqrt(Var(L" << i_rec + 1 << "-Gen Mass)) vs Gen Mass";
     nbins = GenDilMassResScat[i_rec]->GetNbinsX();
-    MassResScat[i_rec] = new TH1F("", histname.str().c_str(), nbins,
-				  GenDilMassResScat[i_rec]->GetXaxis()->GetXmin(),
-				  GenDilMassResScat[i_rec]->GetXaxis()->GetXmax());
+    MassResScat[i_rec] =
+      fs->make<TH1F>(nameHist("MassResScat", i_rec).c_str(),
+		     histname.str().c_str(), nbins,
+		     GenDilMassResScat[i_rec]->GetXaxis()->GetXmin(),
+		     GenDilMassResScat[i_rec]->GetXaxis()->GetXmax());
     for (int ibin = 1; ibin <= nbins; ibin++) {
       f_bin   = GenDilMassResScat[i_rec]->GetBinContent(ibin);
       ent_bin = GenDilMassResScat[i_rec]->GetBinEntries(ibin);
@@ -3085,9 +2819,11 @@ void Zprime2muResolution::DrawResHistos(){
     histtitle = "Sqrt(Var((" + str_level[i_rec+1] +
       "-Gen Mass)/Gen Mass)) vs Gen Mass";
     nbins = GenDilMassFrResScat[i_rec]->GetNbinsX();
-    MassFrResScat[i_rec] = new TH1F("dm", histtitle.c_str(), nbins,
-				    GenDilMassFrResScat[i_rec]->GetXaxis()->GetXmin(),
-				    GenDilMassFrResScat[i_rec]->GetXaxis()->GetXmax());
+    MassFrResScat[i_rec] =
+      fs->make<TH1F>(nameHist("MassFrResScat", i_rec).c_str(),
+		     histtitle.c_str(), nbins,
+		     GenDilMassFrResScat[i_rec]->GetXaxis()->GetXmin(),
+		     GenDilMassFrResScat[i_rec]->GetXaxis()->GetXmax());
     for (int ibin = 1; ibin <= nbins; ibin++) {
       f_bin   = GenDilMassFrResScat[i_rec]->GetBinContent(ibin);
       ent_bin = GenDilMassFrResScat[i_rec]->GetBinEntries(ibin);
@@ -3271,32 +3007,32 @@ void Zprime2muResolution::DrawResHistos(){
   pad[page]->Divide(2,3);
   pad[page]->cd(1);
   ratio[0][0] = (TH1F*)QResVsPt[0][0]->Clone();
-  ratio[0][0]->SetNameTitle("", "(wrong Q)/(right Q) vs L1 pT");
+  ratio[0][0]->SetNameTitle("QResVsPtRatio00", "(wrong Q)/(right Q) vs L1 pT");
   ratio[0][0]->Divide(QResVsPt[0][1], QResVsPt[0][0], 1., 1.);
   ratio[0][0]->Draw();
   pad[page]->cd(2);
   ratio[0][1] = (TH1F*)QResVsInvPt[0][0]->Clone();
-  ratio[0][1]->SetNameTitle("", "(wrong Q)/(right Q) vs L1 1/pT");
+  ratio[0][1]->SetNameTitle("QResVsPtRatio01", "(wrong Q)/(right Q) vs L1 1/pT");
   ratio[0][1]->Divide(QResVsInvPt[0][1], QResVsInvPt[0][0], 1., 1.);
   ratio[0][1]->Draw();
   pad[page]->cd(3);
   ratio[0][2] = (TH1F*)QResVsPt[1][0]->Clone();
-  ratio[0][2]->SetNameTitle("", "(wrong Q)/(right Q) vs L2 pT");
+  ratio[0][2]->SetNameTitle("QResVsPtRatio02", "(wrong Q)/(right Q) vs L2 pT");
   ratio[0][2]->Divide(QResVsPt[1][1], QResVsPt[1][0], 1., 1.); 
   ratio[0][2]->Draw();
   pad[page]->cd(4);
   ratio[0][3] = (TH1F*)QResVsInvPt[1][0]->Clone();
-  ratio[0][3]->SetNameTitle("", "(wrong Q)/(right Q) vs L2 1/pT");
+  ratio[0][3]->SetNameTitle("QResVsPtRatio03", "(wrong Q)/(right Q) vs L2 1/pT");
   ratio[0][3]->Divide(QResVsInvPt[1][1], QResVsInvPt[1][0], 1., 1.);
   ratio[0][3]->Draw();
   pad[page]->cd(5);
   ratio[0][4] = (TH1F*)QResVsPt[2][0]->Clone();
-  ratio[0][4]->SetNameTitle("", "(wrong Q)/(right Q) vs L3 pT");
+  ratio[0][4]->SetNameTitle("QResVsPtRatio04", "(wrong Q)/(right Q) vs L3 pT");
   ratio[0][4]->Divide(QResVsPt[2][1], QResVsPt[2][0], 1., 1.); 
   ratio[0][4]->Draw();
   pad[page]->cd(6);
   ratio[0][5] = (TH1F*)QResVsInvPt[2][0]->Clone();
-  ratio[0][5]->SetNameTitle("", "(wrong Q)/(right Q) vs L3 1/pT");
+  ratio[0][5]->SetNameTitle("QResVsPtRatio05", "(wrong Q)/(right Q) vs L3 1/pT");
   ratio[0][5]->Divide(QResVsInvPt[2][1], QResVsInvPt[2][0], 1., 1.);
   ratio[0][5]->Draw();
   c1->Update();
@@ -3315,34 +3051,34 @@ void Zprime2muResolution::DrawResHistos(){
   pad[page]->Divide(2,3);
   pad[page]->cd(1);
   ratio[1][0] = (TH1F*)QResVsP[0][0]->Clone();
-  ratio[1][0]->SetNameTitle("", "(wrong Q)/(right Q) vs L1 P");
+  ratio[1][0]->SetNameTitle("QResVsPtRatio10", "(wrong Q)/(right Q) vs L1 P");
   ratio[1][0]->Divide(QResVsP[0][1], QResVsP[0][0], 1., 1.); 
   ratio[1][0]->Draw();
   pad[page]->cd(2);
   ratio[1][1] = (TH1F*)QResVsInvP[0][0]->Clone();
-  ratio[1][1]->SetNameTitle("", "(wrong Q)/(right Q) vs L1 1/P");
+  ratio[1][1]->SetNameTitle("QResVsPtRatio11", "(wrong Q)/(right Q) vs L1 1/P");
   ratio[1][1]->Divide(QResVsInvP[0][1], QResVsInvP[0][0], 1., 1.);
   ratio[1][1]->Draw();
   pad[page]->cd(3);
   ratio[1][2] = (TH1F*)QResVsP[1][0]->Clone();
-  ratio[1][2]->SetNameTitle("", "(wrong Q)/(right Q) vs L2 P");
+  ratio[1][2]->SetNameTitle("QResVsPtRatio12", "(wrong Q)/(right Q) vs L2 P");
   ratio[1][2]->Divide(QResVsP[1][1], QResVsP[1][0], 1., 1.); 
   ratio[1][2]->Draw();
   pad[page]->cd(4);
   ratio[1][3] = (TH1F*)QResVsInvP[1][0]->Clone();
-  ratio[1][3]->SetNameTitle("", "(wrong Q)/(right Q) vs L2 1/P");
+  ratio[1][3]->SetNameTitle("QResVsPtRatio13", "(wrong Q)/(right Q) vs L2 1/P");
   ratio[1][3]->Divide(QResVsInvP[1][1], QResVsInvP[1][0], 1., 1.);
   ratio[1][3]->Draw();
   pad[page]->cd(5);
   ratio[1][4] = (TH1F*)QResVsP[2][0]->Clone();
-  ratio[1][4]->SetNameTitle("", "(wrong Q)/(right Q) vs L3 P");
+  ratio[1][4]->SetNameTitle("QResVsPtRatio14", "(wrong Q)/(right Q) vs L3 P");
   ratio[1][4]->Divide(QResVsP[2][1], QResVsP[2][0], 1., 1.);
   ratio[1][4]->SetMinimum(-0.1); 
   ratio[1][4]->SetMaximum(0.5); 
   ratio[1][4]->Draw();
   pad[page]->cd(6);
   ratio[1][5] = (TH1F*)QResVsInvP[2][0]->Clone();
-  ratio[1][5]->SetNameTitle("", "(wrong Q)/(right Q) vs L3 1/P");
+  ratio[1][5]->SetNameTitle("QResVsPtRatio15", "(wrong Q)/(right Q) vs L3 1/P");
   ratio[1][5]->Divide(QResVsInvP[2][1], QResVsInvP[2][0], 1., 1.);
   ratio[1][5]->SetMinimum(-0.1); 
   ratio[1][5]->SetMaximum(0.5); 
@@ -3443,35 +3179,4 @@ void Zprime2muResolution::DrawAcceptance() {
   delete accept;
   delete eps;
   delete c1;
-}
-
-void Zprime2muResolution::analyze(const edm::Event& event, 
-				  const edm::EventSetup& eSetup) {
-  // don't bother reading any events if we're getting the histos from
-  // a file
-  if (!useHistosFromFile) {
-    // delegate filling our muon vectors to the parent class
-    Zprime2muAnalysis::analyze(event, eSetup);
-    // fill resolution histos
-    calcResolution();
-  }
-}
-
-void Zprime2muResolution::beginJob(const edm::EventSetup& eSetup) {
-}
-
-void Zprime2muResolution::endJob() {
-  Zprime2muAnalysis::endJob();
-
-  // JMTBAD make sure we're cd'ed into our histoFile, else ROOT tries
-  // to write to one of the input files
-  if (!useHistosFromFile) {
-    histoFile->cd();
-    WriteHistos();
-    histoFile->Write();
-  }
-
-  DrawResHistos();
-  //DrawAcceptance();
-  histoFile->Close();
 }

@@ -7,8 +7,6 @@
 #include "TH1.h"
 #include "TStyle.h"
 
-#include "CLHEP/GenericFunctions/CumulativeChiSquare.hh"
-
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/TriggerNames.h"
 #include "FWCore/Utilities/interface/Exception.h"
@@ -126,7 +124,7 @@ bool Zprime2muAnalysis::cutTrig[NUM_REC_LEVELS] = {true,  true,  true,  true};
 
 Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config) 
   : eventNum(-1) {
-  recLevelHelper.init(config);
+  recLevelHelper.init(config, true);
 
   verbosity = VERBOSITY(config.getUntrackedParameter<int>("verbosity", 0));
   dateHistograms = config.getUntrackedParameter<bool>("dateHistograms");
@@ -137,7 +135,6 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   doingGeant4 = config.getParameter<bool>("doingGeant4");
   reconstructedOnly = config.getParameter<bool>("reconstructedOnly");
   useOtherMuonRecos = config.getParameter<bool>("useOtherMuonRecos");
-  useTMRforBest = config.getParameter<bool>("useTMRforBest");
   usingAODOnly = config.getParameter<bool>("usingAODOnly");
   useTriggerInfo = config.getParameter<bool>("useTriggerInfo");
 
@@ -155,8 +152,6 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   // input tags for the reco collections we need
   l1ParticleMap   = config.getParameter<edm::InputTag>("l1ParticleMap");
   hltResults      = config.getParameter<edm::InputTag>("hltResults");
-  photons         = config.getParameter<edm::InputTag>("photons");
-  standAloneMuons = config.getParameter<edm::InputTag>("standAloneMuons");
 
   if (doingElectrons) {
     leptonFlavor = 11;
@@ -188,21 +183,6 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   // Physics TDR style.
   // TH1::AddDirectory(false);
   // setTDRStyle();
-
-  // Clear out the cocktail statistics.
-  best_ntrk = best_ngmr = best_nfms = best_npmr = best_ngpr = best_ntot = 0;
-}
-
-void Zprime2muAnalysis::endJob() {
-  if (verbosity >= VERBOSITY_SIMPLE) {
-    // Dump statistics on fractions of events from different
-    // reconstructors picked by the cocktail.
-    edm::LogInfo("findBestLeptons")
-      << "findBestLeptons summary: "
-      << "TO: "    << best_ntrk/double(best_ntot) << "; GMR: " << best_ngmr/double(best_ntot)
-      << "; FMS: " << best_nfms/double(best_ntot) << "; PMR: " << best_npmr/double(best_ntot)
-      << "; GMR=PMR: " << (best_ngmr > 0 ? best_ngpr/double(best_ngmr) : 0);
-  }
 }
 
 void Zprime2muAnalysis::analyze(const edm::Event& event,
@@ -217,12 +197,6 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
     storeHLTDecision(event);
   }
 
-  // Store the STA muons for use in matching L3/offline muons
-  event.getByLabel(standAloneMuons, seedTracks);
-
-  // Store the reconstructed photons to recover brems
-  event.getByLabel(photons, photonCollection);
-
   // Store a reference to the generator-level particle collection.
   edm::Handle<reco::CandidateCollection> genp;
   event.getByLabel("genParticleCandidates", genp);
@@ -235,22 +209,21 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   // all the match maps from the event).
   recLevelHelper.initEvent(event);
 
-  // At each rec level, store the lepton CandidateBaseRefs.
-  for (int irec = 0; irec < MAX_LEVELS; irec++)
-    storeLeptons(event, irec);
-  // Store the "best" leptons, picking them according to the selected
-  // cocktail method.
-  findBestLeptons();
-
-  // Make dileptons out of the leptons at each rec level (including
-  // the "best" leptons), adding in photons to make the resonance
-  // four-vector.
+  // At each rec level (including the "best" leptons), store the
+  // lepton CandidateBaseRefs and make dileptons, adding in photons
+  // to make the resonance four-vector.
   for (int irec = 0; irec <= MAX_LEVELS; irec++) {
+    storeLeptons(event, irec);
     makeDileptons(irec);
     addBremCandidates(irec);
   }
 
-  // Also store the true generator-level resonance
+  // Retrieve the vector of original rec levels for the best leptons.
+  edm::Handle<vector<int> > bestRecs;
+  event.getByLabel("bestMuons", bestRecs);
+  bestRecLevels = *bestRecs;
+  
+  // Also store the true generator-level resonance.
   addTrueResonance(event);
 
   // Dump the event if appropriate.
@@ -345,11 +318,12 @@ bool Zprime2muAnalysis::storeLeptons(const edm::Event& event,
   }
 
   // Store CandidateBaseRefs in the order we just found.
+  LeptonRefVector& leps = rec == MAX_LEVELS ? bestLeptons : allLeptons[rec];
   for (ilep = 0; ilep < nlep; ilep++) {
     unsigned jlep = rec == lgen ? ilep : sortIndices[ilep];
     // don't cut on pt at gen level
     if (lepCandView[jlep].pt() > PTMIN)
-      allLeptons[rec].push_back(lepCandView.refAt(jlep));
+      leps.push_back(lepCandView.refAt(jlep));
   }
 
   return true;
@@ -937,123 +911,6 @@ void Zprime2muAnalysis::compareTrigDecision(const edm::Event& event,
 }
 
 ////////////////////////////////////////////////////////////////////
-// Picking "best" leptons
-////////////////////////////////////////////////////////////////////
-
-const reco::CandidateBaseRef&
-Zprime2muAnalysis::cocktailMuon(const reco::CandidateBaseRef& trk,
-				const bool doTMR, const bool debug) const {
-  const reco::CandidateBaseRef& fms = recLevelHelper.sameSeedLepton(trk, lfms);
-  const reco::CandidateBaseRef& pmr = recLevelHelper.sameSeedLepton(trk, lpmr);
-  int result = 0;
-
-  bool trkValid = !trk.isNull();
-  bool fmsValid = !fms.isNull();
-  bool pmrValid = !pmr.isNull();
-
-  double prob_trk = 1000.0, prob_fms = 1000.0, prob_pmr = 1000.0;
-
-  if (trkValid) prob_trk = cumulativeChiSquare(trk);
-  if (fmsValid) prob_fms = cumulativeChiSquare(fms);
-  if (pmrValid) prob_pmr = cumulativeChiSquare(pmr);
-
-  if (doTMR && trkValid && fmsValid) {
-    // If we're doing the TMR cocktail, only choose between
-    // tracker-only and tracker+first muon station.
-    if (prob_fms - prob_trk > 30)
-      result = ltk;
-    else
-      result = lfms;
-  }
-  else if (fmsValid && !pmrValid) {
-    //if (trkValid && prob_fms - prob_trk > 30.) result = ltk;
-    //else                                       result = lfms;
-    result = lfms;
-  }
-  else if (!fmsValid && pmrValid) {
-    result = lpmr;
-    //if (trkValid && prob_pmr - prob_trk > 30.) result = ltk;
-  }
-  else if (fmsValid && pmrValid) {
-    if (prob_fms - prob_pmr > 0.9) result = lpmr;
-    //else {
-    //  if (trkValid && prob_fms - prob_trk > 30.) result = ltk;
-    //  else                                       result = lfms;
-    //}
-    else result = lfms;
-  }
-
-  if (debug)
-    LogTrace("PiotrsCocktail")
-      << " Event " << eventNum << " Probabilities: trk = " << prob_trk
-      << "; fms = " << prob_fms << "; pmr = " << prob_pmr
-      << "; result = " << (doTMR ? "(TMR choice only) " : "") << result;
-
-  if      (result == ltk)  return trk;
-  else if (result == lfms) return fms;
-  else if (result == lpmr) return pmr;
-  else                     return invalidRef;
-}
-
-void Zprime2muAnalysis::findBestLeptons() {
-  const static bool debug = verbosity >= VERBOSITY_SIMPLE;
-
-  unsigned int imu;
-  if (doingElectrons || !useOtherMuonRecos) {
-    // just have one set of electrons to look at in this case, or if
-    // the other muon reconstructors are not available, just use the
-    // default GMR muons
-    for (imu = 0; imu < allLeptons[lgmr].size(); imu++)
-      bestLeptons.push_back(allLeptons[lgmr][imu]);
-  }
-  else {
-    // Start with tracker-only tracks.
-    for (imu = 0; imu < allLeptons[ltk].size(); imu++) {
-      const reco::CandidateBaseRef& trkMu = allLeptons[ltk][imu];
-      const reco::CandidateBaseRef& bestMu =
-	cocktailMuon(trkMu, useTMRforBest, debug);
-      if (debug) {
-	if (!bestMu.isNull()) {
-	  int picked = recLevel(bestMu);
-	  if (picked == ltk) {
-	    best_ntrk++; LogTrace("findBestMuons") << "  --> select Tracker only";
-	  }
-	  else if (picked == lgmr) {
-	    best_ngmr++; LogTrace("findBestMuons") << "  --> select GMR";
-	    const reco::CandidateBaseRef& pmrMu = recLevelHelper.sameSeedLepton(trkMu, lpmr);
-	    if (!pmrMu.isNull() &&
-		fabs(bestMu->phi() - pmrMu->phi()) < 0.001 &&
-		fabs(bestMu->eta() - pmrMu->eta()) < 0.001 &&
-		fabs(bestMu->pt()  - pmrMu->pt()) < 0.001)
-	      best_ngpr++;
-	  }
-	  else if (picked == lfms) {
-	    best_nfms++; LogTrace("findBestMuons") << "  --> select TPFMS";
-	  }
-	  else if (picked == lpmr) {
-	    best_npmr++; LogTrace("findBestMuons") << "  --> select PMR";
-	  }
-	  else {
-	    throw cms::Exception("findBestMuons") << "+++ Unknown outcome! +++\n";
-	  }
-	  best_ntot++;
-	}
-	else // i.e. an invalid result
-	  edm::LogWarning("findBestMuons") << "  --> reject muon\n";
-      }
-
-      if (!bestMu.isNull())
-	bestLeptons.push_back(bestMu);
-    }
-
-    // Since bestLeptons is not a CandidateBaseRefVector but just a
-    // vector of CandidateBaseRefs, we can use the standard sort
-    // function.
-    sort(bestLeptons.begin(), bestLeptons.end(), reverse_momentum_sort());
-  }
-}
-
-////////////////////////////////////////////////////////////////////
 // Lepton/dilepton rec level utility functions
 ////////////////////////////////////////////////////////////////////
 
@@ -1067,6 +924,16 @@ int Zprime2muAnalysis::id(const reco::CandidateBaseRef& cand) const {
   if (cand.isNull())
     return -999;
   return cand.key();
+}
+
+int Zprime2muAnalysis::recLevel(const reco::CandidateBaseRef& cand) const {
+  int level = recLevelHelper.recLevel(cand);
+  if (level == lbest) {
+    int ndx = id(cand);
+    if (ndx >= 0 && ndx < bestRecLevels.size())
+      level = bestRecLevels[ndx];
+  }
+  return level;
 }
 
 int Zprime2muAnalysis::recLevel(const reco::Candidate& dil) const {
@@ -1529,13 +1396,6 @@ Zprime2muAnalysis::ptLx(const reco::TrackRef& theTrack, const int rec) const {
   return ptLx;
 }
 
-double
-Zprime2muAnalysis::cumulativeChiSquare(const reco::CandidateBaseRef& mu) const {
-  const reco::TrackRef& track = toConcrete<reco::Muon>(mu).combinedMuon();
-  Genfun::CumulativeChiSquare myCumulativeChiSquare(int(track->ndof()));
-  return -log(1.-myCumulativeChiSquare(track->chi2()));
-}
-
 ////////////////////////////////////////////////////////////////////
 // Dilepton utility functions
 ////////////////////////////////////////////////////////////////////
@@ -1586,10 +1446,7 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
 
   const int level = recLevel(cand);
 
-  string str_lvl = " ";
-  if (level >= 0 && level < MAX_LEVELS) str_lvl = str_level_short[level];
-  else if (level == lbest)              str_lvl = "BEST";
-  output << str_lvl
+  output << recLevelHelper.levelName(level, true)
 	 << " #"          << setw(1) << id(cand)
 	 << "  Q: "       << setw(2) << cand->charge();
 
@@ -1653,13 +1510,13 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
     output << "   Closest  :";
     for (int i = 0; i < MAX_LEVELS; i++) {
       output << setw(5) << id(recLevelHelper.closestLepton(cand, i))
-	     << "(" << str_level_short[i] << ")";
+	     << "(" << recLevelHelper.levelName(i, true) << ")";
     }
     output << endl;
     output << "   Same-seed:";
     for (int i = 0; i < MAX_LEVELS; i++) {
       output << setw(5) << id(recLevelHelper.sameSeedLepton(cand, i))
-	     << "(" << str_level_short[i] << ")";
+	     << "(" << recLevelHelper.levelName(i, true) << ")";
     }
     output << endl;
     output << "   P:          " << setw(7) << setprecision(5) << cand->p();
@@ -1784,16 +1641,6 @@ void Zprime2muAnalysis::dumpEvent(const bool printGen, const bool printL1,
   ostringstream out;
 
   out << "\n******************************** Event " << eventNum << endl;
-
-  if (printSeeds && seedTracks.isValid() && seedTracks->size() > 0) {
-    out << "Stand-alone tracks (offline muon system fit), used as seeds:\n";
-
-    unsigned i = 0;
-    for (reco::TrackCollection::const_iterator seedmu = seedTracks->begin();
-	 seedmu != seedTracks->end(); seedmu++, i++)
-      out << "  #" << setw(3) << i << " charge: " << setw(2) << seedmu->charge()
-	  << " p: " << seedmu->momentum() << endl;
-  }
 
   for (irec = 0; irec < MAX_LEVELS; irec++) {
     if (irec == 0 && !printGen ||

@@ -1,3 +1,5 @@
+#include <string>
+
 #include "DataFormats/Common/interface/Handle.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -7,29 +9,39 @@
 
 using namespace std;
 
-void RecLevelHelper::init(const edm::ParameterSet& config) {
+const string& RecLevelHelper::levelName(const int rec,
+					bool shortVersion) const {
+  checkRecLevel(rec, "levelName", true);
+  if (shortVersion) return levelNamesShort[rec];
+  else return levelNames[rec];
+}    
+
+void RecLevelHelper::init(const edm::ParameterSet& config,
+			  bool doBest) {
   doingElectrons = config.getParameter<bool>("doingElectrons");
+  includeBest = doBest;
+  maxRec = includeBest ? MAX_LEVELS + 1 : MAX_LEVELS;
 
   if (doingElectrons) {
     // JMTBAD preserve the order until L1/HLT electrons are implemented
     inputs = config.getParameter<vector<edm::InputTag> >("elInputs");
-    while (int(inputs.size()) < MAX_LEVELS)
+    while (int(inputs.size()) < MAX_LEVELS+1)
       inputs.push_back(edm::InputTag());
-    inputs[lgmr] = inputs[l1];
+    inputs[lgmr] = inputs[1];
     inputs[l1] = edm::InputTag();
+    inputs[lbest] = inputs[2];
+    inputs[l2] = edm::InputTag();
   }
   else
     inputs = config.getParameter<vector<edm::InputTag> >("muInputs");
 
-  if (int(inputs.size()) < MAX_LEVELS) {
-    edm::LogWarning("") << "inputs.size() < MAX_LEVELS; padding it";
-    while (int(inputs.size()) < MAX_LEVELS)
-      inputs.push_back(edm::InputTag());
-  }
+  if (int(inputs.size()) < MAX_LEVELS+1)
+    throw cms::Exception("RecLevelHelper")
+      << "inputs.size() < MAX_LEVELS+1\n";
 }
 
 void RecLevelHelper::initEvent(const edm::Event& event) {
-  for (int rec = 0; rec < MAX_LEVELS; rec++)
+  for (int rec = 0; rec <= MAX_LEVELS; rec++)
     warned[rec] = false;
   storeRecLevelMap(event);
   storeMatchMaps(event);
@@ -60,16 +72,16 @@ string RecLevelHelper::makeMatchMapName(RecLevelHelper::MatchType mtype,
 					const int jrec) const {
   static const char* base[] = { "photon", "closest", "seed" };
   string res = base[int(mtype)];
-  res += str_level_short[irec];
+  res += levelName(irec, true);
   if (jrec >= 0)
-    res += str_level_short[jrec];
+    res += levelName(jrec, true);
   return res;
 }
 
 void RecLevelHelper::storeRecLevelMap(const edm::Event& event) {
   // We shouldn't have to re-store this every event...
   recLevelMap.clear();
-  for (int rec = 0; rec < MAX_LEVELS; rec++) {
+  for (int rec = 0; rec < maxRec; rec++) {
     edm::View<reco::Candidate> view;
     getView(event, rec, view);
 
@@ -84,31 +96,38 @@ void RecLevelHelper::storeRecLevelMap(const edm::Event& event) {
 void RecLevelHelper::storeMatchMaps(const edm::Event& event) {
   edm::Handle<reco::CandViewMatchMap> matchMap;
   edm::Handle<vector<int> > seeds;
-  for (int i = 0; i < MAX_LEVELS; i++) {
+
+  for (int i = 0; i < maxRec; i++) {
+    // LeptonAssociator was run twice; once for all rec levels
+    // excluding the cocktail ("best") leptons, and once including the
+    // latter after they were produced.
+    string modulename = i < MAX_LEVELS ? "leptonMatches" : "bestMatches";
+
     if (i >= l3) {
       // Store the photon match maps (which only exist for global fit
       // leptons).
-      event.getByLabel("leptonMatches", makeMatchMapName(PHOTON, i), matchMap);
+      event.getByLabel(modulename, makeMatchMapName(PHOTON, i), matchMap);
       photonMatchMap[i] = *matchMap;
 
       // Store the seed indices, which map candidates to their seeds
       // via the index into the seedIndices vector.
-      event.getByLabel("leptonMatches", makeMatchMapName(SEED, i), seeds);
+      event.getByLabel(modulename, makeMatchMapName(SEED, i), seeds);
       seedIndices[i] = *seeds;
     }
 
+    // The inner loop does not include lbest, since we do not match to
+    // that level, only from it.
     for (int j = 0; j < MAX_LEVELS; j++) {
       // Don't bother storing an identity map.
       if (i == j) continue;
 
       // Store closest and by-seed match maps (the latter only
       // existing for global fits).
-      string sublabel = str_level_short[i] + str_level_short[j];
-      event.getByLabel("leptonMatches", makeMatchMapName(CLOSEST, i, j),
+      event.getByLabel(modulename, makeMatchMapName(CLOSEST, i, j),
 		       matchMap);
       closestMatchMap[i][j] = *matchMap;
       if (i >= l3 && j >= l3) {
-	event.getByLabel("leptonMatches", makeMatchMapName(SEED, i, j),
+	event.getByLabel(modulename, makeMatchMapName(SEED, i, j),
 			 matchMap);
 	seedMatchMap[i][j] = *matchMap;
       }
@@ -123,8 +142,10 @@ int RecLevelHelper::recLevel(const reco::CandidateBaseRef& cand) const {
 }
 
 void
-RecLevelHelper::checkRecLevel(const int level, const char* name) const {
-  if (level < 0 || level > MAX_LEVELS)
+RecLevelHelper::checkRecLevel(const int level, const char* name,
+			      bool extended) const {
+  if (level < 0 || (extended && level > MAX_LEVELS+1) ||
+      (!extended && level > MAX_LEVELS))
     throw cms::Exception(name)
       << "invalid level " << level << " in " << name << "!\n";
 }
@@ -149,8 +170,8 @@ int RecLevelHelper::seedIndex(const reco::CandidateBaseRef& cand) const {
 
 const reco::CandidateBaseRef&
 RecLevelHelper::matchLepton(const reco::CandidateBaseRef& lep,
-			       const int level,
-			       int whichMatch) const {
+			    const int level,
+			    int whichMatch) const {
   int oldlevel = recLevel(lep);
 
   if (oldlevel == level)
@@ -179,22 +200,4 @@ RecLevelHelper::matchLepton(const reco::CandidateBaseRef& lep,
   }
     
   return invalidRef;
-}
-
-const reco::CandidateBaseRef&
-RecLevelHelper::closestLepton(const reco::CandidateBaseRef& lep,
-				 const int level) const {
-  return matchLepton(lep, level, 0);
-}
-
-const reco::CandidateBaseRef&
-RecLevelHelper::sameSeedLepton(const reco::CandidateBaseRef& lep,
-				  const int level) const {
-  return matchLepton(lep, level, 1);
-}
-
-const reco::CandidateBaseRef&
-RecLevelHelper::matchedLepton(const reco::CandidateBaseRef& lep,
-				 const int level) const {
-  return matchLepton(lep, level, -1);
 }

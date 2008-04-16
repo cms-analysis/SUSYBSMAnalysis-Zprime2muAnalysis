@@ -27,4 +27,8 @@
   <use name=DataFormats/RecoCandidate>
 </library>
 
+<library file=CocktailMuonProducer.cc,../src/RecLevelHelper.cc name=CocktailMuonProducer>
+  <use name=DataFormats/MuonReco>
+</library>
+
 <flags CXXFLAGS="-O0 -g -DDEBUG">

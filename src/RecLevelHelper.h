@@ -16,20 +16,25 @@
 const int NUM_REC_LEVELS = 4;
 const int MAX_LEVELS = 8;
 enum RecLevel { lgen, l1, l2, l3, lgmr, ltk, lfms, lpmr, lbest };
-const std::string str_level[MAX_LEVELS+1] = {
+// The names of the defined rec levels, as well as shortened versions.
+const std::string levelNames[MAX_LEVELS+1] = {
   "Gen", " L1", " L2", " L3", "GMR", "Tracker-only", "TPFMS", "PMR", "OPT"
 };
-const std::string str_level_short[MAX_LEVELS+1] = {
-  "GN", "L1", "L2", "L3", "GR", "TK", "FS", "PR", "BS"
+const std::string levelNamesShort[MAX_LEVELS+1] = {
+  "GN", "L1", "L2", "L3", "GR", "TK", "FS", "PR", "OP"
 };
 
 class RecLevelHelper {
  public:
-  bool isDoingElectrons() { return doingElectrons; }
-  
+  bool isDoingElectrons() const { return doingElectrons; }
+
+  // Return either the short or the regular version of rec level's
+  // name.
+  const std::string& levelName(const int rec, bool shortVersion=false) const;
+
   // Set up per-lifetime things, including storing the collection
   // InputTags in the right order (padding if doingElectrons).
-  void init(const edm::ParameterSet& config);
+  void init(const edm::ParameterSet& config, bool doBest=false);
 
   // Set up per-event things, such as the recLevelMap, and match maps.
   void initEvent(const edm::Event& event);
@@ -51,8 +56,10 @@ class RecLevelHelper {
   int recLevel(const reco::CandidateBaseRef& cand) const;
 
   // Perform a sanity check on the rec level passed, throwing an
-  // exception if it is out of range.
-  void checkRecLevel(const int level, const char* name) const;
+  // exception if it is out of range. If extended, allow level to be
+  // lbest == MAX_LEVELS.
+  void checkRecLevel(const int level, const char* name,
+		     bool extended=false) const;
 
   // Get the four-vector of the closest photon found for cand.
   reco::Particle::LorentzVector
@@ -78,23 +85,34 @@ class RecLevelHelper {
   // Const access to lep's closest match (in delta R) at another rec level.
   const reco::CandidateBaseRef&
     closestLepton(const reco::CandidateBaseRef& lep,
-		  const int level) const;
+		  const int level) const
+    { return matchLepton(lep, level, 0); }
 
   // Const access to lep's same-seed match at another rec level.
   const reco::CandidateBaseRef&
     sameSeedLepton(const reco::CandidateBaseRef& lep,
-		   const int level) const;
+		   const int level) const
+    { return matchLepton(lep, level, 1); }
 
   // Const access to lep's "best" match (defined above) at another rec
   // level.
   const reco::CandidateBaseRef&
     matchedLepton(const reco::CandidateBaseRef& lep,
-		  const int level) const;
+		  const int level) const
+    { return matchLepton(lep, level, -1); }
 
  private:
   // Flag stating whether we're running in electron mode, which 
   // ignores all collections except gen and gmr.
   bool doingElectrons;
+
+  // Flag whether we should even try to look at the "best" rec level,
+  // which may or may not be available yet.
+  bool includeBest;
+
+  // Loop boundary which stops us from looking at lbest when the
+  // products haven't been produced yet.
+  int maxRec;
 
   // The vector of InputTags which maps rec level number to the EDM
   // collection.
@@ -103,31 +121,31 @@ class RecLevelHelper {
   // Flag whether we've warned about a missing collection at each rec
   // level for each event. (Set to prevent double warnings when
   // getView() gets called twice.)
-  bool warned[MAX_LEVELS];
+  bool warned[MAX_LEVELS+1];
 
   // Map product IDs from CandidateBaseRef to whatever rec level we
   // choose.
   std::map<int,int> recLevelMap;
   
   // Map lepton CandidateBaseRefs to photon ones.
-  reco::CandViewMatchMap photonMatchMap[MAX_LEVELS];
+  reco::CandViewMatchMap photonMatchMap[MAX_LEVELS+1];
 
   // Store seed indices for global fits (indexed in the vector by
   // id(cand)).
-  std::vector<int> seedIndices[MAX_LEVELS];
+  std::vector<int> seedIndices[MAX_LEVELS+1];
 
   // Store an AssociationMap for each rec level which maps leptons to
   // leptons at other rec levels, matching by closest in delta R. (We
   // are wasteful, not using entries for which the rec levels are
   // equal, but storage is easier this way.)
-  reco::CandViewMatchMap closestMatchMap[MAX_LEVELS][MAX_LEVELS];
+  reco::CandViewMatchMap closestMatchMap[MAX_LEVELS+1][MAX_LEVELS];
 
   // Store an AssociationMap for each rec level of global fits
   // (i.e. L3 and above), matching by "seed" lepton. (Currently only
   // meaningful for muons, and we are even more wasteful than before,
   // in addition not using entries for which rec levels are less than
   // l3.)
-  reco::CandViewMatchMap seedMatchMap[MAX_LEVELS][MAX_LEVELS];
+  reco::CandViewMatchMap seedMatchMap[MAX_LEVELS+1][MAX_LEVELS];
 
   // An invalid CandidateBaseRef so that some of the methods above can
   // return by reference and still be able to return a null reference.

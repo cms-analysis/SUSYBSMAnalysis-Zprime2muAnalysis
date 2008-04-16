@@ -71,7 +71,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   virtual ~Zprime2muAnalysis() {}
 
   virtual void beginJob(const edm::EventSetup&) {}
-  virtual void endJob();
+  virtual void endJob() {}
 
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
 
@@ -144,9 +144,6 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // whether to include the extra muon reconstructors (FMS, PMR, etc);
   bool useOtherMuonRecos;
 
-  // whether to use the TMR cocktail or Piotr's
-  bool useTMRforBest;
-
   // if the input file is only AOD, then don't use EDProducts that are
   // included only in the full RECO tier;
   bool usingAODOnly;
@@ -195,6 +192,11 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   LeptonRefVector allLeptons[MAX_LEVELS];
   LeptonRefVector bestLeptons;
 
+  // The original rec levels of the "best" leptons, indexed by the id
+  // of the CandidateBaseRef (i.e. these are in the original order of
+  // bestLeptons before the sorting was done).
+  std::vector<int> bestRecLevels;
+
   // The dilepton collections, stored as CompositeCandidates in an
   // OwnVector (for compatibility with CandCombiner, if we switch to
   // using it.)
@@ -207,52 +209,19 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // resonances.
   std::vector<LorentzVector> dileptonResonances[MAX_LEVELS+1];
   
-  // Map product IDs from CandidateBaseRef to whatever rec level we
-  // choose.
-  std::map<int,int> recLevelMap;
-  
-  // Map lepton CandidateBaseRefs to photon ones.
-  reco::CandViewMatchMap photonMatchMap[MAX_LEVELS];
-
-  // Store seed indices for global fits (indexed in the vector by
-  // id(cand)).
-  std::vector<int> seedIndices[MAX_LEVELS];
-
-  // Store an AssociationMap for each rec level which maps leptons to
-  // leptons at other rec levels, matching by closest in delta R. (We
-  // are wasteful, not using entries for which the rec levels are
-  // equal, but storage is easier this way.)
-  reco::CandViewMatchMap closestMatchMap[MAX_LEVELS][MAX_LEVELS];
-
-  // Store an AssociationMap for each rec level of global fits
-  // (i.e. L3 and above), matching by "seed" lepton. (Currently only
-  // meaningful for muons, and we are even more wasteful than before,
-  // in addition not using entries for which rec levels are less than
-  // l3.)
-  reco::CandViewMatchMap seedMatchMap[MAX_LEVELS][MAX_LEVELS];
-
-  // An invalid CandidateBaseRef so that some of the methods above can
-  // return by reference and still be able to return a null reference.
-  reco::CandidateBaseRef invalidRef;
-
   // A handle to the TFileService for convenience.
   edm::Service<TFileService> fs;
 
- private:
   // Object to help with per-rec-level information.
   RecLevelHelper recLevelHelper;
 
+ private:
   // verbosity controls the amount of debugging information printed;
   // levels are defined using the VERBOSITY_* codes above
   VERBOSITY verbosity;
   edm::InputTag l1ParticleMap;
   edm::InputTag hltResults;
-  edm::InputTag standAloneMuons;
-  edm::InputTag photons;
-
-  edm::Handle<reco::TrackCollection> seedTracks;
-  edm::Handle<reco::PhotonCollection> photonCollection;
-
+  
   ////////////////////////////////////////////////////////////////////
   // Initialization
   ////////////////////////////////////////////////////////////////////
@@ -317,26 +286,6 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // Use TriggerTranslator to compare the "official" decisions stored
   // by store*Decision with what we calculate.
   void compareTrigDecision(const edm::Event& event, bool old=false) const;
-  
-  ////////////////////////////////////////////////////////////////////
-  // Picking "best" leptons
-  ////////////////////////////////////////////////////////////////////
-
-  // Our implementation of cocktail methods for picking muons from the
-  // various TeV muon reconstructors (either TMR, picking between
-  // tracker-only and tracker+first muon station, or Piotr's, picking
-  // between those two and also PMR); returns a reference to the one
-  // picked.
-  const reco::CandidateBaseRef&
-    cocktailMuon(const reco::CandidateBaseRef& trk,
-		 const bool doTMR, const bool debug) const;
-
-  // Keep some statistics on what the cocktail picked.
-  int best_ntrk, best_ngmr, best_nfms, best_npmr, best_ngpr, best_ntot;
-
-  // A driver routine which uses the cocktail methods above to pick
-  // "best" leptons (only implemented for muons).
-  void findBestLeptons();
 
  protected:
   ////////////////////////////////////////////////////////////////////
@@ -360,10 +309,10 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   int id(const reco::CandidateRef& cand) const;
   int id(const reco::CandidateBaseRef& cand) const;
 
-  // Translate the Ref's product id to one of our rec levels, using the
-  // cached map.
-  int recLevel(const reco::CandidateBaseRef& cand) const
-  { return recLevelHelper.recLevel(cand); }
+  // Translate the Ref's product id to one of our rec levels, using
+  // the cached map. If the rec level turns out to be lbest, return
+  // the original rec level using the stored map.
+  int recLevel(const reco::CandidateBaseRef& cand) const;
 
   // Get the rec level for a dilepton, making sure that either all the
   // daughter leptons have the same rec level, or else returning lbest,
@@ -516,10 +465,6 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // Mimic what HLTMuonPrefilter does for pt cut: convert 50%
   // efficiency threshold to 90% efficiency threshold.
   double ptLx(const reco::TrackRef& theTrack, const int rec) const;
-
-  // Simplify usage of chi2 prob for tracks (used in selecting "best"
-  // muons).
-  double cumulativeChiSquare(const reco::CandidateBaseRef& mu) const;
 
   ////////////////////////////////////////////////////////////////////
   // Dilepton utility functions

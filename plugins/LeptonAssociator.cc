@@ -67,6 +67,10 @@ private:
   // tracks from the event.
   void initialize(const Event& event);
 
+  // Dump debug information, such as the list of standalone muons used
+  // as seeds, and the photons.
+  void dumpEvent();
+
   // The driver routine -- put the match maps into the event.
   virtual void produce(Event&, const EventSetup&);
 
@@ -75,28 +79,55 @@ private:
   InputTag standAloneMuons;
   InputTag photonInput;
 
-  View<Candidate> leptons[MAX_LEVELS];
+  View<Candidate> leptons[MAX_LEVELS+1];
   View<Candidate> photons;
   TrackCollection seedTracks;
-  vector<int> seedIndex[MAX_LEVELS];
+  vector<int> seedIndex[MAX_LEVELS+1];
 
   // Object to help with per-rec-level information.
   RecLevelHelper recLevelHelper;
+
+  // Since the cocktail muon producer needs information on matching,
+  // LeptonAssociator must be run beforehand.To get the matching
+  // information set up for the cocktail muons, LeptonAssociator must
+  // be re-run, only producing match maps for them and not redoing the
+  // entire thing. This flag is set according to which phase we are
+  // in. (We only care about matching from the cocktail muons to the
+  // other rec levels, and not from any of the others to the cocktail
+  // muons.)
+  bool fromCocktail;
+  
+  // Loop boundaries for producing match maps, set appropriately
+  // according to the value of fromCocktail. (Storing leptons and
+  // matching seeds must still be done at all rec levels, however.)
+  int fromStart;
+  int fromEnd;
 };
 
 LeptonAssociator::LeptonAssociator(const ParameterSet& cfg)
-  : debug(false),
+  : debug(cfg.getUntrackedParameter<int>("verbosity", 0) > 0),
     doingElectrons(cfg.getParameter<bool>("doingElectrons")),
     standAloneMuons(cfg.getParameter<InputTag>("standAloneMuons")),
-    photonInput(cfg.getParameter<InputTag>("photons"))
+    photonInput(cfg.getParameter<InputTag>("photons")),
+    fromCocktail(cfg.getParameter<bool>("fromCocktail"))
 {
-  recLevelHelper.init(cfg);
+  recLevelHelper.init(cfg, fromCocktail);
 
-  for (int irec = 0; irec < MAX_LEVELS; irec++) {
+  if (fromCocktail) {
+    fromStart = lbest;
+    fromEnd = lbest+1;
+  }
+  else {
+    fromStart = 0;
+    fromEnd = lbest;
+  }
+
+  for (int irec = fromStart; irec < fromEnd; irec++) {
     if (irec >= l3) {
       produces<CandViewMatchMap>(recLevelHelper.makeMatchMapName(RecLevelHelper::PHOTON, irec));
       produces<vector<int> >(recLevelHelper.makeMatchMapName(RecLevelHelper::SEED, irec));
     }
+
     for (int jrec = 0; jrec < MAX_LEVELS; jrec++) {
       produces<CandViewMatchMap>(recLevelHelper.makeMatchMapName(RecLevelHelper::CLOSEST, irec, jrec));
       if (irec >= l3 && jrec >= l3)
@@ -223,7 +254,7 @@ int LeptonAssociator::matchStandAloneMuon(const TrackRef& track,
 }
 
 void LeptonAssociator::matchLeptonsToSeeds() {
-  for (int irec = l3; irec < MAX_LEVELS; irec++) {
+  for (int irec = l3; irec < fromEnd; irec++) {
     for (unsigned ilep = 0; ilep < leptons[irec].size(); ilep++) {
       const RecoCandidate& lep
       	= toConcrete<RecoCandidate>(leptons[irec][ilep]);
@@ -310,12 +341,12 @@ void LeptonAssociator::initialize(const Event& event) {
   View<Candidate> emptyView;
 
   // Clear out seedIndex.
-  for (int irec = 0; irec < MAX_LEVELS; irec++)
+  for (int irec = 0; irec < fromEnd; irec++)
     seedIndex[irec].clear();
 
   // Store views to the leptons from the event.
   Handle<View<Candidate> > hview;
-  for (int irec = 0; irec < MAX_LEVELS; irec++) {
+  for (int irec = 0; irec < fromEnd; irec++) {
     View<Candidate> view;
     bool ok = recLevelHelper.getView(event, irec, view);
     leptons[irec] = ok ? view : emptyView;
@@ -335,8 +366,28 @@ void LeptonAssociator::initialize(const Event& event) {
   Handle<TrackCollection> hcoll;
   event.getByLabel(standAloneMuons, hcoll);
   seedTracks = *hcoll;
+
+  if (debug) dumpEvent();
 }
-				   
+
+void LeptonAssociator::dumpEvent() {
+  ostringstream out;
+
+  out << "Stand-alone tracks (offline muon system fit), used as seeds:\n";
+  unsigned i = 0;
+  for (TrackCollection::const_iterator seedmu = seedTracks.begin();
+       seedmu != seedTracks.end(); seedmu++, i++)
+    out << "  #" << setw(3) << i << " charge: " << setw(2) << seedmu->charge()
+	<< " p: " << seedmu->momentum() << endl;
+  
+  out << "\nReconstructed photons:\n";
+  i = 0;
+  for (i = 0; i < photons.size(); i++)
+    out << "  #" << setw(3) << i << " p4: " << photons[i].p4() << endl;
+
+  LogInfo("LeptonAssociator") << out.str();
+}
+
 void LeptonAssociator::produce(Event& event,
 			       const EventSetup& eSetup) {
   if (debug)
@@ -350,7 +401,7 @@ void LeptonAssociator::produce(Event& event,
   // electron.)
   if (!doingElectrons) matchLeptonsToSeeds();
 
-  for (int irec = 0; irec < MAX_LEVELS; irec++) {
+  for (int irec = fromStart; irec < fromEnd; irec++) {
     if (irec >= l3) {
       // Store closest photon for all global fit leptons.
       auto_ptr<CandViewMatchMap> photonMatchMap(new CandViewMatchMap);

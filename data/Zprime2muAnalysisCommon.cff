@@ -92,7 +92,6 @@ block Zprime2muAnalysisCommon = {
   bool doingGeant4 = true
   bool reconstructedOnly = false
   bool useOtherMuonRecos = true
-  bool useTMRforBest = false
   bool usingAODOnly = false
   bool useTriggerInfo = true
 
@@ -121,14 +120,16 @@ block Zprime2muAnalysisCommon = {
     muons,
     muCandTK, # muonsTK,
     muonsFMS,
-    muonsPMR
+    muonsPMR,
+    bestMuons
   }
 
   # Zprime2muAnalysis knows to put pixelMatchGsfElectrons in the right
   # spot (i.e., in the same rec level as GMR muons).
   VInputTag elInputs = {
     elCandGN,
-    pixelMatchGsfElectrons
+    pixelMatchGsfElectrons,
+    pixelMatchGsfElectrons # for now, bestElectrons are the default ones
   }
 }
 
@@ -139,9 +140,29 @@ block Zprime2muAnalysisCommon = {
 
 module leptonMatches = LeptonAssociator { 
   using Zprime2muAnalysisCommon
+  untracked int32 verbosity = 0
+  bool fromCocktail = false
 }
 
-path matching = { leptonMatches }
+####################################################################
+## Pick the "best" muons according to a cocktail (currently ##
+## implemented are Piotr's old cocktail, and TMR), and match them to
+## the other rec levels.
+####################################################################
+
+module bestMuons = CocktailMuonProducer { 
+  using Zprime2muAnalysisCommon
+  untracked int32 verbosity = 0
+  bool useTMR = false
+}
+
+module bestMatches = LeptonAssociator { 
+  using Zprime2muAnalysisCommon
+  untracked int32 verbosity = 0
+  bool fromCocktail = true
+}
+
+path m = { leptonMatches, bestMuons, bestMatches }
 
 ####################################################################
 ## Include the TFileService so that histograms get stored to a root

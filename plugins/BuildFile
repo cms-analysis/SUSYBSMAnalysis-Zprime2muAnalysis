@@ -23,7 +23,7 @@
   <use name=DataFormats/MuonReco>
 </library>
 
-<library file=LeptonAssociator.cc name=LeptonAssociator>
+<library file=LeptonAssociator.cc,../src/RecLevelHelper.cc name=LeptonAssociator>
   <use name=DataFormats/RecoCandidate>
 </library>
 

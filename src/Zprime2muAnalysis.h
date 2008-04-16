@@ -1,5 +1,5 @@
-#ifndef ZP2MUANALYSISNEW_H
-#define ZP2MUANALYSISNEW_H
+#ifndef ZP2MUANALYSIS_H
+#define ZP2MUANALYSIS_H
 
 #include <iosfwd>
 #include <vector>
@@ -37,6 +37,8 @@
 
 #include "PhysicsTools/UtilAlgos/interface/TFileService.h"
 
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/RecLevelHelper.h"
+
 namespace reco {
   // JMTBAD this is included in 170 and above
   typedef edm::RefToBase<reco::Track> TrackBaseRef;
@@ -48,17 +50,6 @@ const int NUM_Q_SETS       = 8;
 const int NUM_L2_CUTS      = 4;
 const int NUM_L3_CUTS      = 9;
 const int NUM_TRACKER_CUTS = 4;
-
-// details about the number of rec levels stored, their names, etc.
-const int NUM_REC_LEVELS = 4;
-const int MAX_LEVELS = 8;
-enum RecLevel { lgen, l1, l2, l3, lgmr, ltk, lfms, lpmr, lbest };
-const std::string str_level[MAX_LEVELS+1] = {
-  "Gen", " L1", " L2", " L3", "GMR", "Tracker-only", "TPFMS", "PMR", "OPT"
-};
-const std::string str_level_short[MAX_LEVELS+1] = {
-  "GN", "L1", "L2", "L3", "GR", "TK", "FS", "PR", "BS"
-};
 
 // A simple class for passing around the generator-level particles
 // from the resonant interaction.
@@ -248,6 +239,9 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   edm::Service<TFileService> fs;
 
  private:
+  // Object to help with per-rec-level information.
+  RecLevelHelper recLevelHelper;
+
   // verbosity controls the amount of debugging information printed;
   // levels are defined using the VERBOSITY_* codes above
   VERBOSITY verbosity;
@@ -255,7 +249,6 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   edm::InputTag hltResults;
   edm::InputTag standAloneMuons;
   edm::InputTag photons;
-  std::vector<edm::InputTag> inputs;
 
   edm::Handle<reco::TrackCollection> seedTracks;
   edm::Handle<reco::PhotonCollection> photonCollection;
@@ -279,11 +272,6 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // returning a success flag.
   bool storeLeptons(const edm::Event& event, const int rec);
 
-  // Store the match maps for this event: the matching between all
-  // pairs of rec levels ("closest" matching), the matching between
-  // all global fits ("seed" matching), and closest photon matches.
-  void storeMatchMaps(const edm::Event& event);
-
   // Construct a new dilepton from the two specified lepton
   // candidates, using AddFourMomenta to set up the dilepton.
   reco::CompositeCandidate* newDilepton(const reco::CandidateBaseRef& dau1,
@@ -294,7 +282,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // preference is given to higher mass dilepton over lower mass
   // dilepton (i.e. to the earlier dilepton in the current sort
   // order).
-  void RemoveDileptonOverlap(reco::CandidateCollection& dileptons);
+  void removeDileptonOverlap(reco::CandidateCollection& dileptons);
 
   // Consider all possible combinations of l+ and l-, and form
   // dilepton candidates. 
@@ -374,17 +362,14 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 
   // Translate the Ref's product id to one of our rec levels, using the
   // cached map.
-  int recLevel(const reco::CandidateBaseRef& cand) const;
+  int recLevel(const reco::CandidateBaseRef& cand) const
+  { return recLevelHelper.recLevel(cand); }
 
   // Get the rec level for a dilepton, making sure that either all the
   // daughter leptons have the same rec level, or else returning lbest,
   // (since a "best" dilepton can be made up of leptons at different rec
   // levels).
   int recLevel(const reco::Candidate& cand) const;
-
-  // Perform a sanity check on the rec level passed, throwing an
-  // exception if it is out of range.
-  void checkRecLevel(const int level, const char* name) const;
 
   // Provide uniform access to allLeptons and bestLeptons by returning a
   // reference to the appropriate collection.
@@ -394,44 +379,36 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   const reco::CandidateCollection& getDileptons(const int rec) const;
 
   // Get the four-vector of the closest photon found for cand.
-  LorentzVector closestPhoton(const reco::CandidateBaseRef& cand) const;
+  LorentzVector closestPhoton(const reco::CandidateBaseRef& cand) const
+  { return recLevelHelper.closestPhoton(cand); }
 
   // Get the seed index (i.e. the index into the stand-alone muon
   // collection) of the candidate.
-  int seedIndex(const reco::CandidateBaseRef& cand) const;
+  int seedIndex(const reco::CandidateBaseRef& cand) const 
+  { return recLevelHelper.seedIndex(cand); }
 
   ////////////////////////////////////////////////////////////////////
   // Lepton/dilepton matching
   ////////////////////////////////////////////////////////////////////
 
-  // Search for the lepton at the specified rec level which is either
-  // the closest or same-seed match to the lepton specified, returning
-  // an invalid reference if not found (if the id was = -999 or an
-  // invalid rec level). whichMatch = 0 for closest match, 1 for
-  // same-seed match, and -1 to pick the "best" match, i.e. same-seed if
-  // available, and closest if not.  Not meant to be called directly;
-  // use one of the three methods closestLepton, sameSeedLepton, and
-  // matchedLepton.
-  const reco::CandidateBaseRef&
-    matchLepton(const reco::CandidateBaseRef& lep,
-		const int level,
-		int whichMatch) const;
-
-  // Const access to lep's closest match (in delta R) at another rec level.
+  // Const access to lep's closest match in delta R at another rec level.
   const reco::CandidateBaseRef&
     closestLepton(const reco::CandidateBaseRef& lep,
-		  const int level) const;
+		  const int level) const
+    { return recLevelHelper.closestLepton(lep, level); }
 
   // Const access to lep's same-seed match at another rec level.
   const reco::CandidateBaseRef&
     sameSeedLepton(const reco::CandidateBaseRef& lep,
-		   const int level) const;
+		   const int level) const
+    { return recLevelHelper.sameSeedLepton(lep, level); }
 
-  // Const access to lep's "best" match (defined above) at another rec
-  // level.
+  // Const access to lep's "best" match, i.e. same-seed if available,
+  // closest in delta R if not, at another rec level.
   const reco::CandidateBaseRef&
     matchedLepton(const reco::CandidateBaseRef& lep,
-		  const int level) const;
+		  const int level) const
+    { return recLevelHelper.matchedLepton(lep, level); }
 
   // Try to find the dilepton at the new rec level that has the same
   // two leptons as dil. Return success, and return the other dilepton in

@@ -5,9 +5,15 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "DataFormats/Candidate/interface/CandMatchMap.h"
+#include "DataFormats/Candidate/interface/Candidate.h"
+#include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
+#include "DataFormats/RecoCandidate/interface/RecoCandidate.h"
+#include "DataFormats/TrackReco/interface/Track.h"
+#include "DataFormats/TrackReco/interface/TrackFwd.h"
 
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/RecLevelHelper.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
 
 using namespace std;
@@ -25,13 +31,6 @@ public:
   explicit LeptonAssociator(const ParameterSet&);
 
 private:
-  // Helper enums and function to build the match map name for storing
-  // in the event. E.g. storing a closest match map from L3 to GMR
-  // will get the branch name *_leptonMatches_closestL3GR_*.
-  enum MatchType { PHOTON, CLOSEST, SEED };
-  string makeMatchMapName(MatchType mtype, const int irec,
-			  const int jrec=-1) const;
-
   // Match each of the candsFrom to the closest one of candsTo, where
   // the metric is in eta-phi space (delta R). We do something similar
   // to TrivialDeltaRMatcher, only do it from code so that it can be
@@ -75,12 +74,14 @@ private:
   bool doingElectrons;
   InputTag standAloneMuons;
   InputTag photonInput;
-  vector<InputTag> inputs;
 
   View<Candidate> leptons[MAX_LEVELS];
   View<Candidate> photons;
   TrackCollection seedTracks;
   vector<int> seedIndex[MAX_LEVELS];
+
+  // Object to help with per-rec-level information.
+  RecLevelHelper recLevelHelper;
 };
 
 LeptonAssociator::LeptonAssociator(const ParameterSet& cfg)
@@ -89,45 +90,19 @@ LeptonAssociator::LeptonAssociator(const ParameterSet& cfg)
     standAloneMuons(cfg.getParameter<InputTag>("standAloneMuons")),
     photonInput(cfg.getParameter<InputTag>("photons"))
 {
-  if (doingElectrons) {
-    // L1/HLT electrons are not yet implemented, and there are no
-    // alternative global reconstructors for electrons (yet);
-    // reorder the input vector
-    inputs = cfg.getParameter<vector<InputTag> >("elInputs");
-    while (int(inputs.size()) < MAX_LEVELS)
-      inputs.push_back(InputTag());
-    inputs[lgmr] = inputs[l1];
-    inputs[l1] = InputTag();
-  }
-  else {
-    inputs = cfg.getParameter<vector<InputTag> >("muInputs");
-    if (int(inputs.size()) != MAX_LEVELS)
-      throw cms::Exception("LeptonAssociator")
-	<< "Not doing electrons and inputs size is " << inputs.size()
-	<< "; aborting\n";
-  }
+  recLevelHelper.init(cfg);
 
   for (int irec = 0; irec < MAX_LEVELS; irec++) {
     if (irec >= l3) {
-      produces<CandViewMatchMap>(makeMatchMapName(PHOTON, irec));
-      produces<vector<int> >(makeMatchMapName(SEED, irec));
+      produces<CandViewMatchMap>(recLevelHelper.makeMatchMapName(RecLevelHelper::PHOTON, irec));
+      produces<vector<int> >(recLevelHelper.makeMatchMapName(RecLevelHelper::SEED, irec));
     }
     for (int jrec = 0; jrec < MAX_LEVELS; jrec++) {
-      produces<CandViewMatchMap>(makeMatchMapName(CLOSEST, irec, jrec));
+      produces<CandViewMatchMap>(recLevelHelper.makeMatchMapName(RecLevelHelper::CLOSEST, irec, jrec));
       if (irec >= l3 && jrec >= l3)
-	produces<CandViewMatchMap>(makeMatchMapName(SEED, irec, jrec));
+	produces<CandViewMatchMap>(recLevelHelper.makeMatchMapName(RecLevelHelper::SEED, irec, jrec));
     }
   }
-}
-
-string LeptonAssociator::makeMatchMapName(MatchType mtype, const int irec,
-					  const int jrec) const {
-  static const char* base[] = { "photon", "closest", "seed" };
-  string res = base[int(mtype)];
-  res += str_level_short[irec];
-  if (jrec >= 0)
-    res += str_level_short[jrec];
-  return res;
 }
 
 void
@@ -251,7 +226,7 @@ void LeptonAssociator::matchLeptonsToSeeds() {
   for (int irec = l3; irec < MAX_LEVELS; irec++) {
     for (unsigned ilep = 0; ilep < leptons[irec].size(); ilep++) {
       const RecoCandidate& lep
-	= toConcrete<RecoCandidate>(leptons[irec][ilep]);
+      	= toConcrete<RecoCandidate>(leptons[irec][ilep]);
       const TrackRef& leptrk = lep.standAloneMuon();
       if (debug) LogVerbatim("matchLeptonsToSeeds")
 	<< "Matching to stand-alone muons, rec level " << irec
@@ -341,15 +316,9 @@ void LeptonAssociator::initialize(const Event& event) {
   // Store views to the leptons from the event.
   Handle<View<Candidate> > hview;
   for (int irec = 0; irec < MAX_LEVELS; irec++) {
-    bool ok = true;
-    try {
-      event.getByLabel(inputs[irec], hview);
-    } catch (const cms::Exception& e) {
-      //if (hview.failedToGet()) {
-      ok = false;
-    }
-
-    leptons[irec] = ok ? *hview : emptyView;
+    View<Candidate> view;
+    bool ok = recLevelHelper.getView(event, irec, view);
+    leptons[irec] = ok ? view : emptyView;
   }
 
   // Store a view to the photons as well.
@@ -387,11 +356,13 @@ void LeptonAssociator::produce(Event& event,
       auto_ptr<CandViewMatchMap> photonMatchMap(new CandViewMatchMap);
       minDeltaRMatch(photonMatchMap, leptons[irec], photons,
 		     irec, -1);
-      event.put(photonMatchMap, makeMatchMapName(PHOTON, irec));
+      event.put(photonMatchMap,
+		recLevelHelper.makeMatchMapName(RecLevelHelper::PHOTON, irec));
 
       // Store (by copying) seed indices for later inspection.
       auto_ptr<vector<int> > seeds(new vector<int>(seedIndex[irec]));
-      event.put(seeds, makeMatchMapName(SEED, irec));
+      event.put(seeds,
+		recLevelHelper.makeMatchMapName(RecLevelHelper::SEED, irec));
     }
 
     for (int jrec = 0; jrec < MAX_LEVELS; jrec++) {
@@ -400,13 +371,17 @@ void LeptonAssociator::produce(Event& event,
 	auto_ptr<CandViewMatchMap> closestMatchMap(new CandViewMatchMap);
 	minDeltaRMatch(closestMatchMap, leptons[irec], leptons[jrec],
 		       irec, jrec);
-	event.put(closestMatchMap, makeMatchMapName(CLOSEST, irec, jrec));
+	event.put(closestMatchMap,
+		  recLevelHelper.makeMatchMapName(RecLevelHelper::CLOSEST,
+						  irec, jrec));
 
 	if (irec >= l3 && jrec >= l3) {
 	  // Store by-seed matches for all globally-fit leptons.
 	  auto_ptr<CandViewMatchMap> seedMatchMap(new CandViewMatchMap);
 	  matchBySeed(seedMatchMap, irec, jrec);
-	  event.put(seedMatchMap, makeMatchMapName(SEED, irec, jrec));
+	  event.put(seedMatchMap,
+		    recLevelHelper.makeMatchMapName(RecLevelHelper::SEED,
+						    irec, jrec));
 	}
       }
     }

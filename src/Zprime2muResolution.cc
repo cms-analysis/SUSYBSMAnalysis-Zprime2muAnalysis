@@ -210,10 +210,10 @@ void Zprime2muResolution::BookResHistos() {
 				      peakMass);
     }
 
-    string titl = str_level[i] + ", all muons";
+    string titl = recLevelHelper.levelName(i) + ", all muons";
     SumPtR03[i][0] = fs->make<TH1F>(nameHist("SumPtR03", i, 0).c_str(),
-				    str_level[i].c_str(), 30, 0, 30);
-    titl = str_level[i] + ", w/ opp-sign dimuon";
+				    recLevelHelper.levelName(i).c_str(), 30, 0, 30);
+    titl = recLevelHelper.levelName(i) + ", w/ opp-sign dimuon";
     SumPtR03[i][1] = fs->make<TH1F>(nameHist("SumPtR03", i, 1).c_str(),
 				    titl.c_str(), 30, 0, 30);
 
@@ -244,7 +244,7 @@ void Zprime2muResolution::BookResHistos() {
 				      100, 0., peakMass,
 				      100, 0., peakMass);
     }
-    string tit = "Opp-sign Dilepton Mass, " + str_level[i];
+    string tit = "Opp-sign Dilepton Mass, " + recLevelHelper.levelName(i);
     AllDilMass[i] =
       fs->make<TH1F>(nameHist("AllDilMass", i).c_str(), tit.c_str(), 50, 0., upperMassWin);
 
@@ -293,11 +293,11 @@ void Zprime2muResolution::BookResHistos() {
 
   // Differences between different levels of reconstruction
   for (int i = l1; i <= MAX_LEVELS; i++) {
-    string tit_eta = str_level[i] + " eta - Gen eta";
-    string tit_phi = str_level[i] + " phi - Gen phi";
-    string tit_pt  = str_level[i] + " pT - Gen pT";
-    string tit_p   = "(" + str_level[i] + " P - Gen P)/(Gen P)";
-    string tit_ppr = "(" + str_level[i] + " P - Gen P)/(Gen P) vs Gen P";
+    string tit_eta = recLevelHelper.levelName(i) + " eta - Gen eta";
+    string tit_phi = recLevelHelper.levelName(i) + " phi - Gen phi";
+    string tit_pt  = recLevelHelper.levelName(i) + " pT - Gen pT";
+    string tit_p   = "(" + recLevelHelper.levelName(i) + " P - Gen P)/(Gen P)";
+    string tit_ppr = "(" + recLevelHelper.levelName(i) + " P - Gen P)/(Gen P) vs Gen P";
     if (i == l1) {
       EtaRes[i] = fs->make<TH1F>(nameHist("EtaRes", i).c_str(), tit_eta.c_str(), 100, -0.1,  0.1);
       PhiRes[i] = fs->make<TH1F>(nameHist("PhiRes", i).c_str(), tit_phi.c_str(), 100, -0.1,  0.1);
@@ -455,11 +455,11 @@ void Zprime2muResolution::BookEffHistos() {
   const double pi = TMath::Pi();
   string tit;
   for (int i = lgen; i <= MAX_LEVELS; i++) {
-    tit = "Gen eta, " + str_level[i] + " muons";
+    tit = "Gen eta, " + recLevelHelper.levelName(i) + " muons";
     EffVsEta[i] = fs->make<TH1F>(nameHist("EffVsEta", i).c_str(), tit.c_str(), 50, -2.5, 2.5);
-    tit = "Gen phi, " + str_level[i] + " muons";
+    tit = "Gen phi, " + recLevelHelper.levelName(i) + " muons";
     EffVsPhi[i] = fs->make<TH1F>(nameHist("EffVsPhi", i).c_str(), tit.c_str(), 63,  -pi, pi);
-    tit = "Gen pT, "  + str_level[i] + " muons";
+    tit = "Gen pT, "  + recLevelHelper.levelName(i) + " muons";
     EffVsPt[i]  = fs->make<TH1F>(nameHist("EffVsPt", i).c_str(), tit.c_str(), 35,  0., 3500.);
   }
 
@@ -600,7 +600,7 @@ void Zprime2muResolution::BookDilResHistos(){
     else                    mass_min = lowerMassWin;
     for (int j = 0; j < 2; j++) {
       DilMassComp[i][j] =
-	fs->make<TH1F>(nameHist("DilMassComp", i, j).c_str(), str_level[i].c_str(),
+	fs->make<TH1F>(nameHist("DilMassComp", i, j).c_str(), recLevelHelper.levelName(i).c_str(),
 		       binSize, mass_min, mass_max);
     }
   }
@@ -616,10 +616,10 @@ void Zprime2muResolution::BookDilResHistos(){
   for (int i = l1; i <= MAX_LEVELS; i++) {
     for (int j = 0; j < 6; j++) {
       if (i == l1 || i == l2) {
-	DilMassRes[i][j] = fs->make<TH1F>(nameHist("DilMassRes", i, j).c_str(), str_level[i].c_str(), 100, -1.,  1.);
+	DilMassRes[i][j] = fs->make<TH1F>(nameHist("DilMassRes", i, j).c_str(), recLevelHelper.levelName(i).c_str(), 100, -1.,  1.);
       }
       else {
-	DilMassRes[i][j] = fs->make<TH1F>(nameHist("DilMassRes", i, j).c_str(), str_level[i].c_str(), 100, -0.3, 0.3);
+	DilMassRes[i][j] = fs->make<TH1F>(nameHist("DilMassRes", i, j).c_str(), recLevelHelper.levelName(i).c_str(), 100, -0.3, 0.3);
       }
     }
   }
@@ -631,7 +631,7 @@ void Zprime2muResolution::BookDilResHistos(){
   // Dilepton pT resolution
   DilPtRes[0] = 0;
   for (int i = l1; i <= MAX_LEVELS; i++) {
-    DilPtRes[i] = fs->make<TH1F>(nameHist("DilPtRes", i).c_str(), str_level[i].c_str(), 100, -1., 4.);
+    DilPtRes[i] = fs->make<TH1F>(nameHist("DilPtRes", i).c_str(), recLevelHelper.levelName(i).c_str(), 100, -1., 4.);
   }
 
   MuPVsMuM[0] = fs->make<TH2F>("MuPVsMuM0", "pT Rel Error for dM > 0.1", 100, 0., 1.,
@@ -642,7 +642,7 @@ void Zprime2muResolution::BookDilResHistos(){
 
 void Zprime2muResolution::BookChargeResHistos() {
   for (int i = l1; i <= MAX_LEVELS; i++) {
-    string tit = str_level[i] + " charge - Gen charge";
+    string tit = recLevelHelper.levelName(i) + " charge - Gen charge";
     QRes[i] = fs->make<TH1F>(nameHist("QRes", i).c_str(), tit.c_str(), 7, -3.5, 3.5);
   }
 
@@ -891,7 +891,7 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	  }
 
 	if (debug) {
-	  LogTrace("Zprime2muResolution") << str_level[i_rec] << " values:";
+	  LogTrace("Zprime2muResolution") << recLevelHelper.levelName(i_rec) << " values:";
 	  LogTrace("Zprime2muResolution")
 	    << "#|Charge |   Eta   |   Phi   |    P    |"
 	    << "    Pt   |    Pz   |   Rap   |  Mass  ";
@@ -2075,7 +2075,7 @@ void Zprime2muResolution::DrawResHistos() {
   for (int irec = 1; irec <= MAX_LEVELS; irec++) {
     pad[page]->cd(irec);  gPad->SetGrid(1);
     effvseta[irec] = (TH1F*)EffVsEta[irec]->Clone();
-    histtitle = str_level[irec] + " muon efficiency vs eta";
+    histtitle = recLevelHelper.levelName(irec) + " muon efficiency vs eta";
     effvseta[irec]->SetTitle(histtitle.c_str());
     effvseta[irec]->Divide(EffVsEta[irec], EffVsEta[0], 1., 1., "B");
     effvseta[irec]->SetMinimum(0.60);  effvseta[irec]->SetMaximum(1.02);
@@ -2116,7 +2116,7 @@ void Zprime2muResolution::DrawResHistos() {
 	histtitle = "Trigger eff. (#eta < 2.4) vs mass, ";
       else if (j == 2)
 	histtitle = "Trigger eff. (#eta < 2.1) vs mass, ";
-      histtitle += str_level[irec];
+      histtitle += recLevelHelper.levelName(irec);
       rat[irec][j]->SetTitle(histtitle.c_str());
       rat[irec][j]->Divide(TrigMass[irec][j], TrigMass[0][j], 1., 1., "B");
       rat[irec][j]->SetMinimum(0.89); rat[irec][j]->SetMaximum(1.01);
@@ -2263,7 +2263,7 @@ void Zprime2muResolution::DrawResHistos() {
     ps->NewPage();
     c1->Clear();
     c1->cd(0);
-    tit = str_level[i] + " Values, all Muons";
+    tit = recLevelHelper.levelName(i) + " Values, all Muons";
     delete title; title = new TPaveLabel(0.1,0.94,0.9,0.98,tit.c_str());
     title->SetFillColor(10);
     title->Draw();
@@ -2289,7 +2289,7 @@ void Zprime2muResolution::DrawResHistos() {
       ps->NewPage();
       c1->Clear();
       c1->cd(0);
-      tit = str_part[j] + " " + str_level[i] + " Values";
+      tit = str_part[j] + " " + recLevelHelper.levelName(i) + " Values";
       delete title; title = new TPaveLabel(0.1,0.94,0.9,0.98,tit.c_str());
       title->SetFillColor(10);
       title->Draw();
@@ -2315,7 +2315,7 @@ void Zprime2muResolution::DrawResHistos() {
     ps->NewPage();
     c1->Clear();
     c1->cd(0);
-    tit = str_part[2] + " " + str_level[i_rec] + " Values";
+    tit = str_part[2] + " " + recLevelHelper.levelName(i_rec) + " Values";
     delete title; title = new TPaveLabel(0.1,0.94,0.9,0.98,tit.c_str());
     title->SetFillColor(10);
     title->Draw();
@@ -2560,7 +2560,7 @@ void Zprime2muResolution::DrawResHistos() {
   // P resolution
   TH1F *PResVsPMod[MAX_LEVELS+1];
   for (int i_rec = l1; i_rec <= MAX_LEVELS; i_rec++) {
-    histtitle = "Sqrt(Var((" + str_level[i_rec] + "-Gen P)/Gen P)) vs Gen P";
+    histtitle = "Sqrt(Var((" + recLevelHelper.levelName(i_rec) + "-Gen P)/Gen P)) vs Gen P";
     nbins = PResVsP[i_rec]->GetNbinsX();
     PResVsPMod[i_rec] =
       fs->make<TH1F>(nameHist("PResVsPMod", i_rec).c_str(),
@@ -2816,7 +2816,7 @@ void Zprime2muResolution::DrawResHistos() {
     }
     pad[page]->cd(2*i_rec+1);  MassResScat[i_rec]->Draw();
 
-    histtitle = "Sqrt(Var((" + str_level[i_rec+1] +
+    histtitle = "Sqrt(Var((" + recLevelHelper.levelName(i_rec+1) +
       "-Gen Mass)/Gen Mass)) vs Gen Mass";
     nbins = GenDilMassFrResScat[i_rec]->GetNbinsX();
     MassFrResScat[i_rec] =

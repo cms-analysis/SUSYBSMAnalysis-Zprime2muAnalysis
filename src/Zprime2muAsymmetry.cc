@@ -400,7 +400,7 @@ void Zprime2muAsymmetry::bookFrameHistos() {
   cosCSRes[1] = fs->make<TH1F>("cosCSRes1", "L2 cos CS - Gen cos CS", 100, -0.25,  0.25);
   cosCSRes[2] = fs->make<TH1F>("cosCSRes2", "L3 cos CS - Gen cos CS", 100, -0.005, 0.005);
   for (int j = 3; j < MAX_LEVELS; j++) {
-    string title = str_level[j] + " cos CS - Gen cos CS";
+    string title = recLevelHelper.levelName(j) + " cos CS - Gen cos CS";
     cosCSRes[j] = fs->make<TH1F>(nameHist("cosCSRes", j).c_str(), title.c_str(), 100, -0.005, 0.005);
   }
   cosCS3_diffsq_vs_cosCS0 = fs->make<TProfile>("cosCS3_diffsq_vs_cosCS0",
@@ -841,7 +841,7 @@ void Zprime2muAsymmetry::fillFrameHistos() {
       if (debug) {
 	ostringstream out;
 	TLorentzVector tempV;
-	out << str_level[i_rec] << " values:" << endl;
+	out << recLevelHelper.levelName(i_rec) << " values:" << endl;
 	out << "#|Charge |   Eta   |   Phi   |    P    |"
 	    << "    Pt   |    Pz   |   Rap   |  Mass  " << endl;
 	out << "-------------------------------------------------"
@@ -3086,7 +3086,7 @@ void Zprime2muAsymmetry::drawFrameHistos() {
     ps->NewPage();
     c1->Clear();
     c1->cd(0);
-    tit = str_level[i_rec] + " Gottfried-Jackson Frame";
+    tit = recLevelHelper.levelName(i_rec) + " Gottfried-Jackson Frame";
     title = new TPaveLabel(0.1,0.94,0.9,0.98,tit.c_str());
     title->SetFillColor(10);
     title->Draw();
@@ -3121,7 +3121,7 @@ void Zprime2muAsymmetry::drawFrameHistos() {
     ps->NewPage();
     c1->Clear();
     c1->cd(0);
-    tit = str_level[i_rec] + " Collins-Soper Frame";
+    tit = recLevelHelper.levelName(i_rec) + " Collins-Soper Frame";
     title = new TPaveLabel(0.1,0.94,0.9,0.98,tit.c_str());
     title->SetFillColor(10);
     title->Draw();
@@ -3192,7 +3192,7 @@ void Zprime2muAsymmetry::drawFrameHistos() {
     ps->NewPage();
     c1->Clear();
     c1->cd(0);
-    tit = str_level[i_rec] + " Baur-Boost Frame";
+    tit = recLevelHelper.levelName(i_rec) + " Baur-Boost Frame";
     title = new TPaveLabel(0.1,0.94,0.9,0.98,tit.c_str());
     title->SetFillColor(10);
     title->Draw();
@@ -3229,7 +3229,7 @@ void Zprime2muAsymmetry::drawFrameHistos() {
     ps->NewPage();
     c1->Clear();
     c1->cd(0);
-    tit = str_level[i_rec] + " Wulz Frame";
+    tit = recLevelHelper.levelName(i_rec) + " Wulz Frame";
     title = new TPaveLabel(0.1,0.94,0.9,0.98,tit.c_str());
     title->SetFillColor(10);
     title->Draw();

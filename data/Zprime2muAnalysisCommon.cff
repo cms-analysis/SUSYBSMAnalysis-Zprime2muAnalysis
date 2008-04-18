@@ -30,6 +30,13 @@ module muCandL1 = L1MuonSanitizer {
   InputTag src = l1extraParticles
 }
 
+# "Sanitize" the L2 muons, i.e. in case there is no
+# hltL2MuonCandidates collection in the event, put an empty one in
+# (otherwise just copy the existing one).
+module muCandL2 = L2MuonSanitizer {
+  InputTag src = hltL2MuonCandidates
+}
+
 # "Sanitize" the L3 muons, i.e. make up reco::Muons from
 # reco::MuonTrackLinks (the hltL3MuonCandidates drop some of the extra
 # track information, while the MuonTrackLinksCollection hltL3Muons
@@ -45,7 +52,7 @@ module muCandTK = TrackerOnlyMuonProducer {
 }
 
 sequence makeMuonCandidates = { 
-  genMuons, simMuons, muCandGN, muCandL1, muCandL3, muCandTK
+  genMuons, simMuons, muCandGN, muCandL1, muCandL2, muCandL3, muCandTK
 }
 
 ####################################################################
@@ -115,7 +122,7 @@ block Zprime2muAnalysisCommon = {
   VInputTag muInputs = {
     muCandGN,
     muCandL1, # l1extraParticles
-    hltL2MuonCandidates,
+    muCandL2, # hltL2MuonCandidates,
     muCandL3, # hltL3MuonCandidates,
     muons,
     muCandTK, # muonsTK,

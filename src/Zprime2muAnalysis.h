@@ -334,7 +334,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // Get the seed index (i.e. the index into the stand-alone muon
   // collection) of the candidate.
   int seedIndex(const reco::CandidateBaseRef& cand) const 
-  { return recLevelHelper.seedIndex(cand); }
+  { return doingElectrons ? -1 : recLevelHelper.seedIndex(cand); }
 
   ////////////////////////////////////////////////////////////////////
   // Lepton/dilepton matching
@@ -500,6 +500,12 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // information.
   void dumpLepton(std::ostream& output, reco::CandidateBaseRef cand) const;
 
+  // Print out all the relevant information about the dilepton, and
+  // call dumpLepton on each of its daughters if dumpLeptons is true.
+  void dumpDilepton(std::ostream& output,
+		    const reco::CompositeCandidate& cand,
+		    bool dumpLeptons=false) const;
+
   // Dump the masses of the dileptons formed at each level of
   // reconstruction.
   void dumpDileptonMasses() const;
@@ -513,7 +519,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   void dumpEvent(const bool printGen = false, const bool printL1 = false,
                  const bool printL2 = false, const bool printL3 = false,
                  const bool printBest = false,
-		 const bool printSeeds = false) const;
+		 const bool printDileptons = false) const;
 
   ////////////////////////////////////////////////////////////////////
   // Quality cuts
@@ -566,7 +572,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // passed. This can be directly used as a comparison, since if no
   // cuts are made, then the return value is 0 == false; otherwise it
   // is > 0 == true.
-  unsigned leptonIsCut(const reco::CandidateBaseRef& lepton);
+  unsigned leptonIsCut(const reco::CandidateBaseRef& lepton) const;
 };
 
 // Sorting functors.

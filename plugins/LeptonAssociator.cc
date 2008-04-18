@@ -403,10 +403,12 @@ void LeptonAssociator::produce(Event& event,
 
   for (int irec = fromStart; irec < fromEnd; irec++) {
     if (irec >= l3) {
-      // Store closest photon for all global fit leptons.
+      // Store closest photon for all global fit muons (electrons
+      // already count this?).
       auto_ptr<CandViewMatchMap> photonMatchMap(new CandViewMatchMap);
-      minDeltaRMatch(photonMatchMap, leptons[irec], photons,
-		     irec, -1);
+      if (!doingElectrons)
+	minDeltaRMatch(photonMatchMap, leptons[irec], photons,
+		       irec, -1);
       event.put(photonMatchMap,
 		recLevelHelper.makeMatchMapName(RecLevelHelper::PHOTON, irec));
 

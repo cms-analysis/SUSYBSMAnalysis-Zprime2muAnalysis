@@ -146,6 +146,9 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
     generatedOnly = false;
   }
 
+  if (doingElectrons)
+    useOtherMuonRecos = false;
+
   if (generatedOnly || reconstructedOnly)
     doingGeant4 = false;
 
@@ -203,7 +206,8 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   genParticles = &*genp;
   
   // Store the particles from the resonant interaction especially.
-  storeInteractionParticles(*genParticles, eventNum, intParticles);
+  if (!doingHiggs)
+    storeInteractionParticles(*genParticles, eventNum, intParticles);
 
   // Store per-rec-level information from the event (includes getting
   // all the match maps from the event).
@@ -930,7 +934,7 @@ int Zprime2muAnalysis::recLevel(const reco::CandidateBaseRef& cand) const {
   int level = recLevelHelper.recLevel(cand);
   if (level == lbest) {
     int ndx = id(cand);
-    if (ndx >= 0 && ndx < bestRecLevels.size())
+    if (ndx >= 0 && ndx < int(bestRecLevels.size()))
       level = bestRecLevels[ndx];
   }
   return level;
@@ -1570,45 +1574,69 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
     output << "   Closest photon: " << closestPhoton(cand)
 	   << "   Sum pT (dR<0.3): " << sumptr03 << endl;
     if (!doingElectrons)
-      output << "                             p4: " << cand->p4() << endl
+      output << "   p4 (p, E):                    " << cand->p4() << endl
 	     << "   Combined track: charge: " << setw(2) << glbtrk->charge()
 	     << " p: " << glbtrk->momentum() << endl
-	     << " Standalone track: charge: " << setw(2) << statrk->charge()
+	     << "   Standalone mu : charge: " << setw(2) << statrk->charge()
 	     << " p: " << statrk->momentum() << endl
-	     << "    Tracker track: charge: " << setw(2) << tktrk->charge()
+	     << "   Tracker track : charge: " << setw(2) << tktrk->charge()
 	     << " p: " << tktrk->momentum() << endl;
-
+    output << "   Cut code: " << leptonIsCut(cand) << endl;
   }
+}
+
+void
+Zprime2muAnalysis::dumpDilepton(ostream& output,
+				const reco::CompositeCandidate& cand,
+				bool dumpLeptons) const {
+  output << "Dilepton: charge: " << cand.charge()
+	 << " pt: " << cand.pt() << " eta: " << cand.eta()
+	 << " phi: " << cand.phi() << " mass: " << cand.mass() << endl;
+
+  int larger = dileptonDaughter(cand, 0)->p() > dileptonDaughter(cand, 1)->p() ? 0 : 1;
+  int smaller = larger == 0 ? 1 : 0;
+  const reco::CandidateBaseRef& cand1 = dileptonDaughter(cand, larger);
+  const reco::CandidateBaseRef& cand2 = dileptonDaughter(cand, smaller);
+
+  if (dumpLeptons) {
+    output << "Higher momentum daughter:\n";
+    dumpLepton(output, cand1);
+    output << "Lower momentum daughter:\n";
+    dumpLepton(output, cand2);
+  }
+  else
+    output << "  Higher-p daughter: " << id(cand1)
+	   << " lower-p daughter: " << id(cand2) << endl;
 }
 
 void Zprime2muAnalysis::dumpDileptonMasses() const {
   ostringstream out;
 
   out << "Dilepton masses at levels  ";
-  for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
+  for (int i_rec = 0; i_rec <= MAX_LEVELS; i_rec++) {
     out << " " << i_rec;
-    if (i_rec < MAX_LEVELS-1) out << "      ";
+    if (i_rec < MAX_LEVELS) out << "      ";
   }
 
   out << setw(6) << setprecision(5);
   for (unsigned int i_dil = 0; i_dil < MAX_DILEPTONS; i_dil++) {
     out << "\n Dilepton # " << i_dil << "; dimu mass: ";
-    for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
-      if (allDileptons[i_rec].size() > i_dil)
-	out << allDileptons[i_rec][i_dil].mass();
+    for (int i_rec = 0; i_rec <= MAX_LEVELS; i_rec++) {
+      if (getDileptons(i_rec).size() > i_dil)
+	out << getDileptons(i_rec)[i_dil].mass();
       else
 	out << " ---  ";
-      if (i_rec < MAX_LEVELS-1) out << ", ";
+      if (i_rec < MAX_LEVELS) out << ", ";
     }
     out << "\n";
 
     out << "                res mass: ";
-    for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
+    for (int i_rec = 0; i_rec <= MAX_LEVELS; i_rec++) {
       if (dileptonResonances[i_rec].size() > i_dil)
 	out << dileptonResonances[i_rec][i_dil].mass();
       else
 	out << " ---  ";
-      if (i_rec < MAX_LEVELS-1) out << ", ";
+      if (i_rec < MAX_LEVELS) out << ", ";
     }
   }
 
@@ -1635,8 +1663,8 @@ void Zprime2muAnalysis::dumpDilQuality() const {
 void Zprime2muAnalysis::dumpEvent(const bool printGen, const bool printL1,
 				  const bool printL2, const bool printL3,
 				  const bool printBest,
-				  const bool printSeeds) const {
-  unsigned imu;
+				  const bool printDileptons) const {
+  unsigned imu, idil;
   int irec;
   ostringstream out;
 
@@ -1651,11 +1679,18 @@ void Zprime2muAnalysis::dumpEvent(const bool printGen, const bool printL1,
       out << endl;
     for (imu = 0; imu < allLeptons[irec].size(); imu++)
       dumpLepton(out, allLeptons[irec][imu]);
+    if (printDileptons)
+      for (idil = 0; idil < allDileptons[irec].size(); idil++)
+	dumpDilepton(out, allDileptons[irec][idil]);
+
   }
   if (printBest) {
     out << "\nBest off-line muons: \n";
     for (imu = 0; imu < bestLeptons.size(); imu++)
       dumpLepton(out, bestLeptons[imu]);
+    if (printDileptons)
+      for (idil = 0; idil < bestDileptons.size(); idil++)
+	dumpDilepton(out, bestDileptons[idil]);
   }
   LogTrace("") << out.str();
 }
@@ -1767,7 +1802,7 @@ bool Zprime2muAnalysis::eventIsInteresting() {
   return result;
 }
 
-unsigned Zprime2muAnalysis::leptonIsCut(const reco::CandidateBaseRef& lepton) {
+unsigned Zprime2muAnalysis::leptonIsCut(const reco::CandidateBaseRef& lepton) const {
   unsigned retval = 0;
   
   if (doingElectrons) {

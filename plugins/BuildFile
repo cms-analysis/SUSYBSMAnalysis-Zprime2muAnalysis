@@ -13,6 +13,11 @@
   <use name=DataFormats/L1Trigger>
 </library>
 
+<library file=L2MuonSanitizer.cc name=L2MuonSanitizer>
+  <use name=DataFormats/RecoCandidate>
+  <use name=DataFormats/MuonReco>
+</library>
+
 <library file=L3MuonSanitizer.cc name=L3MuonSanitizer>
   <use name=DataFormats/RecoCandidate>
   <use name=DataFormats/MuonReco>
@@ -31,4 +36,4 @@
   <use name=DataFormats/MuonReco>
 </library>
 
-<flags CXXFLAGS="-O0 -g -DDEBUG">
+//<flags CXXFLAGS="-O0 -g -DDEBUG">

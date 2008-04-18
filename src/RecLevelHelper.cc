@@ -153,6 +153,7 @@ RecLevelHelper::checkRecLevel(const int level, const char* name,
 reco::Particle::LorentzVector
 RecLevelHelper::closestPhoton(const reco::CandidateBaseRef& cand) const {
   int level = recLevel(cand);
+  checkRecLevel(level, "closestPhoton", true);
   // No closest photon for non-global fits.
   if (level < l3)
     return reco::Particle::LorentzVector();
@@ -165,7 +166,12 @@ RecLevelHelper::closestPhoton(const reco::CandidateBaseRef& cand) const {
 }
 
 int RecLevelHelper::seedIndex(const reco::CandidateBaseRef& cand) const {
-  return seedIndices[recLevel(cand)][cand.key()];
+  int level = recLevel(cand);
+  checkRecLevel(level, "seedIndex", true);
+  int which = cand.key();
+  if (which < 0 || which >= seedIndices[level].size())
+    throw cms::Exception("seedIndex") << "Cand id is out of range!\n";
+  return seedIndices[level][which];
 }
 
 const reco::CandidateBaseRef&
@@ -173,6 +179,8 @@ RecLevelHelper::matchLepton(const reco::CandidateBaseRef& lep,
 			    const int level,
 			    int whichMatch) const {
   int oldlevel = recLevel(lep);
+  checkRecLevel(level, "matchLepton", true);
+  checkRecLevel(oldlevel, "matchLepton", true);
 
   if (oldlevel == level)
     return lep;

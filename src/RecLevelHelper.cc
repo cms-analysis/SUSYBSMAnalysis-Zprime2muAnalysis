@@ -67,6 +67,12 @@ bool RecLevelHelper::getView(const edm::Event& event,
   return true;
 }
 
+bool RecLevelHelper::recLevelOkay(const edm::Event& event,
+				  int level) {
+  edm::View<reco::Candidate> view;
+  return getView(event, level, view);
+}
+  
 string RecLevelHelper::makeMatchMapName(RecLevelHelper::MatchType mtype,
 					const int irec,
 					const int jrec) const {
@@ -169,7 +175,7 @@ int RecLevelHelper::seedIndex(const reco::CandidateBaseRef& cand) const {
   int level = recLevel(cand);
   checkRecLevel(level, "seedIndex", true);
   int which = cand.key();
-  if (which < 0 || which >= seedIndices[level].size())
+  if (which < 0 || which >= int(seedIndices[level].size()))
     throw cms::Exception("seedIndex") << "Cand id is out of range!\n";
   return seedIndices[level][which];
 }

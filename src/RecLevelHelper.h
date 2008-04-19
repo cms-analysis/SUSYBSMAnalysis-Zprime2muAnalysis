@@ -44,6 +44,9 @@ class RecLevelHelper {
   bool getView(const edm::Event& event,
 	       int recLevel, edm::View<reco::Candidate>& view);
 
+  // Return whether the rec level has a collection in the event.
+  bool recLevelOkay(const edm::Event& event, int level);
+
   // Helper enums and function to build the match map name for storing
   // in the event. E.g. storing a closest match map from L3 to GMR
   // will get the branch name *_leptonMatches_closestL3GR_*.

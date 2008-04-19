@@ -105,7 +105,6 @@ block Zprime2muAnalysisCommon = {
   ####################################################################
   ## Input tags for particles/trigger paths
   ####################################################################
-  InputTag genMuons = VtxSmeared # source
   InputTag l1ParticleMap = l1extraParticleMap
   # every process puts a TriggerResults product into the event;
   # pick the HLT one
@@ -170,6 +169,74 @@ module bestMatches = LeptonAssociator {
 }
 
 path m = { leptonMatches, bestMuons, bestMatches }
+
+####################################################################
+## Dilepton construction, using ShallowClones so that pointers to
+## the original leptons in the collections above are stored. We
+## perform the desired cuts in the main Zprime2muAnalysis code (e.g.
+## the isolation cut on muons).
+##
+## The repetition will clean up nicely upon the move to python
+## config files using a loop over the collections; switching to
+## python will also allow easy selection between opposite-sign and
+## like-sign, and opposite-flavor and like-flavor.
+####################################################################
+
+module dileptonsGN = CandViewShallowCloneCombiner { 
+  string decay = "muCandGN@+ muCandGN@-"
+  string cut = "mass > 0"
+}
+
+module dileptonsL1 = CandViewShallowCloneCombiner {
+  string decay = "muCandL1@+ muCandL1@-"
+  string cut = "mass > 0"
+}
+
+module dileptonsL2 = CandViewShallowCloneCombiner {
+  string decay = "muCandL2@+ muCandL2@-"
+  string cut = "mass > 0"
+}
+
+module dileptonsL3 = CandViewShallowCloneCombiner {
+  string decay = "muCandL3@+ muCandL3@-"
+  string cut = "mass > 0"
+}
+
+module dileptonsGR = CandViewShallowCloneCombiner {
+  string decay = "muons@+ muons@-"
+  string cut = "mass > 0"
+}
+
+module dileptonsTK = CandViewShallowCloneCombiner {
+  string decay = "muCandTK@+ muCandTK@-"
+  string cut = "mass > 0"
+}
+
+module dileptonsFS = CandViewShallowCloneCombiner {
+  string decay = "muonsFMS@+ muonsFMS@-"
+  string cut = "mass > 0"
+}
+
+module dileptonsPR = CandViewShallowCloneCombiner {
+  string decay = "muonsPMR@+ muonsPMR@-"
+  string cut = "mass > 0"
+}
+
+module dileptonsOP = CandViewShallowCloneCombiner {
+  string decay = "bestMuons@+ bestMuons@-"
+  string cut = "mass > 0"
+}
+
+path dil = { dileptonsGN, dileptonsGR, dileptonsOP }
+
+# Comment out the next two lines if running on electrons, or on files
+# that do not have trigger or the other muon reconstructors, so that
+# the exception that is thrown when the corresponding lepton
+# collections are not found does not stop the processing of every
+# event. (After moving to python config, this will not be necessary.)
+
+path diltrig = { dileptonsL1, dileptonsL2, dileptonsL3 }
+path dilother = { dileptonsTK, dileptonsFS, dileptonsPR }
 
 ####################################################################
 ## Include the TFileService so that histograms get stored to a root

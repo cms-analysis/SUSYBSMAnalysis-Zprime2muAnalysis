@@ -13,24 +13,14 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
 #include "DataFormats/Candidate/interface/CandMatchMap.h"
-#include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/Candidate/interface/CompositeCandidate.h"
-
-#include "DataFormats/Common/interface/AssociationMap.h"
-#include "DataFormats/Common/interface/OneToOne.h"
-#include "DataFormats/Common/interface/OwnVector.h"
-
-#include "DataFormats/EgammaCandidates/interface/Photon.h"
-#include "DataFormats/EgammaCandidates/interface/PhotonFwd.h"
-#include "DataFormats/EgammaCandidates/interface/PixelMatchGsfElectron.h"
+#include "DataFormats/Candidate/interface/CompositeCandidateFwd.h"
 
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/GsfTrackReco/interface/GsfTrack.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticleCandidate.h"
 #include "DataFormats/L1Trigger/interface/L1ParticleMap.h"
-#include "DataFormats/MuonReco/interface/Muon.h"
-#include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
 
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
@@ -40,7 +30,7 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/RecLevelHelper.h"
 
 namespace reco {
-  // JMTBAD this is included in 170 and above
+  // JMTBAD this is included in TrackFwd.h in 170 and above
   typedef edm::RefToBase<reco::Track> TrackBaseRef;
 }
 
@@ -197,11 +187,9 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // bestLeptons before the sorting was done).
   std::vector<int> bestRecLevels;
 
-  // The dilepton collections, stored as CompositeCandidates in an
-  // OwnVector (for compatibility with CandCombiner, if we switch to
-  // using it.)
-  reco::CandidateCollection allDileptons[MAX_LEVELS];
-  reco::CandidateCollection bestDileptons;
+  // The dilepton collections, stored as CompositeCandidates.
+  reco::CompositeCandidateCollection allDileptons[MAX_LEVELS];
+  reco::CompositeCandidateCollection bestDileptons;
 
   // Store separately the "resonance" four-vectors, i.e. leptons plus
   // photons, since the four-vectors in allDileptons are from just
@@ -241,21 +229,16 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // returning a success flag.
   bool storeLeptons(const edm::Event& event, const int rec);
 
-  // Construct a new dilepton from the two specified lepton
-  // candidates, using AddFourMomenta to set up the dilepton.
-  reco::CompositeCandidate* newDilepton(const reco::CandidateBaseRef& dau1,
-					const reco::CandidateBaseRef& dau2);
-
   // Prune a dilepton collection: if more than one dilepton was
   // formed, we accept only those containing distinct leptons. The
   // preference is given to higher mass dilepton over lower mass
   // dilepton (i.e. to the earlier dilepton in the current sort
   // order).
-  void removeDileptonOverlap(reco::CandidateCollection& dileptons);
+  void removeDileptonOverlap(reco::CompositeCandidateCollection& dileptons);
 
   // Consider all possible combinations of l+ and l-, and form
   // dilepton candidates. 
-  void makeDileptons(const int rec);
+  void storeDileptons(const edm::Event& event, const int rec);
 
   // If there is a photon candidate at the phi-eta distance dRmax from 
   // either of the leptons, combine its 4-momentum with that of the dilepton
@@ -318,14 +301,14 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // daughter leptons have the same rec level, or else returning lbest,
   // (since a "best" dilepton can be made up of leptons at different rec
   // levels).
-  int recLevel(const reco::Candidate& cand) const;
+  int recLevel(const reco::CompositeCandidate& cand) const;
 
   // Provide uniform access to allLeptons and bestLeptons by returning a
   // reference to the appropriate collection.
   const LeptonRefVector& getLeptons(const int rec) const;
 
   // Same as getLeptons() but for dileptons.
-  const reco::CandidateCollection& getDileptons(const int rec) const;
+  const reco::CompositeCandidateCollection& getDileptons(const int rec) const;
 
   // Get the four-vector of the closest photon found for cand.
   LorentzVector closestPhoton(const reco::CandidateBaseRef& cand) const
@@ -362,9 +345,9 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // Try to find the dilepton at the new rec level that has the same
   // two leptons as dil. Return success, and return the other dilepton in
   // newdil.
-  bool matchDilepton(const reco::Candidate& dil,
+  bool matchDilepton(const reco::CompositeCandidate& dil,
 		     const int level,
-		     const reco::Candidate* newdil) const;
+		     const reco::CompositeCandidate* newdil) const;
 
   ////////////////////////////////////////////////////////////////////
   // Generator-level utility functions
@@ -476,19 +459,20 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 
   // Count the number of daughters the dilepton has in the specified
   // acceptance in eta.
-  int numDaughtersInAcc(const reco::Candidate& dil, const double etaCut) const;
+  int numDaughtersInAcc(const reco::CompositeCandidate& dil,
+			const double etaCut) const;
 
   // Return a reference to the ith daughter lepton of the dilepton, or
   // an invalid reference if i is out of bounds.
   const reco::CandidateBaseRef
-    dileptonDaughter(const reco::Candidate& dil,
+    dileptonDaughter(const reco::CompositeCandidate& dil,
 		     const unsigned i) const;
 
   // Return a reference to the daughter lepton of the dilepton with
   // specified charge (if it is a same-sign dilepton, will return the
   // first one found), or else an invalid reference if not found.
   const reco::CandidateBaseRef
-    dileptonDaughterByCharge(const reco::Candidate& dil,
+    dileptonDaughterByCharge(const reco::CompositeCandidate& dil,
 			     const int charge) const;
 
   ////////////////////////////////////////////////////////////////////
@@ -531,7 +515,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 
   // Apply the above track quality cuts to each of the daughters of
   // the dilepton, not yet implemented.
-  bool dilQCheck(const reco::Candidate& dilepton, const int qsel,
+  bool dilQCheck(const reco::CompositeCandidate& dilepton, const int qsel,
 		 int& ncut_mum, int& ncut_mup) const;
 
   ////////////////////////////////////////////////////////////////////
@@ -553,12 +537,12 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // in the overlap region, in the endcap, or outside acceptance
   // (nominally 2.4).
   // JMTBAD are the codes for electrons useful?
-  WhereLepton whereIsLepton(const reco::CandidateBaseRef& lepton);
+  WhereLepton whereIsLepton(const reco::CandidateBaseRef& lepton) const;
 
   // Helper method to return a code based on where the leptons of a
   // dilepton are in the lepton system (using the above whereIsLepton method
   // definitions of location).
-  WhereDilepton whereIsDilepton(const reco::Candidate& dil);
+  WhereDilepton whereIsDilepton(const reco::CompositeCandidate& dil) const;
 
   ////////////////////////////////////////////////////////////////////
   // Analysis level function (cuts, etc.)
@@ -566,7 +550,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 
   // Return whether the event is "interesting", used in determining
   // whether to override the verbosity level for dumping the event.
-  bool eventIsInteresting();
+  bool eventIsInteresting() const;
 
   // Checks our defined cut methods and returns a bitmap of which
   // passed. This can be directly used as a comparison, since if no
@@ -576,17 +560,11 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 };
 
 // Sorting functors.
-struct reverse_momentum_sort {
-  bool operator()(const reco::Candidate& lhs, const reco::Candidate& rhs) const {
-    return lhs.p() > rhs.p();
-  }
-  bool operator()(const reco::CandidateBaseRef& lhs, const reco::CandidateBaseRef& rhs) const {
-    return lhs->p() > rhs->p();
-  }
-};
-
 struct reverse_mass_sort {
   bool operator()(const reco::Candidate& lhs, const reco::Candidate& rhs) const {
+    return lhs.mass() > rhs.mass();
+  }
+  bool operator()(const reco::CompositeCandidate& lhs, const reco::CompositeCandidate& rhs) const {
     return lhs.mass() > rhs.mass();
   }
 };

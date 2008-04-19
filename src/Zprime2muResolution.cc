@@ -18,6 +18,8 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
+#include "DataFormats/MuonReco/interface/Muon.h"
+
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muResolution.h"
 
 using namespace std;
@@ -697,7 +699,7 @@ void Zprime2muResolution::calcResolution(const bool debug) {
   double gen_mass = -999.;
   unsigned idi;
   LeptonRefVector::const_iterator plep;
-  reco::CandidateCollection::const_iterator pdi;
+  reco::CompositeCandidateCollection::const_iterator pdi;
 
   if (allDileptons[lgen].size() > 0) {
     // JMTBAD fill the histograms for every dil in the event?
@@ -730,7 +732,7 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 
   // Main loop over generated, L1, L2, L3 and off-line information.
   for (int i_rec = 0; i_rec <= MAX_LEVELS; i_rec++) {
-    const reco::CandidateCollection& dileptons = getDileptons(i_rec);
+    const reco::CompositeCandidateCollection& dileptons = getDileptons(i_rec);
 
     if (i_rec == 0) {
       if (dileptons.size() == 1) { // one di-muon at generation
@@ -1520,7 +1522,7 @@ void Zprime2muResolution::fillDilResHistos(const bool debug) {
       if (cutTrig[rec] && !passTrigger(rec)) return;
     }
 
-    const reco::CandidateCollection& dileptons = getDileptons(rec);
+    const reco::CompositeCandidateCollection& dileptons = getDileptons(rec);
     unsigned int n_dil = dileptons.size();
 
     // Highest mass reconstructed at various trigger levels and by various

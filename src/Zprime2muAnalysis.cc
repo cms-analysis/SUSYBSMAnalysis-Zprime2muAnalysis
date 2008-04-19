@@ -218,18 +218,18 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   // to make the resonance four-vector.
   for (int irec = 0; irec <= MAX_LEVELS; irec++) {
     storeLeptons(event, irec);
-    makeDileptons(irec);
+    storeDileptons(event, irec);
     addBremCandidates(irec);
   }
+
+  // Also store the true generator-level resonance.
+  addTrueResonance(event);
 
   // Retrieve the vector of original rec levels for the best leptons.
   edm::Handle<vector<int> > bestRecs;
   event.getByLabel("bestMuons", bestRecs);
   bestRecLevels = *bestRecs;
   
-  // Also store the true generator-level resonance.
-  addTrueResonance(event);
-
   // Dump the event if appropriate.
   if (verbosity >= VERBOSITY_SIMPLE || eventIsInteresting()) {
     dumpEvent(true,true,true,true,true,true);
@@ -289,8 +289,17 @@ void Zprime2muAnalysis::clearValues() {
 bool Zprime2muAnalysis::storeLeptons(const edm::Event& event,
 				     const int rec) {
   edm::View<reco::Candidate> lepCandView;
-  if (!recLevelHelper.getView(event, rec, lepCandView))
-    return false;
+  if (!recLevelHelper.getView(event, rec, lepCandView)) {
+    if (rec == lbest) {
+      // If there was no such collection in the event and we're trying
+      // to retrieve the "best" leptons, try to use the default global
+      // leptons (lgmr).
+      if (!recLevelHelper.getView(event, lgmr, lepCandView))
+	return false;
+    }
+    else
+      return false;
+  }
 
   const unsigned nlep = lepCandView.size();
   unsigned ilep;
@@ -333,29 +342,17 @@ bool Zprime2muAnalysis::storeLeptons(const edm::Event& event,
   return true;
 }
 
-reco::CompositeCandidate*
-Zprime2muAnalysis::newDilepton(const reco::CandidateBaseRef& dau1,
-			       const reco::CandidateBaseRef& dau2) {
-  reco::CompositeCandidate* dil = new reco::CompositeCandidate;
-  dil->addDaughter(reco::ShallowCloneCandidate(reco::CandidateBaseRef(dau1)));
-  dil->addDaughter(reco::ShallowCloneCandidate(reco::CandidateBaseRef(dau2)));
-  AddFourMomenta addP4;
-  addP4.set(*dil);
-  //dil->setP4(dau1->polarP4() + dau2->polarP4());
-  //dil->setCharge(dau1->charge() + dau2->charge());
-  return dil;
-}
-
 void
-Zprime2muAnalysis::removeDileptonOverlap(reco::CandidateCollection& dileptons) {
-  reco::CandidateCollection::iterator pdi, qdi;
+Zprime2muAnalysis::removeDileptonOverlap(reco::CompositeCandidateCollection& dileptons) {
+  reco::CompositeCandidateCollection::iterator pdi, qdi;
   for (pdi = dileptons.begin(); pdi != dileptons.end() - 1;) {
     for (qdi = pdi+1; qdi != dileptons.end(); qdi++) {
-      const reco::CandidateBaseRef pm = dileptonDaughterByCharge(*pdi, -1);
-      const reco::CandidateBaseRef pp = dileptonDaughterByCharge(*pdi, +1);
-      const reco::CandidateBaseRef qm = dileptonDaughterByCharge(*qdi, -1);
-      const reco::CandidateBaseRef qp = dileptonDaughterByCharge(*qdi, +1);
-      if (id(pm) == id(qm) || id(pp) == id(qp)) {
+      int p0 = id(dileptonDaughter(*pdi, 0));
+      int p1 = id(dileptonDaughter(*pdi, 1));
+      int q0 = id(dileptonDaughter(*qdi, 0));
+      int q1 = id(dileptonDaughter(*qdi, 1));
+      
+      if (p0 == q0 || p0 == q1 || p1 == q1 || p1 == q0) {
 	// If either lepton is shared, remove the second dilepton
 	// (i.e. the one with lower invariant mass since we have
 	// sorted the vector already), reset pointers and restart.
@@ -370,59 +367,64 @@ Zprime2muAnalysis::removeDileptonOverlap(reco::CandidateCollection& dileptons) {
   }
 }
 
-void Zprime2muAnalysis::makeDileptons(const int rec) {
+void Zprime2muAnalysis::storeDileptons(const edm::Event& event,
+				       const int rec) {
   const static bool debug = verbosity >= VERBOSITY_SIMPLE;
-  
-  const LeptonRefVector& leptons = getLeptons(rec);
 
-  if (leptons.size() < 2) {
-    if (debug)
-      LogTrace("makeDileptons")
-	<< "Only " << leptons.size() << " at level " << rec
-	<< ", refusing to try making dileptons!";
+  edm::Handle<reco::CompositeCandidateCollection> hdils;
+  string label = "dileptons" + recLevelHelper.levelName(rec, true);
+  try {
+    event.getByLabel(label, hdils);
+  } catch (const cms::Exception& e) {
+  //if (hview.failedToGet()) {
+    edm::LogWarning("storeDileptons")
+      << "No dileptons found at rec level " << rec << "; ("
+      << getLeptons(rec).size() << " leptons found)";
     return;
   }
 
   // Don't use getDileptons() since we want non-const access.
-  reco::CandidateCollection& dileptons
+  reco::CompositeCandidateCollection& dileptons
     = rec == MAX_LEVELS ? bestDileptons : allDileptons[rec];
 
-  // Dileptons search in reconstructed muons.  First consider all
-  // possible combinations of mu+ and mu-.
-  const int totalCharge = 0;
-  LeptonRefVector::const_iterator plep, qlep;
-  for (plep = leptons.begin(); plep != leptons.end() - 1; plep++)
-    for (qlep = plep+1; qlep != leptons.end(); qlep++)
-      if ((*qlep)->charge() + (*plep)->charge() == totalCharge) {
-	if (rec == lgen) {
-	  // For generator-level dileptons, unless we are told to do
-	  // otherwise by the "constructGenDil" parameter, make
-	  // sure we pick up the actual leptons from the resonance --
-	  // leptons with the same mother that has a PDG id of one of
-	  // the resonances we care about.
-	  if (!constructGenDil) {
-	    const reco::Candidate* mom = sameMother(*plep, *qlep);
-	    if (!mom || !isResonance(mom->pdgId()))
-	      continue;
-	  }
-	}
-	// Apply cuts at levels of reconstruction above
-	// generator-level.
-	else if (leptonIsCut(*plep) || leptonIsCut(*qlep))
+  // Copy the dileptons we want from the vector.
+  reco::CompositeCandidateCollection::const_iterator dil;
+  for (dil = hdils->begin(); dil != hdils->end(); dil++) {
+    if (rec == lgen) {
+      if (!constructGenDil) {
+	// For generator-level dileptons, unless we are told to do
+	// otherwise by the "constructGenDil" parameter, make sure we pick
+	// up the actual leptons from the resonance -- leptons with the
+	// same mother that has a PDG id of one of the resonances we care
+	// about.
+	const reco::Candidate* mom
+	  = sameMother(dileptonDaughter(*dil, 0),
+		       dileptonDaughter(*dil, 1));
+	if (!mom || !isResonance(mom->pdgId()))
 	  continue;
-
-	dileptons.push_back(newDilepton(*plep, *qlep));
       }
+    }
+    else {
+      // Apply cuts to the leptons.
+      if (leptonIsCut(dileptonDaughter(*dil, 0)) ||
+	  leptonIsCut(dileptonDaughter(*dil, 1)))
+	continue;
+    }
+
+    dileptons.push_back(*dil);
+  }
 
   if (debug)
-    LogTrace("makeDileptons") << "Reconstructed " << dileptons.size()
-			      << " dileptons at rec level " << rec;
-
-  // If H -> ZZ* -> 4mu, sort dileptons to look for two highest-mass ones.
+    LogTrace("storeDileptons") << "Reconstructed " << dileptons.size()
+			       << " dileptons at rec level " << rec;
+    
+  // Sort dileptons to look for one or two highest-mass ones.
   if (dileptons.size() > 1)
-    dileptons.sort(reverse_mass_sort());
+    sort(dileptons.begin(), dileptons.end(), reverse_mass_sort());
 
   if (dileptons.size() > 1) {
+    // Remove dileptons of lower invariant mass that are comprised of a
+    // muon that has been used by a higher invariant mass one.
     removeDileptonOverlap(dileptons);
 
     // Store only 1 dilepton for Z' and G*, and two highest mass dileptons
@@ -446,10 +448,10 @@ void Zprime2muAnalysis::addBremCandidates(const int rec) {
   ostringstream out;
   if (debug) out << "addBremCandidates, rec level " << rec << ":\n";
 
-  const reco::CandidateCollection& dileptons = getDileptons(rec);
+  const reco::CompositeCandidateCollection& dileptons = getDileptons(rec);
 
   for (unsigned idi = 0; idi != dileptons.size(); idi++) {
-    const reco::Candidate& dil = dileptons[idi];
+    const reco::CompositeCandidate& dil = dileptons[idi];
     LorentzVector p4 = dil.p4();
     if (debug)
       out << " Dilepton #" << idi << " p4 = " << p4 << endl;
@@ -522,7 +524,7 @@ void Zprime2muAnalysis::addTrueResonance(const edm::Event& event) {
   out << "addTrueResonance:\n";
 
   for (unsigned idi = 0; idi < ndil; idi++) {
-    const reco::Candidate& dil = allDileptons[lgen][idi];
+    const reco::CompositeCandidate& dil = allDileptons[lgen][idi];
     const reco::Candidate* mom = sameMother(dileptonDaughter(dil, 0),
 					    dileptonDaughter(dil, 1));
 
@@ -536,46 +538,46 @@ void Zprime2muAnalysis::addTrueResonance(const edm::Event& event) {
       if (debug) out << "  Found mother resonance; taking its four-vector...\n";
       p4 = mom->p4();
     }
-    else if (constructGenDil) {
+    else {
       p4 = dil.p4();
-      // If we are allowed to construct the generated dilepton, go and
-      // add in the bremmed final-state photons. We obviously cannot
-      // use here the reconstructed photons as in addBremCandidates().
-      // We could also just add the four-vectors of the documentation
-      // leptons. Stick with the former for now.
-      if (debug) out << "  Allowed to construct generator-level dilepton,"
-		     << " finding final-state brem photons...\n";
-      for (unsigned dau = 0; dau < dil.numberOfDaughters(); dau++) {
-	 // Look at the documentation lines for the leptons, and find
-	 // their daughter photons if any.
-	const reco::Candidate* docLepton
-	  = dileptonDaughter(dil, dau)->mother();
-	out << "   Doc lepton: pdgId: " << setw(3) << docLepton->pdgId() 
-	    << " status: " << docLepton->status()
-	    << " ndau: " << docLepton->numberOfDaughters()
-	    << " p4: " << docLepton->p4() << endl;
-	// If docLepton isn't really a documentation line, or it only
-	// has one daughter (the final-state lepton we just came
-	// from), never mind.
-	unsigned nsis = docLepton->numberOfDaughters();
-	if (docLepton->status() == 3 && nsis > 1) {
-	  // docMom's daughters are potentially our lepton's sister photons.
-	  for (unsigned isis = 0; isis < nsis; isis++) {
-	    const reco::Candidate* sis = docLepton->daughter(isis);
-	    out << "   Sister: pdgId: " << sis->pdgId()
-		<< " status: " << sis->status()
-		<< " p4: " << sis->p4();
-	    if (sis->status() == 1 && sis->pdgId() == 22) {
-	      out << ". Found sister photon!";
-	      p4 += sis->p4();
+      if (constructGenDil) {
+	// If we are allowed to construct the generated dilepton, go and
+	// add in the bremmed final-state photons. We obviously cannot
+	// use here the reconstructed photons as in addBremCandidates().
+	// We could also just add the four-vectors of the documentation
+	// leptons. Stick with the former for now.
+	if (debug) out << "  Allowed to construct generator-level dilepton,"
+		       << " finding final-state brem photons...\n";
+	for (unsigned dau = 0; dau < dil.numberOfDaughters(); dau++) {
+	  // Look at the documentation lines for the leptons, and find
+	  // their daughter photons if any.
+	  const reco::Candidate* docLepton
+	    = dileptonDaughter(dil, dau)->mother();
+	  out << "   Doc lepton: pdgId: " << setw(3) << docLepton->pdgId() 
+	      << " status: " << docLepton->status()
+	      << " ndau: " << docLepton->numberOfDaughters()
+	      << " p4: " << docLepton->p4() << endl;
+	  // If docLepton isn't really a documentation line, or it only
+	  // has one daughter (the final-state lepton we just came
+	  // from), never mind.
+	  unsigned nsis = docLepton->numberOfDaughters();
+	  if (docLepton->status() == 3 && nsis > 1) {
+	    // docMom's daughters are potentially our lepton's sister photons.
+	    for (unsigned isis = 0; isis < nsis; isis++) {
+	      const reco::Candidate* sis = docLepton->daughter(isis);
+	      out << "   Sister: pdgId: " << sis->pdgId()
+		  << " status: " << sis->status()
+		  << " p4: " << sis->p4();
+	      if (sis->status() == 1 && sis->pdgId() == 22) {
+		out << ". Found sister photon!";
+		p4 += sis->p4();
+	      }
+	      out << endl;
 	    }
-	    out << endl;
 	  }
 	}
       }
     }
-    else
-      p4 = dil.p4();
     
     dileptonResonances[lgen].push_back(p4);
 
@@ -940,7 +942,7 @@ int Zprime2muAnalysis::recLevel(const reco::CandidateBaseRef& cand) const {
   return level;
 }
 
-int Zprime2muAnalysis::recLevel(const reco::Candidate& dil) const {
+int Zprime2muAnalysis::recLevel(const reco::CompositeCandidate& dil) const {
   int rec = -1;
   for (unsigned ilep = 0; ilep < dil.numberOfDaughters(); ilep++) {
     int r = recLevel(dileptonDaughter(dil, ilep));
@@ -960,7 +962,7 @@ Zprime2muAnalysis::getLeptons(const int rec) const {
   return rec < MAX_LEVELS ? allLeptons[rec] : bestLeptons;
 }
 
-const reco::CandidateCollection&
+const reco::CompositeCandidateCollection&
 Zprime2muAnalysis::getDileptons(const int rec) const {
   recLevelHelper.checkRecLevel(rec, "getDileptons");
   return rec < MAX_LEVELS ? allDileptons[rec] : bestDileptons;
@@ -970,9 +972,9 @@ Zprime2muAnalysis::getDileptons(const int rec) const {
 // Lepton/dilepton matching
 ////////////////////////////////////////////////////////////////////
 
-bool Zprime2muAnalysis::matchDilepton(const reco::Candidate& dil,
+bool Zprime2muAnalysis::matchDilepton(const reco::CompositeCandidate& dil,
 				      const int level,
-				      const reco::Candidate* newdil) const {
+				      const reco::CompositeCandidate* newdil) const {
   const reco::CandidateBaseRef& lepp
     = matchedLepton(dileptonDaughterByCharge(dil, +1), level);
   const reco::CandidateBaseRef& lepm
@@ -980,7 +982,7 @@ bool Zprime2muAnalysis::matchDilepton(const reco::Candidate& dil,
   int idp = id(lepp), idm = id(lepm);
   
   // look for a dilepton at that level which has the same two leptons
-  const reco::CandidateCollection& dileptons = getDileptons(level);
+  const reco::CompositeCandidateCollection& dileptons = getDileptons(level);
   for (unsigned idi = 0; idi < dileptons.size(); idi++)
     if (id(dileptonDaughterByCharge(dileptons[idi], +1)) == idp &&
 	id(dileptonDaughterByCharge(dileptons[idi], -1)) == idm) {
@@ -1107,8 +1109,8 @@ bool Zprime2muAnalysis::storeInteractionParticles(
 
   if (iq != 1) { 
     edm::LogWarning("storeInteractionParticles")
-      << "+++ Found " << iq << " quarks in the hard interaction;"
-      << " skip the event # " << eventNum << " +++\n";
+      << "Found " << iq << " quarks in the hard interaction; "
+      << "aborting storeInteractionParticles";
     return false;
   }
 
@@ -1410,7 +1412,7 @@ Zprime2muAnalysis::resV(const int rec, const int idil) const {
   return dileptonResonances[rec][idil];
 }
 
-int Zprime2muAnalysis::numDaughtersInAcc(const reco::Candidate& dil,
+int Zprime2muAnalysis::numDaughtersInAcc(const reco::CompositeCandidate& dil,
 					 const double etaCut) const {
   int count = 0;
   for (unsigned ilep = 0; ilep < dil.numberOfDaughters(); ilep++)
@@ -1420,7 +1422,7 @@ int Zprime2muAnalysis::numDaughtersInAcc(const reco::Candidate& dil,
 }
 
 const reco::CandidateBaseRef
-Zprime2muAnalysis::dileptonDaughter(const reco::Candidate& dil,
+Zprime2muAnalysis::dileptonDaughter(const reco::CompositeCandidate& dil,
 				    const unsigned i) const {
   if (i < 0 || i >= dil.numberOfDaughters())
     return reco::CandidateBaseRef(); // an invalid reference
@@ -1428,7 +1430,7 @@ Zprime2muAnalysis::dileptonDaughter(const reco::Candidate& dil,
 }
 
 const reco::CandidateBaseRef
-Zprime2muAnalysis::dileptonDaughterByCharge(const reco::Candidate& dil,
+Zprime2muAnalysis::dileptonDaughterByCharge(const reco::CompositeCandidate& dil,
 					    const int charge) const {
   for (unsigned ilep = 0; ilep < dil.numberOfDaughters(); ilep++) {
     if (dil.daughter(ilep)->charge() == charge)
@@ -1572,16 +1574,16 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
     }
 
     output << "   Closest photon: " << closestPhoton(cand)
-	   << "   Sum pT (dR<0.3): " << sumptr03 << endl;
+	   << "   Sum pT (dR<0.3): " << sumptr03
+	   << "   Cut code  " << leptonIsCut(cand) << endl
+	   << "   p4 (p, E):                    " << cand->p4() << endl;
     if (!doingElectrons)
-      output << "   p4 (p, E):                    " << cand->p4() << endl
-	     << "   Combined track: charge: " << setw(2) << glbtrk->charge()
+      output << "   Combined track: charge: " << setw(2) << glbtrk->charge()
 	     << " p: " << glbtrk->momentum() << endl
 	     << "   Standalone mu : charge: " << setw(2) << statrk->charge()
 	     << " p: " << statrk->momentum() << endl
 	     << "   Tracker track : charge: " << setw(2) << tktrk->charge()
 	     << " p: " << tktrk->momentum() << endl;
-    output << "   Cut code: " << leptonIsCut(cand) << endl;
   }
 }
 
@@ -1682,7 +1684,6 @@ void Zprime2muAnalysis::dumpEvent(const bool printGen, const bool printL1,
     if (printDileptons)
       for (idil = 0; idil < allDileptons[irec].size(); idil++)
 	dumpDilepton(out, allDileptons[irec][idil]);
-
   }
   if (printBest) {
     out << "\nBest off-line muons: \n";
@@ -1692,6 +1693,7 @@ void Zprime2muAnalysis::dumpEvent(const bool printGen, const bool printL1,
       for (idil = 0; idil < bestDileptons.size(); idil++)
 	dumpDilepton(out, bestDileptons[idil]);
   }
+  
   LogTrace("") << out.str();
 }
 
@@ -1705,7 +1707,7 @@ bool Zprime2muAnalysis::TrackQCheck(const reco::CandidateBaseRef& lepton,
   return true;
 }
 
-bool Zprime2muAnalysis::dilQCheck(const reco::Candidate& dilepton,
+bool Zprime2muAnalysis::dilQCheck(const reco::CompositeCandidate& dilepton,
 				  const int qsel, int& ncut_mum,
 				  int& ncut_mup) const {
   // JMTBAD not implemented
@@ -1739,7 +1741,7 @@ bool Zprime2muAnalysis::passTrigger() const {
 ////////////////////////////////////////////////////////////////////
 
 Zprime2muAnalysis::WhereLepton
-Zprime2muAnalysis::whereIsLepton(const reco::CandidateBaseRef& lepton) {
+Zprime2muAnalysis::whereIsLepton(const reco::CandidateBaseRef& lepton) const {
   double abseta = fabs(lepton->eta());
   if (doingElectrons) {
     // JMTBAD are these numbers taken from ECAL TDR applicable/useful?
@@ -1756,7 +1758,7 @@ Zprime2muAnalysis::whereIsLepton(const reco::CandidateBaseRef& lepton) {
 }
 
 Zprime2muAnalysis::WhereDilepton
-Zprime2muAnalysis::whereIsDilepton(const reco::Candidate& dil) {
+Zprime2muAnalysis::whereIsDilepton(const reco::CompositeCandidate& dil) const {
   WhereLepton wlep1 = whereIsLepton(dileptonDaughter(dil, 0));
   WhereLepton wlep2 = whereIsLepton(dileptonDaughter(dil, 1));
   // get a unique ordering so testing below is easier
@@ -1783,11 +1785,11 @@ Zprime2muAnalysis::whereIsDilepton(const reco::Candidate& dil) {
 // Analysis level function (cuts, etc.)
 ////////////////////////////////////////////////////////////////////
 
-bool Zprime2muAnalysis::eventIsInteresting() {
+bool Zprime2muAnalysis::eventIsInteresting() const {
   return false;
   bool result = false;
   if (bestDileptons.size() > 0) {
-    const reco::Candidate& dil = bestDileptons[0];
+    const reco::CompositeCandidate& dil = bestDileptons[0];
     if (dil.mass() > 800)
       result = true;
     const reco::CandidateBaseRef mum = dileptonDaughterByCharge(dil, -1);

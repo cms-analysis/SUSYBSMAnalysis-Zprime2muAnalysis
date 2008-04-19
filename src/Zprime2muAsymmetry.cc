@@ -612,7 +612,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 
     // Loop over all generated dimuons
     for (unsigned int i_dil = 0; i_dil < n_gen; i_dil++) {
-      const reco::Candidate& gen_dil = allDileptons[lgen][i_dil];
+      const reco::CompositeCandidate& gen_dil = allDileptons[lgen][i_dil];
       const reco::CandidateBaseRef& gen_mum = 
 	dileptonDaughterByCharge(gen_dil, -1);
       const reco::CandidateBaseRef& gen_mup = 
@@ -829,7 +829,7 @@ void Zprime2muAsymmetry::fillFrameHistos() {
 
     //Look for an opposite-sign dilepton at this level of reconstruction.
     for (unsigned i_dil = 0; i_dil < allDileptons[i_rec].size(); i_dil++) {
-      const reco::Candidate& dil = allDileptons[i_rec][i_dil];
+      const reco::CompositeCandidate& dil = allDileptons[i_rec][i_dil];
       const reco::CandidateBaseRef& mum = dileptonDaughterByCharge(dil, -1);
       const reco::CandidateBaseRef& mup = dileptonDaughterByCharge(dil, +1);
       

@@ -199,7 +199,7 @@ void Zprime2muMassReach::dilMassPlots(const bool debug) {
       if (i == 0)      rec = lgmr;
       else if (i == 1) rec = lbest;
     }
-    const reco::CandidateCollection& dileptons = getDileptons(rec);
+    const reco::CompositeCandidateCollection& dileptons = getDileptons(rec);
 
     if (dileptons.size() > 0) {
       if (DO_QCUTS ?
@@ -266,7 +266,7 @@ void Zprime2muMassReach::fillMassArrays() {
   }
   else
     rec = lbest;
-  const reco::CandidateCollection& recdi = getDileptons(rec);
+  const reco::CompositeCandidateCollection& recdi = getDileptons(rec);
 
   for (unsigned idi = 0; idi < recdi.size(); idi++) {
     // Check the "off-line" track quality and apply the cuts

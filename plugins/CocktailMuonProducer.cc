@@ -41,7 +41,7 @@ private:
 
   // The driver routine which uses the cocktail method above to pick
   // "best" muons.
-  void findBestMuons(const Event& event,
+  bool findBestMuons(const Event& event,
 		     const auto_ptr<MuonCollection>& bestMuons);
 
   bool debug;
@@ -49,8 +49,12 @@ private:
   // Keep some statistics on what the cocktail picked.
   int ntrk, ngmr, nfms, npmr, ngpr, ntot;
 
-  // whether to use the TMR cocktail or Piotr's.
+  // Whether to use the TMR cocktail or Piotr's.
   bool useTMR;
+
+  // If there are no extra TeV muon collections in the event, then
+  // don't bother producing anything.
+  bool useOtherMuonRecos;
 
   // Object to help with per-rec-level information.
   RecLevelHelper recLevelHelper;
@@ -69,7 +73,8 @@ private:
 
 CocktailMuonProducer::CocktailMuonProducer(const ParameterSet& cfg)
   : debug(cfg.getUntrackedParameter<int>("verbosity", 0) > 0),
-    useTMR(cfg.getParameter<bool>("useTMR"))
+    useTMR(cfg.getParameter<bool>("useTMR")),
+    useOtherMuonRecos(cfg.getParameter<bool>("useOtherMuonRecos"))
 {
   recLevelHelper.init(cfg);
   ntrk = ngmr = nfms = npmr = ngpr = ntot = 0;
@@ -151,15 +156,15 @@ CocktailMuonProducer::cocktailMuon(const reco::CandidateBaseRef& trk) const {
   else                     return invalidRef;
 }
 
-void CocktailMuonProducer::findBestMuons(const Event& event,
+bool CocktailMuonProducer::findBestMuons(const Event& event,
 					 const auto_ptr<MuonCollection>& bestMuons) {
   // Start with tracker-only tracks.
   View<Candidate> trackerOnlyMuons;
   if (!recLevelHelper.getView(event, ltk, trackerOnlyMuons)) {
     edm::LogWarning("findBestMuons")
-      << "Unable to get a view to the tracker-only muons; putting empty"
+      << "Unable to get a view to the tracker-only muons; putting no"
       << " collection into event for 'best' muons.";
-    return;
+    return false;
   }
 
   if (debug) LogTrace("findBestMuons") << "Finding best muons for event #"
@@ -207,10 +212,19 @@ void CocktailMuonProducer::findBestMuons(const Event& event,
     else // i.e. an invalid result
       edm::LogWarning("findBestMuons") << " --> reject muon\n";
   }
+
+  // Even if we rejected all muons, still put an empty collection into
+  // the event so consumers know we were run.
+  return true;
 }
 
 void CocktailMuonProducer::produce(Event& event,
 				   const EventSetup& eSetup) {
+  // If we're not to bother, put no collection into the event that way
+  // consumers know to just get the default global muons.
+  if (!useOtherMuonRecos)
+    return;
+
   // Initialize things.
   recLevelHelper.initEvent(event);
   muonSources.clear();
@@ -218,12 +232,14 @@ void CocktailMuonProducer::produce(Event& event,
   // Find the "best" muons according to the chosen cocktail, and put
   // them in the event.
   auto_ptr<MuonCollection> bestMuons(new MuonCollection);
-  findBestMuons(event, bestMuons);
-  event.put(bestMuons);
 
-  // Store (by copying) original rec levels for later inspection.
-  auto_ptr<vector<int> > sources(new vector<int>(muonSources));
-  event.put(sources);
+  if (findBestMuons(event, bestMuons)) {
+    event.put(bestMuons);
+
+    // Store (by copying) original rec levels for later inspection.
+    auto_ptr<vector<int> > sources(new vector<int>(muonSources));
+    event.put(sources);
+  }
 }
 
 DEFINE_FWK_MODULE(CocktailMuonProducer);

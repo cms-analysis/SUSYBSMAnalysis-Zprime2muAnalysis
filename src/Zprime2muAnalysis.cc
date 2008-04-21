@@ -225,11 +225,19 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   // Also store the true generator-level resonance.
   addTrueResonance(event);
 
-  // Retrieve the vector of original rec levels for the best leptons.
-  edm::Handle<vector<int> > bestRecs;
-  event.getByLabel("bestMuons", bestRecs);
-  bestRecLevels = *bestRecs;
-  
+  // Retrieve or make (if we're doing electrons) the vector of
+  // original rec levels for the best leptons.
+  if (!doingElectrons) {
+    edm::Handle<vector<int> > bestRecs;
+    event.getByLabel("bestMuons", bestRecs);
+    bestRecLevels = *bestRecs;
+  }
+  else
+    // "Best" electrons come from the HEEPSelector, which is assigned
+    // to rec level lbest.
+    for (unsigned i = 0; i < bestLeptons.size(); i++)
+      bestRecLevels.push_back(lbest);
+
   // Dump the event if appropriate.
   if (verbosity >= VERBOSITY_SIMPLE || eventIsInteresting()) {
     dumpEvent(true,true,true,true,true,true);
@@ -377,9 +385,11 @@ void Zprime2muAnalysis::storeDileptons(const edm::Event& event,
     event.getByLabel(label, hdils);
   } catch (const cms::Exception& e) {
   //if (hview.failedToGet()) {
-    edm::LogWarning("storeDileptons")
-      << "No dileptons found at rec level " << rec << "; ("
-      << getLeptons(rec).size() << " leptons found)";
+    unsigned nlep = getLeptons(rec).size();
+    if (nlep >= 2)
+      edm::LogWarning("storeDileptons")
+	<< "No dileptons found in the event at rec level"
+	<< rec << "; (" << nlep << " leptons found)";
     return;
   }
 
@@ -456,8 +466,10 @@ void Zprime2muAnalysis::addBremCandidates(const int rec) {
     if (debug)
       out << " Dilepton #" << idi << " p4 = " << p4 << endl;
 
-    // No way to improve measurement at Level-1 and Level-2
-    if (rec != l1 && rec != l2) {
+    // No way to improve measurement at Level-1 and Level-2. Also, do
+    // nothing for electrons; brem energy losses are already taken
+    // care of by the reconstruction.
+    if (rec != l1 && rec != l2 && !doingElectrons) {
       vector<LorentzVector> photonP4s;
 
       for (unsigned idau = 0; idau < dil.numberOfDaughters(); idau++) {
@@ -1409,6 +1421,10 @@ Zprime2muAnalysis::ptLx(const reco::TrackRef& theTrack, const int rec) const {
 const Zprime2muAnalysis::LorentzVector&
 Zprime2muAnalysis::resV(const int rec, const int idil) const {
   recLevelHelper.checkRecLevel(rec, "resV");
+  int ndil = int(dileptonResonances[rec].size());
+  if (idil < 0 || idil > ndil)
+    throw cms::Exception("resV") 
+      << "idil = " << idil << " out of bounds (ndil = " << ndil << ")\n";
   return dileptonResonances[rec][idil];
 }
 
@@ -1724,16 +1740,21 @@ bool Zprime2muAnalysis::passTrigger(const int irec) const {
       << "+++ passTrigger error: L" << irec << " trigger is unknown +++\n";
   }
 
+  // For electrons, all events pass the trigger until we implement it;
+  // the entire passTrig array is initialized to true and not
+  // overwritten on the electron code path.
   return passTrig[irec];
 }
 
 bool Zprime2muAnalysis::passTrigger() const {
   unsigned int decision = 1;
-
-  for (int itrig = l1; itrig <= l3; itrig++) {
-    decision *= trigWord[itrig];
-  }
-  return (decision != 0);
+  
+  // For electrons, all events pass the trigger until we implement it.
+  if (!doingElectrons)
+    for (int itrig = l1; itrig <= l3; itrig++)
+      decision *= trigWord[itrig];
+  
+  return decision != 0;
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -1808,7 +1829,9 @@ unsigned Zprime2muAnalysis::leptonIsCut(const reco::CandidateBaseRef& lepton) co
   unsigned retval = 0;
   
   if (doingElectrons) {
-    // JMTBAD no cuts yet implemented for electrons
+    // JMTBAD The result of performing cuts on electrons is the "best"
+    // electrons collection produced by HEEPSelector; so there is kind
+    // of an asymmetry between the muon code path and the electron one.
   }
   else {
     // pT cut of 20 GeV

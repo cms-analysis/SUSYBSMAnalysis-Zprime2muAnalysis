@@ -271,11 +271,15 @@ void LeptonAssociator::matchLeptonsToSeeds() {
 void LeptonAssociator::matchBySeed(const auto_ptr<CandViewMatchMap>& matchMap,
 				   const int irec, const int jrec) const {
   if (irec < l3 || jrec < l3)
-    throw cms::Exception("matchBySeed") << "Cannot match " << irec
-					<< " -> " << jrec << " by seed!\n";
-      
+    throw cms::Exception("matchBySeed")
+      << "Cannot match " << irec << " -> " << jrec << " by seed!\n";
+
   const View<Candidate>& candsFrom = leptons[irec];
   const View<Candidate>& candsTo = leptons[jrec];
+
+  if (seedIndex[irec].size() != candsFrom.size())
+    throw cms::Exception("matchBySeed")
+      << "Seed indices not properly set at rec level " << irec << "\n";
 
   ostringstream out;
   if (debug) out << "Performing matchBySeed " << irec << " -> "
@@ -404,7 +408,8 @@ void LeptonAssociator::produce(Event& event,
   for (int irec = fromStart; irec < fromEnd; irec++) {
     if (irec >= l3) {
       // Store closest photon for all global fit muons (electrons
-      // already count this?).
+      // already take into account brem energy loss, so don't do this
+      // for them).
       auto_ptr<CandViewMatchMap> photonMatchMap(new CandViewMatchMap);
       if (!doingElectrons)
 	minDeltaRMatch(photonMatchMap, leptons[irec], photons,
@@ -431,7 +436,8 @@ void LeptonAssociator::produce(Event& event,
 	if (irec >= l3 && jrec >= l3) {
 	  // Store by-seed matches for all globally-fit leptons.
 	  auto_ptr<CandViewMatchMap> seedMatchMap(new CandViewMatchMap);
-	  matchBySeed(seedMatchMap, irec, jrec);
+	  if (!doingElectrons)
+	    matchBySeed(seedMatchMap, irec, jrec);
 	  event.put(seedMatchMap,
 		    recLevelHelper.makeMatchMapName(RecLevelHelper::SEED,
 						    irec, jrec));

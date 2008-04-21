@@ -1,6 +1,9 @@
 //
 // Authors: Jason Mumford, Jordan Tucker, Slava Valuev, UCLA
 //
+// TODO:
+//   replace strings with "muon" to "lepton"
+//   appropriate eta values for electrons in plots
 
 #include <string>
 #include <vector>
@@ -474,9 +477,9 @@ void Zprime2muResolution::BookEffHistos() {
   RecMass[2][0] = fs->make<TH1F>("RecMass20", "Gen mass, GMR, 2mu",  27, 0., maxTrigMass);
   RecMass[2][1] = fs->make<TH1F>("RecMass21", "Gen mass, GMR, dimu", 27, 0., maxTrigMass);
   RecMass[2][2] = fs->make<TH1F>("RecMass22", "Gen mass, GMR, 2mu, w/ cuts",  27, 0., maxTrigMass);
-  RecMass[3][0] = fs->make<TH1F>("RecMass30", "Gen mass, TMR, 2mu",  27, 0., maxTrigMass);
-  RecMass[3][1] = fs->make<TH1F>("RecMass31", "Gen mass, TMR, dimu", 27, 0., maxTrigMass);
-  RecMass[3][2] = fs->make<TH1F>("RecMass32", "Gen mass, TMR, 2mu, w/ cuts",  27, 0., maxTrigMass);
+  RecMass[3][0] = fs->make<TH1F>("RecMass30", "Gen mass, OPT, 2mu",  27, 0., maxTrigMass);
+  RecMass[3][1] = fs->make<TH1F>("RecMass31", "Gen mass, OPT, dimu", 27, 0., maxTrigMass);
+  RecMass[3][2] = fs->make<TH1F>("RecMass32", "Gen mass, OPT, 2mu, w/ cuts",  27, 0., maxTrigMass);
 
   const string locsubs[4] = {"Barrel","Overlap","Endcap","Outside"};
   vector<string> loctitles;
@@ -526,27 +529,27 @@ void Zprime2muResolution::BookPtResHistos() {
   ResidualPt[5] = fs->make<TProfile>("ResidualPt5", "(delta 1/pT)/(1/pT) vs Eta, pT < 1000",
 				     12, 0., 2.4, -10., 10.);
 
-  // 1/p resolution for GMR and TMR, separately for barrel, overlap and endcap.
+  // 1/p resolution for GMR and OPT, separately for barrel, overlap and endcap.
   MuInvPRes[0][0] = fs->make<TH1F>("MuInvPRes00", "1/P res, GMR, barrel",  100, -0.3, 0.3);
   MuInvPRes[0][1] = fs->make<TH1F>("MuInvPRes01", "1/P res, GMR, overlap", 100, -0.3, 0.3);
   MuInvPRes[0][2] = fs->make<TH1F>("MuInvPRes02", "1/P res, GMR, endcap",  100, -0.3, 0.3);
 
-  MuInvPRes[1][0] = fs->make<TH1F>("MuInvPRes10", "1/P res, TMR, barrel",  100, -0.3, 0.3);
-  MuInvPRes[1][1] = fs->make<TH1F>("MuInvPRes11", "1/P res, TMR, overlap", 100, -0.3, 0.3);
-  MuInvPRes[1][2] = fs->make<TH1F>("MuInvPRes12", "1/P res, TMR, endcap",  100, -0.3, 0.3);
+  MuInvPRes[1][0] = fs->make<TH1F>("MuInvPRes10", "1/P res, OPT, barrel",  100, -0.3, 0.3);
+  MuInvPRes[1][1] = fs->make<TH1F>("MuInvPRes11", "1/P res, OPT, overlap", 100, -0.3, 0.3);
+  MuInvPRes[1][2] = fs->make<TH1F>("MuInvPRes12", "1/P res, OPT, endcap",  100, -0.3, 0.3);
 
-  // 1/pT resolution for GMR and TMR, separately for barrel, overlap and endcap
+  // 1/pT resolution for GMR and OPT, separately for barrel, overlap and endcap
   MuInvPtRes[0][0] = fs->make<TH1F>("MuInvPtRes00", "1/pT res, GMR, barrel",  100, -0.3, 0.3);
   MuInvPtRes[0][1] = fs->make<TH1F>("MuInvPtRes01", "1/pT res, GMR, overlap", 100, -0.3, 0.3);
   MuInvPtRes[0][2] = fs->make<TH1F>("MuInvPtRes02", "1/pT res, GMR, endcap",  100, -0.3, 0.3);
 
-  MuInvPtRes[1][0] = fs->make<TH1F>("MuInvPtRes10", "1/pT res, TMR, barrel",  100, -0.3, 0.3);
-  MuInvPtRes[1][1] = fs->make<TH1F>("MuInvPtRes11", "1/pT res, TMR, overlap", 100, -0.3, 0.3);
-  MuInvPtRes[1][2] = fs->make<TH1F>("MuInvPtRes12", "1/pT res, TMR, endcap",  100, -0.3, 0.3);
+  MuInvPtRes[1][0] = fs->make<TH1F>("MuInvPtRes10", "1/pT res, OPT, barrel",  100, -0.3, 0.3);
+  MuInvPtRes[1][1] = fs->make<TH1F>("MuInvPtRes11", "1/pT res, OPT, overlap", 100, -0.3, 0.3);
+  MuInvPtRes[1][2] = fs->make<TH1F>("MuInvPtRes12", "1/pT res, OPT, endcap",  100, -0.3, 0.3);
 
   // pT res for all fits
   MuPtDiff[0] = fs->make<TH1F>("MuPtDiff0",  "L3 pT - Gen pT", 100, -1500., 1500.);
-  MuPtDiff[1] = fs->make<TH1F>("MuPtDiff1", "TMR pT - Gen pT", 100, -1500., 1500.);
+  MuPtDiff[1] = fs->make<TH1F>("MuPtDiff1", "OPT pT - Gen pT", 100, -1500., 1500.);
   TotInvPtRes[0] = fs->make<TH1F>("TotInvPtRes0", 
 				  "(L3 1/pT - Gen 1/pT)/(Gen 1/pT)", 100, -.5, .5);
   TotInvPtRes[1] = fs->make<TH1F>("TotInvPtRes1", "(Tracker Only 1/pT - Gen 1/pT)/(Gen 1/pT)", 
@@ -626,7 +629,7 @@ void Zprime2muResolution::BookDilResHistos(){
     }
   }
   for (int j = 0; j < 6; j++) {
-    DilMassRes[MAX_LEVELS+1][j] = fs->make<TH1F>(nameHist("DilMassRes", MAX_LEVELS+1, j).c_str(), "TMR, D0 method",
+    DilMassRes[MAX_LEVELS+1][j] = fs->make<TH1F>(nameHist("DilMassRes", MAX_LEVELS+1, j).c_str(), "OPT, D0 method",
 						 100, -0.3, 0.3);
   }
 
@@ -1141,9 +1144,9 @@ void Zprime2muResolution::fillEffHistos() {
       RecMass[2][0]->Fill(gen_mass);
     if (allDileptons[lgmr].size() > 0) // Opposite-sign dimuon found by GMR
       RecMass[2][1]->Fill(gen_mass);
-    if (bestLeptons.size() > 1)        // At least two muons found by TMR
+    if (bestLeptons.size() > 1)        // At least two muons found by OPT
       RecMass[3][0]->Fill(gen_mass);
-    if (bestDileptons.size() > 0) {    // Opposite-sign dimuon found by TMR
+    if (bestDileptons.size() > 0) {    // Opposite-sign dimuon found by OPT
       RecMass[3][1]->Fill(gen_mass);
       RecMassByLoc[1][wheredi]->Fill(gen_mass);
     }
@@ -1176,7 +1179,7 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
   double gen_pt, gen_p, gen_eta, residual, pt_pull, tmperr;
   unsigned ilep;
 
-  // Inverse momentum and 1/pT resolution for GMR and TMR, separately for
+  // Inverse momentum and 1/pT resolution for GMR and OPT, separately for
   // barrel, endcap, and their overlap.
   if (passTrigger()) { // event passed the trigger
     for (int i = 0; i < 2; i++) {
@@ -2147,7 +2150,7 @@ void Zprime2muResolution::DrawResHistos() {
   for (int i = 1; i < 4; i++) {
     if (i == 1)      level = "L3";
     else if (i == 2) level = "GMR";
-    else if (i == 3) level = "TMR";
+    else if (i == 3) level = "OPT";
 
     // Total - acceptance, trigger and "off-line" reconstruction - efficiency.
     pad[page]->cd(i);  gPad->SetGrid(1);
@@ -2512,15 +2515,15 @@ void Zprime2muResolution::DrawResHistos() {
   MuInvPtResGMRTot->Add(MuInvPtResGMRTot, MuInvPtRes[0][2], 1., 1.);
   pad[page]->cd(7);
   MuInvPtResGMRTot->Draw();  MuInvPtResGMRTot->Fit("gaus","Q");
-  TH1F* MuInvPtResTMRTot = (TH1F*)MuInvPtRes[1][0]->Clone();
-  MuInvPtResTMRTot->SetNameTitle("MuInvPtResTMRTot", "1/pT res, TMR, total");
-  MuInvPtResTMRTot->Add(MuInvPtRes[1][0], MuInvPtRes[1][1], 1., 1.);
-  MuInvPtResTMRTot->Add(MuInvPtResTMRTot, MuInvPtRes[1][2], 1., 1.);
+  TH1F* MuInvPtResOPTTot = (TH1F*)MuInvPtRes[1][0]->Clone();
+  MuInvPtResOPTTot->SetNameTitle("MuInvPtResOPTTot", "1/pT res, OPT, total");
+  MuInvPtResOPTTot->Add(MuInvPtRes[1][0], MuInvPtRes[1][1], 1., 1.);
+  MuInvPtResOPTTot->Add(MuInvPtResOPTTot, MuInvPtRes[1][2], 1., 1.);
   pad[page]->cd(8);
-  MuInvPtResTMRTot->Draw();  MuInvPtResTMRTot->Fit("gaus","Q");
+  MuInvPtResOPTTot->Draw();  MuInvPtResOPTTot->Fit("gaus","Q");
   c1->Update();
   delete MuInvPtResGMRTot;
-  delete MuInvPtResTMRTot;
+  delete MuInvPtResOPTTot;
 
   ps->NewPage();
   c1->Clear();
@@ -2659,15 +2662,15 @@ void Zprime2muResolution::DrawResHistos() {
   MuInvPResGMRTot->Add(MuInvPResGMRTot, MuInvPRes[0][2], 1., 1.);
   pad[page]->cd(7);
   MuInvPResGMRTot->Draw();  MuInvPResGMRTot->Fit("gaus","Q");
-  TH1F* MuInvPResTMRTot = (TH1F*)MuInvPRes[1][0]->Clone();
-  MuInvPResTMRTot->SetNameTitle("MuInvPResTMRTot", "1/P res, TMR, total");
-  MuInvPResTMRTot->Add(MuInvPRes[1][0], MuInvPRes[1][1], 1., 1.);
-  MuInvPResTMRTot->Add(MuInvPResTMRTot, MuInvPRes[1][2], 1., 1.);
+  TH1F* MuInvPResOPTTot = (TH1F*)MuInvPRes[1][0]->Clone();
+  MuInvPResOPTTot->SetNameTitle("MuInvPResOPTTot", "1/P res, OPT, total");
+  MuInvPResOPTTot->Add(MuInvPRes[1][0], MuInvPRes[1][1], 1., 1.);
+  MuInvPResOPTTot->Add(MuInvPResOPTTot, MuInvPRes[1][2], 1., 1.);
   pad[page]->cd(8);
-  MuInvPResTMRTot->Draw();  MuInvPResTMRTot->Fit("gaus","Q");
+  MuInvPResOPTTot->Draw();  MuInvPResOPTTot->Fit("gaus","Q");
   c1->Update();
   delete MuInvPResGMRTot;
-  delete MuInvPResTMRTot;
+  delete MuInvPResOPTTot;
 
   // Invariant mass
   ps->NewPage();

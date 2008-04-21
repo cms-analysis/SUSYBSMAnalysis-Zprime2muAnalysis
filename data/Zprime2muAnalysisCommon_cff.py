@@ -139,9 +139,11 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             extension    = cms.untracked.string('.out'),
             threshold    = cms.untracked.string('DEBUG'),
             lineLength   = cms.untracked.int32(132),
-            noLineBreaks = cms.untracked.bool(True)),
-        FwkReport = cms.untracked.PSet(
-            reportEvery = cms.untracked.int32(500)),
+            noLineBreaks = cms.untracked.bool(True),
+            FwkReport = cms.untracked.PSet(reportEvery = cms.untracked.int32(500)),
+            RFIOFileDebug = cms.untracked.PSet(limit = cms.untracked.int32(0)),
+            Root_NoDictionary = cms.untracked.PSet(limit = cms.untracked.int32(0))
+            ),
         debugModules = cms.untracked.vstring(
             'leptonMatches', 'bestMuons', 'bestMatches',
             'Zprime2muAnalysis', 'Zprime2muResolution',

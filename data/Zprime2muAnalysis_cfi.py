@@ -1,9 +1,9 @@
 import FWCore.ParameterSet.Config as cms
 
-def makeAnalysis(process):
+def attachAnalysis(process):
     process.Zprime2muAnalysis = cms.EDAnalyzer(
         'Zprime2muAnalysis',
-        Zprime2muAnalysisCommon,
+        process.Zprime2muAnalysisCommon,
         verbosity = cms.untracked.int32(2)
         )
 

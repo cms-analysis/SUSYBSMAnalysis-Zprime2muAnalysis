@@ -2,7 +2,7 @@ import FWCore.ParameterSet.Config as cms
 
 from MassReachDataSets_cff import dataSets
 
-def makeMassReach(process):
+def attachMassReach(process):
     process.Zprime2muMassReach = cms.EDAnalyzer(
         'Zprime2muMassReach',
         process.Zprime2muAnalysisCommon,
@@ -32,4 +32,4 @@ def makeMassReach(process):
         fitRecMass     = cms.bool(True)
         )
 
-    process.analysis = cms.Path(process.Zprime2muResolution)
+    process.analysis = cms.Path(process.Zprime2muMassReach)

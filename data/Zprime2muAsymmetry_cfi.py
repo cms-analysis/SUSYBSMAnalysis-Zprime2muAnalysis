@@ -2,12 +2,12 @@ import FWCore.ParameterSet.Config as cms
 
 from AsymmetryDataSets_cff import dataSets
 
-def makeAsymmetry(process):
+def attachAsymmetry(process):
     process.Zprime2muAsymmetry = cms.EDAnalyzer(
         'Zprime2muAsymmetry',
         process.Zprime2muAnalysisCommon,
         dataSets,
-        dataSet = cms.string('Zssm1000'),
+        dataSet = cms.string('dy_above400'),
         
         # verbosity controls the amount of debug information dumped
         # see the VERBOSITY enum in Zprime2muAsymmetry.h for levels

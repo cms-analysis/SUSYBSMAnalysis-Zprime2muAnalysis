@@ -322,9 +322,9 @@ void Zprime2muAsymmetry::bookFrameHistos() {
 				       50, -1., 1.,  50, -4., 4.);
 
     FMassGJ[j][0] = fs->make<TH1F>(nameHist("FMassGJ", j, 0).c_str(), "F (M), GJ frame",        NBIN-1, DMBINS);
-    FMassGJ[j][1] = fs->make<TH1F>(nameHist("FMassGJ", j, 0).c_str(), "F (M), tagged GJ frame", NBIN-1, DMBINS);
+    FMassGJ[j][1] = fs->make<TH1F>(nameHist("FMassGJ", j, 1).c_str(), "F (M), tagged GJ frame", NBIN-1, DMBINS);
     FMassCS[j][0] = fs->make<TH1F>(nameHist("FMassCS", j, 0).c_str(), "F (M), CS frame",        NBIN-1, DMBINS);
-    FMassCS[j][1] = fs->make<TH1F>(nameHist("FMassCS", j, 0).c_str(), "F (M), CS anal frame",   NBIN-1, DMBINS);
+    FMassCS[j][1] = fs->make<TH1F>(nameHist("FMassCS", j, 1).c_str(), "F (M), CS anal frame",   NBIN-1, DMBINS);
     FMassBoost[j] = fs->make<TH1F>(nameHist("FMassBoost", j).c_str(), "F (M), Boost frame",     NBIN-1, DMBINS);
     FMassW[j]     = fs->make<TH1F>(nameHist("FMassW", j).c_str(),     "F (M), Wulz frame",      NBIN-1, DMBINS);
 

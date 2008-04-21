@@ -1,3 +1,11 @@
+#
+#
+# This file is deprecated in favor of the python configuration, and
+# may not be up to date, or may not work with new features of
+# Zprime2muAnalysis for technical reasons.
+#
+#
+
 ####################################################################
 ## Produce/clone/copy/do whatever to the needed muon collections
 ####################################################################
@@ -73,8 +81,12 @@ module elCandGN = CandMerger {
   VInputTag src = { genElectrons, simElectrons }
 }
 
+# "Best" electrons are those picked by the HEEP electron ID.
+#include "DLEvans/HEEPSelector/data/heepSelection_1_1.cfi"
+
 sequence makeElectronCandidates = {
-  genElectrons, simElectrons, elCandGN 
+  genElectrons, simElectrons, elCandGN
+  #, heepSelection
 }
 
 ####################################################################
@@ -130,12 +142,13 @@ block Zprime2muAnalysisCommon = {
     bestMuons
   }
 
-  # Zprime2muAnalysis knows to put pixelMatchGsfElectrons in the right
-  # spot (i.e., in the same rec level as GMR muons).
+  # Zprime2muAnalysis knows to reorder these into the right rec levels
+  # for now, while trigger collections are absent (i.e. into GN, GR,
+  # and OP, respectively).
   VInputTag elInputs = {
     elCandGN,
     pixelMatchGsfElectrons,
-    pixelMatchGsfElectrons # for now, bestElectrons are the default ones
+    pixelMatchGsfElectrons #   heepSelector
   }
 }
 

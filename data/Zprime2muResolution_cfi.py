@@ -1,17 +1,30 @@
 import FWCore.ParameterSet.Config as cms
 
-#from SUSYBSMAnalysis.Zprime2muAnalysis.data.Zprime2muAnalysisCommon_cff import process, Zprime2muAnalysisCommon
-from Zprime2muAnalysisCommon_cff import process, Zprime2muAnalysisCommon
 from ResolutionDataSets_cff import dataSets
 
-process.Zprime2muResolution = cms.EDAnalyzer('Zprime2muResolution',
-                                             Zprime2muAnalysisCommon,
-                                             dataSets,
-                                             verbosity         = cms.untracked.int32(0),
-                                             outputFile        = cms.untracked.string('muon_resolution.ps'),
-                                             histoFile         = cms.untracked.string('resolution_histos.root'),
-                                             useHistosFromFile = cms.untracked.bool(False),
-                                             dataSet           = cms.string('Zp1000'),
-                                             )
+# Idea: pass in the parameters below as arguments to the function? 
+# Stick with the replace paradigm for now.
+def makeResolution(process):
+    process.Zprime2muResolution = cms.EDAnalyzer(
+        'Zprime2muResolution',
+        process.Zprime2muAnalysisCommon,
+        dataSets,
+        dataSet           = cms.string('Zp1000'),
 
-process.analysis = cms.Path(process.Zprime2muResolution)
+        # verbosity controls the amount of debug information dumped
+        # see the VERBOSITY enum in Zprime2muAsymmetry.h for levels
+        verbosity         = cms.untracked.int32(0),
+
+        # The postscript file for ~87 pages of plots.
+        outputFile        = cms.untracked.string('muon_resolution.ps'),
+
+        # If useHistosFromFile is true, pull the histograms from the
+        # ROOT file specified (made earlier by TFileService and
+        # perhaps merged from many jobs) instead of creating them from
+        # the data in the event, draw the postscript file of plots and
+        # quit.
+        useHistosFromFile = cms.untracked.bool(False),
+        histoFile         = cms.untracked.string('resolution_histos.root'),
+        )
+
+    process.analysis = cms.Path(process.Zprime2muResolution)

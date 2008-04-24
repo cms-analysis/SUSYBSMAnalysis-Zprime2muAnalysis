@@ -19,14 +19,14 @@ muonCollections = [
 
 # The InputTag names for the electron collections.
 #
-# (None specifies that that rec level is to be skipped, especially
+# ('' specifies that that rec level is to be skipped, especially
 # during dilepton construction since the CandCombiner modules throw
 # exceptions if the collection is not found.)
 electronCollections = [
     'elCandGN',
-    None,
-    None,
-    None,
+    'elCandL1',
+    'elCandL2',
+    'elCandL3',
     'pixelMatchGsfElectrons',
     None,
     None,
@@ -127,28 +127,41 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             fileNames = cms.untracked.vstring(*fileNames)
             )
 
-    process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
+    process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(maxEvents))
 
+    #process.options = cms.untracked.PSet(IgnoreCompletely = cms.untracked.vstring('ProductNotFound'))
+    
     process.MessageLogger = cms.Service(
         'MessageLogger',
         destinations = cms.untracked.vstring('Zprime'),
         categories = cms.untracked.vstring(
-            'FwkJob', 'FwkReport', 'Root_Warning',
-            'Root_NoDictionary', 'RFIOFileDebug'),
+            #'FwkJob', 'FwkReport', 'Root_Warning',
+            'Root_NoDictionary', 'RFIOFileDebug',
+            # For some reason these next ones come up (without being
+            # asked to in debugModules below) when doing electrons,
+            # i.e. when the HEEPSelector.cfi is included.
+            'DDLParser', 'PixelGeom', 'EcalGeom', 'TIBGeom', 'TIDGeom',
+            'TOBGeom', 'TECGeom', 'SFGeom', 'HCalGeom', 'TrackerGeom',
+            'GeometryConfiguration', 'HcalHardcodeGeometry'
+            ),
         Zprime = cms.untracked.PSet(
             extension    = cms.untracked.string('.out'),
             threshold    = cms.untracked.string('DEBUG'),
             lineLength   = cms.untracked.int32(132),
-            noLineBreaks = cms.untracked.bool(True),
-            FwkReport = cms.untracked.PSet(reportEvery = cms.untracked.int32(500)),
-            RFIOFileDebug = cms.untracked.PSet(limit = cms.untracked.int32(0)),
-            Root_NoDictionary = cms.untracked.PSet(limit = cms.untracked.int32(0))
+            noLineBreaks = cms.untracked.bool(True)
             ),
         debugModules = cms.untracked.vstring(
             'leptonMatches', 'bestMuons', 'bestMatches',
             'Zprime2muAnalysis', 'Zprime2muResolution',
             'Zprime2muAsymmetry', 'Zprime2muMassReach')
         )
+
+    # Instead of line after line of limit psets in Zprime above, set
+    # them all here.
+    limitZero = cms.untracked.PSet(limit=cms.untracked.int32(0))
+    for cat in process.MessageLogger.categories:
+        setattr(process.MessageLogger.Zprime, cat, limitZero)
+    setattr(process.MessageLogger.Zprime, 'FwkReport', cms.untracked.PSet(reportEvery = cms.untracked.int32(500)))
 
     process.TFileService = cms.Service(
         'TFileService',
@@ -174,19 +187,19 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     ####################################################################
 
     if not doingElectrons:
-        process.genMuons = cms.EDFilter(
+        process.genMuons = cms.EDProducer(
             'CandSelector',
             src = cms.InputTag('genParticleCandidates'),
             cut = cms.string('abs(pdgId) = 13 & status = 1') # & pt > 0.001'
             )
         
-        process.simMuons = cms.EDFilter(
+        process.simMuons = cms.EDProducer(
             'CandSelector',
             src = cms.InputTag('simParticleCandidates'),
             cut = cms.string('abs(pdgId) = 13 & status = 1') # & pt > 0.001'
             )
         
-        process.muCandGN = cms.EDFilter(
+        process.muCandGN = cms.EDProducer(
             'CandMerger',
             src = cms.VInputTag(cms.InputTag('genMuons'),
                                 cms.InputTag('simMuons'))
@@ -194,7 +207,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         
         # 'Sanitize' the L1 muons, i.e. shift their phi values from
         # the bin edge to the bin center (an offset of 0.0218 rad).
-        process.muCandL1 = cms.EDFilter(
+        process.muCandL1 = cms.EDProducer(
             'L1MuonSanitizer',
             src = cms.InputTag('l1extraParticles')
             )
@@ -202,7 +215,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         # 'Sanitize' the L2 muons, i.e. in case there is no
         # hltL2MuonCandidates collection in the event, put an empty
         # one in (otherwise just copy the existing one).
-        process.muCandL2 = cms.EDFilter(
+        process.muCandL2 = cms.EDProducer(
             'L2MuonSanitizer',
             src = cms.InputTag('hltL2MuonCandidates')
             )
@@ -212,7 +225,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         # the extra track information, while the
         # MuonTrackLinksCollection hltL3Muons appropriately has links
         # to all 3 tracks).
-        process.muCandL3 = cms.EDFilter(
+        process.muCandL3 = cms.EDProducer(
             'L3MuonSanitizer',
             src = cms.InputTag('hltL3Muons')
             )
@@ -235,32 +248,82 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     ####################################################################
 
     if doingElectrons:
-        process.genElectrons = cms.EDFilter(
+        process.genElectrons = cms.EDProducer(
             'CandSelector',
             src = cms.InputTag('genParticleCandidates'),
             cut = cms.string('abs(pdgId) = 11 & status = 1')
             )
         
-        process.simElectrons = cms.EDFilter(
+        process.simElectrons = cms.EDProducer(
             'CandSelector',
             src = cms.InputTag('simParticleCandidates'),
             cut = cms.string('abs(pdgId) = 11 & status = 1')
             )
         
-        process.elCandGN = cms.EDFilter(
+        process.elCandGN = cms.EDProducer(
             'CandMerger',
             src = cms.VInputTag(cms.InputTag('genElectrons'),
                                 cms.InputTag('simElectrons'))
             )
+
+        process.elCandL1 = cms.EDProducer(
+            'CandViewMerger',
+            src = cms.VInputTag(
+                cms.InputTag('l1extraParticles','NonIsolated'),
+                cms.InputTag('l1extraParticles','Isolated'))
+            )
+
+        # For electrons, the HLT makes its decision based off of the
+        # l1(Non)IsoRecoEcalCandidate and the
+        # pixelMatchElectronsL1(Non)IsoForHLT collections. I choose to
+        # call them L2 and L3 electrons here, respectively.
         
-        # Hack for now to include old-style cfgs in python ones. (Doing
-        # this takes ~30 seconds on my machine! Hopefully a python config
-        # version will appear soon.)
+        # 'Sanitize' the L2 & L3 electrons, i.e. in case there is no
+        # collection in the event, put an empty one in (otherwise just
+        # copy the existing one).
+
+        process.elCandL2NonIso = cms.EDProducer(
+            'L2ElectronSanitizer',
+            src = cms.InputTag('l1NonIsoRecoEcalCandidate')
+            )
+
+        process.elCandL2Iso = cms.EDProducer(
+            'L2ElectronSanitizer',
+            src = cms.InputTag('l1IsoRecoEcalCandidate')
+            )
+
+        process.elCandL3NonIso = cms.EDProducer(
+            'L3ElectronSanitizer',
+            src = cms.InputTag('pixelMatchElectronsL1NonIsoForHLT')
+            )
+        
+        process.elCandL3Iso = cms.EDProducer(
+            'L3ElectronSanitizer',
+            src = cms.InputTag('pixelMatchElectronsL1IsoForHLT')
+            )
+        
+        process.elCandL2 = cms.EDProducer(
+            'CandViewMerger',
+            src = cms.VInputTag(
+                cms.InputTag('elCandL2NonIso'),
+                cms.InputTag('elCandL2Iso'))
+            )
+
+        process.elCandL3 = cms.EDProducer(
+            'CandViewMerger',
+            src = cms.VInputTag(
+                cms.InputTag('elCandL3NonIso'),
+                cms.InputTag('elCandL3Iso'))
+            )
+        
+        # Hack for now to include old-style cfgs in python ones.
         process.include('DLEvans/HEEPSelector/data/heepSelection_1_1.cfi')
         
         process.makeElectronCandidates = cms.Sequence(
-            process.genElectrons * process.simElectrons * process.elCandGN
-            * process.heepSelection
+            process.genElectrons * process.simElectrons * process.elCandGN *
+            process.elCandL1 * process.elCandL2NonIso * process.elCandL2Iso *
+            process.elCandL3NonIso * process.elCandL3Iso * process.elCandL2 *
+            process.elCandL3 * process.heepSelection
             )
 
     ####################################################################
@@ -327,7 +390,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     ## photons
     ####################################################################
             
-    process.leptonMatches = cms.EDFilter(
+    process.leptonMatches = cms.EDProducer(
         'LeptonAssociator',
         process.Zprime2muAnalysisCommon,
         verbosity    = cms.untracked.int32(0),
@@ -349,7 +412,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         useTMR    = cms.bool(False),
         )
 
-    process.bestMatches = cms.EDFilter(
+    process.bestMatches = cms.EDProducer(
         'LeptonAssociator',
         process.Zprime2muAnalysisCommon,
         verbosity    = cms.untracked.int32(0),
@@ -368,26 +431,40 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         if not useOtherMuonRecos and i >= 5 and i <= 7:
             continue
 
+        # Set up the flavor and charge pair for this rec level.
+        collections = []
+        charges = []
+        for j in xrange(2):
+            collections.append(eval(flavorsForDileptons[j])[i])
+            # Electrons at L1 and L2 do not have charges (they are
+            # just ECAL superclusters); try to use them to make
+            # dileptons anyway.
+            if flavorsForDileptons[j] == 'electrons' and (i == 1 or i == 2):
+                charges.append('')
+            else:
+                charges.append('@%s' % chargesForDileptons[j])
+            
         # We finally come to the point of the Nones in the electron
         # collection above: to skip rec levels that have no
         # collections here when producing dileptons. Otherwise,
         # CandCombiner throws an exception when it cannot find the
         # input collection.
-        coll0 = eval(flavorsForDileptons[0])[i]
-        coll1 = eval(flavorsForDileptons[1])[i]
-        if coll0 == None or coll1 == None:
+        if None in collections:
             continue
-
-        charge0, charge1 = chargesForDileptons
         
         # Use CandViewShallowCloneCombiner for the ShallowClone bit;
         # this enables us to get the reference to the original lepton
         # that makes up the dilepton we're looking at in the code.
         combiner = 'CandViewShallowCloneCombiner'
+        if i == 0:
+            # At generator level, look only at the leptons which came
+            # from the resonance.
+            combiner = 'GenDil' + combiner
 
         # Put the decay string in the format expected by CandCombiner:
         # e.g. 'muons@+ muons@-'.
-        decay = '%s@%s %s@%s' % (coll0, charge0, coll1, charge1)
+        decay = '%s%s %s%s' % (collections[0], charges[0],
+                               collections[1], charges[1])
 
         # A dummy cut, otherwise CandCombiner crashes.
         cut = 'mass > 0'

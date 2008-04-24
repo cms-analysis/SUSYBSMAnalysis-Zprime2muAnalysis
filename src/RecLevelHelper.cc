@@ -23,14 +23,14 @@ void RecLevelHelper::init(const edm::ParameterSet& config,
   maxRec = includeBest ? MAX_LEVELS + 1 : MAX_LEVELS;
 
   if (doingElectrons) {
-    // JMTBAD preserve the order until L1/HLT electrons are implemented
     inputs = config.getParameter<vector<edm::InputTag> >("elInputs");
     while (int(inputs.size()) < MAX_LEVELS+1)
       inputs.push_back(edm::InputTag());
-    inputs[lgmr] = inputs[1];
-    inputs[l1] = edm::InputTag();
-    inputs[lbest] = inputs[2];
-    inputs[l2] = edm::InputTag();
+    // "Best" electrons come in the inputs vector right after default
+    // global ones.
+    inputs[lbest] = inputs[lgmr+1];
+    for (int i = lgmr+1; i < lbest; i++)
+      inputs[i] = edm::InputTag();
   }
   else
     inputs = config.getParameter<vector<edm::InputTag> >("muInputs");
@@ -56,9 +56,12 @@ bool RecLevelHelper::getView(const edm::Event& event,
   } catch (const cms::Exception& e) {
   //if (hview.failedToGet()) {
     if (!warned[level]) {
-      edm::LogWarning("initEvent")
-	<< "No event collection " << inputs[level]
-	<< " found at rec level " << level << "; skipping";
+      string inp = inputs[level].encode();
+      // Don't bother to warn about collections that are supposed to be missing.
+      if (inp != ":") 
+	edm::LogWarning("initEvent")
+	  << "No event collection " << inputs[level]
+	  << " found at rec level " << level << "; skipping";
       warned[level] = true;
     }
     return false;

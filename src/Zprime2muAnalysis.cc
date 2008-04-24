@@ -19,6 +19,10 @@
 
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/DetId/interface/DetId.h"
+#include "DataFormats/EgammaCandidates/interface/Electron.h"
+#include "DataFormats/EgammaCandidates/interface/ElectronFwd.h"
+#include "DataFormats/EgammaCandidates/interface/PixelMatchGsfElectron.h"
+#include "DataFormats/EgammaReco/interface/SuperCluster.h"
 #include "DataFormats/HLTReco/interface/HLTFilterObject.h"
 #include "DataFormats/L1GlobalMuonTrigger/interface/L1MuGMTExtendedCand.h"
 #include "DataFormats/Math/interface/deltaR.h"
@@ -156,11 +160,7 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   l1ParticleMap   = config.getParameter<edm::InputTag>("l1ParticleMap");
   hltResults      = config.getParameter<edm::InputTag>("hltResults");
 
-  if (doingElectrons) {
-    leptonFlavor = 11;
-    leptonMass = 0.000511;
-  }
-  else {
+  if (!doingElectrons) {
     leptonFlavor = 13;
     leptonMass = 0.10566;
 
@@ -180,6 +180,17 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
     hltPaths.push_back("HLT1MuonNonIso");
     hltPaths.push_back("HLT2MuonNonIso");
   }
+  else {
+    leptonFlavor = 11;
+    leptonMass = 0.000511;
+
+    l1paths.push_back(l1extra::L1ParticleMap::kSingleEG15);
+
+    // For now, just look at the overall HLT decision for electrons.
+    hltPaths.push_back("HLT1EMHighEt");
+    hltPaths.push_back("HLT1EMVeryHighEt");
+    hltPaths.push_back("HLT1ElectronRelaxed");
+  }
 
   // Our preferred style.
   InitROOT();
@@ -192,13 +203,13 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
 				const edm::EventSetup& eSetup) {
   clearValues();
 
-  // could store the whole event/eventsetup object if needed
+  // We could store the whole event/eventsetup object if needed, but
+  // for now just store the event number.
   eventNum = event.id().event();
-  
-  if (!doingElectrons) {
-    storeL1Decision(event);
-    storeHLTDecision(event);
-  }
+ 
+  // Store the official trigger decisions.
+  storeL1Decision(event);
+  storeHLTDecision(event);
 
   // Store a reference to the generator-level particle collection.
   edm::Handle<reco::CandidateCollection> genp;
@@ -234,7 +245,7 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   }
   else
     // "Best" electrons come from the HEEPSelector, which is assigned
-    // to rec level lbest.
+    // to rec level lbest. (They only come from lgmr.)
     for (unsigned i = 0; i < bestLeptons.size(); i++)
       bestRecLevels.push_back(lbest);
 
@@ -425,8 +436,9 @@ void Zprime2muAnalysis::storeDileptons(const edm::Event& event,
   }
 
   if (debug)
-    LogTrace("storeDileptons") << "Reconstructed " << dileptons.size()
-			       << " dileptons at rec level " << rec;
+    LogTrace("storeDileptons") << "At rec level " << rec << ", CandCombiner"
+			       << " made " << hdils->size()
+			       << " dileptons; kept " << dileptons.size();
     
   // Sort dileptons to look for one or two highest-mass ones.
   if (dileptons.size() > 1)
@@ -660,6 +672,27 @@ void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
 
   if (debug) out << "storeHLTDecision:\n";
 
+  // Get the official HLT results, and pack them.
+  unsigned int hlt_trigbits = 0;
+  for (unsigned int i = 0; i < hltPaths.size(); i++) {
+    int ndx = hltTrigNames.triggerIndex(hltPaths[i]);
+    bool fired = hltRes->accept(ndx);
+    if (debug)
+      out << " HLT path #" << ndx << ": " << hltPaths[i]
+	  << " decision = " << fired << endl;
+    if (fired) hlt_trigbits |= 1 << i;
+  }
+
+  // For now, don't bother looking at sub-levels for electrons.
+  if (doingElectrons) {
+    trigWord[l2] = trigWord[l3] = hlt_trigbits;
+    passTrig[l2] = passTrig[l3] = hlt_trigbits != 0;
+    for (int l = l2; l <= l3; l++) 
+      out << "  trigWord[l" << l << "]: " << trigWord[l] << endl;
+    if (debug) LogTrace("storeHLTDecision") << out.str();
+    return;
+  }
+  
   // Extract L2 and L3 decisions by seeing if the corresponding
   // HLTFilterObjectWithRefs exists and seeing how many muons it holds.
   for (unsigned int lvl = 0; lvl < 2; lvl++) {
@@ -714,15 +747,6 @@ void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
     
   // Check that the official full HLT path decisions agree with
   // what we extracted for the official L3 decision.
-  unsigned int hlt_trigbits = 0;
-  for (unsigned int i = 0; i < hltPaths.size(); i++) {
-    int ndx = hltTrigNames.triggerIndex(hltPaths[i]);
-    bool fired = hltRes->accept(ndx);
-    if (debug)
-      out << " HLT path #" << ndx << ": " << hltPaths[i]
-	  << " decision = " << fired << endl;
-    if (fired) hlt_trigbits |= 1 << i;
-  }
   if (hlt_trigbits != trigWord[l3]) {
     edm::LogWarning("storeHLTDecision")
       << "+++ Warning: official HLT"
@@ -987,20 +1011,22 @@ Zprime2muAnalysis::getDileptons(const int rec) const {
 bool Zprime2muAnalysis::matchDilepton(const reco::CompositeCandidate& dil,
 				      const int level,
 				      const reco::CompositeCandidate* newdil) const {
-  const reco::CandidateBaseRef& lepp
-    = matchedLepton(dileptonDaughterByCharge(dil, +1), level);
-  const reco::CandidateBaseRef& lepm
-    = matchedLepton(dileptonDaughterByCharge(dil, -1), level);
-  int idp = id(lepp), idm = id(lepm);
+  const reco::CandidateBaseRef& lep0
+    = matchedLepton(dileptonDaughter(dil, 0), level);
+  const reco::CandidateBaseRef& lep1
+    = matchedLepton(dileptonDaughter(dil, 1), level);
+  int id0 = id(lep0), id1 = id(lep1);
   
   // look for a dilepton at that level which has the same two leptons
   const reco::CompositeCandidateCollection& dileptons = getDileptons(level);
-  for (unsigned idi = 0; idi < dileptons.size(); idi++)
-    if (id(dileptonDaughterByCharge(dileptons[idi], +1)) == idp &&
-	id(dileptonDaughterByCharge(dileptons[idi], -1)) == idm) {
+  for (unsigned idi = 0; idi < dileptons.size(); idi++) {
+    int nid0 = id(dileptonDaughter(dileptons[idi], 0));
+    int nid1 = id(dileptonDaughter(dileptons[idi], 1));
+    if ((nid0 == id0 && nid1 == id1) || (nid0 == id1 && nid1 == id0)) {
       newdil = &dileptons[idi];
       return true;
     }
+  }
   return false;
 }
 
@@ -1267,14 +1293,25 @@ bool Zprime2muAnalysis::storeInteractionParticles(
 
 reco::TrackBaseRef
 Zprime2muAnalysis::getMainTrack(const reco::CandidateBaseRef& cand) const {
+  // JMTBAD reco::RecoCandidate::bestTrack() ?
   const int rec = recLevel(cand);
-  if (doingElectrons)
-    return reco::TrackBaseRef(cand->get<reco::GsfTrackRef>());
-  else if (rec == l2)
-    return reco::TrackBaseRef(cand->get<reco::TrackRef>());
-  else if (rec >= l3)
-    return reco::TrackBaseRef(cand->get<reco::TrackRef,
-			      reco::CombinedMuonTag>());
+  if (rec == l2) {
+    // L2 electrons are just RecoEcalCandidates -- no track. L2 muons
+    // are standalone muons -- only one track possible to get.
+    if (doingElectrons)
+      return reco::TrackBaseRef();
+    else
+      return reco::TrackBaseRef(cand->get<reco::TrackRef>());
+  }
+  else if (rec >= l3) {
+    // L3 and above electrons have a GsfTrack in the pixel
+    // detector. L3 and above muons have a combined muon track from
+    // hits in the tracker and in the muon system.
+    if (doingElectrons)
+      return reco::TrackBaseRef(cand->get<reco::GsfTrackRef>());
+    else
+      return reco::TrackBaseRef(cand->get<reco::TrackRef, reco::CombinedMuonTag>());
+  }
   else
     return reco::TrackBaseRef(); // an invalid ref
 }
@@ -1377,18 +1414,23 @@ int Zprime2muAnalysis::nHits(const reco::CandidateBaseRef& cand,
 			     const int type) const {
   const int rec = recLevel(cand);
   const reco::TrackBaseRef tk = getMainTrack(cand);
-  if (type == HITS_ALL || (rec == l2 && type == HITS_OTH))
-    return tk->recHitsSize();
-  else if (rec >= l3) {
-    int pix, sil, oth;
-    if (doingElectrons)
-      numSubDetHits(tk, pix, sil, oth, DetId::Ecal);
-    else
-      numSubDetHits(tk, pix, sil, oth, DetId::Muon);
-    if      (type == HITS_OTH) return oth;
-    else if (type == HITS_TRK) return pix + sil;
-    else if (type == HITS_PIX) return pix;
-    else if (type == HITS_SIL) return sil;
+  if (tk.isNonnull()) {
+    if (type == HITS_ALL || 
+	(rec == l2 && type == HITS_OTH && !doingElectrons))
+      // JMTBAD perhaps the # of xtals in the supercluster for L2
+      // electrons (since L2 electrons have no track)?
+      return tk->recHitsSize();
+    else if (rec >= l3) {
+      int pix, sil, oth;
+      if (doingElectrons)
+	numSubDetHits(tk, pix, sil, oth, DetId::Ecal);
+      else
+	numSubDetHits(tk, pix, sil, oth, DetId::Muon);
+      if      (type == HITS_OTH) return oth;
+      else if (type == HITS_TRK) return pix + sil;
+      else if (type == HITS_PIX) return pix;
+      else if (type == HITS_SIL) return sil;
+    }
   }
   // return nonsensical number of hits if the above logic failed
   return -1;
@@ -1448,11 +1490,10 @@ Zprime2muAnalysis::dileptonDaughter(const reco::CompositeCandidate& dil,
 const reco::CandidateBaseRef
 Zprime2muAnalysis::dileptonDaughterByCharge(const reco::CompositeCandidate& dil,
 					    const int charge) const {
-  for (unsigned ilep = 0; ilep < dil.numberOfDaughters(); ilep++) {
+  for (unsigned ilep = 0; ilep < dil.numberOfDaughters(); ilep++)
     if (dil.daughter(ilep)->charge() == charge)
-      return dileptonDaughter(dil, ilep);
-  }
-  return reco::CandidateBaseRef(); // an invalid reference
+      return dil.daughter(ilep)->masterClone();
+  return reco::CandidateBaseRef();
 }
 
 ////////////////////////////////////////////////////////////////////
@@ -1485,10 +1526,14 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
 	   << endl;
   }
   else if (level == l1) {
-    const l1extra::L1MuonParticle& l1mu
-      = toConcrete<l1extra::L1MuonParticle>(cand);
-    output << " Quality: "<< setw(2) << l1mu.gmtMuonCand().quality()
-	   << " Phi: "    << setw(7) << setprecision(4) << cand->phi()// + 0.0218
+    int quality = -1;
+    if (!doingElectrons) {
+      const l1extra::L1MuonParticle& l1mu
+	= toConcrete<l1extra::L1MuonParticle>(cand);
+      quality = l1mu.gmtMuonCand().quality();
+    }
+    output << " Quality: "<< setw(2) << quality
+	   << " Phi: "    << setw(7) << setprecision(4) << cand->phi()
 	   << " Eta: "    << setw(7) << setprecision(4) << cand->eta()
 	   << " Pt: "     << setw(7) << setprecision(5) << cand->pt()
 	   << " P: "      << setw(7) << setprecision(5) << cand->p()
@@ -1497,17 +1542,23 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
   else if (level == l2) {
     const reco::TrackBaseRef& tk = getMainTrack(cand);
     output << " Phi: "      << setw(8) << setprecision(4) << cand->phi()
-	   << "      Eta: " << setw(8) << setprecision(4) << cand->eta()
-	   << endl;
-    output << "   Muhits: "    << setw(3) << nHits(cand, HITS_OTH)
-	   << "   Chi2/Ndof: " << setw(8) << setprecision(4) << tk->chi2()
-	   << "/"              << setw(2) << tk->ndof() << endl;
-    output << "   P:     " << setw(7) << setprecision(5) << cand->p()
+	   << "      Eta: " << setw(8) << setprecision(4) << cand->eta();
+    if (!doingElectrons) {
+      output << endl
+	     << "   Muhits: "    << setw(3) << nHits(cand, HITS_OTH)
+	     << "   Chi2/Ndof: " << setw(8) << setprecision(4) << tk->chi2()
+	     << "/"              << setw(2) << tk->ndof() << endl;
+      output << "   P:     " << setw(7) << setprecision(5) << cand->p()
 	   << " +/- " << pError(tk)
-	   << "   "
-	   << "   Pt:    " << setw(7) << setprecision(5) << cand->pt()
-	   << " +/- " << ptError(tk)
-	   << endl;
+	     << "   "
+	     << "   Pt:    " << setw(7) << setprecision(5) << cand->pt()
+	     << " +/- " << ptError(tk)
+	     << endl;
+    }
+    else
+      output << "   Pt:    " << setw(7) << setprecision(5) << cand->pt()
+	     << "   P:     " << setw(7) << setprecision(5) << cand->p()
+	     << endl;
   }
   else {
     const reco::RecoCandidate& lep = toConcrete<reco::RecoCandidate>(cand);
@@ -1589,17 +1640,33 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
 	     << endl;
     }
 
-    output << "   Closest photon: " << closestPhoton(cand)
-	   << "   Sum pT (dR<0.3): " << sumptr03
-	   << "   Cut code  " << leptonIsCut(cand) << endl
-	   << "   p4 (p, E):                    " << cand->p4() << endl;
     if (!doingElectrons)
+      output << "   Closest photon: " << closestPhoton(cand)
+	     << "   Sum pT (dR<0.3): " << sumptr03
+	     << "   Cut code  " << leptonIsCut(cand) << endl;
+
+    output << "   Loc. code: " << whereIsLepton(cand)
+	   << "   p4 (p, E): " << cand->p4() << endl;
+
+    if (doingElectrons && level > l3) {
+      const reco::PixelMatchGsfElectron& el =
+	toConcrete<reco::PixelMatchGsfElectron>(cand);
+      const reco::SuperClusterRef& sc = el.superCluster();
+      output << "   Et: " << el.et() << "   Eta^{sc}: " << sc->eta()
+	     << "   El. classification: " << el.classification() << endl
+	     << "   Delta Eta_in: " << el.deltaEtaSuperClusterTrackAtVtx()
+	     << "   Delta Phi_in: " << el.deltaPhiSuperClusterTrackAtVtx() 
+	     << "   HoE: " << el.hadronicOverEm() << endl;
+    }
+
+    if (!doingElectrons) {
       output << "   Combined track: charge: " << setw(2) << glbtrk->charge()
 	     << " p: " << glbtrk->momentum() << endl
 	     << "   Standalone mu : charge: " << setw(2) << statrk->charge()
 	     << " p: " << statrk->momentum() << endl
 	     << "   Tracker track : charge: " << setw(2) << tktrk->charge()
 	     << " p: " << tktrk->momentum() << endl;
+    }
   }
 }
 
@@ -1667,8 +1734,8 @@ void Zprime2muAnalysis::dumpDileptonMasses() const {
   for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++)
     if (allDileptons[i_rec].size() >= 1)
       out << "\n 4vecs: " << allDileptons[i_rec][0].p4() << allDileptons[i_rec][0].p4().mag()
-	  << " " << dileptonDaughterByCharge(allDileptons[i_rec][0], -1)->p4()	  << " " << dileptonDaughterByCharge(allDileptons[i_rec][0], -1)->p4().mag()
-	  << " " << dileptonDaughterByCharge(allDileptons[i_rec][0], +1)->p4()	  << " " << dileptonDaughterByCharge(allDileptons[i_rec][0], +1)->p4().mag() << endl;
+	  << " " << dileptonDaughter(allDileptons[i_rec][0], 0)->p4()	  << " " << dileptonDaughter(allDileptons[i_rec][0], 0)->p4().mag()
+	  << " " << dileptonDaughter(allDileptons[i_rec][0], 1)->p4()	  << " " << dileptonDaughter(allDileptons[i_rec][0], 1)->p4().mag() << endl;
   */
 
   LogTrace("dumpDileptonMasses") << out.str();
@@ -1734,25 +1801,24 @@ bool Zprime2muAnalysis::dilQCheck(const reco::CompositeCandidate& dilepton,
 // Trigger decision queries
 ////////////////////////////////////////////////////////////////////
 
+// JMTBAD keep electron and muon trigger info separate for every
+// event, so we can look at opposite-flavor events. Possibly just
+// shift the bits over?
+
 bool Zprime2muAnalysis::passTrigger(const int irec) const {
   if (irec < 0 || irec > l3) {
     throw cms::Exception("Zprime2muAnalysis")
       << "+++ passTrigger error: L" << irec << " trigger is unknown +++\n";
   }
 
-  // For electrons, all events pass the trigger until we implement it;
-  // the entire passTrig array is initialized to true and not
-  // overwritten on the electron code path.
   return passTrig[irec];
 }
 
 bool Zprime2muAnalysis::passTrigger() const {
   unsigned int decision = 1;
   
-  // For electrons, all events pass the trigger until we implement it.
-  if (!doingElectrons)
-    for (int itrig = l1; itrig <= l3; itrig++)
-      decision *= trigWord[itrig];
+  for (int itrig = l1; itrig <= l3; itrig++)
+    decision *= trigWord[itrig];
   
   return decision != 0;
 }
@@ -1765,10 +1831,17 @@ Zprime2muAnalysis::WhereLepton
 Zprime2muAnalysis::whereIsLepton(const reco::CandidateBaseRef& lepton) const {
   double abseta = fabs(lepton->eta());
   if (doingElectrons) {
-    // JMTBAD are these numbers taken from ECAL TDR applicable/useful?
-    if      (abseta < 1.48)  return W_BARREL;
-    else if (abseta < 3.0)   return W_ENDCAP;
-    else                     return W_OUTSIDE;
+    // Electron classification should be from the eta of its supercluster.
+    if (recLevel(lepton) >= l3) {
+      const reco::RecoCandidate& el = toConcrete<reco::RecoCandidate>(lepton);
+      const reco::SuperClusterRef& sc = el.superCluster();
+      if (sc.isNonnull())
+	abseta = fabs(sc->eta());
+    }
+    if      (abseta < 1.4442) return W_BARREL;
+    else if (abseta < 1.560)  return W_CRACK;
+    else if (abseta < 2.5)    return W_ENDCAP;
+    else                      return W_OUTSIDE;
   }
   else {
     if      (abseta < 0.9) return W_BARREL;
@@ -1788,6 +1861,8 @@ Zprime2muAnalysis::whereIsDilepton(const reco::CompositeCandidate& dil) const {
     wlep1 = wlep2;
     wlep2 = tmp;
   }
+
+  // For electrons, OVERLAP here means CRACK.
 
   if      (wlep1 == W_BARREL  && wlep2 == W_BARREL)   return W_BARRELBARREL;
   else if (wlep1 == W_BARREL  && wlep2 == W_OVERLAP)  return W_BARRELOVERLAP;
@@ -1813,9 +1888,9 @@ bool Zprime2muAnalysis::eventIsInteresting() const {
     const reco::CompositeCandidate& dil = bestDileptons[0];
     if (dil.mass() > 800)
       result = true;
-    const reco::CandidateBaseRef mum = dileptonDaughterByCharge(dil, -1);
-    const reco::CandidateBaseRef mup = dileptonDaughterByCharge(dil, +1);
-    if (fabs(mum->phi() - mup->phi()) < .4)
+    const reco::CandidateBaseRef lep1 = dileptonDaughter(dil, 0);
+    const reco::CandidateBaseRef lep2 = dileptonDaughter(dil, 1);
+    if (fabs(lep1->phi() - lep2->phi()) < .4)
       result = true;
   }
 
@@ -1832,6 +1907,7 @@ unsigned Zprime2muAnalysis::leptonIsCut(const reco::CandidateBaseRef& lepton) co
     // JMTBAD The result of performing cuts on electrons is the "best"
     // electrons collection produced by HEEPSelector; so there is kind
     // of an asymmetry between the muon code path and the electron one.
+    // Perhaps use HEEPHelper here to make a cut code?
   }
   else {
     // pT cut of 20 GeV

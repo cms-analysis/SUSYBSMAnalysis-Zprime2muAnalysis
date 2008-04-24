@@ -77,7 +77,9 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 		  HITS_TRK, HITS_PIX, HITS_SIL, HITS_ALL };
 
   // Lepton location codes, used by whereIs(Di)Lepton() methods.
-  enum WhereLepton { W_BARREL=0, W_OVERLAP, W_ENDCAP, W_OUTSIDE };
+  enum WhereLepton { W_BARREL=0, W_OVERLAP, W_CRACK=W_OVERLAP,
+		     W_ENDCAP, W_OUTSIDE };
+  // For electrons, OVERLAP here means CRACK.
   enum WhereDilepton { W_BARRELBARREL=0, W_BARRELOVERLAP,  W_BARRELENDCAP,
 		       W_BARRELOUTSIDE,  W_OVERLAPOVERLAP, W_OVERLAPENDCAP, 
 		       W_OVERLAPOUTSIDE, W_ENDCAPENDCAP,   W_ENDCAPOUTSIDE,
@@ -471,6 +473,9 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // Return a reference to the daughter lepton of the dilepton with
   // specified charge (if it is a same-sign dilepton, will return the
   // first one found), or else an invalid reference if not found.
+  // (Code using this method should check the ref for validity, since
+  // for same-sign dileptons it is easy to not find a daughter lepton
+  // of the wrong sign.)
   const reco::CandidateBaseRef
     dileptonDaughterByCharge(const reco::CompositeCandidate& dil,
 			     const int charge) const;

@@ -101,7 +101,7 @@ void Zprime2muResolution::BookResHistos() {
   GenMassInAccept  = fs->make<TH1F>("GenMassInAccept",
 				    "Gen mass, events in acceptance",
 				    24, 200., 5000.);
-  GenMassAllEvents->Sumw2();
+  GenMassAllEvents->Sumw2();  
   GenMassInAccept->Sumw2();
 
   // Origin of muons
@@ -110,18 +110,19 @@ void Zprime2muResolution::BookResHistos() {
 			     20, 0, 20);
 
   // Trigger decisions
-  TrigResult[0][0] = fs->make<TH1F>("TrigResult00", "Gen, all events",        5, 0., 5.);
-  TrigResult[1][0] = fs->make<TH1F>("TrigResult10", "L1 trigger, all events", 5, 0., 5.);
-  TrigResult[2][0] = fs->make<TH1F>("TrigResult20", "L2 trigger, all events", 5, 0., 5.);
-  TrigResult[3][0] = fs->make<TH1F>("TrigResult30", "L3 trigger, all events", 5, 0., 5.);
-  TrigResult[0][1] = fs->make<TH1F>("TrigResult01", "Gen, #eta < 2.4",        5, 0., 5.);
-  TrigResult[1][1] = fs->make<TH1F>("TrigResult11","L1 trigger, #eta < 2.4",  5, 0., 5.);
-  TrigResult[2][1] = fs->make<TH1F>("TrigResult21","L2 trigger, #eta < 2.4",  5, 0., 5.);
-  TrigResult[3][1] = fs->make<TH1F>("TrigResult31","L3 trigger, #eta < 2.4",  5, 0., 5.);
-  TrigResult[0][2] = fs->make<TH1F>("TrigResult02", "Gen, #eta < 2.1",        5, 0., 5.);
-  TrigResult[1][2] = fs->make<TH1F>("TrigResult12","L1 trigger, #eta < 2.1",  5, 0., 5.);
-  TrigResult[2][2] = fs->make<TH1F>("TrigResult22","L2 trigger, #eta < 2.1",  5, 0., 5.);
-  TrigResult[3][2] = fs->make<TH1F>("TrigResult32","L3 trigger, #eta < 2.1",  5, 0., 5.);
+  const int maxTrigBits = 8;
+  TrigResult[0][0] = fs->make<TH1F>("TrigResult00", "Gen, all events",        maxTrigBits, 0., double(maxTrigBits));
+  TrigResult[1][0] = fs->make<TH1F>("TrigResult10", "L1 trigger, all events", maxTrigBits, 0., double(maxTrigBits));
+  TrigResult[2][0] = fs->make<TH1F>("TrigResult20", "L2 trigger, all events", maxTrigBits, 0., double(maxTrigBits));
+  TrigResult[3][0] = fs->make<TH1F>("TrigResult30", "L3 trigger, all events", maxTrigBits, 0., double(maxTrigBits));
+  TrigResult[0][1] = fs->make<TH1F>("TrigResult01", "Gen, #eta < 2.4",        maxTrigBits, 0., double(maxTrigBits));
+  TrigResult[1][1] = fs->make<TH1F>("TrigResult11","L1 trigger, #eta < 2.4",  maxTrigBits, 0., double(maxTrigBits));
+  TrigResult[2][1] = fs->make<TH1F>("TrigResult21","L2 trigger, #eta < 2.4",  maxTrigBits, 0., double(maxTrigBits));
+  TrigResult[3][1] = fs->make<TH1F>("TrigResult31","L3 trigger, #eta < 2.4",  maxTrigBits, 0., double(maxTrigBits));
+  TrigResult[0][2] = fs->make<TH1F>("TrigResult02", "Gen, #eta < 2.1",        maxTrigBits, 0., double(maxTrigBits));
+  TrigResult[1][2] = fs->make<TH1F>("TrigResult12","L1 trigger, #eta < 2.1",  maxTrigBits, 0., double(maxTrigBits));
+  TrigResult[2][2] = fs->make<TH1F>("TrigResult22","L2 trigger, #eta < 2.1",  maxTrigBits, 0., double(maxTrigBits));
+  TrigResult[3][2] = fs->make<TH1F>("TrigResult32","L3 trigger, #eta < 2.1",  maxTrigBits, 0., double(maxTrigBits));
 
   TrigMass[0][0] = fs->make<TH1F>("TrigMass00", "Gen mass, Gen, all events", 27, 0., maxTrigMass);
   TrigMass[1][0] = fs->make<TH1F>("TrigMass10", "Gen mass, L1, all events",  27, 0., maxTrigMass);
@@ -914,6 +915,11 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	DilMassVsEta[i_rec]->Fill(pdi->eta(), pdi->mass());
 	DilMassVsY[i_rec]->Fill(pdi->rapidity(), pdi->mass());
 
+	// L1 and L2 electrons have no charge; skip the below which
+	// depends on the charge.
+	if (doingElectrons && (i_rec == l1 || i_rec == l2))
+	  continue;
+
 	const reco::CandidateBaseRef& mum = dileptonDaughterByCharge(*pdi, -1);
 	const reco::CandidateBaseRef& mup = dileptonDaughterByCharge(*pdi, +1);
 
@@ -934,12 +940,10 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	  if (debug) {
 	    std::ostringstream strstrm;
 	    strstrm << setprecision(5) << i_part << "| ";
-	    if (i_part == 0)
-	      strstrm << setw(4) << mum->charge() << "  | ";
-	    else if (i_part == 1)
-	      strstrm << setw(4) << mup->charge() << "  | ";
+	    if (i_part < 2)
+	      strstrm << setw(4) << cand->charge() << "  | ";
 	    else
-	      strstrm                        << "      | ";
+	      strstrm << "      | ";
 	    strstrm << endl << cand->p4();
 	    LogTrace("Zprime2muAnalysis") << strstrm.str();
 	  }
@@ -1058,12 +1062,12 @@ void Zprime2muResolution::calcResolution(const bool debug) {
     }
     for (pdi = allDileptons[lgen].begin(); pdi != allDileptons[lgen].end();
 	 pdi++) {
-      const reco::CandidateBaseRef& mum = dileptonDaughterByCharge(*pdi, -1);
-      const reco::CandidateBaseRef& mup = dileptonDaughterByCharge(*pdi, +1);
-      Eta4muons->Fill(mup->eta());
-      Eta4muons->Fill(mum->eta());
-      Pt4muons->Fill(mup->pt());
-      Pt4muons->Fill(mum->pt());
+      const reco::CandidateBaseRef& lep0 = dileptonDaughter(*pdi, 0);
+      const reco::CandidateBaseRef& lep1 = dileptonDaughter(*pdi, 1);
+      Eta4muons->Fill(lep0->eta());
+      Eta4muons->Fill(lep1->eta());
+      Pt4muons->Fill(lep0->pt());
+      Pt4muons->Fill(lep1->pt());
     }
 
     // For events passing the trigger
@@ -1381,8 +1385,9 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
 // This function makes histos of the difference between charge assignment
 // for various levels of reconstruction.
 void Zprime2muResolution::fillChargeResHistos(const bool debug) {
-  // Loop over all reconstructed levels.
-  for (int rec = l1; rec <= MAX_LEVELS; rec++) {
+  // Loop over all reconstructed levels. L1 and L2 "electrons" are
+  // superclusters, and do not have a charge, so skip them.
+  for (int rec = doingElectrons ? l3 : l1; rec <= MAX_LEVELS; rec++) {
     const LeptonRefVector& leptons = getLeptons(rec);
     for (unsigned ilep = 0; ilep < leptons.size(); ilep++) {
       // Find charge of closest gen muon and store difference in histogram
@@ -1587,12 +1592,12 @@ void Zprime2muResolution::fillDilResHistos(const bool debug) {
 	// in the RMS of the inv. mass distribution.
 	if (rec == MAX_LEVELS) {
 	  // Calculate reweighted pT.
-	  const reco::CandidateBaseRef& mum
-	    = dileptonDaughterByCharge(dileptons[i_dil], -1);
-	  const reco::CandidateBaseRef& mup
-	    = dileptonDaughterByCharge(dileptons[i_dil], +1);
-	  double pTp = mup->pt();
-	  double pTm = mum->pt();
+	  const reco::CandidateBaseRef& lep0
+	    = dileptonDaughter(dileptons[i_dil], 0);
+	  const reco::CandidateBaseRef& lep1
+	    = dileptonDaughter(dileptons[i_dil], 1);
+	  double pTp = lep0->pt();
+	  double pTm = lep1->pt();
 	  double wp  = 1./pTp/(1./pTp + 1./pTm);
 	  double wm  = 1./pTm/(1./pTp + 1./pTm);
 	  double pTw = pTp*wp + pTm*wm;
@@ -1602,10 +1607,10 @@ void Zprime2muResolution::fillDilResHistos(const bool debug) {
 	  //   << " pTw = " << pTw << " " << 2./(1./pTp + 1./pTm);
 
 	  // Construct new dimuon and calculate its mass.
-	  LorentzVector vmup, vmum, vdil;
-	  SetP4M(vmup, pTw, mup->phi(), mup->p(), mup->theta(), leptonMass);
-	  SetP4M(vmum, pTw, mum->phi(), mum->p(), mum->theta(), leptonMass);
-	  vdil = vmup + vmum;
+	  LorentzVector vlep0, vlep1, vdil;
+	  SetP4M(vlep0, pTw, lep0->phi(), lep0->p(), lep0->theta(), leptonMass);
+	  SetP4M(vlep1, pTw, lep1->phi(), lep1->p(), lep1->theta(), leptonMass);
+	  vdil = vlep0 + vlep1;
 	  double D0mass = vdil.mass();
 	  // LogTrace("Zprime2muResolution") << " Gen mass = " << geant_mass
 	  //      << " rec mass = " << recDimuV.M()

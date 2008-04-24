@@ -915,8 +915,9 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	DilMassVsEta[i_rec]->Fill(pdi->eta(), pdi->mass());
 	DilMassVsY[i_rec]->Fill(pdi->rapidity(), pdi->mass());
 
-	// L1 and L2 electrons have no charge; skip the below which
-	// depends on the charge.
+	// L1 and L2 electrons have no charge (they are just
+	// superclusters); skip the below which depends on being able
+	// to find the daughter by charge.
 	if (doingElectrons && (i_rec == l1 || i_rec == l2))
 	  continue;
 
@@ -997,8 +998,12 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	    }
 
 	    if ((i_rec == l2 || i_rec == l3) &&
-		dileptons.size() == allDileptons[l1].size()) {
+		dileptons.size() == allDileptons[l1].size() &&
+		!doingElectrons) {
 	      // Compare rec 2 and rec 3 values with rec 1 values.
+	      // When doingElectrons the dileptonDaughterByCharge will
+	      // not work, since L1 and L2 electrons as implemented do
+	      // not have charges (they are just superclusters).
 	      const reco::CandidateBaseRef& murec = i_part == 0 ? mum : mup;
 	      int charge = i_part == 0 ? -1 : 1;
 	      const reco::CandidateBaseRef& mul1 =

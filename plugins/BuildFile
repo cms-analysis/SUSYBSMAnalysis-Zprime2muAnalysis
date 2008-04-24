@@ -13,9 +13,9 @@
   <use name=DataFormats/L1Trigger>
 </library>
 
-<library file=L2MuonSanitizer.cc name=L2MuonSanitizer>
+<library file=HLTLeptonSanitizer.cc name=HLTLeptonSanitizer>
+  <use name=DataFormats/EgammaCandidates>
   <use name=DataFormats/RecoCandidate>
-  <use name=DataFormats/MuonReco>
 </library>
 
 <library file=L3MuonSanitizer.cc name=L3MuonSanitizer>
@@ -34,6 +34,12 @@
 
 <library file=CocktailMuonProducer.cc,../src/RecLevelHelper.cc name=CocktailMuonProducer>
   <use name=DataFormats/MuonReco>
+</library>
+
+<library file=GenDilCandViewShallowCloneCombiner.cc name=GenDilCandViewShallowCloneCombiner>
+  <use name=DataFormats/Candidate>
+  <use name=PhysicsTools/UtilAlgos>
+  <use name=PhysicsTools/CandAlgos>
 </library>
 
 //<flags CXXFLAGS="-O0 -g -DDEBUG">

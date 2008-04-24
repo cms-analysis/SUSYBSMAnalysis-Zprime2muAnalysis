@@ -425,22 +425,26 @@ To check out the package:
 
    scramv1 project CMSSW CMSSW_1_6_11
    cd CMSSW_1_6_11/src
+
    project CMSSW
    cvs co -r V00-01-02 SUSYBSMAnalysis/Zprime2muAnalysis
-   # next is needed for fwlite::ChainEvent to read from CASTOR,
-   # but the unit test will fail; OK for our purposes
+
+   # This is needed for fwlite::ChainEvent to read from CASTOR,
+   # but the unit test will fail; OK for our purposes.
    cvs co -r V00-07-00 DataFormats/FWLite
-   # Grab D.L. Evans's HEEPSelector (and put it in the right directory):
+
+   # Grab D.L. Evans's HEEPSelector (and put it in the right directory).
    cvs co -r V02-01-02 -d DLEvans/HEEPSelector UserCode/DLEvans/HEEPSelector
    cvs co -r V02-01-01 -d DLEvans/HEEPUtilities UserCode/DLEvans/HEEPUtilities
 
-To compile:
-
+   # Compile the code, including the extra packages checked
+   # out. (Ignore the FWLite unit test failure.)
    eval `scramv1 runtime -csh`
-   cd SUSYBSMAnalysis/Zprime2muAnalysis
    scramv1 b
 
 To run (where the _cfg.py can be any of the *_cfg.py files in /test):
 
-   cd test
+   cd SUSYBSMAnalysis/Zprime2muAnalysis/test
    cmsRun testZprime2muResolution_cfg.py
+     -or for an electron mode example-
+   cmsRun testZprime2muResolutionElectrons_cfg.py

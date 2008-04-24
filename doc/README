@@ -46,20 +46,21 @@ gamma*/Z0/Z'/G/G* --> l- l+ events (with l=e,mu). Some sample files
 are available at /castor/cern.ch/user/t/tucker/CMSSW_1_6_7.
 
 At the time this documentation was updated, the package has been
-tested to work with version 1_6_11 of CMSSW. The tag V00-01-01 should
-be used. With this new release, we have abandoned our private
-BaseMuon/Muon/DiMuon classes in favor of using directly the standard
-AnalysisTools classes (reco::Candidate and all its derived classes,
-including those of the PAT).
+tested to work with version 1_6_11 of CMSSW. The tag V00-01-02 should
+be used. We have abandoned our private BaseMuon/Muon/DiMuon classes in
+favor of using directly the standard AnalysisTools classes
+(reco::Candidate and all its derived classes, including those of the
+PAT).
 
 While much of the base class Zprime2muAnalysis along with its provided
 interface for accessing the (di)lepton four-vectors and other data has
-changed, the bulk of the logic in the derived classes has remained the
-same, as has the physics. The rest of this document is devoted to
-details of how the standard AnalysisTools classes are used, how the
-data can be accessed by customers of the base class,
-Zprime2muAnalysis, and how the three included analysis modules,
-Resolution, Asymmetry, and MassReach, can be configured and run.
+changed from V00-00-* series, the bulk of the logic in the derived
+classes has remained the same, as has the physics. The rest of this
+document is devoted to details of how the standard AnalysisTools
+classes are used, how the data can be accessed by customers of the
+base class, Zprime2muAnalysis, and how the three included analysis
+modules, Resolution, Asymmetry, and MassReach, can be configured and
+run.
 
 
 Philosophy
@@ -79,22 +80,20 @@ different levels of muon reconstruction:
   - and "best" muons, chosen from the previous four options on a
     muon-by-muon basis using some track goodness-of-fit criteria (OPT).
 
-The last four options are designed to deal with showering TeV muons,
-for which GMR is not the best choice for reconstruction. When running
-in electron mode, some of these rec levels are no longer appropriate,
-and are simply left empty. In particular, only generated and
-GSF-matched electrons are currently implemented, the latter of which
-is placed in the GMR rec level (which is thus duplicated exactly at
-the OPT rec level).
+TK, FMS, and PMR are designed to deal with showering TeV muons, for
+which GMR is not the best choice for reconstruction.
 
-data/Zprime2muAnalysisCommon.cff organizes the various input
+When running in electron mode, these three rec levels are no longer
+appropriate, and are simply left empty. OPT in electron mode is filled
+with the output of the HEEPSelector written by D.L. Evans (which must be
+checked out separately; see the example at the end of this document).
+
+data/Zprime2muAnalysisCommon_cff.py organizes the various input
 collections of leptons, first running any AnalysisTools modules to
 produce, select, merge, or sort the collections needed for the various
 levels of reconstruction of both muons and electrons. The VInputTags
 muInputs and elInputs then match input collections to the right rec
-levels (although for electrons, since L1/HLT results are currently not
-used in this package, it is easier to skip them in the config file and
-let the code know where to put them for now).
+levels (for electrons, skipping rec levels lTK through lPMR).
 
 The input collections thus defined (whether CandidateCollections,
 MuonCollections, or any other vector of objects deriving from
@@ -117,34 +116,42 @@ closest photons is done in our own code in the module
 LeptonAssociator, but stored in the same manner as the official
 matching packages (i.e., in AssociationMaps). We chose to do this
 instead of using the available AnalysisTools matching tools since,
-with eight rec levels, it proved cumbersome to define matches between
+with nine rec levels, it proved cumbersome to define matches between
 leptons at each pair of rec levels and matches between each rec level
-of leptons and photons in the configuration files. 8*8 (not 8*7, since
-an AssociationMap has no easy inverse mapping) module invocations to
-define the matching between lepton rec levels alone would be
-needed. If CandMatcher were separated from the configuration file
-level and made into a stand-alone object that could be used at the
-code level inside for loops, that would ameliorate the situation
-greatly, and allow the standard matching tools to be used while
-allowing easy maintenance.
+of leptons and photons in the configuration files. Many module
+invocations to define the matching just between lepton rec levels
+alone would be needed.
+
+Now that we have moved to Python configuration files, running a loop
+in the configuration file is just as easy as doing so in the code. We
+still use LeptonAssociator, however, because it performs closest
+matching slightly differently than TrivialDeltaRCandMatcher, and also
+because it takes care of matching offline leptons to photons, and all
+offline leptons to other offline leptons by "seed". By-seed matching
+finds pairs of offline-reconstructed leptons that share the same seed
+track in the muon system, which is useful when trying to pick the
+"best" muon, since we need to know which muon in TK corresponds to
+which in PMR, etc.
 
 Dileptons are constructed as reco::CompositeCandidates, pruned of
 overlap (if two dileptons share a lepton, preference is given to the
 dilepton of higher invariant mass), and stored in
-reco::CandidateCollections (one collection at each rec level). An
-attempt is made to recover energy loss from bremmed photons at GMR rec
-level and higher by adding in the four-vectors of each of the leptons'
-closest photons, found in the matching step above. The resulting
-"resonance" four-vector, however, is not stored in the
-CompositeCandidate object, but is stored separately in order to enable
-comparisons of the two in derived analysis modules such as
-Zprime2muResolution. These resonance four-vectors are stored simply:
-one vector of LorentzVectors for each reconstruction level, in the
-same order as the dileptons.
+reco::CandidateCollections (one collection at each rec level). For
+offline-reconstructed muons (GMR level and higher), an attempt is made
+to recover energy loss from bremmed photons by adding in the
+four-vectors of each of the leptons' closest photons, found in the
+matching step above. The resulting "resonance" four-vector, however,
+is not stored in the CompositeCandidate object, but is stored
+separately in order to enable comparisons of the two in derived
+analysis modules such as Zprime2muResolution. These resonance
+four-vectors are stored simply: one vector of LorentzVectors for each
+reconstruction level, in the same order as the dileptons.
 
-Trigger information is also stored, but only for the few muon trigger
-paths we have implemented. The "official" results are compared to a
-homemade implementation for trigger studies.
+Trigger information is also stored: for muons we look at the trigger
+paths used by the 2007 high-mass dimuon analysis (the result of which
+was presented in CMS AN 2007/038), and for electrons we look at the
+trigger paths used by the HEEP group. For muons, the "official"
+results are compared to a homemade implementation for trigger studies.
 
 All of the above dumps helpful debugging information to the
 MessageLogger, depending on the level of the verbosity flag; see its
@@ -366,18 +373,17 @@ Electron extension
 ------------------
 
 The flow of the code when running in electron mode is nearly identical
-to the muon case.  The only exceptions occur in the Zprime2muAnalysis
-module: In the muon chain considerable muon selection occurs, whereas
-a lot of this selection does not occur in the electron chain.  (The
-code inputs many different classes of muon candidates, whereas it
-inputs only offline PixelMatchGsfElectron electron candidates.  It is
-suggested that the standard HEEP tools that are under development be
-used before this code for most of the electron selection.)  Similarly,
-the module produces many different dilepton collections in the muon
-mode, whereas it does not in the electron mode.
-
-To run in the electron mode:  Change "doingElectrons = false" to 
-"doingElectrons = true" in data/Zprime2muAnalysisCommon.cff 
+to the muon case, except the extra TeV muon collections are
+ignored. The HEEPSelector tool written by D.L. Evans is used to pick
+"best" electrons. There is a slight difference in the two code paths,
+in that the dimuons constructed have the analysis-level cuts applied
+to them at all rec levels, while for dielectrons the analysis-level
+cuts are only performed on the "best" electrons, since that is the
+output of HEEPSelector. So, in electron mode to study what difference
+the HEEP selection makes, one can compare the dileptons at GMR to the
+dileptons at OPT. To run in electron mode, pass doingElectrons=True to 
+the makeZprime2muAnalysisProcess() function in the Python config file.
+(See test/testZprime2muResolutionElectrons_cfg.py for an example.)
 
 
 Histogram dumping
@@ -420,18 +426,21 @@ To check out the package:
    scramv1 project CMSSW CMSSW_1_6_11
    cd CMSSW_1_6_11/src
    project CMSSW
-   cvs co -r V00-01-01 SUSYBSMAnalysis/Zprime2muAnalysis
+   cvs co -r V00-01-02 SUSYBSMAnalysis/Zprime2muAnalysis
    # next is needed for fwlite::ChainEvent to read from CASTOR,
    # but the unit test will fail; OK for our purposes
    cvs co -r V00-07-00 DataFormats/FWLite
-   
+   # Grab D.L. Evans's HEEPSelector (and put it in the right directory):
+   cvs co -r V02-01-02 -d DLEvans/HEEPSelector UserCode/DLEvans/HEEPSelector
+   cvs co -r V02-01-01 -d DLEvans/HEEPUtilities UserCode/DLEvans/HEEPUtilities
+
 To compile:
 
    eval `scramv1 runtime -csh`
    cd SUSYBSMAnalysis/Zprime2muAnalysis
    scramv1 b
 
-To run (where the .cfg can be any of the 4 .cfg files in /test):
+To run (where the _cfg.py can be any of the *_cfg.py files in /test):
 
    cd test
-   cmsRun testZprime2muResolution.cfg
+   cmsRun testZprime2muResolution_cfg.py

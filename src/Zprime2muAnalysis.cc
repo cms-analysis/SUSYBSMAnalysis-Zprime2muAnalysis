@@ -127,7 +127,7 @@ bool Zprime2muAnalysis::cutTrig[NUM_REC_LEVELS] = {true,  true,  true,  true};
 ////////////////////////////////////////////////////////////////////
 
 Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config) 
-  : eventNum(-1) {
+  : eventNum(-1), eventsDone(0) {
   recLevelHelper.init(config, true);
 
   verbosity = VERBOSITY(config.getUntrackedParameter<int>("verbosity", 0));
@@ -136,7 +136,6 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   doingHiggs = config.getParameter<bool>("doingHiggs");
   constructGenDil = config.getParameter<bool>("constructGenDil");
   generatedOnly = config.getParameter<bool>("generatedOnly");
-  doingGeant4 = config.getParameter<bool>("doingGeant4");
   reconstructedOnly = config.getParameter<bool>("reconstructedOnly");
   useOtherMuonRecos = config.getParameter<bool>("useOtherMuonRecos");
   usingAODOnly = config.getParameter<bool>("usingAODOnly");
@@ -152,9 +151,6 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
 
   if (doingElectrons)
     useOtherMuonRecos = false;
-
-  if (generatedOnly || reconstructedOnly)
-    doingGeant4 = false;
 
   // input tags for the reco collections we need
   l1ParticleMap   = config.getParameter<edm::InputTag>("l1ParticleMap");
@@ -207,6 +203,9 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   // for now just store the event number.
   eventNum = event.id().event();
  
+  // Keep track of how many events we run over total.
+  eventsDone++;
+
   // Store the official trigger decisions.
   storeL1Decision(event);
   storeHLTDecision(event);
@@ -236,9 +235,10 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   // Also store the true generator-level resonance.
   addTrueResonance(event);
 
-  // Retrieve or make (if we're doing electrons) the vector of
-  // original rec levels for the best leptons.
-  if (!doingElectrons) {
+  // Retrieve or make (if we're doing electrons, or are just using GMR
+  // muons for best muons) the vector of original rec levels for the
+  // best leptons.
+  if (!doingElectrons && useOtherMuonRecos) {
     edm::Handle<vector<int> > bestRecs;
     event.getByLabel("bestMuons", bestRecs);
     bestRecLevels = *bestRecs;
@@ -399,7 +399,7 @@ void Zprime2muAnalysis::storeDileptons(const edm::Event& event,
     unsigned nlep = getLeptons(rec).size();
     if (nlep >= 2)
       edm::LogWarning("storeDileptons")
-	<< "No dileptons found in the event at rec level"
+	<< "No dileptons found in the event at rec level "
 	<< rec << "; (" << nlep << " leptons found)";
     return;
   }
@@ -703,23 +703,31 @@ void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
       edm::Handle<reco::HLTFilterObjectWithRefs> hltFilterObjs;
 
       bool fired = true;
+      unsigned failAt = 0;
       try {
 	event.getByLabel(trigName, hltFilterObjs);
       }
       catch (const cms::Exception& e) {
 	fired = false;
+	failAt = 1;
       }
 
       // There may be an HLTFilterObject in the event even if the
       // trigger did not accept; the real check is to make sure that
       // the minimum number of muons for the trigger was met.
-      const unsigned int minNMuons = ipath + 1;
-      if (fired && hltFilterObjs->size() < minNMuons)
-	fired = false;	  
+      const unsigned minNMuons = ipath + 1;
+      unsigned nmu = 0;
+      if (fired) {
+	nmu = hltFilterObjs->size();
+	if (nmu < minNMuons) {
+	  fired = false;
+	  failAt = 2;
+	}
+      }
 	
       if (debug)
-	out << "  " << trigName
-	    << ": decision = " << fired << endl;
+	out << "  " << trigName << ": decision = " << fired
+	    << " (#mu: " << nmu << "; failAt: " << failAt << ")\n";
 
       if (fired) {
 	trigbits = trigbits | (1 << ipath);
@@ -744,7 +752,7 @@ void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
     passTrig[l] = (trigbits != 0);
     out << "  trigWord[l" << l << "]: " << trigWord[l] << endl;
   }
-    
+   
   // Check that the official full HLT path decisions agree with
   // what we extracted for the official L3 decision.
   if (hlt_trigbits != trigWord[l3]) {
@@ -757,6 +765,8 @@ void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
     if (verbosity == VERBOSITY_NONE)
       dumpEvent(false, true, true, true, false);
   }
+
+  // JMTBAD how to handle missing L2/L3 info?
 
   if (debug) LogTrace("storeHLTDecision") << out.str();
 }
@@ -1142,16 +1152,6 @@ bool Zprime2muAnalysis::storeInteractionParticles(
     }
   } 
 
-  if (debug) LogDebug("storeInteractionParticles") << out.str();
-  out.str("");
-
-  if (iq != 1) { 
-    edm::LogWarning("storeInteractionParticles")
-      << "Found " << iq << " quarks in the hard interaction; "
-      << "aborting storeInteractionParticles";
-    return false;
-  }
-
   // Find the resonance and its decay products.
   p = genParticles.begin();
   for ( ; p != genParticles.end(); p++) {
@@ -1270,17 +1270,21 @@ bool Zprime2muAnalysis::storeInteractionParticles(
 
   if (debug) LogDebug("storeInteractionParticles") << out.str();
 
+  if (iq != 1) { 
+    edm::LogWarning("storeInteractionParticles")
+      << "+++ Found " << iq << " quarks in the hard interaction! +++";
+    ip.genQuark = 0;
+    return false;
+  }
   if (ip.genResonance == 0) {
     edm::LogWarning("storeInteractionParticles")
-      << " +++ There is no resonance generated in event # "
-      << eventNum << "! +++\n";
+      << " +++ There is no generated resonance found! +++";
     return false;
   }
   if (ip.genLepPlus == 0 || ip.genLepMinus == 0 ||
       ip.genLepMinusNoIB == 0 || ip.genLepPlusNoIB == 0) {
     edm::LogWarning("storeInteractionParticles")
-      << " +++ At least one lepton from resonance decay is not found in event"
-      << " #" << eventNum << "! +++\n";
+      << " +++ At least one lepton from resonance decay was not found! +++\n";
     return false;
   }
 
@@ -1412,6 +1416,7 @@ void Zprime2muAnalysis::numSubDetHits(const TrackType& theTrack,
 
 int Zprime2muAnalysis::nHits(const reco::CandidateBaseRef& cand, 
 			     const int type) const {
+  if (usingAODOnly) return -1;
   const int rec = recLevel(cand);
   const reco::TrackBaseRef tk = getMainTrack(cand);
   if (tk.isNonnull()) {
@@ -1516,9 +1521,9 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
   if (level == lgen) {
     //const reco::GenParticleCandidate& genmu
     //  = toConcrete<reco::GenParticleCandidate>(cand);
-    // JMTBAD fake motherline for tkdiff
+    // JMTBAD fake motherline with pointer value
     output << " Origin: " << setw(4) << motherId(cand)
-	   << "/"         << setw(4) << 0 //(candEx.id() < 2 ? 6 : 0) // rhs.genMotherLine()
+	   << "/"         << setw(4) << mother(cand)
 	   << " Phi: "    << setw(7) << setprecision(4) << cand->phi()
 	   << " Eta: "    << setw(7) << setprecision(4) << cand->eta()
 	   << " Pt: "     << setw(7) << setprecision(5) << cand->pt()
@@ -1634,10 +1639,11 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
       output << "   Vertex position: " << setw(11) << cand->vx() 
 	     << " "                    << setw(11) << cand->vy() 
 	     << " "                    << setw(11) << cand->vz() << endl;
-      output << "   Track. position: " << setw(11) << glbtrk->innerPosition().X()
-	     << " "                    << setw(11) << glbtrk->innerPosition().Y()
-	     << " "                    << setw(11) << glbtrk->innerPosition().Z()
-	     << endl;
+      if (!usingAODOnly)
+	output << "   Track. position: " << setw(11) << glbtrk->innerPosition().X()
+	       << " "                    << setw(11) << glbtrk->innerPosition().Y()
+	       << " "                    << setw(11) << glbtrk->innerPosition().Z()
+	       << endl;
     }
 
     if (!doingElectrons)
@@ -1816,7 +1822,7 @@ bool Zprime2muAnalysis::passTrigger(const int irec) const {
 
 bool Zprime2muAnalysis::passTrigger() const {
   unsigned int decision = 1;
-  
+
   for (int itrig = l1; itrig <= l3; itrig++)
     decision *= trigWord[itrig];
   

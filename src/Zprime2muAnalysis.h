@@ -53,6 +53,12 @@ struct InteractionParticles {
   const reco::Candidate* genLepMinus;
   const reco::Candidate* genLepPlusNoIB;
   const reco::Candidate* genLepMinusNoIB;
+
+  bool isValid() {
+    return genQuark != 0 && genResonance != 0 &&
+      genLepPlus != 0 && genLepMinus != 0 &&
+      genLepPlusNoIB != 0 && genLepMinusNoIB != 0;
+  }
 };
 
 class Zprime2muAnalysis : public edm::EDAnalyzer {
@@ -159,6 +165,9 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   
   // Keep track of the event number for printing out.
   int eventNum;
+
+  // Keep track of how many events total have been processed.
+  int eventsDone;
 
   // Trigger results.
   bool passTrig[NUM_REC_LEVELS];

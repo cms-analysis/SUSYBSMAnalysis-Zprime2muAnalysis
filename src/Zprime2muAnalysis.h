@@ -28,6 +28,7 @@
 #include "PhysicsTools/UtilAlgos/interface/TFileService.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/RecLevelHelper.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 
 namespace reco {
   // JMTBAD this is included in TrackFwd.h in 170 and above
@@ -129,15 +130,18 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // is true;
   bool constructGenDil;
 
-  // whether to look at only generator-level muons (i.e. don't bother
-  // trying to store globalMuons, standAloneMuons, etc);
-  bool generatedOnly;
+  // whether to look at generator-level information;
+  bool useGen;
 
-  // whether to look at Geant4 particles in addition to Pythia particles;
-  bool doingGeant4;
+  // whether to look at GEANT tracks;
+  bool useSim;
 
-  // whether to look at only reconstructed muons (as in the real data sets);
-  bool reconstructedOnly;
+  // whether to look at reconstructed quantities;
+  bool useReco;
+
+  // whether trigger information is supposed to be present in the
+  // input file;
+  bool useTrigger;
 
   // whether to include the extra muon reconstructors (FMS, PMR, etc);
   bool useOtherMuonRecos;
@@ -145,10 +149,6 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // if the input file is only AOD, then don't use EDProducts that are
   // included only in the full RECO tier;
   bool usingAODOnly;
-
-  // whether trigger information is supposed to be present in the
-  // input file;
-  bool useTriggerInfo;
 
   // basic quantities for the chosen lepton (muon or electron);
   unsigned int leptonFlavor; // PDG ID
@@ -582,23 +582,6 @@ struct reverse_mass_sort {
     return lhs.mass() > rhs.mass();
   }
 };
-
-// Functions to cast base types of Candidates to concrete derived types
-// e.g. to a reco::Muon.
-template <typename T>
-inline const T& toConcrete(const reco::Candidate& cand) {
-  return *dynamic_cast<const T*>(&cand);
-}
-
-template <typename T>
-inline const T& toConcrete(const reco::CandidateRef& cand) {
-  return *dynamic_cast<const T*>(&*cand);
-}
-
-template <typename T>
-inline const T& toConcrete(const reco::CandidateBaseRef& cand) {
-  return *dynamic_cast<const T*>(&*cand);
-}
 
 // For pretty-printing.
 std::ostream& operator<<(std::ostream& out, const TLorentzVector& vect);

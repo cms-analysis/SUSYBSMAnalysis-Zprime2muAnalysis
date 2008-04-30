@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
+#include "DataFormats/Candidate/interface/CompositeCandidateFwd.h"
 #include "DataFormats/Candidate/interface/CandMatchMap.h"
 #include "DataFormats/Candidate/interface/Particle.h"
 
@@ -26,8 +27,6 @@ const std::string levelNamesShort[MAX_LEVELS+1] = {
 
 class RecLevelHelper {
  public:
-  bool isDoingElectrons() const { return doingElectrons; }
-
   // Return either the short or the regular version of rec level's
   // name.
   const std::string& levelName(const int rec, bool shortVersion=false) const;
@@ -41,8 +40,12 @@ class RecLevelHelper {
 
   // Using the vector of InputTags, get a view to the candidates at
   // the requested rec level.
-  bool getView(const edm::Event& event,
+  bool getLeptonsView(const edm::Event& event,
 	       int recLevel, edm::View<reco::Candidate>& view);
+
+  // Same, but for the dileptons (no View needed).
+  bool getDileptonsHandle(const edm::Event& event, int level,
+			  edm::Handle<reco::CompositeCandidateCollection>& coll) const;
 
   // Return whether the rec level has a collection in the event.
   bool recLevelOkay(const edm::Event& event, int level);
@@ -105,10 +108,6 @@ class RecLevelHelper {
     { return matchLepton(lep, level, -1); }
 
  private:
-  // Flag stating whether we're running in electron mode, which 
-  // ignores all collections except gen and gmr.
-  bool doingElectrons;
-
   // Flag whether we should even try to look at the "best" rec level,
   // which may or may not be available yet.
   bool includeBest;
@@ -117,13 +116,14 @@ class RecLevelHelper {
   // products haven't been produced yet.
   int maxRec;
 
-  // The vector of InputTags which maps rec level number to the EDM
-  // collection.
-  std::vector<edm::InputTag> inputs;
+  // The arrays of InputTags which maps rec level number to the EDM
+  // collections.
+  edm::InputTag lepInputs[MAX_LEVELS+1];
+  edm::InputTag dilInputs[MAX_LEVELS+1];
 
   // Flag whether we've warned about a missing collection at each rec
   // level for each event. (Set to prevent double warnings when
-  // getView() gets called twice.)
+  // getLeptonsView() gets called twice.)
   bool warned[MAX_LEVELS+1];
 
   // Map product IDs from CandidateBaseRef to whatever rec level we
@@ -156,7 +156,7 @@ class RecLevelHelper {
 
   // Store the object which maps EDM collections (Views, or members of
   // collections) to our defined rec level numbers (in a sense, the
-  // inverse operation to getView() above).
+  // inverse operation to getLeptonsView() above).
   void storeRecLevelMap(const edm::Event& event);
 
   // Store the match maps for this event: the matching between all

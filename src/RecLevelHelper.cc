@@ -18,26 +18,33 @@ const string& RecLevelHelper::levelName(const int rec,
 
 void RecLevelHelper::init(const edm::ParameterSet& config,
 			  bool doBest) {
-  doingElectrons = config.getParameter<bool>("doingElectrons");
   includeBest = doBest;
   maxRec = includeBest ? MAX_LEVELS + 1 : MAX_LEVELS;
 
-  if (doingElectrons) {
-    inputs = config.getParameter<vector<edm::InputTag> >("elInputs");
-    while (int(inputs.size()) < MAX_LEVELS+1)
-      inputs.push_back(edm::InputTag());
-    // "Best" electrons come in the inputs vector right after default
-    // global ones.
-    inputs[lbest] = inputs[lgmr+1];
-    for (int i = lgmr+1; i < lbest; i++)
-      inputs[i] = edm::InputTag();
-  }
-  else
-    inputs = config.getParameter<vector<edm::InputTag> >("muInputs");
+  for (int i = 0; i < maxRec; i++) {
+    string tagname = "leptons" + levelName(i, true);
+    edm::InputTag tag = config.getParameter<edm::InputTag>(tagname);
+    if (tag.label() != "skip")
+      lepInputs[i] = tag;
+    else
+      lepInputs[i] = edm::InputTag();
 
-  if (int(inputs.size()) < MAX_LEVELS+1)
-    throw cms::Exception("RecLevelHelper")
-      << "inputs.size() < MAX_LEVELS+1\n";
+    tagname = "dileptons" + levelName(i, true);
+    bool ok = true;
+    try {
+      // We may have only had the lepton tags passed in, as in
+      // LeptonAssociator etc.
+      tag = config.getParameter<edm::InputTag>(tagname);
+    } catch (const cms::Exception& e) {
+      ok = false;
+    }
+    if (ok && tag.label() != "skip")
+      dilInputs[i] = tag;
+    else
+      dilInputs[i] = edm::InputTag();
+  }
+
+
 }
 
 void RecLevelHelper::initEvent(const edm::Event& event) {
@@ -47,20 +54,19 @@ void RecLevelHelper::initEvent(const edm::Event& event) {
   storeMatchMaps(event);
 }
 
-bool RecLevelHelper::getView(const edm::Event& event,
-			     int level,
-			     edm::View<reco::Candidate>& view) {
+bool RecLevelHelper::getLeptonsView(const edm::Event& event, int level,
+				    edm::View<reco::Candidate>& view) {
   edm::Handle<edm::View<reco::Candidate> > hview;
   try {
-    event.getByLabel(inputs[level], hview);
+    event.getByLabel(lepInputs[level], hview);
   } catch (const cms::Exception& e) {
-  //if (hview.failedToGet()) {
+    //if (hview.failedToGet()) {
     if (!warned[level]) {
-      string inp = inputs[level].encode();
+      string inp = lepInputs[level].encode();
       // Don't bother to warn about collections that are supposed to be missing.
       if (inp != ":") 
 	edm::LogWarning("initEvent")
-	  << "No event collection " << inputs[level]
+	  << "No event collection " << lepInputs[level]
 	  << " found at rec level " << level << "; skipping";
       warned[level] = true;
     }
@@ -70,10 +76,30 @@ bool RecLevelHelper::getView(const edm::Event& event,
   return true;
 }
 
+
+bool RecLevelHelper::getDileptonsHandle(const edm::Event& event, int level,
+					edm::Handle<reco::CompositeCandidateCollection>& hcoll) const {
+  try {
+    event.getByLabel(dilInputs[level], hcoll);
+  } catch (const cms::Exception& e) {
+    //if (coll.failedToGet()) {
+    if (!warned[level]) {
+      string inp = dilInputs[level].encode();
+      // Don't bother to warn about collections that are supposed to be missing.
+      if (inp != ":") 
+	edm::LogWarning("initEvent")
+	  << "No event collection " << dilInputs[level]
+	  << " found at rec level " << level << "; skipping";
+    }
+    return false;
+  }
+  return true;
+}
+
 bool RecLevelHelper::recLevelOkay(const edm::Event& event,
 				  int level) {
   edm::View<reco::Candidate> view;
-  return getView(event, level, view);
+  return getLeptonsView(event, level, view);
 }
   
 string RecLevelHelper::makeMatchMapName(RecLevelHelper::MatchType mtype,
@@ -92,7 +118,7 @@ void RecLevelHelper::storeRecLevelMap(const edm::Event& event) {
   recLevelMap.clear();
   for (int rec = 0; rec < maxRec; rec++) {
     edm::View<reco::Candidate> view;
-    getView(event, rec, view);
+    getLeptonsView(event, rec, view);
 
     // Cache the product ids for each collection so we can look up the
     // rec level from the CandidateBaseRef.

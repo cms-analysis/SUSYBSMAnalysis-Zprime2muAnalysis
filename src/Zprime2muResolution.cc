@@ -750,7 +750,7 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	}
       }
       else {
-	if (!doingHiggs && !reconstructedOnly)
+	if (!doingHiggs && useGen)
 	  edm::LogWarning("Zprime2muResolution")
 	    << "+++ Warning in calcResolution: " << dileptons.size()
 	    << " generated dimuons found! +++\n";
@@ -861,7 +861,7 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	  // JMTBAD rely on ordering
 	  AllDilMassRes->
 	    Fill(pdi->mass() - allDileptons[lgen][idi].mass());
-	if (!reconstructedOnly && allDileptons[lgen].size() <= 0)
+	if (useGen && allDileptons[lgen].size() <= 0)
 	  edm::LogWarning("Zprime2muResolution")
 	    << "+++ Warning: no dilepton in the MC! +++\n";
       }

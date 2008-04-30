@@ -14,7 +14,7 @@
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/RecLevelHelper.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 
 using namespace std;
 using namespace edm;
@@ -88,17 +88,17 @@ private:
   RecLevelHelper recLevelHelper;
 
   // Since the cocktail muon producer needs information on matching,
-  // LeptonAssociator must be run beforehand.To get the matching
+  // LeptonAssociator must be run beforehand. To get the matching
   // information set up for the cocktail muons, LeptonAssociator must
   // be re-run, only producing match maps for them and not redoing the
   // entire thing. This flag is set according to which phase we are
   // in. (We only care about matching from the cocktail muons to the
   // other rec levels, and not from any of the others to the cocktail
   // muons.)
-  bool fromCocktail;
+  bool fromBest;
   
   // Loop boundaries for producing match maps, set appropriately
-  // according to the value of fromCocktail. (Storing leptons and
+  // according to the value of fromBest. (Storing leptons and
   // matching seeds must still be done at all rec levels, however.)
   int fromStart;
   int fromEnd;
@@ -109,11 +109,11 @@ LeptonAssociator::LeptonAssociator(const ParameterSet& cfg)
     doingElectrons(cfg.getParameter<bool>("doingElectrons")),
     standAloneMuons(cfg.getParameter<InputTag>("standAloneMuons")),
     photonInput(cfg.getParameter<InputTag>("photons")),
-    fromCocktail(cfg.getParameter<bool>("fromCocktail"))
+    fromBest(cfg.getParameter<bool>("fromBest"))
 {
-  recLevelHelper.init(cfg, fromCocktail);
+  recLevelHelper.init(cfg, fromBest);
 
-  if (fromCocktail) {
+  if (fromBest) {
     fromStart = lbest;
     fromEnd = lbest+1;
   }
@@ -352,7 +352,7 @@ void LeptonAssociator::initialize(const Event& event) {
   Handle<View<Candidate> > hview;
   for (int irec = 0; irec < fromEnd; irec++) {
     View<Candidate> view;
-    bool ok = recLevelHelper.getView(event, irec, view);
+    bool ok = recLevelHelper.getLeptonsView(event, irec, view);
     leptons[irec] = ok ? view : emptyView;
   }
 

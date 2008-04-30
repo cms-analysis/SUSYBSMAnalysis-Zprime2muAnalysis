@@ -12,7 +12,7 @@
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/RecLevelHelper.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 
 using namespace std;
 using namespace edm;
@@ -160,7 +160,7 @@ bool CocktailMuonProducer::findBestMuons(const Event& event,
 					 const auto_ptr<MuonCollection>& bestMuons) {
   // Start with tracker-only tracks.
   View<Candidate> trackerOnlyMuons;
-  if (!recLevelHelper.getView(event, ltk, trackerOnlyMuons)) {
+  if (!recLevelHelper.getLeptonsView(event, ltk, trackerOnlyMuons)) {
     edm::LogWarning("findBestMuons")
       << "Unable to get a view to the tracker-only muons; putting no"
       << " collection into event for 'best' muons.";

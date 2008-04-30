@@ -180,7 +180,6 @@ void Zprime2muAsymmetry::analyze(const edm::Event& event,
 				 const edm::EventSetup& eSetup) {
   // delegate filling our muon vectors to the parent class
   Zprime2muAnalysis::analyze(event, eSetup);
-  eventNum = event.id().event();
 
   // JMTBAD break out generator-level stuffs from fillFitData
   fillFitData(event);
@@ -543,7 +542,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
   int* type = new int[n_gen];
   for (unsigned i = 0; i < n_gen; i++) type[i] = -1;
 
-  if (!reconstructedOnly) {
+  if (useGen) {
     edm::Handle<reco::CandidateCollection> genParticles;
     event.getByLabel("genParticleCandidates", genParticles);
 
@@ -1050,7 +1049,7 @@ void Zprime2muAsymmetry::fillFrameHistos() {
 
 	//See how this approximation works in various intervals of rapidity.
 	if (cos_boost > 0.) {
-	  if ((abs(rap)) < 0.4)
+	  if (fabs(rap) < 0.4)
 	    FMBoostCut[i_rec][0]->Fill(mass);
 	  else if (fabs(rap) < 0.8)
 	    FMBoostCut[i_rec][1]->Fill(mass);

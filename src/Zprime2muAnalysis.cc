@@ -13,10 +13,7 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "DataFormats/Candidate/interface/CandMatchMap.h"
 #include "DataFormats/Candidate/interface/CompositeCandidate.h"
-#include "DataFormats/Candidate/interface/ShallowCloneCandidate.h"
-
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/DetId/interface/DetId.h"
 #include "DataFormats/EgammaCandidates/interface/Electron.h"
@@ -29,7 +26,6 @@
 #include "DataFormats/Math/interface/deltaPhi.h"
 #include "DataFormats/Math/interface/Vector.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
-#include "DataFormats/MuonReco/interface/MuonTrackLinks.h"
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidateFwd.h"
 #include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
@@ -37,13 +33,9 @@
 #include "DataFormats/TrackingRecHit/interface/TrackingRecHit.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 
-#include "PhysicsTools/CandUtils/interface/AddFourMomenta.h"
-//#include "PhysicsTools/UtilAlgos/interface/AnySelector.h"
-//#include "PhysicsTools/UtilAlgos/interface/AnyPairSelector.h"
-//#include "PhysicsTools/CandUtils/interface/CandCombiner.h"
-
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TeVMuHelper.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
 //#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/tdrstyle.h"
 
@@ -132,25 +124,16 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
 
   verbosity = VERBOSITY(config.getUntrackedParameter<int>("verbosity", 0));
   dateHistograms = config.getUntrackedParameter<bool>("dateHistograms");
-  doingElectrons = config.getParameter<bool>("doingElectrons");
   doingHiggs = config.getParameter<bool>("doingHiggs");
   constructGenDil = config.getParameter<bool>("constructGenDil");
-  generatedOnly = config.getParameter<bool>("generatedOnly");
-  reconstructedOnly = config.getParameter<bool>("reconstructedOnly");
-  useOtherMuonRecos = config.getParameter<bool>("useOtherMuonRecos");
+
+  doingElectrons = config.getParameter<bool>("doingElectrons");
+  useGen = config.getParameter<bool>("useGen");
+  useSim = config.getParameter<bool>("useSim");
+  useReco = config.getParameter<bool>("useReco");
+  useTrigger = config.getParameter<bool>("useTrigger");
   usingAODOnly = config.getParameter<bool>("usingAODOnly");
-  useTriggerInfo = config.getParameter<bool>("useTriggerInfo");
-
-  // no generator-level information or other TeV muon reconstructors
-  // available in the AOD (yet)
-  if (usingAODOnly) {
-    reconstructedOnly = true;
-    useOtherMuonRecos = false;
-    generatedOnly = false;
-  }
-
-  if (doingElectrons)
-    useOtherMuonRecos = false;
+  useOtherMuonRecos = config.getParameter<bool>("useOtherMuonRecos");
 
   // input tags for the reco collections we need
   l1ParticleMap   = config.getParameter<edm::InputTag>("l1ParticleMap");
@@ -159,33 +142,38 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   if (!doingElectrons) {
     leptonFlavor = 13;
     leptonMass = 0.10566;
-
-    // Level-1 paths we want to use for the trigger decision.
-    l1paths.push_back(l1extra::L1ParticleMap::kSingleMu7);
-    l1paths.push_back(l1extra::L1ParticleMap::kDoubleMu3);
-
-    // Level-2 paths (actually, the names of the modules ran)
-    hltModules[0].push_back("SingleMuNoIsoL2PreFiltered");
-    hltModules[0].push_back("DiMuonNoIsoL2PreFiltered");
-    // Level-3 paths (module names)
-    hltModules[1].push_back("SingleMuNoIsoL3PreFiltered");
-    hltModules[1].push_back("DiMuonNoIsoL3PreFiltered");
-    
-    // HLT paths (the logical ANDs of L2 and L3 single/dimuon paths
-    // above)
-    hltPaths.push_back("HLT1MuonNonIso");
-    hltPaths.push_back("HLT2MuonNonIso");
   }
   else {
     leptonFlavor = 11;
     leptonMass = 0.000511;
+  }
 
-    l1paths.push_back(l1extra::L1ParticleMap::kSingleEG15);
+  if (useTrigger) {
+      if (!doingElectrons) {
+	// Level-1 paths we want to use for the trigger decision.
+	l1paths.push_back(l1extra::L1ParticleMap::kSingleMu7);
+	l1paths.push_back(l1extra::L1ParticleMap::kDoubleMu3);
 
-    // For now, just look at the overall HLT decision for electrons.
-    hltPaths.push_back("HLT1EMHighEt");
-    hltPaths.push_back("HLT1EMVeryHighEt");
-    hltPaths.push_back("HLT1ElectronRelaxed");
+	// Level-2 paths (actually, the names of the modules ran)
+	hltModules[0].push_back("SingleMuNoIsoL2PreFiltered");
+	hltModules[0].push_back("DiMuonNoIsoL2PreFiltered");
+	// Level-3 paths (module names)
+	hltModules[1].push_back("SingleMuNoIsoL3PreFiltered");
+	hltModules[1].push_back("DiMuonNoIsoL3PreFiltered");
+    
+	// HLT paths (the logical ANDs of L2 and L3 single/dimuon paths
+	// above)
+	hltPaths.push_back("HLT1MuonNonIso");
+	hltPaths.push_back("HLT2MuonNonIso");
+      }
+      else {
+	l1paths.push_back(l1extra::L1ParticleMap::kSingleEG15);
+	
+	// For now, just look at the overall HLT decision for electrons.
+	hltPaths.push_back("HLT1EMHighEt");
+	hltPaths.push_back("HLT1EMVeryHighEt");
+	hltPaths.push_back("HLT1ElectronRelaxed");
+      }
   }
 
   // Our preferred style.
@@ -206,18 +194,22 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   // Keep track of how many events we run over total.
   eventsDone++;
 
-  // Store the official trigger decisions.
-  storeL1Decision(event);
-  storeHLTDecision(event);
+  if (useTrigger) {
+    // Store the official trigger decisions.
+    storeL1Decision(event);
+    storeHLTDecision(event);
+  }
 
-  // Store a reference to the generator-level particle collection.
-  edm::Handle<reco::CandidateCollection> genp;
-  event.getByLabel("genParticleCandidates", genp);
-  genParticles = &*genp;
+  if (useGen) {
+    // Store a reference to the generator-level particle collection.
+    edm::Handle<reco::CandidateCollection> genp;
+    event.getByLabel("genParticleCandidates", genp);
+    genParticles = &*genp;
   
-  // Store the particles from the resonant interaction especially.
-  if (!doingHiggs)
-    storeInteractionParticles(*genParticles, eventNum, intParticles);
+    // Store the particles from the resonant interaction especially.
+    if (!doingHiggs)
+      storeInteractionParticles(*genParticles, eventNum, intParticles);
+  }
 
   // Store per-rec-level information from the event (includes getting
   // all the match maps from the event).
@@ -232,8 +224,9 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
     addBremCandidates(irec);
   }
 
-  // Also store the true generator-level resonance.
-  addTrueResonance(event);
+  if (useGen)
+    // Also store the true generator-level resonance.
+    addTrueResonance(event);
 
   // Retrieve or make (if we're doing electrons, or are just using GMR
   // muons for best muons) the vector of original rec levels for the
@@ -256,7 +249,7 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   }
 
   // Compare official and homemade trigger decisions.
-  if (!doingElectrons)
+  if (useTrigger && !doingElectrons)
     compareTrigDecision(event);
 }
 
@@ -308,12 +301,12 @@ void Zprime2muAnalysis::clearValues() {
 bool Zprime2muAnalysis::storeLeptons(const edm::Event& event,
 				     const int rec) {
   edm::View<reco::Candidate> lepCandView;
-  if (!recLevelHelper.getView(event, rec, lepCandView)) {
+  if (!recLevelHelper.getLeptonsView(event, rec, lepCandView)) {
     if (rec == lbest) {
       // If there was no such collection in the event and we're trying
       // to retrieve the "best" leptons, try to use the default global
       // leptons (lgmr).
-      if (!recLevelHelper.getView(event, lgmr, lepCandView))
+      if (!recLevelHelper.getLeptonsView(event, lgmr, lepCandView))
 	return false;
     }
     else
@@ -391,11 +384,8 @@ void Zprime2muAnalysis::storeDileptons(const edm::Event& event,
   const static bool debug = verbosity >= VERBOSITY_SIMPLE;
 
   edm::Handle<reco::CompositeCandidateCollection> hdils;
-  string label = "dileptons" + recLevelHelper.levelName(rec, true);
-  try {
-    event.getByLabel(label, hdils);
-  } catch (const cms::Exception& e) {
-  //if (hview.failedToGet()) {
+  bool ok = recLevelHelper.getDileptonsHandle(event, rec, hdils);
+  if (!ok) {
     unsigned nlep = getLeptons(rec).size();
     if (nlep >= 2)
       edm::LogWarning("storeDileptons")
@@ -683,8 +673,11 @@ void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
     if (fired) hlt_trigbits |= 1 << i;
   }
 
-  // For now, don't bother looking at sub-levels for electrons.
-  if (doingElectrons) {
+  // For now, don't bother looking at sub-levels for electrons. Also,
+  // the AOD does not store the L2 path result separately, so short
+  // circuit if we're running on AOD.
+  // JMTBAD for L2, we could take the result of TriggerTranslator()...
+  if (doingElectrons || usingAODOnly) {
     trigWord[l2] = trigWord[l3] = hlt_trigbits;
     passTrig[l2] = passTrig[l3] = hlt_trigbits != 0;
     for (int l = l2; l <= l3; l++) 
@@ -765,8 +758,6 @@ void Zprime2muAnalysis::storeHLTDecision(const edm::Event& event) {
     if (verbosity == VERBOSITY_NONE)
       dumpEvent(false, true, true, true, false);
   }
-
-  // JMTBAD how to handle missing L2/L3 info?
 
   if (debug) LogTrace("storeHLTDecision") << out.str();
 }
@@ -947,6 +938,9 @@ void Zprime2muAnalysis::compareTrigDecision(const edm::Event& event,
     if (lvl >= l3)
       homemade_trigbits &= trigWord[l2];
     // Compare official and homemade decisions.
+    // JMTBAD this warning will also be fired about L2 when running on
+    // AOD and on events for which L2 trigbits do not equal L3
+    // ones... see storeHLTDecision()
     if (homemade_trigbits != trigWord[lvl]) {
       edm::LogWarning("compareTrigDecision")
 	<< "+++ Warning: official L" << lvl
@@ -1915,18 +1909,8 @@ unsigned Zprime2muAnalysis::leptonIsCut(const reco::CandidateBaseRef& lepton) co
     // of an asymmetry between the muon code path and the electron one.
     // Perhaps use HEEPHelper here to make a cut code?
   }
-  else {
-    // pT cut of 20 GeV
-    if (lepton->pt() <= 20.)
-      retval |= 0x01;
-
-    // sum pT in cone of dR=0.3 cut of 10 GeV
-    if (recLevel(lepton) >= lgmr) {
-      const reco::Muon& muon = toConcrete<reco::Muon>(lepton);
-      if (muon.isIsolationValid() && muon.getIsolationR03().sumPt > 10)
-	retval |= 0x02;
-    }
-  }
+  else
+    return TeVMuHelper().leptonIsCut(*lepton);
 
   return retval;
 }

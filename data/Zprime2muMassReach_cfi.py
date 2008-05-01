@@ -6,6 +6,7 @@ def attachMassReach(process):
     process.Zprime2muMassReach = cms.EDAnalyzer(
         'Zprime2muMassReach',
         process.Zprime2muAnalysisCommon,
+        process.recLevelHelperPSet,
         dataSets,
         dataSet        = cms.string('Zssm1000'),
         

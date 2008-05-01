@@ -4,6 +4,7 @@ def attachAnalysis(process):
     process.Zprime2muAnalysis = cms.EDAnalyzer(
         'Zprime2muAnalysis',
         process.Zprime2muAnalysisCommon,
+        process.recLevelHelperPSet,
         verbosity = cms.untracked.int32(2)
         )
 

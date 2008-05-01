@@ -8,6 +8,7 @@ def attachResolution(process):
     process.Zprime2muResolution = cms.EDAnalyzer(
         'Zprime2muResolution',
         process.Zprime2muAnalysisCommon,
+        process.recLevelHelperPSet,
         dataSets,
         dataSet           = cms.string('Zp1000'),
 

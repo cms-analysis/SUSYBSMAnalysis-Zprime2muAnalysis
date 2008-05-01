@@ -445,20 +445,16 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         constructGenDil   = cms.bool(False),
 
         ################################################################
-        ## Input tags for particles/trigger paths
+        ## Input tags for trigger paths and particles.
         ################################################################
         l1ParticleMap = cms.InputTag('l1extraParticleMap'),
         # Every process puts a TriggerResults product into the event;
         # pick the HLT one.
-        hltResults = cms.InputTag('TriggerResults','','HLT'),
-        # Stand-alone muons are used as 'seeds' to try to match the
-        # various levels of global reconstruction.
-        standAloneMuons = cms.InputTag('standAloneMuons','UpdatedAtVtx'),
-        # Reconstructed photons to try to recover brem losses when
-        # running on muons.
-        photons = cms.InputTag('correctedPhotons'),
+        hltResults = cms.InputTag('TriggerResults','','HLT')
         )
 
+    process.recLevelHelperPSet = cms.PSet()
+    
     ################################################################
     ## Input tags for leptons at the different rec levels, in
     ## order; filled below using the collections defined at the
@@ -480,18 +476,29 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             # (we cannot have empty InputTags, apparently).
             tag = cms.InputTag('skip')
             
-        setattr(process.Zprime2muAnalysisCommon, tagname, tag)
+        setattr(process.recLevelHelperPSet, tagname, tag)
 
     ####################################################################
     ## Do all the matching -- between each pair of rec levels
     ## (including MC), to seed leptons (for global fits), and to
     ## photons
     ####################################################################
-    
+
+    leptonMatchPSet = cms.PSet(
+        verbosity      = cms.untracked.int32(0),
+        doingElectrons = cms.bool(doingElectrons),
+        # Stand-alone muons are used as 'seeds' to try to match the
+        # various levels of global reconstruction.
+        standAloneMuons = cms.InputTag('standAloneMuons','UpdatedAtVtx'),
+        # Reconstructed photons to try to recover brem losses when
+        # running on muons.
+        photons = cms.InputTag('correctedPhotons')
+        )
+        
     process.leptonMatches = cms.EDProducer(
         'LeptonAssociator',
-        process.Zprime2muAnalysisCommon,
-        verbosity = cms.untracked.int32(0),
+        leptonMatchPSet,
+        process.recLevelHelperPSet,
         fromBest  = cms.bool(False)
         )
 
@@ -505,18 +512,23 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
 
     process.bestMuons = cms.EDProducer(
         'CocktailMuonProducer',
-        process.Zprime2muAnalysisCommon,
+        process.recLevelHelperPSet,
+        useOtherMuonRecos = cms.bool(useOtherMuonRecos),
         verbosity = cms.untracked.int32(0),
         useTMR    = cms.bool(False),
         )
-        
+    
+    # Need to match the "best" leptons to all the others. (And,
+    # CocktailMuonProducer needs the results of the by-seed
+    # matching to do its thing, so the matching must be done in
+    # two steps.)
     process.bestMatches = cms.EDProducer(
         'LeptonAssociator',
-        process.Zprime2muAnalysisCommon,
-        verbosity = cms.untracked.int32(0),
+        leptonMatchPSet,
+        process.recLevelHelperPSet,
         fromBest  = cms.bool(True)
         )
-
+    
     process.bestMu = cms.Path(process.bestMuons * process.bestMatches)
 
     ####################################################################
@@ -606,7 +618,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             tag = cms.InputTag('skip')
             
         tagname = 'dileptons' + recLevels[i]
-        setattr(process.Zprime2muAnalysisCommon, tagname, tag)
+        setattr(process.recLevelHelperPSet, tagname, tag)
 
     ####################################################################
     ## Done!

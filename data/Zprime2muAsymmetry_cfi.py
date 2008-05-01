@@ -6,6 +6,7 @@ def attachAsymmetry(process):
     process.Zprime2muAsymmetry = cms.EDAnalyzer(
         'Zprime2muAsymmetry',
         process.Zprime2muAnalysisCommon,
+        process.recLevelHelperPSet,
         dataSets,
         dataSet = cms.string('dy_above400'),
         

@@ -152,7 +152,6 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         # Currently, the extra TeV muon reconstructors are not in the
         # AOD. This situation will change come 2_1_X.
         useOtherMuonRecos = False
-        muons[lOP] = muons[lGR]
         # HEEPSelector requires info not in the AOD, so use the
         # default electrons.
         electrons[lOP] = electrons[lGR]
@@ -160,6 +159,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     if not useOtherMuonRecos:
         for i in xrange(lTK, lPR+1):
             muons[i] = None
+        muons[lOP] = muons[lGR]
 
     print 'After sanity checks, using these muon collections:', muons
     print 'And these electron collections:', electrons
@@ -543,64 +543,81 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         return 'dileptons%s%s%s%s%s' % (flavors[0][:2], flavors[1][:2],
                                         cdict[charges[0]], cdict[charges[1]],
                                         reclevel)
-    
+
+    # Keep track of the modules we make so we can set them all into a
+    # path in the process later.
     path = []
-    for theseFlavors in [diMuons, diElectrons, electronMuon, muonElectron]:
-        for theseCharges in [oppSign, likeSignPos, likeSignNeg]:
-            for i in xrange(numRecLevels):
-                # Skip the other TeV muon collections if desired.
-                if not useOtherMuonRecos and i >= lTK and i <= lPR:
-                    continue
+    
+    # Enumerate the valid combinations with no double counting.
+    combos = [
+        (diMuons,      oppSign),     # mu+ mu-
+        (diMuons,      likeSignPos), # mu+ mu+
+        (diMuons,      likeSignNeg), # mu- mu-
+        (diElectrons,  oppSign),     # e+  e-
+        (diElectrons,  likeSignPos), # e+  e+
+        (diElectrons,  likeSignNeg), # e-  e-
+        (muonElectron, likeSignPos), # mu+ e+
+        (muonElectron, likeSignNeg), # mu- e-
+        (muonElectron, oppSign),     # mu+ e-
+        (muonElectron, oppSignMP)    # mu- e+
+        ]
 
-                # Set up the flavor and charge pair for this rec level.
-                collections = []
-                charges = []
-                for j in xrange(2):
-                    collections.append(eval(theseFlavors[j])[i])
-                    # Electrons at L1 and L2 do not have charges (they are
-                    # just ECAL superclusters); try to use them to make
-                    # dileptons anyway.
-                    if theseFlavors[j] == 'electrons' and (i == lL1 or i == lL2):
-                        charges.append('')
-                    else:
-                        charges.append('@%s' % theseCharges[j])
-            
-                # We finally come to the point of the Nones in the electron
-                # collection above: to skip rec levels that have no
-                # collections here when producing dileptons. Otherwise,
-                # CandCombiner throws an exception when it cannot find the
-                # input collection.
-                if None in collections:
-                    continue
-        
-                # Use CandViewShallowCloneCombiner for the ShallowClone bit;
-                # this enables us to get the reference to the original lepton
-                # that makes up the dilepton we're looking at in the code.
-                combiner = 'CandViewShallowCloneCombiner'
-                if i == 0:
-                    # At generator level, look only at the leptons which came
-                    # from the resonance.
-                    combiner = 'GenDil' + combiner
+    # Make all the dileptons.
+    for theseFlavors, theseCharges in combos:
+        for i in xrange(numRecLevels):
+            # Skip the other TeV muon collections if desired.
+            if not useOtherMuonRecos and i >= lTK and i <= lPR:
+                continue
 
-                # Put the decay string in the format expected by CandCombiner:
-                # e.g. 'muons@+ muons@-'.
-                decay = '%s%s %s%s' % (collections[0], charges[0],
-                                       collections[1], charges[1])
+            # Set up the flavor and charge pair for this rec level.
+            collections = []
+            charges = []
+            for j in xrange(2):
+                collections.append(eval(theseFlavors[j])[i])
+                # Electrons at L1 and L2 do not have charges (they are
+                # just ECAL superclusters); try to use them to make
+                # dileptons anyway.
+                if theseFlavors[j] == 'electrons' and (i == lL1 or i == lL2):
+                    charges.append('')
+                else:
+                    charges.append('@%s' % theseCharges[j])
 
-                # A dummy cut, otherwise CandCombiner crashes.
-                cut = 'mass > 0'
-                
-                dilProd = cms.EDProducer(combiner,
-                                         decay = cms.string(decay),
-                                         cut = cms.string(cut))
+            # We finally come to the point of the Nones in the electron
+            # collection above: to skip rec levels that have no
+            # collections here when producing dileptons. Otherwise,
+            # CandCombiner throws an exception when it cannot find the
+            # input collection.
+            if None in collections:
+                continue
+
+            # Use CandViewShallowCloneCombiner for the ShallowClone bit;
+            # this enables us to get the reference to the original lepton
+            # that makes up the dilepton we're looking at in the code.
+            combiner = 'CandViewShallowCloneCombiner'
+            if i == 0:
+                # At generator level, look only at the leptons which came
+                # from the resonance.
+                combiner = 'GenDil' + combiner
+
+            # Put the decay string in the format expected by CandCombiner:
+            # e.g. 'muons@+ muons@-'.
+            decay = '%s%s %s%s' % (collections[0], charges[0],
+                                   collections[1], charges[1])
+
+            # A dummy cut, otherwise CandCombiner crashes.
+            cut = 'mass > 0'
+
+            dilProd = cms.EDProducer(combiner,
+                                     decay = cms.string(decay),
+                                     cut = cms.string(cut))
 
 
-                # Attach this producer to the process, encoding the
-                # name as e.g. 'dileptons_elmuMP_OP' meaning e-mu+ at OP rec
-                # level.
-                name = nameDilCollection(theseFlavors, theseCharges, recLevels[i])
-                setattr(process, name, dilProd)
-                path.append('process.' + name)
+            # Attach this producer to the process, encoding the
+            # name as e.g. 'dileptonselmuMPOP' meaning e-mu+ at OP rec
+            # level.
+            name = nameDilCollection(theseFlavors, theseCharges, recLevels[i])
+            setattr(process, name, dilProd)
+            path.append('process.' + name)
 
     # Make a path that runs all the producers we just made.
     pathCodeStr = ' * '.join(path)

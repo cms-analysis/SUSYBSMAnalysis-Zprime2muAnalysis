@@ -20,5 +20,4 @@
 <use name=SimDataFormats/HepMCProduct>
 <use name=SimDataFormats/Track>
 
-//<flags CXXFLAGS="-O0 -g -DDEBUG">
 <flags EDM_PLUGIN=1>

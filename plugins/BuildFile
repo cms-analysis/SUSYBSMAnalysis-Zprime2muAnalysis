@@ -41,5 +41,3 @@
   <use name=PhysicsTools/UtilAlgos>
   <use name=PhysicsTools/CandAlgos>
 </library>
-
-//<flags CXXFLAGS="-O0 -g -DDEBUG">

@@ -820,7 +820,8 @@ void Zprime2muResolution::calcResolution(const bool debug) {
     if (i_rec == lgmr) {
       for (plep = allLeptons[lgmr].begin(); plep != allLeptons[lgmr].end(); plep++) {
 	int muHits = nHits(*plep, HITS_MU);
-	const reco::TrackBaseRef& tk = getMainTrack(*plep);
+	const reco::Track* tk = getMainTrack(*plep);
+	if (tk == 0) continue;
 	double chi2dof = tk->chi2()/tk->ndof();
 	double eta = fabs((*plep)->eta());
 	if (eta < 0.9) {

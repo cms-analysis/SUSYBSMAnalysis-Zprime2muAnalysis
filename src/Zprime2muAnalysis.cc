@@ -35,7 +35,6 @@
 
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TeVMuHelper.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
 //#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/tdrstyle.h"
 
@@ -354,31 +353,6 @@ bool Zprime2muAnalysis::storeLeptons(const edm::Event& event,
   return true;
 }
 
-void
-Zprime2muAnalysis::removeDileptonOverlap(reco::CompositeCandidateCollection& dileptons) {
-  reco::CompositeCandidateCollection::iterator pdi, qdi;
-  for (pdi = dileptons.begin(); pdi != dileptons.end() - 1;) {
-    for (qdi = pdi+1; qdi != dileptons.end(); qdi++) {
-      int p0 = id(dileptonDaughter(*pdi, 0));
-      int p1 = id(dileptonDaughter(*pdi, 1));
-      int q0 = id(dileptonDaughter(*qdi, 0));
-      int q1 = id(dileptonDaughter(*qdi, 1));
-      
-      if (p0 == q0 || p0 == q1 || p1 == q1 || p1 == q0) {
-	// If either lepton is shared, remove the second dilepton
-	// (i.e. the one with lower invariant mass since we have
-	// sorted the vector already), reset pointers and restart.
-	dileptons.erase(qdi);
-	pdi = dileptons.begin();
-	break;
-      }
-      else {
-	pdi++;
-      }
-    }
-  }
-}
-
 void Zprime2muAnalysis::storeDileptons(const edm::Event& event,
 				       const int rec) {
   const static bool debug = verbosity >= VERBOSITY_SIMPLE;
@@ -398,45 +372,19 @@ void Zprime2muAnalysis::storeDileptons(const edm::Event& event,
   reco::CompositeCandidateCollection& dileptons
     = rec == MAX_LEVELS ? bestDileptons : allDileptons[rec];
 
-  // Copy the dileptons we want from the vector.
-  reco::CompositeCandidateCollection::const_iterator dil;
-  for (dil = hdils->begin(); dil != hdils->end(); dil++) {
-    if (rec == lgen) {
-      if (!constructGenDil) {
-	// For generator-level dileptons, unless we are told to do
-	// otherwise by the "constructGenDil" parameter, make sure we pick
-	// up the actual leptons from the resonance -- leptons with the
-	// same mother that has a PDG id of one of the resonances we care
-	// about.
-	const reco::Candidate* mom
-	  = sameMother(dileptonDaughter(*dil, 0),
-		       dileptonDaughter(*dil, 1));
-	if (!mom || !isResonance(mom->pdgId()))
-	  continue;
-      }
-    }
-    else {
-      // Apply cuts to the leptons.
-      if (leptonIsCut(dileptonDaughter(*dil, 0)) ||
-	  leptonIsCut(dileptonDaughter(*dil, 1)))
-	continue;
-    }
-
-    dileptons.push_back(*dil);
-  }
+  // Default cuts are pT < 20 GeV and isolation sumPt < 10.
+  const unsigned currentCuts = TeVMuHelper::PT | TeVMuHelper::ISO;
+  const bool filterGen = rec == lgen && !constructGenDil;
+  cutDileptons(*hdils, dileptons, currentCuts, filterGen);
 
   if (debug)
     LogTrace("storeDileptons") << "At rec level " << rec << ", CandCombiner"
 			       << " made " << hdils->size()
 			       << " dileptons; kept " << dileptons.size();
     
-  // Sort dileptons to look for one or two highest-mass ones.
-  if (dileptons.size() > 1)
-    sort(dileptons.begin(), dileptons.end(), reverse_mass_sort());
-
   if (dileptons.size() > 1) {
     // Remove dileptons of lower invariant mass that are comprised of a
-    // muon that has been used by a higher invariant mass one.
+    // lepton that has been used by a higher invariant mass one.
     removeDileptonOverlap(dileptons);
 
     // Store only 1 dilepton for Z' and G*, and two highest mass dileptons
@@ -1289,33 +1237,16 @@ bool Zprime2muAnalysis::storeInteractionParticles(
 // Track utility functions
 ////////////////////////////////////////////////////////////////////
 
-reco::TrackBaseRef
+const reco::Track*
 Zprime2muAnalysis::getMainTrack(const reco::CandidateBaseRef& cand) const {
-  // JMTBAD reco::RecoCandidate::bestTrack() ?
   const int rec = recLevel(cand);
-  if (rec == l2) {
-    // L2 electrons are just RecoEcalCandidates -- no track. L2 muons
-    // are standalone muons -- only one track possible to get.
-    if (doingElectrons)
-      return reco::TrackBaseRef();
-    else
-      return reco::TrackBaseRef(cand->get<reco::TrackRef>());
-  }
-  else if (rec >= l3) {
-    // L3 and above electrons have a GsfTrack in the pixel
-    // detector. L3 and above muons have a combined muon track from
-    // hits in the tracker and in the muon system.
-    if (doingElectrons)
-      return reco::TrackBaseRef(cand->get<reco::GsfTrackRef>());
-    else
-      return reco::TrackBaseRef(cand->get<reco::TrackRef, reco::CombinedMuonTag>());
-  }
-  else
-    return reco::TrackBaseRef(); // an invalid ref
+  if (rec >= l2)
+    return toConcrete<reco::RecoCandidate>(cand).bestTrack();
+  return 0;
 }
 
-template <typename TrackType>
-double Zprime2muAnalysis::pError(const TrackType& track) const {
+template <typename TrackPtrType>
+double Zprime2muAnalysis::pError(const TrackPtrType& track) const {
   // dumb identity:
   // p = q / qoverp
   // dp_dqoverp = - q/qoverp^2
@@ -1328,18 +1259,18 @@ double Zprime2muAnalysis::pError(const TrackType& track) const {
   return sig_p;
 }
 
-template <typename TrackType>
-double Zprime2muAnalysis::ptError(const TrackType& track) const {
+template <typename TrackPtrType>
+double Zprime2muAnalysis::ptError(const TrackPtrType& track) const {
   return track->ptError();
 }
 
-template <typename TrackType>
-double Zprime2muAnalysis::invPtError(const TrackType& tk) const {
+template <typename TrackPtrType>
+double Zprime2muAnalysis::invPtError(const TrackPtrType& tk) const {
   return invError(tk->pt(), tk->ptError());
 }
   
-template <typename TrackType>
-double Zprime2muAnalysis::invPError(const TrackType& tk) const {
+template <typename TrackPtrType>
+double Zprime2muAnalysis::invPError(const TrackPtrType& tk) const {
   return invError(tk->p(), pError(tk));
 }
 
@@ -1359,14 +1290,14 @@ double Zprime2muAnalysis::invPError(const reco::CandidateBaseRef& cand) const {
   return invPError(getMainTrack(cand));
 }
 
-template <typename TrackType>
-void Zprime2muAnalysis::numSubDetHits(const TrackType& theTrack,
+template <typename TrackPtrType>
+void Zprime2muAnalysis::numSubDetHits(const TrackPtrType& theTrack,
 				      int& nPixHits, int& nSilHits,
 				      int& nOtherHits,
 				      DetId::Detector otherDet) const {
   nPixHits = nSilHits = nOtherHits = 0;
 
-  if (theTrack.isNull()) {
+  if (theTrack == 0) {
     edm::LogError("numSubDetHits")
       << "theTrack is a null reference!";
     return;
@@ -1412,8 +1343,8 @@ int Zprime2muAnalysis::nHits(const reco::CandidateBaseRef& cand,
 			     const int type) const {
   if (usingAODOnly) return -1;
   const int rec = recLevel(cand);
-  const reco::TrackBaseRef tk = getMainTrack(cand);
-  if (tk.isNonnull()) {
+  const reco::Track* tk = getMainTrack(cand);
+  if (tk != 0) {
     if (type == HITS_ALL || 
 	(rec == l2 && type == HITS_OTH && !doingElectrons))
       // JMTBAD perhaps the # of xtals in the supercluster for L2
@@ -1458,6 +1389,79 @@ Zprime2muAnalysis::ptLx(const reco::TrackRef& theTrack, const int rec) const {
 ////////////////////////////////////////////////////////////////////
 // Dilepton utility functions
 ////////////////////////////////////////////////////////////////////
+
+void
+Zprime2muAnalysis::removeDileptonOverlap(reco::CompositeCandidateCollection& dileptons) {
+  if (dileptons.size() < 2) return;
+
+  // Sort dileptons so we keep the ones with larger invariant mass.
+  sort(dileptons.begin(), dileptons.end(), reverse_mass_sort());
+
+  reco::CompositeCandidateCollection::iterator pdi, qdi;
+  for (pdi = dileptons.begin(); pdi != dileptons.end() - 1;) {
+    for (qdi = pdi+1; qdi != dileptons.end(); qdi++) {
+      int p0 = id(dileptonDaughter(*pdi, 0));
+      int p1 = id(dileptonDaughter(*pdi, 1));
+      int q0 = id(dileptonDaughter(*qdi, 0));
+      int q1 = id(dileptonDaughter(*qdi, 1));
+      
+      if (p0 == q0 || p0 == q1 || p1 == q1 || p1 == q0) {
+	// If either lepton is shared, remove the second dilepton
+	// (i.e. the one with lower invariant mass since we have
+	// sorted the vector already), reset pointers and restart.
+	dileptons.erase(qdi);
+	pdi = dileptons.begin();
+	break;
+      }
+      else {
+	pdi++;
+      }
+    }
+  }
+}
+
+void Zprime2muAnalysis::cutDileptons(const reco::CompositeCandidateCollection& dils,
+				     reco::CompositeCandidateCollection& newDils,
+				     unsigned cuts, bool filterGen,
+				     int pdgId1, int pdgId2) const {
+  reco::CompositeCandidateCollection::const_iterator dil;
+  for (dil = dils.begin(); dil != dils.end(); dil++) {
+    // If requested (by both PDG ids being nonzero), cut out the
+    // dileptons that are not made up of the requested
+    // leptons. (Useful for separating mu+mu+ from mu-mu- in the
+    // output of CandCombiner.)
+    if (pdgId1 != 0 && pdgId2 != 0) {
+      int p1 = dil->daughter(0)->pdgId();
+      int p2 = dil->daughter(1)->pdgId();
+      if (!((p1 == pdgId1 || p1 == pdgId2) && (p2 == pdgId1 || p2 == pdgId2)))
+	continue;
+    }
+
+    if (filterGen) {
+      // Make sure we pick up the actual dilepton from the resonance
+      // -- i.e. the one comprised of leptons with the same mother
+      // that has a PDG id of one of the resonances we care about.
+      const reco::Candidate* mom  = sameMother(dileptonDaughter(*dil, 0),
+					       dileptonDaughter(*dil, 1));
+      if (!mom || !isResonance(mom->pdgId()))
+	continue;
+    }
+    else {
+      // If the lepton is cut with a code that is present in the cuts
+      // bitmask, cut this dilepton.
+      unsigned cut = tevMuHelper.leptonIsCut(*dileptonDaughter(*dil, 0));
+      if (cut & cuts)
+	continue;
+      else {
+	cut = tevMuHelper.leptonIsCut(*dileptonDaughter(*dil, 1));
+	if (cut & cuts)
+	  continue;
+      }
+    }
+
+    newDils.push_back(*dil);
+  }
+}
 
 const Zprime2muAnalysis::LorentzVector&
 Zprime2muAnalysis::resV(const int rec, const int idil) const {
@@ -1539,7 +1543,7 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
 	   << endl;
   }
   else if (level == l2) {
-    const reco::TrackBaseRef& tk = getMainTrack(cand);
+    const reco::Track* tk = getMainTrack(cand);
     output << " Phi: "      << setw(8) << setprecision(4) << cand->phi()
 	   << "      Eta: " << setw(8) << setprecision(4) << cand->eta();
     if (!doingElectrons) {
@@ -1561,7 +1565,7 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
   }
   else {
     const reco::RecoCandidate& lep = toConcrete<reco::RecoCandidate>(cand);
-    const reco::TrackBaseRef glbtrk = getMainTrack(cand);
+    const reco::Track* glbtrk = getMainTrack(cand);
     reco::TrackRef tktrk, statrk;
     double sumptr03 = 0;
     if (!doingElectrons) {
@@ -1592,11 +1596,11 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
     }
     output << endl;
     output << "   P:          " << setw(7) << setprecision(5) << cand->p();
-    if (!glbtrk.isNull()) 
+    if (glbtrk != 0) 
       output << " +/- "    << pError(glbtrk);
     output << endl;
     output << "   Pt:         " << setw(7) << cand->pt();
-    if (!glbtrk.isNull())
+    if (glbtrk != 0)
       output << " +/- "    << ptError(glbtrk)
 	     << "   Chi2/Ndof: "  << setw(11) << glbtrk->chi2()
 	     << "/"        << setw(2) << glbtrk->ndof();
@@ -1629,7 +1633,7 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
     output << "   Tracker Chi2 diff.: " << setw(7) << 0 // rhs.trackerChi2Diff()
 	   << "   MuonFit Chi2 diff.: " << setw(7) << 0 // rhs.muonFitChi2Diff()
 	   << endl;
-    if (!glbtrk.isNull()) {
+    if (glbtrk != 0) {
       output << "   Vertex position: " << setw(11) << cand->vx() 
 	     << " "                    << setw(11) << cand->vy() 
 	     << " "                    << setw(11) << cand->vz() << endl;
@@ -1643,7 +1647,7 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
     if (!doingElectrons)
       output << "   Closest photon: " << closestPhoton(cand)
 	     << "   Sum pT (dR<0.3): " << sumptr03
-	     << "   Cut code  " << leptonIsCut(cand) << endl;
+	     << "   Cut code  " << TeVMuHelper().leptonIsCut(*cand) << endl;
 
     output << "   Loc. code: " << whereIsLepton(cand)
 	   << "   p4 (p, E): " << cand->p4() << endl;
@@ -1690,8 +1694,14 @@ Zprime2muAnalysis::dumpDilepton(ostream& output,
     dumpLepton(output, cand2);
   }
   else
-    output << "  Higher-p daughter: " << id(cand1)
-	   << " lower-p daughter: " << id(cand2) << endl;
+    output << "  higher-p daughter: " << id(cand1)
+	   << " pdgId: " << cand1->pdgId()
+	   << " charge: " << cand1->charge() << " pt: " << cand1->pt()
+	   << " eta: " << cand1->eta() << " phi: " << cand1->phi() << endl
+	   << "   lower-p daughter: " << id(cand2)
+	   << " pdgId: " << cand2->pdgId()
+	   << " charge: " << cand2->charge() << " pt: " << cand2->pt()
+	   << " eta: " << cand2->eta() << " phi: " << cand2->phi() << endl;
 }
 
 void Zprime2muAnalysis::dumpDileptonMasses() const {
@@ -1753,7 +1763,8 @@ void Zprime2muAnalysis::dumpEvent(const bool printGen, const bool printL1,
   int irec;
   ostringstream out;
 
-  out << "\n******************************** Event " << eventNum << endl;
+  out << "\n******************************** Event " << eventNum
+      << " (" << eventsDone << ")\n";
 
   for (irec = 0; irec < MAX_LEVELS; irec++) {
     if (irec == 0 && !printGen ||
@@ -1909,8 +1920,11 @@ unsigned Zprime2muAnalysis::leptonIsCut(const reco::CandidateBaseRef& lepton) co
     // of an asymmetry between the muon code path and the electron one.
     // Perhaps use HEEPHelper here to make a cut code?
   }
-  else
-    return TeVMuHelper().leptonIsCut(*lepton);
+  else {
+    unsigned cutcode = TeVMuHelper().leptonIsCut(*lepton);
+    // Only apply the cuts that were used for the 2007 AN for now.
+    return cutcode & (TeVMuHelper::PT | TeVMuHelper::ISO);
+  }
 
   return retval;
 }

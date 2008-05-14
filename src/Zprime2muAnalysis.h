@@ -28,6 +28,7 @@
 #include "PhysicsTools/UtilAlgos/interface/TFileService.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/RecLevelHelper.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TeVMuHelper.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 
 namespace reco {
@@ -213,6 +214,9 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 
   // Object to help with per-rec-level information.
   RecLevelHelper recLevelHelper;
+  
+  // Helper object for TeV dimuon analysis selection.
+  TeVMuHelper tevMuHelper;
 
  private:
   // verbosity controls the amount of debugging information printed;
@@ -239,16 +243,9 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // Store a sorted vector of CandidateBaseRefs to leptons at level rec,
   // returning a success flag.
   bool storeLeptons(const edm::Event& event, const int rec);
-
-  // Prune a dilepton collection: if more than one dilepton was
-  // formed, we accept only those containing distinct leptons. The
-  // preference is given to higher mass dilepton over lower mass
-  // dilepton (i.e. to the earlier dilepton in the current sort
-  // order).
-  void removeDileptonOverlap(reco::CompositeCandidateCollection& dileptons);
-
-  // Consider all possible combinations of l+ and l-, and form
-  // dilepton candidates. 
+  // Store the default dileptons at this rec level from the event,
+  // keeping only the one or two highest invariant mass unique-lepton
+  // (see removeDileptonOverlap()) dileptons.
   void storeDileptons(const edm::Event& event, const int rec);
 
   // If there is a photon candidate at the phi-eta distance dRmax from 
@@ -288,10 +285,20 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 
   // Build a string containing a name for a histogram -- useful inside
   // loops when booking histos.
-  std::string nameHist(const char* s, int i, int j = -1) {
-    std::string x = std::string(s) + char(i + 48);
-    if (j >= 0) x += char(j + 48);
-    return x;
+  std::string nameHist(const char* s, int i, int j=-1, int k=-1, bool extended=false) {
+    std::ostringstream x;
+    x << s;
+    if (extended) x << "_";
+    x << i;
+    if (j >= 0) {
+      if (extended) x << "_";
+      x << j;
+    }
+    if (k >= 0) {
+      if (extended) x << "_";
+      x << k;
+    }
+    return x.str();
   }
 
   ////////////////////////////////////////////////////////////////////
@@ -414,22 +421,22 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   //   L2: return the muon system track
   //   L3 or higher: return the combined track (tracker+muon system)
   // If something doesn't make sense (e.g. requesting an L1 track for
-  // which a Track is not reconstructed), return an invalid reference.
-  reco::TrackBaseRef getMainTrack(const reco::CandidateBaseRef& cand) const;
+  // which a Track is not reconstructed), return a null pointer.
+  const reco::Track* getMainTrack(const reco::CandidateBaseRef& cand) const;
 
   // There is no pError() in Track/TrackBase; calculate error on p
   // ourselves from error on qoverp().
-  template <typename TrackType> double pError(const TrackType& cand) const;
+  template <typename TrackPtrType> double pError(const TrackPtrType& cand) const;
   // There is a ptError() in Track/TrackBase but for symmetry with the
   // above let's have another.
-  template <typename TrackType> double ptError(const TrackType& cand) const;
+  template <typename TrackPtrType> double ptError(const TrackPtrType& cand) const;
   
   // Propagate inverse errors...
   double invError(double val, double err) const { return 1/val/val*err; } 
   // ... to 1/pT
-  template <typename TrackType> double invPtError(const TrackType& tk) const;
+  template <typename TrackPtrType> double invPtError(const TrackPtrType& tk) const;
   // ... and 1/p
-  template <typename TrackType> double invPError(const TrackType& tk) const;
+  template <typename TrackPtrType> double invPError(const TrackPtrType& tk) const;
 
   // Provide the same track error methods to be called directly on
   // candidates, for convenience.
@@ -441,8 +448,8 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // Return by reference the number of rec hits counted by pixel,
   // silicon, and "other-system", which could be the muon system or
   // the ecal for electrons.
-  template <typename TrackType>
-    void numSubDetHits(const TrackType& theTrack,
+  template <typename TrackPtrType>
+    void numSubDetHits(const TrackPtrType& theTrack,
 		       int& nPixHits, int& nSilHits, int& nOtherHits,
 		       DetId::Detector otherDet) const;
 
@@ -463,6 +470,26 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   ////////////////////////////////////////////////////////////////////
   // Dilepton utility functions
   ////////////////////////////////////////////////////////////////////
+
+  // Sort a dilepton collection by decreasing invariant mass, and then
+  // prune the collection: if more than one dilepton was formed,
+  // accept only those containing distinct leptons. If a lepton is
+  // shared by a pair of dileptons, keep the dilepton with the higher
+  // invariant mass.
+  void removeDileptonOverlap(reco::CompositeCandidateCollection& dileptons);
+
+  // Take the input dileptons in dils (e.g. the output of
+  // CandCombiner) which have only the combinatorics done, and apply
+  // the analysis-level cuts (specified by a bitmask) to them. If
+  // filterGen, then make sure we only keep the dileptons that
+  // correspond to generator-level resonances. If both PDG ids are
+  // nonzero, cut out the dileptons that are not made up of the
+  // requested leptons. (Useful for separating mu+mu+ from mu-mu- in
+  // the output of CandCombiner.)
+  void cutDileptons(const reco::CompositeCandidateCollection& dils,
+		    reco::CompositeCandidateCollection& newDils,
+		    unsigned cuts, bool filterGen,
+		    int pdgId1=0, int pdgId2=0) const;
 
   // Get the "resonance" four-vector, i.e. the dilepton four-vector
   // plus any associated photons.

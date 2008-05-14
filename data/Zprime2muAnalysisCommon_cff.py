@@ -106,6 +106,10 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     scripts in test/makeScripts of this package), this needs to be set
     False.
 
+    useHEEPSelector: whether to use D.L. Evans\'s HEEPSelector for
+    "best" electrons. It requires quantities not in AOD, so it may
+    need to be disabled via this flag.
+    
     useTrigger: whether to expect to be able to get trigger
     collections (i.e. those destined for L1-L3 rec levels) from the
     file.
@@ -141,7 +145,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     if not useGen:
         useSim = False
         muons[lGN] = electrons[lGN] = None
-    
+
     if not useReco:
         useTrigger = False
         useOtherMuonRecos = False
@@ -150,7 +154,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             muons[i] = None
             electrons[i] = None
 
-    if useHEEPSelector:
+    if not useHEEPSelector:
         electrons[lOP] = electrons[lGR]
 
     if not useOtherMuonRecos:
@@ -251,7 +255,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             )
         
         process.ptree = cms.Path(process.printTree)
-    
+
     ####################################################################
     ## Make a CandidateCollection out of the GEANT tracks.
     ####################################################################

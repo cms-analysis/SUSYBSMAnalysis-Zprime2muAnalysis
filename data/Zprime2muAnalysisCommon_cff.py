@@ -56,6 +56,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                  usingAODOnly=False,
                                  useTrigger=True,
                                  useOtherMuonRecos=True,
+                                 useHEEPSelector=True,
                                  lumiForCSA07=0.,
                                  dumpHardInteraction=False,
                                  flavorsForDileptons=diMuons,
@@ -144,22 +145,22 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     if not useReco:
         useTrigger = False
         useOtherMuonRecos = False
+        useHEEPSelector = False
         for i in xrange(lL1, lOP+1):
             muons[i] = None
             electrons[i] = None
 
-    if usingAODOnly:
-        # Currently, the extra TeV muon reconstructors are not in the
-        # AOD. This situation will change come 2_1_X.
-        useOtherMuonRecos = False
-        # HEEPSelector requires info not in the AOD, so use the
-        # default electrons.
+    if useHEEPSelector:
         electrons[lOP] = electrons[lGR]
 
     if not useOtherMuonRecos:
         for i in xrange(lTK, lPR+1):
             muons[i] = None
         muons[lOP] = muons[lGR]
+
+    if not useTrigger:
+        for i in xrange(lL1, lL3+1):
+            muons[i] = electrons[i] = None
 
     print 'After sanity checks, using these muon collections:', muons
     print 'And these electron collections:', electrons
@@ -418,8 +419,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                    process.elCandL3Iso * process.elCandL2 *
                                    process.elCandL3)
 
-    # HEEPSelector uses information not in the AOD for now.
-    if useReco and not usingAODOnly:
+    if useHEEPSelector:
         # Hack for now to include old-style cfgs in python ones.
         process.include('DLEvans/HEEPSelector/data/heepSelection_1_1.cfi')
         process.bestEl = cms.Path(process.heepSelection)
@@ -620,8 +620,18 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             path.append('process.' + name)
 
     # Make a path that runs all the producers we just made.
-    pathCodeStr = ' * '.join(path)
-    process.dileptons = cms.Path(eval(pathCodeStr))
+    #
+    # When the config is converted to the old style configuration
+    # language, and then reparsed (as happens if you run this module
+    # with CRAB), Python complains about too much recursion if there
+    # are too many modules in one path. So, split up the path.
+    count = 0
+    while path:
+        sub = path[:10]
+        path = path[10:]
+        pathCodeStr = ' * '.join(sub)
+        setattr(process, 'dileptons%i' % count, cms.Path(eval(pathCodeStr)))
+        count += 1
 
     # Set up the "main" dileptons -- the ones the analysis module is
     # supposed to use by default.

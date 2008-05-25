@@ -143,6 +143,11 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     if len(muons) != numRecLevels or len(electrons) != numRecLevels:
         raise RuntimeError, 'at least one of the muon and electron collections is not the right length'
 
+    if usingAODOnly:
+        useGen = useSim = False
+        useOtherMuonRecos = False
+        useHEEPSelector = False
+        
     if not useGen:
         useSim = False
         muons[lGN] = electrons[lGN] = None

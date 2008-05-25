@@ -11,9 +11,9 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muRecLevelAnalysis.h"
 
-class Zprime2muResolution : public Zprime2muAnalysis {
+class Zprime2muResolution : public Zprime2muRecLevelAnalysis {
  public:
   explicit Zprime2muResolution(const edm::ParameterSet&);
   ~Zprime2muResolution();
@@ -48,26 +48,26 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   // booked in BookResHistos()
   TH1F *GenMassAllEvents, *GenMassInAccept;
   TH1F *Origin[2];
-  TH1F *TrigResult[NUM_REC_LEVELS][3], *TrigMass[NUM_REC_LEVELS][3];
+  TH1F *TrigResult[TRIG_LEVELS][3], *TrigMass[TRIG_LEVELS][3];
   TH1F *EventsInAccFailed, *L1TrigPassSingleMu, *L1TrigFailSingleMu;
   TH2F *L1TrigFailMu2VsMu1, *L1TrigPassMu2VsMu1;
   TH1F *L2MuonHits, *L3TrackerHits, *GMRMuonHits[3], *GMRChi2dof[3];
-  TH1F *SumPtR03[MAX_LEVELS+1][2];
-  TH1F *NMuons[NUM_REC_LEVELS][4], *NumDilVsRec, *SignOfDil[NUM_REC_LEVELS];
-  TH1F *MuonEta[MAX_LEVELS+1], *MuonRap[MAX_LEVELS+1], *MuonPhi[MAX_LEVELS+1];
-  TH1F *MuonPt[MAX_LEVELS+1], *MuonPz[MAX_LEVELS+1], *MuonP[MAX_LEVELS+1];
-  TH2F *MuonPVsEta[MAX_LEVELS+1], *MuonPtVsEta[MAX_LEVELS+1];
-  TH1F *AllDilMass[MAX_LEVELS+1], *DilMass[MAX_LEVELS+1];
-  TH2F *DilMassVsEta[MAX_LEVELS+1], *DilMassVsY[MAX_LEVELS+1];
-  TH2F *MuMVsMuP[MAX_LEVELS+1][3];
-  TH1F *Phi[MAX_LEVELS+1][3], *Eta[MAX_LEVELS+1][3], *Rapidity[MAX_LEVELS+1][3];
-  TProfile *PVsEta[MAX_LEVELS+1][3], *PtVsEta[MAX_LEVELS+1][3];
-  TH1F *Pt[MAX_LEVELS+1][3], *Pz[MAX_LEVELS+1][3], *P[MAX_LEVELS+1][3];
-  TH1F *ZonDilMass[NUM_REC_LEVELS], *ZofDilMass[NUM_REC_LEVELS];
+  TH1F *SumPtR03[MAX_LEVELS][2];
+  TH1F *NMuons[TRIG_LEVELS][4], *NumDilVsRec, *SignOfDil[TRIG_LEVELS];
+  TH1F *MuonEta[MAX_LEVELS], *MuonRap[MAX_LEVELS], *MuonPhi[MAX_LEVELS];
+  TH1F *MuonPt[MAX_LEVELS], *MuonPz[MAX_LEVELS], *MuonP[MAX_LEVELS];
+  TH2F *MuonPVsEta[MAX_LEVELS], *MuonPtVsEta[MAX_LEVELS];
+  TH1F *AllDilMass[MAX_LEVELS], *DilMass[MAX_LEVELS];
+  TH2F *DilMassVsEta[MAX_LEVELS], *DilMassVsY[MAX_LEVELS];
+  TH2F *MuMVsMuP[MAX_LEVELS][3];
+  TH1F *Phi[MAX_LEVELS][3], *Eta[MAX_LEVELS][3], *Rapidity[MAX_LEVELS][3];
+  TProfile *PVsEta[MAX_LEVELS][3], *PtVsEta[MAX_LEVELS][3];
+  TH1F *Pt[MAX_LEVELS][3], *Pz[MAX_LEVELS][3], *P[MAX_LEVELS][3];
+  TH1F *ZonDilMass[TRIG_LEVELS], *ZofDilMass[TRIG_LEVELS];
   TH1F *Eta4muons, *Pt4muons;
-  TH1F *EtaRes[MAX_LEVELS+1], *PhiRes[MAX_LEVELS+1], *PtDiff[MAX_LEVELS+1];
-  TH1F *GenInvPtRes[3], *PRes[MAX_LEVELS+1], *GenInvPRes[3];
-  TProfile *GenPhiResVsPhi[3], *PResVsP[MAX_LEVELS+1], *GenPResVsPt[3];
+  TH1F *EtaRes[MAX_LEVELS], *PhiRes[MAX_LEVELS], *PtDiff[MAX_LEVELS];
+  TH1F *GenInvPtRes[3], *PRes[MAX_LEVELS], *GenInvPRes[3];
+  TProfile *GenPhiResVsPhi[3], *PResVsP[MAX_LEVELS], *GenPResVsPt[3];
   TProfile *GenInvPResVsPt[3], *GenInvPtResVsPt[3];
   TH2F *GenEtaResScat[3], *GenPhiResScat[3], *GenPtResScat[3];
   TH1F *AllDilMassRes, *GenDilMassRes[3], *GenDilMassFrRes[3];
@@ -77,7 +77,7 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   TH1F *L2EtaRes, *L2PhiRes, *L2PtDiff;
   TH2F *L2EtaResScat, *L2PhiResScat, *L2PtResScat;
   // booked in BookEffHistos()
-  TH1F *EffVsEta[MAX_LEVELS+1], *EffVsPhi[MAX_LEVELS+1], *EffVsPt[MAX_LEVELS+1];
+  TH1F *EffVsEta[MAX_LEVELS], *EffVsPhi[MAX_LEVELS], *EffVsPt[MAX_LEVELS];
   TH1F *RecMass[4][3];
   TH1F *RecMassByLoc[2][10];
   // booked in BookPtResHistos()
@@ -86,11 +86,11 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   TH1F *TotInvPtRes[4], *TotInvPtPull[4];
   TH1F *InvPtRes[4][2], *InvPtPull[4][2];
   // booked in BookDilResHistos()
-  TH1F *DilMassComp[MAX_LEVELS+1][2];
-  TH1F *DilMassRes[MAX_LEVELS+2][6], *DilPtRes[MAX_LEVELS+1];
+  TH1F *DilMassComp[MAX_LEVELS][2];
+  TH1F *DilMassRes[MAX_LEVELS+1][6], *DilPtRes[MAX_LEVELS];
   TH2F *MuPVsMuM[2];
   // booked in BookChargeResHistos()
-  TH1F *QRes[MAX_LEVELS+1];
+  TH1F *QRes[MAX_LEVELS];
   TH1F *QResVsPt[3][2], *QResVsInvPt[3][2];
   TH1F *QResVsP[3][2],  *QResVsInvP[3][2];
 

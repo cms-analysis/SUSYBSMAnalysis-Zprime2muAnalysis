@@ -1,9 +1,6 @@
 //
 // Authors: Jason Mumford, Jordan Tucker, Slava Valuev, UCLA
 //
-// TODO:
-//   replace strings with "muon" to "lepton"
-//   appropriate eta values for electrons in plots
 
 #include <string>
 #include <vector>
@@ -18,17 +15,23 @@
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Utilities/interface/Exception.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "DataFormats/MuonReco/interface/Muon.h"
+#include "DataFormats/TrackReco/interface/HitPattern.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muResolution.h"
 
 using namespace std;
 
+// Whether to obey the trigger decision in making certain plots at the
+// different trigger levels (cutTrig[0] is a placeholder).
+bool cutTrig[TRIG_LEVELS] = {true,  true,  true,  true};
+
 Zprime2muResolution::Zprime2muResolution(const edm::ParameterSet& config) 
-  : Zprime2muAnalysis(config), histoFile(0)
+  : Zprime2muRecLevelAnalysis(config), histoFile(0)
 {
   outputFile = config.getUntrackedParameter<string>("outputFile");
 
@@ -66,6 +69,8 @@ Zprime2muResolution::~Zprime2muResolution() {
 }
 
 void Zprime2muResolution::beginJob(const edm::EventSetup& eSetup) {
+  Zprime2muRecLevelAnalysis::beginJob(eSetup);
+
   if (useHistosFromFile) {
     DrawResHistos();
     // We're done, so stop running and don't waste time reading events.
@@ -79,14 +84,14 @@ void Zprime2muResolution::beginJob(const edm::EventSetup& eSetup) {
 void Zprime2muResolution::analyze(const edm::Event& event, 
 				  const edm::EventSetup& eSetup) {
   // Delegate filling our muon vectors to the parent class.
-  Zprime2muAnalysis::analyze(event, eSetup);
+  Zprime2muRecLevelAnalysis::analyze(event, eSetup);
 
   // Fill resolution histos.
   calcResolution();
 }
 
 void Zprime2muResolution::endJob() {
-  Zprime2muAnalysis::endJob();
+  Zprime2muRecLevelAnalysis::endJob();
 
   DrawResHistos();
   //DrawAcceptance();
@@ -138,7 +143,7 @@ void Zprime2muResolution::BookResHistos() {
   TrigMass[3][2] = fs->make<TH1F>("TrigMass32", "Gen mass, L3, #eta < 2.1",  27, 0., maxTrigMass);
 
   // Define errors
-  for (int i_rec = 0; i_rec < NUM_REC_LEVELS; i_rec++) {
+  for (int i_rec = 0; i_rec < TRIG_LEVELS; i_rec++) {
     for (int j = 0; j < 3; j++) {
       TrigMass[i_rec][j]->Sumw2();
     }
@@ -195,7 +200,7 @@ void Zprime2muResolution::BookResHistos() {
 				3, 0,  3);
 
   // Main kinematic variables for all muons
-  for (int i = 0; i <= MAX_LEVELS; i++) {
+  for (int i = 0; i < MAX_LEVELS; i++) {
     MuonEta[i] = fs->make<TH1F>(nameHist("MuonEta", i).c_str(), "Eta", 100, -5.,  5. );
     MuonRap[i] = fs->make<TH1F>(nameHist("MuonRap", i).c_str(), "Y",   100, -5.,  5. );
     MuonPhi[i] = fs->make<TH1F>(nameHist("MuonPhi", i).c_str(), "Phi", 100,  -pi, pi);
@@ -216,10 +221,10 @@ void Zprime2muResolution::BookResHistos() {
 				      peakMass);
     }
 
-    string titl = recLevelHelper.levelName(i) + ", all muons";
+    string titl = levelName(i) + ", all muons";
     SumPtR03[i][0] = fs->make<TH1F>(nameHist("SumPtR03", i, 0).c_str(),
-				    recLevelHelper.levelName(i).c_str(), 30, 0, 30);
-    titl = recLevelHelper.levelName(i) + ", w/ opp-sign dimuon";
+				    levelName(i).c_str(), 30, 0, 30);
+    titl = levelName(i) + ", w/ opp-sign dimuon";
     SumPtR03[i][1] = fs->make<TH1F>(nameHist("SumPtR03", i, 1).c_str(),
 				    titl.c_str(), 30, 0, 30);
 
@@ -250,7 +255,7 @@ void Zprime2muResolution::BookResHistos() {
 				      100, 0., peakMass,
 				      100, 0., peakMass);
     }
-    string tit = "Opp-sign Dilepton Mass, " + recLevelHelper.levelName(i);
+    string tit = "Opp-sign Dilepton Mass, " + levelName(i);
     AllDilMass[i] =
       fs->make<TH1F>(nameHist("AllDilMass", i).c_str(), tit.c_str(), 50, 0., upperMassWin);
 
@@ -290,7 +295,7 @@ void Zprime2muResolution::BookResHistos() {
       }
     }
   }
-  for (int i = 0; i < NUM_REC_LEVELS; i++) {
+  for (int i = 0; i < TRIG_LEVELS; i++) {
     ZonDilMass[i] = fs->make<TH1F>(nameHist("ZonDilMass", i).c_str(), "Highest Z mass", 100, 0., 120.);
     ZofDilMass[i] = fs->make<TH1F>(nameHist("ZofDilMass", i).c_str(), "Second  Z mass", 100, 0., 120.);
   }
@@ -298,12 +303,12 @@ void Zprime2muResolution::BookResHistos() {
   Pt4muons  = fs->make<TH1F>("Pt4muons", "pT",  100,  0.,100.);
 
   // Differences between different levels of reconstruction
-  for (int i = l1; i <= MAX_LEVELS; i++) {
-    string tit_eta = recLevelHelper.levelName(i) + " eta - Gen eta";
-    string tit_phi = recLevelHelper.levelName(i) + " phi - Gen phi";
-    string tit_pt  = recLevelHelper.levelName(i) + " pT - Gen pT";
-    string tit_p   = "(" + recLevelHelper.levelName(i) + " P - Gen P)/(Gen P)";
-    string tit_ppr = "(" + recLevelHelper.levelName(i) + " P - Gen P)/(Gen P) vs Gen P";
+  for (int i = l1; i < MAX_LEVELS; i++) {
+    string tit_eta = levelName(i) + " eta - Gen eta";
+    string tit_phi = levelName(i) + " phi - Gen phi";
+    string tit_pt  = levelName(i) + " pT - Gen pT";
+    string tit_p   = "(" + levelName(i) + " P - Gen P)/(Gen P)";
+    string tit_ppr = "(" + levelName(i) + " P - Gen P)/(Gen P) vs Gen P";
     if (i == l1) {
       EtaRes[i] = fs->make<TH1F>(nameHist("EtaRes", i).c_str(), tit_eta.c_str(), 100, -0.1,  0.1);
       PhiRes[i] = fs->make<TH1F>(nameHist("PhiRes", i).c_str(), tit_phi.c_str(), 100, -0.1,  0.1);
@@ -460,12 +465,12 @@ void Zprime2muResolution::BookResHistos() {
 void Zprime2muResolution::BookEffHistos() {
   const double pi = TMath::Pi();
   string tit;
-  for (int i = lgen; i <= MAX_LEVELS; i++) {
-    tit = "Gen eta, " + recLevelHelper.levelName(i) + " muons";
+  for (int i = lgen; i < MAX_LEVELS; i++) {
+    tit = "Gen eta, " + levelName(i) + " muons";
     EffVsEta[i] = fs->make<TH1F>(nameHist("EffVsEta", i).c_str(), tit.c_str(), 50, -2.5, 2.5);
-    tit = "Gen phi, " + recLevelHelper.levelName(i) + " muons";
+    tit = "Gen phi, " + levelName(i) + " muons";
     EffVsPhi[i] = fs->make<TH1F>(nameHist("EffVsPhi", i).c_str(), tit.c_str(), 63,  -pi, pi);
-    tit = "Gen pT, "  + recLevelHelper.levelName(i) + " muons";
+    tit = "Gen pT, "  + levelName(i) + " muons";
     EffVsPt[i]  = fs->make<TH1F>(nameHist("EffVsPt", i).c_str(), tit.c_str(), 35,  0., 3500.);
   }
 
@@ -500,7 +505,7 @@ void Zprime2muResolution::BookEffHistos() {
   }
 
   // Define errors
-  for (int i = lgen; i <= MAX_LEVELS; i++) {
+  for (int i = lgen; i < MAX_LEVELS; i++) {
     EffVsEta[i]->Sumw2();
     EffVsPhi[i]->Sumw2();
     EffVsPt[i]->Sumw2();
@@ -601,12 +606,12 @@ void Zprime2muResolution::BookDilResHistos(){
   //  - dilepton plus nearby photon candidates (i=1).
   double mass_min = lowerMassWin;
   double mass_max = upperMassWin;
-  for (int i = lgen; i <= MAX_LEVELS; i++) {
+  for (int i = lgen; i < MAX_LEVELS; i++) {
     if (i == l1 || i == l2) mass_min = 0.;
     else                    mass_min = lowerMassWin;
     for (int j = 0; j < 2; j++) {
       DilMassComp[i][j] =
-	fs->make<TH1F>(nameHist("DilMassComp", i, j).c_str(), recLevelHelper.levelName(i).c_str(),
+	fs->make<TH1F>(nameHist("DilMassComp", i, j).c_str(), levelName(i).c_str(),
 		       binSize, mass_min, mass_max);
     }
   }
@@ -619,25 +624,25 @@ void Zprime2muResolution::BookDilResHistos(){
   //     - events at the Z' mass peak (3-5).
   for (int j = 0; j < 6; j++)
     DilMassRes[0][j] = 0;
-  for (int i = l1; i <= MAX_LEVELS; i++) {
+  for (int i = l1; i < MAX_LEVELS; i++) {
     for (int j = 0; j < 6; j++) {
       if (i == l1 || i == l2) {
-	DilMassRes[i][j] = fs->make<TH1F>(nameHist("DilMassRes", i, j).c_str(), recLevelHelper.levelName(i).c_str(), 100, -1.,  1.);
+	DilMassRes[i][j] = fs->make<TH1F>(nameHist("DilMassRes", i, j).c_str(), levelName(i).c_str(), 100, -1.,  1.);
       }
       else {
-	DilMassRes[i][j] = fs->make<TH1F>(nameHist("DilMassRes", i, j).c_str(), recLevelHelper.levelName(i).c_str(), 100, -0.3, 0.3);
+	DilMassRes[i][j] = fs->make<TH1F>(nameHist("DilMassRes", i, j).c_str(), levelName(i).c_str(), 100, -0.3, 0.3);
       }
     }
   }
   for (int j = 0; j < 6; j++) {
-    DilMassRes[MAX_LEVELS+1][j] = fs->make<TH1F>(nameHist("DilMassRes", MAX_LEVELS+1, j).c_str(), "OPT, D0 method",
-						 100, -0.3, 0.3);
+    DilMassRes[MAX_LEVELS][j] = fs->make<TH1F>(nameHist("DilMassRes", MAX_LEVELS, j).c_str(), "OPT, D0 method",
+					       100, -0.3, 0.3);
   }
 
   // Dilepton pT resolution
   DilPtRes[0] = 0;
-  for (int i = l1; i <= MAX_LEVELS; i++) {
-    DilPtRes[i] = fs->make<TH1F>(nameHist("DilPtRes", i).c_str(), recLevelHelper.levelName(i).c_str(), 100, -1., 4.);
+  for (int i = l1; i < MAX_LEVELS; i++) {
+    DilPtRes[i] = fs->make<TH1F>(nameHist("DilPtRes", i).c_str(), levelName(i).c_str(), 100, -1., 4.);
   }
 
   MuPVsMuM[0] = fs->make<TH2F>("MuPVsMuM0", "pT Rel Error for dM > 0.1", 100, 0., 1.,
@@ -647,8 +652,8 @@ void Zprime2muResolution::BookDilResHistos(){
 }
 
 void Zprime2muResolution::BookChargeResHistos() {
-  for (int i = l1; i <= MAX_LEVELS; i++) {
-    string tit = recLevelHelper.levelName(i) + " charge - Gen charge";
+  for (int i = l1; i < MAX_LEVELS; i++) {
+    string tit = levelName(i) + " charge - Gen charge";
     QRes[i] = fs->make<TH1F>(nameHist("QRes", i).c_str(), tit.c_str(), 7, -3.5, 3.5);
   }
 
@@ -682,10 +687,10 @@ void Zprime2muResolution::BookChargeResHistos() {
   QResVsInvP[2][1] = fs->make<TH1F>("QResVsInvP21", "1/L3P, wrong charge", 50, 0., 0.02);
 
   // Define errors
-  for (int i_rec = l1; i_rec <= MAX_LEVELS; i_rec++) {
+  for (int i_rec = l1; i_rec < MAX_LEVELS; i_rec++) {
     QRes[i_rec]->Sumw2();
   }
-  for (int i_rec = 0; i_rec < NUM_REC_LEVELS-1; i_rec++) {
+  for (int i_rec = 0; i_rec < TRIG_LEVELS-1; i_rec++) {
     for (int j = 0; j < 2; j++) {
       QResVsPt[i_rec][j]->Sumw2();
       QResVsInvPt[i_rec][j]->Sumw2();
@@ -702,7 +707,6 @@ void Zprime2muResolution::calcResolution(const bool debug) {
   bool accept2_4 = false, accept2_1 = false;
   double gen_mass = -999.;
   unsigned idi;
-  LeptonRefVector::const_iterator plep;
   reco::CompositeCandidateCollection::const_iterator pdi;
 
   if (allDileptons[lgen].size() > 0) {
@@ -711,12 +715,13 @@ void Zprime2muResolution::calcResolution(const bool debug) {
     gen_mass = allDileptons[lgen][0].mass(); // (in GeV)
     GenMassAllEvents->Fill(gen_mass);
     // Check whether both muons are inside the full eta coverage.
-    if (numDaughtersInAcc(allDileptons[lgen][0], ETA_CUT) >= 2)
+    if (numDaughtersInAcc(allDileptons[lgen][0]) >= 2)
       GenMassInAccept->Fill(gen_mass);
   }
 
   // Get origin of generated leptons.
-  for (plep = allLeptons[lgen].begin(); plep != allLeptons[lgen].end(); plep++)
+  for (reco::CandidateBaseRefVector::const_iterator plep = allLeptons[lgen].begin();
+       plep != allLeptons[lgen].end(); plep++)
     Origin[0]->Fill(getOrigin(motherId(*plep)));
 
   // some additional plots for improved diagnostics
@@ -724,33 +729,36 @@ void Zprime2muResolution::calcResolution(const bool debug) {
   fillPtResHistos(debug);
   fillChargeResHistos(debug);
 
-  for (int i_rec = 0; i_rec < NUM_REC_LEVELS; i_rec++) {
+  for (int i_rec = 0; i_rec < TRIG_LEVELS; i_rec++) {
     // Total number of muons found in each level of reconstruction.
     NMuons[i_rec][0]->Fill((double)allLeptons[i_rec].size());
   }
 
-  for (int i_rec = 0; i_rec <= MAX_LEVELS; i_rec++) {
+  for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
     // Fill y, eta, phi, p, pt, pz, pt vs eta, p vs eta plots for all muons.
     fillMuonHistos(i_rec, debug);
   }
 
   // Main loop over generated, L1, L2, L3 and off-line information.
-  for (int i_rec = 0; i_rec <= MAX_LEVELS; i_rec++) {
-    const reco::CompositeCandidateCollection& dileptons = getDileptons(i_rec);
+  for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
+    const reco::CompositeCandidateCollection& dileptons = allDileptons[i_rec];
 
     if (i_rec == 0) {
       if (dileptons.size() == 1) { // one di-muon at generation
 	gen_mass = dileptons[0].mass()/1000.; // (in TeV)
 	// Check whether both muons are inside the full eta coverage.
-	if (numDaughtersInAcc(dileptons[0], ETA_CUT) >= 2) {
+	if (numDaughtersInAcc(dileptons[0]) >= 2) {
 	  accept2_4 = true;
+	  // max value of eta to trigger at on L1
+	  static const double L1_ETA_CUT = 2.1;
+
 	  // At least one muon is in the limited muon trigger acceptance.
-	  if (numDaughtersInAcc(dileptons[0], TRIGGER_ETA_CUT[l1]) >= 1)
+	  if (numDaughtersInAcc(dileptons[0], L1_ETA_CUT) >= 1)
 	    accept2_1 = true;
 	}
       }
       else {
-	if (!doingHiggs && useGen)
+	if (maxDileptons == 1) 
 	  edm::LogWarning("Zprime2muResolution")
 	    << "+++ Warning in calcResolution: " << dileptons.size()
 	    << " generated dimuons found! +++\n";
@@ -760,21 +768,22 @@ void Zprime2muResolution::calcResolution(const bool debug) {
     // Trigger decision
     bool decision = false;
     if (i_rec <= l3) {
-      decision = passTrigger(i_rec);
+      decision = trigDecision.pass(i_rec);
+      unsigned tword = trigDecision.getWord(i_rec);
       if (debug)
 	LogTrace("Zprime2muResolution")
 	  << "irec " << i_rec << " passTrig " << decision
-	  << " word " << trigWord[i_rec];
+	  << " word " << tword;
       //if (accept2_4 && gen_mass > 2.6) 
-      TrigResult[i_rec][0]->Fill((double)trigWord[i_rec]);
+      TrigResult[i_rec][0]->Fill((double)tword);
       if (decision) TrigMass[i_rec][0]->Fill(gen_mass);
       if (accept2_4) {
-	TrigResult[i_rec][1]->Fill((double)trigWord[i_rec]);
+	TrigResult[i_rec][1]->Fill((double)tword);
 	//if (gen_mass > 2.6)
 	if (decision) TrigMass[i_rec][1]->Fill(gen_mass);
       }
       if (accept2_1) {
-	TrigResult[i_rec][2]->Fill((double)trigWord[i_rec]);
+	TrigResult[i_rec][2]->Fill((double)tword);
 	if (decision) TrigMass[i_rec][2]->Fill(gen_mass);
       }
 
@@ -786,42 +795,58 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 
       // More info for L1
       if (i_rec == l1) {
+	// Find the two highest pT leptons at L1.
+	// JMTBAD before, the plots contained the pT of the two
+	// highest-p L1 leptons.
+	double pt0 = 0, pt1 = 0;
+	unsigned nL1 = allLeptons[l1].size();
+	for (unsigned l = 0; l < nL1; l++) {
+	  double lpt = allLeptons[l1][l]->pt();
+	  if (lpt > pt0) {
+	    pt1 = pt0;
+	    pt0 = lpt;
+	  }
+	  else if (lpt > pt1)
+	    pt1 = lpt;
+	}
+
 	if (decision) {
-	  if (allLeptons[i_rec].size() == 1)
-	    L1TrigPassSingleMu->Fill(allLeptons[i_rec][0]->pt());
-	  else if (allLeptons[i_rec].size() == 2)
-	    L1TrigPassMu2VsMu1->Fill(allLeptons[i_rec][0]->pt(),
-				     allLeptons[i_rec][1]->pt());
+	  if (nL1 == 1)
+	    L1TrigPassSingleMu->Fill(pt0);
+	  else if (nL1 == 2)
+	    L1TrigPassMu2VsMu1->Fill(pt0, pt1);
 	}
 	else {
-	  if (allLeptons[i_rec].size() == 1)
-	    L1TrigFailSingleMu->Fill(allLeptons[i_rec][0]->pt());
-	  else if (allLeptons[i_rec].size() == 2)
-	    L1TrigFailMu2VsMu1->Fill(allLeptons[i_rec][0]->pt(),
-				     allLeptons[i_rec][1]->pt());
+	  if (nL1 == 1)
+	    L1TrigFailSingleMu->Fill(pt0);
+	  else if (nL1 == 2)
+	    L1TrigFailMu2VsMu1->Fill(pt0, pt1);
 	}
       }
     }
 
     if (i_rec == l2) {
       // Number of muon hits at Level-2
-      for (plep = allLeptons[l2].begin(); plep != allLeptons[l2].end(); plep++)
-	L2MuonHits->Fill(nHits(*plep, HITS_MU));
+      for (reco::CandidateBaseRefVector::const_iterator plep = allLeptons[l2].begin();
+	   plep != allLeptons[l2].end(); plep++)
+	L2MuonHits->Fill(getMainTrack(*plep)->hitPattern().numberOfValidMuonHits());
     }
     else if (i_rec == l3) {
       // Number of tracker (silicon + pixel) hits at Level-3
-      for (plep = allLeptons[l3].begin(); plep != allLeptons[l3].end(); plep++)
-	L3TrackerHits->Fill(nHits(*plep, HITS_TRK));
+      for (reco::CandidateBaseRefVector::const_iterator plep = allLeptons[l3].begin();
+	   plep != allLeptons[l3].end(); plep++)
+	L3TrackerHits->Fill(getMainTrack(*plep)->hitPattern().numberOfValidTrackerHits());
     }
 
     // Number of muon hits and chi2/d.o.f. for off-line (GMR) muons.
     // Unfortunately, the number of muon hits includes RPC hits, and there
     // seems to be no way to subtract them.
     if (i_rec == lgmr) {
-      for (plep = allLeptons[lgmr].begin(); plep != allLeptons[lgmr].end(); plep++) {
-	int muHits = nHits(*plep, HITS_MU);
+      for (reco::CandidateBaseRefVector::const_iterator plep = allLeptons[lgmr].begin();
+	   plep != allLeptons[lgmr].end(); plep++) {
 	const reco::Track* tk = getMainTrack(*plep);
 	if (tk == 0) continue;
+	int muHits = tk->hitPattern().numberOfValidMuonHits();
 	double chi2dof = tk->chi2()/tk->ndof();
 	double eta = fabs((*plep)->eta());
 	if (eta < 0.9) {
@@ -862,15 +887,14 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	  // JMTBAD rely on ordering
 	  AllDilMassRes->
 	    Fill(pdi->mass() - allDileptons[lgen][idi].mass());
-	if (useGen && allDileptons[lgen].size() <= 0)
+	if (allDileptons[lgen].size() <= 0)
 	  edm::LogWarning("Zprime2muResolution")
 	    << "+++ Warning: no dilepton in the MC! +++\n";
       }
 
       // Check the "off-line" track quality and apply the cuts
-      int qcut_mum = 0, qcut_mup = 0; // quality cut number
-      if (DO_QCUTS ?
-	  dilQCheck(*pdi, QSEL, qcut_mum, qcut_mup) : true) {
+      //int qcut_mum = 0, qcut_mup = 0; // quality cut number
+      if (1) { //DO_QCUTS ? dilQCheck(*pdi, QSEL, qcut_mum, qcut_mup) : true) {
   
 	// Keep track of the number of opposite-sign dileptons found
 	// at each level of reconstruction.
@@ -889,7 +913,7 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	else if (i_rec <= l3) NumDilVsRec->Fill(i_rec+1);
 	
 	// Plot sum Pt in cone of dR=0.3 for dilepton leptons
-	if (!doingElectrons && i_rec >= lgmr && passTrigger())
+	if (!doingElectrons && i_rec >= lgmr && trigDecision.pass())
 	  for (unsigned ilep = 0; ilep < pdi->numberOfDaughters(); ilep++) {
 	    const reco::Muon& mu
 	      = toConcrete<reco::Muon>(dileptonDaughter(*pdi, ilep));
@@ -898,7 +922,7 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	  }
 
 	if (debug) {
-	  LogTrace("Zprime2muResolution") << recLevelHelper.levelName(i_rec) << " values:";
+	  LogTrace("Zprime2muResolution") << levelName(i_rec) << " values:";
 	  LogTrace("Zprime2muResolution")
 	    << "#|Charge |   Eta   |   Phi   |    P    |"
 	    << "    Pt   |    Pz   |   Rap   |  Mass  ";
@@ -1057,7 +1081,8 @@ void Zprime2muResolution::calcResolution(const bool debug) {
   // Dilepton tests and resolution
   fillDilResHistos(debug);
 
-  if (doingHiggs) { //SAMPLE_INDEX == kH4mu130) { // H -> ZZ* -> 4mu.
+  // Simple H -> ZZ* -> 4mu plots.
+  if (maxDileptons > 1) { 
     if (allDileptons[lgen].size() != 2) // generated
       edm::LogWarning("Zprime2muResolution") 
 	<< "+++ Warning: " << allDileptons[lgen].size()
@@ -1077,7 +1102,7 @@ void Zprime2muResolution::calcResolution(const bool debug) {
     }
 
     // For events passing the trigger
-    if (passTrigger()) {
+    if (trigDecision.pass()) {
       if (allDileptons[l3].size() >= 2) { // HLT
 	ZonDilMass[3]->Fill(allDileptons[l3][0].mass());
 	ZofDilMass[3]->Fill(allDileptons[l3][1].mass());
@@ -1096,7 +1121,7 @@ void Zprime2muResolution::fillEffHistos() {
   // Efficiency for single muons
   for (ilep = 0; ilep < allLeptons[lgen].size(); ilep++) {
     const reco::CandidateBaseRef& lep = allLeptons[lgen][ilep];
-    if (isResonance(motherId(lep))) {
+    if (HardInteraction::IsResonance(motherId(lep))) {
       gen_eta = lep->eta();
       gen_phi = lep->phi();
       gen_pt  = lep->pt();
@@ -1105,9 +1130,9 @@ void Zprime2muResolution::fillEffHistos() {
       EffVsPhi[0]->Fill(gen_phi);
       EffVsPt[0]->Fill(gen_pt);
 
-      for (int i = l1; i < MAX_LEVELS; i++) {
-	const int closestId = id(closestLepton(lep, i));
-	// if (passTrigger(i) && closestId >= 0) {
+      for (int i = l1; i < MAX_LEVELS-1; i++) {
+	const int closestId = recLevelHelper.closestLeptonId(lep, i);
+	// if (trigDecision.pass(i) && closestId >= 0) {
 	if (closestId >= 0) {
 	  EffVsEta[i]->Fill(gen_eta);
 	  EffVsPhi[i]->Fill(gen_phi);
@@ -1115,15 +1140,15 @@ void Zprime2muResolution::fillEffHistos() {
 	}
       }
 
-      for (jlep = 0; jlep < bestLeptons.size(); jlep++) {
-	const reco::CandidateBaseRef& best = bestLeptons[jlep];
-	const int rec_level = recLevel(best);
-	const reco::CandidateBaseRef& match = closestLepton(best, rec_level);
-	const int closestId = id(closestLepton(lep, rec_level)); 
-	if (closestId >= 0 && closestId == id(match)) {
-	  EffVsEta[MAX_LEVELS]->Fill(gen_eta);
-	  EffVsPhi[MAX_LEVELS]->Fill(gen_phi);
-	  EffVsPt[MAX_LEVELS]->Fill(gen_pt);
+      for (jlep = 0; jlep < allLeptons[lbest].size(); jlep++) {
+	const reco::CandidateBaseRef& best = allLeptons[lbest][jlep];
+	const int rec_level = recLevelHelper.originalRecLevel(best);
+	const int closestId = recLevelHelper.closestLeptonId(lep, rec_level);
+	if (closestId >= 0 &&
+	    closestId == recLevelHelper.closestLeptonId(best, rec_level)) {
+	  EffVsEta[MAX_LEVELS-1]->Fill(gen_eta);
+	  EffVsPhi[MAX_LEVELS-1]->Fill(gen_phi);
+	  EffVsPt[MAX_LEVELS-1]->Fill(gen_pt);
 	  //break; // some gen muons can be matched to > 1 rec muon
 	}
       }
@@ -1135,28 +1160,27 @@ void Zprime2muResolution::fillEffHistos() {
   int wheredi = 0;
   if (allDileptons[lgen].size() == 1) { // one generated dimuon
     gen_mass = allDileptons[lgen][0].mass()/1000.; // (in TeV)
-    wheredi = int(whereIsDilepton(allDileptons[lgen][0]));
+    wheredi = int(whereIsDilepton(allDileptons[lgen][0], doingElectrons));
     RecMass[0][0]->Fill(gen_mass);
 
     // Events with both muons inside the full eta coverage, and passing
     // the trigger
-    if (passTrigger() &&
-	numDaughtersInAcc(allDileptons[lgen][0], ETA_CUT) >= 2)
+    if (trigDecision.pass() && numDaughtersInAcc(allDileptons[lgen][0]) >= 2)
       RecMass[0][1]->Fill(gen_mass);
   }
 
-  if (passTrigger()) {
-    if (allLeptons[l3].size() > 1)     // At least two muons found by L3
+  if (trigDecision.pass()) {
+    if (allLeptons[l3].size() > 1)        // At least two muons found by L3
       RecMass[1][0]->Fill(gen_mass);
-    if (allDileptons[l3].size() > 0)   // Opposite-sign dimuon found by L3
+    if (allDileptons[l3].size() > 0)      // Opposite-sign dimuon found by L3
       RecMass[1][1]->Fill(gen_mass);
-    if (allLeptons[lgmr].size() > 1)   // At least two muons found by GMR
+    if (allLeptons[lgmr].size() > 1)      // At least two muons found by GMR
       RecMass[2][0]->Fill(gen_mass);
-    if (allDileptons[lgmr].size() > 0) // Opposite-sign dimuon found by GMR
+    if (allDileptons[lgmr].size() > 0)    // Opposite-sign dimuon found by GMR
       RecMass[2][1]->Fill(gen_mass);
-    if (bestLeptons.size() > 1)        // At least two muons found by OPT
+    if (allLeptons[lbest].size() > 1)     // At least two muons found by OPT
       RecMass[3][0]->Fill(gen_mass);
-    if (bestDileptons.size() > 0) {    // Opposite-sign dimuon found by OPT
+    if (allDileptons[lbest].size() > 0) { // Opposite-sign dimuon found by OPT
       RecMass[3][1]->Fill(gen_mass);
       RecMassByLoc[1][wheredi]->Fill(gen_mass);
     }
@@ -1165,11 +1189,14 @@ void Zprime2muResolution::fillEffHistos() {
     int passCut = 0;
     for (int z = 1; z <= 3; z++) {
       passCut = 0;
-      const LeptonRefVector& leps
-	= z < 3 ? allLeptons[z == 1 ? l3 : lgmr] : bestLeptons;
-      LeptonRefVector::const_iterator plep;
-      for (plep = leps.begin(); plep != leps.end(); plep++) {
-	if (!leptonIsCut(*plep)) passCut++;
+      int rec = lbest;
+      if (z < 3) {
+	if (z == 1) rec = l3;
+	else        rec = lgmr;
+      }
+      for (reco::CandidateBaseRefVector::const_iterator plep = allLeptons[rec].begin();
+	   plep != allLeptons[rec].end(); plep++) {
+	if (!tevMuHelper.leptonIsCut(**plep)) passCut++;
 	if (passCut > 1) break;
       }
 
@@ -1191,13 +1218,13 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
 
   // Inverse momentum and 1/pT resolution for GMR and OPT, separately for
   // barrel, endcap, and their overlap.
-  if (passTrigger()) { // event passed the trigger
+  if (trigDecision.pass()) { // event passed the trigger
     for (int i = 0; i < 2; i++) {
-      const LeptonRefVector& leptons = i == 0 ? allLeptons[lgmr] : bestLeptons;
-      for (ilep = 0; ilep < leptons.size(); ilep++) {
-	const reco::CandidateBaseRef& lep = leptons[ilep];
+      const int rec = i == 0 ? lgmr : lbest;
+      for (ilep = 0; ilep < allLeptons[rec].size(); ilep++) {
+	const reco::CandidateBaseRef& lep = allLeptons[rec][ilep];
 	// Find the generated muon closest to the reconstructed muon.
-	const reco::CandidateBaseRef& gen_lep = matchedLepton(lep, lgen);
+	const reco::CandidateBaseRef& gen_lep = recLevelHelper.matchedLepton(lep, lgen);
 	if (!gen_lep.isNull()) {
 	  gen_eta = gen_lep->eta();
 	  gen_p   = gen_lep->p();
@@ -1226,11 +1253,11 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
   // First plot histos of 1/pT resolution vs eta for a given muon.  Here
   // residual = ((1/PtL3)-(1/pT[0]))/(1/pT[0]).  We want to compare this
   // with the histogram given in pg. 27 of the Muon TDR.
-  for (ilep = 0; ilep < bestLeptons.size(); ilep++) {
-    const reco::CandidateBaseRef& lep = bestLeptons[ilep];
+  for (ilep = 0; ilep < allLeptons[lbest].size(); ilep++) {
+    const reco::CandidateBaseRef& lep = allLeptons[lbest][ilep];
     if (lep->pt() < 100.) continue;
     // Find the generated muon closest to the reconstructed muon.
-    const reco::CandidateBaseRef& gen_lep = matchedLepton(lep, lgen);
+    const reco::CandidateBaseRef& gen_lep = recLevelHelper.matchedLepton(lep, lgen);
     if (!gen_lep.isNull()) {
       gen_pt  = gen_lep->pt();
       gen_eta = gen_lep->eta();
@@ -1252,7 +1279,7 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
     if (lep->pt() < 100.) continue;
 
     // Find the generated muon closest to the L3 muon.
-    const reco::CandidateBaseRef& gen_lep = matchedLepton(lep, lgen);
+    const reco::CandidateBaseRef& gen_lep = recLevelHelper.matchedLepton(lep, lgen);
     if (!gen_lep.isNull()) {
       // Calculation of 1/pT residual.
       gen_pt  = gen_lep->pt();
@@ -1278,8 +1305,8 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
 
       if (debug) {
 	LogTrace("Zprime2muResolution")
-	  << " l3 muon = "         << id(lep)
-	  << " closest genmuon = " << id(gen_lep);
+	  << " l3 muon = "         << recLevelHelper.id(lep)
+	  << " closest genmuon = " << recLevelHelper.id(gen_lep);
 	LogTrace("Zprime2muResolution")
 	  << "   Ptgen: "  << gen_pt  << " Pt3: " << lep->pt()
 	  << " Etagen: "   << gen_eta << " Residual: " << residual;
@@ -1291,7 +1318,7 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
   // Use same number of muons for all fits so that we can directly compare
   // the change in RMS, sigma and pulls between fits.  Loop over all of L3 
   // muons first.
-  if (!passTrigger()) return;
+  if (!trigDecision.pass()) return;
 
   for (ilep = 0; ilep < allLeptons[l3].size(); ilep++) {
     const reco::CandidateBaseRef& lep = allLeptons[l3][ilep];
@@ -1300,12 +1327,12 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
 
     // Get generated muon closest to the L3 muon.  This gen muon will be used
     // for comparison to all fits.
-    const reco::CandidateBaseRef& gen_lep = matchedLepton(lep, lgen);
+    const reco::CandidateBaseRef& gen_lep = recLevelHelper.matchedLepton(lep, lgen);
 
     // Find corresponding tracker-only, FMS and GMR tracks
-    const reco::CandidateBaseRef& tk_lep = matchedLepton(lep, ltk);
-    const reco::CandidateBaseRef& fms_lep = matchedLepton(lep, lfms);
-    const reco::CandidateBaseRef& gmr_lep = matchedLepton(lep, lgmr);
+    const reco::CandidateBaseRef& tk_lep  = recLevelHelper.matchedLepton(lep, ltk);
+    const reco::CandidateBaseRef& fms_lep = recLevelHelper.matchedLepton(lep, lfms);
+    const reco::CandidateBaseRef& gmr_lep = recLevelHelper.matchedLepton(lep, lgmr);
 
     // Fill only for muons that have tracker-only and FMS tracks, and
     // are matched to the generated tracks
@@ -1315,6 +1342,8 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
 
       // Residual and pulls for on-line and off-line reconstructions.
       // separate each fit by barrel or endcap
+      static const double ENDCAP_BARREL_CUT = 1.04;
+
       if (abs(lep->eta()) < ENDCAP_BARREL_CUT) bar_end = 0;
       else bar_end = 1;
       if (lep->pt() > 0.) {
@@ -1393,16 +1422,15 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
 void Zprime2muResolution::fillChargeResHistos(const bool debug) {
   // Loop over all reconstructed levels. L1 and L2 "electrons" are
   // superclusters, and do not have a charge, so skip them.
-  for (int rec = doingElectrons ? l3 : l1; rec <= MAX_LEVELS; rec++) {
-    const LeptonRefVector& leptons = getLeptons(rec);
-    for (unsigned ilep = 0; ilep < leptons.size(); ilep++) {
+  for (int rec = doingElectrons ? l3 : l1; rec < MAX_LEVELS; rec++) {
+    for (unsigned ilep = 0; ilep < allLeptons[rec].size(); ilep++) {
       // Find charge of closest gen muon and store difference in histogram
-      const reco::CandidateBaseRef& lep = leptons[ilep];
-      const reco::CandidateBaseRef& gen_lep = matchedLepton(lep, lgen);
+      const reco::CandidateBaseRef& lep = allLeptons[rec][ilep];
+      const reco::CandidateBaseRef& gen_lep = recLevelHelper.matchedLepton(lep, lgen);
       if (!gen_lep.isNull()) {
 	int deltaQ = lep->charge() - gen_lep->charge();
 	QRes[rec]->Fill(deltaQ);
-	if (rec <= l3 && rec < MAX_LEVELS) {
+	if (rec <= l3 && rec < MAX_LEVELS-1) {
 	  double pt = lep->pt();
 	  double p  = lep->p();
 	  int idh;
@@ -1431,11 +1459,6 @@ void Zprime2muResolution::fillMuonHistos(const int rec, const bool debug) {
   // Inputs: rec   = level of reconstruction
   //         debug = print statements
 
-  if (rec > MAX_LEVELS) {
-    throw cms::Exception("Zprime2muResolution")
-      << "+++ Unknown rec. level = " << rec << " in fillMuonHistos() +++\n";
-  }
-
   if (debug) {
     ostringstream out;
     out << "****************************************\n";
@@ -1447,10 +1470,8 @@ void Zprime2muResolution::fillMuonHistos(const int rec, const bool debug) {
     LogTrace("Zprime2muResolution") << out.str();
   }
 
-  const LeptonRefVector& leptons = getLeptons(rec);
-  
-  for (unsigned ilep = 0; ilep < leptons.size(); ilep++) {
-    const reco::CandidateBaseRef& lep = leptons[ilep];
+  for (unsigned ilep = 0; ilep < allLeptons[rec].size(); ilep++) {
+    const reco::CandidateBaseRef& lep = allLeptons[rec][ilep];
 
     MuonEta[rec]->Fill(lep->eta());
     MuonRap[rec]->Fill(lep->rapidity());
@@ -1468,7 +1489,7 @@ void Zprime2muResolution::fillMuonHistos(const int rec, const bool debug) {
     }
 
     if (debug)
-      LogTrace("Zprime2muResolution") << setprecision(5) << id(lep) << "| "
+      LogTrace("Zprime2muResolution") << setprecision(5) << recLevelHelper.id(lep) << "| "
 				      << setw(4) << lep->charge() << "  | "
 				      << endl << lep->p4();
   }
@@ -1483,14 +1504,14 @@ void Zprime2muResolution::fillSignOfDilepton(const int rec, const bool debug) {
 
   int total_charge = 0;
   int nLeptons = int(allLeptons[rec].size());
-  LeptonRefVector::const_iterator plep;
   ostringstream out;
 
   // Only enter routine if there are 2 or more muons.
   // Add up total charge of all muons.
   if (nLeptons < 2) return;
 
-  for (plep = allLeptons[rec].begin(); plep != allLeptons[rec].end(); plep++)
+  for (reco::CandidateBaseRefVector::const_iterator plep = allLeptons[rec].begin();
+       plep != allLeptons[rec].end(); plep++)
     total_charge += (*plep)->charge();
   
   if (debug)
@@ -1523,27 +1544,27 @@ void Zprime2muResolution::fillDilResHistos(const bool debug) {
   // Histograms to compare dilepton mass resolution between various fits.
   unsigned int n_gen = allDileptons[lgen].size();
 
-  LorentzVector genDimuV, recDimuV, genResV, recResV;
+  reco::Particle::LorentzVector genDimuV, recDimuV, genResV, recResV;
 
   const double mass_min = peakMass - 0.1*peakMass;
   const double mass_max = peakMass + 0.1*peakMass;
 
   // Search for dileptons at all trigger levels and for all off-line
   // reconstruction methods.
-  for (int rec = 0; rec <= MAX_LEVELS; rec++) {
+  for (int rec = 0; rec < MAX_LEVELS; rec++) {
     // Check whether the event passed the trigger.
     if (rec >= l1 && rec <= l3) {
-      if (cutTrig[rec] && !passTrigger(rec)) return;
+      if (cutTrig[rec] && !trigDecision.pass(rec)) return;
     }
 
-    const reco::CompositeCandidateCollection& dileptons = getDileptons(rec);
+    const reco::CompositeCandidateCollection& dileptons = allDileptons[rec];
     unsigned int n_dil = dileptons.size();
 
     // Highest mass reconstructed at various trigger levels and by various
     // off-line fitting algorithms
     if (n_dil > 0) {
       DilMassComp[rec][0]->Fill(dileptons[0].mass());
-      DilMassComp[rec][1]->Fill(resV(rec, 0).mass());
+      DilMassComp[rec][1]->Fill(allResonances[rec][0].mass());
     }
 
     // Only continue on to calculate resolutions if considering
@@ -1557,8 +1578,8 @@ void Zprime2muResolution::fillDilResHistos(const bool debug) {
 	// reconstructed from GEANT muons.
 	genDimuV = allDileptons[lgen][i_dil].p4();
 	recDimuV = dileptons[i_dil].p4();
-	genResV  = resV(lgen, i_dil);
-	recResV  = resV(rec,  i_dil);
+	genResV  = allResonances[lgen][i_dil].p4();
+	recResV  = allResonances[rec][i_dil].p4();
 	double geant_mass  = genDimuV.mass();
 	double pythia_mass = genResV.mass();
 	double dil_mass    = recDimuV.mass();
@@ -1596,7 +1617,7 @@ void Zprime2muResolution::fillDilResHistos(const bool debug) {
 	// of transverse momentum based on the weighted average (in 1/pT)
 	// of their individual pT's.  They say this resulted in 30% decrease
 	// in the RMS of the inv. mass distribution.
-	if (rec == MAX_LEVELS) {
+	if (rec == MAX_LEVELS-1) {
 	  // Calculate reweighted pT.
 	  const reco::CandidateBaseRef& lep0
 	    = dileptonDaughter(dileptons[i_dil], 0);
@@ -1613,7 +1634,7 @@ void Zprime2muResolution::fillDilResHistos(const bool debug) {
 	  //   << " pTw = " << pTw << " " << 2./(1./pTp + 1./pTm);
 
 	  // Construct new dimuon and calculate its mass.
-	  LorentzVector vlep0, vlep1, vdil;
+	  reco::Particle::LorentzVector vlep0, vlep1, vdil;
 	  SetP4M(vlep0, pTw, lep0->phi(), lep0->p(), lep0->theta(), leptonMass);
 	  SetP4M(vlep1, pTw, lep1->phi(), lep1->p(), lep1->theta(), leptonMass);
 	  vdil = vlep0 + vlep1;
@@ -1643,29 +1664,28 @@ void Zprime2muResolution::fillDilResHistos(const bool debug) {
   // well-reconstructed dimuons.  It was used to determine quality cuts by
   // looking at events in the tail of Drell-Yan dimuon invariant mass
   // distribution.
-  int qcut_mum = 0, qcut_mup = 0;
-  if (bestDileptons.size() > 0) {
-    if (DO_QCUTS ? 
-	dilQCheck(bestDileptons[0], QSEL, qcut_mum, qcut_mup) : true) {
+  //int qcut_mum = 0, qcut_mup = 0;
+  if (allDileptons[lbest].size() > 0) {
+    if (1) { //DO_QCUTS ? dilQCheck(allDileptons[lbest][0], QSEL, qcut_mum, qcut_mup) : true) {
       // Require the reconstructed dilepton invariant mass be above a
       // certain mass value ("tail" of Drell-Yan distributions).
-      double recm = resV(MAX_LEVELS, 0).mass(); // highest mass dilepton
+      double recm = allResonances[lbest][0].mass(); // highest mass dilepton
       if (recm >= mass_min) {
 	const reco::CandidateBaseRef& mum
-	  = dileptonDaughterByCharge(bestDileptons[0], -1);
+	  = dileptonDaughterByCharge(allDileptons[lbest][0], -1);
 	const reco::CandidateBaseRef& mup
-	  = dileptonDaughterByCharge(bestDileptons[0], +1);
+	  = dileptonDaughterByCharge(allDileptons[lbest][0], +1);
 	double err_pt_neg = ptError(mum)/mum->pt();
 	double err_pt_pos = ptError(mup)/mup->pt();
 
 	// Fill histos of relative pT error for mu+ vs mu- for two types of
 	// dileptons.
-	if (allDileptons[lgen].size() > 0) {
-	  double genm = resV(lgen, 0).mass();
+	if (allResonances[lgen].size() > 0) {
+	  double genm = allResonances[lgen][0].mass();
 
 	  if ((recm-genm)/genm > 0.1) {
 	    MuPVsMuM[0]->Fill(err_pt_neg, err_pt_pos);
-	    if (debug) dumpDilQuality();
+	    //if (debug) dumpDilQuality();
 	  }
 	  else {
 	    MuPVsMuM[1]->Fill(err_pt_neg, err_pt_pos);
@@ -1740,12 +1760,12 @@ void Zprime2muResolution::getHistosFromFile() {
   for (int i = 0; i < 2; i++)
     for (int j = 0; j < 10; j++)
       histoDir->GetObject(nameHist("RecMassByLoc", i,j).c_str(), RecMassByLoc[i][j]);
-  for (int i = 0; i <= MAX_LEVELS; i++) {
+  for (int i = 0; i < MAX_LEVELS; i++) {
     histoDir->GetObject(nameHist("EffVsEta", i).c_str(), EffVsEta[i]);
     histoDir->GetObject(nameHist("EffVsPhi", i).c_str(), EffVsPhi[i]);
     histoDir->GetObject(nameHist("EffVsPt", i).c_str(), EffVsPt[i]);
   }
-  for (int i = 0; i < NUM_REC_LEVELS; i++) {
+  for (int i = 0; i < TRIG_LEVELS; i++) {
     for (int j = 0; j < 3; j++) {
       histoDir->GetObject(nameHist("TrigResult", i, j).c_str(), TrigResult[i][j]);
       histoDir->GetObject(nameHist("TrigMass", i, j).c_str(), TrigMass[i][j]);
@@ -1756,7 +1776,7 @@ void Zprime2muResolution::getHistosFromFile() {
     histoDir->GetObject(nameHist("ZonDilMass", i).c_str(), ZonDilMass[i]);
     histoDir->GetObject(nameHist("ZofDilMass", i).c_str(), ZofDilMass[i]);
   }
-  for (int i = 0; i <= MAX_LEVELS; i++) {
+  for (int i = 0; i < MAX_LEVELS; i++) {
     histoDir->GetObject(nameHist("AllDilMass", i).c_str(), AllDilMass[i]);
     histoDir->GetObject(nameHist("DilMass", i).c_str(), DilMass[i]);
     histoDir->GetObject(nameHist("DilMassVsEta", i).c_str(), DilMassVsEta[i]);
@@ -1785,7 +1805,7 @@ void Zprime2muResolution::getHistosFromFile() {
   }
   histoDir->GetObject("Eta4muons", Eta4muons);
   histoDir->GetObject("Pt4muons", Pt4muons);
-  for (int k = l1; k <= MAX_LEVELS; k++) {
+  for (int k = l1; k < MAX_LEVELS; k++) {
     histoDir->GetObject(nameHist("EtaRes", k).c_str(), EtaRes[k]);
     histoDir->GetObject(nameHist("PhiRes", k).c_str(), PhiRes[k]);
     histoDir->GetObject(nameHist("PtDiff", k).c_str(), PtDiff[k]);
@@ -1840,7 +1860,7 @@ void Zprime2muResolution::getHistosFromFile() {
       histoDir->GetObject(nameHist("InvPtPull", i, j).c_str(), InvPtPull[i][j]);
     }
   }
-  for (int i = 0; i <= MAX_LEVELS; i++) {
+  for (int i = 0; i < MAX_LEVELS; i++) {
     for (int j = 0; j < 2; j++)
       histoDir->GetObject(nameHist("DilMassComp", i, j).c_str(), DilMassComp[i][j]);
     if (i > 0) {
@@ -1851,7 +1871,7 @@ void Zprime2muResolution::getHistosFromFile() {
   }
   for (unsigned int j = 0; j < 2; j++)
     histoDir->GetObject(nameHist("MuPVsMuM", j).c_str(), MuPVsMuM[j]);
-  for (int i = l1; i <= MAX_LEVELS; i++)
+  for (int i = l1; i < MAX_LEVELS; i++)
     histoDir->GetObject(nameHist("QRes", i).c_str(), QRes[i]);
   for (int i = 0; i < 3; i++) {
     for (int j = 0; j < 2; j++) {
@@ -1939,7 +1959,7 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,3);
-  for (int irec = 1; irec < NUM_REC_LEVELS; irec++) {
+  for (int irec = 1; irec < TRIG_LEVELS; irec++) {
     pad[page]->cd(2*irec-1);  gPad->SetLogy(1);  TrigResult[irec][0]->Draw();
     pad[page]->cd(2*irec);                       NMuons[irec][2]->Draw();
   }
@@ -2084,21 +2104,21 @@ void Zprime2muResolution::DrawResHistos() {
   gStyle->SetOptStat(10);
   pad[page]->Draw();
   pad[page]->Divide(2,4);
-  TH1F *effvseta[MAX_LEVELS+1];
+  TH1F *effvseta[MAX_LEVELS];
   // Muon reconstruction efficiency (different reconstructors) as a
   // function of true eta. Only muons produced in Z' decays are used;
   // L1/HLT efficiency is not included.
-  for (int irec = 1; irec <= MAX_LEVELS; irec++) {
+  for (int irec = 1; irec < MAX_LEVELS; irec++) {
     pad[page]->cd(irec);  gPad->SetGrid(1);
     effvseta[irec] = (TH1F*)EffVsEta[irec]->Clone();
-    histtitle = recLevelHelper.levelName(irec) + " muon efficiency vs eta";
+    histtitle = levelName(irec) + " muon efficiency vs eta";
     effvseta[irec]->SetTitle(histtitle.c_str());
     effvseta[irec]->Divide(EffVsEta[irec], EffVsEta[0], 1., 1., "B");
     effvseta[irec]->SetMinimum(0.60);  effvseta[irec]->SetMaximum(1.02);
     effvseta[irec]->Draw();  effvseta[irec]->Draw("samehisto");
   }
   c1->Update();
-  for (int irec = 1; irec <= MAX_LEVELS; irec++)
+  for (int irec = 1; irec < MAX_LEVELS; irec++)
     delete effvseta[irec];
 
   // Trigger efficiency as a function of dimuon mass
@@ -2112,7 +2132,7 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(3,4);
-  TH1F *rat[NUM_REC_LEVELS][3];
+  TH1F *rat[TRIG_LEVELS][3];
 
   gStyle->SetOptStat(111111);
   for (int j = 0; j < 3; j++) {
@@ -2122,7 +2142,7 @@ void Zprime2muResolution::DrawResHistos() {
   c1->Update();
 
   gStyle->SetOptStat(110010);
-  for (int irec = l1; irec < NUM_REC_LEVELS; irec++) {
+  for (int irec = l1; irec < TRIG_LEVELS; irec++) {
     for (int j = 0; j < 3; j++) {
       pad[page]->cd(3*irec+j+1);  gPad->SetGrid(1);
       rat[irec][j] = (TH1F*)TrigMass[irec][j]->Clone();
@@ -2132,7 +2152,7 @@ void Zprime2muResolution::DrawResHistos() {
 	histtitle = "Trigger eff. (#eta < 2.4) vs mass, ";
       else if (j == 2)
 	histtitle = "Trigger eff. (#eta < 2.1) vs mass, ";
-      histtitle += recLevelHelper.levelName(irec);
+      histtitle += levelName(irec);
       rat[irec][j]->SetTitle(histtitle.c_str());
       rat[irec][j]->Divide(TrigMass[irec][j], TrigMass[0][j], 1., 1., "B");
       rat[irec][j]->SetMinimum(0.89); rat[irec][j]->SetMaximum(1.01);
@@ -2140,7 +2160,7 @@ void Zprime2muResolution::DrawResHistos() {
     }
   }
   c1->Update();
-  for (int irec = l1; irec < NUM_REC_LEVELS; irec++)
+  for (int irec = l1; irec < TRIG_LEVELS; irec++)
     for (int j = 0; j < 3; j++)
       delete rat[irec][j];
 
@@ -2250,7 +2270,7 @@ void Zprime2muResolution::DrawResHistos() {
     SignOfDil[0]->GetXaxis()->SetBinLabel(i_bin+1,genlabel[i_bin]);
   }
   char *sign[3] = {"opposite","same neg","same pos"};
-  for (int i_hist = 1; i_hist < NUM_REC_LEVELS; i_hist++) {
+  for (int i_hist = 1; i_hist < TRIG_LEVELS; i_hist++) {
     for (int j_bin = 0; j_bin < 3; j_bin++) {
       SignOfDil[i_hist]->GetXaxis()->SetBinLabel(j_bin+1,sign[j_bin]);
     }
@@ -2268,18 +2288,18 @@ void Zprime2muResolution::DrawResHistos() {
   pad[page]->Divide(2,4);
   pad[page]->cd(1);  SignOfDil[0]->Draw();
   pad[page]->cd(2);  EventsInAccFailed->Draw();
-  for (int i_rec = 1; i_rec < NUM_REC_LEVELS; i_rec++) {
+  for (int i_rec = 1; i_rec < TRIG_LEVELS; i_rec++) {
     pad[page]->cd(2*i_rec+1);  SignOfDil[i_rec]->Draw();
     pad[page]->cd(2*i_rec+2);  NMuons[i_rec][3]->Draw();
   }
   c1->Update();
 
   // Draw Eta, Phi, Rap, momentum for all mu's for all rec levels
-  for (int i=0; i<=MAX_LEVELS; i++) {
+  for (int i=0; i < MAX_LEVELS; i++) {
     ps->NewPage();
     c1->Clear();
     c1->cd(0);
-    tit = recLevelHelper.levelName(i) + " Values, all Muons";
+    tit = levelName(i) + " Values, all Muons";
     delete title; title = new TPaveLabel(0.1,0.94,0.9,0.98,tit.c_str());
     title->SetFillColor(10);
     title->Draw();
@@ -2300,12 +2320,12 @@ void Zprime2muResolution::DrawResHistos() {
 
   // Draw Eta, Phi, Rap, momentum for all levels Mu+ and Mu- associated
   // with an opp-sign dilepton.
-  for (int i=0; i<=MAX_LEVELS; i++) {
+  for (int i=0; i < MAX_LEVELS; i++) {
     for (int j=0; j<2; j++) {
       ps->NewPage();
       c1->Clear();
       c1->cd(0);
-      tit = str_part[j] + " " + recLevelHelper.levelName(i) + " Values";
+      tit = str_part[j] + " " + levelName(i) + " Values";
       delete title; title = new TPaveLabel(0.1,0.94,0.9,0.98,tit.c_str());
       title->SetFillColor(10);
       title->Draw();
@@ -2326,12 +2346,12 @@ void Zprime2muResolution::DrawResHistos() {
   }
 
   // Opposite sign dileptons, at Gen, L1, L2 and L3
-  for (int i_rec = 0; i_rec <= MAX_LEVELS; i_rec++) {
+  for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
     // Eta, Phi, Rap and momentum
     ps->NewPage();
     c1->Clear();
     c1->cd(0);
-    tit = str_part[2] + " " + recLevelHelper.levelName(i_rec) + " Values";
+    tit = str_part[2] + " " + levelName(i_rec) + " Values";
     delete title; title = new TPaveLabel(0.1,0.94,0.9,0.98,tit.c_str());
     title->SetFillColor(10);
     title->Draw();
@@ -2409,7 +2429,7 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,4);
-  for (int i_rec = l1; i_rec <= MAX_LEVELS; i_rec++) {
+  for (int i_rec = l1; i_rec < MAX_LEVELS; i_rec++) {
     pad[page]->cd(i_rec);
     EtaRes[i_rec]->Draw();  EtaRes[i_rec]->Fit("gaus","Q");
   }
@@ -2444,7 +2464,7 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,4);
-  for (int i_rec = l1; i_rec <= MAX_LEVELS; i_rec++) {
+  for (int i_rec = l1; i_rec < MAX_LEVELS; i_rec++) {
     pad[page]->cd(i_rec);
     PhiRes[i_rec]->Draw();  PhiRes[i_rec]->Fit("gaus","Q");
   }
@@ -2479,7 +2499,7 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,4);
-  for (int i_rec = l1; i_rec <= MAX_LEVELS; i_rec++) {
+  for (int i_rec = l1; i_rec < MAX_LEVELS; i_rec++) {
     pad[page]->cd(i_rec);
     PtDiff[i_rec]->Draw();  PtDiff[i_rec]->Fit("gaus","Q");
   }
@@ -2574,9 +2594,9 @@ void Zprime2muResolution::DrawResHistos() {
   c1->Update();
 
   // P resolution
-  TH1F *PResVsPMod[MAX_LEVELS+1];
-  for (int i_rec = l1; i_rec <= MAX_LEVELS; i_rec++) {
-    histtitle = "Sqrt(Var((" + recLevelHelper.levelName(i_rec) + "-Gen P)/Gen P)) vs Gen P";
+  TH1F *PResVsPMod[MAX_LEVELS];
+  for (int i_rec = l1; i_rec < MAX_LEVELS; i_rec++) {
+    histtitle = "Sqrt(Var((" + levelName(i_rec) + "-Gen P)/Gen P)) vs Gen P";
     nbins = PResVsP[i_rec]->GetNbinsX();
     PResVsPMod[i_rec] =
       fs->make<TH1F>(nameHist("PResVsPMod", i_rec).c_str(),
@@ -2622,14 +2642,14 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,5);
-  for (int i_rec = lgmr; i_rec <= MAX_LEVELS; i_rec++) {
+  for (int i_rec = lgmr; i_rec < MAX_LEVELS; i_rec++) {
     pad[page]->cd(2*i_rec-7);  PRes[i_rec]->Draw();
     PRes[i_rec]->Fit("gaus","Q");
     pad[page]->cd(2*i_rec-6);  PResVsPMod[i_rec]->Draw();
   }
   c1->Update();
   // The following has to be after c1->Update();
-  for (int i_rec = l1; i_rec <= MAX_LEVELS; i_rec++)
+  for (int i_rec = l1; i_rec < MAX_LEVELS; i_rec++)
     delete PResVsPMod[i_rec];
 
   // 1/P resolution
@@ -2695,7 +2715,7 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,5);
-  for (int i = 0; i < MAX_LEVELS+1; i++) {
+  for (int i = 0; i < MAX_LEVELS; i++) {
     pad[page]->cd(i+1);
     DilMassComp[i][0]->Draw();
     DilMassComp[i][0]->GetXaxis()->SetTitle("#mu^{+}#mu^{-} mass");
@@ -2715,7 +2735,7 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,5);
-  for (int i = 0; i < MAX_LEVELS+1; i++) {
+  for (int i = 0; i < MAX_LEVELS; i++) {
     pad[page]->cd(i+1);
     gPad->SetLogy(1);
     DilMassComp[i][0]->Draw();
@@ -2736,7 +2756,7 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,5);
-  for (int i = 0; i < MAX_LEVELS+1; i++) {
+  for (int i = 0; i < MAX_LEVELS; i++) {
     pad[page]->cd(i+1);
     DilMassComp[i][1]->Draw();
     DilMassComp[i][1]->GetXaxis()->SetTitle("Resonance mass");
@@ -2756,7 +2776,7 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,5);
-  for (int i = 0; i < MAX_LEVELS+1; i++) {
+  for (int i = 0; i < MAX_LEVELS; i++) {
     pad[page]->cd(i+1);
     gPad->SetLogy(1);
     DilMassComp[i][1]->Draw();
@@ -2808,8 +2828,8 @@ void Zprime2muResolution::DrawResHistos() {
   // All this mess below is just to take square root of the content of every
   // bin (leave errors for later).  Clone() does not work since we have to
   // make TH1F from TProfile.
-  TH1F *MassResScat[NUM_REC_LEVELS-1], *MassFrResScat[NUM_REC_LEVELS-1];
-  for (int i_rec = 0; i_rec < NUM_REC_LEVELS-1; i_rec++) {
+  TH1F *MassResScat[TRIG_LEVELS-1], *MassFrResScat[TRIG_LEVELS-1];
+  for (int i_rec = 0; i_rec < TRIG_LEVELS-1; i_rec++) {
     ostringstream histname;
     histname << "Sqrt(Var(L" << i_rec + 1 << "-Gen Mass)) vs Gen Mass";
     nbins = GenDilMassResScat[i_rec]->GetNbinsX();
@@ -2832,7 +2852,7 @@ void Zprime2muResolution::DrawResHistos() {
     }
     pad[page]->cd(2*i_rec+1);  MassResScat[i_rec]->Draw();
 
-    histtitle = "Sqrt(Var((" + recLevelHelper.levelName(i_rec+1) +
+    histtitle = "Sqrt(Var((" + levelName(i_rec+1) +
       "-Gen Mass)/Gen Mass)) vs Gen Mass";
     nbins = GenDilMassFrResScat[i_rec]->GetNbinsX();
     MassFrResScat[i_rec] =
@@ -2855,7 +2875,7 @@ void Zprime2muResolution::DrawResHistos() {
     pad[page]->cd(2*i_rec+2);  MassFrResScat[i_rec]->Draw();
   }
   c1->Update();
-  for (int i_rec = 0; i_rec < NUM_REC_LEVELS-1; i_rec++) {
+  for (int i_rec = 0; i_rec < TRIG_LEVELS-1; i_rec++) {
     delete MassResScat[i_rec];
     delete MassFrResScat[i_rec];
   }
@@ -2872,7 +2892,7 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,4);
-  for (int i = l2; i <= MAX_LEVELS; i++) {
+  for (int i = l2; i < MAX_LEVELS; i++) {
     pad[page]->cd(i-1);
     DilMassRes[i][0]->Draw();  DilMassRes[i][0]->Fit("gaus","Q");
     DilMassRes[i][0]->GetXaxis()->SetTitle("(Rec mass - Gen mass)/Gen mass");
@@ -2893,7 +2913,7 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,4);
-  for (int i = l2; i <= MAX_LEVELS; i++) {
+  for (int i = l2; i < MAX_LEVELS; i++) {
     pad[page]->cd(i-1);
     DilMassRes[i][1]->Draw();  DilMassRes[i][1]->Fit("gaus","Q");
     DilMassRes[i][1]->GetXaxis()->SetTitle("(Rec mass - Gen mass)/Gen mass");
@@ -2914,7 +2934,7 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,4);
-  for (int i = l2; i <= MAX_LEVELS; i++) {
+  for (int i = l2; i < MAX_LEVELS; i++) {
     pad[page]->cd(i-1);
     DilMassRes[i][2]->Draw();  DilMassRes[i][2]->Fit("gaus","Q");
     DilMassRes[i][2]->GetXaxis()->SetTitle("(Rec mass - Gen mass)/Gen mass");
@@ -2934,7 +2954,7 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,4);
-  for (int i = l2; i <= MAX_LEVELS; i++) {
+  for (int i = l2; i < MAX_LEVELS; i++) {
     pad[page]->cd(i-1);
     DilMassRes[i][3]->Draw();  DilMassRes[i][3]->Fit("gaus","Q");
     DilMassRes[i][3]->GetXaxis()->SetTitle("(Rec mass - Gen mass)/Gen mass");
@@ -2954,7 +2974,7 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,4);
-  for (int i = l2; i <= MAX_LEVELS; i++) {
+  for (int i = l2; i < MAX_LEVELS; i++) {
     pad[page]->cd(i-1);
     DilMassRes[i][4]->Draw();  DilMassRes[i][4]->Fit("gaus","Q");
     DilMassRes[i][4]->GetXaxis()->SetTitle("(Rec mass - Gen mass)/Gen mass");
@@ -2975,7 +2995,7 @@ void Zprime2muResolution::DrawResHistos() {
   t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
   pad[page]->Draw();
   pad[page]->Divide(2,4);
-  for (int i = l2; i <= MAX_LEVELS; i++) {
+  for (int i = l2; i < MAX_LEVELS; i++) {
     pad[page]->cd(i-1);
     DilMassRes[i][5]->Draw();  DilMassRes[i][5]->Fit("gaus","Q");
     DilMassRes[i][5]->GetXaxis()->SetTitle("(Rec mass - Gen mass)/Gen mass");
@@ -2997,7 +3017,7 @@ void Zprime2muResolution::DrawResHistos() {
   gStyle->SetOptLogy(1);
   pad[page]->Draw();
   pad[page]->Divide(2,4);
-  for (int i_rec = l1; i_rec <= MAX_LEVELS; i_rec++) {
+  for (int i_rec = l1; i_rec < MAX_LEVELS; i_rec++) {
     QRes[i_rec]->SetMinimum(1.);  QRes[i_rec]->SetMaximum(3000.);
     pad[page]->cd(i_rec);  QRes[i_rec]->Draw("hist");
   }
@@ -3121,7 +3141,7 @@ void Zprime2muResolution::DrawResHistos() {
   gStyle->SetOptLogy(0);
   c1->Update();
 
-  if (doingHiggs) {
+  if (maxDileptons > 1) {
     ps->NewPage();
     c1->Clear();
     c1->cd(0);
@@ -3196,3 +3216,5 @@ void Zprime2muResolution::DrawAcceptance() {
   delete eps;
   delete c1;
 }
+
+DEFINE_FWK_MODULE(Zprime2muResolution);

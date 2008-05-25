@@ -28,16 +28,22 @@ private:
   virtual void produce(Event&, const EventSetup&);
   virtual void endJob();
 
+  // Retrieve the matched-by-seed lepton from ltk to either lfms or
+  // lpmr. (We only use a subset of the by-seed matching available, so
+  // we just implement the tiny part we need here.)
+  const CandidateBaseRef sameSeedLepton(const CandidateBaseRef& lep,
+					const int level) const;
+
   // Get the chi2 prob for the muon's combined track.
-  double cumulativeChiSquare(const reco::CandidateBaseRef& mu) const;
+  double cumulativeChiSquare(const CandidateBaseRef& mu) const;
 
   // Our implementation of cocktail methods for picking muons from the
   // various TeV muon reconstructors (either TMR, picking between
   // tracker-only and tracker+first muon station, or Piotr's, picking
   // between those two and also PMR); returns a reference to the one
   // picked.
-  const reco::CandidateBaseRef&
-    cocktailMuon(const reco::CandidateBaseRef& trk) const;
+  int cocktailMuon(const CandidateBaseRef& trk,
+		   CandidateBaseRef& picked) const;
 
   // The driver routine which uses the cocktail method above to pick
   // "best" muons.
@@ -52,31 +58,17 @@ private:
   // Whether to use the TMR cocktail or Piotr's.
   bool useTMR;
 
-  // If there are no extra TeV muon collections in the event, then
-  // don't bother producing anything.
-  bool useOtherMuonRecos;
-
-  // Object to help with per-rec-level information.
-  RecLevelHelper recLevelHelper;
-
-  // An invalid CandidateBaseRef so that some of the methods above can
-  // return by reference and still be able to return a null reference.
-  reco::CandidateBaseRef invalidRef;
-
-  // Keep track of which collection the cocktail chose. (Since we are
-  // forced to copy the muons, downstream we will not be able to
-  // determine which collections they originally came from, and
-  // therefore will not be able to get their original rec level as
-  // before.)
-  vector<int> muonSources;
+  InputTag trackerOnlyMuons, toFMSMap, toPMRMap;
+  Handle<CandViewMatchMap> toFMS, toPMR;
 };
 
 CocktailMuonProducer::CocktailMuonProducer(const ParameterSet& cfg)
-  : debug(cfg.getUntrackedParameter<int>("verbosity", 0) > 0),
+  : debug(false),
     useTMR(cfg.getParameter<bool>("useTMR")),
-    useOtherMuonRecos(cfg.getParameter<bool>("useOtherMuonRecos"))
+    trackerOnlyMuons(cfg.getParameter<InputTag>("trackerOnlyMuons")),
+    toFMSMap(cfg.getParameter<InputTag>("toFMSMap")),
+    toPMRMap(cfg.getParameter<InputTag>("toPMRMap"))
 {
-  recLevelHelper.init(cfg);
   ntrk = ngmr = nfms = npmr = ngpr = ntot = 0;
 
   produces<MuonCollection>();
@@ -95,18 +87,27 @@ void CocktailMuonProducer::endJob() {
   }
 }
 
-double CocktailMuonProducer::cumulativeChiSquare(const reco::CandidateBaseRef& mu) const {
-  const reco::TrackRef& track = toConcrete<reco::Muon>(mu).combinedMuon();
+const CandidateBaseRef
+CocktailMuonProducer::sameSeedLepton(const CandidateBaseRef& lep,
+				     const int level) const {
+  const Handle<CandViewMatchMap>& mm = level == lfms ? toFMS : toPMR;
+  if (mm->find(lep) != mm->end())
+    return (*mm)[lep];
+  else
+    return CandidateBaseRef(); // an invalid ref
+}
+
+double CocktailMuonProducer::cumulativeChiSquare(const CandidateBaseRef& mu) const {
+  const TrackRef& track = toConcrete<Muon>(mu).combinedMuon();
   Genfun::CumulativeChiSquare myCumulativeChiSquare(int(track->ndof()));
   return -log(1.-myCumulativeChiSquare(track->chi2()));
 }
 
-
-const reco::CandidateBaseRef&
-CocktailMuonProducer::cocktailMuon(const reco::CandidateBaseRef& trk) const {
-  const reco::CandidateBaseRef& fms = recLevelHelper.sameSeedLepton(trk, lfms);
-  const reco::CandidateBaseRef& pmr = recLevelHelper.sameSeedLepton(trk, lpmr);
-  int result = 0;
+int CocktailMuonProducer::cocktailMuon(const CandidateBaseRef& trk,
+				       CandidateBaseRef& picked) const {
+  const CandidateBaseRef& fms = sameSeedLepton(trk, lfms);
+  const CandidateBaseRef& pmr = sameSeedLepton(trk, lpmr);
+  int result = -1;
 
   bool trkValid = !trk.isNull();
   bool fmsValid = !fms.isNull();
@@ -150,17 +151,21 @@ CocktailMuonProducer::cocktailMuon(const reco::CandidateBaseRef& trk) const {
       << "; fms = " << prob_fms << "; pmr = " << prob_pmr
       << "; result = " << (useTMR ? "(TMR choice only) " : "") << result;
 
-  if      (result == ltk)  return trk;
-  else if (result == lfms) return fms;
-  else if (result == lpmr) return pmr;
-  else                     return invalidRef;
+  if      (result == ltk)  picked = trk;
+  else if (result == lfms) picked = fms;
+  else if (result == lpmr) picked = pmr;
+  
+  return result;
 }
 
 bool CocktailMuonProducer::findBestMuons(const Event& event,
 					 const auto_ptr<MuonCollection>& bestMuons) {
   // Start with tracker-only tracks.
-  View<Candidate> trackerOnlyMuons;
-  if (!recLevelHelper.getLeptonsView(event, ltk, trackerOnlyMuons)) {
+  Handle<View<Candidate> > htkonly;
+  try {
+    event.getByLabel(trackerOnlyMuons, htkonly);
+  } catch (const edm::Exception& e) {
+  //  if (htkonly.failedToGet()) {
     edm::LogWarning("findBestMuons")
       << "Unable to get a view to the tracker-only muons; putting no"
       << " collection into event for 'best' muons.";
@@ -170,18 +175,14 @@ bool CocktailMuonProducer::findBestMuons(const Event& event,
   if (debug) LogTrace("findBestMuons") << "Finding best muons for event #"
 				       << event.id().event();
 
-  for (unsigned imu = 0; imu < trackerOnlyMuons.size(); imu++) {
-    int picked = -1;
-    const reco::CandidateBaseRef& trkMu = trackerOnlyMuons.refAt(imu);
-    const reco::CandidateBaseRef& bestMu = cocktailMuon(trkMu);
-    if (!bestMu.isNull()) {
+  for (unsigned imu = 0; imu < htkonly->size(); imu++) {
+    const CandidateBaseRef& trkMu  = htkonly->refAt(imu);
+    CandidateBaseRef bestMu;
+    int picked = cocktailMuon(trkMu, bestMu);
+    if (!bestMu.isNull())
       bestMuons->push_back(toConcrete<Muon>(bestMu));
-      picked = recLevelHelper.recLevel(bestMu);
-    }
-    // Even if the muon was rejected and picked is still -1, keep that
-    // information.
-    muonSources.push_back(picked);
 
+    // Skip the statistics if we're not debugging.
     if (!debug) continue;
 
     if (picked >= 0) {
@@ -190,8 +191,7 @@ bool CocktailMuonProducer::findBestMuons(const Event& event,
       }
       else if (picked == lgmr) {
 	ngmr++; LogTrace("findBestMuons") << " --> select GMR";
-	const reco::CandidateBaseRef& pmrMu =
-	  recLevelHelper.sameSeedLepton(trkMu, lpmr);
+	const CandidateBaseRef& pmrMu = sameSeedLepton(trkMu, lpmr);
 	if (!pmrMu.isNull() &&
 	    fabs(bestMu->phi() - pmrMu->phi()) < 0.001 &&
 	    fabs(bestMu->eta() - pmrMu->eta()) < 0.001 &&
@@ -220,26 +220,17 @@ bool CocktailMuonProducer::findBestMuons(const Event& event,
 
 void CocktailMuonProducer::produce(Event& event,
 				   const EventSetup& eSetup) {
-  // If we're not to bother, put no collection into the event that way
-  // consumers know to just get the default global muons.
-  if (!useOtherMuonRecos)
-    return;
-
-  // Initialize things.
-  recLevelHelper.initEvent(event);
-  muonSources.clear();
+  // Get the match maps. (Let the exception be thrown if the maps are
+  // not found; this is a fatal error.)
+  event.getByLabel(toFMSMap, toFMS);
+  event.getByLabel(toPMRMap, toPMR);
 
   // Find the "best" muons according to the chosen cocktail, and put
   // them in the event.
   auto_ptr<MuonCollection> bestMuons(new MuonCollection);
 
-  if (findBestMuons(event, bestMuons)) {
+  if (findBestMuons(event, bestMuons))
     event.put(bestMuons);
-
-    // Store (by copying) original rec levels for later inspection.
-    auto_ptr<vector<int> > sources(new vector<int>(muonSources));
-    event.put(sources);
-  }
 }
 
 DEFINE_FWK_MODULE(CocktailMuonProducer);

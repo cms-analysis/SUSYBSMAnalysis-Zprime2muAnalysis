@@ -28,16 +28,37 @@
   <use name=DataFormats/MuonReco>
 </library>
 
-<library file=LeptonAssociator.cc,../src/RecLevelHelper.cc name=LeptonAssociator>
+<library file=MuonBySeedMatcher.cc name=MuonBySeedMatcher>
   <use name=DataFormats/RecoCandidate>
 </library>
 
-<library file=CocktailMuonProducer.cc,../src/RecLevelHelper.cc name=CocktailMuonProducer>
+<library file=CocktailMuonProducer.cc name=CocktailMuonProducer>
   <use name=DataFormats/MuonReco>
 </library>
 
 <library file=GenDilCandViewShallowCloneCombiner.cc name=GenDilCandViewShallowCloneCombiner>
   <use name=DataFormats/Candidate>
+  <use name=PhysicsTools/UtilAlgos>
+  <use name=PhysicsTools/CandAlgos>
+</library>
+
+<library file=DimuonBremRecoverer.cc name=DimuonBremRecoverer>
+  <use name=DataFormats/Candidate>
+  <use name=PhysicsTools/CandUtils>
+</library>
+
+<library file=DileptonPicker.cc,../src/DileptonUtilities.cc,../src/HardInteraction.cc,../src/GeneratorUtilities.cc name=DileptonPicker>
+  <use name=DataFormats/Candidate>
+  <use name=DataFormats/HepMCCandidate>
+  <use name=DataFormats/MuonReco>
+</library>
+
+<library file=GenResonanceProducer.cc,../src/HardInteraction.cc name=GenResonanceProducer>
+  <use name=DataFormats/Candidate>
+  <use name=DataFormats/HepMCCandidate>
+</library>
+
+<library file=PtMinDeltaRViewMatcher.cc name=PtMinDeltaRViewMatcher>
   <use name=PhysicsTools/UtilAlgos>
   <use name=PhysicsTools/CandAlgos>
 </library>

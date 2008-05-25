@@ -23,9 +23,11 @@
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/Candidate/interface/CompositeRefCandidate.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticleCandidate.h"
 #include "DataFormats/FWLite/interface/Handle.h"
 
 #include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
@@ -46,14 +48,11 @@ const unsigned int Zprime2muAsymmetry::nNormPoints = 100000;
 
 Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config) 
   : Zprime2muAnalysis(config) {
+
   // initialize array counters since we don't use automatically-sized
   // arrays yet
   for (int i = 0; i < 3; i++)
     nfit_used[i] = 0;
-
-  // verbosity controls the amount of debugging information printed;
-  // levels are defined in an enum
-  verbosity = VERBOSITY(config.getUntrackedParameter<int>("verbosity", 0));
 
   // turn off the fit and only make the histograms -- useful to get the
   // recSigma information from the asymHistos.ps
@@ -188,6 +187,8 @@ void Zprime2muAsymmetry::analyze(const edm::Event& event,
 }
 
 void Zprime2muAsymmetry::beginJob(const edm::EventSetup& eSetup) {
+  Zprime2muAnalysis::beginJob(eSetup);
+
   getAsymParams();
   if (calcParamsOnly)
     // JMTBAD this is the wrong way to do this!
@@ -196,6 +197,8 @@ void Zprime2muAsymmetry::beginJob(const edm::EventSetup& eSetup) {
 }
 
 void Zprime2muAsymmetry::endJob() {
+  Zprime2muAnalysis::endJob();
+
   calcFrameAsym();
 
   drawFrameHistos();
@@ -306,8 +309,8 @@ void Zprime2muAsymmetry::bookFrameHistos() {
   for (int i = 0; i < NBIN; i++)
     DMBINS[i] = 40 + 5. * i;
   */
-  //  for (int j = 0; j < NUM_REC_LEVELS; j++) {
-  for (int j = 0; j < MAX_LEVELS; j++) {
+
+  for (int j = 0; j < 2; j++) {
     cosGJ[j][0] = fs->make<TH1F>(nameHist("cosGJ", j, 0).c_str(), "Cos theta in Gottfried-Jackson Frame",        100, -1., 1.);
     cosGJ[j][1] = fs->make<TH1F>(nameHist("cosGJ", j, 1).c_str(), "Cos theta in tagged Gottfried-Jackson Frame", 100, -1., 1.);
     cosCS[j][0] = fs->make<TH1F>(nameHist("cosCS", j, 0).c_str(), "Cos theta in Collins-Soper Frame",            100, -1., 1.);
@@ -395,13 +398,7 @@ void Zprime2muAsymmetry::bookFrameHistos() {
   }
 
   // Resolution histograms
-  cosCSRes[0] = fs->make<TH1F>("cosCSRes0", "L1 cos CS - Gen cos CS", 100, -0.5,   0.5);
-  cosCSRes[1] = fs->make<TH1F>("cosCSRes1", "L2 cos CS - Gen cos CS", 100, -0.25,  0.25);
-  cosCSRes[2] = fs->make<TH1F>("cosCSRes2", "L3 cos CS - Gen cos CS", 100, -0.005, 0.005);
-  for (int j = 3; j < MAX_LEVELS; j++) {
-    string title = recLevelHelper.levelName(j) + " cos CS - Gen cos CS";
-    cosCSRes[j] = fs->make<TH1F>(nameHist("cosCSRes", j).c_str(), title.c_str(), 100, -0.005, 0.005);
-  }
+  cosCSRes = fs->make<TH1F>("cosCSRes", "Rec cos CS - Gen cos CS", 100, -0.005, 0.005);
   cosCS3_diffsq_vs_cosCS0 = fs->make<TProfile>("cosCS3_diffsq_vs_cosCS0",
 					       "L3 cos theta CS diffsq vs Gen cos theta CS",
 					       20, -1., 1., 0., 0.0625);
@@ -536,8 +533,9 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
   bool debug = verbosity >= VERBOSITY_TOOMUCH; 
 
   double gen_cos_cs = 0., rec_cos_cs = 0., gen_phi_cs = 0., rec_phi_cs = 0.;
-  unsigned int n_dil = bestDileptons.size();
-  unsigned int n_gen = allDileptons[lgen].size();
+  
+  unsigned int n_gen = genDileptons->size();
+  unsigned int n_dil = bestDileptons->size();
 
   int* type = new int[n_gen];
   for (unsigned i = 0; i < n_gen; i++) type[i] = -1;
@@ -611,7 +609,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 
     // Loop over all generated dimuons
     for (unsigned int i_dil = 0; i_dil < n_gen; i_dil++) {
-      const reco::CompositeCandidate& gen_dil = allDileptons[lgen][i_dil];
+      const reco::CompositeCandidate& gen_dil = genDileptons->at(i_dil);
       const reco::CandidateBaseRef& gen_mum = 
 	dileptonDaughterByCharge(gen_dil, -1);
       const reco::CandidateBaseRef& gen_mup = 
@@ -689,7 +687,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 	// dimuon information.  This will be used for obtaining sigmas used
 	// in convolutions for asymmetry fits.
 	if (n_dil == n_gen) {      
-	  const reco::Candidate& rec_dil = bestDileptons[i_dil];
+	  const reco::Candidate& rec_dil = bestDileptons->at(i_dil);
 	  const reco::CandidateBaseRef& rec_mum = 
 	    dileptonDaughterByCharge(rec_dil, -1);
 	  const reco::CandidateBaseRef& rec_mup = 
@@ -733,7 +731,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
   // Now loop over all reconstructed dimuons and store those to be fitted
   // (which lie inside desired reconstructed window).
   for (unsigned int i_dil = 0; i_dil < n_dil; i_dil++) {
-    const reco::Candidate& rec_dil = bestDileptons[i_dil];
+    const reco::Candidate& rec_dil = bestDileptons->at(i_dil);
     if (rec_dil.mass() > asymFitManager.fit_win(0) &&
 	rec_dil.mass() < asymFitManager.fit_win(1)) {
       if (nfit_used[0] == FIT_ARRAY_SIZE - 1)
@@ -812,7 +810,7 @@ void Zprime2muAsymmetry::fillFrameHistos() {
 
   double cos_gj, cos_gj_tag, cos_cs_anal;
   const unsigned int MAX_DILEPTONS = 2;
-  double cos_cs[MAX_LEVELS][MAX_DILEPTONS];
+  double cos_cs[2][MAX_DILEPTONS];
   double cos_boost, cos_wulz;
 
   TLorentzVector pp1(0., 0., 7000., 7000.);
@@ -820,15 +818,17 @@ void Zprime2muAsymmetry::fillFrameHistos() {
   TLorentzVector pb_star, pt_star, pmum_star, pmup_star;
   TVector3 temp3;
 
-  //for (int i_rec = 0; i_rec < NUM_REC_LEVELS; i_rec++) {
-  for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
+  for (int i_rec = 0; i_rec < 2; i_rec++) {
     // Trigger decision
-    if (i_rec < NUM_REC_LEVELS && (cutTrig[i_rec] && !passTrigger(i_rec)))
+    if (i_rec <= l3 && !trigDecision.pass(i_rec))
       break;
 
     //Look for an opposite-sign dilepton at this level of reconstruction.
-    for (unsigned i_dil = 0; i_dil < allDileptons[i_rec].size(); i_dil++) {
-      const reco::CompositeCandidate& dil = allDileptons[i_rec][i_dil];
+
+    const reco::CompositeCandidateCollection& dileptons = 
+      i_rec == 0 ? *genDileptons : *bestDileptons;
+    for (unsigned i_dil = 0; i_dil < dileptons.size(); i_dil++) {
+      const reco::CompositeCandidate& dil = dileptons[i_dil];
       const reco::CandidateBaseRef& mum = dileptonDaughterByCharge(dil, -1);
       const reco::CandidateBaseRef& mup = dileptonDaughterByCharge(dil, +1);
       
@@ -840,7 +840,7 @@ void Zprime2muAsymmetry::fillFrameHistos() {
       if (debug) {
 	ostringstream out;
 	TLorentzVector tempV;
-	out << recLevelHelper.levelName(i_rec) << " values:" << endl;
+	out << levelName(i_rec) << " values:" << endl;
 	out << "#|Charge |   Eta   |   Phi   |    P    |"
 	    << "    Pt   |    Pz   |   Rap   |  Mass  " << endl;
 	out << "-------------------------------------------------"
@@ -975,13 +975,13 @@ void Zprime2muAsymmetry::fillFrameHistos() {
 	  rap_vs_cosCS[i_rec]->Fill(cos_cs[i_rec][i_dil], rap);
 
 	// A few resolution plots
-	if (i_rec > 0 && allDileptons[lgen].size() == allDileptons[i_rec].size()) {
-	  cosCSRes[i_rec-1]->Fill(cos_cs[i_rec][i_dil]-cos_cs[0][i_dil]);
+	if (i_rec > 0 && genDileptons->size() == bestDileptons->size()) {
+	  cosCSRes->Fill(cos_cs[i_rec][i_dil]-cos_cs[0][i_dil]);
 	  if (i_rec == 3) {
 	    cosCS3_diffsq_vs_cosCS0->Fill(cos_cs[0][i_dil],
                           (cos_cs[i_rec][i_dil]-cos_cs[0][i_dil])*
                           (cos_cs[i_rec][i_dil]-cos_cs[0][i_dil]));
-	    rap3_vs_rap0->Fill(allDileptons[lgen][i_dil].rapidity(), rap);
+	    rap3_vs_rap0->Fill(genDileptons->at(i_dil).rapidity(), rap);
 	  }
 	}
 	if (cos_cs[i_rec][i_dil] > 0.) {
@@ -1189,41 +1189,41 @@ void Zprime2muAsymmetry::calcAsymmetry(const TH1F* IdF, const TH1F* IdB,
 void Zprime2muAsymmetry::calcFrameAsym() {
   string dumpfile = "frameAsym." + outputFileBase + ".txt";
   fstream out(dumpfile.c_str(), ios::out);
-  for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
-    out << "Rec level: " << i_rec << endl;
+  for (int j = 0; j < 2; j++) {
+    out << "Rec level: " << j << endl;
     out << "Asymmetry in GJ frame:        ";
-    calcAsymmetry(FMassGJ[i_rec][0], BMassGJ[i_rec][0],
-		  AMassGJ[i_rec][0], out);
-    calcAsymmetry(FRapGJ[i_rec][0],  BRapGJ[i_rec][0],  
-		  ARapGJ[i_rec][0], out);
+    calcAsymmetry(FMassGJ[j][0], BMassGJ[j][0],
+		  AMassGJ[j][0], out);
+    calcAsymmetry(FRapGJ[j][0],  BRapGJ[j][0],  
+		  ARapGJ[j][0], out);
     out << "Asymmetry in tagged GJ frame: ";
-    calcAsymmetry(FMassGJ[i_rec][1], BMassGJ[i_rec][1], 
-		  AMassGJ[i_rec][1], out);
-    calcAsymmetry(FRapGJ[i_rec][1],  BRapGJ[i_rec][1],  
-		  ARapGJ[i_rec][1], out);
+    calcAsymmetry(FMassGJ[j][1], BMassGJ[j][1], 
+		  AMassGJ[j][1], out);
+    calcAsymmetry(FRapGJ[j][1],  BRapGJ[j][1],  
+		  ARapGJ[j][1], out);
     out << "Asymmetry in CS frame:        ";
-    calcAsymmetry(FMassCS[i_rec][0], BMassCS[i_rec][0], 
-		  AMassCS[i_rec][0], out);
-    calcAsymmetry(FRapCS[i_rec][0],  BRapCS[i_rec][0],
-		  ARapCS[i_rec][0], out);
+    calcAsymmetry(FMassCS[j][0], BMassCS[j][0], 
+		  AMassCS[j][0], out);
+    calcAsymmetry(FRapCS[j][0],  BRapCS[j][0],
+		  ARapCS[j][0], out);
     out << "Asymmetry in analyt CS frame: ";
-    calcAsymmetry(FMassCS[i_rec][1], BMassCS[i_rec][1],
-		  AMassCS[i_rec][1], out);
-    calcAsymmetry(FRapCS[i_rec][1],  BRapCS[i_rec][1],
-		  ARapCS[i_rec][1], out);
+    calcAsymmetry(FMassCS[j][1], BMassCS[j][1],
+		  AMassCS[j][1], out);
+    calcAsymmetry(FRapCS[j][1],  BRapCS[j][1],
+		  ARapCS[j][1], out);
     out << "Asymmetry in Boost frame:     ";
-    calcAsymmetry(FMassBoost[i_rec], BMassBoost[i_rec],
-		  AMassBoost[i_rec], out);
-    calcAsymmetry(FRapBoost[i_rec],  BRapBoost[i_rec],
-		  ARapBoost[i_rec], out);
+    calcAsymmetry(FMassBoost[j], BMassBoost[j],
+		  AMassBoost[j], out);
+    calcAsymmetry(FRapBoost[j],  BRapBoost[j],
+		  ARapBoost[j], out);
     out << "Asymmetry in Wulz frame:      ";
-    calcAsymmetry(FMassW[i_rec], BMassW[i_rec], AMassW[i_rec], out);
-    calcAsymmetry(FRapW[i_rec], BRapW[i_rec], ARapW[i_rec], out);
+    calcAsymmetry(FMassW[j], BMassW[j], AMassW[j], out);
+    calcAsymmetry(FRapW[j], BRapW[j], ARapW[j], out);
     
     for (int i = 0; i < 6; i++) {
       out << "Asymmetry in MBCut[" << i << "] frame:  ";
-      calcAsymmetry(FMBoostCut[i_rec][i], BMBoostCut[i_rec][i],
-		    AsymMBoostCut[i_rec][i], out);
+      calcAsymmetry(FMBoostCut[j][i], BMBoostCut[j][i],
+		    AsymMBoostCut[j][i], out);
     }
   }
   out.close();
@@ -1485,28 +1485,27 @@ bool Zprime2muAsymmetry::computeFitQuantities(const reco::CandidateCollection& g
 					      AsymFitData& data) {
   static const bool debug = verbosity >= VERBOSITY_TOOMUCH;
 
-  InteractionParticles ip;
-  if (!storeInteractionParticles(genParticles, eventNum, ip))
-    return false;
+  HardInteraction hi(leptonFlavor, true);
+  hi.Fill(genParticles);
 
   // Copy the four-vectors into TLorentzVectors, since our code uses
   // those already
   TLorentzVector v_dil, v_mum, v_mup, v_muq;
   TLorentzVector v_my_dil, v_my_mum, v_my_mup;
 
-  v_muq.SetPxPyPzE(ip.genQuark->p4().x(), ip.genQuark->p4().y(), ip.genQuark->p4().z(),
-		   ip.genQuark->p4().e());
+  v_muq.SetPxPyPzE(hi.quark->p4().x(), hi.quark->p4().y(), hi.quark->p4().z(),
+		   hi.quark->p4().e());
   if (internalBremOn) {
-    v_my_mum.SetPxPyPzE(ip.genLepMinus->p4().x(), ip.genLepMinus->p4().y(),
-			ip.genLepMinus->p4().z(), ip.genLepMinus->p4().e());
-    v_my_mup.SetPxPyPzE(ip.genLepPlus->p4().x(), ip.genLepPlus->p4().y(),
-			ip.genLepPlus->p4().z(), ip.genLepPlus->p4().e());
+    v_my_mum.SetPxPyPzE(hi.lepMinus->p4().x(), hi.lepMinus->p4().y(),
+			hi.lepMinus->p4().z(), hi.lepMinus->p4().e());
+    v_my_mup.SetPxPyPzE(hi.lepPlus->p4().x(), hi.lepPlus->p4().y(),
+			hi.lepPlus->p4().z(), hi.lepPlus->p4().e());
   } 
   else {
-    v_my_mum.SetPxPyPzE(ip.genLepMinusNoIB->p4().x(), ip.genLepMinusNoIB->p4().y(),
-			ip.genLepMinusNoIB->p4().z(), ip.genLepMinusNoIB->p4().e());
-    v_my_mup.SetPxPyPzE(ip.genLepPlusNoIB->p4().x(), ip.genLepPlusNoIB->p4().y(),
-			ip.genLepPlusNoIB->p4().z(), ip.genLepPlusNoIB->p4().e());
+    v_my_mum.SetPxPyPzE(hi.lepMinusNoIB->p4().x(), hi.lepMinusNoIB->p4().y(),
+			hi.lepMinusNoIB->p4().z(), hi.lepMinusNoIB->p4().e());
+    v_my_mup.SetPxPyPzE(hi.lepPlusNoIB->p4().x(), hi.lepPlusNoIB->p4().y(),
+			hi.lepPlusNoIB->p4().z(), hi.lepPlusNoIB->p4().e());
   }
 
   // The 4-vector for the dimuon
@@ -1524,8 +1523,8 @@ bool Zprime2muAsymmetry::computeFitQuantities(const reco::CandidateCollection& g
   // Cosine theta^* between mu- and the quark in the Z' CMS frame ("true"
   // cos theta^*).
   // JMTBAD calculated by calcCosThetaTrue above already
-  //math::XYZTLorentzVector mum_star = LorentzBoost(ip.genMom.res, ip.genMom.mum);
-  //math::XYZTLorentzVector quark_star = LorentzBoost(ip.genMom.res, ip.genMom.quark);
+  //math::XYZTLorentzVector mum_star = LorentzBoost(hi.genMom.res, hi.genMom.mum);
+  //math::XYZTLorentzVector quark_star = LorentzBoost(hi.genMom.res, hi.genMom.quark);
   //float gen_cos_true = cosTheta(mum_star, quark_star);
   
   data.cos_cs = calcCosThetaCSAnal(v_my_mum.Pz(), v_my_mum.E(),
@@ -1542,9 +1541,9 @@ bool Zprime2muAsymmetry::computeFitQuantities(const reco::CandidateCollection& g
   // other direction.  translating from kir_anal.F, we looked at the
   // dilepton formed from adding the muon final-state four-vectors
   // (i.e., we ignored small effect of any brem):
-  // data.mistag_true = (v_my_dil.Pz()*ip.genQuark->p4().z() < 0) ? 1 : 0;
+  // data.mistag_true = (v_my_dil.Pz()*hi.quark->p4().z() < 0) ? 1 : 0;
   // but, since we have the true resonance four-vector:
-  data.mistag_true = (ip.genResonance->p4().z()*ip.genQuark->p4().z() < 0) ? 1 : 0;
+  data.mistag_true = (hi.resonance->p4().z()*hi.quark->p4().z() < 0) ? 1 : 0;
   // alternatively, we've mistagged if the signs of cos_cs and
   // cos_true are different
   data.mistag_cs = (data.cos_cs/data.cos_true > 0) ? 0 : 1;
@@ -3080,12 +3079,12 @@ void Zprime2muAsymmetry::drawFrameHistos() {
   gStyle->SetOptStat(1110);
 
   // Draw histos for Gottfried-Jackson frame
-  for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
-    if (i_rec == 1 || i_rec == 2) continue; // skip L1 and L2
+  const string which[2] = {"Gen", "Rec"};
+  for (int j = 0; j < 2; j++) {
     ps->NewPage();
     c1->Clear();
     c1->cd(0);
-    tit = recLevelHelper.levelName(i_rec) + " Gottfried-Jackson Frame";
+    tit = which[j] + " Gottfried-Jackson Frame";
     title = new TPaveLabel(0.1,0.94,0.9,0.98,tit.c_str());
     title->SetFillColor(10);
     title->Draw();
@@ -3093,10 +3092,10 @@ void Zprime2muAsymmetry::drawFrameHistos() {
     t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
     pad[page]->Draw();
     pad[page]->Divide(2,2);
-    pad[page]->cd(1); cosGJ[i_rec][0]->Draw(); fitCosCS(cosGJ[i_rec][0],3);
-    pad[page]->cd(2); cosGJ[i_rec][1]->Draw(); fitCosCS(cosGJ[i_rec][1],3);
-    pad[page]->cd(3); AMassGJ[i_rec][0]->Draw();
-    pad[page]->cd(4); AMassGJ[i_rec][1]->Draw();
+    pad[page]->cd(1); cosGJ[j][0]->Draw(); fitCosCS(cosGJ[j][0],3);
+    pad[page]->cd(2); cosGJ[j][1]->Draw(); fitCosCS(cosGJ[j][1],3);
+    pad[page]->cd(3); AMassGJ[j][0]->Draw();
+    pad[page]->cd(4); AMassGJ[j][1]->Draw();
     c1->Update();
 
     ps->NewPage();
@@ -3107,20 +3106,19 @@ void Zprime2muAsymmetry::drawFrameHistos() {
     t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
     pad[page]->Draw();
     pad[page]->Divide(2,2);
-    pad[page]->cd(1);  ARapGJ[i_rec][0]->Draw();
-    pad[page]->cd(2);  ARapGJ[i_rec][1]->Draw();
-    pad[page]->cd(3);  FPseudGJ[i_rec]->Draw();
-    pad[page]->cd(4);  BPseudGJ[i_rec]->Draw();
+    pad[page]->cd(1);  ARapGJ[j][0]->Draw();
+    pad[page]->cd(2);  ARapGJ[j][1]->Draw();
+    pad[page]->cd(3);  FPseudGJ[j]->Draw();
+    pad[page]->cd(4);  BPseudGJ[j]->Draw();
     c1->Update();
   }
 
   // Collins-Soper frame
-  for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
-    if (i_rec == 1 || i_rec == 2) continue; // skip L1 and L2
+  for (int j = 0; j < 2; j++) {
     ps->NewPage();
     c1->Clear();
     c1->cd(0);
-    tit = recLevelHelper.levelName(i_rec) + " Collins-Soper Frame";
+    tit = which[j] + " Collins-Soper Frame";
     title = new TPaveLabel(0.1,0.94,0.9,0.98,tit.c_str());
     title->SetFillColor(10);
     title->Draw();
@@ -3128,11 +3126,11 @@ void Zprime2muAsymmetry::drawFrameHistos() {
     t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
     pad[page]->Draw();
     pad[page]->Divide(2,3);
-    pad[page]->cd(1); cosCS[i_rec][0]->Draw(); fitCosCS(cosCS[i_rec][0],3);
-    pad[page]->cd(3); AMassCS[i_rec][0]->Draw();
-    pad[page]->cd(4); ARapCS[i_rec][0]->Draw();
-    pad[page]->cd(5); FPseudCS[i_rec]->Draw();
-    pad[page]->cd(6); BPseudCS[i_rec]->Draw();
+    pad[page]->cd(1); cosCS[j][0]->Draw(); fitCosCS(cosCS[j][0],3);
+    pad[page]->cd(3); AMassCS[j][0]->Draw();
+    pad[page]->cd(4); ARapCS[j][0]->Draw();
+    pad[page]->cd(5); FPseudCS[j]->Draw();
+    pad[page]->cd(6); BPseudCS[j]->Draw();
     c1->Update();
   }
 
@@ -3165,9 +3163,7 @@ void Zprime2muAsymmetry::drawFrameHistos() {
   pad[page]->Draw();
   pad[page]->Divide(2,2);
   // pad[page]->cd(1);  rap3_vs_rap0->Draw();
-  pad[page]->cd(1);  cosCSRes[0]->Draw();  cosCSRes[0]->Fit("gaus","Q");
-  pad[page]->cd(2);  cosCSRes[1]->Draw();  cosCSRes[1]->Fit("gaus","Q");
-  pad[page]->cd(3);  cosCSRes[2]->Draw();  cosCSRes[2]->Fit("gaus","Q");
+  pad[page]->cd(1);  cosCSRes->Draw();  cosCSRes->Fit("gaus","Q");
   Stat_t f_bin;
   int nbins = cosCS3_diffsq_vs_cosCS0->GetNbinsX();
   TH1F* cosCS3_diffsq_sqrt
@@ -3186,12 +3182,11 @@ void Zprime2muAsymmetry::drawFrameHistos() {
   delete cosCS3_diffsq_sqrt;
 
   // Quark direction is chosen as the boost direction of the dilepton system
-  for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
-    if (i_rec == 1 || i_rec == 2) continue; // skip L1 and L2
+  for (int j = 0; j < 2; j++) {
     ps->NewPage();
     c1->Clear();
     c1->cd(0);
-    tit = recLevelHelper.levelName(i_rec) + " Baur-Boost Frame";
+    tit = which[j] + " Baur-Boost Frame";
     title = new TPaveLabel(0.1,0.94,0.9,0.98,tit.c_str());
     title->SetFillColor(10);
     title->Draw();
@@ -3199,11 +3194,11 @@ void Zprime2muAsymmetry::drawFrameHistos() {
     t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
     pad[page]->Draw();
     pad[page]->Divide(2,3);
-    pad[page]->cd(1); cosBoost[i_rec]->Draw(); fitCosCS(cosBoost[i_rec],3);
-    pad[page]->cd(3); AMassBoost[i_rec]->Draw();
-    pad[page]->cd(4); ARapBoost[i_rec]->Draw();
-    pad[page]->cd(5); FPseudBoost[i_rec]->Draw();
-    pad[page]->cd(6); BPseudBoost[i_rec]->Draw();
+    pad[page]->cd(1); cosBoost[j]->Draw(); fitCosCS(cosBoost[j],3);
+    pad[page]->cd(3); AMassBoost[j]->Draw();
+    pad[page]->cd(4); ARapBoost[j]->Draw();
+    pad[page]->cd(5); FPseudBoost[j]->Draw();
+    pad[page]->cd(6); BPseudBoost[j]->Draw();
     c1->Update();
 
     // Drawing the histos for the Asymmetry cuts
@@ -3216,19 +3211,18 @@ void Zprime2muAsymmetry::drawFrameHistos() {
     pad[page]->Draw();
     pad[page]->Divide(2,3);
     for (int j = 0; j < 3; j++) {
-      pad[page]->cd(2*j+1);  AsymMBoostCut[i_rec][j]->Draw();
-      pad[page]->cd(2*j+2);  AsymMBoostCut[i_rec][j+3]->Draw();
+      pad[page]->cd(2*j+1);  AsymMBoostCut[j][j]->Draw();
+      pad[page]->cd(2*j+2);  AsymMBoostCut[j][j+3]->Draw();
     }
     c1->Update();
   }
 
   // Wulz frame
-  for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
-    if (i_rec == 1 || i_rec == 2) continue; // skip L1 and L2
+  for (int j = 0; j < 2; j++) {
     ps->NewPage();
     c1->Clear();
     c1->cd(0);
-    tit = recLevelHelper.levelName(i_rec) + " Wulz Frame";
+    tit = which[j] + " Wulz Frame";
     title = new TPaveLabel(0.1,0.94,0.9,0.98,tit.c_str());
     title->SetFillColor(10);
     title->Draw();
@@ -3236,11 +3230,11 @@ void Zprime2muAsymmetry::drawFrameHistos() {
     t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
     pad[page]->Draw();
     pad[page]->Divide(2,3);
-    pad[page]->cd(1);  cosW[i_rec]->Draw();  fitCosCS(cosW[i_rec],3);
-    pad[page]->cd(3);  AMassW[i_rec]->Draw();
-    pad[page]->cd(4);  ARapW[i_rec]->Draw();
-    pad[page]->cd(5);  FPseudW[i_rec]->Draw();
-    pad[page]->cd(6);  BPseudW[i_rec]->Draw();
+    pad[page]->cd(1);  cosW[j]->Draw();  fitCosCS(cosW[j],3);
+    pad[page]->cd(3);  AMassW[j]->Draw();
+    pad[page]->cd(4);  ARapW[j]->Draw();
+    pad[page]->cd(5);  FPseudW[j]->Draw();
+    pad[page]->cd(6);  BPseudW[j]->Draw();
     c1->Update();
   }
 
@@ -3252,7 +3246,9 @@ void Zprime2muAsymmetry::drawFrameHistos() {
 }
 
 void Zprime2muAsymmetry::deleteHistos() {
-  // ParamHistos
+  // These are histos from ParamHistos which we manage ourselves; the
+  // rest are managed by the TFileService and thus we do not need to
+  // delete them ourselves.
   delete h_pt_dil;
   for (int i = 0; i < 2; i++) {
     delete h_rap_dil[i];
@@ -3282,3 +3278,5 @@ void Zprime2muAsymmetry::deleteHistos() {
   delete h2_cos_cs_vs_true;
   delete h2_pTrap_mistag_prob;
 }
+
+DEFINE_FWK_MODULE(Zprime2muAsymmetry);

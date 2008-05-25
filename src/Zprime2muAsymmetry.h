@@ -7,10 +7,6 @@
 #include "TH2F.h"
 #include "TProfile.h"
 
-#include "SimDataFormats/HepMCProduct/interface/HepMCProduct.h"
-
-#include "CLHEP/Vector/LorentzVector.h"
-
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
@@ -25,7 +21,6 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   explicit Zprime2muAsymmetry(const edm::ParameterSet&);
   ~Zprime2muAsymmetry();
 
-  // public:
   void beginJob(const edm::EventSetup&);
   void analyze(const edm::Event&, const edm::EventSetup&);
   void endJob();
@@ -84,30 +79,30 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   // look at the angular distributions separately by type
   TH1F *AsymFitHistoGenByType[2][6], *AsymFitHistoRecByType[2][6];
 
-  TH1F *cosGJ[MAX_LEVELS][2], *cosCS[MAX_LEVELS][2];
-  TH1F *cosBoost[MAX_LEVELS], *cosW[MAX_LEVELS];
-  TH1F *cosCSRes[MAX_LEVELS-1];
-  TH2F *rap_vs_cosCS[MAX_LEVELS], *rap3_vs_rap0;
-  TH1F *FMassGJ[MAX_LEVELS][2], *FMassCS[MAX_LEVELS][2];
-  TH1F *BMassGJ[MAX_LEVELS][2], *BMassCS[MAX_LEVELS][2];
-  TH1F *AMassGJ[MAX_LEVELS][2], *AMassCS[MAX_LEVELS][2];
-  TH1F *FMassBoost[MAX_LEVELS], *FMassW[MAX_LEVELS];
-  TH1F *BMassBoost[MAX_LEVELS], *BMassW[MAX_LEVELS];
-  TH1F *AMassBoost[MAX_LEVELS], *AMassW[MAX_LEVELS];
-  TH1F *FRapGJ[MAX_LEVELS][2],  *FRapCS[MAX_LEVELS][2];
-  TH1F *BRapGJ[MAX_LEVELS][2],  *BRapCS[MAX_LEVELS][2];
-  TH1F *ARapGJ[MAX_LEVELS][2],  *ARapCS[MAX_LEVELS][2];
-  TH1F *FRapBoost[MAX_LEVELS],  *FRapW[MAX_LEVELS];
-  TH1F *BRapBoost[MAX_LEVELS],  *BRapW[MAX_LEVELS];
-  TH1F *ARapBoost[MAX_LEVELS],  *ARapW[MAX_LEVELS];
-  TH1F *FPseudGJ[MAX_LEVELS],   *FPseudCS[MAX_LEVELS];
-  TH1F *BPseudGJ[MAX_LEVELS],   *BPseudCS[MAX_LEVELS];
-  TH1F *FPseudBoost[MAX_LEVELS],*FPseudW[MAX_LEVELS];
-  TH1F *BPseudBoost[MAX_LEVELS],*BPseudW[MAX_LEVELS];
+  TH1F *cosGJ[2][2], *cosCS[2][2];
+  TH1F *cosBoost[2], *cosW[2];
+  TH1F *cosCSRes;
+  TH2F *rap_vs_cosCS[2], *rap3_vs_rap0;
+  TH1F *FMassGJ[2][2], *FMassCS[2][2];
+  TH1F *BMassGJ[2][2], *BMassCS[2][2];
+  TH1F *AMassGJ[2][2], *AMassCS[2][2];
+  TH1F *FMassBoost[2], *FMassW[2];
+  TH1F *BMassBoost[2], *BMassW[2];
+  TH1F *AMassBoost[2], *AMassW[2];
+  TH1F *FRapGJ[2][2],  *FRapCS[2][2];
+  TH1F *BRapGJ[2][2],  *BRapCS[2][2];
+  TH1F *ARapGJ[2][2],  *ARapCS[2][2];
+  TH1F *FRapBoost[2],  *FRapW[2];
+  TH1F *BRapBoost[2],  *BRapW[2];
+  TH1F *ARapBoost[2],  *ARapW[2];
+  TH1F *FPseudGJ[2],   *FPseudCS[2];
+  TH1F *BPseudGJ[2],   *BPseudCS[2];
+  TH1F *FPseudBoost[2],*FPseudW[2];
+  TH1F *BPseudBoost[2],*BPseudW[2];
   TProfile *cosCS3_diffsq_vs_cosCS0;
-  TH1F *FMBoostCut[MAX_LEVELS][6];
-  TH1F *BMBoostCut[MAX_LEVELS][6];
-  TH1F *AsymMBoostCut[MAX_LEVELS][6];
+  TH1F *FMBoostCut[2][6];
+  TH1F *BMBoostCut[2][6];
+  TH1F *AsymMBoostCut[2][6];
 
   // histos used to get the mistag parameterizations
   TH1F *h_mass_dil[2];
@@ -155,7 +150,6 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   std::vector<double> angDist;
 
   // config file parameters
-  VERBOSITY verbosity;
   std::string outputFileBase;
   std::vector<std::string> genSampleFiles;
   double peakMass;

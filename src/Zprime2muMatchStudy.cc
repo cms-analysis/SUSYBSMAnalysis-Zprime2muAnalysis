@@ -112,8 +112,7 @@ void Zprime2muMatchStudy::drawHistos() const {
   int page = 0;
   ostringstream strpage;
   string tit;
-  TPaveLabel *title;
-
+  TPaveLabel *title = 0;
   
   for (int type = 0; type < 2; type++) {
     for (int irec = 0; irec < MAX_LEVELS; irec++) {

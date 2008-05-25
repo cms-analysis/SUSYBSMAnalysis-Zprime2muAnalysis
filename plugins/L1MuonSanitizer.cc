@@ -16,6 +16,7 @@ using namespace l1extra;
 // This needs to be corrected by 1.25 degrees or 0.0218 rad.
 const double l1_phi_correction = 0.0218;
 const double muMass = 0.10566;
+const double ptMin = 1e-3;
 
 class L1MuonSanitizer : public EDProducer {
 public:
@@ -52,13 +53,15 @@ void L1MuonSanitizer::produce(Event& event,
   if (ok && !muons.failedToGet()) {
     l1extra::L1MuonParticleCollection::const_iterator muon;
     for (muon = muons->begin(); muon != muons->end(); muon++) {
-      math::PtEtaPhiMLorentzVector p4(muon->pt(),
-				      muon->eta(),
-				      muon->phi() + l1_phi_correction,
-				      muMass);
-      math::XYZTLorentzVector cp4(p4.x(), p4.y(), p4.z(), p4.t());
-      L1MuonParticle l1p(muon->charge(), cp4, muon->gmtMuonCand());
-      cands->push_back(l1p);
+      if (muon->pt() > ptMin) {
+	math::PtEtaPhiMLorentzVector p4(muon->pt(),
+					muon->eta(),
+					muon->phi() + l1_phi_correction,
+					muMass);
+	math::XYZTLorentzVector cp4(p4.x(), p4.y(), p4.z(), p4.t());
+	L1MuonParticle l1p(muon->charge(), cp4, muon->gmtMuonCand());
+	cands->push_back(l1p);
+      }
     }
   }
   else

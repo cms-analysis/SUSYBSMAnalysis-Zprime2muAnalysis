@@ -424,9 +424,15 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                    process.elCandL3)
 
     if useHEEPSelector:
-        # Hack for now to include old-style cfgs in python ones.
-        process.include('DLEvans/HEEPSelector/data/heepSelection_1_1.cfi')
-        process.bestEl = cms.Path(process.heepSelection)
+        ## Hack for now to include old-style cfgs in python ones.
+        #process.include('DLEvans/HEEPSelector/data/heepSelection_1_1.cfi')
+        #process.bestEl = cms.Path(process.heepSelection)
+
+        # Use the output of running dumpPython() on the above for
+        # faster loading (will have to be redumped when there is a new
+        # HEEPSelector!).
+        import HEEPSelector11_cfi
+        HEEPSelector11_cfi.attachHEEPSelector(process)
 
     ####################################################################
     ## Common module configuration parameters.
@@ -780,3 +786,14 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     print 'Zprime2muAnalysis base process built!'
     #print process.dumpConfig()
     return process
+
+# Function to attach simple EDAnalyzers that don't need any
+# parameters. Allows skipping of making data/Zprime2mu*_cfi.py files.
+def attachAnalysis(process, name, isRecLevelAnalysis=False):
+    args = (name, process.Zprime2muAnalysisCommon, process.plainAnalysisPSet)
+    if isRecLevelAnalysis:
+        args = args + (process.recLevelHelperPSet,)
+        
+    analyzer = cms.EDAnalyzer(*args)
+    setattr(process, name, analyzer)
+    setattr(process, name + 'Path', cms.Path(getattr(process, name)))

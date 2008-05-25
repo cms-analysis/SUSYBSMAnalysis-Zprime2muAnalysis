@@ -6,13 +6,9 @@ def attachAsymmetry(process):
     process.Zprime2muAsymmetry = cms.EDAnalyzer(
         'Zprime2muAsymmetry',
         process.Zprime2muAnalysisCommon,
-        process.recLevelHelperPSet,
+        process.plainAnalysisPSet,
         dataSets,
         dataSet = cms.string('dy_above400'),
-        
-        # verbosity controls the amount of debug information dumped
-        # see the VERBOSITY enum in Zprime2muAsymmetry.h for levels
-        verbosity = cms.untracked.int32(1),
         
         # if noFit is true, only make the histograms -- useful for
         # getting the recSigma information for above

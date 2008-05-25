@@ -3,14 +3,20 @@ import FWCore.ParameterSet.Config as cms
 from MassReachDataSets_cff import dataSets
 
 def attachMassReach(process):
+    # By default, we look at the "resonances", i.e. dileptons + found
+    # brem photons.
+    process.plainAnalysisPSet.genDileptons = cms.InputTag('dileptonsmumuPMGNRes')
+    process.plainAnalysisPSet.hltDileptons = cms.InputTag('dileptonsmumuPML3Res')
+    process.plainAnalysisPSet.recDileptons = cms.InputTag('dileptonsmumuPMGRRes')
+    process.plainAnalysisPSet.bestDileptons = cms.InputTag('dileptonsmumuPMOPRes')
+
     process.Zprime2muMassReach = cms.EDAnalyzer(
         'Zprime2muMassReach',
         process.Zprime2muAnalysisCommon,
-        process.recLevelHelperPSet,
+        process.plainAnalysisPSet,
         dataSets,
         dataSet        = cms.string('Zssm1000'),
         
-        verbosity      = cms.untracked.int32(1),
         psFile         = cms.untracked.string('mass_fits.ps'),
 
         DYEvents       = cms.bool(False),  # set to use Drell-Yan only     
@@ -30,7 +36,9 @@ def attachMassReach(process):
         # in the unbinned fit, fit either the generated masses, or the
         # reconstructed masses
         fitGenMass     = cms.bool(False),
-        fitRecMass     = cms.bool(True)
+        fitRecMass     = cms.bool(True),
+
+        nGenEvents     = cms.vuint32(1000,1000,1000)
         )
 
     process.analysis = cms.Path(process.Zprime2muMassReach)

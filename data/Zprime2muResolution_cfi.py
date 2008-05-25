@@ -8,13 +8,10 @@ def attachResolution(process):
     process.Zprime2muResolution = cms.EDAnalyzer(
         'Zprime2muResolution',
         process.Zprime2muAnalysisCommon,
+        process.plainAnalysisPSet,
         process.recLevelHelperPSet,
         dataSets,
         dataSet           = cms.string('Zp1000'),
-
-        # verbosity controls the amount of debug information dumped
-        # see the VERBOSITY enum in Zprime2muAsymmetry.h for levels
-        verbosity         = cms.untracked.int32(0),
 
         # The postscript file for ~87 pages of plots.
         outputFile        = cms.untracked.string('muon_resolution.ps'),

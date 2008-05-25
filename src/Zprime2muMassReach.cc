@@ -16,6 +16,7 @@
 #include "TText.h"
 
 #include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
@@ -41,10 +42,6 @@ const double Zprime2muMassReach::fwhm_over_sigma = 2.*sqrt(2.*log(2.));
 Zprime2muMassReach::Zprime2muMassReach(const edm::ParameterSet& config) 
   : Zprime2muAnalysis(config), eventCount(0), fileNum(-1)
 {
-  // verbosity controls the amount of debugging information printed;
-  // levels are defined in an enum
-  verbosity = VERBOSITY(config.getUntrackedParameter<int>("verbosity", 1));
-
   // Postscript file with mass reach plots.
   psFile    = config.getUntrackedParameter<string>("psFile", "mass_fits.ps");
 
@@ -85,9 +82,6 @@ Zprime2muMassReach::Zprime2muMassReach(const edm::ParameterSet& config)
   bookMassFitHistos();
 }
 
-Zprime2muMassReach::~Zprime2muMassReach() {
-}
-
 void Zprime2muMassReach::analyze(const edm::Event& event, 
 				 const edm::EventSetup& eSetup) {
   // delegate filling our muon vectors to the parent class
@@ -126,10 +120,9 @@ void Zprime2muMassReach::analyze(const edm::Event& event,
     fillMassArrays();
 }
 
-void Zprime2muMassReach::beginJob(const edm::EventSetup& eSetup) {
-}
-
 void Zprime2muMassReach::endJob() {
+  Zprime2muAnalysis::endJob();
+
   scaleMassHistos();
   drawMassHistos();
 
@@ -174,56 +167,40 @@ void Zprime2muMassReach::bookMassHistos() {
 }
 
 void Zprime2muMassReach::dilMassPlots(const bool debug) {
-  int    qcut_mum = 0, qcut_mup = 0;
   double genm, recm;
 
   // Fill GenDilMass here if you want ALL generated events; uncomment Fill
   // in if-statement below if you want gen. mass plot only for events
   // with a reconstructed mu+mu- pair.
-  if (allDileptons[lgen].size() > 0) {
-    genm = resV(lgen, 0).mass();
+  if (genDileptons->size() > 0) {
+    genm = genDileptons->at(0).mass();
     GenDilMass[fileNum]->Fill(genm);
   }
 
   // Check to see if event passed trigger cuts
-  if (!passTrigger()) return;
+  if (!trigDecision.pass()) return;
 
   // "Off-line" dileptons in events passing the trigger and quality cuts
-  int rec;
   for (int i = 0; i < 2; i++) {
-    if (!doingElectrons) {
-      if (i == 0)      rec = useL3Muons ? l3 : lgmr;
-      else if (i == 1) rec = lbest;
-    }
-    else {
-      if (i == 0)      rec = lgmr;
-      else if (i == 1) rec = lbest;
-    }
-    const reco::CompositeCandidateCollection& dileptons = getDileptons(rec);
+    const reco::CompositeCandidateCollection& dileptons =
+      i == 1 ? *bestDileptons : 
+      (useL3Muons ? *hltDileptons : *recDileptons);
 
     if (dileptons.size() > 0) {
-      if (DO_QCUTS ?
-	  dilQCheck(dileptons[0], QSEL, qcut_mum, qcut_mup) : true) {
-	recm = resV(rec, 0).mass(); // highest mass dilepton
-	if (allDileptons[lgen].size() > 0) {
-	  genm = resV(lgen, 0).mass();
-	  // Fill generated mass plot only for those events in which
-	  // TMR dilepton was found.
-	  // if (i == 1) GenDilMass->Fill(genm);
+      recm = dileptons[0].mass(); // highest mass dilepton
+      if (genDileptons->size() > 0) {
+	genm = genDileptons->at(0).mass();
 
-	  // Reconstructed dilepton invariant mass within specific
+	// Fill generated mass plot only for those events in which
+	// TMR dilepton was found.
+	// if (i == 1) GenDilMass->Fill(genm);
+	
+	// Reconstructed dilepton invariant mass within specific
 	  // generated-mass regions (to avoid double-counting).
-	  if (genm >= lowerGenMass[fileNum] && genm < upperGenMass[fileNum]) {
-	    if (i == 0)      HltDilMass[fileNum]->Fill(recm);
-	    else if (i == 1) OffDilMass[fileNum]->Fill(recm);
-	  }
+	if (genm >= lowerGenMass[fileNum] && genm < upperGenMass[fileNum]) {
+	  if (i == 0)      HltDilMass[fileNum]->Fill(recm);
+	  else if (i == 1) OffDilMass[fileNum]->Fill(recm);
 	}
-      }
-      else {
-	LogTrace("Zprime2muMassReach")
-	  << "+++ Event " << eventNum << " was cut by dilQCheck!"
-	  << "  Cut numbers: " << qcut_mum << " " << qcut_mup << " +++";
-	dumpEvent(true, false, false, true, true);
       }
     }
   }
@@ -244,9 +221,9 @@ void Zprime2muMassReach::fillMassArrays() {
   }
 
   // True mass
-  for (unsigned idi = 0; idi < allDileptons[lgen].size(); idi++) {
+  for (unsigned idi = 0; idi < genDileptons->size(); idi++) {
     if (nfit_genmass_used[idx] < MASS_FIT_ARRAY_SIZE) {
-      fit_genmass[idx][nfit_genmass_used[idx]] = resV(lgen, idi).mass();
+      fit_genmass[idx][nfit_genmass_used[idx]] = genDileptons->at(idi).mass();
       fit_genevent[idx][nfit_genmass_used[idx]] = eventNum;
       nfit_genmass_used[idx]++;
     }
@@ -256,37 +233,28 @@ void Zprime2muMassReach::fillMassArrays() {
   }
 
   // Make sure the event passed the trigger
-  if (!passTrigger()) return;
+  if (!trigDecision.pass()) return;
 
-  // Reconstructed dimuons: "best" by default, GMR optional
-  int rec;
-  if (!doingElectrons) {
-    if (kGMR) rec = useL3Muons ? l3 : lgmr;
-    else      rec = lbest;
-  }
-  else
-    rec = lbest;
-  const reco::CompositeCandidateCollection& recdi = getDileptons(rec);
-
-  for (unsigned idi = 0; idi < recdi.size(); idi++) {
+  // Reconstructed dileptons
+  const reco::CompositeCandidateCollection& dileptons = 
+    kGMR ? *recDileptons : *bestDileptons;
+  for (unsigned idi = 0; idi < dileptons.size(); idi++) {
     // Check the "off-line" track quality and apply the cuts
-    int qcut_mum = 0, qcut_mup = 0;
-    if (DO_QCUTS ? dilQCheck(recdi[idi], QSEL, qcut_mum, qcut_mup) : true) {
-      if (nfit_recmass_used[idx] < MASS_FIT_ARRAY_SIZE) {
-	fit_recmass[idx][nfit_recmass_used[idx]] = resV(rec, idi).mass();
+    if (nfit_recmass_used[idx] < MASS_FIT_ARRAY_SIZE) {
+      double resmass = dileptons[idi].mass();
+      fit_recmass[idx][nfit_recmass_used[idx]] = resmass;
 
-	// TESTS ONLY!!!
-	//double epsil = 0.042;
-	//double gsmear = gRandom->Gaus(0., epsil);
-	//fit_recmass[idx][nfit_recmass_used[idx]] = (pdi->resV().M())*(1.+gsmear);
+      // TESTS ONLY!!!
+      //double epsil = 0.042;
+      //double gsmear = gRandom->Gaus(0., epsil);
+      //fit_recmass[idx][nfit_recmass_used[idx]] = resmass*(1 + gsmear);
 
-	fit_recevent[idx][nfit_recmass_used[idx]] = eventNum;
-	nfit_recmass_used[idx]++;
-      }
-      else
-	edm::LogWarning("fillMassArrays")
-	  << "+++ MASS_FIT_ARRAY_SIZE is too small to keep all rec events";
+      fit_recevent[idx][nfit_recmass_used[idx]] = eventNum;
+      nfit_recmass_used[idx]++;
     }
+    else
+      edm::LogWarning("fillMassArrays")
+	<< "+++ MASS_FIT_ARRAY_SIZE is too small to keep all rec events";
   }
 }
 
@@ -2190,3 +2158,5 @@ void Zprime2muMassReach::drawUnbinnedMassFitsHistos() {
   fout->Close();
   delete fout;
 }
+
+DEFINE_FWK_MODULE(Zprime2muMassReach);

@@ -39,9 +39,6 @@ struct evt {
 class Zprime2muMassReach : public Zprime2muAnalysis {
  public:
   explicit Zprime2muMassReach(const edm::ParameterSet&);
-  ~Zprime2muMassReach();
-
-  void beginJob(const edm::EventSetup&);
   void analyze(const edm::Event&, const edm::EventSetup&);
   void endJob();
 
@@ -73,7 +70,6 @@ class Zprime2muMassReach : public Zprime2muAnalysis {
   int fileNum;
 
   // Configuration parameters:
-  VERBOSITY   verbosity;
   std::string psFile;
 
   bool kDYEvents;

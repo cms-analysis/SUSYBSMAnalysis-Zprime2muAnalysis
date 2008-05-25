@@ -2,6 +2,7 @@
 #include "DataFormats/EgammaCandidates/interface/ElectronFwd.h"
 #include "DataFormats/EgammaCandidates/interface/PixelMatchGsfElectron.h"
 #include "DataFormats/EgammaReco/interface/SuperCluster.h"
+#include "DataFormats/L1Trigger/interface/L1MuonParticle.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidateFwd.h"
@@ -44,6 +45,14 @@ void Zprime2muRecLevelAnalysis::analyze(const edm::Event& event,
   // Dump the event if appropriate.
   if (verbosity >= VERBOSITY_SIMPLE)
     dumpEvent();
+}
+
+bool Zprime2muRecLevelAnalysis::skipRecLevel(const int level) const {
+  return
+    (level == lgen && !useGen && !useSim) ||
+    (!useTrigger && level >= l1 && level <= l3) ||
+    (!useReco && level >= lgmr) ||
+    (!useOtherMuonRecos && level > lgmr && level < lbest);
 }
 
 void Zprime2muRecLevelAnalysis::dumpEvent(const bool trigOnly) const {
@@ -167,7 +176,7 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
       tktrk = &*lep.track();
       statrk = &*lep.standAloneMuon();
       const reco::Muon& mu = toConcrete<reco::Muon>(cand);
-      if (mu.isIsolationValid()) sumptr03 = mu.getIsolationR03().sumPt;
+      if (mu.isIsolationValid()) sumptr03 = mu.isolationR03().sumPt;
     }
     
     output << " Phi: "      << setw(8) << setprecision(4) << cand->phi()

@@ -50,17 +50,12 @@ void HLTLeptonSanitizer<CollectionType>::produce(Event& event,
 						 const EventSetup& eSetup) {
   // Try to get the HLT lepton collection from the event.
   Handle<CollectionType> leptons;
-  bool ok = true;
-  try {
-    event.getByLabel(src, leptons);
-  } catch (...) {
-    ok = false;
-  }
+  event.getByLabel(src, leptons);
 
   // Make the output collection.
   auto_ptr<CollectionType> cands(new CollectionType);
 
-  if (ok && !leptons.failedToGet())
+  if (!leptons.failedToGet())
     // Copy the existing one.
     *cands = *leptons;
   else

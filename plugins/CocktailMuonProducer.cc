@@ -162,10 +162,8 @@ bool CocktailMuonProducer::findBestMuons(const Event& event,
 					 const auto_ptr<MuonCollection>& bestMuons) {
   // Start with tracker-only tracks.
   Handle<View<Candidate> > htkonly;
-  try {
-    event.getByLabel(trackerOnlyMuons, htkonly);
-  } catch (const edm::Exception& e) {
-  //  if (htkonly.failedToGet()) {
+  event.getByLabel(trackerOnlyMuons, htkonly);
+  if (htkonly.failedToGet()) {
     edm::LogWarning("findBestMuons")
       << "Unable to get a view to the tracker-only muons; putting no"
       << " collection into event for 'best' muons.";

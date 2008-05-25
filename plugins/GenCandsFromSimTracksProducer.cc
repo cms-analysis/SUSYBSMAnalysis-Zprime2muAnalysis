@@ -4,8 +4,8 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "DataFormats/Candidate/interface/CandidateFwd.h"
-#include "DataFormats/HepMCCandidate/interface/GenParticleCandidate.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 #include "SimDataFormats/Track/interface/SimTrackContainer.h"
 #include "SimDataFormats/Vertex/interface/SimVertexContainer.h"
 
@@ -29,27 +29,23 @@ private:
 GenCandsFromSimTracksProducer::GenCandsFromSimTracksProducer(
 					        const ParameterSet& cfg) {
   src = cfg.getParameter<InputTag>("src");
-  produces<CandidateCollection>();
+  produces<GenParticleCollection>();
 }
 
 void GenCandsFromSimTracksProducer::produce(Event& event,
 					    const EventSetup& eSetup) {
   // Simulated tracks (i.e. GEANT particles).
   Handle<SimTrackContainer> simtracks;
+  event.getByLabel(src, simtracks);
+
   // and the associated vertices
   Handle<SimVertexContainer> simvertices;
-  bool ok = true;
-  try {
-    event.getByLabel(src, simtracks);
-    event.getByLabel(src, simvertices);
-  } catch (...) {
-    ok = false;
-  }
+  event.getByLabel(src, simvertices);
 
   // make the output collection
-  auto_ptr<CandidateCollection> cands(new CandidateCollection);
+  auto_ptr<GenParticleCollection> cands(new GenParticleCollection);
 
-  if (ok && !simtracks.failedToGet() && !simvertices.failedToGet()) {
+  if (!simtracks.failedToGet() && !simvertices.failedToGet()) {
     // Add GEANT tracks which were not in PYTHIA list, since those in
     // the latter should already be in the GenParticleCandidates.
     for (SimTrackContainer::const_iterator isimtrk = simtracks->begin();
@@ -57,22 +53,15 @@ void GenCandsFromSimTracksProducer::produce(Event& event,
       int pythiaInd = isimtrk->genpartIndex();
       if (pythiaInd != -1) continue; // Skip PYTHIA tracks.
 
-      const CLHEP::HepLorentzVector& pmu = isimtrk->momentum();
-
       // Make up a GenParticleCandidate from the GEANT track info.
       int charge = static_cast<int>(isimtrk->charge());
-      Particle::LorentzVector p4;
-      p4.SetXYZT(pmu.x(), pmu.y(), pmu.z(), pmu.t());
+      Particle::LorentzVector p4 = isimtrk->momentum();
       Particle::Point vtx; // = (0,0,0) by default
-      if (!isimtrk->noVertex()) {
-	const CLHEP::HepLorentzVector& v
-	  = (*simvertices)[isimtrk->vertIndex()].position();
-	vtx = v;
-      }
+      if (!isimtrk->noVertex())
+	vtx = (*simvertices)[isimtrk->vertIndex()].position();
       int status = 1;
-      GenParticleCandidate* genp
-	= new GenParticleCandidate(charge, p4, vtx, isimtrk->type(),
-				   status, true);
+
+      GenParticle genp(charge, p4, vtx, isimtrk->type(), status, true);
       cands->push_back(genp);
     }
   }

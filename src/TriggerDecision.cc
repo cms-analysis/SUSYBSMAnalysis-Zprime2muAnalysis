@@ -1,5 +1,5 @@
 #include "DataFormats/Common/interface/TriggerResults.h"
-#include "DataFormats/HLTReco/interface/HLTFilterObject.h"
+#include "DataFormats/HLTReco/interface/TriggerObject.h"
 
 #include "FWCore/Framework/interface/TriggerNames.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -101,7 +101,7 @@ bool TriggerDecision::storeHLTDecision(const edm::Event& event,
   // for L2 and L3 we have to do a little hacky magic.
 
   // Try to get the HLT TriggerResults object now, before
-  // trying to get the HLTFilterObjectWithRefs below
+  // trying to get the TriggerObject below
   // so that if there is no HLT information in the file, 
   // getByLabel will go ahead and throw an exception.
   edm::Handle<edm::TriggerResults> hltRes;
@@ -133,13 +133,13 @@ bool TriggerDecision::storeHLTDecision(const edm::Event& event,
   }
   
   // Extract L2 and L3 decisions by seeing if the corresponding
-  // HLTFilterObjectWithRefs exists and seeing how many muons it holds.
+  // TriggerObject exists and seeing how many muons it holds.
   for (unsigned int lvl = 0; lvl < 2; lvl++) {
     unsigned int l = l2 + lvl;
     unsigned int trigbits = 0;
     for (unsigned int ipath = 0; ipath < hltModules[lvl].size(); ipath++) {
       const string& trigName = hltModules[lvl][ipath];
-      edm::Handle<reco::HLTFilterObjectWithRefs> hltFilterObjs;
+      edm::Handle<trigger::TriggerObjectCollection> hltFilterObjs;
 
       bool fired = true;
       unsigned failAt = 0;
@@ -151,7 +151,7 @@ bool TriggerDecision::storeHLTDecision(const edm::Event& event,
 	failAt = 1;
       }
 
-      // There may be an HLTFilterObject in the event even if the
+      // There may be an TriggerObject in the event even if the
       // trigger did not accept; the real check is to make sure that
       // the minimum number of muons for the trigger was met.
       const unsigned minNMuons = ipath + 1;
@@ -173,11 +173,11 @@ bool TriggerDecision::storeHLTDecision(const edm::Event& event,
 
 	if (debug) {
 	  out << "  " << trigName << " filter result muons:\n";
-	  reco::HLTFilterObjectWithRefs::const_iterator muItr;
+	  trigger::TriggerObjectCollection::const_iterator muItr;
 	  int imu = 0;
 	  for (muItr = hltFilterObjs->begin(); muItr != hltFilterObjs->end();
 	       muItr++) {
-	    out << "    #" << imu++ << " q = " << muItr->charge()
+	    out << "    #" << imu++ << " q = " << muItr->particle().charge()
 		<< " p = (" << muItr->px() << ", " << muItr->py()
 		<< ", " << muItr->pz() << ", " << muItr->energy() << ")\n"
 		<< "     pt = " << muItr->pt() << " eta = " << muItr->eta()

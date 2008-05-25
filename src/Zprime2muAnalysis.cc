@@ -19,6 +19,7 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
     doingElectrons(config.getParameter<bool>("doingElectrons")),
     useGen(config.getParameter<bool>("useGen")),
     useSim(config.getParameter<bool>("useSim")),
+    useTrigger(config.getParameter<bool>("useTrigger")),
     useReco(config.getParameter<bool>("useReco")),
     useOtherMuonRecos(config.getParameter<bool>("useOtherMuonRecos")),
     usingAODOnly(config.getParameter<bool>("usingAODOnly")),

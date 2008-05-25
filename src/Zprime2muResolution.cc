@@ -918,7 +918,7 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	    const reco::Muon& mu
 	      = toConcrete<reco::Muon>(dileptonDaughter(*pdi, ilep));
 	    if (mu.isIsolationValid())
-	      SumPtR03[i_rec][1]->Fill(mu.getIsolationR03().sumPt);
+	      SumPtR03[i_rec][1]->Fill(mu.isolationR03().sumPt);
 	  }
 
 	if (debug) {
@@ -1485,7 +1485,7 @@ void Zprime2muResolution::fillMuonHistos(const int rec, const bool debug) {
     if (!doingElectrons && rec >= lgmr) {
       const reco::Muon& mu = toConcrete<reco::Muon>(lep);
       if (mu.isIsolationValid())
-	SumPtR03[rec][0]->Fill(mu.getIsolationR03().sumPt);
+	SumPtR03[rec][0]->Fill(mu.isolationR03().sumPt);
     }
 
     if (debug)
@@ -2296,6 +2296,7 @@ void Zprime2muResolution::DrawResHistos() {
 
   // Draw Eta, Phi, Rap, momentum for all mu's for all rec levels
   for (int i=0; i < MAX_LEVELS; i++) {
+    if (skipRecLevel(i)) continue;
     ps->NewPage();
     c1->Clear();
     c1->cd(0);
@@ -2321,6 +2322,7 @@ void Zprime2muResolution::DrawResHistos() {
   // Draw Eta, Phi, Rap, momentum for all levels Mu+ and Mu- associated
   // with an opp-sign dilepton.
   for (int i=0; i < MAX_LEVELS; i++) {
+    if (skipRecLevel(i)) continue;
     for (int j=0; j<2; j++) {
       ps->NewPage();
       c1->Clear();
@@ -2347,6 +2349,7 @@ void Zprime2muResolution::DrawResHistos() {
 
   // Opposite sign dileptons, at Gen, L1, L2 and L3
   for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
+    if (skipRecLevel(i_rec)) continue;
     // Eta, Phi, Rap and momentum
     ps->NewPage();
     c1->Clear();

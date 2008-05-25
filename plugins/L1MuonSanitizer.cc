@@ -6,6 +6,7 @@
 
 #include "DataFormats/Candidate/interface/Particle.h"
 #include "DataFormats/L1Trigger/interface/L1MuonParticle.h"
+#include "DataFormats/L1Trigger/interface/L1MuonParticleFwd.h"
 
 using namespace std;
 using namespace edm;
@@ -38,19 +39,14 @@ L1MuonSanitizer::L1MuonSanitizer(const ParameterSet& cfg) {
 
 void L1MuonSanitizer::produce(Event& event,
 				  const EventSetup& eSetup) {
-  // get the L1 muons from the event
+  // Try to get the L1 muons from the event
   Handle<L1MuonParticleCollection> muons;
-  bool ok = true;
-  try {
-    event.getByLabel(src, muons);
-  } catch (...) {
-    ok = false;
-  }
+  event.getByLabel(src, muons);
 
   // make the output collection
   auto_ptr<L1MuonParticleCollection> cands(new L1MuonParticleCollection);
 
-  if (ok && !muons.failedToGet()) {
+  if (!muons.failedToGet()) {
     l1extra::L1MuonParticleCollection::const_iterator muon;
     for (muon = muons->begin(); muon != muons->end(); muon++) {
       if (muon->pt() > ptMin) {

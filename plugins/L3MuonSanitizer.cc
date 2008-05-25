@@ -37,19 +37,14 @@ void L3MuonSanitizer::produce(Event& event,
 				  const EventSetup& eSetup) {
   const double MASS = 0.10566;
 
-  // get the L3 muons from the event
+  // Try to get the L3 muons from the event.
   Handle<MuonTrackLinksCollection> muons;
-  bool ok = true;
-  try {
-    event.getByLabel(src, muons);
-  } catch (...) {
-    ok = false;
-  }
+  event.getByLabel(src, muons);
 
-  // make the output collection
+  // Make the output collection.
   auto_ptr<MuonCollection> cands(new MuonCollection);
 
-  if (ok && !muons.failedToGet()) {
+  if (!muons.failedToGet()) {
     MuonTrackLinksCollection::const_iterator muon;
     for (muon = muons->begin(); muon != muons->end(); muon++) {
       // Null references to combined, tracker-only, and standalone muon tracks.

@@ -23,7 +23,7 @@
   <use name=DataFormats/MuonReco>
 </library>
 
-<library file=TrackerOnlyMuonProducer.cc name=TrackerOnlyMuonProducer>
+<library file=GlobalOnlyMuonProducer.cc name=GlobalOnlyMuonProducer>
   <use name=DataFormats/RecoCandidate>
   <use name=DataFormats/MuonReco>
 </library>

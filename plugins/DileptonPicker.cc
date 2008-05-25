@@ -40,12 +40,7 @@ void DileptonPicker::produce(Event& event, const EventSetup& eSetup) {
   static const bool debug = false;
 
   Handle<CompositeCandidateCollection> hdileptons;
-  bool ok = true;
-  try {
-    event.getByLabel(src, hdileptons);
-  } catch (...) {
-    ok = false;
-  }
+  event.getByLabel(src, hdileptons);
 
   // Make the output collection.
   auto_ptr<CompositeCandidateCollection>
@@ -53,7 +48,7 @@ void DileptonPicker::produce(Event& event, const EventSetup& eSetup) {
 
   ostringstream out;
 
-  if (ok && !hdileptons.failedToGet()) {
+  if (!hdileptons.failedToGet()) {
     if (hdileptons->size() > 0) {
       if (debug) out << hdileptons->size() << " dileptons before selection and overlap removal; ";
 

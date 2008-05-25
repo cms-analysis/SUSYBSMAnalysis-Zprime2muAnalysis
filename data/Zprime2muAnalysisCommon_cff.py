@@ -13,10 +13,10 @@ muonCollections = [
     'muCandL1', # l1extraParticles
     'muCandL2', # hltL2MuonCandidates
     'muCandL3', # hltL3MuonCandidates
-    'muons',
+    'muCandGR',
     'muCandTK', # muonsTK
-    'muonsFMS',
-    'muonsPMR',
+    'muCandFS',
+    'muCandPR',
     'bestMuons'
     ]
 
@@ -57,6 +57,8 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                  useTrigger=True,
                                  useOtherMuonRecos=True,
                                  useHEEPSelector=True,
+                                 recoverBrem=True,
+                                 disableElectrons=False,
                                  lumiForCSA07=0.,
                                  dumpHardInteraction=False,
                                  flavorsForDileptons=diMuons,
@@ -143,6 +145,11 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     if len(muons) != numRecLevels or len(electrons) != numRecLevels:
         raise RuntimeError, 'at least one of the muon and electron collections is not the right length'
 
+    if disableElectrons:
+        for i in xrange(numRecLevels):
+            electrons[i] = None
+        useHEEPSelector = False
+        
     if usingAODOnly:
         useGen = useSim = False
         useOtherMuonRecos = False
@@ -254,7 +261,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         process.printTree = cms.EDAnalyzer(
             'ParticleListDrawer',
             maxEventsToPrint = cms.untracked.int32(-1),
-            src = cms.InputTag('genParticleCandidates') #,
+            src = cms.InputTag('genParticles') #,
             #printOnlyHardInteraction = cms.untracked.bool(True),
             #useMessageLogger = cms.untracked.bool(True),
             )
@@ -279,15 +286,15 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
 
     if useGen:
         process.genMuons = cms.EDProducer(
-            'CandSelector',
-            src = cms.InputTag('genParticleCandidates'),
+            'CandViewSelector',
+            src = cms.InputTag('genParticles'),
             cut = cms.string('abs(pdgId) = 13 & status = 1') # & pt > 0.001'
             )
 
         GNtags = cms.VInputTag(cms.InputTag('genMuons'))
         if useSim:
             process.simMuons = cms.EDProducer(
-                'CandSelector',
+                'CandViewSelector',
                 src = cms.InputTag('simParticleCandidates'),
                 cut = cms.string('abs(pdgId) = 13 & status = 1') # & pt > 0.001'
                 )
@@ -297,7 +304,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             GNtags.append(cms.InputTag('simMuons'))
             
         process.muCandGN = cms.EDProducer(
-            'CandMerger',
+            'CandViewMerger',
             src = GNtags
             )
         
@@ -333,14 +340,23 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                    process.muCandL3)
         
     if useReco:
+        # Copy only the GlobalMuons from the default muon collection,
+        # ignoring the TrackerMuons and CaloMuons for now.
+        process.muCandGR = cms.EDProducer(
+            'GlobalOnlyMuonProducer',
+            src              = cms.InputTag('muons'),
+            fromTrackerTrack = cms.bool(False)
+            )
+
         # Make tracker-only reco::Muons out of the tracker tracks in
         # the muons collection.
         process.muCandTK = cms.EDProducer(
-            'TrackerOnlyMuonProducer',
-            src = cms.InputTag('muons')
+            'GlobalOnlyMuonProducer',
+            src              = cms.InputTag('muons'),
+            fromTrackerTrack = cms.bool(True)
             )
     
-        process.pmuCandTK = cms.Path(process.muCandTK)
+        process.pmuCandTK = cms.Path(process.muCandGR * process.muCandTK)
 
     ####################################################################
     ## Same for the electrons
@@ -348,15 +364,15 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
 
     if useGen:
         process.genElectrons = cms.EDProducer(
-            'CandSelector',
-            src = cms.InputTag('genParticleCandidates'),
+            'CandViewSelector',
+            src = cms.InputTag('genParticles'),
             cut = cms.string('abs(pdgId) = 11 & status = 1')
             )
 
         GNtags = cms.VInputTag(cms.InputTag('genElectrons'))
         if useSim:
             process.simElectrons = cms.EDProducer(
-                'CandSelector',
+                'CandViewSelector',
                 src = cms.InputTag('simParticleCandidates'),
                 cut = cms.string('abs(pdgId) = 11 & status = 1')
                 )
@@ -366,7 +382,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             GNtags.append(cms.InputTag('simElectrons'))
     
         process.elCandGN = cms.EDProducer(
-            'CandMerger',
+            'CandViewMerger',
             src = GNtags
             )
 
@@ -585,15 +601,16 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     # Match all muons to closest photons to try and recover energy
     # lost to brem later. (Don't bother doing this for electrons,
     # since the GSF algorithm already takes brem losses into account.)
-    for rec in xrange(lL3, numRecLevels):
-        if muons[rec] is None: continue
-        prod = cms.EDProducer(
-            'TrivialDeltaRViewMatcher',
-            src     = cms.InputTag(muons[rec]),
-            matched = cms.InputTag('correctedPhotons'),
-            distMin = cms.double(999)
-            )
-        addToPath('photonMatch' + recLevels[rec], prod)
+    if recoverBrem:
+        for rec in xrange(lL3, numRecLevels):
+            if muons[rec] is None: continue
+            prod = cms.EDProducer(
+                'TrivialDeltaRViewMatcher',
+                src     = cms.InputTag(muons[rec]),
+                matched = cms.InputTag('correctedPhotons'),
+                distMin = cms.double(999)
+                )
+            addToPath('photonMatch' + recLevels[rec], prod)
 
     # Also do the by-seed matching from the best level to the others,
     # since we skipped it before. (Again, not available for

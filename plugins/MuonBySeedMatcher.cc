@@ -180,15 +180,11 @@ void MuonBySeedMatcher::produce(Event& event,
   // Get the seed tracks (the offline-fit stand-alone muons), and the
   // two muon collections.
   Handle<View<Candidate> > hsrc, hmatched;
-  bool ok = true;
-  try {
-    event.getByLabel(seedTracks, hseedTracks);
-    event.getByLabel(src,        hsrc);
-    event.getByLabel(matched,    hmatched);
-  } catch (const cms::Exception& e) {
-  //if (hseedTracks.failedToGet() || hmuons[0].failedToGet() || hmuons[1].failedToGet()) {
-    ok = false;
-  }
+  event.getByLabel(seedTracks, hseedTracks);
+  event.getByLabel(src,        hsrc);
+  event.getByLabel(matched,    hmatched);
+  bool ok = !hseedTracks.failedToGet() && !hsrc.failedToGet()
+    && !hmatched.failedToGet();
 
   if (debug) {
     ostringstream out;

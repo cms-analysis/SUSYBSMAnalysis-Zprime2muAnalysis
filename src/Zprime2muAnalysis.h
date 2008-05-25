@@ -63,6 +63,9 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // whether to look at GEANT tracks;
   bool useSim;
 
+  // whether to look at trigger quantities;
+  bool useTrigger;
+
   // whether to look at reconstructed quantities;
   bool useReco;
 

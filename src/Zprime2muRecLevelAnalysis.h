@@ -36,6 +36,16 @@ class Zprime2muRecLevelAnalysis : public Zprime2muAnalysis {
 
   // The collections of dileptons + brem photons.
   reco::CompositeCandidateCollection allResonances[MAX_LEVELS];
+  
+  ////////////////////////////////////////////////////////////////////
+  // General utility
+  ////////////////////////////////////////////////////////////////////
+  
+  // Return whether the rec level might be empty, based on the
+  // useGen/Sim/Reco/etc. flags. (Useful especially in
+  // Zprime2muResolution, to suppress the creation of some pages in
+  // the huge postscript file.)
+  bool skipRecLevel(const int level) const;
 
   ////////////////////////////////////////////////////////////////////
   // Print-outs

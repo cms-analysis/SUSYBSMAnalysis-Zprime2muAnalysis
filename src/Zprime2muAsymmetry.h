@@ -50,7 +50,7 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   void fillFitData(const edm::Event& event);
   void dumpFitData();
 
-  bool computeFitQuantities(const reco::CandidateCollection&, 
+  bool computeFitQuantities(const reco::GenParticleCollection&, 
 			    int eventNum, AsymFitData& data);
 
   void bookParamHistos();

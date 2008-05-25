@@ -8,6 +8,7 @@
 
 #include "TF1.h"
 #include "TFMultiD.h"
+#include "TMath.h"
 #include "TROOT.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"

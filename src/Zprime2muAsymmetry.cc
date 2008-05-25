@@ -16,6 +16,7 @@
 #include "TPaveLabel.h"
 #include "TPostScript.h"
 #include "TRandom3.h"
+#include "TROOT.h"
 #include "TStyle.h"
 #include "TText.h"
 #include "TTree.h"
@@ -23,7 +24,7 @@
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/Candidate/interface/CompositeRefCandidate.h"
-#include "DataFormats/HepMCCandidate/interface/GenParticleCandidate.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 #include "DataFormats/FWLite/interface/Handle.h"
 
 #include "FWCore/Framework/interface/Event.h"
@@ -541,8 +542,8 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
   for (unsigned i = 0; i < n_gen; i++) type[i] = -1;
 
   if (useGen) {
-    edm::Handle<reco::CandidateCollection> genParticles;
-    event.getByLabel("genParticleCandidates", genParticles);
+    edm::Handle<reco::GenParticleCollection> genParticles;
+    event.getByLabel("genParticles", genParticles);
 
     AsymFitData data;
     // JMTBAD redundant with some calculations below
@@ -687,7 +688,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 	// dimuon information.  This will be used for obtaining sigmas used
 	// in convolutions for asymmetry fits.
 	if (n_dil == n_gen) {      
-	  const reco::Candidate& rec_dil = bestDileptons->at(i_dil);
+	  const reco::CompositeCandidate& rec_dil = bestDileptons->at(i_dil);
 	  const reco::CandidateBaseRef& rec_mum = 
 	    dileptonDaughterByCharge(rec_dil, -1);
 	  const reco::CandidateBaseRef& rec_mup = 
@@ -731,7 +732,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
   // Now loop over all reconstructed dimuons and store those to be fitted
   // (which lie inside desired reconstructed window).
   for (unsigned int i_dil = 0; i_dil < n_dil; i_dil++) {
-    const reco::Candidate& rec_dil = bestDileptons->at(i_dil);
+    const reco::CompositeCandidate& rec_dil = bestDileptons->at(i_dil);
     if (rec_dil.mass() > asymFitManager.fit_win(0) &&
 	rec_dil.mass() < asymFitManager.fit_win(1)) {
       if (nfit_used[0] == FIT_ARRAY_SIZE - 1)
@@ -1362,8 +1363,8 @@ void Zprime2muAsymmetry::fillParamHistos(bool fakeData) {
 
   int jentry = 0;
   for (ev.toBegin(); !ev.atEnd() && jentry < nentries; ++ev, ++jentry) {
-    fwlite::Handle<reco::CandidateCollection> genParticles;
-    genParticles.getByLabel(ev, "genParticleCandidates");
+    fwlite::Handle<reco::GenParticleCollection> genParticles;
+    genParticles.getByLabel(ev, "genParticles");
 
     if (verbosity >= VERBOSITY_SIMPLE && jentry % 1000 == 0)
       LogTrace("fillParamHistos") << "fillParamHistos: " << jentry
@@ -1480,7 +1481,7 @@ void Zprime2muAsymmetry::fillParamHistos(bool fakeData) {
 // dimension fit. Variables used in the fit are stored in the
 // structure "data" returned by reference.  The flag "internalBremOn",
 // is for switching on and off the effect of internal bremsstrahlung.
-bool Zprime2muAsymmetry::computeFitQuantities(const reco::CandidateCollection& genParticles, 
+bool Zprime2muAsymmetry::computeFitQuantities(const reco::GenParticleCollection& genParticles, 
 					      int eventNum,
 					      AsymFitData& data) {
   static const bool debug = verbosity >= VERBOSITY_TOOMUCH;

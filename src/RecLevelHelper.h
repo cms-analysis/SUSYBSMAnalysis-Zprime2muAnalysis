@@ -183,6 +183,12 @@ class RecLevelHelper {
   // inverse operation to getLeptonsView() above).
   void storeRecLevelMap(const edm::Event& event);
 
+  // Retrieve a single match map from the event by name, and return it
+  // by reference. If the match map does not exist, print a warning
+  // but do not throw an exception.
+  void storeMatchMap(const edm::Event& event, const std::string& mapName,
+		     reco::CandViewMatchMap& map) const;
+
   // Store the match maps for this event: the matching between all
   // pairs of rec levels ("closest" matching), the matching between
   // all global fits ("seed" matching), and closest photon matches.

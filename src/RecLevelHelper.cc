@@ -150,17 +150,35 @@ void RecLevelHelper::storeRecLevelMap(const edm::Event& event) {
   }
 }
 
-void RecLevelHelper::storeMatchMaps(const edm::Event& event) {
+void RecLevelHelper::storeMatchMap(const edm::Event& event,
+				   const string& mapName,
+				   reco::CandViewMatchMap& map) const {
   edm::Handle<reco::CandViewMatchMap> matchMap;
+  bool ok = true;
+  try {
+    event.getByLabel(mapName, matchMap);
+  } catch (const cms::Exception& e) {
+  // if (matchMap.failedToGet()) {
+    ok = false;
+  }
+  if (!ok) {
+    edm::LogWarning("storeMatchMap")
+      << "Couldn't get match map " << mapName << " from event!"
+      << " Storing empty match map.";
+    map = reco::CandViewMatchMap();
+  }
+  else
+    map = *matchMap;
+}
+
+void RecLevelHelper::storeMatchMaps(const edm::Event& event) {
   edm::Handle<vector<int> > seeds;
 
   for (int i = 0; i < MAX_LEVELS; i++) {
-    if (i >= l3) {
+    if (i >= l3)
       // Store the photon match maps (which only exist for global fit
       // leptons).
-      event.getByLabel(makeMatchMapName(PHOTON, i), matchMap);
-      photonMatchMap[i] = *matchMap;
-    }
+      storeMatchMap(event, makeMatchMapName(PHOTON, i), photonMatchMap[i]);
 
     // This inner loop does not include lbest, since we do not match
     // to that level, only from it.
@@ -169,15 +187,13 @@ void RecLevelHelper::storeMatchMaps(const edm::Event& event) {
       if (i == j) continue;
 
       // Store closest match maps.
-      event.getByLabel(makeMatchMapName(CLOSEST, i, j), matchMap);
-      closestMatchMap[i][j] = *matchMap;
+      storeMatchMap(event, makeMatchMapName(CLOSEST, i, j),
+		    closestMatchMap[i][j]);
 
       // Also store by-seed match maps (which only exist for global
       // fits).
-      if (i >= l3 && j >= l3) {
-	event.getByLabel(makeMatchMapName(SEED, i, j), matchMap);
-	seedMatchMap[i][j] = *matchMap;
-      }
+      if (i >= l3 && j >= l3)
+	storeMatchMap(event, makeMatchMapName(SEED, i, j), seedMatchMap[i][j]);
     }
   }
 }

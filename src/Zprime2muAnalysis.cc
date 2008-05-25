@@ -76,10 +76,13 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
 
   // Get the main dilepton collections: gen, HLT, default offline, and
   // "best" offline.
-  event.getByLabel(genDils,  genDileptons);
-  event.getByLabel(hltDils,  hltDileptons);
-  event.getByLabel(recDils,  recDileptons);
-  event.getByLabel(bestDils, bestDileptons);
+  if (useGen)
+    event.getByLabel(genDils,  genDileptons);
+  if (useReco) {
+    event.getByLabel(hltDils,  hltDileptons);
+    event.getByLabel(recDils,  recDileptons);
+    event.getByLabel(bestDils, bestDileptons);
+  }
 }
 
 DEFINE_FWK_MODULE(Zprime2muAnalysis);

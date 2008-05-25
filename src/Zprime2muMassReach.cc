@@ -167,6 +167,9 @@ void Zprime2muMassReach::bookMassHistos() {
 }
 
 void Zprime2muMassReach::dilMassPlots(const bool debug) {
+  // Plots only made if there is generator information.
+  if (!useGen) return;
+
   double genm, recm;
 
   // Fill GenDilMass here if you want ALL generated events; uncomment Fill
@@ -221,15 +224,17 @@ void Zprime2muMassReach::fillMassArrays() {
   }
 
   // True mass
-  for (unsigned idi = 0; idi < genDileptons->size(); idi++) {
-    if (nfit_genmass_used[idx] < MASS_FIT_ARRAY_SIZE) {
-      fit_genmass[idx][nfit_genmass_used[idx]] = genDileptons->at(idi).mass();
-      fit_genevent[idx][nfit_genmass_used[idx]] = eventNum;
-      nfit_genmass_used[idx]++;
+  if (useGen) {
+    for (unsigned idi = 0; idi < genDileptons->size(); idi++) {
+      if (nfit_genmass_used[idx] < MASS_FIT_ARRAY_SIZE) {
+	fit_genmass[idx][nfit_genmass_used[idx]] = genDileptons->at(idi).mass();
+	fit_genevent[idx][nfit_genmass_used[idx]] = eventNum;
+	nfit_genmass_used[idx]++;
+      }
+      else
+	edm::LogWarning("fillMassArrays")
+	  << "+++ MASS_FIT_ARRAY_SIZE is too small to keep all gen events";
     }
-    else
-      edm::LogWarning("fillMassArrays")
-	<< "+++ MASS_FIT_ARRAY_SIZE is too small to keep all gen events";
   }
 
   // Make sure the event passed the trigger

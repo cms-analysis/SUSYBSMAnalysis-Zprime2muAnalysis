@@ -9,18 +9,33 @@ from Zprime2muAnalysisCommon_cff import *
 from Zprime2muResolution_cfi import *
 
 files = [
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_1_6_7/Zssm1000_fm_RECO.root'
-#    'file:/scratchdisk2/tucker/CMSSW_1_6_7/Zssm1000_fm_RECO.root'
+    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_100_11110001.root',
+    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_100_22220001.root',
+    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_100_33330001.root',
+    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_11110020.root',
+    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_11110300.root',
+    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_11114000.root',
+    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_22220020.root',
+    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_22220300.root',
+    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_22224000.root',
+    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_33330020.root',
+    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_33330300.root',
+    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_33334000.root'
     ]
 
-process = makeZprime2muAnalysisProcess(files)
+process = makeZprime2muAnalysisProcess(files,
+                                       useHEEPSelector=False,
+                                       useTrigger=False,
+                                       useOtherMuonRecos=False,
+                                       recoverBrem=False,
+                                       disableElectrons=True)
 #   , doingElectrons=True,
 #   flavorsForDileptons=diElectrons)
 
 attachResolution(process)
 
-#process.Zprime2muResolution.verbosity = 2
-#process.Zprime2muResolution.dateHistograms = False
+process.Zprime2muResolution.verbosity = 2
+process.Zprime2muResolution.dateHistograms = False
 
 # Example of how to replace one of the parameter sets:
 '''

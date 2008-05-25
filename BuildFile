@@ -2,6 +2,7 @@
 <use name=root>
 <use name=rootmath>
 <use name=lhapdf>
+<lib name=RooFit>
 
 <use name=DataFormats/EgammaCandidates>
 <use name=DataFormats/FWLite>

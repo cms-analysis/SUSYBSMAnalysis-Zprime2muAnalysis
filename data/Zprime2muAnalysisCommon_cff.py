@@ -249,9 +249,9 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         process.printTree = cms.EDAnalyzer(
             'ParticleListDrawer',
             maxEventsToPrint = cms.untracked.int32(-1),
-            src = cms.InputTag('genParticleCandidates'),
-            printOnlyHardInteraction = cms.untracked.bool(True),
-            useMessageLogger = cms.untracked.bool(True),
+            src = cms.InputTag('genParticleCandidates') #,
+            #printOnlyHardInteraction = cms.untracked.bool(True),
+            #useMessageLogger = cms.untracked.bool(True),
             )
         
         process.ptree = cms.Path(process.printTree)

@@ -38,19 +38,31 @@ void GenResonanceProducer::produce(Event& event,
 
   // Use a HardInteraction object to extract the particles we want.
   HardInteraction hi(leptonFlavor, true);
-  hi.Fill(event);
+  bool ok = true;
+  try {
+    hi.Fill(event);
+  }
+  catch (const cms::Exception& e) {
+    ok = false;
+  }
 
-  // Make a CompositeCandidate out of the resonance object, setting as
-  // its daughters the final-state leptons and brem photons.
-  // JMTBAD Do we need shallow clones?
-  CompositeCandidate newRes(*hi.resonance);
-  newRes.addDaughter(*hi.lepMinus);
-  newRes.addDaughter(*hi.lepPlus);
-  for (unsigned i = 0; i < hi.bremPhotons.size(); i++)
-    newRes.addDaughter(*hi.bremPhotons[i]);
-  
-  // Store what we made in the event.
-  resonances->push_back(newRes);
+  if (ok) {
+    // Make a CompositeCandidate out of the resonance object, setting as
+    // its daughters the final-state leptons and brem photons.
+    // JMTBAD Do we need shallow clones?
+    CompositeCandidate newRes(*hi.resonance);
+    newRes.addDaughter(*hi.lepMinus);
+    newRes.addDaughter(*hi.lepPlus);
+    for (unsigned i = 0; i < hi.bremPhotons.size(); i++)
+      newRes.addDaughter(*hi.bremPhotons[i]);
+    resonances->push_back(newRes);
+  }
+  else
+    edm::LogWarning("GenResonanceProducer")
+      << "Couldn't extract hard interaction from event; "
+      << "producing empty collection.";
+
+  // Store what we made in the event, even if the collection is empty
   event.put(resonances);
 }
 

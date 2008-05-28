@@ -44,14 +44,7 @@ class Zprime2muRecLevelAnalysis : public Zprime2muAnalysis {
   // Print out all the relevant information about the lepton; but this
   // method is just as useful as documentation on how to access this
   // information.
-  void dumpLepton(std::ostream& output, reco::CandidateBaseRef cand) const;
-
-  // Print out all the relevant information about the dilepton, and
-  // call dumpLepton on each of its daughters if dumpLeptons is true.
-  void dumpDilepton(std::ostream& output,
-		    const reco::CompositeCandidate& cand,
-		    bool dumpLeptons=false) const;
-
+  void dumpLepton(std::ostream& output, const reco::CandidateBaseRef& cand) const;
 };
 
 #endif

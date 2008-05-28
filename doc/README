@@ -46,11 +46,16 @@ l=e,mu). Some sample files are available at
 /castor/cern.ch/user/t/tucker/CMSSW_1_6_7.
 
 At the time this documentation was updated, the package has been
-tested to work with version 1_6_11 of CMSSW. The tag V00-01-03 should
+tested to work with version 1_6_11 of CMSSW. The tag V00-02-01 should
 be used. We have abandoned our private BaseMuon/Muon/DiMuon classes in
 favor of using directly the standard AnalysisTools classes
 (reco::Candidate and all its derived classes, including those of the
-PAT).
+PAT). Also, the package has been modified for greater modularity with
+respect to V00-01-03, with most of the functionality that was in
+Zprime2muAnalysis being pieced out into modules in the plugins
+directory, and the inheritance structure of the analysis modules being
+changed. See the below discussion on Zprime2muAnalysis
+v. Zprime2muRecLevelAnalysis.
 
 While much of the base class Zprime2muAnalysis along with its provided
 interface for accessing the (di)lepton four-vectors and other data has
@@ -66,10 +71,24 @@ run.
 Philosophy
 ----------
 
-Inside the base class Zprime2muAnalysis, leptons are stored at
-different levels of reconstruction ("rec levels"), of which there are
-currently eight defined. These were originally for dealing with
-different levels of muon reconstruction:
+There are two general classes of analyses envisioned for use with this
+package:
+
+- "plain" analysis, which just wants simple access to the "best"
+  (di)leptons;
+- or "rec level" analysis, which has multiple collections of leptons
+  and dileptons at various levels of reconstruction.
+
+The base class Zprime2muAnalysis handles the former, pulling out the
+generator-level and reconstructed dileptons for use by any derived
+classes. Using a helper class, it handles extracting the trigger
+decision as well.
+
+The class Zprime2muRecLevelAnalysis inherits from
+Zprime2muAnalysis. In it, leptons are stored at different levels of
+reconstruction ("rec levels"), of which there are currently nine
+defined. These were originally for dealing with different levels of
+muon reconstruction:
 
   - generated muons (GEN),
   - Level-1, Level-2, and Level-3 of the muon trigger system (L1, L2, L3),
@@ -98,40 +117,33 @@ levels (for electrons, skipping rec levels lTK through lPMR).
 The input collections thus defined (whether CandidateCollections,
 MuonCollections, or any other vector of objects deriving from
 reco::Candidate) are accessed in the code using edm::View. In the
-class, we store references to leptons as vectors of
-reco::CandidateBaseRef objects:
+classes, we store references to leptons in vectors of
+reco::CandidateBaseRef objects, and collections of dileptons as vectors of
+reco::CompositeCandidate objects:
 
-  // excerpt from Zprime2muAnalysis.h
-  typedef std::vector<reco::CandidateBaseRef> LeptonRefVector;
-     ...
-  LeptonRefVector allLeptons[MAX_LEVELS];
-  LeptonRefVector bestLeptons;
+  // excerpt from Zprime2muRecLevelAnalysis.h
 
-one vector for each rec level. (CandidateBaseRefs were chosen over
-CandidateRefs and vector<CandidateBaseRef> over CandidateBaseRefVector
-for technical reasons documented in code comments.)
+  // The lepton collections, stored as CandidateBaseRefs.
+  reco::CandidateBaseRefVector allLeptons[MAX_LEVELS];
+
+  // The dilepton collections, stored as CompositeCandidates.
+  reco::CompositeCandidateCollection allDileptons[MAX_LEVELS];
+
+with one vector for each rec level. (CandidateBaseRefs were chosen
+over CandidateRefs for technical reasons documented in code comments.)
 
 Matching between rec levels (especially to MC truth) and matching
-closest photons is done in our own code in the module
-LeptonAssociator, but stored in the same manner as the official
-matching packages (i.e., in AssociationMaps). We chose to do this
-instead of using the available AnalysisTools matching tools since,
-with nine rec levels, it proved cumbersome to define matches between
-leptons at each pair of rec levels and matches between each rec level
-of leptons and photons in the configuration files. Many module
-invocations to define the matching just between lepton rec levels
-alone would be needed.
+closest photons is done using the Analysis Tools module
+TrivialDeltaRMatcher. Since we moved to Python configuration files,
+running a loop over all pairs of rec levels in the configuration file
+is just as easy as doing so in the code.
 
-Now that we have moved to Python configuration files, running a loop
-in the configuration file is just as easy as doing so in the code. We
-still use LeptonAssociator, however, because it performs closest
-matching slightly differently than TrivialDeltaRCandMatcher, and also
-because it takes care of matching offline leptons to photons, and all
-offline leptons to other offline leptons by "seed". By-seed matching
-finds pairs of offline-reconstructed leptons that share the same seed
-track in the muon system, which is useful when trying to pick the
-"best" muon, since we need to know which muon in TK corresponds to
-which in PMR, etc.
+We have a custom module to match all offline leptons to other offline
+leptons by "seed". By-seed matching finds pairs of
+offline-reconstructed leptons that share the same seed track in the
+muon system, which is useful when trying to pick the "best" muon,
+since we need to know which muon in TK corresponds to which in PMR,
+etc.
 
 Dileptons are constructed as reco::CompositeCandidates, pruned of
 overlap (if two dileptons share a lepton, preference is given to the
@@ -140,12 +152,7 @@ reco::CandidateCollections (one collection at each rec level). For
 offline-reconstructed muons (GMR level and higher), an attempt is made
 to recover energy loss from bremmed photons by adding in the
 four-vectors of each of the leptons' closest photons, found in the
-matching step above. The resulting "resonance" four-vector, however,
-is not stored in the CompositeCandidate object, but is stored
-separately in order to enable comparisons of the two in derived
-analysis modules such as Zprime2muResolution. These resonance
-four-vectors are stored simply: one vector of LorentzVectors for each
-reconstruction level, in the same order as the dileptons.
+matching step above.
 
 Trigger information is also stored: for muons we look at the trigger
 paths used by the 2007 high-mass dimuon analysis (the result of which
@@ -161,14 +168,11 @@ discussion below.
 Accessing this data in code
 ---------------------------
 
-All of the methods which implement the above are declared private to
-the base class Zprime2muAnalysis, but there are a number of methods
-accessible from derived classes. The main documentation for these
-exists in Zprime2muAnalysis.h, in the sections starting with
-"Lepton/dilepton rec level utility functions". Examples of their use
-are in the method dumpLepton() (which besides dumping debugging info,
-was written for documentation purposes), and in the existing analysis
-classes, Asymmetry, Resolution, and MassReach.
+The main documentation for the code exists in the header
+files. Examples of accessing simple things are in the method
+Zprime2muRecLevelAnalysis::dumpLepton() (which besides dumping
+debugging info, was written for documentation purposes), and in the
+existing analysis classes, Asymmetry, Resolution, and MassReach.
 
 
 Configuring Zprime2muAnalysis
@@ -184,13 +188,6 @@ file:
 
 There are some flags common to all modules Zprime2mu*, since they are
 used by the base class Zprime2muAnalysis:
-
-    constructGenDil: whether to allow construction of generator-level
-    dileptons from generated leptons -- default behavior
-    is no, and to take the actual resonance from the PYTHIA
-    event record, but if there is none, as is the case in
-    some COMPHEP-generated samples, then the code will not
-    find any generated dilepton unless this is set.
 
 (Note: these next flags must be passed into the
  makeZprime2muAnalysisProcess() function instead of using the replace
@@ -432,8 +429,8 @@ will take the histograms from the merged file and draw the postscript,
 bypassing the reading of any events in the analyzer.
 
 
-Step-by-step instructions
--------------------------
+Example session
+---------------
 
 To check out the package:
 
@@ -441,24 +438,28 @@ To check out the package:
    cd CMSSW_1_6_11/src
 
    project CMSSW
-   cvs co -r V00-01-03 SUSYBSMAnalysis/Zprime2muAnalysis
+   cvs co -r V00-02-01 SUSYBSMAnalysis/Zprime2muAnalysis
 
    # This is needed for fwlite::ChainEvent to read from CASTOR,
-   # but the unit test will fail; OK for our purposes.
+   # but the unit test will fail to compile later; OK for our purposes.
    cvs co -r V00-07-00 DataFormats/FWLite
 
    # Grab D.L. Evans's HEEPSelector (and put it in the right directory).
    cvs co -r V02-01-02 -d DLEvans/HEEPSelector UserCode/DLEvans/HEEPSelector
    cvs co -r V02-01-01 -d DLEvans/HEEPUtilities UserCode/DLEvans/HEEPUtilities
+ 
+   # Compile HEEPSelector
+   cd DLEvans/HEEPSelector
+   scramv1 b
 
-   # Compile the code, including the extra packages checked
-   # out. (Ignore the FWLite unit test failure.)
+   # Compile the rest of the code (ignore the error from compiling the
+   # DataFormats/FWLite unit test).
+   cd ../../SUSYBSMAnalysis/Zprime2muAnalysis
    eval `scramv1 runtime -csh`
    scramv1 b
 
 To run (where the _cfg.py can be any of the *_cfg.py files in /test):
-
-   cd SUSYBSMAnalysis/Zprime2muAnalysis/test
+   cd test
    cmsRun testZprime2muResolution_cfg.py
      -or for an electron mode example-
    cmsRun testZprime2muResolutionElectrons_cfg.py

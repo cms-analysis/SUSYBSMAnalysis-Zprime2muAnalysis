@@ -7,14 +7,12 @@ using namespace reco;
 
 HardInteraction::HardInteraction(int lepFlavor, //vector<int> resIds,
 				 bool allowFakeRes)
-  : quark(0), resonance(0), lepPlus(0), lepMinus(0),
-    lepPlusNoIB(0), lepMinusNoIB(0),
-    leptonFlavor(lepFlavor), //resonanceIds(resIds),
-    allowFakeResonance(allowFakeRes), resonanceIsFake(false)
+  : leptonFlavor(lepFlavor), //resonanceIds(resIds),
+    allowFakeResonance(allowFakeRes)
 {
-  // Do nothing here, since we want to be able to throw on error when
-  // filling the class (and it's very bad to throw from a
-  // constructor!)
+  Clear();
+  // Don't fill the structure here, since we want to be able to throw
+  // on error.
 }
 
 HardInteraction::~HardInteraction() {
@@ -45,6 +43,12 @@ bool HardInteraction::IsResonance(int pdgId) {
   return pdgId == 32 || pdgId == 23 || pdgId == 39 || pdgId == 5000039;
 }
 
+void HardInteraction::Clear() {
+  quark = resonance = lepPlus = lepMinus = lepPlusNoIB = lepMinusNoIB = 0;
+  bremPhotons.clear();
+  resonanceIsFake = false;
+}
+
 void HardInteraction::Fill(const edm::Event& event) {
   edm::Handle<CandidateCollection> genParticles;
   event.getByLabel("genParticleCandidates", genParticles);
@@ -52,8 +56,8 @@ void HardInteraction::Fill(const edm::Event& event) {
 }
 
 void HardInteraction::Fill(const CandidateCollection& genParticles) {
-  // Clear out the list of brem photons.
-  bremPhotons.clear();
+  // Reset everything before filling.
+  Clear();
 
   // Look in the doc lines for the hard-interaction resonance and
   // leptons.

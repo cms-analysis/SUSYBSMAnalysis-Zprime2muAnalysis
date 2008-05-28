@@ -19,6 +19,7 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
     doingElectrons(config.getParameter<bool>("doingElectrons")),
     useGen(config.getParameter<bool>("useGen")),
     useSim(config.getParameter<bool>("useSim")),
+    useTrigger(config.getParameter<bool>("useTrigger")),
     useReco(config.getParameter<bool>("useReco")),
     useOtherMuonRecos(config.getParameter<bool>("useOtherMuonRecos")),
     usingAODOnly(config.getParameter<bool>("usingAODOnly")),
@@ -78,11 +79,36 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   // "best" offline.
   if (useGen)
     event.getByLabel(genDils,  genDileptons);
-  if (useReco) {
+  if (useTrigger)
     event.getByLabel(hltDils,  hltDileptons);
+  if (useReco) {
     event.getByLabel(recDils,  recDileptons);
     event.getByLabel(bestDils, bestDileptons);
   }
+}
+
+void Zprime2muAnalysis::dumpLepton(ostream& output,
+				   const reco::CandidateBaseRef& cand) const {
+  output << " pdgId: " << cand->pdgId()
+	 << " charge: " << cand->charge() << " pt: " << cand->pt()
+	 << " eta: " << cand->eta() << " phi: " << cand->phi() << endl;
+}
+
+void Zprime2muAnalysis::dumpDilepton(ostream& output,
+				     const reco::CompositeCandidate& cand) const {
+  output << "Dilepton: charge: " << cand.charge()
+	 << " pt: " << cand.pt() << " eta: " << cand.eta()
+	 << " phi: " << cand.phi() << " mass: " << cand.mass() << endl;
+
+  int larger = dileptonDaughter(cand, 0)->p() > dileptonDaughter(cand, 1)->p() ? 0 : 1;
+  int smaller = larger == 0 ? 1 : 0;
+  const reco::CandidateBaseRef& cand1 = dileptonDaughter(cand, larger);
+  const reco::CandidateBaseRef& cand2 = dileptonDaughter(cand, smaller);
+
+  output << "Higher momentum daughter:\n";
+  dumpLepton(output, cand1);
+  output << "Lower momentum daughter:\n";
+  dumpLepton(output, cand2);
 }
 
 DEFINE_FWK_MODULE(Zprime2muAnalysis);

@@ -25,6 +25,10 @@ struct HardInteraction {
   // interest (currently one of Z0 (inc. DY), Z', or G*).
   static bool IsResonance(int pdgId);
 
+  // Clear out the structure: reset pointers to null, empty
+  // bremPhotons, reset flags.
+  void Clear();
+
   // Store pointers to all the particles from the genParticles collection.
   void Fill(const reco::CandidateCollection& genParticles);
   

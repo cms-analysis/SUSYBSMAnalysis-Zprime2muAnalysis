@@ -98,11 +98,14 @@ void Zprime2muRecLevelAnalysis::dumpEvent(const bool trigOnly) const {
 }
 
 void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
-					   reco::CandidateBaseRef cand) const {
+					   const reco::CandidateBaseRef& cnd) const {
   // Make sure we're looking at the master ref (to handle shallow
   // clones which are daughters of dileptons).
-  if (cand->hasMasterClone())
-    cand = cand->masterClone().castTo<reco::CandidateBaseRef>();
+  reco::CandidateBaseRef cand;
+  if (cnd->hasMasterClone())
+    cand = cnd->masterClone().castTo<reco::CandidateBaseRef>();
+  else
+    cand = cnd;
 
   const int level = recLevelHelper.recLevel(cand);
 
@@ -274,35 +277,6 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
 	     << " p: " << tktrk->momentum() << endl;
     }
   }
-}
-
-void Zprime2muRecLevelAnalysis::dumpDilepton(ostream& output,
-					     const reco::CompositeCandidate& cand,
-					     bool dumpLeptons) const {
-  output << "Dilepton: charge: " << cand.charge()
-	 << " pt: " << cand.pt() << " eta: " << cand.eta()
-	 << " phi: " << cand.phi() << " mass: " << cand.mass() << endl;
-
-  int larger = dileptonDaughter(cand, 0)->p() > dileptonDaughter(cand, 1)->p() ? 0 : 1;
-  int smaller = larger == 0 ? 1 : 0;
-  const reco::CandidateBaseRef& cand1 = dileptonDaughter(cand, larger);
-  const reco::CandidateBaseRef& cand2 = dileptonDaughter(cand, smaller);
-
-  if (dumpLeptons) {
-    output << "Higher momentum daughter:\n";
-    dumpLepton(output, cand1);
-    output << "Lower momentum daughter:\n";
-    dumpLepton(output, cand2);
-  }
-  else
-    output << "  higher-p daughter: " << recLevelHelper.id(cand1)
-	   << " pdgId: " << cand1->pdgId()
-	   << " charge: " << cand1->charge() << " pt: " << cand1->pt()
-	   << " eta: " << cand1->eta() << " phi: " << cand1->phi() << endl
-	   << "   lower-p daughter: " << recLevelHelper.id(cand2)
-	   << " pdgId: " << cand2->pdgId()
-	   << " charge: " << cand2->charge() << " pt: " << cand2->pt()
-	   << " eta: " << cand2->eta() << " phi: " << cand2->phi() << endl;
 }
 
 DEFINE_FWK_MODULE(Zprime2muRecLevelAnalysis);

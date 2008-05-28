@@ -42,7 +42,6 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   virtual void endJob() {}
 
  protected:
-
   ////////////////////////////////////////////////////////////////////
   // Parameters read or determined from the config file:
   ////////////////////////////////////////////////////////////////////
@@ -62,6 +61,9 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 
   // whether to look at GEANT tracks;
   bool useSim;
+
+  // whether to look at trigger quantities;
+  bool useTrigger;
 
   // whether to look at reconstructed quantities;
   bool useReco;
@@ -102,6 +104,14 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   edm::InputTag genDils, hltDils, recDils, bestDils;
   edm::Handle<reco::CompositeCandidateCollection>
     genDileptons, hltDileptons, recDileptons, bestDileptons;
+
+  ////////////////////////////////////////////////////////////////////
+  // Print-outs
+  ////////////////////////////////////////////////////////////////////
+  
+  void dumpLepton(ostream& output, const reco::CandidateBaseRef& cand) const;
+  void dumpDilepton(ostream& output,
+		    const reco::CompositeCandidate& cand) const;
 };
 
 #endif // ZP2MUANALYSIS_H

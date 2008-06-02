@@ -1,0 +1,65 @@
+
+#include "Configuration/StandardSequences/data/FrontierConditions.cff" # Ideal conditions.
+#include "Configuration/StandardSequences/data/FrontierStartupConditions.cff"
+include "Configuration/StandardSequences/data/Frontier10pbConditions.cff" # Used for CSA07 reco.
+#include "Configuration/StandardSequences/data/Frontier100pbConditions.cff"
+#include "Configuration/StandardSequences/data/FakeConditions.cff"
+
+include "Configuration/StandardSequences/data/Reconstruction.cff"
+
+# JMTBAD These next lines were moved up from
+# RecoMuon/MuonIdentification/data/globalMuons.cfi. We must check out
+# this file and remove these lines, so that when we do module muonsFMS
+# below, cmsRun doesn't complain about replacing a parameter twice.x
+replace muons.CaloExtractorPSet.TrackAssociatorParameters.useEcal = false 
+replace muons.CaloExtractorPSet.TrackAssociatorParameters.useHcal = false 
+replace muons.CaloExtractorPSet.TrackAssociatorParameters.useHO   = false 
+replace muons.CaloExtractorPSet.TrackAssociatorParameters.useCalo = true
+replace muons.CaloExtractorPSet.TrackAssociatorParameters.useMuon = false 
+replace muons.CaloExtractorPSet.TrackAssociatorParameters.dREcalPreselection = 1.0
+replace muons.CaloExtractorPSet.TrackAssociatorParameters.dRHcalPreselection = 1.0
+
+# Extra reconstructors for TeV muons.
+# https://twiki.cern.ch/twiki/bin/view/CMS/TeVMuons
+# don't need to redo tracker-only -- available from reco::Muon::track()
+# but, do it so that accessing them is easier
+module globalMuonsTK = globalMuons from "RecoMuon/GlobalMuonProducer/data/globalMuons.cfi"
+replace globalMuonsTK.GLBTrajBuilderParameters.MuonHitsOption = 0
+module globalMuonsFMS = globalMuons from "RecoMuon/GlobalMuonProducer/data/globalMuons.cfi"
+replace globalMuonsFMS.GLBTrajBuilderParameters.MuonHitsOption = 2
+module globalMuonsPMR = globalMuons from "RecoMuon/GlobalMuonProducer/data/globalMuons.cfi"
+replace globalMuonsPMR.GLBTrajBuilderParameters.MuonHitsOption = 3
+# there are still options 4, 5... see the twiki page
+
+module muonsTK = muons from "RecoMuon/MuonIdentification/data/globalMuons.cfi"
+replace muonsTK.inputMuonCollection = globalMuonsTK
+replace muonsTK.inputLinkCollection = globalMuonsTK
+module muonsFMS = muons from "RecoMuon/MuonIdentification/data/globalMuons.cfi"
+replace muonsFMS.inputMuonCollection = globalMuonsFMS
+replace muonsFMS.inputLinkCollection = globalMuonsFMS
+module muonsPMR = muons from "RecoMuon/MuonIdentification/data/globalMuons.cfi"
+replace muonsPMR.inputMuonCollection = globalMuonsPMR
+replace muonsPMR.inputLinkCollection = globalMuonsPMR
+
+sequence tevmuonreco = {globalMuonsTK, globalMuonsFMS, globalMuonsPMR, muonsTK, muonsFMS, muonsPMR}
+
+# Add the extra muon reconstructors to FEVTSIM.
+
+include "Configuration/EventContent/data/EventContent.cff"
+
+block ExtraMuonReco = {
+  untracked vstring outputCommands = {
+    "keep *_globalMuonsTK_*_*",
+    "keep *_globalMuonsFMS_*_*",
+    "keep *_globalMuonsPMR_*_*",
+    "keep *_muonsTK_*_*",
+    "keep *_muonsFMS_*_*",
+    "keep *_muonsPMR_*_*"
+  }
+}
+replace FEVTSIMEventContent.outputCommands += ExtraMuonReco.outputCommands
+
+# We have to re-run ckftracks and muontracking to get some
+# intermediate products for tevmuonreco.
+
+sequence TeVMuonReReco = { ckftracks, muontracking, tevmuonreco }

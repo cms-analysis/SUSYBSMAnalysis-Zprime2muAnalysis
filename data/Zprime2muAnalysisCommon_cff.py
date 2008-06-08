@@ -15,8 +15,8 @@ muonCollections = [
     'muCandL3', # hltL3MuonCandidates
     'muCandGR',
     'muCandTK', # muonsTK
-    'muCandFS',
-    'muCandPR',
+    'muonsFMS',
+    'muonsPMR',
     'bestMuons'
     ]
 
@@ -59,6 +59,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                  useHEEPSelector=False,
                                  recoverBrem=True,
                                  disableElectrons=False,
+                                 performTeVMuonReReco=False,
                                  lumiForCSA07=0.,
                                  dumpHardInteraction=False,
                                  flavorsForDileptons=diMuons,
@@ -112,7 +113,10 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     useHEEPSelector: whether to use D.L. Evans\'s HEEPSelector for
     "best" electrons. It requires quantities not in AOD, so it may
     need to be disabled via this flag.
-    
+
+    performTeVMuonReReco: if set, run the extra TeV muon
+    re-reconstructors on-the-fly before running any analysis paths.
+            
     useTrigger: whether to expect to be able to get trigger
     collections (i.e. those destined for L1-L3 rec levels) from the
     file.
@@ -215,7 +219,15 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             # i.e. when the HEEPSelector.cfi is included.
             'DDLParser', 'PixelGeom', 'EcalGeom', 'TIBGeom', 'TIDGeom',
             'TOBGeom', 'TECGeom', 'SFGeom', 'HCalGeom', 'TrackerGeom',
-            'GeometryConfiguration', 'HcalHardcodeGeometry'
+            'GeometryConfiguration', 'HcalHardcodeGeometry',
+            # ... and these come up if doing the extra TeV muon
+            # reconstructors.
+            'PoolDBESSource', 'TkDetLayers', 'TkNavigation',
+            'Done', 'CSC', 'EcalTrivialConditionRetriever',
+            'Geometry', 'GlobalMuonTrajectoryBuilder', 'HCAL', 'Muon',
+            'RecoMuon', 'setEvent', 'Starting', 'TrackProducer',
+            'trajectories', 'DetLayers', 'RadialStripTopology',
+            'SiStripPedestalsFakeESSource', 'TrackingRegressionTest'
             ),
         Zprime = cms.untracked.PSet(
             extension    = cms.untracked.string('.out'),
@@ -254,6 +266,10 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             )
 
         process.csa07 = cms.Path(process.csa07EventWeightProducer)
+
+    if performTeVMuonReReco:
+        process.include('SUSYBSMAnalysis/Zprime2muAnalysis/data/TeVMuonReReco.cff')
+        process.pReReco = cms.Path(process.TeVMuonReReco)
 
     if useGen and dumpHardInteraction:
         process.include("SimGeneral/HepPDTESSource/data/pythiapdt.cfi")

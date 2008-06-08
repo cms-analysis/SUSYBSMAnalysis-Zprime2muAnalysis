@@ -1,23 +1,8 @@
-
-#include "Configuration/StandardSequences/data/FrontierConditions.cff" # Ideal conditions.
-#include "Configuration/StandardSequences/data/FrontierStartupConditions.cff"
-include "Configuration/StandardSequences/data/Frontier10pbConditions.cff" # Used for CSA07 reco.
-#include "Configuration/StandardSequences/data/Frontier100pbConditions.cff"
-#include "Configuration/StandardSequences/data/FakeConditions.cff"
+include "Configuration/StandardSequences/data/FrontierConditions_GlobalTag.cff"
+# Currently available TAGNAMEs are: STARTUP, 1PB, 10PB, IDEAL
+replace GlobalTag.globaltag = "IDEAL::All"
 
 include "Configuration/StandardSequences/data/Reconstruction.cff"
-
-# JMTBAD These next lines were moved up from
-# RecoMuon/MuonIdentification/data/globalMuons.cfi. We must check out
-# this file and remove these lines, so that when we do module muonsFMS
-# below, cmsRun doesn't complain about replacing a parameter twice.x
-replace muons.CaloExtractorPSet.TrackAssociatorParameters.useEcal = false 
-replace muons.CaloExtractorPSet.TrackAssociatorParameters.useHcal = false 
-replace muons.CaloExtractorPSet.TrackAssociatorParameters.useHO   = false 
-replace muons.CaloExtractorPSet.TrackAssociatorParameters.useCalo = true
-replace muons.CaloExtractorPSet.TrackAssociatorParameters.useMuon = false 
-replace muons.CaloExtractorPSet.TrackAssociatorParameters.dREcalPreselection = 1.0
-replace muons.CaloExtractorPSet.TrackAssociatorParameters.dRHcalPreselection = 1.0
 
 # Extra reconstructors for TeV muons.
 # https://twiki.cern.ch/twiki/bin/view/CMS/TeVMuons
@@ -31,15 +16,15 @@ module globalMuonsPMR = globalMuons from "RecoMuon/GlobalMuonProducer/data/globa
 replace globalMuonsPMR.GLBTrajBuilderParameters.MuonHitsOption = 3
 # there are still options 4, 5... see the twiki page
 
-module muonsTK = muons from "RecoMuon/MuonIdentification/data/globalMuons.cfi"
-replace muonsTK.inputMuonCollection = globalMuonsTK
-replace muonsTK.inputLinkCollection = globalMuonsTK
-module muonsFMS = muons from "RecoMuon/MuonIdentification/data/globalMuons.cfi"
-replace muonsFMS.inputMuonCollection = globalMuonsFMS
-replace muonsFMS.inputLinkCollection = globalMuonsFMS
-module muonsPMR = muons from "RecoMuon/MuonIdentification/data/globalMuons.cfi"
-replace muonsPMR.inputMuonCollection = globalMuonsPMR
-replace muonsPMR.inputLinkCollection = globalMuonsPMR
+module muonsTK = muons from "RecoMuon/MuonIdentification/data/muons.cfi"
+replace muonsTK.inputCollectionLabels = { globalMuonsTK }
+replace muonsTK.inputCollectionTypes = { "links" }
+module muonsFMS = muons from "RecoMuon/MuonIdentification/data/muons.cfi"
+replace muonsFMS.inputCollectionLabels = { globalMuonsFMS }
+replace muonsFMS.inputCollectionTypes = { "links" }
+module muonsPMR = muons from "RecoMuon/MuonIdentification/data/muons.cfi"
+replace muonsPMR.inputCollectionLabels = { globalMuonsPMR }
+replace muonsPMR.inputCollectionTypes = { "links" }
 
 sequence tevmuonreco = {globalMuonsTK, globalMuonsFMS, globalMuonsPMR, muonsTK, muonsFMS, muonsPMR}
 

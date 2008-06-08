@@ -72,7 +72,6 @@ CocktailMuonProducer::CocktailMuonProducer(const ParameterSet& cfg)
   ntrk = ngmr = nfms = npmr = ngpr = ntot = 0;
 
   produces<MuonCollection>();
-  produces<vector<int> >();
 }
 
 void CocktailMuonProducer::endJob() {

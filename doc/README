@@ -456,9 +456,15 @@ To check out the package:
    cvs co -rCMSSW_2_1_0_pre5 RecoMuon/TrackingTools
    cvs co -rCMSSW_2_1_0_pre5 RecoMuon/TransientTrackingRecHit
    cvs co -rCMSSW_2_1_0_pre5 TrackingTools/TrackRefitter
+   
+   # Patch the muon cocktails code into the 2_0_6 version of
+   # DataFormats/MuonReco.
+   cvs co -rCMSSW_2_0_6 DataFormats/MuonReco
+   cvs co -rV07-02-05 DataFormats/MuonReco/BuildFile
+   cvs co -rV07-02-05 DataFormats/MuonReco/interface/MuonCocktails.h
+   cp ~tucker/public/tevmu/MuonCocktails.cc DataFormats/MuonReco/src
 
-   # Compile the code, including the extra packages checked
-   # out. (Ignore the FWLite unit test failure.)
+   # Compile the code, including the extra packages checked out.
    eval `scramv1 runtime -csh`
    scramv1 b
 

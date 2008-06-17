@@ -14,9 +14,9 @@ muonCollections = [
     'muCandL2', # hltL2MuonCandidates
     'muCandL3', # hltL3MuonCandidates
     'muCandGR',
-    'muCandTK', # muonsTK
-    'muonsFMS',
-    'muonsPMR',
+    'muCandTK',
+    'muCandFS',
+    'muCandPR',
     'bestMuons'
     ]
 
@@ -55,11 +55,11 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                  useReco=True,
                                  usingAODOnly=False,
                                  useTrigger=False,
-                                 useOtherMuonRecos=False,
+                                 useOtherMuonRecos=True,
                                  useHEEPSelector=False,
                                  recoverBrem=True,
-                                 disableElectrons=False,
-                                 performTeVMuonReReco=False,
+                                 disableElectrons=True,
+                                 performTrackReReco=False,
                                  lumiForCSA07=0.,
                                  dumpHardInteraction=False,
                                  flavorsForDileptons=diMuons,
@@ -114,8 +114,8 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     "best" electrons. It requires quantities not in AOD, so it may
     need to be disabled via this flag.
 
-    performTeVMuonReReco: if set, run the extra TeV muon
-    re-reconstructors on-the-fly before running any analysis paths.
+    performTrackReReco: if set, re-run track, muon, and photon
+    reconstruction on-the-fly before running any analysis paths.
             
     useTrigger: whether to expect to be able to get trigger
     collections (i.e. those destined for L1-L3 rec levels) from the
@@ -227,7 +227,14 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             'Geometry', 'GlobalMuonTrajectoryBuilder', 'HCAL', 'Muon',
             'RecoMuon', 'setEvent', 'Starting', 'TrackProducer',
             'trajectories', 'DetLayers', 'RadialStripTopology',
-            'SiStripPedestalsFakeESSource', 'TrackingRegressionTest'
+            'SiStripPedestalsFakeESSource', 'TrackingRegressionTest',
+            'CaloExtractorByAssociator', 'CaloGeometryBuilder'
+            'CompositeTrajectoryFilterESProducer', 'NavigationSetter',
+            'SiStripPedestalsFakeESSource', 'TrajectoryFilterESProducer',
+            'ZDC', 'ZdcHardcodeGeometry', 'RunLumiMerging',
+            'TrackAssociator','RecoVertex/PrimaryVertexProducer',
+            'ConversionTrackCandidateProducer','GsfTrackProducer',
+            'PhotonProducer','TrackProducerWithSCAssociation'
             ),
         Zprime = cms.untracked.PSet(
             extension    = cms.untracked.string('.out'),
@@ -240,6 +247,11 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             'Zprime2muAsymmetry', 'Zprime2muMassReach',
             'Zprime2muBackgrounds', 'Zprime2muMatchStudy')
         )
+
+    # Temporarily silence an annoying module while multiple
+    # collections (HLT) are not implemented (but its warnings should
+    # be heeded when all collections are available).
+    process.MessageLogger.categories.append('storeMatchMap')
 
     # Instead of line after line of limit psets in Zprime above, set
     # them all here.
@@ -255,7 +267,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     
     #process.Tracer = cms.Service('Tracer')
     #process.SimpleMemoryCheck = cms.Service('SimpleMemoryCheck')
-
+    
     if useGen and lumiForCSA07 > 0:
         process.csa07EventWeightProducer = cms.EDProducer(
             'CSA07EventWeightProducer',
@@ -267,9 +279,9 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
 
         process.csa07 = cms.Path(process.csa07EventWeightProducer)
 
-    if performTeVMuonReReco:
-        process.include('SUSYBSMAnalysis/Zprime2muAnalysis/data/TeVMuonReReco.cff')
-        process.pReReco = cms.Path(process.TeVMuonReReco)
+    if performTrackReReco:
+        process.include('SUSYBSMAnalysis/Zprime2muAnalysis/data/TrackReReco.cff')
+        process.pReReco = cms.Path(process.trackReReco)
 
     if useGen and dumpHardInteraction:
         process.include("SimGeneral/HepPDTESSource/data/pythiapdt.cfi")
@@ -356,23 +368,58 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                    process.muCandL3)
         
     if useReco:
+        # Use the right collection of muons depending on whether we've
+        # done track re-reconstruction.
+        if performTrackReReco:
+            defaultMuons = 'muons2'
+            tevMuons = 'tevMuons2'
+        else:
+            defaultMuons = 'muons'
+            tevMuons = 'tevMuons'
+
         # Copy only the GlobalMuons from the default muon collection,
         # ignoring the TrackerMuons and CaloMuons for now.
         process.muCandGR = cms.EDProducer(
             'GlobalOnlyMuonProducer',
-            src              = cms.InputTag('muons'),
-            fromTrackerTrack = cms.bool(False)
+            src = cms.InputTag(defaultMuons)
             )
 
         # Make tracker-only reco::Muons out of the tracker tracks in
         # the muons collection.
         process.muCandTK = cms.EDProducer(
             'GlobalOnlyMuonProducer',
-            src              = cms.InputTag('muons'),
-            fromTrackerTrack = cms.bool(True)
+            src              = cms.InputTag(defaultMuons),
+            fromTrackerTrack = cms.untracked.bool(True)
             )
-    
-        process.pmuCandTK = cms.Path(process.muCandGR * process.muCandTK)
+
+        # Make first-muon-station (FMS) reco::Muons using the supplied
+        # TeV refit tracks.
+        process.muCandFS = cms.EDProducer(
+            'GlobalOnlyMuonProducer',
+            src           = cms.InputTag(defaultMuons),
+            tevMuonTracks = cms.untracked.string(tevMuons + ':firstHit') 
+            )
+
+        # Make picky-muon-reconstructor (PMR) reco::Muons using the
+        # supplied TeV refit tracks.
+        process.muCandPR = cms.EDProducer(
+            'GlobalOnlyMuonProducer',
+            src           = cms.InputTag(defaultMuons),
+            tevMuonTracks = cms.untracked.string(tevMuons + ':picky') 
+            )
+
+        # Use the official TeV muon cocktail code to pick the best
+        # muons using the supplied TeV refit tracks.
+        process.bestMuons = cms.EDProducer(
+            'GlobalOnlyMuonProducer',
+            src           = cms.InputTag(defaultMuons),
+            tevMuonTracks = cms.untracked.string(tevMuons),
+            fromCocktail  = cms.untracked.bool(True)
+            )
+        
+        process.pmuReco = cms.Path(process.muCandGR * process.muCandTK *
+                                   process.muCandFS * process.muCandPR *
+                                   process.bestMuons)
 
     ####################################################################
     ## Same for the electrons
@@ -562,22 +609,6 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             addToPath('seedMatch' + recLevels[irec] + recLevels[jrec], prod)
 
     ####################################################################
-    ## Pick the 'best' muons according to a cocktail (currently
-    ## implemented are Piotr's old cocktail and TMR), and match them
-    ## to the other rec levels.
-    ####################################################################
-
-    if useOtherMuonRecos:
-        process.bestMuons = cms.EDProducer(
-            'CocktailMuonProducer',
-            useTMR           = cms.bool(False),
-            trackerOnlyMuons = cms.InputTag(muons[lTK]),
-            toFMSMap         = cms.InputTag('seedMatchTKFS'),
-            toPMRMap         = cms.InputTag('seedMatchTKPR')
-            )
-        path.append('process.bestMuons')
-
-    ####################################################################
     ## Do all the closest-in-deltaR matching -- between each pair of
     ## rec levels (including MC), and between each rec level and
     ## reconstructed photons. 
@@ -623,7 +654,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             prod = cms.EDProducer(
                 'TrivialDeltaRViewMatcher',
                 src     = cms.InputTag(muons[rec]),
-                matched = cms.InputTag('correctedPhotons'),
+                matched = cms.InputTag('photons'),
                 distMin = cms.double(999)
                 )
             addToPath('photonMatch' + recLevels[rec], prod)
@@ -835,3 +866,30 @@ def attachAnalysis(process, name, isRecLevelAnalysis=False):
     analyzer = cms.EDAnalyzer(*args)
     setattr(process, name, analyzer)
     setattr(process, name + 'Path', cms.Path(getattr(process, name)))
+
+# Function to select a set of alignment constants. Useful when doing
+# track re-reconstruction.
+def selectAlignment(process,
+                    condTag='1PB_V2::All',
+                    tkRcd='TrackerAlignedGeometry200_s156_mc',
+                    tkErrRcd='TrackerIdealGeometryErrors200_v2'):
+    process.include('Configuration/StandardSequences/data/FrontierConditions_GlobalTag.cff')
+    process.include('CondCore/DBCommon/data/CondDBSetup.cfi')
+
+    process.GlobalTag.globaltag = condTag
+
+    trackerAlignment = cms.ESSource(
+        'PoolDBESSource',
+        process.CondDBSetup,
+        connect = cms.string('frontier://FrontierProd/CMS_COND_20X_ALIGNMENT'),
+        toGet = cms.VPSet(
+            cms.PSet(
+                record = cms.string('TrackerAlignmentRcd'),
+                tag = cms.string(tkRcd)
+                ),
+            cms.PSet(
+                record = cms.string('TrackerAlignmentErrorRcd'),
+                tag = cms.string(tkErrRcd)
+                )
+            )
+        )

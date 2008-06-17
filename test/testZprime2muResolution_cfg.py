@@ -9,33 +9,36 @@ from Zprime2muAnalysisCommon_cff import *
 from Zprime2muResolution_cfi import *
 
 files = [
-    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_100_11110001.root',
-    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_100_22220001.root',
-    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_100_33330001.root',
-    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_11110020.root',
-    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_11110300.root',
-    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_11114000.root',
-    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_22220020.root',
-    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_22220300.root',
-    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_22224000.root',
-    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_33330020.root',
-    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_33330300.root',
-    'rfio:/castor/cern.ch/user/p/pivarski/Zprime_206_FEVTSIM/Zprime1TeV_400_33334000.root'
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_1.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_2.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_3.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_4.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_5.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_6.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_7.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_8.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_9.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_10.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_11.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_12.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_13.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_14.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_15.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_16.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_17.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_18.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_19.root',
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_0_6/ZPSSMmumu_M1000_Mcut400/reco_20.root'
     ]
 
-process = makeZprime2muAnalysisProcess(files,
-                                       useHEEPSelector=False,
-                                       useTrigger=False,
-                                       useOtherMuonRecos=False,
-                                       recoverBrem=False,
-                                       disableElectrons=True)
-#   , doingElectrons=True,
-#   flavorsForDileptons=diElectrons)
-
+process = makeZprime2muAnalysisProcess(files) #, performTrackReReco=True)
+#selectAlignment(process)
 attachResolution(process)
 
 process.Zprime2muResolution.verbosity = 2
 process.Zprime2muResolution.dateHistograms = False
+
+#print process.dumpConfig()
 
 # Example of how to replace one of the parameter sets:
 '''

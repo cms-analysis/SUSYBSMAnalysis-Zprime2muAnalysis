@@ -47,7 +47,7 @@ l=e,mu). Some sample files are available at
 
 At the time this documentation was updated, the package has been fully
 tested to work with version 1_6_11 of CMSSW. The tag V00-02-01 should
-be used. (However, there is an experts' branch targeting CMSSW_2_0_6
+be used. (However, there is an experts' branch targeting CMSSW_2_0_8
 which can be checked out; see the section "CMSSW 2".) We have
 abandoned our private BaseMuon/Muon/DiMuon classes in favor of using
 directly the standard AnalysisTools classes (reco::Candidate and all
@@ -434,7 +434,7 @@ CMSSW 2
 -------
 
 With the help of Jim Pivarski, a branch of the code has been ported to
-CMSSW_2_0_6, with the extra TeV muon reconstructors from 2_1_Z
+CMSSW_2_0_8, with the extra TeV muon reconstructors from 2_1_Z
 included. See below for a recipe for checking out this branch of the
 code. For now, trigger collections are not implemented, nor are
 electrons.
@@ -444,8 +444,8 @@ Step-by-step instructions
 
 To check out the package:
 
-   scramv1 project CMSSW CMSSW_2_0_6
-   cd CMSSW_2_0_6/src
+   scramv1 project CMSSW CMSSW_2_0_8
+   cd CMSSW_2_0_8/src
 
    project CMSSW
    cvs co -r branch20X SUSYBSMAnalysis/Zprime2muAnalysis
@@ -457,9 +457,9 @@ To check out the package:
    cvs co -rCMSSW_2_1_0_pre5 RecoMuon/TransientTrackingRecHit
    cvs co -rCMSSW_2_1_0_pre5 TrackingTools/TrackRefitter
    
-   # Patch the muon cocktails code into the 2_0_6 version of
+   # Patch the muon cocktails code into the 2_0_8 version of
    # DataFormats/MuonReco.
-   cvs co -rCMSSW_2_0_6 DataFormats/MuonReco
+   cvs co -rCMSSW_2_0_8 DataFormats/MuonReco
    cvs co -rV07-02-05 DataFormats/MuonReco/BuildFile
    cvs co -rV07-02-05 DataFormats/MuonReco/interface/MuonCocktails.h
    cp ~tucker/public/tevmu/MuonCocktails.cc DataFormats/MuonReco/src

@@ -58,9 +58,13 @@ void HLTLeptonSanitizer<CollectionType>::produce(Event& event,
   if (!leptons.failedToGet())
     // Copy the existing one.
     *cands = *leptons;
-  else
-    edm::LogWarning("HLTLeptonSanitizer")
-      << "no collection " << src << " in event; producing empty collection";
+
+  // Fail silently to prevent spamming messages. The user will know when
+  // something is amiss from empty plots.
+
+  //else
+  //  edm::LogWarning("HLTLeptonSanitizer")
+  //    << "no collection " << src << " in event; producing empty collection";
 
   event.put(cands);
 }

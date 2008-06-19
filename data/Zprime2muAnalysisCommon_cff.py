@@ -10,7 +10,7 @@ for i, rec in enumerate(recLevels):
 # The InputTag names for the muon collections.
 muonCollections = [
     'muCandGN',
-    'muCandL1', # l1extraParticles
+    'muCandL1', # hltL1extraParticles
     'muCandL2', # hltL2MuonCandidates
     'muCandL3', # hltL3MuonCandidates
     'muCandGR',
@@ -62,6 +62,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                  performTrackReReco=False,
                                  lumiForCSA07=0.,
                                  dumpHardInteraction=False,
+                                 dumpTriggerSummary=False,
                                  flavorsForDileptons=diMuons,
                                  chargesForDileptons=oppSign,
                                  maxDileptons=1,
@@ -296,6 +297,13 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         
         process.ptree = cms.Path(process.printTree)
 
+    if useTrigger and dumpTriggerSummary:
+        process.trigAnalyzer = cms.EDAnalyzer(
+            'TriggerSummaryAnalyzerAOD',
+            inputTag = cms.InputTag('hltTriggerSummaryAOD')
+            )
+        process.ptrigAnalyzer = cms.Path(process.trigAnalyzer)
+    
     ####################################################################
     ## Make a CandidateCollection out of the GEANT tracks.
     ####################################################################
@@ -343,7 +351,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         # the bin edge to the bin center (an offset of 0.0218 rad).
         process.muCandL1 = cms.EDProducer(
             'L1MuonSanitizer',
-            src = cms.InputTag('l1extraParticles')
+            src = cms.InputTag('hltL1extraParticles')
             )
     
         # 'Sanitize' the L2 muons, i.e. in case there is no
@@ -455,8 +463,8 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         process.elCandL1 = cms.EDProducer(
             'CandViewMerger',
             src = cms.VInputTag(
-            cms.InputTag('l1extraParticles','NonIsolated'),
-            cms.InputTag('l1extraParticles','Isolated'))
+            cms.InputTag('hltL1extraParticles','NonIsolated'),
+            cms.InputTag('hltL1extraParticles','Isolated'))
             )
 
         # For electrons, the HLT makes its decision based off of the
@@ -470,22 +478,22 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         
         process.elCandL2NonIso = cms.EDProducer(
             'L2ElectronSanitizer',
-            src = cms.InputTag('l1NonIsoRecoEcalCandidate')
+            src = cms.InputTag('hltL1NonIsoRecoEcalCandidate')
             )
         
         process.elCandL2Iso = cms.EDProducer(
             'L2ElectronSanitizer',
-            src = cms.InputTag('l1IsoRecoEcalCandidate')
+            src = cms.InputTag('hltL1IsoRecoEcalCandidate')
             )
         
         process.elCandL3NonIso = cms.EDProducer(
             'L3ElectronSanitizer',
-            src = cms.InputTag('pixelMatchElectronsL1NonIsoForHLT')
+            src = cms.InputTag('hltPixelMatchElectronsL1NonIso')
             )
         
         process.elCandL3Iso = cms.EDProducer(
             'L3ElectronSanitizer',
-            src = cms.InputTag('pixelMatchElectronsL1IsoForHLT')
+            src = cms.InputTag('hltPixelMatchElectronsL1Iso')
             )
         
         process.elCandL2 = cms.EDProducer(
@@ -543,7 +551,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         ################################################################
         ## Input tags for trigger paths and particles.
         ################################################################
-        l1ParticleMap = cms.InputTag('l1extraParticleMap'),
+        l1GtObjectMap = cms.InputTag('hltL1GtObjectMap'),
         # Every process puts a TriggerResults product into the event;
         # pick the HLT one.
         hltResults = cms.InputTag('TriggerResults','','HLT')
@@ -856,6 +864,10 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     #print process.dumpConfig()
     return process
 
+########################################################################
+## Utility functions.
+########################################################################
+
 # Function to attach simple EDAnalyzers that don't need any
 # parameters. Allows skipping of making data/Zprime2mu*_cfi.py files.
 def attachAnalysis(process, name, isRecLevelAnalysis=False):
@@ -866,6 +878,22 @@ def attachAnalysis(process, name, isRecLevelAnalysis=False):
     analyzer = cms.EDAnalyzer(*args)
     setattr(process, name, analyzer)
     setattr(process, name + 'Path', cms.Path(getattr(process, name)))
+
+# Attach a PoolOutputModule to the process, by default dumping all
+# branches (useful for inspecting the file).
+def attachOutputModule(process, fileName='/scratchdisk1/tucker/out.root'):
+    process.out = cms.OutputModule(
+        'PoolOutputModule',
+        fileName = cms.untracked.string(fileName)
+        )
+    process.endp = cms.EndPath(process.out)
+
+# Return a list of files suitable for passing into a PoolSource,
+# obtained by globbing using the pattern passed in (which includes the
+# path to them).
+def poolAllFiles(pattern):
+    import glob
+    return ['file:%s' % x for x in glob.glob(pattern)]
 
 # Function to select a set of alignment constants. Useful when doing
 # track re-reconstruction.

@@ -67,20 +67,19 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   // Keep track of how many events we run over total.
   eventsDone++;
 
-  // Get the trigger decision from the event. If there was some funny
-  // business, print out the trigger collections.  For now, don't
-  // bother looking at sub-levels for electrons. Also, the AOD does
-  // not store the L2 path result separately, so ignore the sub-levels
-  // if we're running on AOD. JMTBAD For L2, we could take the result
-  // of TriggerTranslator()...
-  trigDecision.initEvent(event, doingElectrons || usingAODOnly);
+  // Get the trigger decision from the event. For now, don't bother
+  // looking at sub-levels since L2 decisions are no longer stored in
+  // the event. JMTBAD For L2, we could take the result of
+  // TriggerTranslator()...
+  trigDecision.initEvent(event);
 
   // Get the main dilepton collections: gen, HLT, default offline, and
   // "best" offline.
   if (useGen)
     event.getByLabel(genDils,  genDileptons);
-  if (useReco) {
+  if (useTrigger)
     event.getByLabel(hltDils,  hltDileptons);
+  if (useReco) {
     event.getByLabel(recDils,  recDileptons);
     event.getByLabel(bestDils, bestDileptons);
   }

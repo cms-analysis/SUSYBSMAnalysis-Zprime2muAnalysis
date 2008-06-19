@@ -61,9 +61,9 @@ bool RecLevelHelper::getLeptonsView(const edm::Event& event, int level,
     if (!warned[level]) {
       string inp = lepInputs[level].encode();
       // Don't bother to warn about collections that are supposed to be missing.
-      if (inp != ":") 
+      if (inp != ":" && inp != "") 
 	edm::LogWarning("initEvent")
-	  << "No event collection " << lepInputs[level]
+	  << "No event collection " << inp
 	  << " found at rec level " << level << "; skipping";
       warned[level] = true;
     }

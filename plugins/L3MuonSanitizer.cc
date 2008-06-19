@@ -35,7 +35,7 @@ L3MuonSanitizer::L3MuonSanitizer(const ParameterSet& cfg) {
 
 void L3MuonSanitizer::produce(Event& event,
 				  const EventSetup& eSetup) {
-  const double MASS = 0.10566;
+  static const double muMass = 0.10566;
 
   // Try to get the L3 muons from the event.
   Handle<MuonTrackLinksCollection> muons;
@@ -62,7 +62,7 @@ void L3MuonSanitizer::produce(Event& event,
 	Particle::Point vtx(theTrack->vx(), theTrack->vy(), theTrack->vz());
 	Particle::LorentzVector p4;
 	p4.SetXYZT(theTrack->px(), theTrack->py(), theTrack->pz(),
-		   sqrt(theTrack->p()*theTrack->p() + MASS*MASS));
+		   sqrt(theTrack->p()*theTrack->p() + muMass*muMass));
 	Muon mu(theTrack->charge(), p4, vtx);
 	mu.setCombined(theTrack);
 	mu.setTrack(tkTrack);
@@ -71,9 +71,13 @@ void L3MuonSanitizer::produce(Event& event,
       }
     }
   }
-  else
-    edm::LogWarning("L3MuonSanitizer")
-      << "no collection " << src << " in event; producing empty collection";
+  
+  // Fail silently to prevent spamming messages. The user will know when
+  // something is amiss from empty plots.
+
+  //else
+  //  edm::LogWarning("L3MuonSanitizer")
+  //    << "no collection " << src << " in event; producing empty collection";
 
   event.put(cands);
 }

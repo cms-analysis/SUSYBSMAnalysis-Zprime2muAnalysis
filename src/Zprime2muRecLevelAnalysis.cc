@@ -1,6 +1,6 @@
 #include "DataFormats/EgammaCandidates/interface/Electron.h"
 #include "DataFormats/EgammaCandidates/interface/ElectronFwd.h"
-#include "DataFormats/EgammaCandidates/interface/PixelMatchGsfElectron.h"
+#include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/EgammaReco/interface/SuperCluster.h"
 #include "DataFormats/L1Trigger/interface/L1MuonParticle.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
@@ -264,8 +264,8 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
 	   << "   p4 (p, E): " << cand->p4() << endl;
 
     if (doingElectrons && level > l3) {
-      const reco::PixelMatchGsfElectron& el =
-	toConcrete<reco::PixelMatchGsfElectron>(cand);
+      const reco::GsfElectron& el =
+	toConcrete<reco::GsfElectron>(cand);
       const reco::SuperClusterRef& sc = el.superCluster();
       output << "   Et: " << el.et() << "   Eta^{sc}: " << sc->eta()
 	     << "   El. classification: " << el.classification() << endl

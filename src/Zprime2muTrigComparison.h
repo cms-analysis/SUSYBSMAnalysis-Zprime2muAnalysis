@@ -18,7 +18,7 @@ class Zprime2muTrigComparison : public Zprime2muRecLevelAnalysis {
   // and return whether we judge the event to pass the trigger at this
   // level for this algorithm.
   bool TriggerTranslator(const std::string& algo, const unsigned int lvl, 
-			 const unsigned int nmu) const;
+			 const unsigned int nmu, std::ostream& out) const;
 
   // Use TriggerTranslator to compare the "official" decisions stored
   // by store*Decision with what we calculate.

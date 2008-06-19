@@ -60,6 +60,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                  recoverBrem=True,
                                  disableElectrons=True,
                                  performTrackReReco=False,
+                                 conditionsGlobalTag='IDEAL_V2::All',
                                  lumiForCSA07=0.,
                                  dumpHardInteraction=False,
                                  dumpTriggerSummary=False,
@@ -118,6 +119,10 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     performTrackReReco: if set, re-run track, muon, and photon
     reconstruction on-the-fly before running any analysis paths.
             
+    conditionsGlobalTag: if performing re-reconstruction on the fly,
+    this sets the globalTag for database conditions (e.g. alignment,
+    calibration, etc.)
+
     useTrigger: whether to expect to be able to get trigger
     collections (i.e. those destined for L1-L3 rec levels) from the
     file.
@@ -283,6 +288,9 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     if performTrackReReco:
         process.include('SUSYBSMAnalysis/Zprime2muAnalysis/data/TrackReReco.cff')
         process.pReReco = cms.Path(process.trackReReco)
+
+        process.include('Configuration/StandardSequences/data/FrontierConditions_GlobalTag.cff')
+        process.GlobalTag.globaltag = conditionsGlobalTag
 
     if useGen and dumpHardInteraction:
         process.include("SimGeneral/HepPDTESSource/data/pythiapdt.cfi")
@@ -897,27 +905,30 @@ def poolAllFiles(pattern):
 
 # Function to select a set of alignment constants. Useful when doing
 # track re-reconstruction.
-def selectAlignment(process,
-                    condTag='1PB_V2::All',
-                    tkRcd='TrackerAlignedGeometry200_s156_mc',
-                    tkErrRcd='TrackerIdealGeometryErrors200_v2'):
-    process.include('Configuration/StandardSequences/data/FrontierConditions_GlobalTag.cff')
+def setTrackerAlignment(process, connectString, tagTrackerAlignmentRcd, tagTrackerAlignmentErrorRcd):
     process.include('CondCore/DBCommon/data/CondDBSetup.cfi')
 
-    process.GlobalTag.globaltag = condTag
+    process.trackerAlignment = cms.ESSource('PoolDBESSource',
+                                            process.CondDBSetup,
+                                            connect = cms.string(connectString),
+                                            toGet = cms.VPSet(
+        cms.PSet(record = cms.string('TrackerAlignmentRcd'), tag = cms.string(tagTrackerAlignmentRcd)),
+        cms.PSet(record = cms.string('TrackerAlignmentErrorRcd'), tag = cms.string(tagTrackerAlignmentErrorRcd)),
+        ))
 
-    trackerAlignment = cms.ESSource(
-        'PoolDBESSource',
-        process.CondDBSetup,
-        connect = cms.string('frontier://FrontierProd/CMS_COND_20X_ALIGNMENT'),
-        toGet = cms.VPSet(
-            cms.PSet(
-                record = cms.string('TrackerAlignmentRcd'),
-                tag = cms.string(tkRcd)
-                ),
-            cms.PSet(
-                record = cms.string('TrackerAlignmentErrorRcd'),
-                tag = cms.string(tkErrRcd)
-                )
-            )
-        )
+    process.prefer("trackerAlignment")
+
+def setMuonAlignment(process, connectString, tagDTAlignmentRcd, tagDTAlignmentErrorRcd, tagCSCAlignmentRcd, tagCSCAlignmentErrorRcd):
+    process.include('CondCore/DBCommon/data/CondDBSetup.cfi')
+
+    process.muonAlignment = cms.ESSource('PoolDBESSource',
+                                         process.CondDBSetup,
+                                         connect = cms.string(connectString),
+                                         toGet = cms.VPSet(
+        cms.PSet(record = cms.string('DTAlignmentRcd'), tag = cms.string(tagDTAlignmentRcd)),
+        cms.PSet(record = cms.string('DTAlignmentErrorRcd'), tag = cms.string(tagDTAlignmentErrorRcd)),
+        cms.PSet(record = cms.string('CSCAlignmentRcd'), tag = cms.string(tagCSCAlignmentRcd)),
+        cms.PSet(record = cms.string('CSCAlignmentErrorRcd'), tag = cms.string(tagCSCAlignmentErrorRcd)),
+        ))
+
+    process.prefer("muonAlignment")

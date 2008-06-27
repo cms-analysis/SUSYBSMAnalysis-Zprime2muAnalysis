@@ -1,0 +1,29 @@
+HowTo:
+
+//----configure parameters in "Configure.C"
+
+//-  for Parameterizing
+root -l 
+.x NtupleBase.C+
+.x FakeMuonParameterizer.C+
+.q
+root -l
+.x NtupleBase.C+
+.L FakeMuonParameterizer_C.so
+FakeMuonParameterizer parameterizer
+parameterizer.Initialize()
+parameterizer.Loop()
+
+//- for Analyzing 
+root -l -q FakeMuonGenerator.cc+
+.x NtupleBase.C+
+.L FakeMuonGenerator_cc.so
+.x FakeMuonAnalyzer.C+
+.q
+root -l 
+.x NtupleBase.C+
+.L FakeMuonGenerator_cc.so
+.L FakeMuonAnalyzer_C.so
+FakeMuonAnalyzer analyzer
+analyzer.Initialize()
+analyzer.Loop() 

@@ -46,7 +46,7 @@ l=e,mu). Some sample files are available at
 /castor/cern.ch/user/t/tucker/CMSSW_1_6_7.
 
 At the time this documentation was updated, the package has been
-tested to work with version 1_6_11 of CMSSW. The tag V00-02-01 should
+tested to work with version 1_6_12 of CMSSW. The tag V00-02-01 should
 be used. We have abandoned our private BaseMuon/Muon/DiMuon classes in
 favor of using directly the standard AnalysisTools classes
 (reco::Candidate and all its derived classes, including those of the
@@ -434,8 +434,8 @@ Example session
 
 To check out the package:
 
-   scramv1 project CMSSW CMSSW_1_6_11
-   cd CMSSW_1_6_11/src
+   scramv1 project CMSSW CMSSW_1_6_12
+   cd CMSSW_1_6_12/src
 
    project CMSSW
    cvs co -r V00-02-01 SUSYBSMAnalysis/Zprime2muAnalysis

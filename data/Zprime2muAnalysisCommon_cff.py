@@ -59,6 +59,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                  useHEEPSelector=True,
                                  lumiForCSA07=0.,
                                  dumpHardInteraction=False,
+                                 strictGenDilepton=True,
                                  flavorsForDileptons=diMuons,
                                  chargesForDileptons=oppSign,
                                  maxDileptons=1,
@@ -121,6 +122,15 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     dumpHardInteraction: if True, use the (modified)
     ParticleListDrawer to dump the generator info on the hard
     interaction particles.
+
+    strictGenDilepton: if True, require the dilepton produced at gen
+    level to have leptons that have the same generated mother as
+    specified in the MC record (or, in the case of leptons that have
+    radiated photons, try to find the first non-lepton ancestor of
+    each and compare those). Set this to False for CompHEP or other
+    samples which do not have the resonance listed in the MC record;
+    the dilepton will then be constructed using final state muons in
+    the same way as for all the other rec levels.
     
     flavorsForDileptons: the pair of collections to be used for the
     "official" dileptons (i.e. those accessed by allDileptons in the
@@ -670,7 +680,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             # this enables us to get the reference to the original lepton
             # that makes up the dilepton we're looking at in the code.
             combiner = 'CandViewShallowCloneCombiner'
-            if i == 0:
+            if i == 0 and strictGenDilepton:
                 # At generator level, look only at the leptons which came
                 # from the resonance.
                 combiner = 'GenDil' + combiner
@@ -712,7 +722,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             prod = cms.EDProducer(
                 'DileptonPicker',
                 src          = cms.InputTag(rawname),
-                doingGen     = cms.bool(i == 0),
+                doingGen     = cms.bool(i == 0 and strictGenDilepton),
                 maxDileptons = cms.uint32(maxDileptons),
                 pdgIds       = cms.vint32(*pdgIds)
                 )
@@ -792,6 +802,10 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     #print process.dumpConfig()
     return process
 
+########################################################################
+## Utility functions.
+########################################################################
+
 # Function to attach simple EDAnalyzers that don't need any
 # parameters. Allows skipping of making data/Zprime2mu*_cfi.py files.
 def attachAnalysis(process, name, isRecLevelAnalysis=False):
@@ -802,3 +816,19 @@ def attachAnalysis(process, name, isRecLevelAnalysis=False):
     analyzer = cms.EDAnalyzer(*args)
     setattr(process, name, analyzer)
     setattr(process, name + 'Path', cms.Path(getattr(process, name)))
+
+# Attach a PoolOutputModule to the process, by default dumping all
+# branches (useful for inspecting the file).
+def attachOutputModule(process, fileName='/scratchdisk1/tucker/out.root'):
+    process.out = cms.OutputModule(
+        'PoolOutputModule',
+        fileName = cms.untracked.string(fileName)
+        )
+    process.endp = cms.EndPath(process.out)
+
+# Return a list of files suitable for passing into a PoolSource,
+# obtained by globbing using the pattern passed in (which includes the
+# path to them).
+def poolAllFiles(pattern):
+    import glob
+    return ['file:%s' % x for x in glob.glob(pattern)]

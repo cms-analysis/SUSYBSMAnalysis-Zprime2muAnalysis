@@ -1,0 +1,3 @@
+source SETENV_ROOT.csh
+root -l ZprimeMassRooFit.C
+root -l DrawPulls.C

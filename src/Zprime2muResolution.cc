@@ -918,7 +918,7 @@ void Zprime2muResolution::calcResolution(const bool debug) {
 	    const reco::Muon& mu
 	      = toConcrete<reco::Muon>(dileptonDaughter(*pdi, ilep));
 	    if (mu.isIsolationValid())
-	      SumPtR03[i_rec][1]->Fill(mu.isolationR03().sumPt);
+	      SumPtR03[i_rec][1]->Fill(mu.getIsolationR03().sumPt);
 	  }
 
 	if (debug) {
@@ -1485,7 +1485,7 @@ void Zprime2muResolution::fillMuonHistos(const int rec, const bool debug) {
     if (!doingElectrons && rec >= lgmr) {
       const reco::Muon& mu = toConcrete<reco::Muon>(lep);
       if (mu.isIsolationValid())
-	SumPtR03[rec][0]->Fill(mu.isolationR03().sumPt);
+	SumPtR03[rec][0]->Fill(mu.getIsolationR03().sumPt);
     }
 
     if (debug)

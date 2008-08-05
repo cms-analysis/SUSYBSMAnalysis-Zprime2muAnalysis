@@ -47,7 +47,7 @@ void L3MuonSanitizer::produce(Event& event,
   }
 
   // make the output collection
-  auto_ptr<reco::MuonCollection> cands(new reco::MuonCollection);
+  auto_ptr<MuonCollection> cands(new MuonCollection);
 
   if (ok && !muons.failedToGet()) {
     MuonTrackLinksCollection::const_iterator muon;
@@ -68,10 +68,10 @@ void L3MuonSanitizer::produce(Event& event,
 	Particle::LorentzVector p4;
 	p4.SetXYZT(theTrack->px(), theTrack->py(), theTrack->pz(),
 		   sqrt(theTrack->p()*theTrack->p() + MASS*MASS));
-	reco::Muon mu(theTrack->charge(), p4, vtx);
-	mu.setGlobalTrack(theTrack);
-	mu.setInnerTrack(tkTrack);
-	mu.setOuterTrack(muTrack);
+	Muon mu(theTrack->charge(), p4, vtx);
+	mu.setCombined(theTrack);
+	mu.setTrack(tkTrack);
+	mu.setStandAlone(muTrack);
 	cands->push_back(mu);
       }
     }

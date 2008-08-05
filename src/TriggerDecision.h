@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "DataFormats/L1Trigger/interface/L1ParticleMap.h"
-#include "DataFormats/L1Trigger/interface/L1ParticleMapFwd.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"

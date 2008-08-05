@@ -6,7 +6,6 @@
 #include <string>
 #include <vector>
 
-#include <TROOT.h>
 #include "TBranch.h"
 #include "TCanvas.h"
 #include "TF1.h"
@@ -688,7 +687,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 	// dimuon information.  This will be used for obtaining sigmas used
 	// in convolutions for asymmetry fits.
 	if (n_dil == n_gen) {      
-	  const reco::CompositeCandidate& rec_dil = bestDileptons->at(i_dil);
+	  const reco::Candidate& rec_dil = bestDileptons->at(i_dil);
 	  const reco::CandidateBaseRef& rec_mum = 
 	    dileptonDaughterByCharge(rec_dil, -1);
 	  const reco::CandidateBaseRef& rec_mup = 
@@ -732,7 +731,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
   // Now loop over all reconstructed dimuons and store those to be fitted
   // (which lie inside desired reconstructed window).
   for (unsigned int i_dil = 0; i_dil < n_dil; i_dil++) {
-    const reco::CompositeCandidate& rec_dil = bestDileptons->at(i_dil);
+    const reco::Candidate& rec_dil = bestDileptons->at(i_dil);
     if (rec_dil.mass() > asymFitManager.fit_win(0) &&
 	rec_dil.mass() < asymFitManager.fit_win(1)) {
       if (nfit_used[0] == FIT_ARRAY_SIZE - 1)

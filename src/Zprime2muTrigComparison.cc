@@ -3,8 +3,6 @@
 #include "DataFormats/L1Trigger/interface/L1ParticleMap.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "DataFormats/L1Trigger/interface/L1MuonParticle.h"
-#include "DataFormats/L1Trigger/interface/L1MuonParticleFwd.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muTrigComparison.h"
 

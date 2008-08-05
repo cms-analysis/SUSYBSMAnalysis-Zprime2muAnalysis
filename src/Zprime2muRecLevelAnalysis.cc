@@ -1,14 +1,12 @@
 #include "DataFormats/EgammaCandidates/interface/Electron.h"
 #include "DataFormats/EgammaCandidates/interface/ElectronFwd.h"
-#include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
+#include "DataFormats/EgammaCandidates/interface/PixelMatchGsfElectron.h"
 #include "DataFormats/EgammaReco/interface/SuperCluster.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidateFwd.h"
 #include "DataFormats/TrackReco/interface/HitPattern.h"
 #include "DataFormats/TrackReco/interface/Track.h"
-#include "DataFormats/L1Trigger/interface/L1MuonParticle.h"
-#include "DataFormats/L1Trigger/interface/L1MuonParticleFwd.h"
 
 #include "FWCore/Utilities/interface/Exception.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
@@ -172,7 +170,7 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
       tktrk = &*lep.track();
       statrk = &*lep.standAloneMuon();
       const reco::Muon& mu = toConcrete<reco::Muon>(cand);
-      if (mu.isIsolationValid()) sumptr03 = mu.isolationR03().sumPt;
+      if (mu.isIsolationValid()) sumptr03 = mu.getIsolationR03().sumPt;
     }
     
     output << " Phi: "      << setw(8) << setprecision(4) << cand->phi()
@@ -260,8 +258,8 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
 	   << "   p4 (p, E): " << cand->p4() << endl;
 
     if (doingElectrons && level > l3) {
-      const reco::GsfElectron& el =
-	toConcrete<reco::GsfElectron>(cand);
+      const reco::PixelMatchGsfElectron& el =
+	toConcrete<reco::PixelMatchGsfElectron>(cand);
       const reco::SuperClusterRef& sc = el.superCluster();
       output << "   Et: " << el.et() << "   Eta^{sc}: " << sc->eta()
 	     << "   El. classification: " << el.classification() << endl

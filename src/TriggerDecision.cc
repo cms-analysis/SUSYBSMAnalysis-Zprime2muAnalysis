@@ -1,5 +1,7 @@
 #include "DataFormats/Common/interface/TriggerResults.h"
-#include "DataFormats/HLTReco/interface/HLTFilterObject.h"
+#include "DataFormats/HLTReco/interface/TriggerFilterObjectWithRefs.h"
+#include "DataFormats/HLTReco/interface/TriggerRefsCollections.h"
+#include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
 
 #include "FWCore/Framework/interface/TriggerNames.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -139,7 +141,7 @@ bool TriggerDecision::storeHLTDecision(const edm::Event& event,
     unsigned int trigbits = 0;
     for (unsigned int ipath = 0; ipath < hltModules[lvl].size(); ipath++) {
       const string& trigName = hltModules[lvl][ipath];
-      edm::Handle<reco::HLTFilterObjectWithRefs> hltFilterObjs;
+      edm::Handle<trigger::TriggerFilterObjectWithRefs> hltFilterObjs;
 
       bool fired = true;
       unsigned failAt = 0;
@@ -157,7 +159,7 @@ bool TriggerDecision::storeHLTDecision(const edm::Event& event,
       const unsigned minNMuons = ipath + 1;
       unsigned nmu = 0;
       if (fired) {
-	nmu = hltFilterObjs->size();
+	nmu = hltFilterObjs->muonIds().size(); //FIXME
 	if (nmu < minNMuons) {
 	  fired = false;
 	  failAt = 2;
@@ -173,15 +175,17 @@ bool TriggerDecision::storeHLTDecision(const edm::Event& event,
 
 	if (debug) {
 	  out << "  " << trigName << " filter result muons:\n";
-	  reco::HLTFilterObjectWithRefs::const_iterator muItr;
+          trigger::VRmuon hltFilterObjs_muon = hltFilterObjs->muonRefs();
+
+	  trigger::VRmuon::const_iterator muItr;
 	  int imu = 0;
-	  for (muItr = hltFilterObjs->begin(); muItr != hltFilterObjs->end();
+	  for (muItr = hltFilterObjs_muon.begin(); muItr != hltFilterObjs_muon.end();
 	       muItr++) {
-	    out << "    #" << imu++ << " q = " << muItr->charge()
-		<< " p = (" << muItr->px() << ", " << muItr->py()
-		<< ", " << muItr->pz() << ", " << muItr->energy() << ")\n"
-		<< "     pt = " << muItr->pt() << " eta = " << muItr->eta()
-		<< " phi = " << muItr->phi() << endl;
+	    cout << "    #" << imu++ << " q = " << (*muItr)->charge()
+		<< " p = (" << (*muItr)->px() << ", " << (*muItr)->py()
+		<< ", " << (*muItr)->pz() << ", " << (*muItr)->energy() << ")\n"
+		<< "     pt = " << (*muItr)->pt() << " eta = " << (*muItr)->eta()
+		<< " phi = " << (*muItr)->phi() << endl;
 	  }
 	}
       }

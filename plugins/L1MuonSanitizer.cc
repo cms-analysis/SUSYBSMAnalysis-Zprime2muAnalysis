@@ -6,6 +6,7 @@
 
 #include "DataFormats/Candidate/interface/Particle.h"
 #include "DataFormats/L1Trigger/interface/L1MuonParticle.h"
+#include "DataFormats/L1Trigger/interface/L1MuonParticleFwd.h"
 
 using namespace std;
 using namespace edm;
@@ -33,7 +34,7 @@ private:
 
 L1MuonSanitizer::L1MuonSanitizer(const ParameterSet& cfg) {
   src = cfg.getParameter<InputTag>("src");
-  produces<L1MuonParticleCollection>();
+  produces<l1extra::L1MuonParticleCollection>();
 }
 
 void L1MuonSanitizer::produce(Event& event,

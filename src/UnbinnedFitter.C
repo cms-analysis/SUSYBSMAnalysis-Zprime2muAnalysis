@@ -7,6 +7,7 @@
 #include <fstream>
 
 #include "TF1.h"
+#include "TMath.h"
 #include "TFMultiD.h"
 #include "TROOT.h"
 

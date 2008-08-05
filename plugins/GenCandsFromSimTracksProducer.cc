@@ -57,7 +57,7 @@ void GenCandsFromSimTracksProducer::produce(Event& event,
       int pythiaInd = isimtrk->genpartIndex();
       if (pythiaInd != -1) continue; // Skip PYTHIA tracks.
 
-      const CLHEP::HepLorentzVector& pmu = isimtrk->momentum();
+      const math::XYZTLorentzVectorD& pmu = isimtrk->momentum();
 
       // Make up a GenParticleCandidate from the GEANT track info.
       int charge = static_cast<int>(isimtrk->charge());
@@ -65,7 +65,7 @@ void GenCandsFromSimTracksProducer::produce(Event& event,
       p4.SetXYZT(pmu.x(), pmu.y(), pmu.z(), pmu.t());
       Particle::Point vtx; // = (0,0,0) by default
       if (!isimtrk->noVertex()) {
-	const CLHEP::HepLorentzVector& v
+	const math::XYZTLorentzVectorD& v
 	  = (*simvertices)[isimtrk->vertIndex()].position();
 	vtx = v;
       }

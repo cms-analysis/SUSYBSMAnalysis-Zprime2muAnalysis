@@ -32,9 +32,9 @@ namespace reco {
     };
 
     typedef CandCombiner<
-      reco::CandidateView,
+//      reco::CandidateView,
       StringCutObjectSelector<reco::Candidate>,
-      reco::CompositeCandidateCollection,
+//      reco::CompositeCandidateCollection,
       GenDilPairSelector,
       combiner::helpers::ShallowClone
       > GenDilCandViewShallowCloneCombiner;

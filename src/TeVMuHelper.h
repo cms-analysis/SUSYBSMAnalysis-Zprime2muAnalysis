@@ -35,7 +35,7 @@ public:
     if (muon != 0) {
       // Sum pT in cone of dR=0.3 cut
       if ((cutMask & ISO) && muon->isIsolationValid() &&
-	  muon->getIsolationR03().sumPt > isoCut)
+	  muon->isolationR03().sumPt > isoCut)
 	retval |= ISO;
       
       const reco::TrackRef& tk = muon->combinedMuon();

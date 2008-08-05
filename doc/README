@@ -480,6 +480,8 @@ both 2_0_12 and 2_1_0:
 
    eval `scramv1 runtime -csh`
    scramv1 b
+   # ignore deprecation warnings about setTrack/setCombined/etc.,
+   # they are a necessary evil until support for 2_0_X is dropped.
 
 To run:
 

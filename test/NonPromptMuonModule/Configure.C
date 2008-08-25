@@ -7,7 +7,7 @@ Double_t _MaxJetEta= 2.5; // - - mamimum jet eta to produce a fake muon , havn't
 Double_t _MinMuonPt = 20; // - - consistence cut with TeV Muon 2007 effort
 Double_t _MaxMuonEta = 2.4 ; //--- in muon system's acceptance
 Int_t _MinNumberOfJetsAboveThreshold = 2;// - - How many jets required to selected events
-Bool_t _ifRunOnGumboSoup = true; // extract dijets
+Bool_t _ifRunOnGumboSoup = false; // extract dijets
 //Bool_t _ifTakeIntoAccountWeight = false;// evt weight
 Int_t _TakeHalfEvents = 0; //0-all; 1- odd to para, even to analyze; 2- odd to analyze, even to para 
 Bool_t _ifApplyLikelihoodRatioCut = false; //
@@ -34,7 +34,7 @@ Bool_t _ifTakeIntoAccountWeight_Parameterizing = false;// evt weight
 // - - - -analyzing
 Bool_t _OppositeSign = true; // 
 Bool_t _ifSkipTwoMuonsAssociatedWithTheSameJet = true;
-Double_t _DeltaRCutForTwoMuons = 0.0;
+Double_t _DeltaRCutForTwoMuons = 0;
 Bool_t _SkipMuonsWhosePAboveThreshold = true;
 Double_t _MaxMuonP = 6000.;
 TString _InputFileToDoAnalyzing = "/data/0b/mschen/CSA07/FullSim100pb/Gumbo_Test.root";
@@ -43,6 +43,15 @@ Int_t _FakeMuonGeneratorSeed = 1000;
 TString _OutputFileComparison = "DijetsPredObsv.root";
 Bool_t _ifTakeIntoAccountWeight_Analyzing = false;// evt weight
 
+Bool_t _ifRunOnWmunuJetsSample = true;
+Bool_t _TestOnEventsWithMassOnWtmPeak = true;
+Float_t _WBosonTMass = 75.;
+Float_t _WBosonTMassWindow = 30;
+
+Bool_t _ifRunOnZmumuJetsSample = false;
+Bool_t _TestOnEventsWithMassOnZPeak = false;
+Float_t _ZBosonMass = 91.2;
+Float_t _ZBosonMassWindow = 5.;
 
 //-- CSA07 QCD Dijets weights ~100/pb
 // - - - QCD Dijets pt-hats can be a discriminant

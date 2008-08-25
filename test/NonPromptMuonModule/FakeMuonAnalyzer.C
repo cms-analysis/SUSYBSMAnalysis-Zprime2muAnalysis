@@ -65,6 +65,9 @@ void FakeMuonAnalyzer::Loop(TString s_output, Long64_t entryToStart , Long64_t e
 	myGenerator = new FakeMuonGenerator(_FakeMuonGeneratorSeed);
 	myGenerator->Initialize(_InputFileParameterizedHistos);
 
+	if(_ifRunOnWmunuJetsSample) _gRandom . SetSeed(1300);
+
+
 	cout<<"Intialize done..."<<endl;
 
 	Long64_t nentries = fChain->GetEntriesFast();
@@ -121,6 +124,13 @@ void FakeMuonAnalyzer::Loop(TString s_output, Long64_t entryToStart , Long64_t e
 		if (numOfJetsWithPtLargerThan20GeV< _MinNumberOfJetsAboveThreshold) continue;
 
 		Double_t EventWeight = evtWeight;
+
+
+
+		if(_ifRunOnZmumuJetsSample && _TestOnEventsWithMassOnZPeak)
+			if(!KeepEventsWithMassOnZPeak(jentry)) continue;
+		if(_ifRunOnWmunuJetsSample && _TestOnEventsWithMassOnWtmPeak)
+			if(!KeepEventsWithTMassOnWtmPeak(jentry)) continue;
 		GetPredictedDistributions(jentry, EventWeight);	
 		GetObservedDistributions(jentry, EventWeight);
 
@@ -159,7 +169,433 @@ void FakeMuonAnalyzer::GetPredictedDistributions( Long64_t jentry, double EventW
 	}
 	if(_Debug)cout<<blahs.size()<<" fake muons produced."<<endl;
 
+	if(_ifRunOnZmumuJetsSample) 
+	{
+		//int promptMuon = GetRandomPromptMuon(jentry);
+		vector<int> promptmuons = GetPromptMuonsFromZPeak(jentry);
+		for(int i=0; i<(int)promptmuons.size(); i++)
+		{
+			int promptMuon = promptmuons[i];
+			if(promptMuon >=0 && promptMuon < gmrSize ) 
+			{
+				FakeMuonGenerator::fakeMuon tmp; 
+				tmp.pt = (*gmrPt )[promptMuon];
+				tmp.p  = (*gmrP  )[promptMuon];
+				tmp.phi= (*gmrPhi)[promptMuon];
+				tmp.eta= (*gmrEta)[promptMuon];
+				tmp.charge=(*gmrCharge)[promptMuon];
+				tmp.weight = 1;
+				blahs.push_back(tmp);
+			}
+		}
+		/*
+		   int promptMuon = GetMaxPtPromptMuon(jentry, -1);
+		   if(promptMuon >=0 && promptMuon < gmrSize ) 
+		   {
+		   FakeMuonGenerator::fakeMuon tmp; 
+		   tmp.pt = (*gmrPt )[promptMuon];
+		   tmp.p  = (*gmrP  )[promptMuon];
+		   tmp.phi= (*gmrPhi)[promptMuon];
+		   tmp.eta= (*gmrEta)[promptMuon];
+		   tmp.charge=(*gmrCharge)[promptMuon];
+		   tmp.weight = 1;
+		   blahs.push_back(tmp);
+		   int secondPromptMuon = GetMaxPtPromptMuon(jentry, promptMuon);
+		   if(secondPromptMuon>=0 && secondPromptMuon < gmrSize)
+		   {
+		   FakeMuonGenerator::fakeMuon tmp2;
+		   tmp2.pt = (*gmrPt )[secondPromptMuon];
+		   tmp2.p  = (*gmrP  )[secondPromptMuon];
+		   tmp2.phi= (*gmrPhi)[secondPromptMuon];
+		   tmp2.eta= (*gmrEta)[secondPromptMuon];
+		   tmp2.charge=(*gmrCharge)[secondPromptMuon];
+		   tmp2.weight = 1;
+		   blahs.push_back(tmp2);
+		   }
+		   }
+		//else {return;}
+		 */
+	}
+	if(_ifRunOnWmunuJetsSample) 
+	{
+		//int promptMuon = GetRandomPromptMuon(jentry);
+		//int promptMuon = GetMaxPtPromptMuon(jentry, -1);
+		int promptMuon = GetPromptMuonFromWtmPeak(jentry);
+		if(promptMuon >=0 && promptMuon < gmrSize ) 
+		{
+			FakeMuonGenerator::fakeMuon tmp; 
+			tmp.pt = (*gmrPt )[promptMuon];
+			tmp.p  = (*gmrP  )[promptMuon];
+			tmp.phi= (*gmrPhi)[promptMuon];
+			tmp.eta= (*gmrEta)[promptMuon];
+			tmp.charge=(*gmrCharge)[promptMuon];
+			tmp.weight = 1;
+			blahs.push_back(tmp);
+		}
+		//else {return;}
+	}
+
 	FillPredictedHists(blahs, EventWeight);
+}
+bool FakeMuonAnalyzer::AcceptedMuon(Long64_t jentry, int muonIndex)
+{
+	fChain->GetEntry(jentry);
+	bool accept = true;
+	double glbpt = (*gmrPt)[muonIndex];   		
+	double glbp = (*gmrP)[muonIndex];   		
+	double glbeta =(*gmrEta)[muonIndex]; 
+	double glbphi =(*gmrPhi)[muonIndex]; 
+	double glbdxy = (*gmrDXY)[muonIndex];
+	double glbiso03sumpt = (*gmrIso03sumPt)[muonIndex];
+	if(glbpt <_MinMuonPt) return false; 
+	if(fabs(glbeta) > _MaxMuonEta ) return false;
+	if( _ifApplyImpactParCut &&  fabs(glbdxy) > _MaxDxy ) return false;
+	if( _ifApplyIsolationCut && glbiso03sumpt > _MaxIso03sumPt ) return false;
+	if(_SkipMuonsWhosePAboveThreshold && glbp> _MaxMuonP ) return false;
+	if( Use_Likelihood && _ifApplyLikelihoodRatioCut ) 
+	{
+		Bool_t passLikelihood1 = false;
+		double llr1	= GetLikelihoodRatio( glbiso03sumpt, glbdxy, fDxyS, fDxyB, fIsoSumPtS, fIsoSumPtB );
+		passLikelihood1 = (llr1 >= ResponseCut_Likelihood );
+		if(!passLikelihood1) return false;
+	}
+	return accept;
+}
+bool FakeMuonAnalyzer::KeepEventsWithTMassOnWtmPeak(Long64_t jentry)
+{
+	float WBosonTMass = _WBosonTMass; //GeV/cc
+	float MaxDeltaMass = _WBosonTMassWindow;
+	// CUTs
+	//http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/CMSSW/ElectroWeakAnalysis/WMuNu/data/WMuNuSel_16x.cff?revision=1.1&view=markup
+	//code inspired 
+	//http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/CMSSW/ElectroWeakAnalysis/WMuNu/plugins/WMuNuAnalyzer.cc?revision=1.1&view=markup
+	fChain->GetEntry(jentry);
+
+	double _PtThrForZCount = 20. ;
+	double _PtCut = 25.;
+	double _EtaCut = 2.0;
+	double _IsoCut = 3.0; //IsoCone = 0.3
+	double _MassTMin = 50.;
+	double _MassTMax = 200.;
+	double _EJetMin = 40.;
+	int	   _NJetMax = 3;
+	double _AcopCut = 1.0;
+
+	bool _IfSkipZEvents = true;
+
+	double pt_sel[5];
+	double eta_sel[5];
+	double acop_sel[5];
+	double massT_sel[5];
+	double iso_sel[5];
+	double isoN_sel[5];
+
+	bool event_sel = true;
+
+	double met_px =0;
+	double met_py =0;
+
+	met_px += (*metPx)[0];
+	met_py += (*metPy)[0];
+	for(int m1 =0; m1< gmrSize; m1++ )
+	{
+		double glbpx = (*gmrPx)[m1];   		
+		double glbpy = (*gmrPy)[m1];   		
+		met_px -= glbpx;
+		met_py -= glbpy;
+	}
+	double met_et = sqrt(met_px*met_px+met_py*met_py);
+
+	int njets = 0;
+	for (int j=0; j < jetSize; j++) {
+		if ((*jetEt)[j]>_EJetMin) njets++;
+	}
+	if (njets>_NJetMax) event_sel = false;
+
+	unsigned int nmuons = 0;
+	unsigned int nmuonsForZ = 0;
+
+
+	double max_pt = -9999.;
+	int i_max_pt = 0;
+
+	for(int m1 =0; m1< gmrSize; m1++ )
+	{
+		bool muon_sel = true;
+
+		// pt
+		double glbpt = (*gmrPt)[m1];   		
+		if (glbpt>_PtThrForZCount) nmuonsForZ++;
+		if (glbpt<_PtCut) muon_sel = false;
+
+		// eta
+		double glbeta = (*gmrEta)[m1];   		
+		if (fabs(glbeta)>_EtaCut) muon_sel = false;
+
+		// acoplanarity
+		//http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/CMSSW/DataFormats/GeometryVector/interface/Phi.h?revision=1.1&view=markup
+		double glbphi = (*gmrPhi)[m1];   		
+		double deltaphi = glbphi-atan2(met_py,met_px);
+		if( deltaphi > 2*M_PI ) deltaphi -= 2*M_PI;
+		if( deltaphi < -2*M_PI) deltaphi += 2*M_PI;
+		if (deltaphi <= -M_PI) deltaphi += 2*M_PI;
+		if (deltaphi >  M_PI) deltaphi -= 2*M_PI;
+		double acop = deltaphi;
+		if (acop<0) acop = - acop;
+		acop = M_PI - acop;
+		if (acop>_AcopCut) muon_sel = false;
+
+		// transverse mass
+		double glbpx = (*gmrPx)[m1];   		
+		double glbpy = (*gmrPy)[m1];   		
+		double w_et  = glbpt + met_et;
+		double w_px  = glbpx + met_px;
+		double w_py  = glbpy + met_py;
+		double massT = 0;
+		massT = w_et*w_et - w_px*w_px - w_py*w_py;
+		massT = (massT>0) ? sqrt(massT) : 0;
+		//	if (massT<_MassTMin) muon_sel = false;
+		//	if (massT>_MassTMax) muon_sel = false;
+
+		//---FIXME
+		float tmpDeltaMass = fabs(massT - WBosonTMass);
+		if( (tmpDeltaMass < MaxDeltaMass) )
+		{
+			return true;
+		}
+
+		// Isolation
+		double glbiso = (*gmrIso03sumPt)[m1];
+		if(glbiso >= _IsoCut) muon_sel = false;
+
+		if(muon_sel)
+		{
+			nmuons++;
+			if (glbpt > max_pt)
+			{  //and identify the highest pt muon
+				max_pt = glbpt;
+				i_max_pt = nmuons;
+			}
+			pt_sel[nmuons] = glbpt;
+			eta_sel[nmuons] = glbeta;
+			acop_sel[nmuons] = acop;
+			massT_sel[nmuons] = massT;
+			iso_sel[nmuons] = glbiso;
+			isoN_sel[nmuons] = glbiso/glbpt;
+		}
+	}
+
+	//FIXME 
+	return false;
+
+	if (nmuonsForZ>=2 && _IfSkipZEvents) {
+		event_sel = false;
+	}
+	if (nmuons<1) {
+		event_sel = false;
+	}
+
+	if ( !((*l1Results)[0] && (*hltResults)[1] ))
+	{
+		event_sel = false;
+	}
+
+}
+bool FakeMuonAnalyzer::KeepEventsWithMassOnZPeak(Long64_t jentry)
+{
+	float ZBosonMass = _ZBosonMass; //GeV/cc
+	float MaxDeltaMass = _ZBosonMassWindow;
+	fChain->GetEntry(jentry);
+	TLorentzVector vmu1, vmu2, vmm; // LorentzVectors for mu+ mu- 
+	for(int i=0; i<gmrSize; i++)
+	{
+		if ( !AcceptedMuon(jentry, i)) continue;
+		double glbeta1 = (*gmrEta)[i]; 
+		double glbphi1 = (*gmrPhi)[i];
+		double glbpt1 = (*gmrPt)[i];   		
+		double glbcharge1 = (*gmrCharge)[i];   		
+		vmu1.SetPtEtaPhiM(glbpt1, glbeta1, glbphi1, MUMASS);
+		for(int j=i+1; j<gmrSize; j++)
+		{
+			if ( !AcceptedMuon(jentry, j)) continue;
+			double glbeta2 = (*gmrEta)[j]; 
+			double glbphi2 = (*gmrPhi)[j];
+			double glbpt2 = (*gmrPt)[j];   		
+			double glbcharge2 = (*gmrCharge)[j];   		
+			if(glbcharge1 == glbcharge2) continue;
+			vmu2.SetPtEtaPhiM(glbpt2, glbeta2, glbphi2, MUMASS);
+			vmm = vmu1 + vmu2;		
+			float tmpDeltaMass = fabs(vmm.M() - ZBosonMass);
+			// FIXME
+			if( (tmpDeltaMass < MaxDeltaMass) )
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+vector<int> FakeMuonAnalyzer::GetPromptMuonsFromZPeak(Long64_t jentry)
+{
+	fChain->GetEntry(jentry);
+	float ZBosonMass = 91.2; //GeV/cc
+	float MinZBosonMass = 70. ;
+	float MaxZBosonMass = 110.;
+	float MaxDeltaMass =  60;
+	vector<int> promptmuons ; 
+	promptmuons.clear();
+	int prompt1 = -1; 
+	int prompt2 = -1;
+	float minDeltaMass = 999999.;
+
+	int n_acceptedmuons = 0;
+	for(int i=0; i<gmrSize; i++)
+	{
+		if ( !AcceptedMuon(jentry, i)) continue;
+		n_acceptedmuons++;
+	}
+	if(n_acceptedmuons <=1 )
+	{
+		for(int i=0; i<gmrSize; i++)
+		{
+			if ( !AcceptedMuon(jentry, i)) continue;
+			promptmuons.push_back(i);
+		}
+	}
+	else 
+	{
+		TLorentzVector vmu1, vmu2, vmm; // LorentzVectors for mu+ mu- 
+		for(int i=0; i<gmrSize; i++)
+		{
+			if ( !AcceptedMuon(jentry, i)) continue;
+			double glbeta1 = (*gmrEta)[i]; 
+			double glbphi1 = (*gmrPhi)[i];
+			double glbpt1 = (*gmrPt)[i];   		
+			double glbcharge1 = (*gmrCharge)[i];   		
+			vmu1.SetPtEtaPhiM(glbpt1, glbeta1, glbphi1, MUMASS);
+			for(int j=i+1; j<gmrSize; j++)
+			{
+				if ( !AcceptedMuon(jentry, j)) continue;
+				double glbeta2 = (*gmrEta)[j]; 
+				double glbphi2 = (*gmrPhi)[j];
+				double glbpt2 = (*gmrPt)[j];   		
+				double glbcharge2 = (*gmrCharge)[j];   		
+				if(glbcharge1 == glbcharge2) continue;
+				vmu2.SetPtEtaPhiM(glbpt2, glbeta2, glbphi2, MUMASS);
+				vmm = vmu1 + vmu2;		
+				float tmpDeltaMass = fabs(vmm.M() - ZBosonMass);
+				// FIXME
+				if( (tmpDeltaMass < minDeltaMass) )// && (tmpDeltaMass < MaxDeltaMass ))
+				{
+					minDeltaMass = tmpDeltaMass;
+					prompt1 = i; 
+					prompt2 = j;		
+				}
+			}
+		}
+		if(prompt1 != -1)		promptmuons.push_back(prompt1);
+		if(prompt2 != -1) 		promptmuons.push_back(prompt2);
+		if((prompt1 == -1) && (prompt2==-1)) promptmuons.push_back(GetMaxPtPromptMuon(jentry, -1));
+	}
+	return promptmuons;
+}
+int FakeMuonAnalyzer::GetPromptMuonFromWtmPeak(Long64_t jentry)
+{
+	fChain->GetEntry(jentry);
+	//https://twiki.cern.ch/twiki/pub/CMS/TWikiEWKmuon/WmnSel_linear.pdf
+	float WBosonTMass = 75.; //GeV/cc
+	float MinWBosonTMass = 45.;
+	float MaxWBosonTMass = 120.;
+	float minDeltaMass = 999999.;
+
+	int promptMuon = -1;
+
+	int n_acceptedmuons = 0;
+	for(int i=0; i<gmrSize; i++)
+	{
+		if ( !AcceptedMuon(jentry, i)) continue;
+		n_acceptedmuons++;
+	}
+	if(n_acceptedmuons <=1 )
+	{
+		for(int i=0; i<gmrSize; i++)
+		{
+			if ( !AcceptedMuon(jentry, i)) continue;
+			promptMuon = i;
+		}
+	}
+	else 
+	{
+		TLorentzVector vmu1, vmu2, vmm; // LorentzVectors for mu+ mu- 
+
+		float METeta = (*metEta)[0]; 
+		float METphi = (*metPhi)[0];
+		float METpt = (*metEt)[0];   		
+		vmu2.SetPtEtaPhiM(METpt, METeta, METphi, 0.);
+		for(int i=0; i<gmrSize; i++)
+		{
+			if ( !AcceptedMuon(jentry, i)) continue;
+			double glbeta1 = (*gmrEta)[i]; 
+			double glbphi1 = (*gmrPhi)[i];
+			double glbpt1 = (*gmrPt)[i];   		
+			vmu1.SetPtEtaPhiM(glbpt1, glbeta1, glbphi1, MUMASS);
+			vmm = vmu1 + vmu2;		
+			float tmpDeltaMass = fabs(vmm.Mt() - WBosonTMass);
+			// FIXME
+			if(tmpDeltaMass < minDeltaMass )//&& tmpDeltaMass > MinWBosonTMass && tmpDeltaMass < MaxWBosonTMass)
+			{
+				minDeltaMass = tmpDeltaMass;
+				promptMuon = i;
+			}
+		}
+	}
+	return promptMuon;
+}
+
+int FakeMuonAnalyzer::GetMaxPtPromptMuon(Long64_t jentry, int firstMuon)
+{
+	// if firstMuon == -1; then return the muon with max pt
+	// if firstMuon != -1; then return the muon with second max pt 
+	int index = -1; 
+	float tmppt = 0;
+	fChain->GetEntry(jentry);
+	for(int i = 0; i<gmrSize; i++)
+	{
+		if(i==firstMuon) continue;
+		if(!AcceptedMuon(jentry, i)) continue;
+
+		if((*gmrPt)[i] > tmppt ) 
+		{
+			tmppt = (*gmrPt)[i];
+			index = i;
+		}
+
+	}
+
+	return index;
+}
+int  FakeMuonAnalyzer::GetRandomPromptMuon(Long64_t jentry)
+{
+	int index = -1; 
+	fChain->GetEntry(jentry);
+	//if(gmrSize==1)  index = 0;
+	vector<int> muonindexs;
+	muonindexs . clear();
+	for(int i = 0; i<gmrSize; i++)
+	{
+		if(!AcceptedMuon(jentry, i)) continue;
+		muonindexs . push_back (i);
+
+	}
+
+	if((int)muonindexs.size()>=1 )  
+	{
+		double rand = _gRandom . Rndm();
+		int tmp = (int) (rand * muonindexs.size()) ;
+		if(tmp==(int)muonindexs.size()) tmp-=1;
+		index = muonindexs[tmp];
+	}
+	return index;
 }
 void FakeMuonAnalyzer::FillPredictedHists(vector<FakeMuonGenerator::fakeMuon> vfakemu, double EventWeight)
 {
@@ -289,28 +725,30 @@ void FakeMuonAnalyzer::GetObservedDistributions(Long64_t jentry, double EventWei
 
 	for(int m1 =0; m1< gmrSize; m1++ )
 	{
+		if(!AcceptedMuon(jentry, m1)) continue;
 		double glbpt = (*gmrPt)[m1];   		
-		if(glbpt <_MinMuonPt) continue;
 		double glbp = (*gmrP)[m1];
 		double glbeta = (*gmrEta)[m1]; 
-		if(fabs(glbeta) > _MaxMuonEta ) continue;
 		double glbphi = (*gmrPhi)[m1];
 		double glbcharge = (*gmrCharge)[m1];
 		double glbdxy = (*gmrDXY)[m1];
 		double glbiso03sumpt = (*gmrIso03sumPt)[m1];
 
-		if( _ifApplyImpactParCut &&  fabs(glbdxy) > _MaxDxy ) continue;
-		if( _ifApplyIsolationCut && glbiso03sumpt > _MaxIso03sumPt )	continue;
-		Bool_t passLikelihood1 = false;
-		if( Use_Likelihood && _ifApplyLikelihoodRatioCut ) 
-		{
-			double llr1	= GetLikelihoodRatio( glbiso03sumpt, glbdxy, fDxyS, fDxyB, fIsoSumPtS, fIsoSumPtB );
-			passLikelihood1 = (llr1 >= ResponseCut_Likelihood );
-			if(!passLikelihood1) continue;
-		}
+		/*
+		   if(glbpt <_MinMuonPt) continue;
+		   if(fabs(glbeta) > _MaxMuonEta ) continue;
+		   if( _ifApplyImpactParCut &&  fabs(glbdxy) > _MaxDxy ) continue;
+		   if( _ifApplyIsolationCut && glbiso03sumpt > _MaxIso03sumPt )	continue;
+		   Bool_t passLikelihood1 = false;
+		   if( Use_Likelihood && _ifApplyLikelihoodRatioCut ) 
+		   {
+		   double llr1	= GetLikelihoodRatio( glbiso03sumpt, glbdxy, fDxyS, fDxyB, fIsoSumPtS, fIsoSumPtB );
+		   passLikelihood1 = (llr1 >= ResponseCut_Likelihood );
+		   if(!passLikelihood1) continue;
+		   }
 		// - - - - - - - - - -
 		if(_SkipMuonsWhosePAboveThreshold && glbp> _MaxMuonP ) continue;
-
+		 */
 		h_obsvMuonP  ->Fill(glbp,EventWeight);
 		h_obsvMuonEta->Fill(glbeta,EventWeight);
 		h_obsvMuonPhi->Fill(glbphi,EventWeight);
@@ -318,28 +756,29 @@ void FakeMuonAnalyzer::GetObservedDistributions(Long64_t jentry, double EventWei
 
 		for(int m2 =m1+1; m2< gmrSize; m2++ )
 		{
+			if(!AcceptedMuon(jentry, m2)) continue;
 			double glbpt2 = (*gmrPt)[m2];   		
-			if(glbpt2 <_MinMuonPt) continue;
 			double glbp2 = (*gmrP)[m2];
 			double glbeta2 = (*gmrEta)[m2]; 
-			if(fabs(glbeta2) > _MaxMuonEta ) continue;
 			double glbphi2 = (*gmrPhi)[m2];
 			double glbcharge2 = (*gmrCharge)[m2];
 			double glbdxy2 = (*gmrDXY)[m2];
 			double glbiso03sumpt2 = (*gmrIso03sumPt)[m2];
-
-			if( _ifApplyImpactParCut &&  fabs(glbdxy2) > _MaxDxy ) continue;
-			if( _ifApplyIsolationCut && glbiso03sumpt2 > _MaxIso03sumPt )	continue;
-			Bool_t passLikelihood2 = false;
-			if( Use_Likelihood && _ifApplyLikelihoodRatioCut ) 
-			{
-				double llr2	= GetLikelihoodRatio( glbiso03sumpt2, glbdxy2, fDxyS, fDxyB, fIsoSumPtS, fIsoSumPtB );
-				passLikelihood2 = (llr2 >= ResponseCut_Likelihood );
-				if(!passLikelihood2) continue;
-			}
+			/*
+			   if(glbpt2 <_MinMuonPt) continue;
+			   if(fabs(glbeta2) > _MaxMuonEta ) continue;
+			   if( _ifApplyImpactParCut &&  fabs(glbdxy2) > _MaxDxy ) continue;
+			   if( _ifApplyIsolationCut && glbiso03sumpt2 > _MaxIso03sumPt )	continue;
+			   Bool_t passLikelihood2 = false;
+			   if( Use_Likelihood && _ifApplyLikelihoodRatioCut ) 
+			   {
+			   double llr2	= GetLikelihoodRatio( glbiso03sumpt2, glbdxy2, fDxyS, fDxyB, fIsoSumPtS, fIsoSumPtB );
+			   passLikelihood2 = (llr2 >= ResponseCut_Likelihood );
+			   if(!passLikelihood2) continue;
+			   }
 			// - - - - - - - - - -
 			if(_SkipMuonsWhosePAboveThreshold && glbp2> _MaxMuonP ) continue;
-
+			 */
 			if(_OppositeSign && glbcharge ==glbcharge2) continue; //skip it with same sign muons
 			if(!_OppositeSign && glbcharge !=glbcharge2) continue; //
 

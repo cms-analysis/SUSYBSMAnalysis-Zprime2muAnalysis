@@ -1,0 +1,35 @@
+<use name=FWCore/Framework>
+<use name=FWCore/ParameterSet>
+<library file=NtupleDumper.cc>
+  <use name=SimGeneral/HepPDTRecord>
+  <use name=SimDataFormats/HepMCProduct>
+  <use name=PhysicsTools/RecoAlgos>
+  <use name=DataFormats/EgammaReco>
+  <use name=DataFormats/MuonReco>
+  <use name=DataFormats/VertexReco>
+  <use name=DataFormats/TrackReco>
+  <use name=DataFormats/TrackingRecHit>
+  <use name=root>
+  <use name=DataFormats/Common>
+  <use name=SimDataFormats/TrackingAnalysis>
+  <use name=TrackingTools/TransientTrack>
+  <use name=CommonTools/Statistics>
+  <use name=RecoVertex/KalmanVertexFit>
+  <use name=SimTracker/TrackAssociation>
+  <use name=clhep>
+  <use name=boost>
+  <use name=DataFormats/Math>
+  <use name=DataFormats/L1Trigger>
+  <use name=DataFormats/EgammaCandidates>
+  <use name=DataFormats/L1GlobalMuonTrigger>
+  <use name=DataFormats/L1GlobalTrigger>
+  <use name=CondFormats/L1TObjects>
+  <use name=CondFormats/DataRecord>
+  <use name=Geometry/CommonDetUnit>
+  <use name=Geometry/Records>
+  <use name=RecoMuon/TrackingTools>
+  <use name=TrackingTools/DetLayers>
+  <use name=DataFormats/METReco>
+  <use name=SimDataFormats/Track>
+</library>
+

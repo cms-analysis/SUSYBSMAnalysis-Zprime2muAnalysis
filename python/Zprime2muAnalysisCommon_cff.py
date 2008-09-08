@@ -1,5 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
+__debug = False
+
 # Info about the defined rec levels.
 recLevels = ['GN','L1','L2','L3','GR','TK','FS','PR','OP']
 numRecLevels = len(recLevels)
@@ -213,10 +215,15 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(maxEvents))
 
     #process.options = cms.untracked.PSet(IgnoreCompletely = cms.untracked.vstring('ProductNotFound'))
-    
+
+    if __debug:
+        outFile = 'cout'
+    else:
+        outFile = 'Zprime'
+        
     process.MessageLogger = cms.Service(
         'MessageLogger',
-        destinations = cms.untracked.vstring('Zprime'),
+        destinations = cms.untracked.vstring(outFile),
         categories = cms.untracked.vstring(
             #'FwkJob', 'FwkReport', 'Root_Warning',
             'Root_NoDictionary', 'RFIOFileDebug',
@@ -243,7 +250,6 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             'PhotonProducer','TrackProducerWithSCAssociation'
             ),
         Zprime = cms.untracked.PSet(
-            extension    = cms.untracked.string('.out'),
             threshold    = cms.untracked.string('DEBUG'),
             lineLength   = cms.untracked.int32(132),
             noLineBreaks = cms.untracked.bool(True)
@@ -254,25 +260,24 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             'Zprime2muBackgrounds', 'Zprime2muMatchStudy')
         )
 
-    # Temporarily silence an annoying module while multiple
-    # collections (HLT) are not implemented (but its warnings should
-    # be heeded when all collections are available).
-    process.MessageLogger.categories.append('storeMatchMap')
-
-    # Instead of line after line of limit psets in Zprime above, set
-    # them all here.
-    limitZero = cms.untracked.PSet(limit = cms.untracked.int32(0))
-    for cat in process.MessageLogger.categories:
-        setattr(process.MessageLogger.Zprime, cat, limitZero)
-    setattr(process.MessageLogger.Zprime, 'FwkReport', cms.untracked.PSet(reportEvery = cms.untracked.int32(500)))
+    if not __debug:
+        process.MessageLogger.Zprime.extension = cms.untracked.string('.out')
+        
+        # Instead of line after line of limit psets in Zprime above, set
+        # them all here.
+        limitZero = cms.untracked.PSet(limit = cms.untracked.int32(0))
+        for cat in process.MessageLogger.categories:
+            setattr(process.MessageLogger.Zprime, cat, limitZero)
+        setattr(process.MessageLogger.Zprime, 'FwkReport', cms.untracked.PSet(reportEvery = cms.untracked.int32(500)))
 
     process.TFileService = cms.Service(
         'TFileService',
         fileName = cms.string('zp2mu_histos.root')
         )
     
-    #process.Tracer = cms.Service('Tracer')
-    #process.SimpleMemoryCheck = cms.Service('SimpleMemoryCheck')
+    if __debug:
+        process.Tracer = cms.Service('Tracer')
+        process.SimpleMemoryCheck = cms.Service('SimpleMemoryCheck')
     
     if useGen and lumiForCSA07 > 0:
         process.csa07EventWeightProducer = cms.EDProducer(
@@ -605,8 +610,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                     
     ####################################################################
     ## Do all the by-seed matching between each pair of globally-fit
-    ## muon collections, two of which are needed by
-    ## CocktailMuonProducer, so these must be run first.
+    ## muon collections.
     ####################################################################
 
     for irec in xrange(lL3, numRecLevels-1):

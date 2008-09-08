@@ -35,16 +35,19 @@ void TriggerDecision::init(const edm::ParameterSet& config,
       
       // HLT paths (the logical ANDs of L2 and L3 single/dimuon paths
       // above)
-      hltPaths.push_back("HLT1MuonNonIso");
-      hltPaths.push_back("HLT2MuonNonIso");
+      hltPaths.push_back("HLT_Mu15_L1Mu7"); // Closest to HLT1MuonNonIso from 1_6_X.
+      hltPaths.push_back("HLT_DoubleMu3");
     }
     else {
       l1Paths.push_back("L1_SingleEG15");
       
       // For now, just look at the overall HLT decision for electrons.
-      hltPaths.push_back("HLT1EMHighEt");
-      hltPaths.push_back("HLT1EMVeryHighEt");
-      hltPaths.push_back("HLT1ElectronRelaxed");
+      // JMTBAD trigger names have changed; which are the "right" ones for electrons?
+      /*
+      hltPaths.push_back("HLT_EM80");
+      hltPaths.push_back("HLT_EM200");
+      //hltPaths.push_back("HLT1ElectronRelaxed");
+      */
     }
   }
 }

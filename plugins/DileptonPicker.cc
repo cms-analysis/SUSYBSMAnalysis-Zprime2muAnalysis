@@ -25,13 +25,16 @@ private:
   bool doingGen;
   unsigned maxDileptons;
   vector<int> pdgIds;
+  bool weakIso;
 };
 
 DileptonPicker::DileptonPicker(const ParameterSet& cfg)
   : src(cfg.getParameter<InputTag>("src")),
     doingGen(cfg.getParameter<bool>("doingGen")),
     maxDileptons(cfg.getParameter<unsigned>("maxDileptons")),
-    pdgIds(cfg.getParameter<vector<int> >("pdgIds"))
+    pdgIds(cfg.getParameter<vector<int> >("pdgIds")),
+    weakIso(cfg.getUntrackedParameter<bool>("weakIso", false))
+  
 {
   produces<CompositeCandidateCollection>();
 }
@@ -57,17 +60,21 @@ void DileptonPicker::produce(Event& event, const EventSetup& eSetup) {
     if (hdileptons->size() > 0) {
       if (debug) out << hdileptons->size() << " dileptons before selection and overlap removal; ";
 
-      // Default cuts are pT < 20 GeV and isolation sumPt < 10.
-      const unsigned cuts = TeVMuHelper::PT | TeVMuHelper::ISO;
-      cutDileptons(*hdileptons, *dileptons, cuts, doingGen,
-		   pdgIds[0], pdgIds[1], debug);
+      if (doingGen)
+	genDileptonsOnly(*hdileptons, *dileptons, debug);
+      else {
+	// Default cuts are pT < 20 GeV and isolation sumPt < 10.
+	const unsigned cuts = TeVMuHelper::PT | TeVMuHelper::ISO;
+	cutDileptons(event, *hdileptons, *dileptons, cuts,
+		     pdgIds[0], pdgIds[1], weakIso, debug);
 
-      if (debug) out << dileptons->size() << " dileptons before overlap removal; ";
+	if (debug) out << dileptons->size() << " dileptons before overlap removal; ";
 
-      // Remove dileptons of lower invariant mass that are comprised of a
-      // lepton that has been used by a higher invariant mass one.
-      if (dileptons->size() > 1)
-	removeDileptonOverlap(*dileptons, debug);
+	// Remove dileptons of lower invariant mass that are comprised of a
+	// lepton that has been used by a higher invariant mass one.
+	if (dileptons->size() > 1)
+	  removeDileptonOverlap(*dileptons, debug);
+      }
 
       if (dileptons->size() > maxDileptons)
 	dileptons->erase(dileptons->begin() + maxDileptons, dileptons->end());

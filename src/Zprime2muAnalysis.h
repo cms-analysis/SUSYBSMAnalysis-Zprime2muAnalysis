@@ -23,8 +23,8 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneralUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/RecLevelHelper.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TeVMuHelper.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TeVMuHelper.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TrackUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TriggerDecision.h"
 
@@ -95,9 +95,12 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // Helper object for extracting the trigger decision from the paths
   // we care about.
   TriggerDecision trigDecision;
-  
-  // Helper object for TeV dimuon analysis selection.
-  TeVMuHelper tevMuHelper;
+
+  // The helper object for cuts.
+  TeVMuHelper* tevMuHelper;
+
+  // Cut mask to be passed to TeVMuHelper when needed.
+  unsigned cutMask;
 
   // The main dilepton collections: gen, hlt, default offline, and
   // "best" offline.

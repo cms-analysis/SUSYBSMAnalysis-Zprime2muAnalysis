@@ -64,13 +64,49 @@ void removeDileptonOverlap(reco::CompositeCandidateCollection& dileptons,
   }
 }
 
-void cutDileptons(const reco::CompositeCandidateCollection& dils,
-		  reco::CompositeCandidateCollection& newDils,
-		  unsigned cuts, bool filterGen, int pdgId1, int pdgId2,
-		  const bool debug) {
+void genDileptonsOnly(const reco::CompositeCandidateCollection& dils,
+		      reco::CompositeCandidateCollection& newDils,
+		      const bool debug) {
   ostringstream out;
   if (debug)
     out << "cutDileptons: starting size " << dils.size() << endl;
+
+  reco::CompositeCandidateCollection::const_iterator dil;
+  for (dil = dils.begin(); dil != dils.end(); dil++) {
+    // Make sure we pick up the actual dilepton from the resonance
+    // -- i.e. the one comprised of leptons with the same mother
+    // that has a PDG id of one of the resonances we care about.
+    const reco::Candidate* mom  = sameMother(dileptonDaughter(*dil, 0),
+					     dileptonDaughter(*dil, 1));
+
+    if (debug) {
+      out << "  filtering at generator level: mom pointer: " << mom;
+      if (mom) out << " mom's id: " << mom->pdgId();
+      out << endl;
+    }
+
+    if (mom && HardInteraction::IsResonance(mom->pdgId())) {
+      if (debug) out << "  dilepton not cut!" << endl;
+      newDils.push_back(*dil);
+    }
+  }
+
+  if (debug) {
+    out << " done. end size: " << newDils.size();
+    edm::LogInfo("cutDileptons") << out.str();
+  }
+}
+
+void cutDileptons(const edm::Event& event,
+		  const reco::CompositeCandidateCollection& dils,
+		  reco::CompositeCandidateCollection& newDils,
+		  unsigned cuts, int pdgId1, int pdgId2,
+		  const bool weakIso, const bool debug) {
+  ostringstream out;
+  if (debug)
+    out << "cutDileptons: starting size " << dils.size() << endl;
+
+  TeVMuHelper tmh(event);
 
   reco::CompositeCandidateCollection::const_iterator dil;
   for (dil = dils.begin(); dil != dils.end(); dil++) {
@@ -87,39 +123,12 @@ void cutDileptons(const reco::CompositeCandidateCollection& dils,
 	continue;
     }
 
-    if (filterGen) {
-      // Make sure we pick up the actual dilepton from the resonance
-      // -- i.e. the one comprised of leptons with the same mother
-      // that has a PDG id of one of the resonances we care about.
-      const reco::Candidate* mom  = sameMother(dileptonDaughter(*dil, 0),
-					       dileptonDaughter(*dil, 1));
-
-      if (debug) {
-	out << "  filtering at generator level: mom pointer: " << mom;
-	if (mom)
-	  out << " mom's id: " << mom->pdgId();
-	out << endl;
-      }
-
-      if (!mom || !HardInteraction::IsResonance(mom->pdgId()))
-	continue;
+    // If the lepton is cut with a code that is present in the cuts
+    // bitmask, cut this dilepton.
+    if (!tmh.dileptonIsCut(*dil, cuts)) {
+      if (debug) out << "  dilepton not cut!" << endl;
+      newDils.push_back(*dil);
     }
-    else {
-      // If the lepton is cut with a code that is present in the cuts
-      // bitmask, cut this dilepton.
-      TeVMuHelper tvh;
-      unsigned cut0 = tvh.leptonIsCut(*dileptonDaughter(*dil, 0));
-      unsigned cut1 = tvh.leptonIsCut(*dileptonDaughter(*dil, 1));
-      if (debug) out << "  applying selection cuts: pre-mask: "
-		     << cut0 << " " << cut1;
-      cut0 &= cuts;
-      cut1 &= cuts;
-      if (debug) out << " post-mask: " << cut0 << " " << cut1 << endl;
-      if (cut0 || cut1) continue;
-    }
-
-    if (debug) out << "  dilepton not cut!" << endl;
-    newDils.push_back(*dil);
   }
 
   if (debug) {

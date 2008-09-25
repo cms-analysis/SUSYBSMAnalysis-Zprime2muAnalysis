@@ -1196,7 +1196,7 @@ void Zprime2muResolution::fillEffHistos() {
       }
       for (reco::CandidateBaseRefVector::const_iterator plep = allLeptons[rec].begin();
 	   plep != allLeptons[rec].end(); plep++) {
-	if (!tevMuHelper.leptonIsCut(**plep)) passCut++;
+	if (!tevMuHelper->leptonIsCut(**plep, cutMask)) passCut++;
 	if (passCut > 1) break;
       }
 
@@ -1562,18 +1562,21 @@ void Zprime2muResolution::fillDilResHistos(const bool debug) {
 
     // Highest mass reconstructed at various trigger levels and by various
     // off-line fitting algorithms
-    if (n_dil > 0) {
+    if (n_dil > 0)
       DilMassComp[rec][0]->Fill(dileptons[0].mass());
+
+    if (allResonances[rec].size() > 0)
       DilMassComp[rec][1]->Fill(allResonances[rec][0].mass());
-    }
 
     // Only continue on to calculate resolutions if considering
     // reconstructed dileptons.
     if (rec == lgen) continue;
 
-    for (unsigned int i_dil = 0; i_dil < n_dil; i_dil++) {
-      // Very poor match of dileptons; needs to be improved!
-      if (n_dil == n_gen) {
+    // Very poor match of dileptons; needs to be improved!
+    if (n_dil == n_gen &&
+	n_gen == allResonances[lgen].size() &&
+	n_dil == allResonances[rec].size()) {
+      for (unsigned int i_dil = 0; i_dil < n_dil; i_dil++) {
 	// Invariant mass resolution calculated relative to the mass
 	// reconstructed from GEANT muons.
 	genDimuV = allDileptons[lgen][i_dil].p4();
@@ -1665,7 +1668,8 @@ void Zprime2muResolution::fillDilResHistos(const bool debug) {
   // looking at events in the tail of Drell-Yan dimuon invariant mass
   // distribution.
   //int qcut_mum = 0, qcut_mup = 0;
-  if (allDileptons[lbest].size() > 0) {
+  unsigned nbest = allDileptons[lbest].size();
+  if (nbest > 0 && nbest == allResonances[lbest].size()) {
     if (1) { //DO_QCUTS ? dilQCheck(allDileptons[lbest][0], QSEL, qcut_mum, qcut_mup) : true) {
       // Require the reconstructed dilepton invariant mass be above a
       // certain mass value ("tail" of Drell-Yan distributions).

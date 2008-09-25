@@ -251,8 +251,7 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
 
     if (!doingElectrons)
       output << "   Closest photon: " << recLevelHelper.closestPhoton(cand)
-	     << "   Sum pT (dR<0.3): " << sumptr03
-	     << "   Cut code  " << tevMuHelper.leptonIsCut(*cand) << endl;
+	     << "   Sum pT (dR<0.3): " << sumptr03 << endl;
 
     output << "   Loc. code: " << whereIsLepton(cand, doingElectrons)
 	   << "   p4 (p, E): " << cand->p4() << endl;

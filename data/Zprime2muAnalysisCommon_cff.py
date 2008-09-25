@@ -1,5 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
+__debug = False
+
 # Info about the defined rec levels.
 recLevels = ['GN','L1','L2','L3','GR','TK','FS','PR','OP']
 numRecLevels = len(recLevels)
@@ -13,11 +15,11 @@ muonCollections = [
     'muCandL1', # l1extraParticles
     'muCandL2', # hltL2MuonCandidates
     'muCandL3', # hltL3MuonCandidates
-    'muons',
+    'muons',    #'selectedLayer1Muons',
     'muCandTK', # muonsTK
     'muonsFMS',
     'muonsPMR',
-    'bestMuons'
+    'bestMuons' #'muons'
     ]
 
 # The InputTag names for the electron collections.
@@ -30,7 +32,7 @@ electronCollections = [
     'elCandL1',
     'elCandL2',
     'elCandL3',
-    'pixelMatchGsfElectrons',
+    'pixelMatchGsfElectrons', #'selectedLayer1Electrons',
     None,
     None,
     None,
@@ -48,6 +50,13 @@ diElectrons = ('electrons', 'electrons')
 muonElectron = ('muons', 'electrons')
 electronMuon = ('electrons', 'muons')
 
+def nameDilCollection(flavors, charges, reclevel):
+    cdict = {'+': 'P', '-': 'M'}
+    # I would put _s in the label name, but that is illegal in CMSSW.
+    return 'dileptons%s%s%s%s%s' % (flavors[0][:2], flavors[1][:2],
+                                    cdict[charges[0]], cdict[charges[1]],
+                                    reclevel)
+
 def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                  doingElectrons=False,
                                  useGen=True,
@@ -57,12 +66,18 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                  useTrigger=True,
                                  useOtherMuonRecos=True,
                                  useHEEPSelector=True,
+                                 performTeVMuonReReco=False,
                                  lumiForCSA07=0.,
                                  dumpHardInteraction=False,
+                                 makeGenCandidates=False,
                                  strictGenDilepton=True,
                                  flavorsForDileptons=diMuons,
                                  chargesForDileptons=oppSign,
                                  maxDileptons=1,
+                                 outputFile='',
+                                 readFromOurAOD=False,
+                                 constructDileptons=True,
+                                 runPATLayers=False,
                                  # These last two are passed in just
                                  # so they can be put standalone at
                                  # the top of the file so they stick
@@ -97,7 +112,11 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     useGen/Sim/Reco: whether to expect information from GEN, SIM or
     RECO branches. (The expectation from RECO is modified by the
     usingAODOnly parameter below.)
-    
+
+    useTrigger: whether to expect to be able to get trigger
+    collections (i.e. those destined for L1-L3 rec levels) from the
+    file.
+
     usingAODOnly: if True, do not expect to be able to get information
     that is not in AOD, such as rechits.
 
@@ -111,11 +130,10 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     useHEEPSelector: whether to use D.L. Evans\'s HEEPSelector for
     "best" electrons. It requires quantities not in AOD, so it may
     need to be disabled via this flag.
-    
-    useTrigger: whether to expect to be able to get trigger
-    collections (i.e. those destined for L1-L3 rec levels) from the
-    file.
 
+    performTeVMuonReReco: if set, run the extra TeV muon
+    re-reconstructors on-the-fly before running any analysis paths.
+    
     lumiForCSA07: if > 0, set up the CSA07EventWeightProducer with
     weights corresponding to the given lumi (in pb^-1).
 
@@ -143,21 +161,25 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
       Example: if flavorsForDileptons == muonElectron and
       chargesForDileptons == oppSign, then the official dileptons
       will be all pairs of mu+ e-.
-    
+
+    maxDileptons: the maximum number of dileptons to keep in the
+    collections after selection and overlap removal.
+
+    outputFile: if specified, dump our AOD content to an EDM file with
+    this filename.
     '''
 
     ####################################################################
     ## Sanity checks.
     ####################################################################
 
+    # OurAOD is disabled for now.
+    outputFile = ''
+    readFromOurAOD = False
+    
     if len(muons) != numRecLevels or len(electrons) != numRecLevels:
         raise RuntimeError, 'at least one of the muon and electron collections is not the right length'
 
-    if usingAODOnly:
-        useGen = useSim = False
-        useOtherMuonRecos = False
-        useHEEPSelector = False
-        
     if not useGen:
         useSim = False
         muons[lGN] = electrons[lGN] = None
@@ -166,7 +188,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         useTrigger = False
         useOtherMuonRecos = False
         useHEEPSelector = False
-        for i in xrange(lL1, lOP+1):
+        for i in xrange(lGR, lOP+1):
             muons[i] = None
             electrons[i] = None
 
@@ -195,7 +217,10 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     ## Set up the CMSSW process and useful services.
     ####################################################################
 
-    process = cms.Process('Zprime2muAnalysis')
+    processName = 'Zprime2muAnalysis'
+    if readFromOurAOD:
+        processName += '2'
+    process = cms.Process(processName)
 
     if fileNames:
         process.source = cms.Source(
@@ -206,22 +231,48 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(maxEvents))
 
     #process.options = cms.untracked.PSet(IgnoreCompletely = cms.untracked.vstring('ProductNotFound'))
-    
+
+    if __debug:
+        process.Tracer = cms.Service('Tracer')
+        process.SimpleMemoryCheck = cms.Service('SimpleMemoryCheck')
+        process.EventContentAnalyzer = cms.EDAnalyzer('EventContentAnalyzer')
+        process.debugPath = cms.Path(process.EventContentAnalyzer)
+
+    ####################################################################
+    ## Set up MessageLogger, silencing rogue modules.
+    ####################################################################
+
+    if __debug:
+        outFile = 'cout'
+    else:
+        outFile = 'Zprime'
+
     process.MessageLogger = cms.Service(
         'MessageLogger',
         destinations = cms.untracked.vstring('Zprime'),
         categories = cms.untracked.vstring(
             #'FwkJob', 'FwkReport', 'Root_Warning',
             'Root_NoDictionary', 'RFIOFileDebug',
+            # Suppress the track() v gsftrack() warning from
+            # PixelMatchGsfElectron.
+            'PixelMatchGsfElectron',
             # For some reason these next ones come up (without being
             # asked to in debugModules below) when doing electrons,
             # i.e. when the HEEPSelector.cfi is included.
             'DDLParser', 'PixelGeom', 'EcalGeom', 'TIBGeom', 'TIDGeom',
             'TOBGeom', 'TECGeom', 'SFGeom', 'HCalGeom', 'TrackerGeom',
-            'GeometryConfiguration', 'HcalHardcodeGeometry'
+            'GeometryConfiguration', 'HcalHardcodeGeometry',
+            # ... and these come up if doing the extra TeV muon
+            # reconstructors.
+            'GenResonanceProducer'
+            'PoolDBESSource', 'TkDetLayers', 'TkNavigation',
+            'Done', 'CSC', 'EcalTrivialConditionRetriever',
+            'Geometry', 'GlobalMuonTrajectoryBuilder', 'HCAL', 'Muon',
+            'RecoMuon', 'setEvent', 'Starting', 'TrackProducer',
+            'trajectories', 'DetLayers', 'RadialStripTopology',
+            'SiStripPedestalsFakeESSource', 'TrackingRegressionTest'
             ),
         Zprime = cms.untracked.PSet(
-            extension    = cms.untracked.string('.out'),
             threshold    = cms.untracked.string('DEBUG'),
             lineLength   = cms.untracked.int32(132),
             noLineBreaks = cms.untracked.bool(True)
@@ -229,23 +280,162 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         debugModules = cms.untracked.vstring(
             'bestMuons', 'Zprime2muAnalysis', 'Zprime2muResolution',
             'Zprime2muAsymmetry', 'Zprime2muMassReach',
-            'Zprime2muBackgrounds', 'Zprime2muMatchStudy')
+            'Zprime2muBackgrounds', 'Zprime2muMatchStudy', 'Zprime2muGenAnalyzer')
         )
 
-    # Instead of line after line of limit psets in Zprime above, set
-    # them all here.
-    limitZero = cms.untracked.PSet(limit = cms.untracked.int32(0))
-    for cat in process.MessageLogger.categories:
-        setattr(process.MessageLogger.Zprime, cat, limitZero)
-    setattr(process.MessageLogger.Zprime, 'FwkReport', cms.untracked.PSet(reportEvery = cms.untracked.int32(500)))
+    if not __debug:
+        process.MessageLogger.Zprime.extension = cms.untracked.string('.out')
+
+        # Instead of line after line of limit psets in Zprime above, set
+        # them all here.
+        limitZero = cms.untracked.PSet(limit = cms.untracked.int32(0))
+        for cat in process.MessageLogger.categories:
+            setattr(process.MessageLogger.Zprime, cat, limitZero)
+        setattr(process.MessageLogger.Zprime, 'FwkReport', cms.untracked.PSet(reportEvery = cms.untracked.int32(500)))
+
+    ####################################################################
+    ## Set up a TFileService object to manage histograms.
+    ####################################################################
 
     process.TFileService = cms.Service(
         'TFileService',
         fileName = cms.string('zp2mu_histos.root')
         )
+
+    ####################################################################
+    ## Perform PAT layer-0 and layer-1 tasks.
+    ####################################################################
+
+    if runPATLayers:
+        process.include('SUSYBSMAnalysis/Zprime2muAnalysis/data/PAT.cff')
     
-    #process.Tracer = cms.Service('Tracer')
-    #process.SimpleMemoryCheck = cms.Service('SimpleMemoryCheck')
+    ####################################################################
+    ## Print out the hard interaction PYTHIA lines (if desired).
+    ####################################################################
+
+    if makeGenCandidates:
+        process.include("SimGeneral/HepPDTESSource/data/pythiapdt.cfi")
+        process.include("PhysicsTools/HepMCCandAlgos/data/genParticleCandidates.cfi")
+        process.pgenCands = cms.Path(process.genParticleCandidates)
+
+    if useGen and dumpHardInteraction:
+        process.include("SimGeneral/HepPDTESSource/data/pythiapdt.cfi")
+        
+        process.printTree = cms.EDAnalyzer(
+            'ParticleListDrawer',
+            maxEventsToPrint = cms.untracked.int32(-1),
+            src = cms.InputTag('genParticleCandidates'),
+            printOnlyHardInteraction = cms.untracked.bool(True),
+            useMessageLogger = cms.untracked.bool(True),
+            )
+        
+        process.ptree = cms.Path(process.printTree)
+
+    ####################################################################
+    ## Common module configuration parameters.
+    ####################################################################
+
+    process.Zprime2muAnalysisCommon = cms.PSet(
+        ################################################################
+        ## Analysis configuration 
+        ################################################################
+        verbosity         = cms.untracked.int32(0),
+        maxDileptons      = cms.uint32(maxDileptons),
+        doingElectrons    = cms.bool(doingElectrons),
+        useGen            = cms.bool(useGen),
+        useSim            = cms.bool(useSim),
+        useReco           = cms.bool(useReco),
+        usingAODOnly      = cms.bool(usingAODOnly),
+        useTrigger        = cms.bool(useTrigger),
+        useOtherMuonRecos = cms.bool(useOtherMuonRecos),
+
+        dateHistograms    = cms.untracked.bool(True),
+
+        #resonanceIds      = cms.vint32(32, 23, 39, 5000039),
+
+        ################################################################
+        ## Input tags for trigger paths and particles.
+        ################################################################
+        l1ParticleMap = cms.InputTag('l1extraParticleMap'),
+        # Every process puts a TriggerResults product into the event;
+        # pick the HLT one.
+        hltResults = cms.InputTag('TriggerResults','','HLT')
+        )
+
+    process.recLevelHelperPSet = cms.PSet()
+    process.plainAnalysisPSet  = cms.PSet()
+    
+    ####################################################################
+    ## Input tags for leptons at the different rec levels, in order;
+    ## filled below using the collections defined at the top of the
+    ## file, and according to whether the default leptons are
+    ## electrons or muons (determined by doingElectrons).
+    ####################################################################
+    if doingElectrons:
+        lepcoll = electrons
+    else:
+        lepcoll = muons
+
+    for i in xrange(numRecLevels):
+        tagname = 'leptons' + recLevels[i]
+        
+        if lepcoll[i] != None:
+            tag = cms.InputTag(lepcoll[i])    
+        else:
+            # The code (via RecLevelHelper) will know to ignore this
+            # (we cannot have empty InputTags, apparently).
+            tag = cms.InputTag('skip')
+            
+        setattr(process.recLevelHelperPSet, tagname, tag)
+
+    ####################################################################
+    ## Set up the "main" dileptons -- the ones the analysis module is
+    ## supposed to use by default.
+    ####################################################################
+
+    # For plain analyzers, point them at gen, hlt, default offline,
+    # and "best" offline dileptons and resonances.
+    names = [nameDilCollection(flavorsForDileptons, chargesForDileptons,
+                               recLevels[l]) for l in [lGN, lL3, lGR, lOP]]
+    kinds = ['gen', 'hlt', 'rec', 'best']
+    for kind, name in zip(kinds, names):
+        setattr(process.plainAnalysisPSet, '%sDileptons' % kind,
+                cms.InputTag(name))
+        setattr(process.plainAnalysisPSet, '%sResonances' % kind,
+                cms.InputTag(name))
+
+    # For RecLevelAnalyzers:
+    for i in xrange(numRecLevels):
+        # If we skipped making this dilepton collection in the logic
+        # above, skip using it.
+        name = nameDilCollection(flavorsForDileptons, chargesForDileptons,
+                                 recLevels[i])
+        tagname = 'dileptons' + recLevels[i]
+        setattr(process.recLevelHelperPSet, tagname, cms.string(name))
+
+    ####################################################################
+    ## If we have an input file that came from an earlier running of
+    ## Zprime2muAnalysis and was written out with our Zp2muAOD (see
+    ## below), we're done, since the products of everything below is
+    ## already in the input file. So, return the process object and
+    ## skip the construction of producers below.
+    ####################################################################
+
+    if readFromOurAOD:
+        print 'Zprime2muAnalysis base process built!'
+        print '(Not running producers; expecting to find collections in input file.)'
+        #print process.dumpConfig() 
+        return process
+
+
+    ####################################################################
+    ## March forward, making a bunch of producers.
+    ####################################################################
+
+    ####################################################################
+    ## If we're running on a CSA07 file, set up the weight producer
+    ## with appropriate normalization.
+    ####################################################################
 
     if useGen and lumiForCSA07 > 0:
         process.csa07EventWeightProducer = cms.EDProducer(
@@ -258,18 +448,14 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
 
         process.csa07 = cms.Path(process.csa07EventWeightProducer)
 
-    if useGen and dumpHardInteraction:
-        process.include("SimGeneral/HepPDTESSource/data/pythiapdt.cfi")
-        
-        process.printTree = cms.EDAnalyzer(
-            'ParticleListDrawer',
-            maxEventsToPrint = cms.untracked.int32(-1),
-            src = cms.InputTag('genParticleCandidates') #,
-            #printOnlyHardInteraction = cms.untracked.bool(True),
-            #useMessageLogger = cms.untracked.bool(True),
-            )
-        
-        process.ptree = cms.Path(process.printTree)
+    ####################################################################
+    ## Run TeV muon re-reconstruction before any physics analysis
+    ## paths (if desired).
+    ####################################################################
+
+    if performTeVMuonReReco:
+        process.include('SUSYBSMAnalysis/Zprime2muAnalysis/data/TeVMuonReReco.cff')
+        process.pReReco = cms.Path(process.TeVMuonReReco)
 
     ####################################################################
     ## Make a CandidateCollection out of the GEANT tracks.
@@ -439,72 +625,9 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                    process.elCandL3)
 
     if useHEEPSelector:
-        ## Hack for now to include old-style cfgs in python ones.
-        #process.include('DLEvans/HEEPSelector/data/heepSelection_1_1.cfi')
-        #process.bestEl = cms.Path(process.heepSelection)
-
-        # Use the output of running dumpPython() on the above for
-        # faster loading (will have to be redumped when there is a new
-        # HEEPSelector!).
-        import HEEPSelector11_cfi
-        HEEPSelector11_cfi.attachHEEPSelector(process)
-
-    ####################################################################
-    ## Common module configuration parameters.
-    ####################################################################
-
-    process.Zprime2muAnalysisCommon = cms.PSet(
-        ################################################################
-        ## Analysis configuration 
-        ################################################################
-        verbosity         = cms.untracked.int32(0),
-        maxDileptons      = cms.uint32(maxDileptons),
-        doingElectrons    = cms.bool(doingElectrons),
-        useGen            = cms.bool(useGen),
-        useSim            = cms.bool(useSim),
-        useReco           = cms.bool(useReco),
-        usingAODOnly      = cms.bool(usingAODOnly),
-        useTrigger        = cms.bool(useTrigger),
-        useOtherMuonRecos = cms.bool(useOtherMuonRecos),
-
-        dateHistograms    = cms.untracked.bool(True),
-
-        #resonanceIds      = cms.vint32(32, 23, 39, 5000039),
-
-        ################################################################
-        ## Input tags for trigger paths and particles.
-        ################################################################
-        l1ParticleMap = cms.InputTag('l1extraParticleMap'),
-        # Every process puts a TriggerResults product into the event;
-        # pick the HLT one.
-        hltResults = cms.InputTag('TriggerResults','','HLT')
-        )
-
-    process.recLevelHelperPSet = cms.PSet()
-    process.plainAnalysisPSet  = cms.PSet()
-    
-    ####################################################################
-    ## Input tags for leptons at the different rec levels, in order;
-    ## filled below using the collections defined at the top of the
-    ## file, and according to whether the default leptons are
-    ## electrons or muons (determined by doingElectrons).
-    ####################################################################
-    if doingElectrons:
-        lepcoll = electrons
-    else:
-        lepcoll = muons
-
-    for i in xrange(numRecLevels):
-        tagname = 'leptons' + recLevels[i]
-        
-        if lepcoll[i] != None:
-            tag = cms.InputTag(lepcoll[i])    
-        else:
-            # The code (via RecLevelHelper) will know to ignore this
-            # (we cannot have empty InputTags, apparently).
-            tag = cms.InputTag('skip')
-            
-        setattr(process.recLevelHelperPSet, tagname, tag)
+        # Hack for now to include old-style cfgs in python ones.
+        process.include('DLEvans/HEEPSelector/data/heepSelection_1_2.cfi')
+        process.bestEl = cms.Path(process.heepSelection)
 
     ####################################################################
     ## After this point, we will add a *lot* of modules to the path in
@@ -626,27 +749,22 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     ## {mu, e} x {+, -}.
     ####################################################################
 
-    def nameDilCollection(flavors, charges, reclevel):
-        cdict = {'+': 'P', '-': 'M'}
-        # I would put a _ in the label name but that is illegal in
-        # CMSSW.
-        return 'dileptons%s%s%s%s%s' % (flavors[0][:2], flavors[1][:2],
-                                        cdict[charges[0]], cdict[charges[1]],
-                                        reclevel)
-
-    # Enumerate the valid combinations with no double counting.
-    combos = [
-        (diMuons,      oppSign),     # mu+ mu-
-        (diMuons,      likeSignPos), # mu+ mu+
-        (diMuons,      likeSignNeg), # mu- mu-
-        (diElectrons,  oppSign),     # e+  e-
-        (diElectrons,  likeSignPos), # e+  e+
-        (diElectrons,  likeSignNeg), # e-  e-
-        (muonElectron, likeSignPos), # mu+ e+
-        (muonElectron, likeSignNeg), # mu- e-
-        (muonElectron, oppSign),     # mu+ e-
-        (muonElectron, oppSignMP)    # mu- e+
-        ]
+    if constructDileptons:
+        # Enumerate the valid combinations with no double counting.
+        combos = [
+            (diMuons,      oppSign),     # mu+ mu-
+            (diMuons,      likeSignPos), # mu+ mu+
+            (diMuons,      likeSignNeg), # mu- mu-
+            (diElectrons,  oppSign),     # e+  e-
+            (diElectrons,  likeSignPos), # e+  e+
+            (diElectrons,  likeSignNeg), # e-  e-
+            (muonElectron, likeSignPos), # mu+ e+
+            (muonElectron, likeSignNeg), # mu- e-
+            (muonElectron, oppSign),     # mu+ e-
+            (muonElectron, oppSignMP)    # mu- e+
+            ]
+    else:
+        combos = []
 
     # Make all the dileptons.
     for theseFlavors, theseCharges in combos:
@@ -752,31 +870,6 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                     )
                 addToPath(resname, prod)
 
-    # Set up the "main" dileptons -- the ones the analysis module is
-    # supposed to use by default.
-
-    # For RecLevelAnalyzers:
-    for i in xrange(numRecLevels):
-        # If we skipped making this dilepton collection in the logic
-        # above, skip using it.
-        name = nameDilCollection(flavorsForDileptons, chargesForDileptons,
-                                 recLevels[i])
-        if hasattr(process, name): tag = name
-        else:                      tag = 'skip'
-            
-        tagname = 'dileptons' + recLevels[i]
-        setattr(process.recLevelHelperPSet, tagname, cms.string(tag))
-
-    # For plain analyzers, point them at gen, hlt, default offline,
-    # and "best" offline dileptons and resonances.
-    names = [nameDilCollection(flavorsForDileptons, chargesForDileptons, recLevels[l]) for l in [lGN, lL3, lGR, lOP]]
-    kinds = ['gen', 'hlt', 'rec', 'best']
-    for kind, name in zip(kinds, names):
-        setattr(process.plainAnalysisPSet, '%sDileptons' % kind,
-                cms.InputTag(name))
-        setattr(process.plainAnalysisPSet, '%sResonances' % kind,
-                cms.InputTag(name))
-
     ####################################################################
     ## Make a path that runs all the producers we just made.
     ####################################################################
@@ -794,6 +887,56 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         setattr(process, 'zp2muPath%i' % count, cms.Path(eval(pathCodeStr)))
         count += 1
 
+    ####################################################################
+    ## Define a small subset of branches to keep (our AOD).
+    ####################################################################
+
+    Zp2muAOD = cms.PSet(
+        outputCommands = cms.untracked.vstring(
+            "drop *",
+            "keep *_*_*_Zprime2muAnalysis",
+            "keep *_genParticleCandidates_*_*",
+            "keep *_ctfWithMaterialTracks_*_*",
+            "keep *_pixelTracks_*_*",
+            "keep *_rsWithMaterialTracks_*_*",
+            "keep *_hltL2MuonCandidates_*_*",
+            "keep *_hltL3MuonCandidates_*_*",
+            "keep *_standAloneMuons_*_*",
+            "keep *_muons_*_*",
+            "keep *_muonsTK_*_*",
+            "keep *_muonsFMS_*_*",
+            "keep *_muonsPMR_*_*",
+            "keep *_globalMuons_*_*",
+            "keep *_globalMuonsTK_*_*",
+            "keep *_globalMuonsFMS_*_*",
+            "keep *_globalMuonsPMR_*_*",
+            "keep recoTracksrecoMuIsoDeposituintedmOneToValueedmAssociationMap_*_*_*",
+            "keep recoCaloJets_*_*_*",
+            "keep recoGenJets_*_*_*",
+            "keep *_correctedPhotons_*_*",
+            "keep recoVertexs_*_*_*",
+            "keep *_l1extraParticleMap_*_*",				 
+            "keep *_TriggerResults_*_HLT",
+            "keep l1extraL1MuonParticles_l1extraParticles__Raw",
+            "keep recoHLTFilterObjectWithRefs_SingleMuNoIsoL2PreFiltered__HLT",
+            "keep recoHLTFilterObjectWithRefs_SingleMuNoIsoL3PreFiltered__HLT",
+            "keep recoHLTFilterObjectWithRefs_DiMuonNoIsoL2PreFiltered__HLT",
+            "keep recoHLTFilterObjectWithRefs_DiMuonNoIsoL3PreFiltered__HLT"
+            )
+        )
+
+    ####################################################################
+    ## If specified, write out the output file.
+    ####################################################################
+    
+    if outputFile:
+        process.outAOD = cms.OutputModule(
+            'PoolOutputModule',
+            Zp2muAOD,
+            fileName = cms.untracked.string(outputFile)
+            )
+        process.poutAOD = cms.EndPath(process.outAOD)
+        
     ####################################################################
     ## Done!
     ####################################################################

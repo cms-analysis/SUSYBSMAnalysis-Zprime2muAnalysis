@@ -1,0 +1,29 @@
+include "PhysicsTools/PatAlgos/data/patLayer0.cff"
+include "PhysicsTools/PatAlgos/data/patLayer1.cff"
+
+# Since we're not doing the trigger matching at layer 0, turn it off
+# at layer 1 too.
+replace allLayer1Electrons.addTrigMatch = false
+replace allLayer1Muons.addTrigMatch     = false
+replace allLayer1Jets.addTrigMatch      = false
+replace allLayer1METs.addTrigMatch      = false
+replace allLayer1Photons.addTrigMatch   = false
+replace allLayer1Taus.addTrigMatch      = false
+
+# Switch the default "robust" electron id to "tight".
+replace electronId.doPtdrId   = false
+replace electronId.doCutBased = true
+replace CutBased_ID.electronQuality = "tight"
+
+# Make selection of electrons for layer-1 contingent on passing lepton id.
+#replace selectedLayer1Electrons.cut = "leptonID > 0"
+
+# Run 'em.
+path zp2muPAT = { patLayer0_withoutTrigMatch & patLayer1 }
+#path zp2muPAT = {patLayer1}
+
+## Keep all the PAT Layer-0 and Layer-1 stuff too.
+#include "PhysicsTools/PatAlgos/data/patLayer0_EventContent.cff"
+#replace myEventContent.outputCommands += patLayer0EventContent.outputCommands
+#include "PhysicsTools/PatAlgos/data/patLayer1_EventContent.cff"
+#replace myEventContent.outputCommands += patLayer1EventContent.outputCommands

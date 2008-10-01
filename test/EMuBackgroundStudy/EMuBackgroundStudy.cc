@@ -208,7 +208,7 @@ unsigned EMuBackgroundStudy::CalculateCuts(unsigned j, int k) {
 
     // pT > 20 and 80 GeV cuts.
     if (pt[j] < 20) cuts |= Parameters::pt;
-    if (pt[j] < 80) cuts |= Parameters::ptheep;
+    if (pt[j] < 80) cuts |= Parameters::pt80;
     
     float s;
     if (is_muon(j)) {
@@ -329,9 +329,9 @@ void EMuBackgroundStudy::PostDileptonCalcs() {
 }
 
 bool EMuBackgroundStudy::InterestingEvent() {
+  return false;
   DileptonKey k(1, 4, 2, Parameters::pt | Parameters::isotk);
   return bkg_id == Parameters::ttjets && dileptons.find(k) != dileptons.end();
-  return false;
   return event_passes;
   return gen_pdg_id[0]*gen_pdg_id[1] == -143;
   return bkg_id == Parameters::QCD && event_passes[0];
@@ -604,13 +604,13 @@ void EMuBackgroundStudy::DrawGenTopo(const char* name) {
 
 void EMuBackgroundStudy::DrawPlots() {
   StackMassHistos("h_%s_bestMuVHEEP_oppSign_ptisotk_mass",     "h_elmu_mass_20", "e#mu");
-  StackMassHistos("h_%s_bestMuVHEEP_oppSign_isotkptheep_mass", "h_elmu_mass_80", "e#mu");
+  StackMassHistos("h_%s_bestMuVHEEP_oppSign_isotkpt80_mass",   "h_elmu_mass_80", "e#mu");
 
   OverlayHistos("h_%s_met",                                     "#slash{E}_{T} by process (overlaid)",        "#slash{E}_{T} (GeV)", "met",          0.16);
   OverlayHistos("h_%s_njets",                                   "# jets by process (overlaid)",               "# jets",              "njets");
   OverlayHistos("h_%s_ncleanjets",                              "# cleaned jets by process (overlaid)",       "# jets",              "ncleanjets");
   OverlayHistos("h_%s_bestMuVHEEP_oppSign_ptisotk_deltaR",      "#DeltaR(e,#mu)",                             "#DeltaR",             "deltar");
-  OverlayHistos("h_%s_bestMuVHEEP_oppSign_isotkptheep_deltaR",  "#DeltaR(e,#mu)",                             "#DeltaR",             "deltar_80");
+  OverlayHistos("h_%s_bestMuVHEEP_oppSign_isotkpt80_deltaR",    "#DeltaR(e,#mu)",                             "#DeltaR",             "deltar_80");
   OverlayHistos("h_%s_bestMuVbestMu_oppSign_ptisotk_deltaR",    "#DeltaR(#mu,#mu)",                           "#DeltaR",             "deltarmumu");
   OverlayHistos("h_%s_bestMuVHEEP_oppSign_ptisotk_d0",          "max lepton |d0|",                            "|d_0| (cm)",          "d0",           0.2);
 
@@ -618,7 +618,7 @@ void EMuBackgroundStudy::DrawPlots() {
   OverlayHistos("h_%s_njets_200",                                  "# jets by process (overlaid)",               "# jets",              "njets_200");
   OverlayHistos("h_%s_ncleanjets_200",                             "# cleaned jets by process (overlaid)",       "# jets",              "ncleanjets_200");
   OverlayHistos("h_%s_bestMuVHEEP_oppSign_ptisotk_deltaR200",      "#DeltaR(e,#mu)",                             "#DeltaR",             "deltar_200");
-  OverlayHistos("h_%s_bestMuVHEEP_oppSign_isotkptheep_deltaR200",  "#DeltaR(e,#mu)",                             "#DeltaR",             "deltar_80_200");
+  OverlayHistos("h_%s_bestMuVHEEP_oppSign_isotkpt80_deltaR200",    "#DeltaR(e,#mu)",                             "#DeltaR",             "deltar_80_200");
   OverlayHistos("h_%s_bestMuVbestMu_oppSign_ptisotk_deltaR200",    "#DeltaR(#mu,#mu)",                           "#DeltaR",             "deltarmumu_200");
   OverlayHistos("h_%s_bestMuVHEEP_oppSign_ptisotk_d0200",          "max lepton |d0|",                            "|d_0| (cm)",          "d0_200",           0.2);
 

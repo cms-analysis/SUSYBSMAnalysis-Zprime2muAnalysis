@@ -24,7 +24,7 @@ void Parameters::init() {
   cut_names[none]    = "none";
   cut_names[pt]      = "pt";
   cut_names[isotk]   = "isotk";
-  cut_names[ptheep]  = "ptheep";
+  cut_names[pt80]    = "pt80";
   cut_names[deltar]  = "deltar";
   cut_names[isotk3]  = "isotk3";
   cut_names[trigger] = "trigger";
@@ -68,13 +68,15 @@ void Parameters::init() {
 //valid_cuts.push_back(none);
 //valid_cuts.push_back(pt);
   valid_cuts.push_back(pt | isotk);
-  valid_cuts.push_back(ptheep | isotk);
+  valid_cuts.push_back(pt80 | isotk);
+  valid_cuts.push_back(pt | isotk3 | chi2dof);
+  valid_cuts.push_back(pt80 | isotk3 | chi2dof);
 //valid_cuts.push_back(pt | isotk | deltar);
 //valid_cuts.push_back(pt | isotk3);
 //valid_cuts.push_back(pt20mu | pt80el | isotk);
 //valid_cuts.push_back(pt20el | pt80mu | isotk);
 //valid_cuts.push_back(pt);
-//valid_cuts.push_back(ptheep);
+//valid_cuts.push_back(pt80);
 //valid_cuts.push_back(pt | isotk | njets);
   
   // Valid collections.

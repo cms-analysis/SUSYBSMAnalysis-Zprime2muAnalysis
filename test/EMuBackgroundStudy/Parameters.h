@@ -37,9 +37,9 @@ class Parameters {
   // Codes that can be combined bitwise representing cuts implemented.
   enum cut_type {
     none    = 0,
-    pt 	    = 1<<0,
+    pt      = 1<<0,
     isotk   = 1<<1,
-    ptheep  = 1<<2,
+    pt80    = 1<<2,
     deltar  = 1<<3,
     isotk3  = 1<<4,
     trigger = 1<<5,

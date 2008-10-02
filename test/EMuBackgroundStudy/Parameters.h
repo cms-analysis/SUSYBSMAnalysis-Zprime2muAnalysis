@@ -30,7 +30,7 @@ class Parameters {
     Zp 	    = 1<<12,
     tW 	    = 1<<13,
     DYtt    = 1<<14,
-    fantasy = 1<<15,
+    ignore  = 1<<15,
     nbkgs   = 16
   };
 

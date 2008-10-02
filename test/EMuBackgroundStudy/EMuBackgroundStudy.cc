@@ -321,6 +321,7 @@ void EMuBackgroundStudy::MakeDileptons() {
 }
 
 void EMuBackgroundStudy::PostDileptonCalcs() {
+  //static const DileptonKey pass_key(1, 4, 0, Parameters::pt | Parameters::isotk3 | Parameters::chi2dof );
   static const DileptonKey pass_key(1, 4, 0, Parameters::pt | Parameters::isotk);
   // Event has at least one opposite-sign e-mu dilepton passing cuts.
   event_passes[0] = dileptons.find(pass_key) != dileptons.end();
@@ -330,9 +331,9 @@ void EMuBackgroundStudy::PostDileptonCalcs() {
 
 bool EMuBackgroundStudy::InterestingEvent() {
   return false;
+  return bkg_id == Parameters::ttjets && event_passes[1];
   DileptonKey k(1, 4, 2, Parameters::pt | Parameters::isotk);
   return bkg_id == Parameters::ttjets && dileptons.find(k) != dileptons.end();
-  return event_passes;
   return gen_pdg_id[0]*gen_pdg_id[1] == -143;
   return bkg_id == Parameters::QCD && event_passes[0];
 }
@@ -447,13 +448,13 @@ void EMuBackgroundStudy::FillPlots() {
       p1 = p2;
       p2 = tmp;
     }
-    ((TH2F*)dynamic_histo("gen_topo",     "", "generated event topo",   17, 0, 17, 17, 0, 17))->Fill(p1, p2, weight_final);
+    ((TH2F*)dynamic_histo("gen_topo",     which, "generated event topo",   17, 0, 17, 17, 0, 17))->Fill(p1, p2, weight_final);
 
     for (DileptonMap::const_iterator it = dileptons.begin(); it != dileptons.end(); ++it) {
       for (unsigned i = 0; i < it->second.size(); ++i) {
 	const Dilepton* dil = it->second.at(i);
 	((TH1F*)dynamic_histo(Parameters::key_name(it->first), "mass"     + which,   "dilepton mass",             100, 0,    1000))->Fill(dil->mass, weight_final);
-	((TH1F*)dynamic_histo(Parameters::key_name(it->first), "deltaR"   + which,   "dilepton dR(l1, l2)",       100, 0,      10))->Fill(dil->delta_r, weight_final);
+	((TH1F*)dynamic_histo(Parameters::key_name(it->first), "deltaR"   + which,   "dilepton dR(l1, l2)",       100, 0,    6.29))->Fill(dil->delta_r, weight_final);
 	((TH1F*)dynamic_histo(Parameters::key_name(it->first), "deltaPhi" + which,   "dilepton dPhi(l1, l2)",     100, 0,    3.15))->Fill(dil->delta_phi, weight_final);
 	((TH1F*)dynamic_histo(Parameters::key_name(it->first), "d0"       + which,   "lepton tk |d0| (max)",      100, 1e-6,  0.1))->Fill(dil->d0, weight_final);
       }
@@ -500,8 +501,6 @@ void EMuBackgroundStudy::StackMassHistos(const char* base_name, const char* name
     TH1F* h = it->first;
     Parameters::bkg_id_type b = it->second;
 
-    legend->AddEntry(h, Parameters::bkg_name(b).c_str());
-    
     h->SetFillColor(Parameters::color(b));
     h->SetLineColor(Parameters::color(b));
     h->SetAxisRange(200, 1000);
@@ -510,7 +509,8 @@ void EMuBackgroundStudy::StackMassHistos(const char* base_name, const char* name
     mass_histos_stacked->Add(h);
   }
 
-  //for (vector<Utilities::histo_bkg>::reverse_iterator it = mass_histos.rbegin(); it != mass_histos.rend(); ++it)
+  for (vector<Utilities::histo_bkg>::reverse_iterator it = mass_histos.rbegin(); it != mass_histos.rend(); ++it)
+    legend->AddEntry(it->first, Parameters::bkg_name(it->second).c_str());
   
   TCanvas* c = new TCanvas("c", "c", 1200, 800);
   c->SetLogy();
@@ -537,7 +537,7 @@ void EMuBackgroundStudy::StackMassHistos(const char* base_name, const char* name
   c->SaveAs(fn);
 }
 
-void EMuBackgroundStudy::OverlayHistos(const char* base_name, const char* title, const char* xtitle, const char* name, double max) {
+void EMuBackgroundStudy::OverlayHistos(const char* base_name, const char* title, const char* xtitle, const char* name, const int rebin, const double max, const bool move_overflow) {
   vector<Utilities::histo_bkg> mass_histos = GetHistos(base_name);
 
   TLegend* legend = new TLegend(0.77, 0.57, 0.89, 0.89);
@@ -559,10 +559,17 @@ void EMuBackgroundStudy::OverlayHistos(const char* base_name, const char* title,
     if (max > 0)
       h->SetMaximum(max);
 
+    int r = rebin;
+    while (r-- > 0) h->Rebin();
+
     h->GetXaxis()->SetTitle(xtitle);
     h->GetYaxis()->SetTitle("Arb. units");
     h->GetYaxis()->SetTitleOffset(1.45);
 
+    if (move_overflow) {
+      int nbins = h->GetNbinsX();
+      h->SetBinContent(nbins, h->GetBinContent(nbins) + h->GetBinContent(nbins+1));
+    }
   }
 
   sort(mass_histos.begin(), mass_histos.end(), Utilities::HistogramDecreasingMaximum);
@@ -583,10 +590,14 @@ void EMuBackgroundStudy::OverlayHistos(const char* base_name, const char* title,
   c->SaveAs(fn);  
 }
 
-void EMuBackgroundStudy::DrawGenTopo(const char* name) {
+void EMuBackgroundStudy::DrawGenTopo(const char* name, const char* which) {
   TCanvas* c = new TCanvas();
   char buf[128];
-  snprintf(buf, 128, "h_%s_gen_topo", name);
+  if (which == 0)
+    snprintf(buf, 128, "h_%s_gen_topo", name);
+  else
+    snprintf(buf, 128, "h_%s_gen_topo_%s", name, which);
+    
   TH1F* h = (TH1F*)gDirectory->Get(buf);
   if (!h) return;
 
@@ -599,66 +610,84 @@ void EMuBackgroundStudy::DrawGenTopo(const char* name) {
   snprintf(fn, 128, "histos/h_gen_topo_%s.png", name);
   c->SaveAs(fn);
 
-  printf("DrawGenTopo sample: %s %.3f\n", name, h->GetBinContent(h->FindBin(13,11)));
+  double f_emu   = h->GetBinContent(h->FindBin(13,11));
+  double f_etau  = h->GetBinContent(h->FindBin(15,11));
+  double f_mutau = h->GetBinContent(h->FindBin(15,13));
+
+  printf("DrawGenTopo sample: %s e/mu: which: %s %.3f e/tau: %.3f mu/tau: %.3f sum: %.3f\n",
+	 name, which, f_emu, f_etau, f_mutau, f_emu + f_etau + f_mutau);
 }
 
 void EMuBackgroundStudy::DrawPlots() {
-  StackMassHistos("h_%s_bestMuVHEEP_oppSign_ptisotk_mass",     "h_elmu_mass_20", "e#mu");
+  StackMassHistos("h_%s_bestMuVHEEP_oppSign_isotkpt_mass",     "h_elmu_mass_20", "e#mu");
   StackMassHistos("h_%s_bestMuVHEEP_oppSign_isotkpt80_mass",   "h_elmu_mass_80", "e#mu");
 
-  OverlayHistos("h_%s_met",                                     "#slash{E}_{T} by process (overlaid)",        "#slash{E}_{T} (GeV)", "met",          0.16);
-  OverlayHistos("h_%s_njets",                                   "# jets by process (overlaid)",               "# jets",              "njets");
-  OverlayHistos("h_%s_ncleanjets",                              "# cleaned jets by process (overlaid)",       "# jets",              "ncleanjets");
-  OverlayHistos("h_%s_bestMuVHEEP_oppSign_ptisotk_deltaR",      "#DeltaR(e,#mu)",                             "#DeltaR",             "deltar");
-  OverlayHistos("h_%s_bestMuVHEEP_oppSign_isotkpt80_deltaR",    "#DeltaR(e,#mu)",                             "#DeltaR",             "deltar_80");
-  OverlayHistos("h_%s_bestMuVbestMu_oppSign_ptisotk_deltaR",    "#DeltaR(#mu,#mu)",                           "#DeltaR",             "deltarmumu");
-  OverlayHistos("h_%s_bestMuVHEEP_oppSign_ptisotk_d0",          "max lepton |d0|",                            "|d_0| (cm)",          "d0",           0.2);
+  OverlayHistos("h_%s_met",                                          "#slash{E}_{T} by process (overlaid)",        "#slash{E}_{T} (GeV)", "met", 1);
+  OverlayHistos("h_%s_njets",                                        "# jets by process (overlaid)",               "# jets",              "njets");
+  OverlayHistos("h_%s_ncleanjets",                                   "# cleaned jets by process (overlaid)",       "# jets",              "ncleanjets");
+  OverlayHistos("h_%s_bestMuVHEEP_oppSign_isotkpt_deltaR",           "#DeltaR(e,#mu)",                             "#DeltaR",             "deltar", 1, 0.3);
+  OverlayHistos("h_%s_bestMuVbestMu_oppSign_isotkpt_deltaR",         "#DeltaR(#mu,#mu)",                           "#DeltaR",             "deltarmumu", 1, 0.3);
+  OverlayHistos("h_%s_bestMuVHEEP_oppSign_isotkpt_d0",               "max lepton |d_{0}|",                         "|d_{0}| (cm)",        "d0", 1, 0.3, true);
+							          
+  OverlayHistos("h_%s_met_ep",                                       "#slash{E}_{T} by process (overlaid)",        "#slash{E}_{T} (GeV)", "met_ep", 1, 0.23);
+  OverlayHistos("h_%s_njets_ep",                                     "# jets by process (overlaid)",               "# jets",              "njets_ep");
+  OverlayHistos("h_%s_ncleanjets_ep",                                "# cleaned jets by process (overlaid)",       "# jets",              "ncleanjets_ep");
+  OverlayHistos("h_%s_bestMuVHEEP_oppSign_isotkpt_deltaRep",         "#DeltaR(e,#mu)",                             "#DeltaR",             "deltar_ep", 1, 0.22);
+  OverlayHistos("h_%s_bestMuVbestMu_oppSign_isotkpt_deltaRep",       "#DeltaR(#mu,#mu)",                           "#DeltaR",             "deltarmumu_ep", 1, 0.3);
+  OverlayHistos("h_%s_bestMuVHEEP_oppSign_isotkpt_d0ep",             "max lepton |d_{0}|",                         "|d_{0}| (cm)",        "d0_ep", 1, 0.3, true);
 
-  OverlayHistos("h_%s_met_200",                                    "#slash{E}_{T} by process (overlaid)",        "#slash{E}_{T} (GeV)", "met_200",          0.2);
-  OverlayHistos("h_%s_njets_200",                                  "# jets by process (overlaid)",               "# jets",              "njets_200");
-  OverlayHistos("h_%s_ncleanjets_200",                             "# cleaned jets by process (overlaid)",       "# jets",              "ncleanjets_200");
-  OverlayHistos("h_%s_bestMuVHEEP_oppSign_ptisotk_deltaR200",      "#DeltaR(e,#mu)",                             "#DeltaR",             "deltar_200");
-  OverlayHistos("h_%s_bestMuVHEEP_oppSign_isotkpt80_deltaR200",    "#DeltaR(e,#mu)",                             "#DeltaR",             "deltar_80_200");
-  OverlayHistos("h_%s_bestMuVbestMu_oppSign_ptisotk_deltaR200",    "#DeltaR(#mu,#mu)",                           "#DeltaR",             "deltarmumu_200");
-  OverlayHistos("h_%s_bestMuVHEEP_oppSign_ptisotk_d0200",          "max lepton |d0|",                            "|d_0| (cm)",          "d0_200",           0.2);
+  OverlayHistos("h_%s_met_ep200",                                    "#slash{E}_{T} by process (overlaid)",        "#slash{E}_{T} (GeV)", "met_ep200", 1, 0.3);
+  OverlayHistos("h_%s_njets_ep200",                                  "# jets by process (overlaid)",               "# jets",              "njets_ep200");
+  OverlayHistos("h_%s_ncleanjets_ep200",                             "# cleaned jets by process (overlaid)",       "# jets",              "ncleanjets_ep200");
+  OverlayHistos("h_%s_bestMuVHEEP_oppSign_isotkpt_deltaRep200",      "#DeltaR(e,#mu)",                             "#DeltaR",             "deltar_ep200", 1, 0.4);
+  OverlayHistos("h_%s_bestMuVbestMu_oppSign_isotkpt_deltaRep200",    "#DeltaR(#mu,#mu)",                           "#DeltaR",             "deltarmumu_ep200", 1, 0.3);
+  OverlayHistos("h_%s_bestMuVHEEP_oppSign_isotkpt_d0ep200",          "max lepton |d_{0}|",                         "|d_{0}| (cm)",        "d0_ep200", 1, 0.3, true);
 
   DrawGenTopo("WW");
   DrawGenTopo("tW");
   DrawGenTopo("ttjets");
+
+  DrawGenTopo("WW", "ep");
+  DrawGenTopo("tW", "ep");
+  DrawGenTopo("ttjets", "ep");
+
+  DrawGenTopo("WW", "ep200");
+  DrawGenTopo("tW", "ep200");
+  DrawGenTopo("ttjets", "ep200");
 }
 
 void EMuBackgroundStudy::DumpMassIntegrals() {
   string fn = out_prefix + ".integrals";
   FILE* f = fopen(fn.c_str(), "wt"); // I hate ostream..
-  fprintf(f, "%10s%20s%10s%30s %7s %7s %7s %7s\n", "","","","",">200", "+/-", ">400", "+/-");
+  fprintf(f, "%20s%10s%30s%10s %7s %7s %7s %7s\n", "","","","",">200", "+/-", ">400", "+/-");
 
   const double breaks[3] = { 200, 400, 1000 };
 
-  vector<Parameters::bkg_id_type>::const_iterator bkg = Parameters::valid_bkg_ids.begin();
-  for (unsigned ibkg = 0; bkg != Parameters::valid_bkg_ids.end(); ++bkg, ++ibkg) {
-    vector<std::pair<unsigned,unsigned> >::const_iterator coll = Parameters::valid_collections.begin();
-    for (unsigned icoll = 0; coll != Parameters::valid_collections.end(); ++coll, ++icoll) {
-      vector<int>::const_iterator charge = Parameters::valid_charges.begin();
-      for (unsigned icharge = 0; charge != Parameters::valid_charges.end(); ++charge, ++icharge) {
-	vector<unsigned>::const_iterator cuts = Parameters::valid_cuts.begin();
-	for (unsigned icuts = 0; cuts != Parameters::valid_cuts.end(); ++cuts, ++icuts) {
+  vector<std::pair<unsigned,unsigned> >::const_iterator coll = Parameters::valid_collections.begin();
+  for (unsigned icoll = 0; coll != Parameters::valid_collections.end(); ++coll, ++icoll) {
+    vector<int>::const_iterator charge = Parameters::valid_charges.begin();
+    for (unsigned icharge = 0; charge != Parameters::valid_charges.end(); ++charge, ++icharge) {
+      vector<unsigned>::const_iterator cuts = Parameters::valid_cuts.begin();
+      for (unsigned icuts = 0; cuts != Parameters::valid_cuts.end(); ++cuts, ++icuts) {
+	vector<Parameters::bkg_id_type>::const_iterator bkg = Parameters::valid_bkg_ids.begin();
+	for (unsigned ibkg = 0; bkg != Parameters::valid_bkg_ids.end(); ++bkg, ++ibkg) {
 
-	  if (icuts == 0)
+	  if (ibkg == 0)
 	    fprintf(f, "\n");
 
-	  if (icoll == 0 && icharge == 0 && icuts == 0)
-	    fprintf(f, "%10s", Parameters::bkg_name(*bkg).c_str());
-	  else
-	    fprintf(f, "%10s", "");
-	  if (icharge == 0 && icuts == 0)
+	  if (icharge == 0 && icuts == 0 && ibkg == 0)
 	    fprintf(f, "%20s", Parameters::collection_name(*coll).c_str());
 	  else
 	    fprintf(f, "%20s", "");
-	  if (icuts == 0)
+	  if (icuts == 0 && ibkg == 0)
 	    fprintf(f, "%10s", Parameters::charge_name(*charge).c_str());
 	  else
 	    fprintf(f, "%10s", "");
-	  fprintf(f, "%30s", Parameters::cut_name(*cuts).c_str());
+	  if (ibkg == 0)
+	    fprintf(f, "%30s", Parameters::cut_name(*cuts).c_str());
+	  else
+	    fprintf(f, "%30s", "");
+	  fprintf(f, "%10s", Parameters::bkg_name(*bkg).c_str());
 
 	  DileptonKey key(coll->first, coll->second, *charge, *cuts);
 	  string name = histo_name(key, "mass", *bkg);

@@ -56,9 +56,9 @@ void Parameters::init() {
   valid_bkg_ids.push_back(ZZ);
   valid_bkg_ids.push_back(DY);
   valid_bkg_ids.push_back(QCD);
+  valid_bkg_ids.push_back(onia);
+  valid_bkg_ids.push_back(muX);
 //valid_bkg_ids.push_back(photonj);
-//valid_bkg_ids.push_back(onia);
-//valid_bkg_ids.push_back(muX);
 //valid_bkg_ids.push_back(elX);
 //valid_bkg_ids.push_back(minbias);
 //valid_bkg_ids.push_back(DYtt);
@@ -127,7 +127,7 @@ string Parameters::bkg_name(bkg_id_type bkg) {
   case Zp:  	return "Zp";
   case tW:  	return "tW";
   case DYtt:    return "DYtt";
-  case fantasy: return "fantasy";
+  case ignore:  return "ignore";
   default:      break;
   }
     
@@ -180,7 +180,6 @@ Parameters::bkg_id_type Parameters::bkg_id(unsigned id) {
   // See https://twiki.cern.ch/twiki/bin/view/CMS/CSA07ProcessId .
   switch (id) {
   case 27: return minbias;
-  case 60: return onia;
   case 61: return QCD;
   case 70: return muX;
   case 71: return WW;
@@ -190,8 +189,10 @@ Parameters::bkg_id_type Parameters::bkg_id(unsigned id) {
   case 75: return Zp;
   case 76: return tW;
   case 77: return DYtt;
-  case 58: // fall through
-  case 59: return fantasy; // Higgs and Z'->ee. How useful.
+  case 58: // Higgs
+  case 59: // Z'->ee. How useful.
+  case 60: // bbbar->j/psi, already in mu+X
+    return ignore;
   default: break;
   }
     
@@ -221,7 +222,7 @@ int Parameters::color(bkg_id_type bkg) {
   case muX:       return 38;
   case elX:       return 49;
   case onia:      return 40;
-  case fantasy:   return 0;
+  case ignore:    return 0;
   default: break;
   }
 

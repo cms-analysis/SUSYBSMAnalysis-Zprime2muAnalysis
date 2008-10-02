@@ -170,8 +170,8 @@ class EMuBackgroundStudy {
 
   std::vector<Utilities::histo_bkg> GetHistos(const char* base_name);
   void StackMassHistos(const char* base_name, const char* name, const char* tex_abbrev);
-  void OverlayHistos(const char* base_name, const char* title, const char* xtitle, const char* name, double max=-1);
-  void DrawGenTopo(const char* name);
+  void OverlayHistos(const char* base_name, const char* title, const char* xtitle, const char* name, const int rebin = 0, const double max=-1, const bool move_overflow=false);
+  void DrawGenTopo(const char* name, const char* which=0);
 };
 
 #endif

@@ -25,22 +25,22 @@ void TriggerDecision::init(const edm::ParameterSet& config,
       // Level-1 paths we want to use for the trigger decision.
       l1Paths.push_back("L1_SingleMu7");
       l1Paths.push_back("L1_DoubleMu3");
-      
+
       // Level-2 paths (actually, the names of the modules ran)
       hltModules[0].push_back("SingleMuNoIsoL2PreFiltered");
       hltModules[0].push_back("DiMuonNoIsoL2PreFiltered");
       // Level-3 paths (module names)
       hltModules[1].push_back("SingleMuNoIsoL3PreFiltered");
       hltModules[1].push_back("DiMuonNoIsoL3PreFiltered");
-      
+
       // HLT paths (the logical ANDs of L2 and L3 single/dimuon paths
-      // above)
-      hltPaths.push_back("HLT1MuonNonIso");
-      hltPaths.push_back("HLT2MuonNonIso");
+      // above) in 2E30 menu.
+      hltPaths.push_back("HLT_Mu15");      // former HLT1MuonNonIso
+      hltPaths.push_back("HLT_DoubleMu3"); // former HLT2MuonNonIso
     }
     else {
       l1Paths.push_back("L1_SingleEG15");
-      
+
       // For now, just look at the overall HLT decision for electrons.
       hltPaths.push_back("HLT1EMHighEt");
       hltPaths.push_back("HLT1EMVeryHighEt");
@@ -101,22 +101,30 @@ void TriggerDecision::storeHLTDecision(const edm::Event& event) {
   // path decisions can be extracted.
   edm::Handle<edm::TriggerResults> hltRes;
   event.getByLabel(hltResults, hltRes);
-  
+
   // Get the map between path names and indices.
   edm::TriggerNames hltTrigNames(*hltRes);
-  
+
   ostringstream out;
   if (debug) out << "storeHLTDecision:\n";
 
   // Get the official HLT results, and pack them.
   unsigned int hlt_trigbits = 0;
+  int paths_defined = hltRes->size();
   for (unsigned int i = 0; i < hltPaths.size(); i++) {
     int ndx = hltTrigNames.triggerIndex(hltPaths[i]);
-    bool fired = hltRes->accept(ndx);
-    if (debug)
-      out << "  " << hltPaths[i] << " (index " << ndx << "): " 
-	  << " decision " << fired << endl;
-    if (fired) hlt_trigbits |= 1 << i;
+    if (ndx >= paths_defined) {
+      edm::LogWarning("storeHLTDecision")
+	<< "+++ HLT path " << hltPaths[i]
+	<< " is not available in TriggerResults object; skipping it... +++";
+    }
+    else {
+      bool fired = hltRes->accept(ndx);
+      if (debug)
+	out << "  " << hltPaths[i] << " (index " << ndx << "): " 
+	    << " decision " << fired << endl;
+      if (fired) hlt_trigbits |= 1 << i;
+    }
   }
 
   // In the new HLT data model, filter decisions and objects firing

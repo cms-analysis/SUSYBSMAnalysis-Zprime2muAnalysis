@@ -16,6 +16,66 @@ using namespace std;
 using namespace edm;
 using namespace reco;
 
+// Return the TeV-optimized refit track using the TMR choice; cuts on
+// prob are old and are therefore unoptimized, but this is here for
+// reference's sake.
+//
+// Function is in the same format as Piotr's in MuonCocktails.h.
+reco::TrackRef tevOptimizedTMR( const reco::TrackRef& combinedTrack,
+				const reco::TrackRef& trackerTrack,
+				const reco::TrackToTrackMap tevMap1,
+				const reco::TrackToTrackMap tevMap2,
+				const reco::TrackToTrackMap tevMap3,
+				const bool useTMR ) {
+
+  enum { tk, gmr, fms, pmr };
+
+  std::vector<reco::TrackRef> refit(4);
+  bool ok[4];
+  ok[tk] = true; // Assume tracker track OK.
+
+  reco::TrackToTrackMap::const_iterator gmrTrack = tevMap1.find(combinedTrack);
+  reco::TrackToTrackMap::const_iterator fmsTrack = tevMap2.find(combinedTrack);
+  reco::TrackToTrackMap::const_iterator pmrTrack = tevMap3.find(combinedTrack);
+
+  ok[gmr] = gmrTrack != tevMap1.end();
+  ok[fms] = fmsTrack != tevMap2.end();
+  ok[pmr] = pmrTrack != tevMap3.end();
+
+  double prob[4];
+  int chosen=3;
+
+  if (ok[tk])  refit[tk]  = trackerTrack;
+  if (ok[gmr]) refit[gmr] = (*gmrTrack).val;
+  if (ok[fms]) refit[fms] = (*fmsTrack).val;
+  if (ok[pmr]) refit[pmr] = (*pmrTrack).val;
+  
+  for (unsigned int i=0; i<4; i++) {
+    prob[i] = (ok[i] && refit[i]->recHitsSize())
+      ? muon::trackProbability(refit[i]) : 0.0; 
+    if (prob[i] == 0.0) ok[i] = false;
+  }
+
+//  std::cout << "Probabilities: " << prob[0] << " " << prob[1] << " " << prob[2] << " " << prob[3] << std::endl;
+
+  if (useTMR && ok[tk] && ok[fms]) {
+    if (prob[fms] - prob[tk] > 30.)
+      chosen = tk;
+    else
+      chosen = fms;
+  }
+  else if (ok[fms] && ok[pmr]) {
+    if (prob[fms] - prob[pmr] > 0.9)
+      chosen = pmr;
+  }
+  else {
+    if      (ok[fms]) chosen = fms;
+    else if (ok[pmr]) chosen = pmr;
+  }
+    
+  return refit.at(chosen);
+}
+
 // Module to copy only the GlobalMuons out of the default
 // MuonCollection (and ignore the Tracker, CaloMuons).
 
@@ -114,9 +174,9 @@ Muon* GlobalOnlyMuonProducer::cloneAndSwitchTrack(const Muon& muon,
   mu->setCharge(newTrack->charge());
   mu->setP4(p4);
   mu->setVertex(vtx);
-  mu->setCombined(newTrack);
-  mu->setTrack(tkTrack);
-  mu->setStandAlone(muTrack);
+  mu->setGlobalTrack(newTrack);
+  mu->setInnerTrack(tkTrack);
+  mu->setOuterTrack(muTrack);
   return mu;
 }
 

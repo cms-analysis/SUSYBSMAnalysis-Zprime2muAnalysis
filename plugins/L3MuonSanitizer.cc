@@ -64,9 +64,9 @@ void L3MuonSanitizer::produce(Event& event,
 	p4.SetXYZT(theTrack->px(), theTrack->py(), theTrack->pz(),
 		   sqrt(theTrack->p()*theTrack->p() + muMass*muMass));
 	Muon mu(theTrack->charge(), p4, vtx);
-	mu.setCombined(theTrack);
-	mu.setTrack(tkTrack);
-	mu.setStandAlone(muTrack);
+	mu.setGlobalTrack(theTrack);
+	mu.setInnerTrack(tkTrack);
+	mu.setOuterTrack(muTrack);
 	cands->push_back(mu);
       }
     }

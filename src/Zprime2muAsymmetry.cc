@@ -47,7 +47,7 @@ const double       Zprime2muAsymmetry::nSigma = 5.;
 const unsigned int Zprime2muAsymmetry::nSmearPoints = 100000;
 const unsigned int Zprime2muAsymmetry::nNormPoints = 100000;
 
-Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config) 
+Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   : Zprime2muAnalysis(config) {
 
   // initialize array counters since we don't use automatically-sized
@@ -178,7 +178,6 @@ Zprime2muAsymmetry::~Zprime2muAsymmetry() {
 
 void Zprime2muAsymmetry::analyze(const edm::Event& event, 
 				 const edm::EventSetup& eSetup) {
-  // delegate filling our muon vectors to the parent class
   Zprime2muAnalysis::analyze(event, eSetup);
 
   // JMTBAD break out generator-level stuffs from fillFitData
@@ -1561,8 +1560,15 @@ void Zprime2muAsymmetry::getAsymParams() {
     
   if (useCachedParams) {
     // first try to get the already calculated params from the file
-    paramFile = new TFile(paramCacheFile.c_str(), "read");
-    if (paramFile->IsOpen()) {
+    try {
+      paramFile = new TFile(paramCacheFile.c_str(), "read");
+    }
+    catch (const cms::Exception& e) {
+      // Now CMSSW throws exceptions on almost all ROOT erorrs,
+      // including the file not existing above. Grr.
+    }
+
+    if (paramFile && paramFile->IsOpen()) {
       // JMTBAD from here, assume that all the reading of the file works
       edm::LogInfo("getAsymParams") << "Using cached parameterizations from "
 				    << paramCacheFile;

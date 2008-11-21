@@ -1,15 +1,62 @@
 <use name=FWCore/Framework>
 <use name=FWCore/ParameterSet>
 
-<library file=CocktailMuonProducer.cc,DileptonPicker.cc,DimuonBremRecoverer.cc,GenCandsFromSimTracksProducer.cc,GenDilCandViewShallowCloneCombiner.cc,GenResonanceProducer.cc,GlobalOnlyMuonProducer.cc,HLTLeptonSanitizer.cc,L1MuonSanitizer.cc,L3MuonSanitizer.cc,MuonBySeedMatcher.cc,PtMinDeltaRViewMatcher.cc,../src/DileptonUtilities.cc,../src/HardInteraction.cc,../src/GeneratorUtilities.cc name=Zprime2muPlugins>
+<library file=DileptonPicker.cc,../src/DileptonUtilities.cc,../src/GeneratorUtilities.cc,../src/HardInteraction.cc name=DileptonPicker>
   <use name=DataFormats/Candidate>
-  <use name=DataFormats/EgammaCandidates>
   <use name=DataFormats/HepMCCandidate>
-  <use name=DataFormats/L1Trigger>
   <use name=DataFormats/MuonReco>
-  <use name=DataFormats/RecoCandidate>
+  <use name=DataFormats/TrackReco>
+</library>
+
+<library file=DimuonBremRecoverer.cc name=DimuonBremRecoverer>
+  <use name=DataFormats/Candidate>
   <use name=PhysicsTools/CandAlgos>
-  <use name=PhysicsTools/UtilAlgos>
+</library>
+
+<library file=GenCandsFromSimTracksProducer.cc name=GenCandsFromSimTracksProducer>
+  <use name=DataFormats/HepMCCandidate>
   <use name=SimDataFormats/HepMCProduct>
   <use name=SimDataFormats/Track>
+</library>
+
+<library file=GenDilCandViewShallowCloneCombiner.cc name=GenDilCandViewShallowCloneCombiner>
+  <use name=DataFormats/Candidate>
+  <use name=PhysicsTools/CandAlgos>
+  <use name=PhysicsTools/UtilAlgos>
+</library>
+
+<library file=GenResonanceProducer.cc,../src/HardInteraction.cc name=GenResonanceProducer>
+  <use name=DataFormats/Candidate>
+  <use name=DataFormats/HepMCCandidate>
+</library>
+
+<library file=GlobalOnlyMuonProducer.cc name=GlobalOnlyMuonProducer>
+  <use name=DataFormats/Candidate>
+  <use name=DataFormats/MuonReco>
+  <use name=DataFormats/TrackReco>
+</library>
+
+<library file=HLTLeptonSanitizer.cc name=HLTLeptonSanitizer>
+  <use name=DataFormats/EgammaCandidates>
+  <use name=DataFormats/RecoCandidate>
+</library>
+
+<library file=L1MuonSanitizer.cc name=L1MuonSanitizer>
+  <use name=DataFormats/Candidate>
+  <use name=DataFormats/L1Trigger>
+</library>
+
+<library file=L3MuonSanitizer.cc name=L3MuonSanitizer>
+  <use name=DataFormats/Candidate>
+  <use name=DataFormats/MuonReco>
+  <use name=DataFormats/TrackReco>
+</library>
+
+<library file=MuonBySeedMatcher.cc name=MuonBySeedMatcher>
+  <use name=DataFormats/RecoCandidate>
+</library>
+
+<library file=PtMinDeltaRViewMatcher.cc name=PtMinDeltaRViewMatcher>
+  <use name=PhysicsTools/CandAlgos>
+  <use name=PhysicsTools/UtilAlgos>
 </library>

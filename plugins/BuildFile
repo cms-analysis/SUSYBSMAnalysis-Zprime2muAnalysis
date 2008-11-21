@@ -1,10 +1,11 @@
 <use name=FWCore/Framework>
 <use name=FWCore/ParameterSet>
 
-<library file=DileptonPicker.cc,../src/DileptonUtilities.cc,../src/GeneratorUtilities.cc,../src/HardInteraction.cc name=DileptonPicker>
+<library file=DileptonPicker.cc,../src/DileptonUtilities.cc,../src/GeneratorUtilities.cc,../src/HardInteraction.cc,../src/TeVMuHelper.cc name=DileptonPicker>
   <use name=DataFormats/Candidate>
   <use name=DataFormats/HepMCCandidate>
   <use name=DataFormats/MuonReco>
+  <use name=DataFormats/PatCandidates>
   <use name=DataFormats/TrackReco>
 </library>
 

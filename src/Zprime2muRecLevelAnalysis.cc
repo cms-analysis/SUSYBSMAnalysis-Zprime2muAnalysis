@@ -35,7 +35,8 @@ void Zprime2muRecLevelAnalysis::analyze(const edm::Event& event,
   // lepton and dilepton collections, including the "resonances"
   // (dileptons + closest photons added in).
   for (int irec = 0; irec < MAX_LEVELS; irec++) {
-    recLevelHelper.getLeptons(event, irec, allLeptons[irec]);
+    double pt_min = (irec == 0) ? 1. : 0.; // cut very-low-pT generated muons
+    recLevelHelper.getLeptons(event, irec, allLeptons[irec], pt_min);
     recLevelHelper.getDileptons(event, irec, RecLevelHelper::DIL,
 				allDileptons[irec]);
     recLevelHelper.getDileptons(event, irec, RecLevelHelper::RES,

@@ -9,6 +9,7 @@
 <use name=DataFormats/HepMCCandidate>
 <use name=DataFormats/L1GlobalTrigger>
 <use name=DataFormats/MuonReco>
+<use name=DataFormats/PatCandidates>
 
 <use name=Foundation/PluginManager>
 

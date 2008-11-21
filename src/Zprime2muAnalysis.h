@@ -42,7 +42,6 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   virtual void endJob() {}
 
  protected:
-
   ////////////////////////////////////////////////////////////////////
   // Parameters read or determined from the config file:
   ////////////////////////////////////////////////////////////////////
@@ -96,15 +95,26 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // Helper object for extracting the trigger decision from the paths
   // we care about.
   TriggerDecision trigDecision;
-  
-  // Helper object for TeV dimuon analysis selection.
-  TeVMuHelper tevMuHelper;
+
+  // The helper object for cuts.
+  TeVMuHelper* tevMuHelper;
+
+  // Cut mask to be passed to TeVMuHelper when needed.
+  unsigned cutMask;
 
   // The main dilepton collections: gen, hlt, default offline, and
   // "best" offline.
   edm::InputTag genDils, hltDils, recDils, bestDils;
   edm::Handle<reco::CompositeCandidateCollection>
     genDileptons, hltDileptons, recDileptons, bestDileptons;
+
+  ////////////////////////////////////////////////////////////////////
+  // Print-outs
+  ////////////////////////////////////////////////////////////////////
+  
+  void dumpLepton(ostream& output, const reco::CandidateBaseRef& cand) const;
+  void dumpDilepton(ostream& output,
+		    const reco::CompositeCandidate& cand) const;
 };
 
 #endif // ZP2MUANALYSIS_H

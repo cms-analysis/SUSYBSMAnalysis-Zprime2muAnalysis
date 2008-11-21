@@ -1,72 +1,108 @@
 #ifndef TEVMUHELPER_H
 #define TEVMUHELPER_H
 
-#include "DataFormats/Candidate/interface/Candidate.h"
-#include "DataFormats/MuonReco/interface/Muon.h"
-#include "DataFormats/TrackReco/interface/Track.h"
-#include "DataFormats/TrackReco/interface/TrackFwd.h"
+#include <map>
+#include <vector>
 
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
+#include "DataFormats/Candidate/interface/Candidate.h"
+#include "DataFormats/Candidate/interface/CompositeCandidate.h"
+#include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
+#include "DataFormats/JetReco/interface/CaloJetCollection.h"
+#include "DataFormats/MuonReco/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/Electron.h"
+#include "FWCore/Framework/interface/Event.h"
+
+typedef std::vector<pat::Electron> PatElectronCollection;
 
 class TeVMuHelper {
 public:
-  enum CutResult {PASS, PT=0x01, ISO=0x02, CHI2DOF=0x04, D0=0x08, NSIHITS=0x10}; // To go in bitfields.
+  // To go in bitfields.
+  enum CutResult {
+    PASS=0,
+    // Least significant word is for per-lepton cuts:
+    PT=0x01, ISO=0x02, CHI2DOF=0x04, D0=0x08,
+    NSIHITS=0x10, PTOTHER=0x20, D0EL=0x40, COLLEMU=0x80,
+    ISOS=0x100, ELTIGHT=0x200,
+    LEPCUTS=0xFFFF,
+    // Most significant word is for per-event or per-dilepton cuts:
+    TOPMET=0x10000, ZVETO=0x20000, NJETS2=0x40000, NJETS01=0x80000,
+    WEAKISO=0x100000, TOPTRIGGER=0x200000,
+    EVTCUTS=0xFFFF0000,
+    ALLCUTS=0xFFFFFFFF
+  };
 
-  // Default values are what was used in the 2007 AN (only applying pT
-  // and isolation cuts).
-  TeVMuHelper() :
-    ptCut(20), isoCut(10), chi2dofCut(5),
-    d0Cut(0.25), nSiHitsCut(7),
-    cutMask(PT | ISO) {}
+  // Some defined cut choices.
 
-  void setCutMask(const unsigned mask) {
-    cutMask = mask;
-  }
+  // AN 2007/038 cuts (pT and isolation)
+  static const unsigned tevMuCuts;
 
-  unsigned leptonIsCut(const reco::Candidate& lepton) const {
-    unsigned retval = 0;
-
-    // pT cut.
-    if ((cutMask & PT) && lepton.pt() <= ptCut)
-      retval |= PT;
-
-    // Try to cast to reco::Muon.
-    const reco::Muon* muon = toConcretePtr<reco::Muon>(lepton);
-    if (muon != 0) {
-      // Sum pT in cone of dR=0.3 cut
-      if ((cutMask & ISO) && muon->isIsolationValid() &&
-	  muon->isolationR03().sumPt > isoCut)
-	retval |= ISO;
-      
-      const reco::TrackRef& tk = muon->combinedMuon();
-      if (tk.isNonnull()) {
-	// Cut on chi2/dof.
-	if ((cutMask & CHI2DOF) && tk->normalizedChi2() > chi2dofCut)
-	  retval |= CHI2DOF;
-
-	// Cut on d0.
-	if ((cutMask & D0) && fabs(tk->d0()) > d0Cut) // 2.5 mm
-	  retval |= D0;
-      }
-
-      const reco::TrackRef& tktk = muon->track();
-      // Cut on number of silicon hits for the tracker track.
-      if ((cutMask & NSIHITS) && tktk.isNonnull() &&
-	  tktk->numberOfValidHits() < nSiHitsCut)
-	retval |= NSIHITS;
-    }
+  // AN 2008/044 e mu bkg study broken cuts.
+  static const unsigned heepCuts;
   
-    return retval & cutMask;
-  }
+  // Various combinations of AN 2008/015 cuts ("top group").
+  static const unsigned topSkim;
+  static const unsigned topElCuts;   
+  static const unsigned topMuCuts;
+  static const unsigned topLeptonId;
+  static const unsigned topIsolation;
+  static const unsigned topLepCuts;
+  static const unsigned topEventCuts;
+  static const unsigned topGroupCuts;
 
-private:
+  typedef std::map<unsigned, const char*> CutNameMap;
+  static CutNameMap cutNames;
+
+  TeVMuHelper(const edm::Event& evt);
+
+  void initEvent(const edm::Event* evt);
+
+  bool collinearMuon(const reco::PixelMatchGsfElectron* electron) const;
+
+  double calcIsolationS(const reco::Muon* muon) const;
+  double calcIsolationS(const reco::PixelMatchGsfElectron* electron) const;
+  bool passIsolationS(double S, double pt) const;
+
+  unsigned electronIsCut(const reco::PixelMatchGsfElectron* electron,
+			 const unsigned cutMask) const;
+  unsigned muonIsCut(const reco::Muon* muon,
+		     const unsigned cutMask) const;
+  unsigned leptonIsCut(const reco::Candidate& lepton,
+		       const unsigned cutMask) const;
+
+  unsigned dileptonIsCut(const reco::CompositeCandidate& dil,
+			 const unsigned cutMask);
+
+ private:
+  void _eventOK() const;
+
+  void _cacheTrigger();
+  void _cacheMET();
+  void _cacheZvetoed();
+  void _cacheNJets();
+
+  const edm::Event* event;
+
+  // Cut values.
   double ptCut;
   double isoCut;
+  double ptOthCut;
   double chi2dofCut;
   double d0Cut;
+  double d0ElCut;
   int nSiHitsCut;
+  double collinearMuon_dRmax;
+  double Sratio_min;
 
-  unsigned cutMask;
+  // Per-event quantity cache.
+  double METx_uncorrJES;
+  double METy_uncorrJES;
+  double MET_uncorrJES;
+  double METx;
+  double METy;
+  double MET;
+  int Zvetoed;
+  int nJets;
+  int topTriggered;
 };
 
 #endif

@@ -364,12 +364,12 @@ process Skim = {
 #  }
 #  path pt = {printTree}
 
-  module Zprime2muBackgrounds = Zprime2muBackgrounds { 
+  module ntupledump = EMuBackgroundsNtupleDumper { 
     untracked int32 selfProcId = %(procId)i
   }
 
   sequence stuff = { patLayer0 & patLayer1 & heepSelection & simParticleCandidates }
-  sequence ntpl = { muCandTK, seedMatchTKFS, seedMatchTKPR, bestMuons, Zprime2muBackgrounds }
+  sequence ntpl = { muCandTK, seedMatchTKFS, seedMatchTKPR, bestMuons, ntupledump }
 
   # The filter that will determine the event output.
   path myfilter = { myHLTfilter & %(nocsa07muon)s %(weights2)s kine & TeVMuonReReco & stuff & ntpl }

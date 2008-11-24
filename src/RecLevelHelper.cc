@@ -51,26 +51,25 @@ void RecLevelHelper::initEvent(const edm::Event& event) {
 bool RecLevelHelper::getLeptonsView(const edm::Event& event, int level,
 				    edm::View<reco::Candidate>& view) {
   edm::Handle<edm::View<reco::Candidate> > hview;
-  try {
-    event.getByLabel(lepInputs[level], hview);
-  } catch (const cms::Exception& e) {
+  event.getByLabel(lepInputs[level], hview);
+  if (hview.failedToGet()) {
     // If there was no "best" collection in the event, try to use the
     // default global leptons (lgmr).
     if (level == lbest)
       return getLeptonsView(event, lgmr, view);
-      
-    //if (hview.failedToGet()) {
+    
     if (!warned[level]) {
       string inp = lepInputs[level].encode();
       // Don't bother to warn about collections that are supposed to be missing.
-      if (inp != ":") 
+      if (inp != ":" && inp != "") 
 	edm::LogWarning("initEvent")
-	  << "No event collection " << lepInputs[level]
+	  << "No event collection " << inp
 	  << " found at rec level " << level << "; skipping";
       warned[level] = true;
     }
     return false;
   }
+
   view = *hview;
   return true;
 }
@@ -101,10 +100,8 @@ bool RecLevelHelper::getDileptons(const edm::Event& event, int level, DilType ty
   string label = dilInputs[level] + extra[type];
 
   edm::Handle<reco::CompositeCandidateCollection> hcoll;
-  try {
-    event.getByLabel(label, hcoll);
-  } catch (const cms::Exception& e) {
-    //if (coll.failedToGet()) {
+  event.getByLabel(label, hcoll);
+  if (hcoll.failedToGet()) {
     if (!warned[level]) {
       // Don't bother to warn about collections that are supposed to be missing.
       if (label != "")
@@ -154,14 +151,9 @@ void RecLevelHelper::storeMatchMap(const edm::Event& event,
 				   const string& mapName,
 				   reco::CandViewMatchMap& map) const {
   edm::Handle<reco::CandViewMatchMap> matchMap;
-  bool ok = true;
-  try {
-    event.getByLabel(mapName, matchMap);
-  } catch (const cms::Exception& e) {
-  // if (matchMap.failedToGet()) {
-    ok = false;
-  }
-  if (!ok) {
+  event.getByLabel(mapName, matchMap);
+
+  if (matchMap.failedToGet()) {
     edm::LogWarning("storeMatchMap")
       << "Couldn't get match map " << mapName << " from event!"
       << " Storing empty match map.";

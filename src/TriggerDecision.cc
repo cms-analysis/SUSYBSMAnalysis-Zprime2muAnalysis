@@ -1,5 +1,9 @@
 #include "DataFormats/Common/interface/TriggerResults.h"
-#include "DataFormats/HLTReco/interface/HLTFilterObject.h"
+#include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerObjectMap.h"
+#include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerObjectMapRecord.h"
+#include "DataFormats/HLTReco/interface/TriggerEvent.h"
+#include "DataFormats/HLTReco/interface/TriggerObject.h"
+#include "DataFormats/HLTReco/interface/TriggerTypeDefs.h"
 
 #include "FWCore/Framework/interface/TriggerNames.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -12,77 +16,77 @@ void TriggerDecision::init(const edm::ParameterSet& config,
 			   const bool dbg) {
   debug = dbg;
 
-  doingElectrons = config.getParameter<bool>("doingElectrons");
-  useTrigger     = config.getParameter<bool>("useTrigger");
-  l1ParticleMap  = config.getParameter<edm::InputTag>("l1ParticleMap");
-  hltResults     = config.getParameter<edm::InputTag>("hltResults");
+  doingElectrons     = config.getParameter<bool>("doingElectrons");
+  useTrigger         = config.getParameter<bool>("useTrigger");
+  l1GtObjectMap      = config.getParameter<edm::InputTag>("l1GtObjectMap");
+  hltResults         = config.getParameter<edm::InputTag>("hltResults");
 
   if (useTrigger) {
     if (!doingElectrons) {
       // Level-1 paths we want to use for the trigger decision.
-      l1paths.push_back(l1extra::L1ParticleMap::kSingleMu7);
-      l1paths.push_back(l1extra::L1ParticleMap::kDoubleMu3);
-      
+      l1Paths.push_back("L1_SingleMu7");
+      l1Paths.push_back("L1_DoubleMu3");
+
       // Level-2 paths (actually, the names of the modules ran)
       hltModules[0].push_back("SingleMuNoIsoL2PreFiltered");
       hltModules[0].push_back("DiMuonNoIsoL2PreFiltered");
       // Level-3 paths (module names)
       hltModules[1].push_back("SingleMuNoIsoL3PreFiltered");
       hltModules[1].push_back("DiMuonNoIsoL3PreFiltered");
-      
+
       // HLT paths (the logical ANDs of L2 and L3 single/dimuon paths
-      // above)
-      hltPaths.push_back("HLT1MuonNonIso");
-      hltPaths.push_back("HLT2MuonNonIso");
+      // above) in 2E30 menu.
+      hltPaths.push_back("HLT_Mu15");      // former HLT1MuonNonIso
+      hltPaths.push_back("HLT_DoubleMu3"); // former HLT2MuonNonIso
     }
     else {
-      l1paths.push_back(l1extra::L1ParticleMap::kSingleEG15);
-      
+      l1Paths.push_back("L1_SingleEG15");
+
       // For now, just look at the overall HLT decision for electrons.
-      hltPaths.push_back("HLT1EMHighEt");
-      hltPaths.push_back("HLT1EMVeryHighEt");
-      hltPaths.push_back("HLT1ElectronRelaxed");
+      // JMTBAD trigger names have changed; which are the "right" ones for electrons?
+      hltPaths.push_back("HLT_EM80");
+      hltPaths.push_back("HLT_EM200");
+      //hltPaths.push_back("HLT1ElectronRelaxed");
     }
   }
 }
 
-bool TriggerDecision::initEvent(const edm::Event& event,
-				const bool ignoreSubLevels) {
+void TriggerDecision::initEvent(const edm::Event& event) {
   for (int i_rec = 0; i_rec < TRIG_LEVELS; i_rec++) {
     passTrig[i_rec] = true;
     trigWord[i_rec] = 0;
   }
 
+  // If we're to ignore trigger info, leave passTrig as true.
   if (useTrigger) {
-    event.getByLabel(l1ParticleMap, l1MapColl);
-    if (!l1MapColl.isValid()) {
-      edm::LogWarning("storeL1Decision")
-	<< "L1ParticleMapCollection with label [" << l1ParticleMap.encode()
-	<< "] not found!" << endl;
-      return false;
-    }
     storeL1Decision(event);
-    return storeHLTDecision(event, ignoreSubLevels);
+    storeHLTDecision(event);
   }
-
-  return true;
 }
 
 void TriggerDecision::storeL1Decision(const edm::Event& event) {
   // Get Level-1 decisions for trigger paths we are interested in.
+  edm::Handle<L1GlobalTriggerObjectMapRecord> l1Map;
+  event.getByLabel(l1GtObjectMap, l1Map);
+  if (!l1Map.isValid()) {
+    edm::LogWarning("storeL1Decision")
+      << "L1GlobalTriggerObjectMapRecord with label "
+      << l1GtObjectMap.encode() << " not found!";
+    return;
+  }
+
   ostringstream out;
   if (debug) out << "storeL1Decision:\n";
 
-  // Loop over chosen paths, check trigger decisions, and save them into
-  // "trigbits".
+  // Loop over chosen paths, check trigger decisions, and pack them
+  // into trigbbits.
   unsigned int trigbits = 0;
-  int nl1paths = l1paths.size();
-  for (int ipath = 0; ipath < nl1paths; ipath++) {
-    const l1extra::L1ParticleMap& thisMap = (*l1MapColl)[l1paths[ipath]];
-    bool fired = thisMap.triggerDecision();
+  for (int ipath = 0; ipath < int(l1Paths.size()); ipath++) {
+    const L1GlobalTriggerObjectMap* map = l1Map->getObjectMap(l1Paths[ipath]);
+    bool fired = map->algoGtlResult();
     if (fired) trigbits = trigbits | (1 << ipath);
-    if (debug) out << "  " << thisMap.triggerName() << " (index "
-		   << l1paths[ipath] << "): decision " << fired << endl;
+    if (debug) out << "  " << l1Paths[ipath] << " (index "
+		   << map->algoBitNumber() << "): decision " << fired << endl;
   }
 
   if (debug) {
@@ -91,122 +95,100 @@ void TriggerDecision::storeL1Decision(const edm::Event& event) {
   }
 
   trigWord[l1] = trigbits;
-  passTrig[l1] = (trigbits != 0);
+  passTrig[l1] = trigbits != 0;
 }
 
-bool TriggerDecision::storeHLTDecision(const edm::Event& event,
-				       const bool ignoreSubLevels) {
-  // Getting the result of the entire HLT path is done easily with the
-  // TriggerResults object, however to get at the separate decisions
-  // for L2 and L3 we have to do a little hacky magic.
-
-  // Try to get the HLT TriggerResults object now, before
-  // trying to get the HLTFilterObjectWithRefs below
-  // so that if there is no HLT information in the file, 
-  // getByLabel will go ahead and throw an exception.
+void TriggerDecision::storeHLTDecision(const edm::Event& event) {
+  // Get the HLT TriggerResults object, from which the official HLT
+  // path decisions can be extracted.
   edm::Handle<edm::TriggerResults> hltRes;
   event.getByLabel(hltResults, hltRes);
-  edm::TriggerNames hltTrigNames;
-  hltTrigNames.init(*hltRes);
+
+  // Get the map between path names and indices.
+  edm::TriggerNames hltTrigNames(*hltRes);
 
   ostringstream out;
   if (debug) out << "storeHLTDecision:\n";
 
   // Get the official HLT results, and pack them.
   unsigned int hlt_trigbits = 0;
+  int paths_defined = hltRes->size();
   for (unsigned int i = 0; i < hltPaths.size(); i++) {
     int ndx = hltTrigNames.triggerIndex(hltPaths[i]);
-    bool fired = hltRes->accept(ndx);
-    if (debug)
-      out << " HLT path #" << ndx << ": " << hltPaths[i]
-	  << " decision = " << fired << endl;
-    if (fired) hlt_trigbits |= 1 << i;
+    if (ndx >= paths_defined) {
+      edm::LogWarning("storeHLTDecision")
+	<< "+++ HLT path " << hltPaths[i]
+	<< " is not available in TriggerResults object; skipping it... +++";
+    }
+    else {
+      bool fired = hltRes->accept(ndx);
+      if (debug)
+	out << "  " << hltPaths[i] << " (index " << ndx << "): " 
+	    << " decision " << fired << endl;
+      if (fired) hlt_trigbits |= 1 << i;
+    }
   }
 
-  if (ignoreSubLevels) {
-    trigWord[l2] = trigWord[l3] = hlt_trigbits;
-    passTrig[l2] = passTrig[l3] = hlt_trigbits != 0;
-    for (int l = l2; l <= l3; l++) 
-      out << "  trigWord[l" << l << "]: " << trigWord[l] << endl;
-    if (debug) LogTrace("storeHLTDecision") << out.str();
-    return true;
-  }
-  
-  // Extract L2 and L3 decisions by seeing if the corresponding
-  // HLTFilterObjectWithRefs exists and seeing how many muons it holds.
-  for (unsigned int lvl = 0; lvl < 2; lvl++) {
-    unsigned int l = l2 + lvl;
-    unsigned int trigbits = 0;
-    for (unsigned int ipath = 0; ipath < hltModules[lvl].size(); ipath++) {
-      const string& trigName = hltModules[lvl][ipath];
-      edm::Handle<reco::HLTFilterObjectWithRefs> hltFilterObjs;
+  // In the new HLT data model, filter decisions and objects firing
+  // the trigger are stored in a TriggerEvent object. However, the L2
+  // filter module results for muons are not saved (saveTag = False in
+  // HLTMuonL2PreFilter in the HLT table) separately, e.g. we do not
+  // have both SingleMuNoIsoL2PreFiltered and
+  // SingleMuonNoIsoL3PreFiltered saved. (The L2 decisions and
+  // TriggerObjects are in HLTDEBUG.) So, skip extracting L2 and L3
+  // decisions separately for now.
 
-      bool fired = true;
-      unsigned failAt = 0;
-      try {
-	event.getByLabel(trigName, hltFilterObjs);
-      }
-      catch (const cms::Exception& e) {
-	fired = false;
-	failAt = 1;
-      }
+  trigWord[l2] = trigWord[l3] = hlt_trigbits;
+  passTrig[l2] = passTrig[l3] = hlt_trigbits != 0;
+  for (int l = l2; l <= l3; l++) 
+    out << "  trigWord[l" << l << "]: " << trigWord[l] << endl;
 
-      // There may be an HLTFilterObject in the event even if the
-      // trigger did not accept; the real check is to make sure that
-      // the minimum number of muons for the trigger was met.
-      const unsigned minNMuons = ipath + 1;
-      unsigned nmu = 0;
-      if (fired) {
-	nmu = hltFilterObjs->size();
-	if (nmu < minNMuons) {
-	  fired = false;
-	  failAt = 2;
+  edm::Handle<trigger::TriggerEvent> trigEvent;
+  event.getByLabel("hltTriggerSummaryAOD", trigEvent);
+  if (trigEvent.isValid()) {
+    // Get indices of L2 and L3 muon objects.
+    int l2ind_first = -99, l2ind_last = -99;
+    int l3ind_first = -99, l3ind_last = -99;
+    int ind_prev = 0;
+    const trigger::size_type nC(trigEvent->sizeCollections());
+    for (trigger::size_type iC = 0; iC < nC; ++iC) {
+      std::string encodedCollectionTag(trigEvent->collectionTag(iC).encode());
+      if (strstr(encodedCollectionTag.c_str(), "hltL2MuonCandidates")) {
+	l2ind_first = ind_prev;
+	l2ind_last  = trigEvent->collectionKey(iC)-1;
+      }
+      else if (strstr(encodedCollectionTag.c_str(), "hltL3MuonCandidates")) {
+	l3ind_first = ind_prev;
+	l3ind_last  = trigEvent->collectionKey(iC)-1;
+      }
+      ind_prev = trigEvent->collectionKey(iC);
+    }
+
+    // Access collections of L2 and L3 muons.  Shall we convert them to
+    // reco::muons, similarly to what is done in L3MuonSanitizer.cc, and
+    // save into allLeptons?
+    const trigger::TriggerObjectCollection& TOC(trigEvent->getObjects());
+    if (!doingElectrons) {
+      if (l2ind_first >= 0 && l2ind_last >= l2ind_first) {
+	out << "  L2 muon(s): #, id, pt, eta, phi\n";
+	for (trigger::size_type iO = l2ind_first; iO <= l2ind_last; ++iO) {
+	  const trigger::TriggerObject& TO(TOC[iO]);
+	  out << "  " << iO << " " << TO.id() << " " << TO.pt()
+	      << " " << TO.eta() << " " << TO.phi() << "\n";
 	}
       }
-	
-      if (debug)
-	out << "  " << trigName << ": decision = " << fired
-	    << " (#mu: " << nmu << "; failAt: " << failAt << ")\n";
-
-      if (fired) {
-	trigbits = trigbits | (1 << ipath);
-
-	if (debug) {
-	  out << "  " << trigName << " filter result muons:\n";
-	  reco::HLTFilterObjectWithRefs::const_iterator muItr;
-	  int imu = 0;
-	  for (muItr = hltFilterObjs->begin(); muItr != hltFilterObjs->end();
-	       muItr++) {
-	    out << "    #" << imu++ << " q = " << muItr->charge()
-		<< " p = (" << muItr->px() << ", " << muItr->py()
-		<< ", " << muItr->pz() << ", " << muItr->energy() << ")\n"
-		<< "     pt = " << muItr->pt() << " eta = " << muItr->eta()
-		<< " phi = " << muItr->phi() << endl;
-	  }
+      if (l3ind_first >= 0 && l3ind_last >= l3ind_first) {
+	out << "  L3 muon(s): #, id, pt, eta, phi\n";
+	for (trigger::size_type iO = l3ind_first; iO <= l3ind_last; ++iO) {
+	  const trigger::TriggerObject& TO(TOC[iO]);
+	  out << "  " << iO << " " << TO.id() << " " << TO.pt()
+	      << " " << TO.eta() << " " << TO.phi() << "\n";
 	}
       }
     }
-
-    trigWord[l] = trigbits;
-    passTrig[l] = (trigbits != 0);
-    out << "  trigWord[l" << l << "]: " << trigWord[l] << endl;
-  }
-   
-  bool retval = true;
-  // Check that the official full HLT path decisions agree with
-  // what we extracted for the official L3 decision.
-  if (hlt_trigbits != trigWord[l3]) {
-    edm::LogWarning("storeHLTDecision")
-      << "+++ Warning: official HLT"
-      << " decision disagrees with extracted L3 decision:"
-      << " official HLT: " << hlt_trigbits
-      << " extracted L3: " << trigWord[l3] << " +++";
-    retval = false;
   }
 
   if (debug) LogTrace("storeHLTDecision") << out.str();
-
-  return retval;
 }
 
 unsigned TriggerDecision::getWord(const int irec) const {
@@ -220,10 +202,6 @@ unsigned TriggerDecision::getWord(const int irec) const {
 bool TriggerDecision::pass(const int irec) const {
   // If we're ignoring trigger info, everything passes.
   if (!useTrigger) return true;
-
-  // JMTBAD keep electron and muon trigger info separate for every
-  // event, so we can look at opposite-flavor events. Possibly just
-  // shift the bits over?
 
   if (irec < 0 || irec > l3)
     throw cms::Exception("passTrigger")

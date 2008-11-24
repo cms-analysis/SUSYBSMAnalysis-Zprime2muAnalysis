@@ -1,7 +1,8 @@
 #include "DataFormats/EgammaCandidates/interface/Electron.h"
 #include "DataFormats/EgammaCandidates/interface/ElectronFwd.h"
-#include "DataFormats/EgammaCandidates/interface/PixelMatchGsfElectron.h"
+#include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/EgammaReco/interface/SuperCluster.h"
+#include "DataFormats/L1Trigger/interface/L1MuonParticle.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
 #include "DataFormats/RecoCandidate/interface/RecoChargedCandidateFwd.h"
@@ -34,7 +35,8 @@ void Zprime2muRecLevelAnalysis::analyze(const edm::Event& event,
   // lepton and dilepton collections, including the "resonances"
   // (dileptons + closest photons added in).
   for (int irec = 0; irec < MAX_LEVELS; irec++) {
-    recLevelHelper.getLeptons(event, irec, allLeptons[irec]);
+    double pt_min = (irec == 0) ? 1. : 0.; // cut very-low-pT generated muons
+    recLevelHelper.getLeptons(event, irec, allLeptons[irec], pt_min);
     recLevelHelper.getDileptons(event, irec, RecLevelHelper::DIL,
 				allDileptons[irec]);
     recLevelHelper.getDileptons(event, irec, RecLevelHelper::RES,
@@ -44,6 +46,14 @@ void Zprime2muRecLevelAnalysis::analyze(const edm::Event& event,
   // Dump the event if appropriate.
   if (verbosity >= VERBOSITY_SIMPLE)
     dumpEvent();
+}
+
+bool Zprime2muRecLevelAnalysis::skipRecLevel(const int level) const {
+  return
+    (level == lgen && !useGen && !useSim) ||
+    (!useTrigger && level >= l1 && level <= l3) ||
+    (!useReco && level >= lgmr) ||
+    (!useOtherMuonRecos && level > lgmr && level < lbest);
 }
 
 void Zprime2muRecLevelAnalysis::dumpEvent(const bool trigOnly) const {
@@ -98,14 +108,11 @@ void Zprime2muRecLevelAnalysis::dumpEvent(const bool trigOnly) const {
 }
 
 void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
-					   const reco::CandidateBaseRef& cnd) const {
+					   reco::CandidateBaseRef cand) const {
   // Make sure we're looking at the master ref (to handle shallow
   // clones which are daughters of dileptons).
-  reco::CandidateBaseRef cand;
-  if (cnd->hasMasterClone())
-    cand = cnd->masterClone().castTo<reco::CandidateBaseRef>();
-  else
-    cand = cnd;
+  if (cand->hasMasterClone())
+    cand = cand->masterClone().castTo<reco::CandidateBaseRef>();
 
   const int level = recLevelHelper.recLevel(cand);
 
@@ -170,7 +177,7 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
       tktrk = &*lep.track();
       statrk = &*lep.standAloneMuon();
       const reco::Muon& mu = toConcrete<reco::Muon>(cand);
-      if (mu.isIsolationValid()) sumptr03 = mu.getIsolationR03().sumPt;
+      if (mu.isIsolationValid()) sumptr03 = mu.isolationR03().sumPt;
     }
     
     output << " Phi: "      << setw(8) << setprecision(4) << cand->phi()
@@ -251,14 +258,15 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
 
     if (!doingElectrons)
       output << "   Closest photon: " << recLevelHelper.closestPhoton(cand)
-	     << "   Sum pT (dR<0.3): " << sumptr03 << endl;
+	     << "   Sum pT (dR<0.3): " << sumptr03
+	     << "   Cut code  " << tevMuHelper.leptonIsCut(*cand) << endl;
 
     output << "   Loc. code: " << whereIsLepton(cand, doingElectrons)
 	   << "   p4 (p, E): " << cand->p4() << endl;
 
     if (doingElectrons && level > l3) {
-      const reco::PixelMatchGsfElectron& el =
-	toConcrete<reco::PixelMatchGsfElectron>(cand);
+      const reco::GsfElectron& el =
+	toConcrete<reco::GsfElectron>(cand);
       const reco::SuperClusterRef& sc = el.superCluster();
       output << "   Et: " << el.et() << "   Eta^{sc}: " << sc->eta()
 	     << "   El. classification: " << el.classification() << endl
@@ -276,6 +284,35 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
 	     << " p: " << tktrk->momentum() << endl;
     }
   }
+}
+
+void Zprime2muRecLevelAnalysis::dumpDilepton(ostream& output,
+					     const reco::CompositeCandidate& cand,
+					     bool dumpLeptons) const {
+  output << "Dilepton: charge: " << cand.charge()
+	 << " pt: " << cand.pt() << " eta: " << cand.eta()
+	 << " phi: " << cand.phi() << " mass: " << cand.mass() << endl;
+
+  int larger = dileptonDaughter(cand, 0)->p() > dileptonDaughter(cand, 1)->p() ? 0 : 1;
+  int smaller = larger == 0 ? 1 : 0;
+  const reco::CandidateBaseRef& cand1 = dileptonDaughter(cand, larger);
+  const reco::CandidateBaseRef& cand2 = dileptonDaughter(cand, smaller);
+
+  if (dumpLeptons) {
+    output << "Higher momentum daughter:\n";
+    dumpLepton(output, cand1);
+    output << "Lower momentum daughter:\n";
+    dumpLepton(output, cand2);
+  }
+  else
+    output << "  higher-p daughter: " << recLevelHelper.id(cand1)
+	   << " pdgId: " << cand1->pdgId()
+	   << " charge: " << cand1->charge() << " pt: " << cand1->pt()
+	   << " eta: " << cand1->eta() << " phi: " << cand1->phi() << endl
+	   << "   lower-p daughter: " << recLevelHelper.id(cand2)
+	   << " pdgId: " << cand2->pdgId()
+	   << " charge: " << cand2->charge() << " pt: " << cand2->pt()
+	   << " eta: " << cand2->eta() << " phi: " << cand2->phi() << endl;
 }
 
 DEFINE_FWK_MODULE(Zprime2muRecLevelAnalysis);

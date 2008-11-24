@@ -101,12 +101,13 @@ void cutDileptons(const edm::Event& event,
 		  const reco::CompositeCandidateCollection& dils,
 		  reco::CompositeCandidateCollection& newDils,
 		  unsigned cuts, int pdgId1, int pdgId2,
-		  const bool weakIso, const bool debug) {
+		  const bool debug) {
   ostringstream out;
   if (debug)
     out << "cutDileptons: starting size " << dils.size() << endl;
 
-  TeVMuHelper tmh(event);
+  TeVMuHelper tmh;
+  tmh.initEvent(event);
 
   reco::CompositeCandidateCollection::const_iterator dil;
   for (dil = dils.begin(); dil != dils.end(); dil++) {

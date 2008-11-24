@@ -7,7 +7,7 @@
 <use name=DataFormats/EgammaCandidates>
 <use name=DataFormats/FWLite>
 <use name=DataFormats/HepMCCandidate>
-<use name=DataFormats/L1Trigger>
+<use name=DataFormats/L1GlobalTrigger>
 <use name=DataFormats/MuonReco>
 <use name=DataFormats/PatCandidates>
 

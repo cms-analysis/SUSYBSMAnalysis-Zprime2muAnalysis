@@ -36,6 +36,16 @@ class Zprime2muRecLevelAnalysis : public Zprime2muAnalysis {
 
   // The collections of dileptons + brem photons.
   reco::CompositeCandidateCollection allResonances[MAX_LEVELS];
+  
+  ////////////////////////////////////////////////////////////////////
+  // General utility
+  ////////////////////////////////////////////////////////////////////
+  
+  // Return whether the rec level might be empty, based on the
+  // useGen/Sim/Reco/etc. flags. (Useful especially in
+  // Zprime2muResolution, to suppress the creation of some pages in
+  // the huge postscript file.)
+  bool skipRecLevel(const int level) const;
 
   ////////////////////////////////////////////////////////////////////
   // Print-outs
@@ -44,7 +54,14 @@ class Zprime2muRecLevelAnalysis : public Zprime2muAnalysis {
   // Print out all the relevant information about the lepton; but this
   // method is just as useful as documentation on how to access this
   // information.
-  void dumpLepton(std::ostream& output, const reco::CandidateBaseRef& cand) const;
+  void dumpLepton(std::ostream& output, reco::CandidateBaseRef cand) const;
+
+  // Print out all the relevant information about the dilepton, and
+  // call dumpLepton on each of its daughters if dumpLeptons is true.
+  void dumpDilepton(std::ostream& output,
+		    const reco::CompositeCandidate& cand,
+		    bool dumpLeptons=false) const;
+
 };
 
 #endif

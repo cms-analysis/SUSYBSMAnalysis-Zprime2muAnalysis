@@ -25,7 +25,6 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
     usingAODOnly(config.getParameter<bool>("usingAODOnly")),
     eventNum(-1),
     eventsDone(0),
-    tevMuHelper(0),
     genDils(config.getParameter<edm::InputTag>("genDileptons")),
     hltDils(config.getParameter<edm::InputTag>("hltDileptons")),
     recDils(config.getParameter<edm::InputTag>("recDileptons")),
@@ -55,7 +54,7 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   // kind of an asymmetry between the muon code path and the electron
   // one.  Perhaps use HEEPHelper here instead of TeVMuHelper to make
   // a cut code?
-  cutMask = doingElectrons ? 0 : TeVMuHelper::tevMuCuts;
+  tevMuHelper.setCutMask(doingElectrons ? 0 : TeVMuHelper::tevMuCuts);
 }
 
 void Zprime2muAnalysis::analyze(const edm::Event& event,
@@ -67,16 +66,14 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   // Keep track of how many events we run over total.
   eventsDone++;
 
-  // Get the trigger decision from the event. If there was some funny
-  // business, print out the trigger collections.  For now, don't
-  // bother looking at sub-levels for electrons. Also, the AOD does
-  // not store the L2 path result separately, so ignore the sub-levels
-  // if we're running on AOD. JMTBAD For L2, we could take the result
-  // of TriggerTranslator()...
-  trigDecision.initEvent(event, doingElectrons || usingAODOnly);
+  // Get the trigger decision from the event. For now, don't bother
+  // looking at sub-levels since L2 decisions are no longer stored in
+  // the event. JMTBAD For L2, we could take the result of
+  // TriggerTranslator()...
+  trigDecision.initEvent(event);
 
-  delete tevMuHelper;
-  tevMuHelper = new TeVMuHelper(event);
+  // Store the pointer to the current event in the helper object.
+  tevMuHelper.initEvent(event);
 
   // Get the main dilepton collections: gen, HLT, default offline, and
   // "best" offline.
@@ -92,7 +89,7 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
 
 double getIso(const reco::CandidateBaseRef& cand) {
   const reco::Muon* mu = toConcretePtr<reco::Muon>(cand);
-  return mu == 0 ? 0 : mu->getIsolationR03().sumPt;
+  return mu == 0 ? 0 : mu->isolationR03().sumPt;
 }
 
 void Zprime2muAnalysis::dumpLepton(ostream& output,
@@ -121,3 +118,4 @@ void Zprime2muAnalysis::dumpDilepton(ostream& output,
 }
 
 DEFINE_FWK_MODULE(Zprime2muAnalysis);
+

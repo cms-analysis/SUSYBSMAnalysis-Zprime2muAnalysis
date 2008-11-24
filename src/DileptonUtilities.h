@@ -16,7 +16,6 @@
 void removeDileptonOverlap(reco::CompositeCandidateCollection& dileptons,
 			   const bool debug=false);
 
-
 // Take the input dileptons in dils (e.g. the output of CandCombiner)
 // which have only the combinatorics done, and put only the dileptons
 // that correspond to generator-level resonances into newDils.
@@ -34,7 +33,7 @@ void cutDileptons(const edm::Event& event,
 		  const reco::CompositeCandidateCollection& dils,
 		  reco::CompositeCandidateCollection& newDils,
 		  unsigned cuts, int pdgId1=0, int pdgId2=0,
-		  bool weakIso=false, const bool debug=false);
+		  const bool debug=false);
 
 // Count the number of daughters the dilepton has in the specified
 // acceptance in eta.

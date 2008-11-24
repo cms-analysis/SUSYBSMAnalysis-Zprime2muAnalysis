@@ -38,7 +38,7 @@ const double tightEleIDCuts_eSeedOverPinMin[8] = {0.24,    0.94,   0.11,   0.,
 const double tightEleIDCuts_eSeedOverPinMax[8] = {99999.,  99999., 99999., 99999.,   
 						  99999.,  99999., 99999., 99999.};
 
-const ClusterShapeRef& getClusterShape(const PixelMatchGsfElectron* electron, const Event& e) {
+const ClusterShapeRef& getClusterShape(const GsfElectron* electron, const Event& e) {
   InputTag barrelClusterShapeAssocProducer_("hybridSuperClusters:hybridShapeAssoc");
   InputTag endcapClusterShapeAssocProducer_("islandBasicClusters:islandEndcapShapeAssoc");
 
@@ -62,7 +62,7 @@ const ClusterShapeRef& getClusterShape(const PixelMatchGsfElectron* electron, co
   return seedShpItr->val;
 }
 
-int classify(const PixelMatchGsfElectron* electron) {
+int classify(const GsfElectron* electron) {
   
   double eta = electron->p4().Eta();
   double eOverP = electron->eSuperClusterOverP();
@@ -82,7 +82,7 @@ int classify(const PixelMatchGsfElectron* electron) {
   return cat;
 }
 
-bool result(const PixelMatchGsfElectron* electron,
+bool result(const GsfElectron* electron,
 	    const Event& e,
 	    const string& quality_) { 
   

@@ -6,7 +6,7 @@
 #include "TText.h"
 
 #include "DataFormats/Common/interface/Handle.h"
-#include "DataFormats/Math/interface/deltaR.h"
+#include "PhysicsTools/Utilities/interface/deltaR.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
@@ -54,7 +54,7 @@ void Zprime2muMatchStudy::analyze(const Event& event,
 	  if (index[t] != -999) {
 	    hDeltaPt[t][irec][jrec]->Fill(jcand[t]->pt()     - icand->pt());
 	    hDeltaQ [t][irec][jrec]->Fill(jcand[t]->charge() - icand->charge());
-	    hDeltaR [t][irec][jrec]->Fill(deltaR(*jcand[t], *icand));
+	    hDeltaR [t][irec][jrec]->Fill(reco::deltaR(*jcand[t], *icand));
 	  }
 	}
 

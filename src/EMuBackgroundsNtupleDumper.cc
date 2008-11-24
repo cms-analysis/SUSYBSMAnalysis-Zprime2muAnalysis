@@ -6,7 +6,6 @@
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/Common/interface/View.h"
-#include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
@@ -19,8 +18,9 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
-#include "PhysicsTools/HepMCCandAlgos/interface/CSA07ProcessId.h"
+//#include "PhysicsTools/HepMCCandAlgos/interface/CSA07ProcessId.h"
 #include "PhysicsTools/UtilAlgos/interface/TFileService.h"
+#include "PhysicsTools/Utilities/interface/deltaR.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GenEventTopology.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/RedoElectronId.h"
@@ -123,6 +123,7 @@ struct jmt_event_t {
 };
 
 void jmt_event_add_etc(jmt_event_t& ev, const edm::Event& event) {
+  /*
   // Try to get the CSA07 info (won't be there in DY samples).
   edm::Handle<double> weightHandle;
   const double intLumi = 100;
@@ -131,6 +132,7 @@ void jmt_event_add_etc(jmt_event_t& ev, const edm::Event& event) {
     ev.proc_id = (unsigned short)(csa07::csa07ProcessId(event, intLumi));
     ev.status |= jmt::WEIGHTTYPE;
   }
+  */
 
   // MET
   edm::Handle<std::vector<pat::MET> > METs;
@@ -201,13 +203,13 @@ void jmt_event_add_lepton(jmt_event_t& ev,
 
   const pat::Electron* patEl = dynamic_cast<const pat::Electron*>(cand);
   if (patEl != 0)
-    ev.lepton_id[n] = patEl->leptonID() ? 1 : -1;
+    ev.lepton_id[n] = patEl->leptonID("tight") ? 1 : -1;
 
   const reco::Track* tk = 0;
 
   const reco::Muon* muon = dynamic_cast<const reco::Muon*>(cand);
   if (muon != 0) {
-    const reco::MuonIsolation& iso = muon->getIsolationR03();;
+    const reco::MuonIsolation& iso = muon->isolationR03();
     ev.iso_njets[n]   = iso.nJets;
     ev.iso_ntracks[n] = iso.nTracks;
     ev.iso_tk[n]      = iso.sumPt;
@@ -245,7 +247,7 @@ void jmt_event_add_lepton(jmt_event_t& ev,
 	      tk->numberOfValidHits() >= 7 &&
 	      fabs(elTk->vz() - tk->vz()) < 0.5) {
 	  
-	    double dR = deltaR(*tk, *elTk);
+	    double dR = reco::deltaR(*tk, *elTk);
 	    if (dR > 0.01 && dR < 0.3) { // guess at a veto cone 
 	      ev.iso_tk[n] += pt;
 	      ev.iso_ntracks[n]++;

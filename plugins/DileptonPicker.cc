@@ -25,16 +25,13 @@ private:
   bool doingGen;
   unsigned maxDileptons;
   vector<int> pdgIds;
-  bool weakIso;
 };
 
 DileptonPicker::DileptonPicker(const ParameterSet& cfg)
   : src(cfg.getParameter<InputTag>("src")),
     doingGen(cfg.getParameter<bool>("doingGen")),
     maxDileptons(cfg.getParameter<unsigned>("maxDileptons")),
-    pdgIds(cfg.getParameter<vector<int> >("pdgIds")),
-    weakIso(cfg.getUntrackedParameter<bool>("weakIso", false))
-  
+    pdgIds(cfg.getParameter<vector<int> >("pdgIds"))
 {
   produces<CompositeCandidateCollection>();
 }
@@ -43,12 +40,7 @@ void DileptonPicker::produce(Event& event, const EventSetup& eSetup) {
   static const bool debug = false;
 
   Handle<CompositeCandidateCollection> hdileptons;
-  bool ok = true;
-  try {
-    event.getByLabel(src, hdileptons);
-  } catch (...) {
-    ok = false;
-  }
+  event.getByLabel(src, hdileptons);
 
   // Make the output collection.
   auto_ptr<CompositeCandidateCollection>
@@ -56,7 +48,7 @@ void DileptonPicker::produce(Event& event, const EventSetup& eSetup) {
 
   ostringstream out;
 
-  if (ok && !hdileptons.failedToGet()) {
+  if (!hdileptons.failedToGet()) {
     if (hdileptons->size() > 0) {
       if (debug) out << hdileptons->size() << " dileptons before selection and overlap removal; ";
 
@@ -66,7 +58,7 @@ void DileptonPicker::produce(Event& event, const EventSetup& eSetup) {
 	// Default cuts are pT < 20 GeV and isolation sumPt < 10.
 	const unsigned cuts = TeVMuHelper::PT | TeVMuHelper::ISO;
 	cutDileptons(event, *hdileptons, *dileptons, cuts,
-		     pdgIds[0], pdgIds[1], weakIso, debug);
+		     pdgIds[0], pdgIds[1], debug);
 
 	if (debug) out << dileptons->size() << " dileptons before overlap removal; ";
 

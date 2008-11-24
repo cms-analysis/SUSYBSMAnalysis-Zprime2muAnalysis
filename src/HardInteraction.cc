@@ -1,4 +1,4 @@
-#include "DataFormats/HepMCCandidate/interface/GenParticleCandidate.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 
@@ -50,18 +50,18 @@ void HardInteraction::Clear() {
 }
 
 void HardInteraction::Fill(const edm::Event& event) {
-  edm::Handle<CandidateCollection> genParticles;
-  event.getByLabel("genParticleCandidates", genParticles);
+  edm::Handle<GenParticleCollection> genParticles;
+  event.getByLabel("genParticles", genParticles);
   Fill(*genParticles);
 }
 
-void HardInteraction::Fill(const CandidateCollection& genParticles) {
+void HardInteraction::Fill(const GenParticleCollection& genParticles) {
   // Reset everything before filling.
   Clear();
 
   // Look in the doc lines for the hard-interaction resonance and
   // leptons.
-  CandidateCollection::const_iterator genp = genParticles.begin();
+  GenParticleCollection::const_iterator genp = genParticles.begin();
   for (; genp != genParticles.end(); genp++) {
     if (genp->status() == 3) {
       int pdgId = genp->pdgId();
@@ -124,7 +124,7 @@ void HardInteraction::Fill(const CandidateCollection& genParticles) {
     
       // We have ownership of this pointer, and we will delete it in our
       // destructor.
-      resonance = new GenParticleCandidate(q, p4, vtx, pdgId, status, true);
+      resonance = new GenParticle(q, p4, vtx, pdgId, status, true);
       resonanceIsFake = true;
 
       // In these resonanceless COMPHEP samples, the quark/antiquark are

@@ -42,20 +42,22 @@ modules; default parameters for each module are specified in the .cfi
 and .cff files in the data/ subdirectory. As in the .cfg files, in
 general these modules take as input EDM ROOT files with
 fully-reconstructed gamma*/Z0/Z'/G/G* --> l- l+ events (with
-l=e,mu). Some sample files are available at
-/castor/cern.ch/user/t/tucker/CMSSW_1_6_7.
+l=e,mu). Official sample files for Z' events in 2_1_X are being
+created; in the meantime one may use private samples or work with
+DY/other events found via DBS: https://cmsweb.cern.ch/dbs_discovery/ .
 
-At the time this documentation was updated, the package has been
-tested to work with version 1_6_12 of CMSSW. The tag V00-02-02 should
-be used. We have abandoned our private BaseMuon/Muon/DiMuon classes in
-favor of using directly the standard AnalysisTools classes
-(reco::Candidate and all its derived classes, including those of the
-PAT). Also, the package has been modified for greater modularity with
-respect to V00-01-03, with most of the functionality that was in
-Zprime2muAnalysis being pieced out into modules in the plugins
-directory, and the inheritance structure of the analysis modules being
-changed. See the below discussion on Zprime2muAnalysis
-v. Zprime2muRecLevelAnalysis.
+At the time this documentation was updated, the package has been 
+tested to work with version 2_1_12 of CMSSW. The tag V00-03-00 should
+be used. (However, there is an experts' branch targeting CMSSW_1_6_12
+which can be checked out; see the section "CMSSW 1_6_12".) We have
+abandoned our private BaseMuon/Muon/DiMuon classes in favor of using
+directly the standard AnalysisTools classes (reco::Candidate and all
+its derived classes, including those of the PAT). Also, the package
+has been modified for greater modularity with respect to V00-01-03,
+with most of the functionality that was in Zprime2muAnalysis being
+pieced out into modules in the plugins directory, and the inheritance
+structure of the analysis modules being changed. See the below
+discussion on Zprime2muAnalysis v. Zprime2muRecLevelAnalysis.
 
 While much of the base class Zprime2muAnalysis along with its provided
 interface for accessing the (di)lepton four-vectors and other data has
@@ -396,6 +398,10 @@ dileptons at OPT. To run in electron mode, pass doingElectrons=True to
 the makeZprime2muAnalysisProcess() function in the Python config file.
 (See test/testZprime2muResolutionElectrons_cfg.py for an example.)
 
+The HEEPSelector tool in the form was used in 1_6_X does not exist for
+2_1, so the electron mode is disabled for Zprime2muAnalysis until the
+HEEP selection is done by default in the PAT.
+
 
 Histogram dumping
 -----------------
@@ -429,37 +435,37 @@ will take the histograms from the merged file and draw the postscript,
 bypassing the reading of any events in the analyzer.
 
 
-Example session
----------------
+CMSSW_1_6_12
+------------
 
-To check out the package:
+If you are still doing analysis under 1_6_12 (e.g. if you are using
+the CSA07 samples), the version of the code running under 1_6_12 is
+still available under the branch "branch16X". No further development
+will be done on this branch except to fix major bugs, as management
+has declared that no further analyses done with 1_6_X/CSA07 samples
+will be approved.
 
-   scramv1 project CMSSW CMSSW_1_6_12
-   cd CMSSW_1_6_12/src
+
+Step-by-step instructions
+-------------------------
+
+To check out the package under 2_1_12:
+
+   scramv1 project CMSSW CMSSW_2_1_12
+   cd CMSSW_2_1_12/src
 
    project CMSSW
-   cvs co -r V00-02-02 SUSYBSMAnalysis/Zprime2muAnalysis
+   cvs co -r V00-03-00 SUSYBSMAnalysis/Zprime2muAnalysis
 
-   # This is needed for fwlite::ChainEvent to read from CASTOR,
-   # but the unit test will fail to compile later; OK for our purposes.
-   cvs co -r V00-07-00 DataFormats/FWLite
-
-   # Grab D.L. Evans's HEEPSelector (and put it in the right directory).
-   cvs co -r V02-01-02 -d DLEvans/HEEPSelector UserCode/DLEvans/HEEPSelector
-   cvs co -r V02-01-01 -d DLEvans/HEEPUtilities UserCode/DLEvans/HEEPUtilities
- 
-   # Compile HEEPSelector
-   cd DLEvans/HEEPSelector
-   scramv1 b
-
-   # Compile the rest of the code (ignore the error from compiling the
-   # DataFormats/FWLite unit test).
-   cd ../../SUSYBSMAnalysis/Zprime2muAnalysis
+   # Compile the code, including the extra packages checked out.
    eval `scramv1 runtime -csh`
    scramv1 b
 
-To run (where the _cfg.py can be any of the *_cfg.py files in /test):
-   cd test
-   cmsRun testZprime2muResolution_cfg.py
-     -or for an electron mode example-
-   cmsRun testZprime2muResolutionElectrons_cfg.py
+To run:
+
+   cd SUSYBSMAnalysis/Zprime2muAnalysis/test
+   cmsRun testZprime2muResolution_cfg.py # or any of the other test/testZprime2mu*_cfg.py
+
+
+
+     

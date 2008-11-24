@@ -6,7 +6,7 @@
 
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/Candidate/interface/CompositeCandidate.h"
-#include "DataFormats/EgammaCandidates/interface/PixelMatchGsfElectron.h"
+#include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/JetReco/interface/CaloJetCollection.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
@@ -52,9 +52,9 @@ public:
   typedef std::map<unsigned, const char*> CutNameMap;
   static CutNameMap cutNames;
 
-  TeVMuHelper(const edm::Event& evt);
-
-  void initEvent(const edm::Event* evt);
+  TeVMuHelper();
+  void initEvent(const edm::Event& evt);
+  void setCutMask(const unsigned mask) { _cutMask = mask; }
 
   bool collinearMuon(const reco::PixelMatchGsfElectron* electron) const;
 
@@ -63,14 +63,14 @@ public:
   bool passIsolationS(double S, double pt) const;
 
   unsigned electronIsCut(const reco::PixelMatchGsfElectron* electron,
-			 const unsigned cutMask) const;
+			 unsigned cutMask=0) const;
   unsigned muonIsCut(const reco::Muon* muon,
-		     const unsigned cutMask) const;
+		     unsigned cutMask=0) const;
   unsigned leptonIsCut(const reco::Candidate& lepton,
-		       const unsigned cutMask) const;
+		       unsigned cutMask=0) const;
 
   unsigned dileptonIsCut(const reco::CompositeCandidate& dil,
-			 const unsigned cutMask);
+			 unsigned cutMask=0);
 
  private:
   void _eventOK() const;
@@ -81,6 +81,8 @@ public:
   void _cacheNJets();
 
   const edm::Event* event;
+
+  unsigned _cutMask;
 
   // Cut values.
   double ptCut;

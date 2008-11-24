@@ -1,20 +1,16 @@
 #include <ostream>
 
 #include "DataFormats/Candidate/interface/Candidate.h"
-#include "DataFormats/EgammaCandidates/interface/PixelMatchGsfElectron.h"
+#include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/JetReco/interface/CaloJet.h"
-#include "DataFormats/JetReco/interface/CaloJetfwd.h"
-#include "DataFormats/Math/interface/deltaR.h"
+#include "PhysicsTools/Utilities/interface/deltaR.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
-#include "DataFormats/MuonReco/interface/MuIsoDeposit.h"
-#include "DataFormats/MuonReco/interface/MuIsoDepositFwd.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
-#include "DataFormats/HLTReco/interface/HLTFilterObject.h"
 #include "FWCore/Framework/interface/TriggerNames.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
@@ -35,13 +31,14 @@ const unsigned TeVMuHelper::topLeptonId  = TeVMuHelper::topElCuts | TeVMuHelper:
 const unsigned TeVMuHelper::topIsolation = TeVMuHelper::ISOS;
 const unsigned TeVMuHelper::topLepCuts   = TeVMuHelper::topSkim | TeVMuHelper::topLeptonId | TeVMuHelper::topIsolation;
 
-TeVMuHelper::CutNameMap TeVMuHelper::cutNames;
+//TeVMuHelper::CutNameMap TeVMuHelper::cutNames;
 
 const bool debug = false;
 
 // JMTBAD don't hardcode inputtag names
 
-TeVMuHelper::TeVMuHelper(const Event& evt) :
+TeVMuHelper::TeVMuHelper() :
+  _cutMask(0),
   // should take these values from the cfg
   ptCut(20),
   isoCut(10),
@@ -53,8 +50,7 @@ TeVMuHelper::TeVMuHelper(const Event& evt) :
   collinearMuon_dRmax(0.1),
   Sratio_min(0.92)
 {
-  initEvent(&evt);
-
+  /*
   if (cutNames.empty()) {
     cutNames[PT]      	 = "PT";
     cutNames[ISO]     	 = "ISO";
@@ -72,11 +68,11 @@ TeVMuHelper::TeVMuHelper(const Event& evt) :
     cutNames[NJETS01] 	 = "NJETS01";
     cutNames[WEAKISO] 	 = "WEAKISO";
     cutNames[TOPTRIGGER] = "TOPTRIGGER";
-  }
+    }*/
 }
 
-void TeVMuHelper::initEvent(const Event* evt) {
-  event = evt;
+void TeVMuHelper::initEvent(const Event& evt) {
+  event = &evt;
   METx_uncorrJES = METy_uncorrJES = MET_uncorrJES = -1;
   METx = METy = MET = -1;
   Zvetoed = -1;
@@ -98,8 +94,9 @@ void TeVMuHelper::_cacheTrigger() {
   hltTrigNames.init(*hltRes);
 
   vector<string> hltPaths;
-  hltPaths.push_back("HLT1MuonNonIso");
-  hltPaths.push_back("HLT1ElectronRelaxed");
+  // JMTBAD fix paths
+  //hltPaths.push_back("HLT1MuonNonIso");
+  //hltPaths.push_back("HLT1ElectronRelaxed");
 
   bool fired = false;
   for (unsigned i = 0; i < hltPaths.size(); ++i) {
@@ -171,14 +168,14 @@ void TeVMuHelper::_cacheZvetoed() {
   ;
 }
 
-bool TeVMuHelper::collinearMuon(const PixelMatchGsfElectron* electron) const {
+bool TeVMuHelper::collinearMuon(const GsfElectron* electron) const {
   _eventOK();
 
   Handle<View<Candidate> > muons;
   event->getByLabel("selectedLayer1Muons", muons);
 
   for (unsigned i = 0; i < muons->size(); i++) {
-    if (deltaR((*muons)[i], *electron) < collinearMuon_dRmax)
+    if (reco::deltaR((*muons)[i], *electron) < collinearMuon_dRmax)
       return true;
   }
 
@@ -189,11 +186,11 @@ double TeVMuHelper::calcIsolationS(const Muon* muon) const {
   if (!muon->isIsolationValid())
     throw cms::Exception("TeVMuHelper") << "muon isolation not valid in passIsolationS()!\n";
 
-  const MuonIsolation& iso = muon->getIsolationR03();
+  const MuonIsolation& iso = muon->isolationR03();
   return iso.sumPt + iso.hadEt + iso.hoEt + iso.emEt;
 }
 
-double TeVMuHelper::calcIsolationS(const PixelMatchGsfElectron* electron) const {
+double TeVMuHelper::calcIsolationS(const GsfElectron* electron) const {
   _eventOK();
 
   double S = 0;
@@ -210,7 +207,7 @@ double TeVMuHelper::calcIsolationS(const PixelMatchGsfElectron* electron) const 
 	tk->numberOfValidHits() >= 7 &&
 	fabs(elTk->vz() - tk->vz()) < 0.5) {
 
-      double dR = deltaR(*tk, *elTk);
+      double dR = reco::deltaR(*tk, *elTk);
       if (dR > 0.01 && dR < 0.3) // guess at a veto cone
 	S += pt;
     }
@@ -241,7 +238,7 @@ void TeVMuHelper::_cacheNJets() {
 
       PatElectronCollection::const_iterator el = electrons->begin();
       for ( ; el != electrons->end(); ++el) {
-	if (deltaR(*el, *jet) < 0.3 && !electronIsCut(&*el, topElCuts | topIsolation)) {
+	if (reco::deltaR(*el, *jet) < 0.3 && !electronIsCut(&*el, topElCuts | topIsolation)) {
 	  isEl = true;
 	  break;
 	}
@@ -252,16 +249,19 @@ void TeVMuHelper::_cacheNJets() {
   }
 }
 
-unsigned TeVMuHelper::electronIsCut(const PixelMatchGsfElectron* electron,
-				    const unsigned cutMask) const {
+unsigned TeVMuHelper::electronIsCut(const GsfElectron* electron,
+				    unsigned cutMask) const {
   unsigned result = 0;
+  
+  if (cutMask == 0)
+    cutMask = _cutMask;
 
   if ((cutMask & ISOS) && !passIsolationS(calcIsolationS(electron), electron->pt()))
     result |= ISOS;
 
   if (cutMask & ELTIGHT) {
     const pat::Electron* patEl = toConcretePtr<pat::Electron>(*((Candidate*)electron));
-    if (patEl != 0 && patEl->leptonID() == 0)
+    if (patEl != 0 && patEl->leptonID("tight") == 0)
       result |= ELTIGHT;
   }
 
@@ -280,13 +280,16 @@ unsigned TeVMuHelper::electronIsCut(const PixelMatchGsfElectron* electron,
 }
 
 unsigned TeVMuHelper::muonIsCut(const Muon* muon,
-				const unsigned cutMask) const {
+				unsigned cutMask) const {
   unsigned result = 0;
+
+  if (cutMask == 0)
+    cutMask = _cutMask;
 
   // Sum pT in cone of dR=0.3 cut (with veto cone of dR=0.01), using
   // all tracks in the isolation definition.
   if ((cutMask & ISO) && muon->isIsolationValid()) {
-    double iso = muon->getIsolationR03().sumPt;
+    double iso = muon->isolationR03().sumPt;
     if (iso > isoCut)
       result |= ISO;
   }
@@ -314,9 +317,12 @@ unsigned TeVMuHelper::muonIsCut(const Muon* muon,
   return result & cutMask;
 }
 
- unsigned TeVMuHelper::leptonIsCut(const Candidate& lepton,
-				   const unsigned cutMask) const {
+unsigned TeVMuHelper::leptonIsCut(const Candidate& lepton,
+				  unsigned cutMask) const {
   unsigned result = 0;
+
+  if (cutMask == 0)
+    cutMask = _cutMask;
 
   if ((cutMask & PT) && lepton.pt() <= ptCut)
     result |= PT;
@@ -328,7 +334,7 @@ unsigned TeVMuHelper::muonIsCut(const Muon* muon,
 
   // Try electron cuts.
   if (pdgId == 11) {
-    const PixelMatchGsfElectron* electron = toConcretePtr<PixelMatchGsfElectron>(lepton);
+    const GsfElectron* electron = toConcretePtr<GsfElectron>(lepton);
     if (electron != 0)
       result |= electronIsCut(electron, cutMask);
     //else
@@ -348,8 +354,11 @@ unsigned TeVMuHelper::muonIsCut(const Muon* muon,
 }
 
 unsigned TeVMuHelper::dileptonIsCut(const CompositeCandidate& dil,
-				    const unsigned cutMask) {
+				    unsigned cutMask) {
   unsigned result = 0;
+
+  if (cutMask == 0)
+    cutMask = _cutMask;
 
   // Top group trigger requirement.
   if (cutMask & TOPTRIGGER) {
@@ -444,7 +453,7 @@ unsigned TeVMuHelper::dileptonIsCut(const CompositeCandidate& dil,
     out << " electrons (" << electrons->size() << "):\n";
     for (PatElectronCollection::const_iterator it = electrons->begin(); it != electrons->end(); ++it)
       out << "  E: " << it->energy() << " pt: " << it->pt() << " eta: " << it->eta() << " phi: " << it->phi() << " pid: " << it->pdgId()
-	  << " q: " << it->charge() << " isoS: " << calcIsolationS((PixelMatchGsfElectron*)(&*it)) << endl;
+	  << " q: " << it->charge() << " isoS: " << calcIsolationS((GsfElectron*)(&*it)) << endl;
 
     Handle<View<Candidate> muons;
     event->getByLabel("selectedLayer1Muons", muons);

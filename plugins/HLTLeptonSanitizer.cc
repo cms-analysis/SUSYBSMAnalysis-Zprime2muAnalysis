@@ -50,22 +50,21 @@ void HLTLeptonSanitizer<CollectionType>::produce(Event& event,
 						 const EventSetup& eSetup) {
   // Try to get the HLT lepton collection from the event.
   Handle<CollectionType> leptons;
-  bool ok = true;
-  try {
-    event.getByLabel(src, leptons);
-  } catch (...) {
-    ok = false;
-  }
+  event.getByLabel(src, leptons);
 
   // Make the output collection.
   auto_ptr<CollectionType> cands(new CollectionType);
 
-  if (ok && !leptons.failedToGet())
+  if (!leptons.failedToGet())
     // Copy the existing one.
     *cands = *leptons;
-  else
-    edm::LogWarning("HLTLeptonSanitizer")
-      << "no collection " << src << " in event; producing empty collection";
+
+  // Fail silently to prevent spamming messages. The user will know when
+  // something is amiss from empty plots.
+
+  //else
+  //  edm::LogWarning("HLTLeptonSanitizer")
+  //    << "no collection " << src << " in event; producing empty collection";
 
   event.put(cands);
 }

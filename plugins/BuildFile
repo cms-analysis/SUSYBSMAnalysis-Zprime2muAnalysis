@@ -1,11 +1,6 @@
 <use name=FWCore/Framework>
 <use name=FWCore/ParameterSet>
 
-<library file=CocktailMuonProducer.cc name=CocktailMuonProducer>
-  <use name=DataFormats/MuonReco>
-  <use name=DataFormats/TrackReco>
-</library>
-
 <library file=DileptonPicker.cc,../src/DileptonUtilities.cc,../src/GeneratorUtilities.cc,../src/HardInteraction.cc,../src/TeVMuHelper.cc name=DileptonPicker>
   <use name=DataFormats/Candidate>
   <use name=DataFormats/HepMCCandidate>
@@ -36,6 +31,12 @@
   <use name=DataFormats/HepMCCandidate>
 </library>
 
+<library file=GlobalOnlyMuonProducer.cc name=GlobalOnlyMuonProducer>
+  <use name=DataFormats/Candidate>
+  <use name=DataFormats/MuonReco>
+  <use name=DataFormats/TrackReco>
+</library>
+
 <library file=HLTLeptonSanitizer.cc name=HLTLeptonSanitizer>
   <use name=DataFormats/EgammaCandidates>
   <use name=DataFormats/RecoCandidate>
@@ -59,10 +60,4 @@
 <library file=PtMinDeltaRViewMatcher.cc name=PtMinDeltaRViewMatcher>
   <use name=PhysicsTools/CandAlgos>
   <use name=PhysicsTools/UtilAlgos>
-</library>
-
-<library file=TrackerOnlyMuonProducer.cc name=TrackerOnlyMuonProducer>
-  <use name=DataFormats/Candidate>
-  <use name=DataFormats/MuonReco>
-  <use name=DataFormats/TrackReco>
 </library>

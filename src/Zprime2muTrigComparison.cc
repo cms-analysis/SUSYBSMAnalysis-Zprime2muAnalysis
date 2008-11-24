@@ -1,5 +1,6 @@
 #include <string>
 
+#include "DataFormats/L1Trigger/interface/L1MuonParticle.h"
 #include "DataFormats/L1Trigger/interface/L1ParticleMap.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -9,7 +10,7 @@
 using namespace std;
 
 void Zprime2muTrigComparison::analyze(const edm::Event& event, 
-				  const edm::EventSetup& eSetup) {
+				      const edm::EventSetup& eSetup) {
   // Delegate filling our muon vectors to the parent class.
   Zprime2muRecLevelAnalysis::analyze(event, eSetup);
 
@@ -18,7 +19,8 @@ void Zprime2muTrigComparison::analyze(const edm::Event& event,
 
 bool Zprime2muTrigComparison::TriggerTranslator(const string& algo,
 						const unsigned int lvl,
-						const unsigned int nmu) const {
+						const unsigned int nmu,
+						ostream& out) const {
   // See https://twiki.cern.ch/twiki/bin/view/CMS/SWGuideMuonHLT
   // https://twiki.cern.ch/twiki/bin/view/CMS/L1TriggerTableHLTExercise
   // L1 Quality codes are still the same, but we are suggested to use the 
@@ -31,23 +33,24 @@ bool Zprime2muTrigComparison::TriggerTranslator(const string& algo,
   const unsigned int l = lvl - 1;
   const unsigned int n = nmu - 1;
 
-  // these are for L = 10^{32}
+  // 19/6/2008: CMSSW_2_1_X trigger table
+  // these are for L = 2e30
   const double ptMin[3][2] = {
     { 7, 3},
-    {16, 3},
-    {16, 3}
+    {12, 3},
+    {15, 3}
   };
   const double etaMax[3] = { 2.5, 2.5, 2.5 };
-  // 28/10/2007: in CMSSW_1_6_0, requirement is just that 
-  // the vertex be < 200 microns from the beam axis, i.e. 
-  // sqrt(vx**2+vy**2) < 0.02
-  const double dxy2Max[3] = { 9999, 9999, 0.02*0.02 };
+  // 19/6/2008: in CMSSW_2_1_X, requirement is just that the vertex
+  // be < 2 cm from the beam axis, i.e. sqrt(vx**2+vy**2) < 2.0
+  const double dxy2Max[3] = { 9999, 9999, 2.0*2.0 };
   const double dzMax[3] = { 9999, 9999, 9999 };
-  const double nSigmaPt[3] = { 0, 3.9, 2.2 };
+  const double nSigmaPt[3] = { 0, 0, 0 };
   // 12/05/2004: a muon must have more than 5 pixel plus silicon hits in
   // the tracker (DAQ TDR, p. 306).
   //const int minHits[3] = { 0, 0, 6 };
   // 28/10/2007: for CMSSW_1_6_0, min hits is 0
+  // 19/6/2008: same in 2_1_X
   const int minHits[3] = { 0, 0, 0 };
 
   // Check if the algorithm string passed in is one we recognized.
@@ -64,10 +67,7 @@ bool Zprime2muTrigComparison::TriggerTranslator(const string& algo,
     return false;
   }
 
-  static const bool debug = verbosity >= VERBOSITY_SIMPLE;
-  ostringstream out;
-
-  if (debug) out << "TriggerTranslator, " << algo << ":\n";
+  out << "TriggerTranslator, " << algo << ":\n";
 
   unsigned int muonsPass = 0;
   //vector<zp2mu::Muon>::const_iterator pmu; //, pmu_prev;
@@ -85,17 +85,18 @@ bool Zprime2muTrigComparison::TriggerTranslator(const string& algo,
     // JMTBAD HLTMuonPrefilter cuts not on pt but on what they call ptLx
     // nSigmaPt[l1] = 0, so ptLx(l1) = pt(l1), but safeguard against
     // accidentally setting nSigmaPt[l1] != 0:
+    // 19/6/2008: in 2_1_X the ptLx cut is removed, but keep this code
+    // around for good luck.
     double ptLx;
     if (lvl == l1)
       ptLx = mu->pt();
     else
       ptLx = (1 + nSigmaPt[l]*invPError(&*tk)*mu->p())*mu->pt();
 
-    if (debug)
-      out << "  mu #" << recLevelHelper.id(mu)
-	  << " pt: " << mu->pt() << " ptLx: " << ptLx << " (cut: " << ptMin[l][n] 
-	  << ") eta: " << mu->eta() << " (cut: " << etaMax[l] << ")\n";
-
+    out << "    mu #" << recLevelHelper.id(mu)
+	<< " pt: " << mu->pt() << " ptLx: " << ptLx << " (cut: " << ptMin[l][n] 
+	<< ") eta: " << mu->eta() << " (cut: " << etaMax[l] << ")\n";
+    
     bool pass = ptLx >= ptMin[l][n] && fabs(mu->eta()) <= etaMax[l];
 
     // don't bother evaluating the other constraints if they aren't set
@@ -148,48 +149,40 @@ bool Zprime2muTrigComparison::TriggerTranslator(const string& algo,
       break;
   }
 
-  bool result;
-  if (debug) out << "  TriggerTranslator result for " << algo << ": ";
-  if (muonsPass >= nmu) {
-    out << "pass!";
-    result = true;
-  }
-  else {
-    out << "fail!";
-    result = false;
-  }
-  if (debug) LogTrace("TriggerTranslator") << out.str();
+  bool result = muonsPass >= nmu;
+
+  out << "  " << algo << ": ";
+  if (result) out << "pass!";
+  else        out << "fail!";
+  out << endl;
 
   return result;
 }
 
 void Zprime2muTrigComparison::compareTrigDecision(const edm::Event& event) const {
-  static const bool debug = verbosity >= VERBOSITY_SIMPLE;
-  ostringstream out;
+  const unsigned nPaths = 2;
+  static const string trigNames[3][nPaths] = {
+    { "L1_SingleMu7", "L1_DoubleMu3" },
+    { "SingleMuNoIsoL2PreFiltered", "DiMuonNoIsoL2PreFiltered" },
+    { "SingleMuNoIsoL3PreFiltered", "DiMuonNoIsoL3PreFiltered" }
+  };
 
-  if (debug) out << "compareTrigDecision:\n";
-
-
-  const std::vector<l1extra::L1ParticleMap::L1TriggerType>& l1paths =
-    trigDecision.getL1Paths();
+  ostringstream out, xout;
+  out << "Homemade decisions:\n";
 
   for (unsigned int lvl = l1; lvl <= l3; lvl++) {
     unsigned homemade_trigbits = 0;
-    
-    const vector<string>& hltModules = lvl > l1 ? 
-      trigDecision.getHLTModules(lvl-l2) : vector<string>();
-    unsigned npaths = lvl == l1 ? l1paths.size() : hltModules.size();
-    for (unsigned ipath = 0; ipath < npaths; ipath++) {
-      const string& trigName = lvl > l1 ? hltModules[ipath]
-	: trigDecision.getL1ParticleMap()[l1paths[ipath]].triggerName();
+
+    for (unsigned ipath = 0; ipath < nPaths; ipath++) {
+      const string& trigName = trigNames[lvl - l1][ipath];
 
       // Try to emulate HLT algorithms.
-      bool fired = TriggerTranslator(trigName, lvl, ipath+1);
+      bool fired = TriggerTranslator(trigName, lvl, ipath+1, xout);
       
       // If the event passes, set the corresponding bit in trigbits.
       if (fired) homemade_trigbits = homemade_trigbits | (1 << ipath);
-      if (debug)
-	out << "  " << trigName << " (homemade): decision = " << fired << endl;
+      
+      out << "  " << setw(35) << trigName << ": decision = " << fired << endl;
     }
 
     // "Official" muon HLTs are calculated only when corresponding
@@ -199,6 +192,7 @@ void Zprime2muTrigComparison::compareTrigDecision(const edm::Event& event) const
       homemade_trigbits &= trigDecision.getWord(l1);
     if (lvl >= l3)
       homemade_trigbits &= trigDecision.getWord(l2);
+
     // Compare official and homemade decisions.
     // JMTBAD this warning will also be fired about L2 when running on
     // AOD and on events for which L2 trigbits do not equal L3
@@ -215,7 +209,7 @@ void Zprime2muTrigComparison::compareTrigDecision(const edm::Event& event) const
     }
   }
 
-  if (debug) LogTrace("compareTrigDecision") << out.str();
+  edm::LogInfo("compareTrigDecision") << xout.str() << endl << out.str();
 }
 
 DEFINE_FWK_MODULE(Zprime2muTrigComparison);

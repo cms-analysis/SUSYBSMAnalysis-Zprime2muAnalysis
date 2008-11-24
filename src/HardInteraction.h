@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "DataFormats/Candidate/interface/Candidate.h"
-#include "DataFormats/Candidate/interface/CandidateFwd.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 #include "FWCore/Framework/interface/Event.h"
 
 // A class for extracting and storing the generator-level particles
@@ -30,7 +30,7 @@ struct HardInteraction {
   void Clear();
 
   // Store pointers to all the particles from the genParticles collection.
-  void Fill(const reco::CandidateCollection& genParticles);
+  void Fill(const reco::GenParticleCollection& genParticles);
   
   // The same, but get the genParticles from the event.
   void Fill(const edm::Event& event);

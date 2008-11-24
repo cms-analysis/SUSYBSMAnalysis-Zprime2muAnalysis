@@ -106,7 +106,8 @@ void cutDileptons(const edm::Event& event,
   if (debug)
     out << "cutDileptons: starting size " << dils.size() << endl;
 
-  TeVMuHelper tmh(event);
+  TeVMuHelper tmh;
+  tmh.initEvent(event);
 
   reco::CompositeCandidateCollection::const_iterator dil;
   for (dil = dils.begin(); dil != dils.end(); dil++) {

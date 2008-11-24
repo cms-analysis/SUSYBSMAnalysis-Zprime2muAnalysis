@@ -1196,7 +1196,7 @@ void Zprime2muResolution::fillEffHistos() {
       }
       for (reco::CandidateBaseRefVector::const_iterator plep = allLeptons[rec].begin();
 	   plep != allLeptons[rec].end(); plep++) {
-	if (!tevMuHelper->leptonIsCut(**plep, cutMask)) passCut++;
+	if (!tevMuHelper.leptonIsCut(**plep)) passCut++;
 	if (passCut > 1) break;
       }
 

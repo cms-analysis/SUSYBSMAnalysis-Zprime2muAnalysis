@@ -31,13 +31,14 @@ const unsigned TeVMuHelper::topLeptonId  = TeVMuHelper::topElCuts | TeVMuHelper:
 const unsigned TeVMuHelper::topIsolation = TeVMuHelper::ISOS;
 const unsigned TeVMuHelper::topLepCuts   = TeVMuHelper::topSkim | TeVMuHelper::topLeptonId | TeVMuHelper::topIsolation;
 
-TeVMuHelper::CutNameMap TeVMuHelper::cutNames;
+//TeVMuHelper::CutNameMap TeVMuHelper::cutNames;
 
 const bool debug = false;
 
 // JMTBAD don't hardcode inputtag names
 
-TeVMuHelper::TeVMuHelper(const Event& evt) :
+TeVMuHelper::TeVMuHelper() :
+  _cutMask(0),
   // should take these values from the cfg
   ptCut(20),
   isoCut(10),
@@ -49,8 +50,7 @@ TeVMuHelper::TeVMuHelper(const Event& evt) :
   collinearMuon_dRmax(0.1),
   Sratio_min(0.92)
 {
-  initEvent(&evt);
-
+  /*
   if (cutNames.empty()) {
     cutNames[PT]      	 = "PT";
     cutNames[ISO]     	 = "ISO";
@@ -68,11 +68,11 @@ TeVMuHelper::TeVMuHelper(const Event& evt) :
     cutNames[NJETS01] 	 = "NJETS01";
     cutNames[WEAKISO] 	 = "WEAKISO";
     cutNames[TOPTRIGGER] = "TOPTRIGGER";
-  }
+    }*/
 }
 
-void TeVMuHelper::initEvent(const Event* evt) {
-  event = evt;
+void TeVMuHelper::initEvent(const Event& evt) {
+  event = &evt;
   METx_uncorrJES = METy_uncorrJES = MET_uncorrJES = -1;
   METx = METy = MET = -1;
   Zvetoed = -1;
@@ -250,8 +250,11 @@ void TeVMuHelper::_cacheNJets() {
 }
 
 unsigned TeVMuHelper::electronIsCut(const GsfElectron* electron,
-				    const unsigned cutMask) const {
+				    unsigned cutMask) const {
   unsigned result = 0;
+  
+  if (cutMask == 0)
+    cutMask = _cutMask;
 
   if ((cutMask & ISOS) && !passIsolationS(calcIsolationS(electron), electron->pt()))
     result |= ISOS;
@@ -277,8 +280,11 @@ unsigned TeVMuHelper::electronIsCut(const GsfElectron* electron,
 }
 
 unsigned TeVMuHelper::muonIsCut(const Muon* muon,
-				const unsigned cutMask) const {
+				unsigned cutMask) const {
   unsigned result = 0;
+
+  if (cutMask == 0)
+    cutMask = _cutMask;
 
   // Sum pT in cone of dR=0.3 cut (with veto cone of dR=0.01), using
   // all tracks in the isolation definition.
@@ -311,9 +317,12 @@ unsigned TeVMuHelper::muonIsCut(const Muon* muon,
   return result & cutMask;
 }
 
- unsigned TeVMuHelper::leptonIsCut(const Candidate& lepton,
-				   const unsigned cutMask) const {
+unsigned TeVMuHelper::leptonIsCut(const Candidate& lepton,
+				  unsigned cutMask) const {
   unsigned result = 0;
+
+  if (cutMask == 0)
+    cutMask = _cutMask;
 
   if ((cutMask & PT) && lepton.pt() <= ptCut)
     result |= PT;
@@ -345,8 +354,11 @@ unsigned TeVMuHelper::muonIsCut(const Muon* muon,
 }
 
 unsigned TeVMuHelper::dileptonIsCut(const CompositeCandidate& dil,
-				    const unsigned cutMask) {
+				    unsigned cutMask) {
   unsigned result = 0;
+
+  if (cutMask == 0)
+    cutMask = _cutMask;
 
   // Top group trigger requirement.
   if (cutMask & TOPTRIGGER) {

@@ -53,6 +53,12 @@
   <use name=DataFormats/TrackReco>
 </library>
 
+<library file=HLTLeptonsFromTriggerEvent.cc name=HLTLeptonsFromTriggerEvent>
+  <use name=DataFormats/Candidate>
+  <use name=DataFormats/HLTReco>
+  <use name=DataFormats/RecoCandidate>
+</library>
+
 <library file=MuonBySeedMatcher.cc name=MuonBySeedMatcher>
   <use name=DataFormats/RecoCandidate>
 </library>

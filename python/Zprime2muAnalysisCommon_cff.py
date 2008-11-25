@@ -68,6 +68,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                  chargesForDileptons=oppSign,
                                  maxDileptons=1,
                                  skipPAT=False,
+                                 useHLTDEBUG=False,
                                  # These last two are passed in just
                                  # so they can be put standalone at
                                  # the top of the file so they stick
@@ -363,23 +364,34 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             src = cms.InputTag('hltL1extraParticles')
             )
     
-        # 'Sanitize' the L2 muons, i.e. in case there is no
-        # hltL2MuonCandidates collection in the event, put an empty
-        # one in (otherwise just copy the existing one).
-        process.muCandL2 = cms.EDProducer(
-            'L2MuonSanitizer',
-            src = cms.InputTag('hltL2MuonCandidates')
-            )
-    
-        # 'Sanitize' the L3 muons, i.e. make up reco::Muons from
-        # reco::MuonTrackLinks (the hltL3MuonCandidates drop some of
-        # the extra track information, while the
-        # MuonTrackLinksCollection hltL3Muons appropriately has links
-        # to all 3 tracks).
-        process.muCandL3 = cms.EDProducer(
-            'L3MuonSanitizer',
-            src = cms.InputTag('hltL3Muons')
-            )
+        if useHLTDEBUG:
+            # 'Sanitize' the L2 muons, i.e. in case there is no
+            # hltL2MuonCandidates collection in the event, put an empty
+            # one in (otherwise just copy the existing one).
+            process.muCandL2 = cms.EDProducer(
+                'L2MuonSanitizer',
+                src = cms.InputTag('hltL2MuonCandidates')
+                )
+
+            # 'Sanitize' the L3 muons, i.e. make up reco::Muons from
+            # reco::MuonTrackLinks (the hltL3MuonCandidates drop some of
+            # the extra track information, while the
+            # MuonTrackLinksCollection hltL3Muons appropriately has links
+            # to all 3 tracks).
+            process.muCandL3 = cms.EDProducer(
+                'L3MuonSanitizer',
+                src = cms.InputTag('hltL3Muons')
+                )
+        else:
+            process.muCandL2 = cms.EDProducer(
+                'HLTLeptonsFromTriggerEvent',
+                src = cms.VInputTag(cms.InputTag('hltL2MuonCandidates::HLT'))
+                )
+
+            process.muCandL3 = cms.EDProducer(
+                'HLTLeptonsFromTriggerEvent',
+                src = cms.VInputTag(cms.InputTag('hltL3MuonCandidates::HLT'))
+                )
 
         process.pmuTrig = cms.Path(process.muCandL1 * process.muCandL2 *
                                    process.muCandL3)
@@ -476,53 +488,71 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             cms.InputTag('hltL1extraParticles','Isolated'))
             )
 
-        # For electrons, the HLT makes its decision based off of the
-        # l1(Non)IsoRecoEcalCandidate and the
-        # pixelMatchElectronsL1(Non)IsoForHLT collections. I choose to
-        # call them L2 and L3 electrons here, respectively.
-        
-        # 'Sanitize' the L2 & L3 electrons, i.e. in case there is no
-        # collection in the event, put an empty one in (otherwise just
-        # copy the existing one).
-        
-        process.elCandL2NonIso = cms.EDProducer(
-            'L2ElectronSanitizer',
-            src = cms.InputTag('hltL1NonIsoRecoEcalCandidate')
-            )
-        
-        process.elCandL2Iso = cms.EDProducer(
-            'L2ElectronSanitizer',
-            src = cms.InputTag('hltL1IsoRecoEcalCandidate')
-            )
-        
-        process.elCandL3NonIso = cms.EDProducer(
-            'L3ElectronSanitizer',
-            src = cms.InputTag('hltPixelMatchElectronsL1NonIso')
-            )
-        
-        process.elCandL3Iso = cms.EDProducer(
-            'L3ElectronSanitizer',
-            src = cms.InputTag('hltPixelMatchElectronsL1Iso')
-            )
-        
-        process.elCandL2 = cms.EDProducer(
-            'CandViewMerger',
-            src = cms.VInputTag(
-            cms.InputTag('elCandL2NonIso'),
-            cms.InputTag('elCandL2Iso'))
-            )
-        
-        process.elCandL3 = cms.EDProducer(
-            'CandViewMerger',
-            src = cms.VInputTag(
-            cms.InputTag('elCandL3NonIso'),
-            cms.InputTag('elCandL3Iso'))
-            )
+        if useHLTDEBUG:
+            # For electrons, the HLT makes its decision based off of the
+            # l1(Non)IsoRecoEcalCandidate and the
+            # pixelMatchElectronsL1(Non)IsoForHLT collections. I choose to
+            # call them L2 and L3 electrons here, respectively.
 
-        process.pelTrig = cms.Path(process.elCandL1 * process.elCandL2NonIso *
-                                   process.elCandL2Iso * process.elCandL3NonIso *
-                                   process.elCandL3Iso * process.elCandL2 *
-                                   process.elCandL3)
+            # 'Sanitize' the L2 & L3 electrons, i.e. in case there is no
+            # collection in the event, put an empty one in (otherwise just
+            # copy the existing one).
+
+            process.elCandL2NonIso = cms.EDProducer(
+                'L2ElectronSanitizer',
+                src = cms.InputTag('hltL1NonIsoRecoEcalCandidate')
+                )
+
+            process.elCandL2Iso = cms.EDProducer(
+                'L2ElectronSanitizer',
+                src = cms.InputTag('hltL1IsoRecoEcalCandidate')
+                )
+
+            process.elCandL3NonIso = cms.EDProducer(
+                'L3ElectronSanitizer',
+                src = cms.InputTag('hltPixelMatchElectronsL1NonIso')
+                )
+
+            process.elCandL3Iso = cms.EDProducer(
+                'L3ElectronSanitizer',
+                src = cms.InputTag('hltPixelMatchElectronsL1Iso')
+                )
+
+            process.elCandL2 = cms.EDProducer(
+                'CandViewMerger',
+                src = cms.VInputTag(
+                cms.InputTag('elCandL2NonIso'),
+                cms.InputTag('elCandL2Iso'))
+                )
+
+            process.elCandL3 = cms.EDProducer(
+                'CandViewMerger',
+                src = cms.VInputTag(
+                cms.InputTag('elCandL3NonIso'),
+                cms.InputTag('elCandL3Iso'))
+                )
+
+            process.pelTrig = cms.Path(process.elCandL1 * process.elCandL2NonIso *
+                                       process.elCandL2Iso * process.elCandL3NonIso *
+                                       process.elCandL3Iso * process.elCandL2 *
+                                       process.elCandL3)
+        else:
+            process.elCandL2 = cms.EDProducer(
+                'HLTLeptonsFromTriggerEvent',
+                src = cms.VInputTag(
+                cms.InputTag('hltL1NonIsoRecoEcalCandidate::HLT'),
+                cms.InputTag('hltL1IsoRecoEcalCandidate::HLT'))
+                )
+
+            process.elCandL3 = cms.EDProducer(
+                'HLTLeptonsFromTriggerEvent',
+                src = cms.VInputTag(
+                cms.InputTag('hltPixelMatchElectronsL1NonIso::HLT'),
+                cms.InputTag('hltPixelMatchElectronsL1Iso::HLT'))
+                )
+
+            process.pelTrig = cms.Path(process.elCandL1 * process.elCandL2 * process.elCandL3)
+                
 
     ####################################################################
     ## Common module configuration parameters.

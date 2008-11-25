@@ -174,27 +174,32 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
     const reco::Track* statrk = 0;
     double sumptr03 = 0;
     if (!doingElectrons) {
-      tktrk = &*lep.track();
-      statrk = &*lep.standAloneMuon();
-      const reco::Muon& mu = toConcrete<reco::Muon>(cand);
-      if (mu.isIsolationValid()) sumptr03 = mu.isolationR03().sumPt;
+      const reco::TrackRef& tktrkref = lep.track();
+      const reco::TrackRef& statrkref = lep.combinedMuon();
+      if (tktrkref.isNonnull()) tktrk = &*tktrkref;
+      if (statrkref.isNonnull()) statrk = &*statrkref;
+      const reco::Muon* mu = toConcretePtr<reco::Muon>(cand);
+      if (mu && mu->isIsolationValid()) sumptr03 = mu->isolationR03().sumPt;
     }
     
     output << " Phi: "      << setw(8) << setprecision(4) << cand->phi()
 	   << "      Eta: " << setw(8) << setprecision(4) << cand->eta()
 	   << endl;
-    const reco::HitPattern& hp = glbtrk->hitPattern();
-    int px = hp.numberOfValidPixelHits();
-    int si = hp.numberOfValidTrackerHits() - px;
-    int pxl = hp.numberOfLostPixelHits();
-    int sil = hp.numberOfLostTrackerHits() - pxl;
-    int nh = hp.numberOfValidHits();
-    int nhl = hp.numberOfLostHits();
-    output << "   Pixhits: " << setw(3) << px + pxl 
-	   << " Silhits: "   << setw(3) << si + sil
-	   << " Rechits: "   << setw(3) << nh + nhl
-      //	   << " Seed: "      << setw(3) << seedIndex(cand)
-	   << endl;
+
+    if (glbtrk) {
+      const reco::HitPattern& hp = glbtrk->hitPattern();
+      int px = hp.numberOfValidPixelHits();
+      int si = hp.numberOfValidTrackerHits() - px;
+      int pxl = hp.numberOfLostPixelHits();
+      int sil = hp.numberOfLostTrackerHits() - pxl;
+      int nh = hp.numberOfValidHits();
+      int nhl = hp.numberOfLostHits();
+      output << "   Pixhits: " << setw(3) << px + pxl 
+	     << " Silhits: "   << setw(3) << si + sil
+	     << " Rechits: "   << setw(3) << nh + nhl
+	//	   << " Seed: "      << setw(3) << seedIndex(cand)
+	     << endl;
+    }
     output << "   Closest  :";
     for (int i = 0; i < MAX_LEVELS-1; i++) {
       output << setw(5) << recLevelHelper.closestLeptonId(cand, i)
@@ -275,7 +280,7 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
 	     << "   HoE: " << el.hadronicOverEm() << endl;
     }
 
-    if (!doingElectrons) {
+    if (!doingElectrons && (glbtrk != 0 && statrk != 0 && tktrk != 0)) {
       output << "   Combined track: charge: " << setw(2) << glbtrk->charge()
 	     << " p: " << glbtrk->momentum() << endl
 	     << "   Standalone mu : charge: " << setw(2) << statrk->charge()

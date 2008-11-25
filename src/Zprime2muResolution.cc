@@ -828,14 +828,18 @@ void Zprime2muResolution::calcResolution(const bool debug) {
     if (i_rec == l2) {
       // Number of muon hits at Level-2
       for (reco::CandidateBaseRefVector::const_iterator plep = allLeptons[l2].begin();
-	   plep != allLeptons[l2].end(); plep++)
-	L2MuonHits->Fill(getMainTrack(*plep)->hitPattern().numberOfValidMuonHits());
+	   plep != allLeptons[l2].end(); plep++) {
+	const reco::Track* tk = getMainTrack(*plep);
+	if (tk) L2MuonHits->Fill(tk->hitPattern().numberOfValidMuonHits());
+      }
     }
     else if (i_rec == l3) {
       // Number of tracker (silicon + pixel) hits at Level-3
       for (reco::CandidateBaseRefVector::const_iterator plep = allLeptons[l3].begin();
-	   plep != allLeptons[l3].end(); plep++)
-	L3TrackerHits->Fill(getMainTrack(*plep)->hitPattern().numberOfValidTrackerHits());
+	   plep != allLeptons[l3].end(); plep++) {
+	const reco::Track* tk = getMainTrack(*plep);
+	if (tk) L3TrackerHits->Fill(tk->hitPattern().numberOfValidTrackerHits());
+      }
     }
 
     // Number of muon hits and chi2/d.o.f. for off-line (GMR) muons.
@@ -1350,7 +1354,7 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
 	residual  = (1./lep->pt() - 1./gen_pt)/(1./gen_pt);
 	TotInvPtRes[0]->Fill(residual);
 	InvPtRes[0][bar_end]->Fill(residual);
-	if ((tmperr = invPtError(lep)) > 0.) {
+	if (getMainTrack(lep) && (tmperr = invPtError(lep)) > 0.) {
 	  pt_pull = (1./lep->pt() - 1./gen_pt)/tmperr;
 	  TotInvPtPull[0]->Fill(pt_pull);
 	  InvPtPull[0][bar_end]->Fill(pt_pull);

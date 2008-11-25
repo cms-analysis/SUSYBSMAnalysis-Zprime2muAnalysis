@@ -143,51 +143,6 @@ void TriggerDecision::storeHLTDecision(const edm::Event& event) {
   for (int l = l2; l <= l3; l++) 
     out << "  trigWord[l" << l << "]: " << trigWord[l] << endl;
 
-  edm::Handle<trigger::TriggerEvent> trigEvent;
-  event.getByLabel("hltTriggerSummaryAOD", trigEvent);
-  if (trigEvent.isValid()) {
-    // Get indices of L2 and L3 muon objects.
-    int l2ind_first = -99, l2ind_last = -99;
-    int l3ind_first = -99, l3ind_last = -99;
-    int ind_prev = 0;
-    const trigger::size_type nC(trigEvent->sizeCollections());
-    for (trigger::size_type iC = 0; iC < nC; ++iC) {
-      std::string encodedCollectionTag(trigEvent->collectionTag(iC).encode());
-      if (strstr(encodedCollectionTag.c_str(), "hltL2MuonCandidates")) {
-	l2ind_first = ind_prev;
-	l2ind_last  = trigEvent->collectionKey(iC)-1;
-      }
-      else if (strstr(encodedCollectionTag.c_str(), "hltL3MuonCandidates")) {
-	l3ind_first = ind_prev;
-	l3ind_last  = trigEvent->collectionKey(iC)-1;
-      }
-      ind_prev = trigEvent->collectionKey(iC);
-    }
-
-    // Access collections of L2 and L3 muons.  Shall we convert them to
-    // reco::muons, similarly to what is done in L3MuonSanitizer.cc, and
-    // save into allLeptons?
-    const trigger::TriggerObjectCollection& TOC(trigEvent->getObjects());
-    if (!doingElectrons) {
-      if (l2ind_first >= 0 && l2ind_last >= l2ind_first) {
-	out << "  L2 muon(s): #, id, pt, eta, phi\n";
-	for (trigger::size_type iO = l2ind_first; iO <= l2ind_last; ++iO) {
-	  const trigger::TriggerObject& TO(TOC[iO]);
-	  out << "  " << iO << " " << TO.id() << " " << TO.pt()
-	      << " " << TO.eta() << " " << TO.phi() << "\n";
-	}
-      }
-      if (l3ind_first >= 0 && l3ind_last >= l3ind_first) {
-	out << "  L3 muon(s): #, id, pt, eta, phi\n";
-	for (trigger::size_type iO = l3ind_first; iO <= l3ind_last; ++iO) {
-	  const trigger::TriggerObject& TO(TOC[iO]);
-	  out << "  " << iO << " " << TO.id() << " " << TO.pt()
-	      << " " << TO.eta() << " " << TO.phi() << "\n";
-	}
-      }
-    }
-  }
-
   if (debug) LogTrace("storeHLTDecision") << out.str();
 }
 

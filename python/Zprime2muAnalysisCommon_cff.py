@@ -36,7 +36,7 @@ electronCollections = [
     None,
     None,
     None,
-    'heepSelector'
+    'selectedLayer1Electrons',
     ]
 
 # Dilepton construction specifiers (see docstring in the main method
@@ -58,17 +58,16 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                  usingAODOnly=False,
                                  useTrigger=True,
                                  useOtherMuonRecos=True,
-                                 useHEEPSelector=False,
                                  recoverBrem=True,
-                                 disableElectrons=True,
+                                 disableElectrons=False,
                                  performTrackReReco=False,
-                                 conditionsGlobalTag='IDEAL_V2::All',
-                                 lumiForCSA07=0.,
+                                 conditionsGlobalTag='IDEAL_V9::All',
                                  dumpHardInteraction=False,
                                  dumpTriggerSummary=False,
                                  flavorsForDileptons=diMuons,
                                  chargesForDileptons=oppSign,
                                  maxDileptons=1,
+                                 skipPAT=False,
                                  # These last two are passed in just
                                  # so they can be put standalone at
                                  # the top of the file so they stick
@@ -114,10 +113,6 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     scripts in test/makeScripts of this package), this needs to be set
     False.
 
-    useHEEPSelector: whether to use D.L. Evans\'s HEEPSelector for
-    "best" electrons. It requires quantities not in AOD, so it may
-    need to be disabled via this flag.
-
     performTrackReReco: if set, re-run track, muon, and photon
     reconstruction on-the-fly before running any analysis paths.
             
@@ -128,9 +123,6 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     useTrigger: whether to expect to be able to get trigger
     collections (i.e. those destined for L1-L3 rec levels) from the
     file.
-
-    lumiForCSA07: if > 0, set up the CSA07EventWeightProducer with
-    weights corresponding to the given lumi (in pb^-1).
 
     dumpHardInteraction: if True, use the (modified)
     ParticleListDrawer to dump the generator info on the hard
@@ -160,12 +152,10 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     if disableElectrons:
         for i in xrange(numRecLevels):
             electrons[i] = None
-        useHEEPSelector = False
         
     if usingAODOnly:
         useGen = useSim = False
         useOtherMuonRecos = False
-        useHEEPSelector = False
         
     if not useGen:
         useSim = False
@@ -174,13 +164,9 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     if not useReco:
         useTrigger = False
         useOtherMuonRecos = False
-        useHEEPSelector = False
         for i in xrange(lL1, lOP+1):
             muons[i] = None
             electrons[i] = None
-
-    if not useHEEPSelector:
-        electrons[lOP] = electrons[lGR]
 
     if not useOtherMuonRecos:
         for i in xrange(lTK, lPR+1):
@@ -214,7 +200,10 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
 
     process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(maxEvents))
 
-    #process.options = cms.untracked.PSet(IgnoreCompletely = cms.untracked.vstring('ProductNotFound'))
+    process.options = cms.untracked.PSet(
+        #IgnoreCompletely = cms.untracked.vstring('ProductNotFound'),
+        wantSummary = cms.untracked.bool(True)
+        )
 
     if __debug:
         outFile = 'cout'
@@ -247,7 +236,10 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             'ZDC', 'ZdcHardcodeGeometry', 'RunLumiMerging',
             'TrackAssociator','RecoVertex/PrimaryVertexProducer',
             'ConversionTrackCandidateProducer','GsfTrackProducer',
-            'PhotonProducer','TrackProducerWithSCAssociation'
+            'PhotonProducer','TrackProducerWithSCAssociation',
+            'PartonSelector', 'JetPartonMatcher', 'Alignments',
+            'L1GtConfigProducers', 'SiStripQualityESProducer',
+            'LikelihoodPdf', 'HemisphereAlgo', 'LikelihoodPdfProduct'
             ),
         Zprime = cms.untracked.PSet(
             threshold    = cms.untracked.string('DEBUG'),
@@ -279,17 +271,6 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         process.Tracer = cms.Service('Tracer')
         process.SimpleMemoryCheck = cms.Service('SimpleMemoryCheck')
     
-    if useGen and lumiForCSA07 > 0:
-        process.csa07EventWeightProducer = cms.EDProducer(
-            'CSA07EventWeightProducer',
-            src         = cms.InputTag('source'),
-            talkToMe    = cms.untracked.bool(False),
-            overallLumi = cms.double(lumiForCSA07), # in pb^-1
-            ttKfactor   = cms.double(1) # 1.85
-            )
-
-        process.csa07 = cms.Path(process.csa07EventWeightProducer)
-
     if performTrackReReco:
         process.include('SUSYBSMAnalysis/Zprime2muAnalysis/data/TrackReReco.cff')
         process.pReReco = cms.Path(process.trackReReco)
@@ -303,9 +284,9 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         process.printTree = cms.EDAnalyzer(
             'ParticleListDrawer',
             maxEventsToPrint = cms.untracked.int32(-1),
-            src = cms.InputTag('genParticles') #,
-            #printOnlyHardInteraction = cms.untracked.bool(True),
-            #useMessageLogger = cms.untracked.bool(True),
+            src = cms.InputTag('genParticles'),
+            printOnlyHardInteraction = cms.untracked.bool(True),
+            useMessageLogger = cms.untracked.bool(True)
             )
         
         process.ptree = cms.Path(process.printTree)
@@ -316,7 +297,22 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             inputTag = cms.InputTag('hltTriggerSummaryAOD')
             )
         process.ptrigAnalyzer = cms.Path(process.trigAnalyzer)
-    
+
+    ####################################################################
+    ## Run PAT layers 0 and 1 (unless instructed to skip them).
+    ####################################################################
+
+    if not skipPAT:
+        process.load("Configuration.StandardSequences.Geometry_cff")
+        process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
+        process.GlobalTag.globaltag = cms.string(conditionsGlobalTag)
+        process.load("Configuration.StandardSequences.MagneticField_cff")
+
+        process.load("PhysicsTools.PatAlgos.patLayer0_cff")
+        process.load("PhysicsTools.PatAlgos.patLayer1_cff")
+
+        process.pPAT = cms.Path(process.patLayer0 + process.patLayer1)
+
     ####################################################################
     ## Make a CandidateCollection out of the GEANT tracks.
     ####################################################################
@@ -527,17 +523,6 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                    process.elCandL2Iso * process.elCandL3NonIso *
                                    process.elCandL3Iso * process.elCandL2 *
                                    process.elCandL3)
-
-    if useHEEPSelector:
-        ## Hack for now to include old-style cfgs in python ones.
-        #process.include('DLEvans/HEEPSelector/data/heepSelection_1_1.cfi')
-        #process.bestEl = cms.Path(process.heepSelection)
-
-        # Use the output of running dumpPython() on the above for
-        # faster loading (will have to be redumped when there is a new
-        # HEEPSelector!).
-        import HEEPSelector11_cfi
-        HEEPSelector11_cfi.attachHEEPSelector(process)
 
     ####################################################################
     ## Common module configuration parameters.
@@ -867,6 +852,10 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         path = path[chunkSize:]
         setattr(process, 'zp2muPath%i' % count, cms.Path(eval(pathCodeStr)))
         count += 1
+
+    if __debug:
+        process.EventContentAnalyzer = cms.EDAnalyzer('EventContentAnalyzer')
+        process.pECA = cms.Path(process.EventContentAnalyzer)        
 
     ####################################################################
     ## Done!

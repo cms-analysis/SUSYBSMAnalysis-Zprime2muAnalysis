@@ -47,7 +47,7 @@ created; in the meantime one may use private samples or work with
 DY/other events found via DBS: https://cmsweb.cern.ch/dbs_discovery/ .
 
 At the time this documentation was updated, the package has been 
-tested to work with version 2_1_12 of CMSSW. The tag V00-03-00 should
+tested to work with version 2_1_12 of CMSSW. The tag V00-03-01 should
 be used. (However, there is an experts' branch targeting CMSSW_1_6_12
 which can be checked out; see the section "CMSSW 1_6_12".) We have
 abandoned our private BaseMuon/Muon/DiMuon classes in favor of using
@@ -399,8 +399,9 @@ the makeZprime2muAnalysisProcess() function in the Python config file.
 (See test/testZprime2muResolutionElectrons_cfg.py for an example.)
 
 The HEEPSelector tool in the form was used in 1_6_X does not exist for
-2_1, so the electron mode is disabled for Zprime2muAnalysis until the
-HEEP selection is done by default in the PAT.
+2_1, so the electron mode is not yet fully tested for
+Zprime2muAnalysis until the HEEP selection is done by default in the
+PAT.
 
 
 Histogram dumping
@@ -455,7 +456,7 @@ To check out the package under 2_1_12:
    cd CMSSW_2_1_12/src
 
    project CMSSW
-   cvs co -r V00-03-00 SUSYBSMAnalysis/Zprime2muAnalysis
+   cvs co -r V00-03-01 SUSYBSMAnalysis/Zprime2muAnalysis
 
    # Compile the code, including the extra packages checked out.
    eval `scramv1 runtime -csh`

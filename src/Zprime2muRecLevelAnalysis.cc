@@ -174,7 +174,7 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
     double sumptr03 = 0;
     if (!doingElectrons) {
       const reco::TrackRef& tktrkref = lep.track();
-      const reco::TrackRef& statrkref = lep.combinedMuon();
+      const reco::TrackRef& statrkref = lep.standAloneMuon();
       if (tktrkref.isNonnull()) tktrk = &*tktrkref;
       if (statrkref.isNonnull()) statrk = &*statrkref;
       const reco::Muon* mu = toConcretePtr<reco::Muon>(cand);

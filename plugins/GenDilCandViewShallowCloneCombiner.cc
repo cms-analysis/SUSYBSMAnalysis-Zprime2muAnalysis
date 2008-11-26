@@ -31,14 +31,8 @@ namespace reco {
       }
     };
 
-    // CandCombiner is in a funny state -- some interface changes
-    // (specificially the dropped template parameters below) went into
-    // 2_0_9, but not into any 2_1_X version. For now, comment out
-    // until things settle.
     typedef CandCombiner<
-      //      reco::CandidateView,
       StringCutObjectSelector<reco::Candidate>,
-      //      reco::CompositeCandidateCollection,
       GenDilPairSelector,
       combiner::helpers::ShallowClone
       > GenDilCandViewShallowCloneCombiner;

@@ -14,12 +14,6 @@
   <use name=PhysicsTools/CandAlgos>
 </library>
 
-<library file=GenCandsFromSimTracksProducer.cc name=GenCandsFromSimTracksProducer>
-  <use name=DataFormats/HepMCCandidate>
-  <use name=SimDataFormats/HepMCProduct>
-  <use name=SimDataFormats/Track>
-</library>
-
 <library file=GenDilCandViewShallowCloneCombiner.cc name=GenDilCandViewShallowCloneCombiner>
   <use name=DataFormats/Candidate>
   <use name=PhysicsTools/CandAlgos>
@@ -61,9 +55,4 @@
 
 <library file=MuonBySeedMatcher.cc name=MuonBySeedMatcher>
   <use name=DataFormats/RecoCandidate>
-</library>
-
-<library file=PtMinDeltaRViewMatcher.cc name=PtMinDeltaRViewMatcher>
-  <use name=PhysicsTools/CandAlgos>
-  <use name=PhysicsTools/UtilAlgos>
 </library>

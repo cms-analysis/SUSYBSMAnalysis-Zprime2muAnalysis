@@ -69,6 +69,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                  maxDileptons=1,
                                  skipPAT=False,
                                  useHLTDEBUG=False,
+                                 minGenPt=1.0,
                                  # These last two are passed in just
                                  # so they can be put standalone at
                                  # the top of the file so they stick
@@ -320,8 +321,9 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
 
     if useSim:
         process.simParticleCandidates = cms.EDProducer(
-            'GenCandsFromSimTracksProducer',
-            src = cms.InputTag('g4SimHits')
+            'PATGenCandsFromSimTracksProducer',
+            src = cms.InputTag('g4SimHits'),
+            setStatus = cms.int32(1)
             )
         
         process.psimParticleCandidates = cms.Path(process.simParticleCandidates)
@@ -334,7 +336,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         process.genMuons = cms.EDProducer(
             'CandViewSelector',
             src = cms.InputTag('genParticles'),
-            cut = cms.string('abs(pdgId) = 13 & status = 1') # & pt > 0.001'
+            cut = cms.string('abs(pdgId) = 13 & status = 1 & pt > %f' % minGenPt)
             )
 
         GNtags = cms.VInputTag(cms.InputTag('genMuons'))
@@ -342,7 +344,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             process.simMuons = cms.EDProducer(
                 'CandViewSelector',
                 src = cms.InputTag('simParticleCandidates'),
-                cut = cms.string('abs(pdgId) = 13 & status = 1') # & pt > 0.001'
+                cut = cms.string('abs(pdgId) = 13 & status = 1 & pt > %f' % minGenPt)
                 )
             
             process.psimMuons = cms.Path(process.simMuons)
@@ -458,7 +460,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         process.genElectrons = cms.EDProducer(
             'CandViewSelector',
             src = cms.InputTag('genParticles'),
-            cut = cms.string('abs(pdgId) = 11 & status = 1')
+            cut = cms.string('abs(pdgId) = 11 & status = 1 & pt > %f' % minGenPt)
             )
 
         GNtags = cms.VInputTag(cms.InputTag('genElectrons'))
@@ -466,7 +468,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             process.simElectrons = cms.EDProducer(
                 'CandViewSelector',
                 src = cms.InputTag('simParticleCandidates'),
-                cut = cms.string('abs(pdgId) = 11 & status = 1')
+                cut = cms.string('abs(pdgId) = 11 & status = 1 & pt > %f' % minGenPt)
                 )
             
             process.psimElectrons = cms.Path(process.simElectrons)
@@ -665,15 +667,8 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             if fromColl is None or toColl is None:
                 continue
             
-            matcher = 'DeltaRViewMatcher'
-            if irec == lGN or jrec == lGN:
-                # Could switch to MCTruth matcher, but needs studying.
-                matcher = 'PtMin' + matcher
-            else:
-                matcher = 'Trivial' + matcher
-
             prod = cms.EDProducer(
-                matcher,
+                'TrivialDeltaRViewMatcher',
                 src     = cms.InputTag(muons[irec]),
                 matched = cms.InputTag(muons[jrec]),
                 distMin = cms.double(0.7072)

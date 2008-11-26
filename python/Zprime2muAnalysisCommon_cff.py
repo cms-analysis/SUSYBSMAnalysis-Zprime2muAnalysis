@@ -408,44 +408,47 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             defaultMuons = 'muons'
             tevMuons = 'tevMuons'
 
+        from RecoMuon.MuonIdentification.refitMuons_cfi import refitMuons
+        
         # Copy only the GlobalMuons from the default muon collection,
         # ignoring the TrackerMuons and CaloMuons for now.
-        process.muCandGR = cms.EDProducer(
-            'GlobalOnlyMuonProducer',
-            src = cms.InputTag(defaultMuons)
+        process.muCandGR = refitMuons.clone(
+            src           = defaultMuons,
+            fromCocktail  = False,
+            tevMuonTracks = 'none'
             )
 
         # Make tracker-only reco::Muons out of the tracker tracks in
         # the muons collection.
-        process.muCandTK = cms.EDProducer(
-            'GlobalOnlyMuonProducer',
-            src              = cms.InputTag(defaultMuons),
+        process.muCandTK = refitMuons.clone(
+            src           = defaultMuons,
+            fromCocktail  = False,
+            tevMuonTracks = 'none',
             fromTrackerTrack = cms.untracked.bool(True)
             )
 
         # Make first-muon-station (FMS) reco::Muons using the supplied
         # TeV refit tracks.
-        process.muCandFS = cms.EDProducer(
-            'GlobalOnlyMuonProducer',
-            src           = cms.InputTag(defaultMuons),
-            tevMuonTracks = cms.untracked.string(tevMuons + ':firstHit') 
+        process.muCandFS = refitMuons.clone(
+            src           = defaultMuons,
+            fromCocktail  = False,
+            tevMuonTracks = tevMuons + ':firstHit'
             )
 
         # Make picky-muon-reconstructor (PMR) reco::Muons using the
         # supplied TeV refit tracks.
-        process.muCandPR = cms.EDProducer(
-            'GlobalOnlyMuonProducer',
-            src           = cms.InputTag(defaultMuons),
-            tevMuonTracks = cms.untracked.string(tevMuons + ':picky') 
+        process.muCandPR = refitMuons.clone(
+            src           = defaultMuons,
+            fromCocktail  = False,
+            tevMuonTracks = tevMuons + ':picky'
             )
 
         # Use the official TeV muon cocktail code to pick the best
         # muons using the supplied TeV refit tracks.
-        process.bestMuons = cms.EDProducer(
-            'GlobalOnlyMuonProducer',
-            src           = cms.InputTag(defaultMuons),
-            tevMuonTracks = cms.untracked.string(tevMuons),
-            fromCocktail  = cms.untracked.bool(True)
+        process.bestMuons = refitMuons.clone(
+            src           = defaultMuons,
+            fromCocktail  = True,
+            tevMuonTracks = tevMuons
             )
         
         process.pmuReco = cms.Path(process.muCandGR * process.muCandTK *
@@ -774,9 +777,6 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             decay = '%s%s %s%s' % (collections[0], charges[0],
                                    collections[1], charges[1])
 
-            # A dummy cut, otherwise CandCombiner crashes.
-            cut = 'mass > 0'
-
             # Encode the name as e.g. 'dileptonselmuMPOP' meaning
             # e-mu+ at OP rec level.
             dilname = nameDilCollection(theseFlavors, theseCharges,
@@ -788,7 +788,8 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             # removal and selection cuts.
             prod = cms.EDProducer(combiner,
                                   decay = cms.string(decay),
-                                  cut = cms.string(cut))
+                                  cut = cms.string('')
+                                  )
             addToPath(rawname, prod)
 
             # Remove dilepton overlap and apply selection cuts, also

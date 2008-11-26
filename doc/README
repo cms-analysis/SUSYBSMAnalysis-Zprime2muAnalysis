@@ -462,11 +462,18 @@ To check out the package under 2_1_12:
    eval `scramv1 runtime -csh`
    scramv1 b
 
+To live on the edge, i.e. to use the HEAD version of the code instead
+of the tagged version above, you must also check out and compile some
+extra code:
+
+   cvs co -r CMSSW_2_1_12 RecoMuon/MuonIdentification
+   cvs co -r HEAD RecoMuon/MuonIdentification/plugins/MuonsFromRefitTracksProducer.cc 
+   cvs co -r HEAD RecoMuon/MuonIdentification/python/refitMuons_cfi.py
+   scramv1 b
+
 To run:
 
    cd SUSYBSMAnalysis/Zprime2muAnalysis/test
    cmsRun testZprime2muResolution_cfg.py # or any of the other test/testZprime2mu*_cfg.py
-
-
 
      

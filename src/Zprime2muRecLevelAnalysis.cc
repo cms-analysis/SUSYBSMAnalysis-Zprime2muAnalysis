@@ -175,8 +175,8 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
     if (!doingElectrons) {
       const reco::TrackRef& tktrkref = lep.track();
       const reco::TrackRef& statrkref = lep.standAloneMuon();
-      if (tktrkref.isNonnull()) tktrk = &*tktrkref;
-      if (statrkref.isNonnull()) statrk = &*statrkref;
+      if (tktrkref.isAvailable()) tktrk = &*tktrkref;
+      if (statrkref.isAvailable()) statrk = &*statrkref;
       const reco::Muon* mu = toConcretePtr<reco::Muon>(cand);
       if (mu && mu->isIsolationValid()) sumptr03 = mu->isolationR03().sumPt;
     }
@@ -253,7 +253,7 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
       output << "   Vertex position: " << setw(11) << cand->vx() 
 	     << " "                    << setw(11) << cand->vy() 
 	     << " "                    << setw(11) << cand->vz() << endl;
-      if (!usingAODOnly)
+      if (glbtrk->extra().isAvailable())
 	output << "   Track. position: " << setw(11) << glbtrk->innerPosition().X()
 	       << " "                    << setw(11) << glbtrk->innerPosition().Y()
 	       << " "                    << setw(11) << glbtrk->innerPosition().Z()

@@ -160,9 +160,9 @@ void Zprime2muResolution::BookResHistos() {
   L2MuonHits    = fs->make<TH1F>("L2MuonHits", "Muon hits, Level-2", 25, 0., 25.);
   L3TrackerHits = fs->make<TH1F>("L3TrackerHits", "Tracker hits (pixel+silicon), Level-3",
 				 25, 0., 25.);
-  GMRMuonHits[0]= fs->make<TH1F>("GMRMuonHits0", "Muon hits, GMR, barrel",  25, 0., 25.);
-  GMRMuonHits[1]= fs->make<TH1F>("GMRMuonHits1", "Muon hits, GMR, overlap", 25, 0., 25.);
-  GMRMuonHits[2]= fs->make<TH1F>("GMRMuonHits2", "Muon hits, GMR, endcap",  25, 0., 25.);
+  GMRMuonHits[0]= fs->make<TH1F>("GMRMuonHits0", "Muon hits, GMR, barrel",  60, 0., 60.);
+  GMRMuonHits[1]= fs->make<TH1F>("GMRMuonHits1", "Muon hits, GMR, overlap", 60, 0., 60.);
+  GMRMuonHits[2]= fs->make<TH1F>("GMRMuonHits2", "Muon hits, GMR, endcap",  60, 0., 60.);
   GMRChi2dof[0] = fs->make<TH1F>("GMRChi2dof0", "Chi2/d.o.f., GMR, barrel",  100, 0., 5.);
   GMRChi2dof[1] = fs->make<TH1F>("GMRChi2dof1", "Chi2/d.o.f., GMR, overlap", 100, 0., 5.);
   GMRChi2dof[2] = fs->make<TH1F>("GMRChi2dof2", "Chi2/d.o.f., GMR, endcap",  100, 0., 5.);

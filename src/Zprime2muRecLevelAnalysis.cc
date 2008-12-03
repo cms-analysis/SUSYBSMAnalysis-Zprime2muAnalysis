@@ -146,10 +146,11 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
 	   << endl;
   }
   else if (level == l2) {
-    const reco::Track* tk = getMainTrack(cand);
+    const reco::RecoCandidate& lep = toConcrete<reco::RecoCandidate>(cand);
+    const reco::Track* tk = lep.track().get();
     output << " Phi: "      << setw(8) << setprecision(4) << cand->phi()
 	   << "      Eta: " << setw(8) << setprecision(4) << cand->eta();
-    if (tk != 0 && !doingElectrons) {
+    if (tk && !doingElectrons) {
       output << endl
 	     << "   Muhits: "    << setw(3) << tk->hitPattern().numberOfValidMuonHits()
 	     << "   Chi2/Ndof: " << setw(8) << setprecision(4) << tk->chi2()
@@ -167,16 +168,20 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
 	     << endl;
   }
   else {
+    const reco::Track* globalTrack = 0;
+    const reco::Track* trackerTrack = 0;
+    const reco::Track* standAloneTrack = 0;
+    double sumptr03 = -999;
+
     const reco::RecoCandidate& lep = toConcrete<reco::RecoCandidate>(cand);
-    const reco::Track* glbtrk = getMainTrack(cand);
-    const reco::Track* tktrk = 0;
-    const reco::Track* statrk = 0;
-    double sumptr03 = 0;
-    if (!doingElectrons) {
-      const reco::TrackRef& tktrkref = lep.track();
-      const reco::TrackRef& statrkref = lep.standAloneMuon();
-      if (tktrkref.isAvailable()) tktrk = &*tktrkref;
-      if (statrkref.isAvailable()) statrk = &*statrkref;
+    if (doingElectrons) {
+      globalTrack = lep.gsfTrack().get();
+    }
+    else {
+      globalTrack = lep.combinedMuon().get();
+      trackerTrack = lep.track().get();
+      standAloneTrack = lep.standAloneMuon().get();
+
       const reco::Muon* mu = toConcretePtr<reco::Muon>(cand);
       if (mu && mu->isIsolationValid()) sumptr03 = mu->isolationR03().sumPt;
     }
@@ -184,9 +189,9 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
     output << " Phi: "      << setw(8) << setprecision(4) << cand->phi()
 	   << "      Eta: " << setw(8) << setprecision(4) << cand->eta()
 	   << endl;
-
-    if (glbtrk) {
-      const reco::HitPattern& hp = glbtrk->hitPattern();
+ 
+    if (globalTrack) {
+      const reco::HitPattern& hp = globalTrack->hitPattern();
       int px = hp.numberOfValidPixelHits();
       int si = hp.numberOfValidTrackerHits() - px;
       int pxl = hp.numberOfLostPixelHits();
@@ -212,36 +217,36 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
     }
     output << endl;
     output << "   P:          " << setw(7) << setprecision(5) << cand->p();
-    if (glbtrk != 0) 
-      output << " +/- "    << pError(glbtrk);
+    if (globalTrack != 0) 
+      output << " +/- "    << pError(globalTrack);
     output << endl;
     output << "   Pt:         " << setw(7) << cand->pt();
-    if (glbtrk != 0)
-      output << " +/- "    << ptError(glbtrk)
-	     << "   Chi2/Ndof: "  << setw(11) << glbtrk->chi2()
-	     << "/"        << setw(2) << glbtrk->ndof();
+    if (globalTrack != 0)
+      output << " +/- "    << ptError(globalTrack)
+	     << "   Chi2/Ndof: "  << setw(11) << globalTrack->chi2()
+	     << "/"        << setw(2) << globalTrack->ndof();
     output << endl;
     output << "   Forward Pt: " << setw(7) << 0 //rhs.forwardPt()
 	   << " +/- "    << 0 //rhs.errForwardPt()
 	   << "   Back Chi2: "  << setw(11) << 0 //rhs.backChi2()
 	   << endl;
     double tkpt, tkpterr, tkchi2;
-    if (tktrk == 0 || doingElectrons)
-      tkpt = tkpterr = tkchi2 = 0;
+    if (trackerTrack == 0 || doingElectrons)
+      tkpt = tkpterr = tkchi2 = -999;
     else {
-      tkpt = tktrk->pt();
-      tkpterr = ptError(tktrk);
-      tkchi2 = tktrk->chi2();
+      tkpt = trackerTrack->pt();
+      tkpterr = ptError(trackerTrack);
+      tkchi2 = trackerTrack->chi2();
     }
     output << "   Tracker Pt: " << setw(7) << tkpt << " +/- " << tkpterr
 	   << "   Tracker Chi2: " << setw(8) << tkchi2 << endl;
     double stapt, stapterr, stachi2;
-    if (statrk == 0 || doingElectrons)
-      stapt = stapterr = stachi2 = 0;
+    if (standAloneTrack == 0 || doingElectrons)
+      stapt = stapterr = stachi2 = -999;
     else {
-      stapt = statrk->pt();
-      stapterr = ptError(statrk);
-      stachi2 = statrk->chi2();
+      stapt = standAloneTrack->pt();
+      stapterr = ptError(standAloneTrack);
+      stachi2 = standAloneTrack->chi2();
     }
     output << "   MuonFit Pt: " << setw(7) << stapt
 	   << " +/- " << stapterr
@@ -249,14 +254,14 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
     output << "   Tracker Chi2 diff.: " << setw(7) << 0 // rhs.trackerChi2Diff()
 	   << "   MuonFit Chi2 diff.: " << setw(7) << 0 // rhs.muonFitChi2Diff()
 	   << endl;
-    if (glbtrk != 0) {
+    if (globalTrack != 0) {
       output << "   Vertex position: " << setw(11) << cand->vx() 
 	     << " "                    << setw(11) << cand->vy() 
 	     << " "                    << setw(11) << cand->vz() << endl;
-      if (glbtrk->extra().isAvailable())
-	output << "   Track. position: " << setw(11) << glbtrk->innerPosition().X()
-	       << " "                    << setw(11) << glbtrk->innerPosition().Y()
-	       << " "                    << setw(11) << glbtrk->innerPosition().Z()
+      if (globalTrack->extra().isAvailable())
+	output << "   Track. position: " << setw(11) << globalTrack->innerPosition().X()
+	       << " "                    << setw(11) << globalTrack->innerPosition().Y()
+	       << " "                    << setw(11) << globalTrack->innerPosition().Z()
 	       << endl;
     }
 
@@ -279,13 +284,13 @@ void Zprime2muRecLevelAnalysis::dumpLepton(ostream& output,
 	     << "   HoE: " << el.hadronicOverEm() << endl;
     }
 
-    if (!doingElectrons && (glbtrk != 0 && statrk != 0 && tktrk != 0)) {
-      output << "   Combined track: charge: " << setw(2) << glbtrk->charge()
-	     << " p: " << glbtrk->momentum() << endl
-	     << "   Standalone mu : charge: " << setw(2) << statrk->charge()
-	     << " p: " << statrk->momentum() << endl
-	     << "   Tracker track : charge: " << setw(2) << tktrk->charge()
-	     << " p: " << tktrk->momentum() << endl;
+    if (!doingElectrons && (globalTrack != 0 && standAloneTrack != 0 && trackerTrack != 0)) {
+      output << "   Combined track: charge: " << setw(2) << globalTrack->charge()
+	     << " p: " << globalTrack->momentum() << endl
+	     << "   Standalone mu : charge: " << setw(2) << standAloneTrack->charge()
+	     << " p: " << standAloneTrack ->momentum() << endl
+	     << "   Tracker track : charge: " << setw(2) << trackerTrack->charge()
+	     << " p: " << trackerTrack->momentum() << endl;
     }
   }
 }

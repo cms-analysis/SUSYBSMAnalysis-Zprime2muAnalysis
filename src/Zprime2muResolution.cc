@@ -829,16 +829,22 @@ void Zprime2muResolution::calcResolution(const bool debug) {
       // Number of muon hits at Level-2
       for (reco::CandidateBaseRefVector::const_iterator plep = allLeptons[l2].begin();
 	   plep != allLeptons[l2].end(); plep++) {
-	const reco::Track* tk = getMainTrack(*plep);
-	if (tk) L2MuonHits->Fill(tk->hitPattern().numberOfValidMuonHits());
+	const reco::RecoCandidate* lep = toConcretePtr<reco::RecoCandidate>(*plep);
+	if (lep) {
+	  const reco::Track* tk = lep->track().get();
+	  if (tk) L2MuonHits->Fill(tk->hitPattern().numberOfValidMuonHits());
+	}
       }
     }
     else if (i_rec == l3) {
       // Number of tracker (silicon + pixel) hits at Level-3
       for (reco::CandidateBaseRefVector::const_iterator plep = allLeptons[l3].begin();
 	   plep != allLeptons[l3].end(); plep++) {
-	const reco::Track* tk = getMainTrack(*plep);
-	if (tk) L3TrackerHits->Fill(tk->hitPattern().numberOfValidTrackerHits());
+	const reco::RecoCandidate* lep = toConcretePtr<reco::RecoCandidate>(*plep);
+	if (lep) {
+	  const reco::Track* tk = lep->combinedMuon().get();
+	  if (tk) L3TrackerHits->Fill(tk->hitPattern().numberOfValidTrackerHits());
+	}
       }
     }
 
@@ -848,7 +854,9 @@ void Zprime2muResolution::calcResolution(const bool debug) {
     if (i_rec == lgmr) {
       for (reco::CandidateBaseRefVector::const_iterator plep = allLeptons[lgmr].begin();
 	   plep != allLeptons[lgmr].end(); plep++) {
-	const reco::Track* tk = getMainTrack(*plep);
+	const reco::RecoCandidate* lep = toConcretePtr<reco::RecoCandidate>(*plep);
+	if (lep == 0) continue;
+	const reco::Track* tk = lep->combinedMuon().get();
 	if (tk == 0) continue;
 	int muHits = tk->hitPattern().numberOfValidMuonHits();
 	double chi2dof = tk->chi2()/tk->ndof();
@@ -1354,10 +1362,15 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
 	residual  = (1./lep->pt() - 1./gen_pt)/(1./gen_pt);
 	TotInvPtRes[0]->Fill(residual);
 	InvPtRes[0][bar_end]->Fill(residual);
-	if (getMainTrack(lep) && (tmperr = invPtError(lep)) > 0.) {
-	  pt_pull = (1./lep->pt() - 1./gen_pt)/tmperr;
-	  TotInvPtPull[0]->Fill(pt_pull);
-	  InvPtPull[0][bar_end]->Fill(pt_pull);
+
+	const reco::RecoCandidate* cand = toConcretePtr<reco::RecoCandidate>(lep);
+	if (cand) {
+	  const reco::Track* tk = cand->combinedMuon().get();
+	  if (tk && (tmperr = invPtError(tk)) > 0.) {
+	    pt_pull = (1./lep->pt() - 1./gen_pt)/tmperr;
+	    TotInvPtPull[0]->Fill(pt_pull);
+	    InvPtPull[0][bar_end]->Fill(pt_pull);
+	  }
 	}
       }
 
@@ -1368,10 +1381,15 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
 	residual  = (1./tk_lep->pt() - 1./gen_pt)/(1./gen_pt);
 	TotInvPtRes[1]->Fill(residual);
 	InvPtRes[1][bar_end]->Fill(residual);
-	if ((tmperr = invPtError(tk_lep)) > 0.) {
-	  pt_pull = (1./tk_lep->pt() - 1./gen_pt)/tmperr;
-	  TotInvPtPull[1]->Fill(pt_pull);
-	  InvPtPull[1][bar_end]->Fill(pt_pull);
+
+	const reco::RecoCandidate* cand = toConcretePtr<reco::RecoCandidate>(tk_lep);
+	if (cand) {
+	  const reco::Track* tk = cand->combinedMuon().get();
+	  if (tk && (tmperr = invPtError(tk)) > 0.) {
+	    pt_pull = (1./tk_lep->pt() - 1./gen_pt)/tmperr;
+	    TotInvPtPull[1]->Fill(pt_pull);
+	    InvPtPull[1][bar_end]->Fill(pt_pull);
+	  }
 	}
       }
 
@@ -1382,9 +1400,14 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
 	if (gmr_lep->pt() > 0.) {
 	  residual  = (1./gmr_lep->pt() - 1./gen_pt)/(1./gen_pt);
 	  InvPtRes[3][bar_end]->Fill(residual);
-	  if ((tmperr = invPtError(gmr_lep)) > 0.) {
-	    pt_pull = (1./gmr_lep->pt() - 1./gen_pt)/tmperr;
-	    InvPtPull[3][bar_end]->Fill(pt_pull);
+
+	  const reco::RecoCandidate* cand = toConcretePtr<reco::RecoCandidate>(gmr_lep);
+	  if (cand) {
+	    const reco::Track* tk = cand->combinedMuon().get();
+	    if (tk && (tmperr = invPtError(tk)) > 0.) {
+	      pt_pull = (1./gmr_lep->pt() - 1./gen_pt)/tmperr;
+	      InvPtPull[3][bar_end]->Fill(pt_pull);
+	    }
 	  }
 	}
       }
@@ -1411,10 +1434,15 @@ void Zprime2muResolution::fillPtResHistos(const bool debug) {
 	residual  = (1./fms_lep->pt() - 1./gen_pt)/(1./gen_pt);
 	TotInvPtRes[2]->Fill(residual);
 	InvPtRes[2][bar_end]->Fill(residual);
-	if ((tmperr = invPtError(fms_lep)) > 0.) {
-	  pt_pull = (1./fms_lep->pt() - 1./gen_pt)/tmperr;
-	  TotInvPtPull[2]->Fill(pt_pull);
-	  InvPtPull[2][bar_end]->Fill(pt_pull);
+
+	const reco::RecoCandidate* cand = toConcretePtr<reco::RecoCandidate>(fms_lep);
+	if (cand) {
+	  const reco::Track* tk = cand->combinedMuon().get();
+	  if (tk && (tmperr = invPtError(tk)) > 0.) {
+	    pt_pull = (1./fms_lep->pt() - 1./gen_pt)/tmperr;
+	    TotInvPtPull[2]->Fill(pt_pull);
+	    InvPtPull[2][bar_end]->Fill(pt_pull);
+	  }
 	}
       }
     }
@@ -1679,24 +1707,30 @@ void Zprime2muResolution::fillDilResHistos(const bool debug) {
       // certain mass value ("tail" of Drell-Yan distributions).
       double recm = allResonances[lbest][0].mass(); // highest mass dilepton
       if (recm >= mass_min) {
-	const reco::CandidateBaseRef& mum
-	  = dileptonDaughterByCharge(allDileptons[lbest][0], -1);
-	const reco::CandidateBaseRef& mup
-	  = dileptonDaughterByCharge(allDileptons[lbest][0], +1);
-	double err_pt_neg = ptError(mum)/mum->pt();
-	double err_pt_pos = ptError(mup)/mup->pt();
+	const reco::RecoCandidate* mum = toConcretePtr<reco::RecoCandidate>(dileptonDaughterByCharge(allDileptons[lbest][0], -1));
+	const reco::RecoCandidate* mup = toConcretePtr<reco::RecoCandidate>(dileptonDaughterByCharge(allDileptons[lbest][0], +1));
 
-	// Fill histos of relative pT error for mu+ vs mu- for two types of
-	// dileptons.
-	if (allResonances[lgen].size() > 0) {
-	  double genm = allResonances[lgen][0].mass();
+	if (mum && mup && !doingElectrons) {
+	  const reco::Track* mum_tk = mum->combinedMuon().get();
+	  const reco::Track* mup_tk = mup->combinedMuon().get();
+	  
+	  if (mum_tk && mup_tk) {
+	    double err_pt_neg = ptError(mum_tk)/mum->pt();
+	    double err_pt_pos = ptError(mup_tk)/mup->pt();
 
-	  if ((recm-genm)/genm > 0.1) {
-	    MuPVsMuM[0]->Fill(err_pt_neg, err_pt_pos);
-	    //if (debug) dumpDilQuality();
-	  }
-	  else {
-	    MuPVsMuM[1]->Fill(err_pt_neg, err_pt_pos);
+	    // Fill histos of relative pT error for mu+ vs mu- for two types of
+	    // dileptons.
+	    if (allResonances[lgen].size() > 0) {
+	      double genm = allResonances[lgen][0].mass();
+
+	      if ((recm-genm)/genm > 0.1) {
+		MuPVsMuM[0]->Fill(err_pt_neg, err_pt_pos);
+		//if (debug) dumpDilQuality();
+	      }
+	      else {
+		MuPVsMuM[1]->Fill(err_pt_neg, err_pt_pos);
+	      }
+	    }
 	  }
 	}
       }

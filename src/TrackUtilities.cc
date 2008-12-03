@@ -1,19 +1,7 @@
+#include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
-#include "DataFormats/RecoCandidate/interface/RecoCandidate.h"
-#include "DataFormats/SiPixelDetId/interface/PixelSubdetector.h"
-#include "DataFormats/SiStripDetId/interface/StripSubdetector.h"
 
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TrackUtilities.h"
-
-const reco::Track* getMainTrack(const reco::CandidateBaseRef& cand) {
-  const reco::RecoCandidate* rcand =
-    toConcretePtr<reco::RecoCandidate>(cand);
-  if (rcand != 0)
-    return rcand->bestTrack();
-  else
-    return 0;
-}
 
 double pError(const reco::Track* tk) {
   // dumb identity:
@@ -38,22 +26,6 @@ double invPtError(const reco::Track* tk) {
   
 double invPError(const reco::Track* tk) {
   return invError(tk->p(), pError(tk));
-}
-
-double ptError(const reco::CandidateBaseRef& cand) {
-  return getMainTrack(cand)->ptError();
-}
-
-double pError(const reco::CandidateBaseRef& cand) {
-  return pError(getMainTrack(cand));
-}
-
-double invPtError(const reco::CandidateBaseRef& cand) {
-  return invPtError(getMainTrack(cand));
-}
-
-double invPError(const reco::CandidateBaseRef& cand) {
-  return invPError(getMainTrack(cand));
 }
 
 bool matchTracks(const reco::CandidateBaseRef& cand1,

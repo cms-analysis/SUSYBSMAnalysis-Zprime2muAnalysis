@@ -466,7 +466,7 @@ To live on the edge, i.e. to use the HEAD version of the code instead
 of the tagged version above, you must also check out and compile some
 extra code:
 
-   cvs co -r CMSSW_2_1_12 RecoMuon/MuonIdentification
+   addpkg RecoMuon/MuonIdentification
    cvs co -r HEAD RecoMuon/MuonIdentification/plugins/MuonsFromRefitTracksProducer.cc 
    cvs co -r HEAD RecoMuon/MuonIdentification/python/refitMuons_cfi.py
    scramv1 b

@@ -4,8 +4,8 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/CutHelper.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TeVMuHelper.h"
 
 using namespace std;
 using namespace edm;
@@ -22,16 +22,14 @@ private:
   virtual void endJob() {}
   
   InputTag src;
-  bool doingGen;
   unsigned maxDileptons;
-  vector<int> pdgIds;
+  unsigned cutMask;
 };
 
 DileptonPicker::DileptonPicker(const ParameterSet& cfg)
   : src(cfg.getParameter<InputTag>("src")),
-    doingGen(cfg.getParameter<bool>("doingGen")),
     maxDileptons(cfg.getParameter<unsigned>("maxDileptons")),
-    pdgIds(cfg.getParameter<vector<int> >("pdgIds"))
+    cutMask(cfg.getParameter<unsigned>("cutMask"))
 {
   produces<CompositeCandidateCollection>();
 }
@@ -43,8 +41,7 @@ void DileptonPicker::produce(Event& event, const EventSetup& eSetup) {
   event.getByLabel(src, hdileptons);
 
   // Make the output collection.
-  auto_ptr<CompositeCandidateCollection>
-    dileptons(new CompositeCandidateCollection);
+  auto_ptr<CompositeCandidateCollection> dileptons(new CompositeCandidateCollection);
 
   ostringstream out;
 
@@ -52,25 +49,22 @@ void DileptonPicker::produce(Event& event, const EventSetup& eSetup) {
     if (hdileptons->size() > 0) {
       if (debug) out << hdileptons->size() << " dileptons before selection and overlap removal; ";
 
-      if (doingGen)
-	genDileptonsOnly(*hdileptons, *dileptons, debug);
-      else {
-	// Default cuts are pT < 20 GeV and isolation sumPt < 10.
-	const unsigned cuts = TeVMuHelper::PT | TeVMuHelper::ISO;
-	cutDileptons(event, *hdileptons, *dileptons, cuts,
-		     pdgIds[0], pdgIds[1], debug);
+      CutHelper cuts;
+      cuts.setCutMask(cutMask);
+      for (CompositeCandidateCollection::const_iterator dil = hdileptons->begin(); dil != hdileptons->end(); ++dil)
+	if (!cuts.dileptonIsCut(*dil))
+	  dileptons->push_back(*dil);
 
-	if (debug) out << dileptons->size() << " dileptons before overlap removal; ";
-
-	// Remove dileptons of lower invariant mass that are comprised of a
-	// lepton that has been used by a higher invariant mass one.
-	if (dileptons->size() > 1)
-	  removeDileptonOverlap(*dileptons, debug);
-      }
+      if (debug) out << dileptons->size() << " dileptons before overlap removal; ";
+      
+      // Remove dileptons of lower invariant mass that are comprised of a
+      // lepton that has been used by a higher invariant mass one.
+      if (dileptons->size() > 1)
+	removeDileptonOverlap(*dileptons, debug);
 
       if (dileptons->size() > maxDileptons)
 	dileptons->erase(dileptons->begin() + maxDileptons, dileptons->end());
-      
+
       if (debug) out << dileptons->size() << " dileptons kept.";
     }
     else {

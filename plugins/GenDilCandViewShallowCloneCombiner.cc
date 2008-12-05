@@ -1,10 +1,12 @@
-#include "FWCore/Framework/interface/MakerMacros.h"
-#include "PhysicsTools/UtilAlgos/interface/StringCutObjectSelector.h"
-#include "PhysicsTools/CandAlgos/interface/CandCombiner.h"
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
+
+#include "FWCore/Framework/interface/MakerMacros.h"
+
+#include "PhysicsTools/CandAlgos/interface/CandCombiner.h"
 #include "PhysicsTools/UtilAlgos/interface/ParameterAdapter.h"
- 
+#include "PhysicsTools/UtilAlgos/interface/StringCutObjectSelector.h"
+
 struct GenDilPairSelector {
   template<typename T1, typename T2>
   bool operator()(const T1 &t1, const T2 &t2) const {
@@ -16,9 +18,10 @@ struct GenDilPairSelector {
     while (mom1 && mom1->pdgId() == t1.pdgId()) mom1 = mom1->mother();
     while (mom2 && mom2->pdgId() == t2.pdgId()) mom2 = mom2->mother();
 
-    if (mom1 == 0 || mom2 == 0) return false;
+    if (mom1 == 0 || mom2 == 0 || mom1 != mom2) return false;
 
-    return mom1 == mom2;
+    int pdgId = mom1->pdgId();
+    return pdgId == 32 || pdgId == 23 || pdgId == 39 || pdgId == 5000039;
   }
 };
 

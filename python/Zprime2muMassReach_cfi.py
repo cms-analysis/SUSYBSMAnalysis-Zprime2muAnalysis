@@ -3,17 +3,9 @@ import FWCore.ParameterSet.Config as cms
 from MassReachDataSets_cff import dataSets
 
 def attachMassReach(process):
-    # By default, we look at the "resonances", i.e. dileptons + found
-    # brem photons.
-    process.plainAnalysisPSet.genDileptons = cms.InputTag('dileptonsmumuPMGNRes')
-    process.plainAnalysisPSet.hltDileptons = cms.InputTag('dileptonsmumuPML3Res')
-    process.plainAnalysisPSet.recDileptons = cms.InputTag('dileptonsmumuPMGRRes')
-    process.plainAnalysisPSet.bestDileptons = cms.InputTag('dileptonsmumuPMOPRes')
-
     process.Zprime2muMassReach = cms.EDAnalyzer(
         'Zprime2muMassReach',
         process.Zprime2muAnalysisCommon,
-        process.plainAnalysisPSet,
         dataSets,
         dataSet        = cms.string('Zssm1000'),
         
@@ -23,7 +15,6 @@ def attachMassReach(process):
         BackgroundFit  = cms.bool(False),  # set to fit background slope   
         GenuineEvents  = cms.bool(True),   # set to use genuine sim. events
         GMR            = cms.bool(False),  # set to use GMR instead of "bes
-        useL3Muons     = cms.bool(False),  # set to use L3 muons instead of
         FixedMass      = cms.bool(True),   # set to fix signal mean mass   
         FixedFWHM      = cms.bool(True),   # set to fix signal FWHM        
         SmoothedSample = cms.bool(False),  # currently only for DY to 5 TeV

@@ -1,3 +1,4 @@
+import os
 import FWCore.ParameterSet.Config as cms
 
 __debug = False
@@ -50,6 +51,31 @@ diElectrons = ('electrons', 'electrons')
 muonElectron = ('muons', 'electrons')
 electronMuon = ('electrons', 'muons')
 
+# Lepton/dilepton cut specifiers, for inclusion in a bitmask.  Magic
+# happens here to get the cut bit values directly from CutHelper.h so
+# we don't have to worry about keeping them consistent between the two
+# files.
+cutHelperText = file(os.path.join(os.getenv('CMSSW_BASE'),
+                                  'src/SUSYBSMAnalysis/Zprime2muAnalysis/src/CutHelper.h')).read().split('CutCutCut')[1]
+cutHelperText = ''.join([line.split('//')[0].strip() for line in cutHelperText.split('\n')])
+cutHelperText = [enum.strip().split('=') for enum in cutHelperText.split(',') if enum]
+cutHelperText = [(x, eval(y)) for x, y in cutHelperText]
+cuts = dict(cutHelperText)
+
+# Now that that nastiness is over, use the cuts so defined and make some sets of cuts.
+# AN 2007/038 cuts (pT > 20 and isolation dR sumPt < 10)
+cuts['TeVmu'] = cuts['PT'] | cuts['ISO'];
+# AN 2008/044 e mu bkg study cuts (pT > 80).
+cuts['HEEP']  = cuts['PTOTHER'];
+# Various combinations of AN 2008/015 cuts ("top group").
+cuts['TopSkim']      = cuts['PT'] # | cuts['TOPTRIGGER']
+cuts['TopEl']        = cuts['ELTIGHT'] | cuts['D0EL'] | cuts['COLLEMU']
+cuts['TopMu']        = cuts['D0'] | cuts['NSIHITS'] | cuts['CHI2DOF']
+cuts['TopLeptonId']  = cuts['TopEl'] | cuts['TopMu']
+cuts['TopIsolation'] = cuts['ISOS']
+cuts['Top']          = cuts['TopSkim'] | cuts['TopLeptonId'] | cuts['TopIsolation']
+
+path = None
 def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                  doingElectrons=False,
                                  useGen=True,
@@ -70,6 +96,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                  skipPAT=False,
                                  useHLTDEBUG=False,
                                  minGenPt=1.0,
+                                 cutMask=cuts['TeVmu'],
                                  # These last two are passed in just
                                  # so they can be put standalone at
                                  # the top of the file so they stick
@@ -249,9 +276,8 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             noLineBreaks = cms.untracked.bool(True)
             ),
         debugModules = cms.untracked.vstring(
-            'bestMuons', 'Zprime2muAnalysis', 'Zprime2muResolution',
-            'Zprime2muAsymmetry', 'Zprime2muMassReach',
-            'Zprime2muBackgrounds', 'Zprime2muMatchStudy')
+            'bestMuons', 'Zprime2muAnalysis', 'Zprime2muHistos',
+            'Zprime2muAsymmetry', 'Zprime2muMassReach')
         )
 
     if not __debug:
@@ -576,6 +602,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         usingAODOnly      = cms.bool(usingAODOnly),
         useTrigger        = cms.bool(useTrigger),
         useOtherMuonRecos = cms.bool(useOtherMuonRecos),
+        cutMask           = cms.uint32(cutMask),
 
         dateHistograms    = cms.untracked.bool(True),
 
@@ -590,9 +617,6 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         hltResults = cms.InputTag('TriggerResults','','HLT')
         )
 
-    process.recLevelHelperPSet = cms.PSet()
-    process.plainAnalysisPSet  = cms.PSet()
-    
     ####################################################################
     ## Input tags for leptons at the different rec levels, in order;
     ## filled below using the collections defined at the top of the
@@ -605,290 +629,155 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         lepcoll = muons
 
     for i in xrange(numRecLevels):
-        tagname = 'leptons' + recLevels[i]
-        
-        if lepcoll[i] != None:
+        if lepcoll[i] is not None:
             tag = cms.InputTag(lepcoll[i])    
-        else:
-            # The code (via RecLevelHelper) will know to ignore this
-            # (we cannot have empty InputTags, apparently).
-            tag = cms.InputTag('skip')
-            
-        setattr(process.recLevelHelperPSet, tagname, tag)
+            setattr(process.Zprime2muAnalysisCommon, 'leptons' + recLevels[i], tag)
 
     ####################################################################
-    ## After this point, we will add a *lot* of modules to the path in
-    ## loops, with their names depending on the loop variables.  Keep
-    ## track of the modules we make so we can set them all into a real
-    ## CMSSW path in the process later. The order of the modules in
-    ## this list will be obeyed by CMSSW.
+    ## After this point, we will add modules to the path in loops,
+    ## with their names depending on the loop variables.  Keep track
+    ## of the modules we make so we can set them all into a real CMSSW
+    ## path in the process later. The order of the modules in this
+    ## list will be obeyed by CMSSW.
     ####################################################################
-    path = []
+
+    global path
     def addToPath(name, prodobj):
-        path.append('process.' + name)
+        global path
+        if path is None: path  = prodobj
+        else:            path *= prodobj
         setattr(process, name, prodobj)
+
+    def finalizePath():
+        global path
+        p = cms.Path(path)
+        path = None
+        return p
                     
     ####################################################################
-    ## Do all the by-seed matching between each pair of globally-fit
-    ## muon collections.
+    ## Do all the closest-in-deltaR matching -- between each rec level
+    ## and MC truth, and between each offline rec level and
+    ## reconstructed photons.
     ####################################################################
 
-    for irec in xrange(lL3, numRecLevels-1):
-        for jrec in xrange(lL3, numRecLevels-1):
-            # Don't store an identity map, and skip missing collections.
-            if irec == jrec or muons[irec] is None or muons[jrec] is None:
-                continue
-            
-            prod = cms.EDProducer(
-                'MuonBySeedMatcher',
-                # Stand-alone muon tracks are used as 'seeds'.
-                seedTracks = cms.InputTag('standAloneMuons','UpdatedAtVtx'),
-                src        = cms.InputTag(muons[irec]),
-                matched    = cms.InputTag(muons[jrec])
-                )
-            addToPath('seedMatch' + recLevels[irec] + recLevels[jrec], prod)
+    # Closest (deltaR) matching to MC truth.
+    for irec in xrange(lL1, numRecLevels):
+        jrec = lGN
+        
+        if doingElectrons:
+            fromColl = electrons[irec]
+            toColl   = electrons[jrec]
+        else:
+            fromColl = muons[irec]
+            toColl   = muons[jrec]
 
-    ####################################################################
-    ## Do all the closest-in-deltaR matching -- between each pair of
-    ## rec levels (including MC), and between each rec level and
-    ## reconstructed photons. 
-    ####################################################################
+        if fromColl is None or toColl is None:
+            continue
 
-    # Closest (deltaR) matching between all pairs of rec levels.
-    for irec in xrange(numRecLevels):
-        for jrec in xrange(numRecLevels):
-            # Again, don't store an identity map.
-            if irec == jrec: continue
+        prod = cms.EDProducer(
+            'TrivialDeltaRViewMatcher',
+            src     = cms.InputTag(muons[irec]),
+            matched = cms.InputTag(muons[jrec]),
+            distMin = cms.double(0.7072)
+            )
+        addToPath('genMatch' + recLevels[irec], prod)
 
-            if doingElectrons:
-                fromColl = electrons[irec]
-                toColl   = electrons[jrec]
-            else:
-                fromColl = muons[irec]
-                toColl   = muons[jrec]
+    process.genMatchPath = finalizePath()
 
-            if fromColl is None or toColl is None:
-                continue
-            
-            prod = cms.EDProducer(
-                'TrivialDeltaRViewMatcher',
-                src     = cms.InputTag(muons[irec]),
-                matched = cms.InputTag(muons[jrec]),
-                distMin = cms.double(0.7072)
-                )
-            addToPath('closestMatch' + recLevels[irec] + recLevels[jrec], prod)
-
-    # Match all muons to closest photons to try and recover energy
-    # lost to brem later. (Don't bother doing this for electrons,
-    # since the GSF algorithm already takes brem losses into account.)
+    # Match all muons to their single closest photons (within dR <
+    # 0.1) to try and recover energy lost to brem later. (Don't bother
+    # doing this for electrons, since the GSF algorithm already takes
+    # brem losses into account.)
     if recoverBrem:
-        for rec in xrange(lL3, numRecLevels):
+        for rec in xrange(lGR, numRecLevels):
             if muons[rec] is None: continue
             prod = cms.EDProducer(
                 'TrivialDeltaRViewMatcher',
                 src     = cms.InputTag(muons[rec]),
                 matched = cms.InputTag('photons'),
-                distMin = cms.double(999)
+                distMin = cms.double(0.1)
                 )
             addToPath('photonMatch' + recLevels[rec], prod)
 
-    # Also do the by-seed matching from the best level to the others,
-    # since we skipped it before. (Again, not available for
-    # electrons.)
-    irec = lOP
-    if muons[irec] is not None:
-        for jrec in xrange(lL3, numRecLevels-1):
-            if muons[jrec] is None: continue
-            prod = cms.EDProducer(
-                'MuonBySeedMatcher',
-                # Stand-alone muon tracks are used as 'seeds'.
-                seedTracks = cms.InputTag('standAloneMuons','UpdatedAtVtx'),
-                src        = cms.InputTag(muons[irec]),
-                matched    = cms.InputTag(muons[jrec])
-                )
-            addToPath('seedMatch' + recLevels[irec] + recLevels[jrec], prod)
+        process.photonMatchPath = finalizePath()
 
     ####################################################################
-    ## Dilepton construction. Make all possible dileptons:
-    ## {mu, e} x {+, -}.
+    ## Dilepton construction. Make the requested dileptons, by default
+    ## opposite-sign dimuons.
     ####################################################################
 
-    def nameDilCollection(flavors, charges, reclevel):
-        cdict = {'+': 'P', '-': 'M'}
-        # I would put a _ in the label name but that is illegal in
-        # CMSSW.
-        return 'dileptons%s%s%s%s%s' % (flavors[0][:2], flavors[1][:2],
-                                        cdict[charges[0]], cdict[charges[1]],
-                                        reclevel)
+    for rec in xrange(numRecLevels):
+        # Do not make dileptons for trigger levels.
+        if rec >= lL1 and rec <= lL3:
+            continue
 
-    # Enumerate the valid combinations with no double counting.
-    combos = [
-        (diMuons,      oppSign),     # mu+ mu-
-        (diMuons,      likeSignPos), # mu+ mu+
-        (diMuons,      likeSignNeg), # mu- mu-
-        (diElectrons,  oppSign),     # e+  e-
-        (diElectrons,  likeSignPos), # e+  e+
-        (diElectrons,  likeSignNeg), # e-  e-
-        (muonElectron, likeSignPos), # mu+ e+
-        (muonElectron, likeSignNeg), # mu- e-
-        (muonElectron, oppSign),     # mu+ e-
-        (muonElectron, oppSignMP)    # mu- e+
-        ]
+        # Set up the flavor and charge pair for this rec level.
+        collections = []
+        for j in xrange(2):
+            if flavorsForDileptons[j] == 'muons':
+                collection_list = muons
+            elif flavorsForDileptons[j] == 'electrons':
+                collection_list = electrons
+            collections.append(collection_list[rec])
 
-    # Make all the dileptons.
-    for theseFlavors, theseCharges in combos:
-        for i in xrange(numRecLevels):
-            # Skip the other TeV muon collections if desired.
-            if not useOtherMuonRecos and i >= lTK and i <= lPR:
-                continue
+        # We finally come to the point of the Nones in the electron
+        # collection above: to skip rec levels that have no
+        # collections here when producing dileptons. Otherwise,
+        # CandCombiner throws an exception when it cannot find the
+        # input collection.
+        if None in collections:
+            continue
 
-            # Set up the flavor and charge pair for this rec level.
-            collections = []
-            charges = []
-            for j in xrange(2):
-                collections.append(eval(theseFlavors[j])[i])
-                # Electrons at L1 and L2 do not have charges (they are
-                # just ECAL superclusters); try to use them to make
-                # dileptons anyway.
-                if theseFlavors[j] == 'electrons' and (i == lL1 or i == lL2):
-                    charges.append('')
-                else:
-                    charges.append('@%s' % theseCharges[j])
+        # Use CandViewShallowCloneCombiner for the ShallowClone bit;
+        # this enables us to get the reference to the original lepton
+        # that makes up the dilepton we're looking at in the code.
+        combiner = 'CandViewShallowCloneCombiner'
+        if rec == 0:
+            # At generator level, look only at the leptons which came
+            # from the resonance.
+            combiner = 'GenDil' + combiner
 
-            # We finally come to the point of the Nones in the electron
-            # collection above: to skip rec levels that have no
-            # collections here when producing dileptons. Otherwise,
-            # CandCombiner throws an exception when it cannot find the
-            # input collection.
-            if None in collections:
-                continue
+        # Put the decay string in the format expected by CandCombiner:
+        # e.g. 'muons@+ muons@-'.
+        decay = '%s@%s %s@%s' % (collections[0], chargesForDileptons[0],
+                                 collections[1], chargesForDileptons[1])
 
-            # Use CandViewShallowCloneCombiner for the ShallowClone bit;
-            # this enables us to get the reference to the original lepton
-            # that makes up the dilepton we're looking at in the code.
-            combiner = 'CandViewShallowCloneCombiner'
-            if i == 0:
-                # At generator level, look only at the leptons which came
-                # from the resonance.
-                combiner = 'GenDil' + combiner
+        # These are the "raw" unsorted, uncut dileptons.
+        prod = cms.EDProducer(combiner,
+                              decay = cms.string(decay),
+                              cut = cms.string('')
+                              )
+        rawdils = 'rawDileptons' + recLevels[rec]
+        addToPath(rawdils, prod)
 
-            # Put the decay string in the format expected by CandCombiner:
-            # e.g. 'muons@+ muons@-'.
-            decay = '%s%s %s%s' % (collections[0], charges[0],
-                                   collections[1], charges[1])
+        # Produce the dileptons after cuts and overlap removal.
+        prod = cms.EDProducer('DileptonPicker',
+                              src          = cms.InputTag(rawdils),
+                              maxDileptons = cms.uint32(maxDileptons),
+                              cutMask      = cms.uint32(cutMask)
+                              )
+        addToPath('dileptons' + recLevels[rec], prod)
 
-            # Encode the name as e.g. 'dileptonselmuMPOP' meaning
-            # e-mu+ at OP rec level.
-            dilname = nameDilCollection(theseFlavors, theseCharges,
-                                        recLevels[i])
-            rawname = dilname + 'Raw'
-            resname = dilname + 'Res'
-            
-            # These are the "raw" dileptons, i.e. before overlap
-            # removal and selection cuts.
-            prod = cms.EDProducer(combiner,
-                                  decay = cms.string(decay),
-                                  cut = cms.string('')
-                                  )
-            addToPath(rawname, prod)
-
-            # Remove dilepton overlap and apply selection cuts, also
-            # making sure we get the requested combination by PDG id.
-            # This doesn't work for L1 or L2.
-            if i != lL1 and i != lL2:
-                pdgIds = []
-                for flavor, charge in zip(theseFlavors, theseCharges):
-                    pid =  {'muons': 13, 'electrons': 11}[flavor]
-                    if charge == '+': pid *= -1
-                    pdgIds.append(pid)
-            else:
-                pdgIds = [0,0]
-            
-            prod = cms.EDProducer(
-                'DileptonPicker',
-                src          = cms.InputTag(rawname),
-                doingGen     = cms.bool(i == 0),
-                maxDileptons = cms.uint32(maxDileptons),
-                pdgIds       = cms.vint32(*pdgIds)
-                )
-            addToPath(dilname, prod)
-            
-            # For offline dimuons, attempt to recover some of the
-            # energy lost to bremsstrahlung by using the daughter
-            # muons' closest photons (those within dRmax).
-            if i >= lL3 and theseFlavors == diMuons:
-                prod = cms.EDProducer(
-                    'DimuonBremRecoverer',
-                    dimuons        = cms.InputTag(dilname),
-                    photonMatchMap = cms.InputTag('photonMatch' + recLevels[i]),
-                    dRmax          = cms.double(0.1)
-                    )
-                addToPath(resname, prod)
-
-            # For generator-level dileptons, we don't need to attempt
-            # brem recovery, we can just take the generated resonance
-            # from the event.
-            if i == lGN:
-                if doingElectrons: lf = 11
-                else:              lf = 13
-                prod = cms.EDProducer(
-                    'GenResonanceProducer',
-                    leptonFlavor = cms.int32(lf)
-                    )
-                addToPath(resname, prod)
+    process.dileptonPath = finalizePath()
 
     # Set up the "main" dileptons -- the ones the analysis module is
     # supposed to use by default.
-
-    # For RecLevelAnalyzers:
-    for i in xrange(numRecLevels):
+    for rec in xrange(numRecLevels):
         # If we skipped making this dilepton collection in the logic
         # above, skip using it.
-        name = nameDilCollection(flavorsForDileptons, chargesForDileptons,
-                                 recLevels[i])
-        if hasattr(process, name): tag = name
-        else:                      tag = 'skip'
-            
-        tagname = 'dileptons' + recLevels[i]
-        setattr(process.recLevelHelperPSet, tagname, cms.string(tag))
-
-    # For plain analyzers, point them at gen, hlt, default offline,
-    # and "best" offline dileptons and resonances.
-    names = [nameDilCollection(flavorsForDileptons, chargesForDileptons, recLevels[l]) for l in [lGN, lL3, lGR, lOP]]
-    kinds = ['gen', 'hlt', 'rec', 'best']
-    for kind, name in zip(kinds, names):
-        setattr(process.plainAnalysisPSet, '%sDileptons' % kind,
-                cms.InputTag(name))
-        setattr(process.plainAnalysisPSet, '%sResonances' % kind,
-                cms.InputTag(name))
-
+        tag = 'dileptons' + recLevels[rec]
+        if hasattr(process, tag):
+            setattr(process.Zprime2muAnalysisCommon, tag, cms.InputTag(tag))
+      
     ####################################################################
-    ## Make a path that runs all the producers we just made.
+    ## Done!
     ####################################################################
-
-    # When the config is converted to the old style configuration
-    # language, and then reparsed (as happens if you run this module
-    # with CRAB), Python complains about too much recursion if there
-    # are too many modules in one path. So, split up the path into
-    # reasonable chunks.
-    count = 0
-    chunkSize = 5
-    while path:
-        pathCodeStr = ' * '.join(path[:chunkSize])
-        path = path[chunkSize:]
-        setattr(process, 'zp2muPath%i' % count, cms.Path(eval(pathCodeStr)))
-        count += 1
 
     if __debug:
         process.EventContentAnalyzer = cms.EDAnalyzer('EventContentAnalyzer')
         process.pECA = cms.Path(process.EventContentAnalyzer)        
 
-    ####################################################################
-    ## Done!
-    ####################################################################
-
     print 'Zprime2muAnalysis base process built!'
-    #print process.dumpConfig()
     return process
 
 ########################################################################
@@ -897,12 +786,8 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
 
 # Function to attach simple EDAnalyzers that don't need any
 # parameters. Allows skipping of making data/Zprime2mu*_cfi.py files.
-def attachAnalysis(process, name, isRecLevelAnalysis=False):
-    args = (name, process.Zprime2muAnalysisCommon, process.plainAnalysisPSet)
-    if isRecLevelAnalysis:
-        args = args + (process.recLevelHelperPSet,)
-        
-    analyzer = cms.EDAnalyzer(*args)
+def attachAnalysis(process, name):
+    analyzer = cms.EDAnalyzer(name, process.Zprime2muAnalysisCommon)
     setattr(process, name, analyzer)
     setattr(process, name + 'Path', cms.Path(getattr(process, name)))
 
@@ -951,3 +836,12 @@ def setMuonAlignment(process, connectString, tagDTAlignmentRcd, tagDTAlignmentEr
         ))
 
     process.prefer("muonAlignment")
+
+
+########################################################################
+
+# To debug this config, you can do from the shell:
+#   python Zprime2muAnalysisCommon_cff.py
+if __name__ == '__main__':
+    process = makeZprime2muAnalysisProcess(['file:/dev/null'], 42, skipPAT=True)
+    print process.dumpConfig()

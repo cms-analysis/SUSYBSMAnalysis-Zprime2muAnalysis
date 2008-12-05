@@ -2,20 +2,6 @@
 #include <iostream>
 
 #include "MistagCalc.h"
-#include "MistagCache.h"
-
-bool operator<(const mtagdata& l, const mtagdata& r) {
-  if (l.y < r.y) return true;
-  else if (l.y > r.y) return false;
-  else {
-    if (l.m < r.m) return true;
-    else if (l.m > r.m) return false;
-    else {
-      // they are equal
-      return false;
-    }
-  }
-}
 
 // the charges squared of u- and d-type quarks
 const double MistagCalc::chgsq[2] = {4./9, 1./9};
@@ -24,11 +10,6 @@ MistagCalc::MistagCalc(const double sqrt_s_, char* pdfName, int subset)
   : sqrt_s(sqrt_s_) {
   lhapdf::initpdfsetbyname_(pdfName, strlen(pdfName));
   lhapdf::initpdf_(subset);
-  cache = new mtagcache;
-}
-
-MistagCalc::~MistagCalc() {
-  delete cache;
 }
 
 void MistagCalc::xfx(double x, double Q, double* newf) {
@@ -40,8 +21,20 @@ double MistagCalc::omega(const double y, const double m) {
   // invariant mass m. Returns 0 on failure (i.e. unphysical
   // combination of y and m).
 
+  // The kinematics, assuming pT = 0:
+  // Parton momenta:
+  //   p1 = Ebeam(x1, 0, 0,  x1)
+  //   p2 = Ebeam(x1, 0, 0, -x2)
+  // which implies
+  //   m^2 = (p1 + p2)^2 = x1 x2 s = 4 x1 x2 Ebeam^2,
+  //   y = 0.5 ln[(Ez + Pz)/(Ez - Pz)] = 0.5 ln(x1/x2);
+  // solve to get x1,2 = m/sqrt(s) exp(\pm abs(y)).
+  // (Only looking at abs(y) so that x1 > x2.)
+  // From assuming that p_q \parallel p_Z, we mistag if the quark ends
+  // up with x2 and the anti-quark with x1.
+
   double omega = 0;
-  if (cache->has(y,m,omega))
+  if (cache_.has(y,m,omega))
     return omega;
 
   if (m < 1e-6 || m > sqrt_s) {
@@ -68,6 +61,6 @@ double MistagCalc::omega(const double y, const double m) {
   }
 
   omega = prob == 0 ? 0 : mistag/prob;
-  cache->put(y,m,omega);
+  cache_.put(y,m,omega);
   return omega;
 }

@@ -1,7 +1,7 @@
 #ifndef MISTAGCALC_H
 #define MISTAGCALC_H
 
-#include "MistagCache.h"
+#include <map>
 
 namespace lhapdf {
   extern "C" {
@@ -14,7 +14,6 @@ namespace lhapdf {
 class MistagCalc {
 public:
   MistagCalc(const double pb, char* pdfName, int subset=0);
-  ~MistagCalc();
 
   static const double chgsq[2];
 
@@ -22,10 +21,30 @@ public:
   double omega(const double y, const double m);
 
 private:
+  class cache {
+  public:
+    bool has(double y, double m, double& omega) {
+      cachetype::const_iterator it = cache_.find(std::make_pair(y,m)); 
+      if (it != cache_.end()) {
+	omega = it->second;
+	return true;
+      }
+      return false;
+    }
+  
+    void put(double y, double m, const double omega) {
+      cache_[std::make_pair(y,m)] = omega;
+    }
+  
+  private:
+    typedef std::map<std::pair<double, double>, double> cachetype;
+    cachetype cache_;
+  };
+
   // the center-of-mass energy in GeV
   double sqrt_s;
   // a cache to store calculated values in
-  mtagcache* cache;
+  cache cache_;
 };
 
 #endif

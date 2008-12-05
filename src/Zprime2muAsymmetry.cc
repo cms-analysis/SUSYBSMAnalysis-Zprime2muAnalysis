@@ -534,8 +534,8 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 
   double gen_cos_cs = 0., rec_cos_cs = 0., gen_phi_cs = 0., rec_phi_cs = 0.;
   
-  unsigned int n_gen = genDileptons->size();
-  unsigned int n_dil = bestDileptons->size();
+  unsigned int n_gen = allDileptons[lgen].size();
+  unsigned int n_dil = allDileptons[lbest].size();
 
   int* type = new int[n_gen];
   for (unsigned i = 0; i < n_gen; i++) type[i] = -1;
@@ -609,7 +609,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 
     // Loop over all generated dimuons
     for (unsigned int i_dil = 0; i_dil < n_gen; i_dil++) {
-      const reco::CompositeCandidate& gen_dil = genDileptons->at(i_dil);
+      const reco::CompositeCandidate& gen_dil = allDileptons[lgen].at(i_dil);
       const reco::CandidateBaseRef& gen_mum = 
 	dileptonDaughterByCharge(gen_dil, -1);
       const reco::CandidateBaseRef& gen_mup = 
@@ -687,7 +687,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 	// dimuon information.  This will be used for obtaining sigmas used
 	// in convolutions for asymmetry fits.
 	if (n_dil == n_gen) {      
-	  const reco::CompositeCandidate& rec_dil = bestDileptons->at(i_dil);
+	  const reco::CompositeCandidate& rec_dil = allDileptons[lbest].at(i_dil);
 	  const reco::CandidateBaseRef& rec_mum = 
 	    dileptonDaughterByCharge(rec_dil, -1);
 	  const reco::CandidateBaseRef& rec_mup = 
@@ -731,7 +731,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
   // Now loop over all reconstructed dimuons and store those to be fitted
   // (which lie inside desired reconstructed window).
   for (unsigned int i_dil = 0; i_dil < n_dil; i_dil++) {
-    const reco::CompositeCandidate& rec_dil = bestDileptons->at(i_dil);
+    const reco::CompositeCandidate& rec_dil = allDileptons[lbest].at(i_dil);
     if (rec_dil.mass() > asymFitManager.fit_win(0) &&
 	rec_dil.mass() < asymFitManager.fit_win(1)) {
       if (nfit_used[0] == FIT_ARRAY_SIZE - 1)
@@ -826,7 +826,7 @@ void Zprime2muAsymmetry::fillFrameHistos() {
     //Look for an opposite-sign dilepton at this level of reconstruction.
 
     const reco::CompositeCandidateCollection& dileptons = 
-      i_rec == 0 ? *genDileptons : *bestDileptons;
+      i_rec == 0 ? allDileptons[lgen] : allDileptons[lbest];
     for (unsigned i_dil = 0; i_dil < dileptons.size(); i_dil++) {
       const reco::CompositeCandidate& dil = dileptons[i_dil];
       const reco::CandidateBaseRef& mum = dileptonDaughterByCharge(dil, -1);
@@ -975,13 +975,13 @@ void Zprime2muAsymmetry::fillFrameHistos() {
 	  rap_vs_cosCS[i_rec]->Fill(cos_cs[i_rec][i_dil], rap);
 
 	// A few resolution plots
-	if (i_rec > 0 && genDileptons->size() == bestDileptons->size()) {
+	if (i_rec > 0 && allDileptons[lgen].size() == allDileptons[lbest].size()) {
 	  cosCSRes->Fill(cos_cs[i_rec][i_dil]-cos_cs[0][i_dil]);
 	  if (i_rec == 3) {
 	    cosCS3_diffsq_vs_cosCS0->Fill(cos_cs[0][i_dil],
                           (cos_cs[i_rec][i_dil]-cos_cs[0][i_dil])*
                           (cos_cs[i_rec][i_dil]-cos_cs[0][i_dil]));
-	    rap3_vs_rap0->Fill(genDileptons->at(i_dil).rapidity(), rap);
+	    rap3_vs_rap0->Fill(allDileptons[lgen].at(i_dil).rapidity(), rap);
 	  }
 	}
 	if (cos_cs[i_rec][i_dil] > 0.) {
@@ -1485,7 +1485,8 @@ bool Zprime2muAsymmetry::computeFitQuantities(const reco::GenParticleCollection&
 					      AsymFitData& data) {
   static const bool debug = verbosity >= VERBOSITY_TOOMUCH;
 
-  HardInteraction hi(leptonFlavor, true);
+  HardInteraction hi;
+  hi.init(leptonFlavor, true);
   hi.Fill(genParticles);
 
   // Copy the four-vectors into TLorentzVectors, since our code uses

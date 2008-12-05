@@ -44,31 +44,17 @@ class RecLevelHelper {
   // Set up per-event things, such as the recLevelMap, and match maps.
   void initEvent(const edm::Event& event);
 
-  // Using the vector of InputTags, get a view to the candidates at
-  // the requested rec level.
-  bool getLeptonsView(const edm::Event& event, int recLevel,
-		      edm::View<reco::Candidate>& view);
-
   // Using getLeptonsView(), get a vector of refs to the lepton
   // candidates at the requested rec level, storing them in leps.
   bool getLeptons(const edm::Event& event, int level,
-		  reco::CandidateBaseRefVector& leps,
-		  double ptMin=1e-3);
+		  reco::CandidateBaseRefVector& leps);
 
   // Same, but for the dileptons.
-  enum DilType { DIL, RES, RAW };
-  bool getDileptons(const edm::Event& event, int level, DilType type,
-		    reco::CompositeCandidateCollection& coll) const;
+  bool getDileptons(const edm::Event& event, int level,
+		    reco::CompositeCandidateCollection& coll);
 
   // Return whether the rec level has a collection in the event.
   bool recLevelOkay(const edm::Event& event, int level);
-
-  // Helper enums and function to build the match map name for storing
-  // in the event. E.g. storing a closest match map from L3 to GMR
-  // will get the branch name *_leptonMatches_closestL3GR_*.
-  enum MatchType { PHOTON, CLOSEST, SEED };
-  std::string makeMatchMapName(MatchType mtype, const int irec,
-			       const int jrec=-1) const;
 
   // Return a unique id for the lepton cand (currently implemented by
   // the reference's index into the collection).
@@ -94,65 +80,31 @@ class RecLevelHelper {
   reco::Particle::LorentzVector
     closestPhoton(const reco::CandidateBaseRef& cand) const;
 
-  // Search for the lepton at the specified rec level which is either
-  // the closest or same-seed match to the lepton specified, returning
-  // an invalid reference if not found (if the id was = -999 or an
-  // invalid rec level). whichMatch = 0 for closest match, 1 for
-  // same-seed match, and -1 to pick the "best" match, i.e. same-seed if
-  // available, and closest if not.  Not meant to be called directly;
-  // use one of the three methods closestLepton, sameSeedLepton, and
-  // matchedLepton.
+  // Return the already-matched-in-deltaR closest MC truth
+  // lepton. Returns an invalid ref if not found.
   const reco::CandidateBaseRef&
-    matchLepton(const reco::CandidateBaseRef& lep,
-		const int level,
-		int whichMatch) const;
-
-  // Const access to lep's closest match (in delta R) at another rec level.
-  const reco::CandidateBaseRef&
-    closestLepton(const reco::CandidateBaseRef& lep,
-		  const int level) const
-    { return matchLepton(lep, level, 0); }
-
-  // Const access to lep's same-seed match at another rec level.
-  const reco::CandidateBaseRef&
-    sameSeedLepton(const reco::CandidateBaseRef& lep,
-		   const int level) const
-    { return matchLepton(lep, level, 1); }
-
-  // Const access to lep's "best" match (defined above) at another rec
-  // level.
-  const reco::CandidateBaseRef&
-    matchedLepton(const reco::CandidateBaseRef& lep,
-		  const int level) const
-    { return matchLepton(lep, level, -1); }
+    matchGenLepton(const reco::CandidateBaseRef& lep) const;
 
   // Get the id of lep's closest match (in delta R) at another rec level.
-  int closestLeptonId(const reco::CandidateBaseRef& lep,
-		      const int level) const
-  { return id(matchLepton(lep, level, 0)); }
-      
-  // Get the id of lep's same-seed match at another rec level.
-  int sameSeedLeptonId(const reco::CandidateBaseRef& lep,
-		     const int level) const
-  { return id(matchLepton(lep, level, 1)); }
+  int genMatchId(const reco::CandidateBaseRef& lep) const
+  { return id(matchGenLepton(lep)); }
 
-  // Get the id of lep's "best" match (defined above) at another rec
-  // level.
-  int matchedLeptonId(const reco::CandidateBaseRef& lep,
-		      const int level) const
-  { return id(matchLepton(lep, level, -1)); }
+  // Get the lepton of the lepton at the other offline level 
+  const reco::CandidateBaseRef&
+    matchOfflineLepton(const reco::CandidateBaseRef& lep,
+		       const int level) const;
 
 
  private:
   // The arrays of InputTags which maps rec level number to the EDM
   // collections.
   edm::InputTag lepInputs[MAX_LEVELS];
-  std::string dilInputs[MAX_LEVELS];
+  edm::InputTag dilInputs[MAX_LEVELS];
 
   // Flag whether we've warned about a missing collection at each rec
   // level for each event. (Set to prevent double warnings when
   // getLeptonsView() gets called twice.)
-  bool warned[MAX_LEVELS];
+  mutable bool warned[MAX_LEVELS];
 
   // Map product IDs from CandidateBaseRef to whatever rec level we
   // choose.
@@ -165,14 +117,7 @@ class RecLevelHelper {
   // leptons at other rec levels, matching by closest in delta R. (We
   // are wasteful, not using entries for which the rec levels are
   // equal, but storage is easier this way.)
-  reco::CandViewMatchMap closestMatchMap[MAX_LEVELS][MAX_LEVELS-1];
-
-  // Store an AssociationMap for each rec level of global fits
-  // (i.e. L3 and above), matching by "seed" lepton. (Currently only
-  // meaningful for muons, and we are even more wasteful than before,
-  // in addition not using entries for which rec levels are less than
-  // l3.)
-  reco::CandViewMatchMap seedMatchMap[MAX_LEVELS][MAX_LEVELS-1];
+  reco::CandViewMatchMap genMatchMap[MAX_LEVELS];
 
   // An invalid CandidateBaseRef so that some of the methods above can
   // return by reference and still be able to return a null reference.
@@ -193,6 +138,12 @@ class RecLevelHelper {
   // pairs of rec levels ("closest" matching), the matching between
   // all global fits ("seed" matching), and closest photon matches.
   void storeMatchMaps(const edm::Event& event);
+
+  // Using the vector of InputTags, get a collection reference at the
+  // requested rec level.
+  template <typename T>
+    bool get(const edm::Event& event, int recLevel,
+	     const edm::InputTag& tag, T& coll) const;
 };
 
 #endif

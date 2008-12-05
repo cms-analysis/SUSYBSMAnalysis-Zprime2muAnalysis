@@ -4,12 +4,12 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muRecLevelAnalysis.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAnalysis.h"
 
-class Zprime2muTrigComparison : public Zprime2muRecLevelAnalysis {
+class Zprime2muTrigComparison : public Zprime2muAnalysis {
  public:
   explicit Zprime2muTrigComparison(const edm::ParameterSet& config)
-    : Zprime2muRecLevelAnalysis(config) {}
+    : Zprime2muAnalysis(config) {}
   void analyze(const edm::Event& event, const edm::EventSetup& eSetup);
 
  private:

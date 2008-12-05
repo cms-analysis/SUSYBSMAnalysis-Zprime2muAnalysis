@@ -18,12 +18,12 @@
 
 #include "PhysicsTools/UtilAlgos/interface/TFileService.h"
 
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/CutHelper.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneratorUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneralUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/RecLevelHelper.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TeVMuHelper.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TrackUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TriggerDecision.h"
@@ -40,6 +40,10 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   virtual void beginJob(const edm::EventSetup&) {}
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
   virtual void endJob() {}
+
+  // Dump the event, printing out the specified information at each
+  // level of lepton reconstruction.
+  virtual void dumpEvent(const bool trigOnly=false) const;
 
  protected:
   ////////////////////////////////////////////////////////////////////
@@ -92,26 +96,52 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // A handle to the TFileService for convenience.
   edm::Service<TFileService> fs;
 
+  // Helper object to extract the important generator-level objects:
+  // the resonance and its decay products (including brem. photons).
+  HardInteraction hardInteraction;
+
   // Helper object for extracting the trigger decision from the paths
   // we care about.
   TriggerDecision trigDecision;
 
-  // The helper object for cuts.
-  TeVMuHelper tevMuHelper;
+  // Object to help with per-rec-level information.
+  RecLevelHelper recLevelHelper;
 
-  // The main dilepton collections: gen, hlt, default offline, and
-  // "best" offline.
-  edm::InputTag genDils, hltDils, recDils, bestDils;
-  edm::Handle<reco::CompositeCandidateCollection>
-    genDileptons, hltDileptons, recDileptons, bestDileptons;
+  // Helper object for lepton/dilepton cuts.
+  CutHelper cutHelper;
+
+  // The lepton collections.
+  reco::CandidateBaseRefVector allLeptons[MAX_LEVELS];
+
+  // The dilepton collections.
+  reco::CompositeCandidateCollection allDileptons[MAX_LEVELS];
+
+  ////////////////////////////////////////////////////////////////////
+  // General utility
+  ////////////////////////////////////////////////////////////////////
+  
+  // Return whether the rec level might be empty, based on the
+  // useGen/Sim/Reco/etc. flags.
+  bool skipRecLevel(const int level) const;
+
+  // Get the invariant mass of the two leptons plus their closest
+  // photons (what we've in the past called the "resonance").
+  double resonanceMass(const reco::CompositeCandidate& dil) const;
 
   ////////////////////////////////////////////////////////////////////
   // Print-outs
   ////////////////////////////////////////////////////////////////////
   
-  void dumpLepton(ostream& output, const reco::CandidateBaseRef& cand) const;
-  void dumpDilepton(ostream& output,
-		    const reco::CompositeCandidate& cand) const;
+  // Print out all the relevant information about the lepton; but this
+  // method is just as useful as documentation on how to access this
+  // information.
+  void dumpLepton(std::ostream& output, reco::CandidateBaseRef cand) const;
+
+  // Print out all the relevant information about the dilepton, and
+  // call dumpLepton on each of its daughters if dumpLeptons is true.
+  void dumpDilepton(std::ostream& output,
+		    const reco::CompositeCandidate& cand,
+		    bool dumpLeptons=false) const;
 };
 
 #endif // ZP2MUANALYSIS_H

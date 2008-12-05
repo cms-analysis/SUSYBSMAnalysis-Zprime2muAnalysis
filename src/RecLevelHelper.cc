@@ -25,19 +25,9 @@ const std::string& levelName(const int rec, bool shortVersion) {
 void RecLevelHelper::init(const edm::ParameterSet& config) {
   for (int i = 0; i < MAX_LEVELS; i++) {
     string tagname = "leptons" + levelName(i, true);
-    edm::InputTag tag = config.getParameter<edm::InputTag>(tagname);
-    if (tag.label() != "skip")
-      lepInputs[i] = tag;
-    else
-      lepInputs[i] = edm::InputTag();
-
-    tagname = "dileptons" + levelName(i, true);
-    string diltag;
-    diltag = config.getParameter<string>(tagname);
-    if (diltag != "skip")
-      dilInputs[i] = diltag;
-    else
-      dilInputs[i] = "";
+    lepInputs[i] = config.exists(tagname) ? config.getParameter<edm::InputTag>(tagname) : edm::InputTag();
+    tagname = "di" + tagname;
+    dilInputs[i] = config.exists(tagname) ? config.getParameter<edm::InputTag>(tagname) : edm::InputTag();
   }
 }
 
@@ -48,18 +38,20 @@ void RecLevelHelper::initEvent(const edm::Event& event) {
   storeMatchMaps(event);
 }
 
-bool RecLevelHelper::getLeptonsView(const edm::Event& event, int level,
-				    edm::View<reco::Candidate>& view) {
-  edm::Handle<edm::View<reco::Candidate> > hview;
-  event.getByLabel(lepInputs[level], hview);
-  if (hview.failedToGet()) {
+template <typename T>
+bool RecLevelHelper::get(const edm::Event& event, int level,
+			 const edm::InputTag& tag, T& coll) const {
+  edm::Handle<T> handle;
+  event.getByLabel(tag, handle);
+
+  if (handle.failedToGet()) {
     // If there was no "best" collection in the event, try to use the
     // default global leptons (lgmr).
     if (level == lbest)
-      return getLeptonsView(event, lgmr, view);
+      return get(event, lgmr, tag, coll);
     
     if (!warned[level]) {
-      string inp = lepInputs[level].encode();
+      string inp = tag.encode();
       // Don't bother to warn about collections that are supposed to be missing.
       if (inp != ":" && inp != "") 
 	edm::LogWarning("initEvent")
@@ -67,77 +59,44 @@ bool RecLevelHelper::getLeptonsView(const edm::Event& event, int level,
 	  << " found at rec level " << level << "; skipping";
       warned[level] = true;
     }
+
     return false;
   }
 
-  view = *hview;
+  coll = *handle;
   return true;
 }
 
 bool RecLevelHelper::getLeptons(const edm::Event& event, int level,
-				reco::CandidateBaseRefVector& leps,
-				double ptMin) {
+				reco::CandidateBaseRefVector& leps) {
   edm::View<reco::Candidate> view;
-  if (!getLeptonsView(event, level, view))
+  if (!get(event, level, lepInputs[level], view))
     return false;
 
-  // Store refs to the leptons that are valid (i.e. pt > ptMin = 1e-3
-  // by default).
+  // Store refs to the leptons.
   leps.clear();
-  for (unsigned ilep = 0; ilep < view.size(); ilep++)
-    if (view[ilep].pt() > ptMin)
-      leps.push_back(view.refAt(ilep));
+  for (unsigned ilep = 0; ilep < view.size(); ++ilep)
+    leps.push_back(view.refAt(ilep));
 
   return true;
 }
 
-bool RecLevelHelper::getDileptons(const edm::Event& event, int level, DilType type,
-				  reco::CompositeCandidateCollection& coll) const {
-  static const string extra[3] = {"", "Res", "Raw"};
-
-  // No "resonances" for L1 or L2, so just get the plain dileptons.
-  if (type == RES && (level == l1 || level == l2)) type = DIL;
-  string label = dilInputs[level] + extra[type];
-
-  edm::Handle<reco::CompositeCandidateCollection> hcoll;
-  event.getByLabel(label, hcoll);
-  if (hcoll.failedToGet()) {
-    if (!warned[level]) {
-      // Don't bother to warn about collections that are supposed to be missing.
-      if (label != "")
-	edm::LogWarning("initEvent")
-	  << "No event collection " << label
-	  << " found at rec level " << level << "; skipping";
-    }
-    return false;
-  }
-
-  coll = *hcoll;
-  return true;
-}
+bool RecLevelHelper::getDileptons(const edm::Event& event, int level,
+				  reco::CompositeCandidateCollection& dils) {
+  return get(event, level, dilInputs[level], dils);
+}  
 
 bool RecLevelHelper::recLevelOkay(const edm::Event& event, int level) {
   edm::View<reco::Candidate> view;
-  return getLeptonsView(event, level, view);
+  return get(event, level, lepInputs[level], view);
 }
   
-string RecLevelHelper::makeMatchMapName(RecLevelHelper::MatchType mtype,
-					const int irec,
-					const int jrec) const {
-  static const char* base[] = { "photonMatch", "closestMatch", "seedMatch" };
-  string res = base[int(mtype)];
-  res += levelName(irec, true);
-  if (jrec >= 0)
-    res += levelName(jrec, true);
-  return res;
-}
-
 void RecLevelHelper::storeRecLevelMap(const edm::Event& event) {
   // We shouldn't have to re-store this every event...
   recLevelMap.clear();
   for (int rec = 0; rec < MAX_LEVELS; rec++) {
     edm::View<reco::Candidate> view;
-    getLeptonsView(event, rec, view);
+    get(event, rec, lepInputs[rec], view);
 
     // Cache the product ids for each collection so we can look up the
     // rec level from the CandidateBaseRef.
@@ -154,9 +113,11 @@ void RecLevelHelper::storeMatchMap(const edm::Event& event,
   event.getByLabel(mapName, matchMap);
 
   if (matchMap.failedToGet()) {
-    edm::LogWarning("storeMatchMap")
-      << "Couldn't get match map " << mapName << " from event!"
-      << " Storing empty match map.";
+    // Fail silently. The user will know what's wrong when absolutely
+    // nothing gets matched.
+    //edm::LogWarning("storeMatchMap")
+    //  << "Couldn't get match map " << mapName << " from event!"
+    //  << " Storing empty match map.";
     map = reco::CandViewMatchMap();
   }
   else
@@ -167,26 +128,13 @@ void RecLevelHelper::storeMatchMaps(const edm::Event& event) {
   edm::Handle<vector<int> > seeds;
 
   for (int i = 0; i < MAX_LEVELS; i++) {
-    if (i >= l3)
-      // Store the photon match maps (which only exist for global fit
-      // leptons).
-      storeMatchMap(event, makeMatchMapName(PHOTON, i), photonMatchMap[i]);
+    // Store MC truth match maps.
+    storeMatchMap(event, "genMatch" + levelName(i, true), genMatchMap[i]);
 
-    // This inner loop does not include lbest, since we do not match
-    // to that level, only from it.
-    for (int j = 0; j < MAX_LEVELS-1; j++) {
-      // Don't bother storing an identity map.
-      if (i == j) continue;
-
-      // Store closest match maps.
-      storeMatchMap(event, makeMatchMapName(CLOSEST, i, j),
-		    closestMatchMap[i][j]);
-
-      // Also store by-seed match maps (which only exist for global
-      // fits).
-      if (i >= l3 && j >= l3)
-	storeMatchMap(event, makeMatchMapName(SEED, i, j), seedMatchMap[i][j]);
-    }
+    // Store the photon match maps (which only exist for global fit
+    // leptons).
+    if (i >= lgmr)
+      storeMatchMap(event, "photonMatch" + levelName(i, true), photonMatchMap[i]);
   }
 }
 
@@ -228,31 +176,29 @@ int RecLevelHelper::originalRecLevel(const reco::CandidateBaseRef& cand) const {
 
   // Try to look in the original collections the cocktail muon chose
   // from to see which level it came from.
-  for (level = ltk; level <= lpmr; level++) {
+  for (level = lgmr; level <= lpmr; level++) {
     // If the closest lepton at the other level has the same
     // four-vector, charge, and vertex, this level is from where the
     // cocktail muon came.
-    const reco::CandidateBaseRef& clos = closestLepton(cand, level);
+    const reco::CandidateBaseRef& clos = matchOfflineLepton(cand, level);
     if (clos.isNonnull() &&
 	cand->p4() == clos->p4() && cand->charge() == clos->charge() &&
 	cand->vertex() == clos->vertex())
       return level;
   }
-
-  // If we didn't find an equal lepton in one of the above
-  // collections, the lepton must have come from lgmr (either via
-  // HEEPSelector or just copying the default GMR muons as the "best"
-  // ones).
-  return lgmr;
+  
+  return lbest;
 }
 
 reco::Particle::LorentzVector
 RecLevelHelper::closestPhoton(const reco::CandidateBaseRef& cand) const {
   int level = recLevel(cand);
   checkRecLevel(level, "closestPhoton");
-  // No closest photon for non-global fits.
-  if (level < l3)
+
+  // No closest photon for non-offline fits.
+  if (level < lgmr)
     return reco::Particle::LorentzVector();
+
   const reco::CandViewMatchMap& mm = photonMatchMap[level];
   // If no closest photon found, return a zero four-vector.
   if (mm.find(cand) == mm.end())
@@ -262,37 +208,57 @@ RecLevelHelper::closestPhoton(const reco::CandidateBaseRef& cand) const {
 }
 
 const reco::CandidateBaseRef&
-RecLevelHelper::matchLepton(const reco::CandidateBaseRef& lep,
-			    const int level,
-			    int whichMatch) const {
+RecLevelHelper::matchGenLepton(const reco::CandidateBaseRef& lep) const {
   int oldlevel = recLevel(lep);
-  checkRecLevel(level, "matchLepton");
-  checkRecLevel(oldlevel, "matchLepton");
+  checkRecLevel(oldlevel, "matchGenLepton");
 
+  const int level = lgen;
   if (oldlevel == level)
     return lep;
 
-  bool canMatchSeed = oldlevel >= l3 && level >= l3;
-  bool doSeed;
-
-  if (whichMatch == 0)
-    doSeed = false;
-  else if (whichMatch == 1) {
-    if (!canMatchSeed) return invalidRef;
-    doSeed = true;
-  }
-  else
-    doSeed = canMatchSeed;
-
-  const reco::CandViewMatchMap& mm = doSeed ? seedMatchMap[oldlevel][level]
-                                         : closestMatchMap[oldlevel][level];
+  const reco::CandViewMatchMap& mm = genMatchMap[oldlevel];
   if (mm.find(lep) != mm.end())
     return mm[lep];
-  else if (whichMatch == -1 && doSeed) {
-    const reco::CandViewMatchMap& cmm = closestMatchMap[oldlevel][level];
-    if (cmm.find(lep) != cmm.end())
-      return cmm[lep];
-  }
     
+  return invalidRef;
+}
+
+const reco::CandidateBaseRef&
+RecLevelHelper::matchOfflineLepton(const reco::CandidateBaseRef& lep,
+				   const int level) const {
+  checkRecLevel(level, "matchOfflineLepton");
+  if (level < lgmr)
+    return invalidRef;
+
+  /*
+  // JMTBAD need better way to match different offline fits, this is
+  // absolutely horrible.
+
+  edm::View<reco::Candidate> leps;
+  if (!get(*evt, level, lepInputs[level], leps))
+    return invalidRef;
+
+  const reco::Muon* orig = toConcretePtr<reco::Muon>(lep);
+  if (orig == 0)
+    return invalidRef;
+  const reco::Track* orig_tk = orig->innerTrack().get();
+  if (orig_tk == 0)
+    return invalidRef;
+
+  for (unsigned i = 0; i < leps.size(); ++i) {
+    const reco::CandidateBaseRef& newlep = leps.refAt(i);
+
+    const reco::Muon* mu = toConcretePtr<reco::Muon>(newlep);
+    if (mu == 0)
+      continue;
+    const reco::Track* tk = mu->innerTrack().get();
+    if (tk == 0)
+      continue;
+
+    if (tk->momentum() == orig_tk->momentum())
+      return newlep;
+  }
+  */
+
   return invalidRef;
 }

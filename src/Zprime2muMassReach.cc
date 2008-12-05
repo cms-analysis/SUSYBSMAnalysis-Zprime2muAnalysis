@@ -49,7 +49,6 @@ Zprime2muMassReach::Zprime2muMassReach(const edm::ParameterSet& config)
   kBackgroundFit  = config.getParameter<bool>("BackgroundFit");
   kGenuineEvents  = config.getParameter<bool>("GenuineEvents");
   kGMR            = config.getParameter<bool>("GMR");
-  useL3Muons      = config.getParameter<bool>("useL3Muons");
   kFixedMass      = config.getParameter<bool>("FixedMass");
   kFixedFWHM      = config.getParameter<bool>("FixedFWHM");
   kSmoothedSample = config.getParameter<bool>("SmoothedSample");
@@ -175,8 +174,8 @@ void Zprime2muMassReach::dilMassPlots(const bool debug) {
   // Fill GenDilMass here if you want ALL generated events; uncomment Fill
   // in if-statement below if you want gen. mass plot only for events
   // with a reconstructed mu+mu- pair.
-  if (genDileptons->size() > 0) {
-    genm = genDileptons->at(0).mass();
+  if (allDileptons[lgen].size() > 0) {
+    genm = resonanceMass(allDileptons[lgen].at(0));
     GenDilMass[fileNum]->Fill(genm);
   }
 
@@ -186,13 +185,12 @@ void Zprime2muMassReach::dilMassPlots(const bool debug) {
   // "Off-line" dileptons in events passing the trigger and quality cuts
   for (int i = 0; i < 2; i++) {
     const reco::CompositeCandidateCollection& dileptons =
-      i == 1 ? *bestDileptons : 
-      (useL3Muons ? *hltDileptons : *recDileptons);
+      i == 1 ? allDileptons[lbest] : allDileptons[lgmr];
 
     if (dileptons.size() > 0) {
-      recm = dileptons[0].mass(); // highest mass dilepton
-      if (genDileptons->size() > 0) {
-	genm = genDileptons->at(0).mass();
+      recm = resonanceMass(dileptons[0]); // highest mass dilepton
+      if (allDileptons[lgen].size() > 0) {
+	genm = resonanceMass(allDileptons[lgen].at(0));
 
 	// Fill generated mass plot only for those events in which
 	// TMR dilepton was found.
@@ -225,9 +223,9 @@ void Zprime2muMassReach::fillMassArrays() {
 
   // True mass
   if (useGen) {
-    for (unsigned idi = 0; idi < genDileptons->size(); idi++) {
+    for (unsigned idi = 0; idi < allDileptons[lgen].size(); idi++) {
       if (nfit_genmass_used[idx] < MASS_FIT_ARRAY_SIZE) {
-	fit_genmass[idx][nfit_genmass_used[idx]] = genDileptons->at(idi).mass();
+	fit_genmass[idx][nfit_genmass_used[idx]] = resonanceMass(allDileptons[lgen].at(idi));
 	fit_genevent[idx][nfit_genmass_used[idx]] = eventNum;
 	nfit_genmass_used[idx]++;
       }
@@ -242,11 +240,11 @@ void Zprime2muMassReach::fillMassArrays() {
 
   // Reconstructed dileptons
   const reco::CompositeCandidateCollection& dileptons = 
-    kGMR ? *recDileptons : *bestDileptons;
+    kGMR ? allDileptons[lgmr] : allDileptons[lbest];
   for (unsigned idi = 0; idi < dileptons.size(); idi++) {
     // Check the "off-line" track quality and apply the cuts
     if (nfit_recmass_used[idx] < MASS_FIT_ARRAY_SIZE) {
-      double resmass = dileptons[idi].mass();
+      double resmass = resonanceMass(dileptons[idi]);
       fit_recmass[idx][nfit_recmass_used[idx]] = resmass;
 
       // TESTS ONLY!!!

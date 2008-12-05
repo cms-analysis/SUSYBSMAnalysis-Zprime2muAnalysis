@@ -12,7 +12,7 @@ using namespace std;
 void Zprime2muTrigComparison::analyze(const edm::Event& event, 
 				      const edm::EventSetup& eSetup) {
   // Delegate filling our muon vectors to the parent class.
-  Zprime2muRecLevelAnalysis::analyze(event, eSetup);
+  Zprime2muAnalysis::analyze(event, eSetup);
 
   compareTrigDecision(event);
 }

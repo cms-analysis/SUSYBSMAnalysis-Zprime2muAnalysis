@@ -5,14 +5,9 @@
 using namespace std;
 using namespace reco;
 
-HardInteraction::HardInteraction(int lepFlavor, //vector<int> resIds,
-				 bool allowFakeRes)
-  : leptonFlavor(lepFlavor), //resonanceIds(resIds),
-    allowFakeResonance(allowFakeRes)
-{
+HardInteraction::HardInteraction() {
+  init(13, true);
   Clear();
-  // Don't fill the structure here, since we want to be able to throw
-  // on error.
 }
 
 HardInteraction::~HardInteraction() {
@@ -24,11 +19,10 @@ HardInteraction::~HardInteraction() {
     delete resonance;
 }
 
-/*
-void SetResonanceIds(const std::vector<int>& resIds) {
-  resonanceIds = resIds;
+void HardInteraction::init(int lepFlavor, bool allowFakeRes){
+  leptonFlavor = lepFlavor;
+  allowFakeResonance = allowFakeRes;
 }
-*/
 
 bool HardInteraction::IsResonance(int pdgId) {
   /*

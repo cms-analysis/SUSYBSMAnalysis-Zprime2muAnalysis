@@ -14,12 +14,9 @@
 // interaction per event. We store pointers to all these particles.
 
 struct HardInteraction {
-  HardInteraction(int lepFlavor, // std::vector<int> resIds,
-		  bool allowFakeRes=false);
+  HardInteraction();
   ~HardInteraction();
-
-  // Set the list of qualifying resonance ids.
-  //static void SetResonanceIds(const std::vector<int>& resIds);
+  void init(int lepFlavor, bool allowFakeRes=false);
 
   // Determine whether the passed in pdgId is one of the resonances of
   // interest (currently one of Z0 (inc. DY), Z', or G*).
@@ -48,10 +45,6 @@ struct HardInteraction {
 
   // The lepton flavor to look for (e.g. 13 for muons, 11 for electrons).
   int leptonFlavor;
-
-  // The PDG ids of the resonances of interest.
-  // JMTBAD Hard-coded for now in isResonance().
-  //static std::vector<int> resonanceIds;
 
   // Whether to allow the building of the resonance from the doc-line
   // leptons if the resonance is not found in the event record (this

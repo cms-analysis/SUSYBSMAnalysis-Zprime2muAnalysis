@@ -6,20 +6,8 @@
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneratorUtilities.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TeVMuHelper.h"
 
 using namespace std;
-
-// Sorting functor for removeDileptonOverlap().
-struct reverse_mass_sort {
-  bool operator()(const reco::Candidate& lhs, const reco::Candidate& rhs) {
-    return lhs.mass() > rhs.mass();
-  }
-  bool operator()(const reco::CompositeCandidate& lhs, const reco::CompositeCandidate& rhs) {
-    return lhs.mass() > rhs.mass();
-  }
-};
 
 void removeDileptonOverlap(reco::CompositeCandidateCollection& dileptons,
 			   const bool debug) {
@@ -61,80 +49,6 @@ void removeDileptonOverlap(reco::CompositeCandidateCollection& dileptons,
   if (debug) {
     out << " done. end size: " << dileptons.size();
     edm::LogInfo("removeDileptonOverlap") << out.str();
-  }
-}
-
-void genDileptonsOnly(const reco::CompositeCandidateCollection& dils,
-		      reco::CompositeCandidateCollection& newDils,
-		      const bool debug) {
-  ostringstream out;
-  if (debug)
-    out << "cutDileptons: starting size " << dils.size() << endl;
-
-  reco::CompositeCandidateCollection::const_iterator dil;
-  for (dil = dils.begin(); dil != dils.end(); dil++) {
-    // Make sure we pick up the actual dilepton from the resonance
-    // -- i.e. the one comprised of leptons with the same mother
-    // that has a PDG id of one of the resonances we care about.
-    const reco::Candidate* mom  = sameMother(dileptonDaughter(*dil, 0),
-					     dileptonDaughter(*dil, 1));
-
-    if (debug) {
-      out << "  filtering at generator level: mom pointer: " << mom;
-      if (mom) out << " mom's id: " << mom->pdgId();
-      out << endl;
-    }
-
-    if (mom && HardInteraction::IsResonance(mom->pdgId())) {
-      if (debug) out << "  dilepton not cut!" << endl;
-      newDils.push_back(*dil);
-    }
-  }
-
-  if (debug) {
-    out << " done. end size: " << newDils.size();
-    edm::LogInfo("cutDileptons") << out.str();
-  }
-}
-
-void cutDileptons(const edm::Event& event,
-		  const reco::CompositeCandidateCollection& dils,
-		  reco::CompositeCandidateCollection& newDils,
-		  unsigned cuts, int pdgId1, int pdgId2,
-		  const bool debug) {
-  ostringstream out;
-  if (debug)
-    out << "cutDileptons: starting size " << dils.size() << endl;
-
-  TeVMuHelper tmh;
-  tmh.initEvent(event);
-
-  reco::CompositeCandidateCollection::const_iterator dil;
-  for (dil = dils.begin(); dil != dils.end(); dil++) {
-    // If requested (by both PDG ids being nonzero), cut out the
-    // dileptons that are not made up of the requested
-    // leptons. (Useful for separating mu+mu+ from mu-mu- in the
-    // output of CandCombiner.)
-    if (pdgId1 != 0 && pdgId2 != 0) {
-      int p1 = dil->daughter(0)->pdgId();
-      int p2 = dil->daughter(1)->pdgId();
-      if (debug) out << "  filtering by PDG ids: requested: " << pdgId1 << " "
-		     << pdgId2 << " got: " << p1 << " " << p2 << endl;
-      if (!((p1 == pdgId1 || p1 == pdgId2) && (p2 == pdgId1 || p2 == pdgId2)))
-	continue;
-    }
-
-    // If the lepton is cut with a code that is present in the cuts
-    // bitmask, cut this dilepton.
-    if (!tmh.dileptonIsCut(*dil, cuts)) {
-      if (debug) out << "  dilepton not cut!" << endl;
-      newDils.push_back(*dil);
-    }
-  }
-
-  if (debug) {
-    out << " done. end size: " << newDils.size();
-    edm::LogInfo("cutDileptons") << out.str();
   }
 }
 

@@ -6,7 +6,13 @@
 #include "DataFormats/Candidate/interface/CompositeCandidateFwd.h"
 #include "FWCore/Framework/interface/Event.h"
 
-// Dilepton utility functions
+// Sorting functor for dileptons. Using std::sort results in dileptons
+// reverse-sorted by invariant mass.
+struct reverse_mass_sort {
+  bool operator()(const reco::CompositeCandidate& lhs, const reco::CompositeCandidate& rhs) {
+    return lhs.mass() > rhs.mass();
+  }
+};
 
 // Sort a dilepton collection by decreasing invariant mass, and then
 // prune the collection: if more than one dilepton was formed,

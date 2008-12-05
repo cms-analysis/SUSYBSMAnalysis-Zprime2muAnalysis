@@ -1,7 +1,6 @@
-#ifndef TEVMUHELPER_H
-#define TEVMUHELPER_H
+#ifndef CUTHELPER_H
+#define CUTHELPER_H
 
-#include <map>
 #include <vector>
 
 #include "DataFormats/Candidate/interface/Candidate.h"
@@ -14,10 +13,11 @@
 
 typedef std::vector<pat::Electron> PatElectronCollection;
 
-class TeVMuHelper {
+class CutHelper {
 public:
   // To go in bitfields.
   enum CutResult {
+    // CutCutCut
     PASS=0,
     // Least significant word is for per-lepton cuts:
     PT=0x01, ISO=0x02, CHI2DOF=0x04, D0=0x08,
@@ -29,30 +29,10 @@ public:
     WEAKISO=0x100000, TOPTRIGGER=0x200000,
     EVTCUTS=0xFFFF0000,
     ALLCUTS=0xFFFFFFFF
+    // CutCutCut
   };
 
-  // Some defined cut choices.
-
-  // AN 2007/038 cuts (pT and isolation)
-  static const unsigned tevMuCuts;
-
-  // AN 2008/044 e mu bkg study broken cuts.
-  static const unsigned heepCuts;
-  
-  // Various combinations of AN 2008/015 cuts ("top group").
-  static const unsigned topSkim;
-  static const unsigned topElCuts;   
-  static const unsigned topMuCuts;
-  static const unsigned topLeptonId;
-  static const unsigned topIsolation;
-  static const unsigned topLepCuts;
-  static const unsigned topEventCuts;
-  static const unsigned topGroupCuts;
-
-  typedef std::map<unsigned, const char*> CutNameMap;
-  static CutNameMap cutNames;
-
-  TeVMuHelper();
+  CutHelper();
   void initEvent(const edm::Event& evt);
   void setCutMask(const unsigned mask) { _cutMask = mask; }
 

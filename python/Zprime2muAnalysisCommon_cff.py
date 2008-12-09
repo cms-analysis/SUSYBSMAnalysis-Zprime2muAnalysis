@@ -245,14 +245,9 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         categories = cms.untracked.vstring(
             #'FwkJob', 'FwkReport', 'Root_Warning',
             'Root_NoDictionary', 'RFIOFileDebug',
-            # For some reason these next ones come up (without being
-            # asked to in debugModules below) when doing electrons,
-            # i.e. when the HEEPSelector.cfi is included.
             'DDLParser', 'PixelGeom', 'EcalGeom', 'TIBGeom', 'TIDGeom',
             'TOBGeom', 'TECGeom', 'SFGeom', 'HCalGeom', 'TrackerGeom',
             'GeometryConfiguration', 'HcalHardcodeGeometry',
-            # ... and these come up if doing the extra TeV muon
-            # reconstructors.
             'PoolDBESSource', 'TkDetLayers', 'TkNavigation',
             'Done', 'CSC', 'EcalTrivialConditionRetriever',
             'Geometry', 'GlobalMuonTrajectoryBuilder', 'HCAL', 'Muon',
@@ -276,8 +271,9 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             noLineBreaks = cms.untracked.bool(True)
             ),
         debugModules = cms.untracked.vstring(
-            'bestMuons', 'Zprime2muAnalysis', 'Zprime2muHistos',
-            'Zprime2muAsymmetry', 'Zprime2muMassReach')
+            'bestMuons', 'Zprime2muAnalysis', 'Zprime2muHistos', 'Zprime2muResolution',
+            'Zprime2muAsymmetry', 'Zprime2muMassReach'
+            )
         )
 
     if not __debug:
@@ -742,21 +738,25 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         decay = '%s@%s %s@%s' % (collections[0], chargesForDileptons[0],
                                  collections[1], chargesForDileptons[1])
 
-        # These are the "raw" unsorted, uncut dileptons.
+        # These are the "raw" unsorted, uncut dileptons...
         prod = cms.EDProducer(combiner,
                               decay = cms.string(decay),
                               cut = cms.string('')
                               )
-        rawdils = 'rawDileptons' + recLevels[rec]
-        addToPath(rawdils, prod)
+        # ...except at generator level.
+        if rec != lGN: name = 'rawDileptons'
+        else:          name = 'dileptons'
+        name += recLevels[rec]
+        addToPath(name, prod)
 
-        # Produce the dileptons after cuts and overlap removal.
-        prod = cms.EDProducer('DileptonPicker',
-                              src          = cms.InputTag(rawdils),
-                              maxDileptons = cms.uint32(maxDileptons),
-                              cutMask      = cms.uint32(cutMask)
-                              )
-        addToPath('dileptons' + recLevels[rec], prod)
+        if rec != lGN:
+            # Produce the dileptons after cuts and overlap removal.
+            prod = cms.EDProducer('DileptonPicker',
+                                  src          = cms.InputTag(name),
+                                  maxDileptons = cms.uint32(maxDileptons),
+                                  cutMask      = cms.uint32(cutMask)
+                                  )
+            addToPath('dileptons' + recLevels[rec], prod)
 
     process.dileptonPath = finalizePath()
 

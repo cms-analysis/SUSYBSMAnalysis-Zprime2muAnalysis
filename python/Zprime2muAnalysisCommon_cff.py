@@ -62,7 +62,8 @@ cutHelperText = [enum.strip().split('=') for enum in cutHelperText.split(',') if
 cutHelperText = [(x, eval(y)) for x, y in cutHelperText]
 cuts = dict(cutHelperText)
 
-# Now that that nastiness is over, use the cuts so defined and make some sets of cuts.
+# Now that that nastiness is over, use the cuts so defined and make
+# some sets of cuts:
 # AN 2007/038 cuts (pT > 20 and isolation dR sumPt < 10)
 cuts['TeVmu'] = cuts['PT'] | cuts['ISO'];
 # AN 2008/044 e mu bkg study cuts (pT > 80).
@@ -97,10 +98,6 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                  useHLTDEBUG=False,
                                  minGenPt=1.0,
                                  cutMask=cuts['TeVmu'],
-                                 # These last two are passed in just
-                                 # so they can be put standalone at
-                                 # the top of the file so they stick
-                                 # out.
                                  muons=muonCollections,
                                  electrons=electronCollections):
     '''Return a CMSSW process for running Zprime2muAnalysis-derived
@@ -122,7 +119,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
       with which paths are put into the process matters, i.e. one
       cannot simply replace any of the paths below after they are
       already made and get the modules to run in the right
-      order. Other than paths everything is (should be?) replaceable.
+      order. Other than paths everything should be replaceable.
     
     doingElectrons: whether to run on electron or muon collections
     (i.e. which collections are in allLeptons in the code). Default is
@@ -135,15 +132,19 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     usingAODOnly: if True, do not expect to be able to get information
     that is not in AOD, such as rechits.
 
-    useOtherMuonRecos: whether to expect the extra TeV muon
-    reconstructors in the input files. Default is True, but if running
-    on "official" files that do not have these extra collections
-    (i.e. most likely every file that was not produced with the
-    scripts in test/makeScripts of this package), this needs to be set
-    False.
+    useOtherMuonRecos: whether to expect the extra TeV muon tracks and
+    the track-to-track maps for them in the input files.
+
+    recoverBrem: whether to expect a collection of reconstructed
+    photons in the input files in order to construct "resonances",
+    i.e. add closest photons to the dimuons made.
+
+    disableElectrons: whether to completely kill electrons from being
+    accessed.
 
     performTrackReReco: if set, re-run track, muon, and photon
-    reconstruction on-the-fly before running any analysis paths.
+    reconstruction on-the-fly before running any analysis
+    paths. Does this work in 2_1/2_2?
             
     conditionsGlobalTag: if performing re-reconstruction on the fly,
     this sets the globalTag for database conditions (e.g. alignment,
@@ -153,9 +154,13 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     collections (i.e. those destined for L1-L3 rec levels) from the
     file.
 
-    dumpHardInteraction: if True, use the (modified)
-    ParticleListDrawer to dump the generator info on the hard
-    interaction particles.
+    dumpHardInteraction: if True, use ParticleListDrawer to dump the
+    generator info on the hard interaction particles.
+
+    dumpTriggerSummary: if True, use TriggerSummaryAnalyzerAOD to dump
+    the information in the hltTriggerSummaryAOD object (which is the
+    input the L2 and L3 collections when not running on HLTDEBUG
+    files).
     
     flavorsForDileptons: the pair of collections to be used for the
     "official" dileptons (i.e. those accessed by allDileptons in the
@@ -168,7 +173,33 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
       Example: if flavorsForDileptons == muonElectron and
       chargesForDileptons == oppSign, then the official dileptons
       will be all pairs of mu+ e-.
-    
+
+    maxDileptons: the maximum number of dileptons that are kept in the
+    collections after cuts, sorting, and overlap removal.
+
+    skipPAT: whether to skip running layers 0 and 1 of the PAT. Useful
+    if running on files that already have PAT collections in them.
+
+    useHLTDEBUG: can be set True if running on HLTDEBUG files, in
+    which case the L2 and L3 collections are taken directly from the
+    appropriate collections in the event. Otherwise, L2 and L3
+    collections are produced from the hltTriggerSummaryAOD object.
+
+    minGenPt: a simple cut on generator-level pT to cut out a lot of
+    leptons that would never have a chance of being reconstructed. We
+    want to keep high-pT leptons from in-flight decays, so we add in
+    the GEANT leptons, but without a pT cut lots of junk leptons would
+    be added.
+
+    cutMask: an unsigned value representing the chosen cuts on
+    leptons/dileptons. The values must correspond to those set in
+    src/CutHelper.h. The "cuts" dictionary defined at the top of this
+    file gives some examples of common ones. The default is the
+    "TeVmu" selection: lepton pT > 20 GeV, and tracker isolation sumPt
+    < 10 GeV.
+
+    muons/electrons: for experts who wish to directly specify the
+    collections to be used for each rec level.
     '''
 
     ####################################################################
@@ -184,7 +215,6 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         
     if usingAODOnly:
         useGen = useSim = False
-        useOtherMuonRecos = False
         
     if not useGen:
         useSim = False
@@ -198,7 +228,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             electrons[i] = None
 
     if not useOtherMuonRecos:
-        for i in xrange(lTK, lPR+1):
+        for i in xrange(lTK+1, lPR+1):
             muons[i] = None
         muons[lOP] = muons[lGR]
 
@@ -449,33 +479,35 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             fromTrackerTrack = cms.untracked.bool(True)
             )
 
-        # Make first-muon-station (FMS) reco::Muons using the supplied
-        # TeV refit tracks.
-        process.muCandFS = refitMuons.clone(
-            src           = defaultMuons,
-            fromCocktail  = False,
-            tevMuonTracks = tevMuons + ':firstHit'
-            )
-
-        # Make picky-muon-reconstructor (PMR) reco::Muons using the
-        # supplied TeV refit tracks.
-        process.muCandPR = refitMuons.clone(
-            src           = defaultMuons,
-            fromCocktail  = False,
-            tevMuonTracks = tevMuons + ':picky'
-            )
-
-        # Use the official TeV muon cocktail code to pick the best
-        # muons using the supplied TeV refit tracks.
-        process.bestMuons = refitMuons.clone(
-            src           = defaultMuons,
-            fromCocktail  = True,
-            tevMuonTracks = tevMuons
-            )
+        process.pmuReco = cms.Path(process.muCandGR * process.muCandTK)
         
-        process.pmuReco = cms.Path(process.muCandGR * process.muCandTK *
-                                   process.muCandFS * process.muCandPR *
-                                   process.bestMuons)
+        if useOtherMuonRecos:
+            # Make first-muon-station (FMS) reco::Muons using the supplied
+            # TeV refit tracks.
+            process.muCandFS = refitMuons.clone(
+                src           = defaultMuons,
+                fromCocktail  = False,
+                tevMuonTracks = tevMuons + ':firstHit'
+                )
+
+            # Make picky-muon-reconstructor (PMR) reco::Muons using the
+            # supplied TeV refit tracks.
+            process.muCandPR = refitMuons.clone(
+                src           = defaultMuons,
+                fromCocktail  = False,
+                tevMuonTracks = tevMuons + ':picky'
+                )
+
+            # Use the official TeV muon cocktail code to pick the best
+            # muons using the supplied TeV refit tracks.
+            process.bestMuons = refitMuons.clone(
+                src           = defaultMuons,
+                fromCocktail  = True,
+                tevMuonTracks = tevMuons
+                )
+        
+            process.pmuTeVReco = cms.Path(process.muCandFS * process.muCandPR *
+                                          process.bestMuons)
 
     ####################################################################
     ## Same for the electrons

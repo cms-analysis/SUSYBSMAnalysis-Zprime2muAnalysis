@@ -3,7 +3,7 @@
   \brief    Plots basic lepton and dilepton quantities for each rec level.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id$
+  \version  $Id: Zprime2muHistos.cc,v 1.1 2008/12/05 09:28:02 tucker Exp $
 */
 
 #include "TString.h"
@@ -32,106 +32,126 @@ Zprime2muHistos::Zprime2muHistos(const edm::ParameterSet& config) : Zprime2muAna
   binSize      = dataSetConfig.getParameter<int>   ("binSize");
   maxTrigMass  = dataSetConfig.getParameter<double>("maxTrigMass");
 
+  bookTriggerHistos();
   bookBasicLeptonHistos();
   bookOfflineLeptonHistos();
   bookDileptonHistos();
 }
 
-const double pi = TMath::Pi();
+void Zprime2muHistos::bookTriggerHistos() {
+  for (int rec = lL1; rec <= lL3; ++rec) {
+    TString level(levelName(rec));
 
-TString makeName(const char* name, Long_t i) {
-  return TString(name) + i;
+    TriggerBits[rec] = fs->make<TH1F>(nameHist("TriggerBits", rec), level + " trigger bits", 8, 0, 8);
+    
+    NLeptonsTriggered[rec] = fs->make<TH1F>(nameHist("NLeptonsTriggered", rec), "# leptons/triggered-event, " + level, 10, 0, 10);
+    NLeptonsFailed[rec]    = fs->make<TH1F>(nameHist("NLeptonsFailed",    rec), "# leptons/failed-event, "    + level, 10, 0, 10);
+  }
 }
 
 void Zprime2muHistos::bookBasicLeptonHistos() {
   // Basic kinematics at all levels (gen, L1/HLT, offline reco)..
   for (int rec = 0; rec < MAX_LEVELS; ++rec) {
-    TString level(levelName(rec, true));
+    TString level(levelName(rec));
 
     // Lepton multiplicity.
-    NLeptons[rec] = fs->make<TH1F>(makeName("NLeptons", rec), "#/event, " + level, 10, 0, 10);
+    NLeptons[rec] = fs->make<TH1F>(nameHist("NLeptons", rec), "# leptons/event, " + level, 10, 0, 10);
 
     // Lepton eta, y, phi.
-    LeptonEta[rec] = fs->make<TH1F>(makeName("LeptonEta", rec), level + " #eta", 100,  -5,  5);
-    LeptonRap[rec] = fs->make<TH1F>(makeName("LeptonRap", rec), level + " y",    100,  -5,  5);
-    LeptonPhi[rec] = fs->make<TH1F>(makeName("LeptonPhi", rec), level + " #phi", 100, -pi, pi);
+    LeptonEta[rec] = fs->make<TH1F>(nameHist("LeptonEta", rec), level + " #eta", 100, -5,  5);
+    LeptonRap[rec] = fs->make<TH1F>(nameHist("LeptonRap", rec), level + " y",    100, -5,  5);
+    LeptonPhi[rec] = fs->make<TH1F>(nameHist("LeptonPhi", rec), level + " #phi", 100, -TMath::Pi(), TMath::Pi());
     
     // Lepton momenta: p, p_T, p_z.
     // Special binning for momenta for L1 leptons.
-    bool isL1 = rec == l1;
-
-    LeptonPt[rec] = fs->make<TH1F>(makeName("LeptonPt", rec), level + " p_{T}", 100,  0, isL1 ? 150 :   peakMass);
-    LeptonPz[rec] = fs->make<TH1F>(makeName("LeptonPz", rec), level + " p_{z}", 100,  0, isL1 ? 800 : 2*peakMass);
-    LeptonP[rec]  = fs->make<TH1F>(makeName("LeptonP",  rec), level + " p",     100,  0, isL1 ? 800 : 2*peakMass);
+    bool isL1 = rec == lL1;
+    LeptonPt[rec] = fs->make<TH1F>(nameHist("LeptonPt", rec), level + " p_{T}", 100,  0, isL1 ? 150 :   peakMass);
+    LeptonPz[rec] = fs->make<TH1F>(nameHist("LeptonPz", rec), level + " p_{z}", 100,  0, isL1 ? 800 : 2*peakMass);
+    LeptonP[rec]  = fs->make<TH1F>(nameHist("LeptonP",  rec), level + " p",     100,  0, isL1 ? 800 : 2*peakMass);
 
     // Lepton momenta versus pseudorapidity.
-    LeptonPVsEta[rec]  = fs->make<TProfile>(makeName("LeptonPVsEta",  rec), level + " p vs. #eta",     100, -6, 6);
-    LeptonPtVsEta[rec] = fs->make<TProfile>(makeName("LeptonPtVsEta", rec), level + " p_{T} vs. #eta", 100, -6, 6);
+    LeptonPVsEta[rec]  = fs->make<TProfile>(nameHist("LeptonPVsEta",  rec), level + " p vs. #eta",     100, -6, 6);
+    LeptonPtVsEta[rec] = fs->make<TProfile>(nameHist("LeptonPtVsEta", rec), level + " p_{T} vs. #eta", 100, -6, 6);
   }
 }
 
 void Zprime2muHistos::bookOfflineLeptonHistos() {
   // Offline reconstructed quantities.
   for (int rec = 0; rec < MAX_LEVELS; ++rec) {
-    TString level(levelName(rec, true));
+    TString level(levelName(rec));
 
     // Delta R < 0.3 isolation variables.
-    IsoSumPt[rec]   = fs->make<TH1F>(makeName("IsoSumPt",   rec), level + " Iso. (#Delta R < 0.3) #Sigma p_{T}", 30, 0, 30);
-    IsoEcal[rec]    = fs->make<TH1F>(makeName("IsoEcal",    rec), level + " Iso. (#Delta R < 0.3) ECAL",         30, 0, 30);
-    IsoHcal[rec]    = fs->make<TH1F>(makeName("IsoHcal",    rec), level + " Iso. (#Delta R < 0.3) HCAL",         30, 0, 30);
-    IsoNTracks[rec] = fs->make<TH1F>(makeName("IsoNTracks", rec), level + " Iso. (#Delta R < 0.3) nTracks",      10, 0, 10);
-    IsoNJets[rec]   = fs->make<TH1F>(makeName("IsoNJets",   rec), level + " Iso. (#Delta R < 0.3) nJets",        10, 0, 10);
+    IsoSumPt[rec]   = fs->make<TH1F>(nameHist("IsoSumPt",   rec), level + " Iso. (#Delta R < 0.3) #Sigma p_{T}", 30, 0, 30);
+    IsoEcal[rec]    = fs->make<TH1F>(nameHist("IsoEcal",    rec), level + " Iso. (#Delta R < 0.3) ECAL",         30, 0, 30);
+    IsoHcal[rec]    = fs->make<TH1F>(nameHist("IsoHcal",    rec), level + " Iso. (#Delta R < 0.3) HCAL",         30, 0, 30);
+    IsoNTracks[rec] = fs->make<TH1F>(nameHist("IsoNTracks", rec), level + " Iso. (#Delta R < 0.3) nTracks",      10, 0, 10);
+    IsoNJets[rec]   = fs->make<TH1F>(nameHist("IsoNJets",   rec), level + " Iso. (#Delta R < 0.3) nJets",        10, 0, 10);
     
     // Track hit counts.
-    NPxHits[rec] = fs->make<TH1F>(makeName("NPxHits", rec), level + " # pixel hits",    8, 0,  8);
-    NStHits[rec] = fs->make<TH1F>(makeName("NStHits", rec), level + " # strip hits",   26, 0, 26);
-    NTkHits[rec] = fs->make<TH1F>(makeName("NTkHits", rec), level + " # tracker hits", 33, 0, 33);
-    NMuHits[rec] = fs->make<TH1F>(makeName("NMuHits", rec), level + " # muon hits",    51, 0, 51);
-    NHits[rec]   = fs->make<TH1F>(makeName("NHits",   rec), level + " # hits",         78, 0, 78);
+    NPxHits[rec] = fs->make<TH1F>(nameHist("NPxHits", rec), level + " # pixel hits",    8, 0,  8);
+    NStHits[rec] = fs->make<TH1F>(nameHist("NStHits", rec), level + " # strip hits",   26, 0, 26);
+    NTkHits[rec] = fs->make<TH1F>(nameHist("NTkHits", rec), level + " # tracker hits", 33, 0, 33);
+    NMuHits[rec] = fs->make<TH1F>(nameHist("NMuHits", rec), level + " # muon hits",    51, 0, 51);
+    NHits[rec]   = fs->make<TH1F>(nameHist("NHits",   rec), level + " # hits",         78, 0, 78);
 
     // Other track variables.
-    Chi2dof[rec] = fs->make<TH1F>(makeName("Chi2dof", rec), level + " #chi^{2}/dof", 100, 0, 5);
-    TrackD0[rec] = fs->make<TH1F>(makeName("TrackD0", rec), level + " |d_{0}|",      100, 0, 0.1);
-    TrackDz[rec] = fs->make<TH1F>(makeName("TrackDz", rec), level + " |dz|",         100, 0, 5);
+    Chi2dof[rec] = fs->make<TH1F>(nameHist("Chi2dof", rec), level + " #chi^{2}/dof", 100, 0, 5);
+    TrackD0[rec] = fs->make<TH1F>(nameHist("TrackD0", rec), level + " |d_{0}|",      100, 0, 0.1);
+    TrackDz[rec] = fs->make<TH1F>(nameHist("TrackDz", rec), level + " |dz|",         100, 0, 5);
   }
 }
 
 void Zprime2muHistos::bookDileptonHistos() {
   // Dilepton quantities.
-  for (int rec = lgen; rec < MAX_LEVELS; ++rec) {
+  for (int rec = lGN; rec < MAX_LEVELS; ++rec) {
     // No trigger-level dileptons.
-    if (rec >= l1 && rec <= l3) continue;
+    if (rec >= lL1 && rec <= lL3) continue;
 
-    TString level(levelName(rec, true));
+    TString level(levelName(rec));
 
     // Dilepton multiplicity.
-    NDileptons[rec] = fs->make<TH1F>(makeName("NDileptons", rec), "# dileptons/event, " + level, maxDileptons + 1, 0, maxDileptons + 1);
+    NDileptons[rec] = fs->make<TH1F>(nameHist("NDileptons", rec), "# dileptons/event, " + level, maxDileptons + 1, 0, maxDileptons + 1);
 
     // Dilepton eta, y, phi.
-    DileptonEta[rec] = fs->make<TH1F>(makeName("DileptonEta", rec), level + " dil. #eta", 100,  -5,  5);
-    DileptonRap[rec] = fs->make<TH1F>(makeName("DileptonRap", rec), level + " dil. y",    100,  -5,  5);
-    DileptonPhi[rec] = fs->make<TH1F>(makeName("DileptonPhi", rec), level + " dil. #phi", 100, -pi, pi);
+    DileptonEta[rec] = fs->make<TH1F>(nameHist("DileptonEta", rec), level + " dil. #eta", 100, -5,  5);
+    DileptonRap[rec] = fs->make<TH1F>(nameHist("DileptonRap", rec), level + " dil. y",    100, -5,  5);
+    DileptonPhi[rec] = fs->make<TH1F>(nameHist("DileptonPhi", rec), level + " dil. #phi", 100, -TMath::Pi(), TMath::Pi());
     
     // Dilepton momenta: p, p_T, p_z.
-    DileptonPt[rec] = fs->make<TH1F>(makeName("DileptonPt", rec), level + " dil. p_{T}", 100,  0,        0.5*peakMass);
-    DileptonPz[rec] = fs->make<TH1F>(makeName("DileptonPz", rec), level + " dil. p_{z}", 100,  0, 1000 + upperMassWin);
-    DileptonP[rec]  = fs->make<TH1F>(makeName("DileptonP",  rec), level + " dil. p",     100,  0, 1000 + upperMassWin);
+    DileptonPt[rec] = fs->make<TH1F>(nameHist("DileptonPt", rec), level + " dil. p_{T}", 100,  0,        0.5*peakMass);
+    DileptonPz[rec] = fs->make<TH1F>(nameHist("DileptonPz", rec), level + " dil. p_{z}", 100,  0, 1000 + upperMassWin);
+    DileptonP[rec]  = fs->make<TH1F>(nameHist("DileptonP",  rec), level + " dil. p",     100,  0, 1000 + upperMassWin);
 
     // Dilepton momenta versus pseudorapidity.
-    DileptonPVsEta[rec]  = fs->make<TProfile>(makeName("DileptonPVsEta",  rec), level + " dil. p vs. #eta",     100, -6, 6);
-    DileptonPtVsEta[rec] = fs->make<TProfile>(makeName("DileptonPtVsEta", rec), level + " dil. p_{T} vs. #eta", 100, -6, 6);
+    DileptonPVsEta[rec]  = fs->make<TProfile>(nameHist("DileptonPVsEta",  rec), level + " dil. p vs. #eta",     100, -6, 6);
+    DileptonPtVsEta[rec] = fs->make<TProfile>(nameHist("DileptonPtVsEta", rec), level + " dil. p_{T} vs. #eta", 100, -6, 6);
 
     // Dilepton invariant mass.
-    DileptonMass[rec]            = fs->make<TH1F>(makeName("DileptonMass",            rec), level + " dil. mass",       binSize, lowerMassWin, upperMassWin);
-    DileptonWithPhotonsMass[rec] = fs->make<TH1F>(makeName("DileptonWithPhotonsMass", rec), level + " dil+#gamma mass", binSize, lowerMassWin, upperMassWin);
+    DileptonMass[rec]            = fs->make<TH1F>(nameHist("DileptonMass",            rec), level + " dil. mass",       binSize, lowerMassWin, upperMassWin);
+    DileptonWithPhotonsMass[rec] = fs->make<TH1F>(nameHist("DileptonWithPhotonsMass", rec), level + " dil+#gamma mass", binSize, lowerMassWin, upperMassWin);
 
     // Opposite/like-sign counts.
-    DileptonSigns[rec] = fs->make<TH1F>(makeName("DileptonSigns", rec), level + " dil. sign", 3, 0, 3);
+    DileptonSigns[rec] = fs->make<TH1F>(nameHist("DileptonSigns", rec), level + " dil. sign", 3, 0, 3);
+    DileptonSigns[rec]->GetXaxis()->SetBinLabel(1, "+-");
+    DileptonSigns[rec]->GetXaxis()->SetBinLabel(2, "--");
+    DileptonSigns[rec]->GetXaxis()->SetBinLabel(3, "++");
 
     // Plots comparing the daughter lepton momenta.
-    DileptonDeltaPt[rec]  = fs->make<TH1F>(makeName("DileptonDeltaPt",  rec), level + " dil. |p_{T}^{1}| - |p_{T}^{2}|",                100, 0, 100);
-    DileptonDeltaP[rec]   = fs->make<TH1F>(makeName("DileptonDeltaP",   rec), level + " dil. |p^{1}| - |p^{2}|",                        100, 0, 100);
-    DileptonPtErrors[rec] = fs->make<TH2F>(makeName("DileptonPtErrors", rec), level + " dil. #sigma_{p_{T}}^{1} v. #sigma_{p_{T}}^{2}", 100, 0, 100, 100, 0, 100);
+    DileptonDeltaPt[rec]  = fs->make<TH1F>(nameHist("DileptonDeltaPt",  rec), level + " dil. |p_{T}^{1}| - |p_{T}^{2}|",                100, 0, 100);
+    DileptonDeltaP[rec]   = fs->make<TH1F>(nameHist("DileptonDeltaP",   rec), level + " dil. |p^{1}| - |p^{2}|",                        100, 0, 100);
+    DileptonPtErrors[rec] = fs->make<TH2F>(nameHist("DileptonPtErrors", rec), level + " dil. #sigma_{p_{T}}^{1} v. #sigma_{p_{T}}^{2}", 100, 0, 100, 100, 0, 100);
+  }
+}
+
+void Zprime2muHistos::fillTriggerHistos() {
+  for (int rec = lL1; rec <= lL3; ++rec) {
+    TriggerBits[rec]->Fill(trigDecision.getWord(rec));
+
+    unsigned n = allLeptons[rec].size();
+    if (trigDecision.pass(rec))
+      NLeptonsTriggered[rec]->Fill(n);
+    else                        
+      NLeptonsFailed[rec]->Fill(n);
   }
 }
 
@@ -228,7 +248,6 @@ void Zprime2muHistos::fillDileptonDaughterHistos(const reco::CompositeCandidate&
 }
 
 void Zprime2muHistos::fillLeptonHistos(const int rec) {
-  // Leptons.
   NLeptons[rec]->Fill(allLeptons[rec].size());
 
   for (reco::CandidateBaseRefVector::const_iterator lep = allLeptons[rec].begin(); lep != allLeptons[rec].end(); ++lep) {
@@ -248,8 +267,7 @@ void Zprime2muHistos::fillDileptonHistos(const int rec) {
 
   NDileptons[rec]->Fill(allDileptons[rec].size());
 
-  unsigned j = 0;
-  for (reco::CompositeCandidateCollection::const_iterator dil = allDileptons[rec].begin(); dil != allDileptons[rec].end(); ++dil, ++j) {
+  for (reco::CompositeCandidateCollection::const_iterator dil = allDileptons[rec].begin(); dil != allDileptons[rec].end(); ++dil) {
     fillBasicDileptonHistos(*dil, rec);
     fillDileptonDaughterHistos(*dil, rec);
   }
@@ -259,9 +277,11 @@ void Zprime2muHistos::analyze(const edm::Event& event, const edm::EventSetup& eS
   // Delegate filling our lepton vectors to the parent class.
   Zprime2muAnalysis::analyze(event, eSetup);
 
+  fillTriggerHistos();
+
   for (int rec = 0; rec < MAX_LEVELS; ++rec) {
     fillLeptonHistos(rec);
-    if (rec == lgen || rec > l3)
+    if (rec == lGN || rec > lL3)
       fillDileptonHistos(rec);
   }
 }

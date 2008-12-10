@@ -4,11 +4,11 @@ from ResolutionDataSets_cff import dataSets
 
 # Idea: pass in the parameters below as arguments to the function? 
 # Stick with the replace paradigm for now.
-def attachHistos(process):
-    process.Zprime2muHistos = cms.EDAnalyzer(
-        'Zprime2muHistos',
+def attachResolution(process):
+    process.Zprime2muResolution = cms.EDAnalyzer(
+        'Zprime2muResolution',
         process.Zprime2muAnalysisCommon,
         dataSets,
         dataSet = cms.string('Zp1000'),
         )
-    process.analysisHistos = cms.Path(process.Zprime2muHistos)
+    process.analysisResolution = cms.Path(process.Zprime2muResolution)

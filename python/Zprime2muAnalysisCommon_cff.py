@@ -76,8 +76,27 @@ cuts['TopLeptonId']  = cuts['TopEl'] | cuts['TopMu']
 cuts['TopIsolation'] = cuts['ISOS']
 cuts['Top']          = cuts['TopSkim'] | cuts['TopLeptonId'] | cuts['TopIsolation']
 
-path = None
-def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
+# We want to be able to add modules to the path in loops, with their
+# names depending on the loop variables.  Keep track of the modules we
+# make so we can set them all into a real CMSSW path in the process
+# later. The order of the modules in this list will be obeyed by
+# CMSSW.
+__path = None
+def addToPath(process, name, prodobj):
+    global __path
+    if __path is None: __path  = prodobj
+    else:              __path *= prodobj
+    setattr(process, name, prodobj)
+
+def finalizePath():
+    global __path
+    p = cms.Path(__path)
+    __path = None
+    return p
+
+
+def makeZprime2muAnalysisProcess(fileNames=[],
+                                 maxEvents=-1,
                                  doingElectrons=False,
                                  useGen=True,
                                  useSim=True,
@@ -260,11 +279,11 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
     process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(maxEvents))
 
     process.options = cms.untracked.PSet(
-        #IgnoreCompletely = cms.untracked.vstring('ProductNotFound'),
-        wantSummary = cms.untracked.bool(True)
+        #IgnoreCompletely = cms.untracked.vstring('ProductNotFound')
         )
 
     if __debug:
+        process.options.wantSummary = cms.untracked.bool(True)
         outFile = 'cout'
     else:
         outFile = 'Zprime'
@@ -288,7 +307,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             'CompositeTrajectoryFilterESProducer', 'NavigationSetter',
             'SiStripPedestalsFakeESSource', 'TrajectoryFilterESProducer',
             'ZDC', 'ZdcHardcodeGeometry', 'RunLumiMerging',
-            'TrackAssociator','RecoVertex/PrimaryVertexProducer',
+            'TrackAssociator',#'RecoVertex/PrimaryVertexProducer',
             'ConversionTrackCandidateProducer','GsfTrackProducer',
             'PhotonProducer','TrackProducerWithSCAssociation',
             'PartonSelector', 'JetPartonMatcher', 'Alignments',
@@ -662,27 +681,6 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             setattr(process.Zprime2muAnalysisCommon, 'leptons' + recLevels[i], tag)
 
     ####################################################################
-    ## After this point, we will add modules to the path in loops,
-    ## with their names depending on the loop variables.  Keep track
-    ## of the modules we make so we can set them all into a real CMSSW
-    ## path in the process later. The order of the modules in this
-    ## list will be obeyed by CMSSW.
-    ####################################################################
-
-    global path
-    def addToPath(name, prodobj):
-        global path
-        if path is None: path  = prodobj
-        else:            path *= prodobj
-        setattr(process, name, prodobj)
-
-    def finalizePath():
-        global path
-        p = cms.Path(path)
-        path = None
-        return p
-                    
-    ####################################################################
     ## Do all the closest-in-deltaR matching -- between each rec level
     ## and MC truth, and between each offline rec level and
     ## reconstructed photons.
@@ -708,7 +706,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
             matched = cms.InputTag(muons[jrec]),
             distMin = cms.double(0.7072)
             )
-        addToPath('genMatch' + recLevels[irec], prod)
+        addToPath(process, 'genMatch' + recLevels[irec], prod)
 
     process.genMatchPath = finalizePath()
 
@@ -725,7 +723,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                 matched = cms.InputTag('photons'),
                 distMin = cms.double(0.1)
                 )
-            addToPath('photonMatch' + recLevels[rec], prod)
+            addToPath(process, 'photonMatch' + recLevels[rec], prod)
 
         process.photonMatchPath = finalizePath()
 
@@ -779,7 +777,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
         if rec != lGN: name = 'rawDileptons'
         else:          name = 'dileptons'
         name += recLevels[rec]
-        addToPath(name, prod)
+        addToPath(process, name, prod)
 
         if rec != lGN:
             # Produce the dileptons after cuts and overlap removal.
@@ -788,7 +786,7 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
                                   maxDileptons = cms.uint32(maxDileptons),
                                   cutMask      = cms.uint32(cutMask)
                                   )
-            addToPath('dileptons' + recLevels[rec], prod)
+            addToPath(process, 'dileptons' + recLevels[rec], prod)
 
     process.dileptonPath = finalizePath()
 
@@ -818,10 +816,12 @@ def makeZprime2muAnalysisProcess(fileNames=[], maxEvents=-1,
 
 # Function to attach simple EDAnalyzers that don't need any
 # parameters. Allows skipping of making data/Zprime2mu*_cfi.py files.
-def attachAnalysis(process, name):
+def attachAnalysis(process, name, **kwargs):
     analyzer = cms.EDAnalyzer(name, process.Zprime2muAnalysisCommon)
     setattr(process, name, analyzer)
     setattr(process, name + 'Path', cms.Path(getattr(process, name)))
+    for key, val in kwargs.items():
+        setattr(analyzer, key, val)
 
 # Attach a PoolOutputModule to the process, by default dumping all
 # branches (useful for inspecting the file).
@@ -870,7 +870,14 @@ def setMuonAlignment(process, connectString, tagDTAlignmentRcd, tagDTAlignmentEr
     process.prefer("muonAlignment")
 
 
-########################################################################
+################################################################################
+
+# so 'from module import *' doesn't clutter the user's namespace
+__all__ = ['oppSign', 'oppSignMP', 'likeSignPos', 'likeSignNeg', 'diMuons',
+           'diElectrons', 'muonElectron', 'electronMuon', 'cuts',
+           'makeZprime2muAnalysisProcess', 'attachAnalysis',
+           'attachOutputModule', 'poolAllFiles', 'setTrackerAlignment',
+           'setMuonAlignment']           
 
 # To debug this config, you can do from the shell:
 #   python Zprime2muAnalysisCommon_cff.py

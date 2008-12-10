@@ -2,8 +2,8 @@ import FWCore.ParameterSet.Config as cms
 
 from AsymmetryDataSets_cff import dataSets
 
-def attachAsymmetry(process):
-    process.Zprime2muAsymmetry = cms.EDAnalyzer(
+def attachAsymmetry(process, **kwargs):
+    module = process.Zprime2muAsymmetry = cms.EDAnalyzer(
         'Zprime2muAsymmetry',
         process.Zprime2muAnalysisCommon,
         dataSets,
@@ -64,4 +64,9 @@ def attachAsymmetry(process):
         calculateMistag = cms.bool(True)
         )
 
-    process.analysis = cms.Path(process.Zprime2muAsymmetry)
+    process.analysis = cms.Path(module)
+
+    for key, val in kwargs.items():
+        setattr(module, key, val)
+
+__all__ = ['attachAsymmetry']

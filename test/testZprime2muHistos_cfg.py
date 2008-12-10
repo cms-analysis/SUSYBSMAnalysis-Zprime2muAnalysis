@@ -7,7 +7,5 @@ files = [
     'file:/scratchdisk3/tucker/ZPSSMmumu_M1000_Mcut400_10TeV_IDEAL_V9_RAW2DIGI_RECO_1-10.root'
     ]
 
-process = makeZprime2muAnalysisProcess(files, skipPAT=True, electrons=([None]*9))
-attachHistos(process)
-
-process.Zprime2muHistos.verbosity = 2
+process = makeZprime2muAnalysisProcess(files, skipPAT=True, disableElectrons=True)
+attachHistos(process, verbosity=2)

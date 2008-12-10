@@ -21,8 +21,9 @@ files = [
     ]
 
 process = makeZprime2muAnalysisProcess(files)
-attachAnalysis(process, 'Zprime2muExample')
-
-process.Zprime2muExample.nBins     = cms.int32(40)
-process.Zprime2muExample.lowerMass = cms.double(400)
-process.Zprime2muExample.upperMass = cms.double(2000)
+attachAnalysis(process, 'Zprime2muExample',
+               verbosity = 2,
+               nBins     = cms.int32(40),
+               lowerMass = cms.double(400),
+               upperMass = cms.double(2000)
+               )

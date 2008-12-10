@@ -2,8 +2,8 @@ import FWCore.ParameterSet.Config as cms
 
 from MassReachDataSets_cff import dataSets
 
-def attachMassReach(process):
-    process.Zprime2muMassReach = cms.EDAnalyzer(
+def attachMassReach(process, **kwargs):
+    module = process.Zprime2muMassReach = cms.EDAnalyzer(
         'Zprime2muMassReach',
         process.Zprime2muAnalysisCommon,
         dataSets,
@@ -32,4 +32,9 @@ def attachMassReach(process):
         nGenEvents     = cms.vuint32(1000,1000,1000)
         )
 
-    process.analysis = cms.Path(process.Zprime2muMassReach)
+    process.analysis = cms.Path(module)
+
+    for key, val in kwargs.items():
+        setattr(module, key, val)
+
+__all__ = ['attachMassReach']

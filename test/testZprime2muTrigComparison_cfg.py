@@ -21,6 +21,4 @@ files = [
     ]
 
 process = makeZprime2muAnalysisProcess(files)
-attachAnalysis(process, 'Zprime2muTrigComparison', isRecLevelAnalysis=True)
-
-process.Zprime2muTrigComparison.verbosity = 2
+attachAnalysis(process, 'Zprime2muTrigComparison', verbosity=2)

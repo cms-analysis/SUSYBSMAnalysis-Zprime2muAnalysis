@@ -5,6 +5,7 @@
 #include <string>
 
 #include "TLorentzVector.h"
+#include "TString.h"
 
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
@@ -23,8 +24,7 @@ std::ostream& operator<<(std::ostream& out, const reco::Candidate& par);
 
 // Build a string containing a name for a histogram -- useful inside
 // loops when booking histos.
-std::string nameHist(const char* s, int i, int j=-1, int k=-1,
-		     int l=-1, int m=-1, bool extended=false);
+TString nameHist(const char* name, Long_t i, Long_t j=-1, Long_t k=-1, Long_t l=-1, Long_t m=-1);
 
 void InitROOT();
 

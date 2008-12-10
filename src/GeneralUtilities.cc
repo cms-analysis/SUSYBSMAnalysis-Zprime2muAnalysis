@@ -8,10 +8,6 @@
 #endif
 
 #include <ostream>
-#include <sstream>
-#include <string>
-
-#include "TLorentzVector.h"
 
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/EgammaReco/interface/SuperCluster.h"
@@ -43,29 +39,13 @@ ostream& operator<<(ostream& out, const reco::Candidate* par) {
 // ROOT helpers.
 ////////////////////////////////////////////////////////////////////
 
-string nameHist(const char* s, int i, int j, int k, int l, int m,
-		bool extended) {
-  ostringstream x;
-  x << s;
-  if (extended) x << "_";
-  x << i;
-  if (j >= 0) {
-    if (extended) x << "_";
-    x << j;
-  }
-  if (k >= 0) {
-    if (extended) x << "_";
-    x << k;
-  }
-  if (l >= 0) {
-    if (extended) x << "_";
-    x << l;
-  }
-  if (m >= 0) {
-    if (extended) x << "_";
-    x << m;
-  }
-  return x.str();
+TString nameHist(const char* name, Long_t i, Long_t j, Long_t k, Long_t l, Long_t m) {
+  TString s = TString(name) + i;
+  if (j >= 0) s += j;
+  if (k >= 0) s += k;
+  if (l >= 0) s += l;
+  if (m >= 0) s += m;
+  return s;
 }
 
 void InitROOT() {

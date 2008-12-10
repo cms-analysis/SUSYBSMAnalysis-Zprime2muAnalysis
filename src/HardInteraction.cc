@@ -1,4 +1,5 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 
@@ -43,6 +44,10 @@ void HardInteraction::Clear() {
   resonanceIsFake = false;
 }
 
+bool HardInteraction::IsValid() const {
+  return quark != 0 && resonance != 0 && lepPlus != 0 && lepMinus != 0 && lepPlusNoIB != 0 && lepMinusNoIB != 0;
+}
+
 void HardInteraction::Fill(const edm::Event& event) {
   edm::Handle<GenParticleCollection> genParticles;
   event.getByLabel("genParticles", genParticles);
@@ -64,35 +69,33 @@ void HardInteraction::Fill(const GenParticleCollection& genParticles) {
 	// We found the resonance (Z0/Z'/etc.). Make sure we didn't
 	// find a second one.
 	if (resonance != 0)
-	  throw cms::Exception("HardInteraction")
-	    << "Found second resonance (pdgId: " << pdgId << ") in event!\n";
-
-	resonance = &*genp;
+	  edm::LogWarning("HardInteraction")
+	    << "Found second resonance (pdgId: " << pdgId << ") in event!";
+	else
+	  resonance = &*genp;
       }
       else if (pdgId == leptonFlavor) {
 	// We found the l-. Make sure we didn't find a second one.
 	if (lepMinus != 0)
-	  throw cms::Exception("HardInteraction")
-	    << "Found second l- in event!\n";
-
-	lepMinusNoIB = &*genp;
+	  edm::LogWarning("HardInteraction") << "Found second l- in event!";
+	else
+	  lepMinusNoIB = &*genp;
       }
       else if (pdgId == -leptonFlavor) {
 	// We found the l+. Make sure we didn't find a second one.
 	if (lepPlus != 0)
-	  throw cms::Exception("HardInteraction")
-	    << "Found second l+ in event!\n";
-
-	lepPlusNoIB = &*genp;
+	  edm::LogWarning("HardInteraction") << "Found second l+ in event!";
+	else
+	  lepPlusNoIB = &*genp;
       }
     }
   }
 
   // We should always find the l+ and l-.
   if (lepMinusNoIB == 0 || lepPlusNoIB == 0)
-    throw cms::Exception("HardInteraction")
+    edm::LogWarning("HardInteraction")
       << "Couldn't find at least one of the pre-brem l-l+! l- = "
-      << lepMinusNoIB << " l+ = " << lepPlusNoIB << endl;
+      << lepMinusNoIB << " l+ = " << lepPlusNoIB;
 
   // We get the quark/antiquark from either the resonance or directly
   // from one of the leptons (see below). Start by assuming it is from
@@ -105,7 +108,7 @@ void HardInteraction::Fill(const GenParticleCollection& genParticles) {
   // build one (we really only care about its four vector and charge
   // at this point). Use the doc-line l+l- we found to do so.
   if (resonance == 0) {
-    if (allowFakeResonance) {
+    if (allowFakeResonance && lepPlusNoIB && lepMinusNoIB) {
       Particle::Charge q = lepPlusNoIB->charge() + lepMinusNoIB->charge();
       Particle::LorentzVector p4 = lepPlusNoIB->p4() + lepMinusNoIB->p4();
       // Don't know the creation vertex of the resonance. Set to (0,0,0)
@@ -127,9 +130,9 @@ void HardInteraction::Fill(const GenParticleCollection& genParticles) {
       mothersAreQuarks = lepMinusNoIB;
     }
     else
-      throw cms::Exception("HardInteraction")
+      edm::LogWarning("HardInteraction")
 	<< "Did not find the resonance in the event, and forbidden"
-	<< " from faking it!\n";
+	<< " from faking it!";
   }
 
   // Did we successfully identify a Candidate that has the
@@ -142,9 +145,8 @@ void HardInteraction::Fill(const GenParticleCollection& genParticles) {
       // For now, don't count gluons (id = 21), but we should
       // implement them later here and in all the above (for gg->G*).
       if (abs(momId) > 6 || momId == 0)
-	throw cms::Exception("HardInteraction")
-	  << "Mother " << m << " is not a quark! its pdgId = "
-	  << momId << endl;
+	edm::LogWarning("HardInteraction")
+	  << "Mother " << m << " is not a quark! its pdgId = " << momId;
       
       if (momId > 0)
 	quark = mom;
@@ -155,38 +157,42 @@ void HardInteraction::Fill(const GenParticleCollection& genParticles) {
   
   // If we didn't find the quark or antiquark, bomb.
   if (quark == 0 || antiquark == 0)
-    throw cms::Exception("HardInteraction")
+    edm::LogWarning("HardInteraction")
       << "Couldn't find at least one of the quark/antiquark! quark = "
-      << quark << " antiquark = " << antiquark << endl;
+      << quark << " antiquark = " << antiquark;
 
   // Now, pick up the leptons after brem. They are daughter leptons of
   // the doc-line leptons and have status = 1, i.e. they are
   // final-state. Also grab the brem photons.
-  for (Candidate::const_iterator dau = lepMinusNoIB->begin();
-       dau != lepMinusNoIB->end(); dau++) {
-    if (dau->status() == 1) {
-      int pdgId = dau->pdgId();
-      if (pdgId == leptonFlavor)
-	lepMinus = &*dau;
-      else if (pdgId == 22)
-	bremPhotons.push_back(&*dau);
+  if (lepMinusNoIB) {
+    for (Candidate::const_iterator dau = lepMinusNoIB->begin();
+	 dau != lepMinusNoIB->end(); dau++) {
+      if (dau->status() == 1) {
+	int pdgId = dau->pdgId();
+	if (pdgId == leptonFlavor)
+	  lepMinus = &*dau;
+	else if (pdgId == 22)
+	  bremPhotons.push_back(&*dau);
+      }
     }
   }
 
-  for (Candidate::const_iterator dau = lepPlusNoIB->begin();
-       dau != lepPlusNoIB->end(); dau++) {
-    if (dau->status() == 1) {
-      int pdgId = dau->pdgId();
-      if (pdgId == -leptonFlavor)
-	lepPlus = &*dau;
-      else if (pdgId == 22)
-	bremPhotons.push_back(&*dau);
+  if (lepPlusNoIB) {
+    for (Candidate::const_iterator dau = lepPlusNoIB->begin();
+	 dau != lepPlusNoIB->end(); dau++) {
+      if (dau->status() == 1) {
+	int pdgId = dau->pdgId();
+	if (pdgId == -leptonFlavor)
+	  lepPlus = &*dau;
+	else if (pdgId == 22)
+	  bremPhotons.push_back(&*dau);
+      }
     }
   }
 
   // If we didn't find the final-state l- or l+, bomb.
   if (lepMinus == 0 || lepPlus == 0)
-    throw cms::Exception("HardInteraction")
+    edm::LogWarning("HardInteraction")
       << "Couldn't find at least one of the final-state l-l+! l- = "
-      << lepMinus << " l+ = " << lepPlus << endl;
+      << lepMinus << " l+ = " << lepPlus;
 }

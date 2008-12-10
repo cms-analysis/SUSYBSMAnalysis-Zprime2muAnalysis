@@ -103,8 +103,12 @@ bool Zprime2muAnalysis::skipRecLevel(const int level) const {
 double Zprime2muAnalysis::resonanceMass(const reco::CompositeCandidate& dil) const {
   // Gen level muons don't have photons matched to them; we can take
   // the mass of the resonance directly from the MC record.
-  if (recLevelHelper.recLevel(dil) == lGN)
-    return hardInteraction.resonance->mass();
+  if (recLevelHelper.recLevel(dil) == lGN) {
+    if (hardInteraction.resonance)
+      return hardInteraction.resonance->mass();
+    else
+      return dil.mass();
+  }
 
   const reco::CandidateBaseRef& lep0 = dileptonDaughter(dil, 0);
   const reco::CandidateBaseRef& lep1 = dileptonDaughter(dil, 1);

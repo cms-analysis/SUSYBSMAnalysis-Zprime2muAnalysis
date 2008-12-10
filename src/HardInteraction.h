@@ -26,6 +26,9 @@ struct HardInteraction {
   // bremPhotons, reset flags.
   void Clear();
 
+  // Return whether all the pointers are valid.
+  bool IsValid() const;
+
   // Store pointers to all the particles from the genParticles collection.
   void Fill(const reco::GenParticleCollection& genParticles);
   

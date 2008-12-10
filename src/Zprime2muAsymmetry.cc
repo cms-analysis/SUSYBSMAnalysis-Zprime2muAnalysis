@@ -1488,6 +1488,8 @@ bool Zprime2muAsymmetry::computeFitQuantities(const reco::GenParticleCollection&
   HardInteraction hi;
   hi.init(leptonFlavor, true);
   hi.Fill(genParticles);
+  if (!hi.IsValid())
+    return false;
 
   // Copy the four-vectors into TLorentzVectors, since our code uses
   // those already

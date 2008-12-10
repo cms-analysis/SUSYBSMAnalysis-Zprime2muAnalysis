@@ -1,5 +1,8 @@
-import os
+import os, sys
+
+sys.argv.append('-b') # start ROOT in batch mode
 from ROOT import *
+sys.argv.remove('-b') # and don't mess up sys.argv
 
 class PSDrawer:
     def __init__(self, filename, datePages=False):
@@ -41,6 +44,37 @@ class PSDrawer:
         self.pad.Divide(*div)
         self.page += 1
         return self.pad
+
+    def draw_if(self, histos, name, draw_opt=''):
+        h = histos.Get(name)
+        if h: h.Draw(draw_opt)
+        return h
+
+    def rec_level_page(self, histos, page_type, histo_base_name, page_title, draw_opt='', log_scale=False, fit_gaus=False):
+        if page_type == 'all':
+            div = (2,5)
+            levels = xrange(9)
+        elif page_type == 'offline':
+            div = (2,3)
+            levels = xrange(4,9)
+        elif page_type == 'no_gen':
+            div = (2,4)
+            levels = xrange(1,9)
+        elif page_type == 'no_trig':
+            div = (2,3)
+            levels = [0] + range(4,9)
+        else:
+            raise ValueError, 'page_type %s not recognized' % page_type
+
+        pad = self.new_page(page_title, div)
+        for i, level in enumerate(levels):
+            subpad = pad.cd(i+1)
+            if log_scale: subpad.SetLogy(1)
+            h = histos.Get('%s%i' % (histo_base_name, level))
+            if h is not None:
+                h.Draw(draw_opt)
+                if fit_gaus:
+                    h.Fit('gaus', 'Q')
 
     def close(self):
         self.canvas.Update()

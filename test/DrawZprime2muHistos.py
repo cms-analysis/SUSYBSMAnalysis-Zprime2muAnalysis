@@ -1,25 +1,16 @@
 #!/usr/bin/env python
 
+# usage: DrawZprime2muHistos.py [zp2mu_histos.root [histos.ps]
+
 import os, sys
-
-#print 'usage: %s [zp2mu_histos.root [histos.ps]' % sys.argv[0]    
-
-# Run ROOT in batch mode.
-sys.argv.append('-b')
-from ROOT import *
-sys.argv.remove('-b')
-
 from PSDrawer import PSDrawer
+from ROOT import TFile
     
-if len(sys.argv) > 1:
-    rootFile = sys.argv[1]
-else:
-    rootFile = 'zp2mu_histos.root'
+if len(sys.argv) > 1: rootFile = sys.argv[1]
+else:                 rootFile = 'zp2mu_histos.root'
 
-if len(sys.argv) > 2:
-    outputFile = sys.argv[2]
-else:
-    outputFile = 'histos.ps'
+if len(sys.argv) > 2: outputFile = sys.argv[2]
+else:                 outputFile = 'histos.ps'
 
 if not os.path.isfile(rootFile):
     sys.stderr.write('input file %s does not exist!\n' % rootFile)
@@ -31,99 +22,61 @@ f = TFile(rootFile)
 histos = f.Zprime2muHistos
 psd = PSDrawer(outputFile)
 
-gStyle.SetHistMinimumZero(True)
-
-def draw_page(page_type, histo_base_name, page_title, draw_log=False):
-    if page_type == 'all':
-        div = (2,5)
-        levels = xrange(9)
-    elif page_type == 'offline':
-        div = (2,3)
-        levels = xrange(4, 9)
-    elif page_type == 'no_trig':
-        div = (2,3)
-        levels = [0] + range(4, 9)
-    else:
-        raise ValueError, 'page_type %s not recognized' % page_type
-    
-    pad = psd.new_page(page_title, div)
-    for i, level in enumerate(levels):
-        subpad = pad.cd(i+1)
-        if draw_log:
-            subpad.SetLogy(1)
-        h = histos.Get('%s%i' % (histo_base_name, level))
-        if h is not None:
-            h.Draw()
-
-def draw(name, opt=''):
-    h = histos.Get(name)
-    if h:
-        h.Draw(opt)
-    return h
-
+################################################################################
 
 pad = psd.new_page('Trigger information', (3,3))
 for rec in xrange(1,4):
     offset = 3*(rec-1)
     pad.cd(offset+1).SetLogy(1)
-    draw('TriggerBits%i' % rec)
+    psd.draw_if(histos, 'TriggerBits%i' % rec)
     pad.cd(offset+2).SetLogy(1)
-    draw('NLeptonsTriggered%i' % rec)
+    psd.draw_if(histos, 'NLeptonsTriggered%i' % rec)
     pad.cd(offset+3).SetLogy(1)
-    draw('NLeptonsFailed%i' % rec)
+    psd.draw_if(histos, 'NLeptonsFailed%i' % rec)
 
-all_levels_pages = [
-    ('NLeptons',      '# leptons/event', True),
-    ('LeptonEta',     'Lepton #eta'),
-    ('LeptonRap',     'Lepton rapidity'),
-    ('LeptonPhi',     'Lepton #phi'),
-    ('LeptonPt',      'Lepton pT'),
-    ('LeptonPz',      'Lepton pz'),
-    ('LeptonP',       'Lepton p'),
-    ('LeptonPVsEta',  'Lepton p vs. #eta'),
-    ('LeptonPtVsEta', 'Lepton pT vs. #eta'),
-    ]
+psd.rec_level_page(histos, 'all', 'NLeptons',      '# leptons/event', log_scale=True)
+psd.rec_level_page(histos, 'all', 'LeptonEta',     'Lepton #eta')
+psd.rec_level_page(histos, 'all', 'LeptonRap',     'Lepton rapidity')
+psd.rec_level_page(histos, 'all', 'LeptonPhi',     'Lepton #phi')
+psd.rec_level_page(histos, 'all', 'LeptonPt',      'Lepton pT')
+psd.rec_level_page(histos, 'all', 'LeptonPz',      'Lepton pz')
+psd.rec_level_page(histos, 'all', 'LeptonP',       'Lepton p')
+psd.rec_level_page(histos, 'all', 'LeptonPVsEta',  'Lepton p vs. #eta')
+psd.rec_level_page(histos, 'all', 'LeptonPtVsEta', 'Lepton pT vs. #eta')
 
-offline_pages = [
-    ('IsoSumPt',      'Lepton isolation (#DeltaR < 0.3) #SigmapT', True),
-    ('IsoEcal',       'Lepton isolation (#DeltaR < 0.3) ECAL', True),
-    ('IsoHcal',       'Lepton isolation (#DeltaR < 0.3) HCAL', True),
-    ('IsoNTracks',    'Lepton isolation (#DeltaR < 0.3) nTracks', True),
-    ('IsoNJets',      'Lepton isolation (#DeltaR < 0.3) nJets', True),
-    ('NPxHits',       'Lepton track # pixel hits', True),
-    ('NStHits',       'Lepton track # strip hits', True),
-    ('NTkHits',       'Lepton track # tracker hits', True),
-    ('NMuHits',       'Lepton track # muon hits', True),
-    ('NHits',         'Lepton track # total hits', True),
-    ('Chi2dof',       'Lepton track #chi^{2}/dof'),
-    ('TrackD0',       'Lepton track |d0|'),
-    ('TrackDz',       'Lepton track |dz|')
-    ]
+psd.rec_level_page(histos, 'offline', 'IsoSumPt',   'Lepton isolation (#DeltaR < 0.3) #SigmapT', log_scale=True)
+psd.rec_level_page(histos, 'offline', 'IsoEcal',    'Lepton isolation (#DeltaR < 0.3) ECAL',     log_scale=True)
+psd.rec_level_page(histos, 'offline', 'IsoHcal',    'Lepton isolation (#DeltaR < 0.3) HCAL',     log_scale=True)
+psd.rec_level_page(histos, 'offline', 'IsoNTracks', 'Lepton isolation (#DeltaR < 0.3) nTracks',  log_scale=True)
+psd.rec_level_page(histos, 'offline', 'IsoNJets',   'Lepton isolation (#DeltaR < 0.3) nJets',    log_scale=True)
 
-no_trig_pages = [
-    ('NDileptons',              '# dileptons/event', True),
-    ('DileptonEta',             'Dilepton #eta'),
-    ('DileptonRap',             'Dilepton rapidity'),
-    ('DileptonPhi',             'Dilepton #phi'),
-    ('DileptonPt',              'Dilepton pT'),
-    ('DileptonPz',              'Dilepton pz'),
-    ('DileptonP',               'Dilepton p'),
-    ('DileptonPVsEta',          'Dilepton p vs. #eta'),
-    ('DileptonPtVsEta',         'Dilepton pT vs. #eta'),
-    ('DileptonMass',            'Dilepton mass'),
-    ('DileptonWithPhotonsMass', 'Dilepton+photons mass'),
-    ('DileptonSigns',           'Dilepton signs', True),
-    ('DileptonDeltaPt',         'Dilepton |pT^{1}| - |pT^{2}|'),
-    ('DileptonDeltaP',          'Dilepton |p^{1}| - |p^{2}|'),
-    ('DileptonPtErrors',        'Dilepton #sigma_{pT}^{1} v. #sigma_{pT}^{2}')
-    ]
+psd.rec_level_page(histos, 'offline', 'NPxHits', 'Lepton track # pixel hits',   log_scale=True)
+psd.rec_level_page(histos, 'offline', 'NStHits', 'Lepton track # strip hits',   log_scale=True)
+psd.rec_level_page(histos, 'offline', 'NTkHits', 'Lepton track # tracker hits', log_scale=True)
+psd.rec_level_page(histos, 'offline', 'NMuHits', 'Lepton track # muon hits',    log_scale=True)
+psd.rec_level_page(histos, 'offline', 'NHits',   'Lepton track # total hits',   log_scale=True)
 
-for page_info in all_levels_pages:
-    draw_page('all', *page_info)
-for page_info in offline_pages:
-    draw_page('offline', *page_info)
-for page_info in no_trig_pages:
-    draw_page('no_trig', *page_info)
+psd.rec_level_page(histos, 'offline', 'Chi2dof', 'Lepton track #chi^{2}/dof')
+psd.rec_level_page(histos, 'offline', 'TrackD0', 'Lepton track |d0|')
+psd.rec_level_page(histos, 'offline', 'TrackDz', 'Lepton track |dz|')
+
+psd.rec_level_page(histos, 'no_trig', 'NDileptons',      '# dileptons/event', log_scale=True)
+psd.rec_level_page(histos, 'no_trig', 'DileptonEta',     'Dilepton #eta')
+psd.rec_level_page(histos, 'no_trig', 'DileptonRap',     'Dilepton rapidity')
+psd.rec_level_page(histos, 'no_trig', 'DileptonPhi',     'Dilepton #phi')
+psd.rec_level_page(histos, 'no_trig', 'DileptonPt',      'Dilepton pT')
+psd.rec_level_page(histos, 'no_trig', 'DileptonPz',      'Dilepton pz')
+psd.rec_level_page(histos, 'no_trig', 'DileptonP',       'Dilepton p')
+psd.rec_level_page(histos, 'no_trig', 'DileptonPVsEta',  'Dilepton p vs. #eta')
+psd.rec_level_page(histos, 'no_trig', 'DileptonPtVsEta', 'Dilepton pT vs. #eta')
+
+psd.rec_level_page(histos, 'no_trig', 'DileptonMass',            'Dilepton mass')
+psd.rec_level_page(histos, 'no_trig', 'DileptonWithPhotonsMass', 'Dilepton+photons mass')
+
+psd.rec_level_page(histos, 'no_trig', 'DileptonSigns',    'Dilepton signs', log_scale=True)
+psd.rec_level_page(histos, 'no_trig', 'DileptonDeltaPt',  'Dilepton |pT^{1}| - |pT^{2}|')
+psd.rec_level_page(histos, 'no_trig', 'DileptonDeltaP',   'Dilepton |p^{1}| - |p^{2}|')
+psd.rec_level_page(histos, 'no_trig', 'DileptonPtErrors', 'Dilepton #sigma_{pT}^{1} v. #sigma_{pT}^{2}')
 
 psd.close()
 f.Close()

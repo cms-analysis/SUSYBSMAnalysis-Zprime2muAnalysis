@@ -3,7 +3,7 @@
   \brief    Calculates and plots lepton/dilepton resolutions and efficiencies.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id$
+  \version  $Id: Zprime2muResolution.cc,v 1.32 2008/12/10 00:06:11 tucker Exp $
 */
 
 #include "TString.h"
@@ -38,7 +38,7 @@ Zprime2muResolution::Zprime2muResolution(const edm::ParameterSet& config) : Zpri
 
 void Zprime2muResolution::bookGenLevelHistos() {
   const int nx = 20;
-  LeptonOrigin[0] = fs->make<TH1F>("LeptonOrigin0", "Particle Id of Mother of all leptons", nx, 0, nx);
+  LeptonOrigin[0] = fs->make<TH1F>("LeptonOrigin0", "Particle Id of Mother of all leptons",                 nx, 0, nx);
   LeptonOrigin[1] = fs->make<TH1F>("LeptonOrigin1", "Particle Id of Mother of opp-sign dilepton daughters", nx, 0, nx);
   char *mother[nx] = {"  ","pi","K ","K0","eta","rho","c ","b ","tau","  ",
 		      "Z ","W ","H ","Z'","G*","  ","  ","  ","  ","  "};
@@ -47,8 +47,8 @@ void Zprime2muResolution::bookGenLevelHistos() {
     LeptonOrigin[1]->GetXaxis()->SetBinLabel(i+1, mother[i]);
   }
 
-  GenMassAllEvents = fs->make<TH1F>("GenMassAllEvents", "Gen mass, all events",           24, 200, 5000);
-  GenMassInAccept  = fs->make<TH1F>("GenMassInAccept",  "Gen mass, events in acceptance", 24, 200, 5000);
+  GenMassAllEvents = fs->make<TH1F>("GenMassAllEvents", "Gen mass, all events",           24, lowerMassWin, upperMassWin);
+  GenMassInAccept  = fs->make<TH1F>("GenMassInAccept",  "Gen mass, events in acceptance", 24, lowerMassWin, upperMassWin);
 
   GenMassAllEvents->Sumw2();
   GenMassInAccept->Sumw2();
@@ -65,33 +65,33 @@ void Zprime2muResolution::bookLeptonResolutionHistos() {
 
     scale = 0.1*peakMass;
     scale = rec == lL1 ? 700 + 2*scale : (rec == lL2 ? 4*scale : scale);
-    LeptonPtDiff[rec] = fs->make<TH1F>(nameHist("LeptonPtDiff", rec), level + " p_{T} - gen p_{T}", 100, -scale, scale);
+    LeptonPtDiff[rec] = fs->make<TH1F>(nameHist("LeptonPtDiff", rec), level + " pT - gen pT", 100, -scale, scale);
 
     scale = rec == lL1 ? 0.6*peakMass/140 : (rec == lL2 ? 2 : 0.3);
-    LeptonPtRes[rec] = fs->make<TH1F>(nameHist("LeptonPtRes", rec), level + " (p_{T} - gen p_{T})/(gen p_{T})", 100, -scale, scale);
-    LeptonPRes[rec]  = fs->make<TH1F>(nameHist("LeptonPRes",  rec), level + " (p - gen p)/(gen p)",             100, -scale, scale);
+    LeptonPtRes[rec] = fs->make<TH1F>(nameHist("LeptonPtRes", rec), level + " (pT - gen pT)/(gen pT)", 100, -scale, scale);
+    LeptonPRes[rec]  = fs->make<TH1F>(nameHist("LeptonPRes",  rec), level + " (p - gen p)/(gen p)",    100, -scale, scale);
 
-    LeptonInvPtRes[rec] = fs->make<TH1F>(nameHist("LeptonInvPtRes", rec), level + " (1/p_{T} - 1/gen p_{T})/(1/gen p_{T})", 100, -scale, scale);
-    LeptonInvPRes[rec]  = fs->make<TH1F>(nameHist("LeptonInvPRes",  rec), level + " (1/p - 1/gen p)/(1/gen p)",             100, -scale, scale);
+    LeptonInvPtRes[rec] = fs->make<TH1F>(nameHist("LeptonInvPtRes", rec), level + " (1/pT - 1/gen pT)/(1/gen pT)", 100, -scale, scale);
+    LeptonInvPRes[rec]  = fs->make<TH1F>(nameHist("LeptonInvPRes",  rec), level + " (1/p - 1/gen p)/(1/gen p)",    100, -scale, scale);
 
     if (rec >= lGR) {
-      LeptonInvPtResVPtGen[rec] = fs->make<TProfile>(nameHist("LeptonInvPtResVPtGen", rec), level + " (1/p_{T} - 1/gen p_{T})/(1/gen p_{T}) vs. gen p_{T}", 50, 0, peakMass, -scale, scale);
-      LeptonInvPResVPGen[rec]   = fs->make<TProfile>(nameHist("LeptonInvPResVPGen",   rec), level + " (1/p - 1/gen p)/(1/gen p) vs. gen p",                 50, 0, peakMass, -scale, scale);
+      LeptonInvPtResVPtGen[rec] = fs->make<TProfile>(nameHist("LeptonInvPtResVPtGen", rec), level + " (1/pT - 1/gen pT)/(1/gen pT) vs. gen pT", 50, 0, peakMass, -scale, scale);
+      LeptonInvPResVPGen[rec]   = fs->make<TProfile>(nameHist("LeptonInvPResVPGen",   rec), level + " (1/p - 1/gen p)/(1/gen p) vs. gen p",     50, 0, peakMass, -scale, scale);
   
-      LeptonInvPtPull[rec] = fs->make<TH1F>(nameHist("LeptonInvPtPull", rec), level + " (1/p_{T} - 1/gen p_{T})/#sigma_{1/p_{T}}", 100, -10, 10);
-      LeptonInvPPull[rec]  = fs->make<TH1F>(nameHist("LeptonInvPPull",  rec), level + " (1/p - 1/gen p)/#sigma_{1/p}",             100, -10, 10);
+      LeptonInvPtPull[rec] = fs->make<TH1F>(nameHist("LeptonInvPtPull", rec), level + " (1/pT - 1/gen pT)/#sigma_{1/pT}", 100, -10, 10);
+      LeptonInvPPull[rec]  = fs->make<TH1F>(nameHist("LeptonInvPPull",  rec), level + " (1/p - 1/gen p)/#sigma_{1/p}",    100, -10, 10);
   
-      LeptonInvPtResBarrel[rec] = fs->make<TH1F>(nameHist("LeptonInvPtResBarrel", rec), level + " (1/p_{T} - 1/gen p_{T})/(1/gen p_{T}), barrel", 100, -scale, scale);
-      LeptonInvPResBarrel[rec]  = fs->make<TH1F>(nameHist("LeptonInvPResBarrel",  rec), level + " (1/p - 1/gen p)/(1/gen p), barrel",             100, -scale, scale);
+      LeptonInvPtResBarrel[rec] = fs->make<TH1F>(nameHist("LeptonInvPtResBarrel", rec), level + " (1/pT - 1/gen pT)/(1/gen pT), barrel", 100, -scale, scale);
+      LeptonInvPResBarrel[rec]  = fs->make<TH1F>(nameHist("LeptonInvPResBarrel",  rec), level + " (1/p - 1/gen p)/(1/gen p), barrel",    100, -scale, scale);
     
-      LeptonInvPtPullBarrel[rec] = fs->make<TH1F>(nameHist("LeptonInvPtPullBarrel", rec), level + " (1/p_{T} - 1/gen p_{T})/#sigma_{1/p_{T}}, barrel", 100, -10, 10);
-      LeptonInvPPullBarrel[rec]  = fs->make<TH1F>(nameHist("LeptonInvPPullBarrel",  rec), level + " (1/p - 1/gen p)/#sigma_{1/p}, barrel",             100, -10, 10);
+      LeptonInvPtPullBarrel[rec] = fs->make<TH1F>(nameHist("LeptonInvPtPullBarrel", rec), level + " (1/pT - 1/gen pT)/#sigma_{1/pT}, barrel", 100, -10, 10);
+      LeptonInvPPullBarrel[rec]  = fs->make<TH1F>(nameHist("LeptonInvPPullBarrel",  rec), level + " (1/p - 1/gen p)/#sigma_{1/p}, barrel",    100, -10, 10);
 
-      LeptonInvPtResEndcap[rec] = fs->make<TH1F>(nameHist("LeptonInvPtResEndcap", rec), level + " (1/p_{T} - 1/gen p_{T})/(1/gen p_{T}), endcap", 100, -scale, scale);
-      LeptonInvPResEndcap[rec]  = fs->make<TH1F>(nameHist("LeptonInvPResEndcap",  rec), level + " (1/p - 1/gen p)/(1/gen p), endcap",             100, -scale, scale);
+      LeptonInvPtResEndcap[rec] = fs->make<TH1F>(nameHist("LeptonInvPtResEndcap", rec), level + " (1/pT - 1/gen pT)/(1/gen pT), endcap", 100, -scale, scale);
+      LeptonInvPResEndcap[rec]  = fs->make<TH1F>(nameHist("LeptonInvPResEndcap",  rec), level + " (1/p - 1/gen p)/(1/gen p), endcap",    100, -scale, scale);
     
-      LeptonInvPtPullEndcap[rec] = fs->make<TH1F>(nameHist("LeptonInvPtPullEndcap", rec), level + " (1/p_{T} - 1/gen p_{T})/#sigma_{1/p_{T}}, endcap", 100, -10, 10);
-      LeptonInvPPullEndcap[rec]  = fs->make<TH1F>(nameHist("LeptonInvPPullEndcap",  rec), level + " (1/p - 1/gen p)/#sigma_{1/p}, endcap",             100, -10, 10);
+      LeptonInvPtPullEndcap[rec] = fs->make<TH1F>(nameHist("LeptonInvPtPullEndcap", rec), level + " (1/pT - 1/gen pT)/#sigma_{1/pT}, endcap", 100, -10, 10);
+      LeptonInvPPullEndcap[rec]  = fs->make<TH1F>(nameHist("LeptonInvPPullEndcap",  rec), level + " (1/p - 1/gen p)/#sigma_{1/p}, endcap",    100, -10, 10);
     }
   }
 }
@@ -102,8 +102,8 @@ void Zprime2muResolution::bookChargeResolutionHistos() {
 
     ChargeDiff[rec] = fs->make<TH1F>(nameHist("ChargeDiff", rec), level + " q - gen q", 7, -3.5, 3.5);
 
-    ChargeRightVInvPt[rec] = fs->make<TH1F>(nameHist("ChargeRightVInvPt", rec), level + " right q vs. 1/(gen p_{T})", 50, 0, 0.01);
-    ChargeWrongVInvPt[rec] = fs->make<TH1F>(nameHist("ChargeWrongVInvPt", rec), level + " wrong q vs. 1/(gen p_{T})", 50, 0, 0.01);
+    ChargeRightVInvPt[rec] = fs->make<TH1F>(nameHist("ChargeRightVInvPt", rec), level + " right q vs. 1/(gen pT)", 50, 0, 0.01);
+    ChargeWrongVInvPt[rec] = fs->make<TH1F>(nameHist("ChargeWrongVInvPt", rec), level + " wrong q vs. 1/(gen pT)", 50, 0, 0.01);
 
     ChargeRightVInvPt[rec]->Sumw2();
     ChargeWrongVInvPt[rec]->Sumw2();
@@ -124,7 +124,7 @@ void Zprime2muResolution::bookEfficiencyHistos() {
     TString level(levelName(rec));
     EffVsEta[rec] = fs->make<TH1F>(nameHist("EffVsEta", rec), "Gen #eta, "  + level + " leptons", 50, -2.5, 2.5);
     EffVsPhi[rec] = fs->make<TH1F>(nameHist("EffVsPhi", rec), "Gen #phi, "  + level + " leptons", 50, -TMath::Pi(), TMath::Pi());
-    EffVsPt[rec]  = fs->make<TH1F>(nameHist("EffVsPt",  rec), "Gen p_{T}, " + level + " leptons", 50, 0, 3500);
+    EffVsPt[rec]  = fs->make<TH1F>(nameHist("EffVsPt",  rec), "Gen pT, "    + level + " leptons", 50, 0, 3500);
 
     EffVsEta[rec]->Sumw2();
     EffVsPhi[rec]->Sumw2();
@@ -178,9 +178,6 @@ void Zprime2muResolution::fillGenLevelHistos() {
   // PDG id of mothers of all generated leptons.
   for (reco::CandidateBaseRefVector::const_iterator lep = allLeptons[lGN].begin(); lep != allLeptons[lGN].end(); ++lep)
     LeptonOrigin[0]->Fill(encodeLeptonOrigin(motherId(*lep)));
-
-  if (allDileptons[lGN].size() == 0)
-    printf("dilSize == 0 eventNum %i eventsDone %i\n", eventNum, eventsDone);
 
   // PDG id of mothers of all leptons in all dileptons.
   for (reco::CompositeCandidateCollection::const_iterator dil = allDileptons[lGN].begin(); dil != allDileptons[lGN].end(); ++dil)

@@ -77,18 +77,18 @@ bool Zprime2muTrigComparison::TriggerTranslator(const string& algo,
   for (unsigned imu = 0; imu < allLeptons[lvl].size(); imu++) {
     const reco::CandidateBaseRef& mu = allLeptons[lvl][imu];
     reco::TrackRef tk, tktk;
-    if (lvl < l3)
+    if (lvl < lL3)
       tk = mu->get<reco::TrackRef>();
     else
       tk = mu->get<reco::TrackRef, reco::CombinedMuonTag>();
 
     // JMTBAD HLTMuonPrefilter cuts not on pt but on what they call ptLx
-    // nSigmaPt[l1] = 0, so ptLx(l1) = pt(l1), but safeguard against
-    // accidentally setting nSigmaPt[l1] != 0:
+    // nSigmaPt[lL1] = 0, so ptLx(lL1) = pt(lL1), but safeguard against
+    // accidentally setting nSigmaPt[lL1] != 0:
     // 19/6/2008: in 2_1_X the ptLx cut is removed, but keep this code
     // around for good luck.
     double ptLx;
-    if (lvl == l1)
+    if (lvl == lL1)
       ptLx = mu->pt();
     else
       ptLx = (1 + nSigmaPt[l]*invPError(&*tk)*mu->p())*mu->pt();
@@ -119,7 +119,7 @@ bool Zprime2muTrigComparison::TriggerTranslator(const string& algo,
       // here check extra stuff depending on the trigger algorithm
       bool passExtra = true;
 
-      if (lvl == l1) {
+      if (lvl == lL1) {
 	int quality
 	  = toConcrete<l1extra::L1MuonParticle>(mu).gmtMuonCand().quality();
 	// In single muon trigger, GMT uses only muons with quality > 3.
@@ -130,7 +130,7 @@ bool Zprime2muTrigComparison::TriggerTranslator(const string& algo,
       }
       /*
       // JMTBAD disabled for now, not currently in HLT
-      else if (lvl == l3 && nmu == 2) {
+      else if (lvl == lL3 && nmu == 2) {
         for (unsigned jmu = 0; jmu < allLeptons[lvl].size(); jmu++) {
 	  const reco::CandidateBaseRef& mu_prev = allLeptons[lvl][jmu];
           // Skip ghost tracks (see p. 308 of DAQ TDR)
@@ -170,11 +170,11 @@ void Zprime2muTrigComparison::compareTrigDecision(const edm::Event& event) const
   ostringstream out, xout;
   out << "Homemade decisions:\n";
 
-  for (unsigned int lvl = l1; lvl <= l3; lvl++) {
+  for (unsigned int lvl = lL1; lvl <= lL3; lvl++) {
     unsigned homemade_trigbits = 0;
 
     for (unsigned ipath = 0; ipath < nPaths; ipath++) {
-      const string& trigName = trigNames[lvl - l1][ipath];
+      const string& trigName = trigNames[lvl - lL1][ipath];
 
       // Try to emulate HLT algorithms.
       bool fired = TriggerTranslator(trigName, lvl, ipath+1, xout);
@@ -188,10 +188,10 @@ void Zprime2muTrigComparison::compareTrigDecision(const edm::Event& event) const
     // "Official" muon HLTs are calculated only when corresponding
     // previous levels gave OK, while we calculate the decision for a
     // given level regardless of previous levels' decisions.
-    if (lvl >= l2)
-      homemade_trigbits &= trigDecision.getWord(l1);
-    if (lvl >= l3)
-      homemade_trigbits &= trigDecision.getWord(l2);
+    if (lvl >= lL2)
+      homemade_trigbits &= trigDecision.getWord(lL1);
+    if (lvl >= lL3)
+      homemade_trigbits &= trigDecision.getWord(lL2);
 
     // Compare official and homemade decisions.
     // JMTBAD this warning will also be fired about L2 when running on

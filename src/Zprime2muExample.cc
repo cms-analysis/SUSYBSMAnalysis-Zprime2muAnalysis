@@ -27,8 +27,8 @@ void Zprime2muExample::analyze(const edm::Event& event,
   Zprime2muAnalysis::analyze(event, eSetup);
 
   // Do whatever you want with the dileptons here.
-  for (unsigned idil = 0; idil < allDileptons[lbest].size(); idil++)
-    hDilMass->Fill(allDileptons[lbest].at(idil).mass());
+  for (unsigned idil = 0; idil < allDileptons[lOP].size(); idil++)
+    hDilMass->Fill(allDileptons[lOP].at(idil).mass());
 }
 
 DEFINE_FWK_MODULE(Zprime2muExample);

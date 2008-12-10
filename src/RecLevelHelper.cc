@@ -24,7 +24,7 @@ const std::string& levelName(const int rec, bool shortVersion) {
 
 void RecLevelHelper::init(const edm::ParameterSet& config) {
   for (int i = 0; i < MAX_LEVELS; i++) {
-    string tagname = "leptons" + levelName(i, true);
+    string tagname = "leptons" + levelName(i);
     lepInputs[i] = config.exists(tagname) ? config.getParameter<edm::InputTag>(tagname) : edm::InputTag();
     tagname = "di" + tagname;
     dilInputs[i] = config.exists(tagname) ? config.getParameter<edm::InputTag>(tagname) : edm::InputTag();
@@ -46,9 +46,9 @@ bool RecLevelHelper::get(const edm::Event& event, int level,
 
   if (handle.failedToGet()) {
     // If there was no "best" collection in the event, try to use the
-    // default global leptons (lgmr).
-    if (level == lbest)
-      return get(event, lgmr, tag, coll);
+    // default global leptons (GMR).
+    if (level == lOP)
+      return get(event, lGR, tag, coll);
     
     if (!warned[level]) {
       string inp = tag.encode();
@@ -129,12 +129,12 @@ void RecLevelHelper::storeMatchMaps(const edm::Event& event) {
 
   for (int i = 0; i < MAX_LEVELS; i++) {
     // Store MC truth match maps.
-    storeMatchMap(event, "genMatch" + levelName(i, true), genMatchMap[i]);
+    storeMatchMap(event, "genMatch" + levelName(i), genMatchMap[i]);
 
     // Store the photon match maps (which only exist for global fit
     // leptons).
-    if (i >= lgmr)
-      storeMatchMap(event, "photonMatch" + levelName(i, true), photonMatchMap[i]);
+    if (i >= lGR)
+      storeMatchMap(event, "photonMatch" + levelName(i), photonMatchMap[i]);
   }
 }
 
@@ -161,7 +161,7 @@ int RecLevelHelper::recLevel(const reco::CompositeCandidate& dil) const {
     int r = recLevel(dileptonDaughter(dil, ilep));
     if (rec >= 0) {
       if (r != rec)
-	return lbest;
+	return lOP;
     }
     else
       rec = r;
@@ -171,12 +171,12 @@ int RecLevelHelper::recLevel(const reco::CompositeCandidate& dil) const {
 
 int RecLevelHelper::originalRecLevel(const reco::CandidateBaseRef& cand) const {
   int level = recLevel(cand);
-  if (level != lbest)
+  if (level != lOP)
     return level;
 
   // Try to look in the original collections the cocktail muon chose
   // from to see which level it came from.
-  for (level = lgmr; level <= lpmr; level++) {
+  for (level = lGR; level <= lPR; level++) {
     // If the closest lepton at the other level has the same
     // four-vector, charge, and vertex, this level is from where the
     // cocktail muon came.
@@ -187,7 +187,7 @@ int RecLevelHelper::originalRecLevel(const reco::CandidateBaseRef& cand) const {
       return level;
   }
   
-  return lbest;
+  return lOP;
 }
 
 reco::Particle::LorentzVector
@@ -196,7 +196,7 @@ RecLevelHelper::closestPhoton(const reco::CandidateBaseRef& cand) const {
   checkRecLevel(level, "closestPhoton");
 
   // No closest photon for non-offline fits.
-  if (level < lgmr)
+  if (level < lGR)
     return reco::Particle::LorentzVector();
 
   const reco::CandViewMatchMap& mm = photonMatchMap[level];
@@ -212,7 +212,7 @@ RecLevelHelper::matchGenLepton(const reco::CandidateBaseRef& lep) const {
   int oldlevel = recLevel(lep);
   checkRecLevel(oldlevel, "matchGenLepton");
 
-  const int level = lgen;
+  const int level = lGN;
   if (oldlevel == level)
     return lep;
 
@@ -227,7 +227,7 @@ const reco::CandidateBaseRef&
 RecLevelHelper::matchOfflineLepton(const reco::CandidateBaseRef& lep,
 				   const int level) const {
   checkRecLevel(level, "matchOfflineLepton");
-  if (level < lgmr)
+  if (level < lGR)
     return invalidRef;
 
   /*

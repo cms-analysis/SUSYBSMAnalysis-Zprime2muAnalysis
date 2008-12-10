@@ -275,19 +275,19 @@ void Zprime2muAsymmetry::bookFitHistos() {
 
   // keep separate histos by type (gg/qqbar) for gravitons
   for (int type = 0; type < 2; type++) {
-    AsymFitHistoGenByType[type][0] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 0).c_str(), "Dil Gen Pt",   50, 0., amg.max_pt());
-    AsymFitHistoGenByType[type][1] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 1).c_str(), "Dil Gen Rap",  50, -amg.max_rap(), amg.max_rap());
-    AsymFitHistoGenByType[type][2] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 2).c_str(), "Dil Gen Phi",  50, 0., twoPi);
-    AsymFitHistoGenByType[type][3] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 3).c_str(), "Dil Gen Mass", 50, amg.fit_win(0), amg.fit_win(1));
-    AsymFitHistoGenByType[type][4] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 4).c_str(), "Gen cos_cs",   50,-1., 1.);
-    AsymFitHistoGenByType[type][5] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 5).c_str(), "Gen phi_cs",   50, 0., twoPi);
+    AsymFitHistoGenByType[type][0] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 0), "Dil Gen Pt",   50, 0., amg.max_pt());
+    AsymFitHistoGenByType[type][1] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 1), "Dil Gen Rap",  50, -amg.max_rap(), amg.max_rap());
+    AsymFitHistoGenByType[type][2] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 2), "Dil Gen Phi",  50, 0., twoPi);
+    AsymFitHistoGenByType[type][3] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 3), "Dil Gen Mass", 50, amg.fit_win(0), amg.fit_win(1));
+    AsymFitHistoGenByType[type][4] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 4), "Gen cos_cs",   50,-1., 1.);
+    AsymFitHistoGenByType[type][5] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 5), "Gen phi_cs",   50, 0., twoPi);
 
-    AsymFitHistoRecByType[type][0] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 0).c_str(), "Dil Rec Pt",   50, 0., amg.max_pt());
-    AsymFitHistoRecByType[type][1] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 1).c_str(), "Dil Rec Rap",  50, -amg.max_rap(), amg.max_rap());
-    AsymFitHistoRecByType[type][2] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 2).c_str(), "Dil Rec Phi",  50, 0., twoPi);
-    AsymFitHistoRecByType[type][3] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 3).c_str(), "Dil Rec Mass", 50, amg.fit_win(0), amg.fit_win(1));
-    AsymFitHistoRecByType[type][4] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 4).c_str(), "Rec cos_cs",   50,-1., 1.);
-    AsymFitHistoRecByType[type][5] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 5).c_str(), "Rec phi_cs",   50, 0., twoPi);
+    AsymFitHistoRecByType[type][0] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 0), "Dil Rec Pt",   50, 0., amg.max_pt());
+    AsymFitHistoRecByType[type][1] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 1), "Dil Rec Rap",  50, -amg.max_rap(), amg.max_rap());
+    AsymFitHistoRecByType[type][2] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 2), "Dil Rec Phi",  50, 0., twoPi);
+    AsymFitHistoRecByType[type][3] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 3), "Dil Rec Mass", 50, amg.fit_win(0), amg.fit_win(1));
+    AsymFitHistoRecByType[type][4] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 4), "Rec cos_cs",   50,-1., 1.);
+    AsymFitHistoRecByType[type][5] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 5), "Rec phi_cs",   50, 0., twoPi);
   }
 
   AsymFitHistoGenSmeared[0] = fs->make<TH1F>("AsymFitHistoGenSmeared0", "Dil Smeared Gen Pt",   50,  0., amg.max_pt());
@@ -311,90 +311,90 @@ void Zprime2muAsymmetry::bookFrameHistos() {
   */
 
   for (int j = 0; j < 2; j++) {
-    cosGJ[j][0] = fs->make<TH1F>(nameHist("cosGJ", j, 0).c_str(), "Cos theta in Gottfried-Jackson Frame",        100, -1., 1.);
-    cosGJ[j][1] = fs->make<TH1F>(nameHist("cosGJ", j, 1).c_str(), "Cos theta in tagged Gottfried-Jackson Frame", 100, -1., 1.);
-    cosCS[j][0] = fs->make<TH1F>(nameHist("cosCS", j, 0).c_str(), "Cos theta in Collins-Soper Frame",            100, -1., 1.);
-    cosCS[j][1] = fs->make<TH1F>(nameHist("cosCS", j, 1).c_str(), "Cos theta in analytic Collins-Soper Frame",	 100, -1., 1.);
-    cosBoost[j] = fs->make<TH1F>(nameHist("cosBoost", j).c_str(), "Cos theta in Boost Frame",                    100, -1., 1.);
-    cosW[j]     = fs->make<TH1F>(nameHist("cosW", j).c_str(),     "Cos theta in Wulz Frame",                     100, -1., 1.);
+    cosGJ[j][0] = fs->make<TH1F>(nameHist("cosGJ", j, 0), "Cos theta in Gottfried-Jackson Frame",        100, -1., 1.);
+    cosGJ[j][1] = fs->make<TH1F>(nameHist("cosGJ", j, 1), "Cos theta in tagged Gottfried-Jackson Frame", 100, -1., 1.);
+    cosCS[j][0] = fs->make<TH1F>(nameHist("cosCS", j, 0), "Cos theta in Collins-Soper Frame",            100, -1., 1.);
+    cosCS[j][1] = fs->make<TH1F>(nameHist("cosCS", j, 1), "Cos theta in analytic Collins-Soper Frame",	 100, -1., 1.);
+    cosBoost[j] = fs->make<TH1F>(nameHist("cosBoost", j), "Cos theta in Boost Frame",                    100, -1., 1.);
+    cosW[j]     = fs->make<TH1F>(nameHist("cosW", j),     "Cos theta in Wulz Frame",                     100, -1., 1.);
 
     if (j == 0 || j == 3)
-      rap_vs_cosCS[j] = fs->make<TH2F>(nameHist("rap_vs_cosCS", j).c_str(),
+      rap_vs_cosCS[j] = fs->make<TH2F>(nameHist("rap_vs_cosCS", j),
 				       "Rap vs Cos theta CS",
 				       50, -1., 1.,  50, -4., 4.);
 
-    FMassGJ[j][0] = fs->make<TH1F>(nameHist("FMassGJ", j, 0).c_str(), "F (M), GJ frame",        NBIN-1, DMBINS);
-    FMassGJ[j][1] = fs->make<TH1F>(nameHist("FMassGJ", j, 1).c_str(), "F (M), tagged GJ frame", NBIN-1, DMBINS);
-    FMassCS[j][0] = fs->make<TH1F>(nameHist("FMassCS", j, 0).c_str(), "F (M), CS frame",        NBIN-1, DMBINS);
-    FMassCS[j][1] = fs->make<TH1F>(nameHist("FMassCS", j, 1).c_str(), "F (M), CS anal frame",   NBIN-1, DMBINS);
-    FMassBoost[j] = fs->make<TH1F>(nameHist("FMassBoost", j).c_str(), "F (M), Boost frame",     NBIN-1, DMBINS);
-    FMassW[j]     = fs->make<TH1F>(nameHist("FMassW", j).c_str(),     "F (M), Wulz frame",      NBIN-1, DMBINS);
+    FMassGJ[j][0] = fs->make<TH1F>(nameHist("FMassGJ", j, 0), "F (M), GJ frame",        NBIN-1, DMBINS);
+    FMassGJ[j][1] = fs->make<TH1F>(nameHist("FMassGJ", j, 1), "F (M), tagged GJ frame", NBIN-1, DMBINS);
+    FMassCS[j][0] = fs->make<TH1F>(nameHist("FMassCS", j, 0), "F (M), CS frame",        NBIN-1, DMBINS);
+    FMassCS[j][1] = fs->make<TH1F>(nameHist("FMassCS", j, 1), "F (M), CS anal frame",   NBIN-1, DMBINS);
+    FMassBoost[j] = fs->make<TH1F>(nameHist("FMassBoost", j), "F (M), Boost frame",     NBIN-1, DMBINS);
+    FMassW[j]     = fs->make<TH1F>(nameHist("FMassW", j),     "F (M), Wulz frame",      NBIN-1, DMBINS);
 
-    BMassGJ[j][0] = fs->make<TH1F>(nameHist("BMassGJ", j, 0).c_str(), "B (M), GJ frame",        NBIN-1, DMBINS);
-    BMassGJ[j][1] = fs->make<TH1F>(nameHist("BMassGJ", j, 1).c_str(), "B (M), tagged GJ frame", NBIN-1, DMBINS);
-    BMassCS[j][0] = fs->make<TH1F>(nameHist("BMassCS", j, 0).c_str(), "B (M), CS frame",        NBIN-1, DMBINS);
-    BMassCS[j][1] = fs->make<TH1F>(nameHist("BMassCS", j, 1).c_str(), "B (M), CS anal frame",   NBIN-1, DMBINS);
-    BMassBoost[j] = fs->make<TH1F>(nameHist("BMassBoost", j).c_str(), "B (M), Boost frame",     NBIN-1, DMBINS);
-    BMassW[j]     = fs->make<TH1F>(nameHist("BMassW", j).c_str(),     "B (M), Wulz frame",      NBIN-1, DMBINS);
+    BMassGJ[j][0] = fs->make<TH1F>(nameHist("BMassGJ", j, 0), "B (M), GJ frame",        NBIN-1, DMBINS);
+    BMassGJ[j][1] = fs->make<TH1F>(nameHist("BMassGJ", j, 1), "B (M), tagged GJ frame", NBIN-1, DMBINS);
+    BMassCS[j][0] = fs->make<TH1F>(nameHist("BMassCS", j, 0), "B (M), CS frame",        NBIN-1, DMBINS);
+    BMassCS[j][1] = fs->make<TH1F>(nameHist("BMassCS", j, 1), "B (M), CS anal frame",   NBIN-1, DMBINS);
+    BMassBoost[j] = fs->make<TH1F>(nameHist("BMassBoost", j), "B (M), Boost frame",     NBIN-1, DMBINS);
+    BMassW[j]     = fs->make<TH1F>(nameHist("BMassW", j),     "B (M), Wulz frame",      NBIN-1, DMBINS);
 
-    AMassGJ[j][0] = fs->make<TH1F>(nameHist("AMassGJ", j, 0).c_str(), "A (M), GJ frame",        NBIN-1, DMBINS);
-    AMassGJ[j][1] = fs->make<TH1F>(nameHist("AMassGJ", j, 1).c_str(), "A (M), tagged GJ frame", NBIN-1, DMBINS);
-    AMassCS[j][0] = fs->make<TH1F>(nameHist("AMassCS", j, 0).c_str(), "A (M), CS frame",        NBIN-1, DMBINS);
-    AMassCS[j][1] = fs->make<TH1F>(nameHist("AMassCS", j, 1).c_str(), "A (M), analyt CS frame", NBIN-1, DMBINS);
-    AMassBoost[j] = fs->make<TH1F>(nameHist("AMassBoost", j).c_str(), "A (M), Boost frame",     NBIN-1, DMBINS);
-    AMassW[j]     = fs->make<TH1F>(nameHist("AMassW", j).c_str(),     "A (M), Wulz frame",      NBIN-1, DMBINS);
+    AMassGJ[j][0] = fs->make<TH1F>(nameHist("AMassGJ", j, 0), "A (M), GJ frame",        NBIN-1, DMBINS);
+    AMassGJ[j][1] = fs->make<TH1F>(nameHist("AMassGJ", j, 1), "A (M), tagged GJ frame", NBIN-1, DMBINS);
+    AMassCS[j][0] = fs->make<TH1F>(nameHist("AMassCS", j, 0), "A (M), CS frame",        NBIN-1, DMBINS);
+    AMassCS[j][1] = fs->make<TH1F>(nameHist("AMassCS", j, 1), "A (M), analyt CS frame", NBIN-1, DMBINS);
+    AMassBoost[j] = fs->make<TH1F>(nameHist("AMassBoost", j), "A (M), Boost frame",     NBIN-1, DMBINS);
+    AMassW[j]     = fs->make<TH1F>(nameHist("AMassW", j),     "A (M), Wulz frame",      NBIN-1, DMBINS);
 
-    FRapGJ[j][0] = fs->make<TH1F>(nameHist("FRapGJ", j, 0).c_str(), "F (Rap), GJ frame",        20, -2.5, 2.5);
-    FRapGJ[j][1] = fs->make<TH1F>(nameHist("FRapGJ", j, 1).c_str(), "F (Rap), tagged GJ frame", 20, -2.5, 2.5);
-    FRapCS[j][0] = fs->make<TH1F>(nameHist("FRapCS", j, 0).c_str(), "F (Rap), CS frame",        20, -2.5, 2.5);
-    FRapCS[j][1] = fs->make<TH1F>(nameHist("FRapCS", j, 1).c_str(), "F (Rap), CS anal frame",   20, -2.5, 2.5);
-    FRapBoost[j] = fs->make<TH1F>(nameHist("FRapBoost", j).c_str(), "F (Rap), Boost frame",     20, -2.5, 2.5);
-    FRapW[j]     = fs->make<TH1F>(nameHist("FRapW", j).c_str(),     "F (Rap), Wulz frame",      20, -2.5, 2.5);
+    FRapGJ[j][0] = fs->make<TH1F>(nameHist("FRapGJ", j, 0), "F (Rap), GJ frame",        20, -2.5, 2.5);
+    FRapGJ[j][1] = fs->make<TH1F>(nameHist("FRapGJ", j, 1), "F (Rap), tagged GJ frame", 20, -2.5, 2.5);
+    FRapCS[j][0] = fs->make<TH1F>(nameHist("FRapCS", j, 0), "F (Rap), CS frame",        20, -2.5, 2.5);
+    FRapCS[j][1] = fs->make<TH1F>(nameHist("FRapCS", j, 1), "F (Rap), CS anal frame",   20, -2.5, 2.5);
+    FRapBoost[j] = fs->make<TH1F>(nameHist("FRapBoost", j), "F (Rap), Boost frame",     20, -2.5, 2.5);
+    FRapW[j]     = fs->make<TH1F>(nameHist("FRapW", j),     "F (Rap), Wulz frame",      20, -2.5, 2.5);
 
-    BRapGJ[j][0] = fs->make<TH1F>(nameHist("BRapGJ", j, 0).c_str(), "B (Rap), GJ frame",        20, -2.5, 2.5);
-    BRapGJ[j][1] = fs->make<TH1F>(nameHist("BRapGJ", j, 1).c_str(), "B (Rap), tagged GJ frame", 20, -2.5, 2.5);
-    BRapCS[j][0] = fs->make<TH1F>(nameHist("BRapCS", j, 0).c_str(), "B (Rap), CS frame",        20, -2.5, 2.5);
-    BRapCS[j][1] = fs->make<TH1F>(nameHist("BRapCS", j, 1).c_str(), "B (Rap), CS anal frame",   20, -2.5, 2.5);
-    BRapBoost[j] = fs->make<TH1F>(nameHist("BRapBoost", j).c_str(), "B (Rap), Boost frame",     20, -2.5, 2.5);
-    BRapW[j]     = fs->make<TH1F>(nameHist("BRapW", j).c_str(),     "B (Rap), Wulz frame",      20, -2.5, 2.5);
+    BRapGJ[j][0] = fs->make<TH1F>(nameHist("BRapGJ", j, 0), "B (Rap), GJ frame",        20, -2.5, 2.5);
+    BRapGJ[j][1] = fs->make<TH1F>(nameHist("BRapGJ", j, 1), "B (Rap), tagged GJ frame", 20, -2.5, 2.5);
+    BRapCS[j][0] = fs->make<TH1F>(nameHist("BRapCS", j, 0), "B (Rap), CS frame",        20, -2.5, 2.5);
+    BRapCS[j][1] = fs->make<TH1F>(nameHist("BRapCS", j, 1), "B (Rap), CS anal frame",   20, -2.5, 2.5);
+    BRapBoost[j] = fs->make<TH1F>(nameHist("BRapBoost", j), "B (Rap), Boost frame",     20, -2.5, 2.5);
+    BRapW[j]     = fs->make<TH1F>(nameHist("BRapW", j),     "B (Rap), Wulz frame",      20, -2.5, 2.5);
 
-    ARapGJ[j][0] = fs->make<TH1F>(nameHist("ARapGJ", j, 0).c_str(), "A (y), GJ frame",        20, -2.5, 2.5);
-    ARapGJ[j][1] = fs->make<TH1F>(nameHist("ARapGJ", j, 1).c_str(), "A (y), tagged GJ frame", 20, -2.5, 2.5);
-    ARapCS[j][0] = fs->make<TH1F>(nameHist("ARapCS", j, 0).c_str(), "A (y), CS frame",        20, -2.5, 2.5);
-    ARapCS[j][1] = fs->make<TH1F>(nameHist("ARapCS", j, 1).c_str(), "A (y), analyt CS frame", 20, -2.5, 2.5);
-    ARapBoost[j] = fs->make<TH1F>(nameHist("ARapBoost", j).c_str(), "A (y), Boost frame",     20, -2.5, 2.5);
-    ARapW[j]     = fs->make<TH1F>(nameHist("ARapW", j).c_str(),     "A (y), Wulz frame",      20, -2.5, 2.5);
+    ARapGJ[j][0] = fs->make<TH1F>(nameHist("ARapGJ", j, 0), "A (y), GJ frame",        20, -2.5, 2.5);
+    ARapGJ[j][1] = fs->make<TH1F>(nameHist("ARapGJ", j, 1), "A (y), tagged GJ frame", 20, -2.5, 2.5);
+    ARapCS[j][0] = fs->make<TH1F>(nameHist("ARapCS", j, 0), "A (y), CS frame",        20, -2.5, 2.5);
+    ARapCS[j][1] = fs->make<TH1F>(nameHist("ARapCS", j, 1), "A (y), analyt CS frame", 20, -2.5, 2.5);
+    ARapBoost[j] = fs->make<TH1F>(nameHist("ARapBoost", j), "A (y), Boost frame",     20, -2.5, 2.5);
+    ARapW[j]     = fs->make<TH1F>(nameHist("ARapW", j),     "A (y), Wulz frame",      20, -2.5, 2.5);
 
-    FPseudGJ[j]    = fs->make<TH1F>(nameHist("FPseudGJ", j, 0).c_str(), "F (Pseud), tagged GJ frame", 50, -6., 6.);
-    FPseudCS[j]    = fs->make<TH1F>(nameHist("FPseudCS", j, 1).c_str(), "F (Pseud), CS frame",        50, -6., 6.);
-    FPseudBoost[j] = fs->make<TH1F>(nameHist("FPseudBoost", j).c_str(), "F (Pseud), Boost frame",     50, -6., 6.);
-    FPseudW[j]     = fs->make<TH1F>(nameHist("FPseudW", j).c_str(),     "F (Pseud), Wulz frame",      50, -6., 6.);
+    FPseudGJ[j]    = fs->make<TH1F>(nameHist("FPseudGJ", j, 0), "F (Pseud), tagged GJ frame", 50, -6., 6.);
+    FPseudCS[j]    = fs->make<TH1F>(nameHist("FPseudCS", j, 1), "F (Pseud), CS frame",        50, -6., 6.);
+    FPseudBoost[j] = fs->make<TH1F>(nameHist("FPseudBoost", j), "F (Pseud), Boost frame",     50, -6., 6.);
+    FPseudW[j]     = fs->make<TH1F>(nameHist("FPseudW", j),     "F (Pseud), Wulz frame",      50, -6., 6.);
 
-    BPseudGJ[j]    = fs->make<TH1F>(nameHist("BPseudGJ", j, 0).c_str(), "B (Pseud), tagged GJ frame", 50, -6., 6.);
-    BPseudCS[j]    = fs->make<TH1F>(nameHist("BPseudCS", j, 1).c_str(), "B (Pseud), CS frame",        50, -6., 6.);
-    BPseudBoost[j] = fs->make<TH1F>(nameHist("BPseudBoost", j).c_str(), "B (Pseud), Boost frame",     50, -6., 6.);
-    BPseudW[j]     = fs->make<TH1F>(nameHist("BPseudW", j).c_str(),     "B (Pseud), Wulz frame",      50, -6., 6.);
+    BPseudGJ[j]    = fs->make<TH1F>(nameHist("BPseudGJ", j, 0), "B (Pseud), tagged GJ frame", 50, -6., 6.);
+    BPseudCS[j]    = fs->make<TH1F>(nameHist("BPseudCS", j, 1), "B (Pseud), CS frame",        50, -6., 6.);
+    BPseudBoost[j] = fs->make<TH1F>(nameHist("BPseudBoost", j), "B (Pseud), Boost frame",     50, -6., 6.);
+    BPseudW[j]     = fs->make<TH1F>(nameHist("BPseudW", j),     "B (Pseud), Wulz frame",      50, -6., 6.);
 
-    FMBoostCut[j][0]= fs->make<TH1F>(nameHist("FMBoostCut", j, 0).c_str(), "F(mass), boost, fabs(rap)<0.4", NBIN-1, DMBINS);
-    FMBoostCut[j][1]= fs->make<TH1F>(nameHist("FMBoostCut", j, 1).c_str(), "F(mass), boost, 0.4<fabs(rap)<0.8", NBIN-1, DMBINS);
-    FMBoostCut[j][2]= fs->make<TH1F>(nameHist("FMBoostCut", j, 2).c_str(), "F(mass), boost, 0.8<fabs(rap)<2.4", NBIN-1, DMBINS);
-    FMBoostCut[j][3]= fs->make<TH1F>(nameHist("FMBoostCut", j, 3).c_str(), "F(mass), boost, fabs(pseudorap)<0.4", NBIN-1, DMBINS);
-    FMBoostCut[j][4]= fs->make<TH1F>(nameHist("FMBoostCut", j, 4).c_str(), "F(mass), boost, 0.4<fabs(pseudorap)<0.8", NBIN-1, DMBINS);
-    FMBoostCut[j][5]= fs->make<TH1F>(nameHist("FMBoostCut", j, 5).c_str(), "F(mass), boost, 0.8<fabs(pseudorap)<2.4", NBIN-1, DMBINS);
+    FMBoostCut[j][0]= fs->make<TH1F>(nameHist("FMBoostCut", j, 0), "F(mass), boost, fabs(rap)<0.4", NBIN-1, DMBINS);
+    FMBoostCut[j][1]= fs->make<TH1F>(nameHist("FMBoostCut", j, 1), "F(mass), boost, 0.4<fabs(rap)<0.8", NBIN-1, DMBINS);
+    FMBoostCut[j][2]= fs->make<TH1F>(nameHist("FMBoostCut", j, 2), "F(mass), boost, 0.8<fabs(rap)<2.4", NBIN-1, DMBINS);
+    FMBoostCut[j][3]= fs->make<TH1F>(nameHist("FMBoostCut", j, 3), "F(mass), boost, fabs(pseudorap)<0.4", NBIN-1, DMBINS);
+    FMBoostCut[j][4]= fs->make<TH1F>(nameHist("FMBoostCut", j, 4), "F(mass), boost, 0.4<fabs(pseudorap)<0.8", NBIN-1, DMBINS);
+    FMBoostCut[j][5]= fs->make<TH1F>(nameHist("FMBoostCut", j, 5), "F(mass), boost, 0.8<fabs(pseudorap)<2.4", NBIN-1, DMBINS);
 
-    BMBoostCut[j][0]= fs->make<TH1F>(nameHist("BMBoostCut", j, 0).c_str(), "B(mass), boost, fabs(rap)<0.4", NBIN-1, DMBINS);
-    BMBoostCut[j][1]= fs->make<TH1F>(nameHist("BMBoostCut", j, 1).c_str(), "B(mass), boost, 0.4<fabs(rap)<0.8", NBIN-1, DMBINS);
-    BMBoostCut[j][2]= fs->make<TH1F>(nameHist("BMBoostCut", j, 2).c_str(), "B(mass), boost, 0.8<fabs(rap)<2.4", NBIN-1, DMBINS);
-    BMBoostCut[j][3]= fs->make<TH1F>(nameHist("BMBoostCut", j, 3).c_str(), "B(mass), boost, fabs(pseudorap)<0.4", NBIN-1, DMBINS);
-    BMBoostCut[j][4]= fs->make<TH1F>(nameHist("BMBoostCut", j, 4).c_str(), "B(mass), boost, 0.4<fabs(pseudorap)<0.8", NBIN-1, DMBINS);
-    BMBoostCut[j][5]= fs->make<TH1F>(nameHist("BMBoostCut", j, 5).c_str(), "B(mass), boost, 0.8<fabs(pseudorap)<2.4", NBIN-1, DMBINS);
+    BMBoostCut[j][0]= fs->make<TH1F>(nameHist("BMBoostCut", j, 0), "B(mass), boost, fabs(rap)<0.4", NBIN-1, DMBINS);
+    BMBoostCut[j][1]= fs->make<TH1F>(nameHist("BMBoostCut", j, 1), "B(mass), boost, 0.4<fabs(rap)<0.8", NBIN-1, DMBINS);
+    BMBoostCut[j][2]= fs->make<TH1F>(nameHist("BMBoostCut", j, 2), "B(mass), boost, 0.8<fabs(rap)<2.4", NBIN-1, DMBINS);
+    BMBoostCut[j][3]= fs->make<TH1F>(nameHist("BMBoostCut", j, 3), "B(mass), boost, fabs(pseudorap)<0.4", NBIN-1, DMBINS);
+    BMBoostCut[j][4]= fs->make<TH1F>(nameHist("BMBoostCut", j, 4), "B(mass), boost, 0.4<fabs(pseudorap)<0.8", NBIN-1, DMBINS);
+    BMBoostCut[j][5]= fs->make<TH1F>(nameHist("BMBoostCut", j, 5), "B(mass), boost, 0.8<fabs(pseudorap)<2.4", NBIN-1, DMBINS);
 
-    AsymMBoostCut[j][0]= fs->make<TH1F>(nameHist("AsymMBoostCut", j, 0).c_str(), "A(mass), boost, abs(rap)<0.4", NBIN-1, DMBINS);
-    AsymMBoostCut[j][1]= fs->make<TH1F>(nameHist("AsymMBoostCut", j, 1).c_str(), "A(mass), boost, 0.4<abs(rap)<0.8", NBIN-1, DMBINS);
-    AsymMBoostCut[j][2]= fs->make<TH1F>(nameHist("AsymMBoostCut", j, 2).c_str(), "A(mass), boost, 0.8<abs(rap)<2.4", NBIN-1, DMBINS);
-    AsymMBoostCut[j][3]= fs->make<TH1F>(nameHist("AsymMBoostCut", j, 3).c_str(), "A(mass), boost, abs(pseudorap)<0.4", NBIN-1, DMBINS);
-    AsymMBoostCut[j][4]= fs->make<TH1F>(nameHist("AsymMBoostCut", j, 4).c_str(), "A(mass), boost, 0.4<abs(pseudorap)<0.8", NBIN-1, DMBINS);
-    AsymMBoostCut[j][5]= fs->make<TH1F>(nameHist("AsymMBoostCut", j, 5).c_str(), "A(mass), boost, 0.8<abs(pseudorap)<2.4", NBIN-1, DMBINS);
+    AsymMBoostCut[j][0]= fs->make<TH1F>(nameHist("AsymMBoostCut", j, 0), "A(mass), boost, abs(rap)<0.4", NBIN-1, DMBINS);
+    AsymMBoostCut[j][1]= fs->make<TH1F>(nameHist("AsymMBoostCut", j, 1), "A(mass), boost, 0.4<abs(rap)<0.8", NBIN-1, DMBINS);
+    AsymMBoostCut[j][2]= fs->make<TH1F>(nameHist("AsymMBoostCut", j, 2), "A(mass), boost, 0.8<abs(rap)<2.4", NBIN-1, DMBINS);
+    AsymMBoostCut[j][3]= fs->make<TH1F>(nameHist("AsymMBoostCut", j, 3), "A(mass), boost, abs(pseudorap)<0.4", NBIN-1, DMBINS);
+    AsymMBoostCut[j][4]= fs->make<TH1F>(nameHist("AsymMBoostCut", j, 4), "A(mass), boost, 0.4<abs(pseudorap)<0.8", NBIN-1, DMBINS);
+    AsymMBoostCut[j][5]= fs->make<TH1F>(nameHist("AsymMBoostCut", j, 5), "A(mass), boost, 0.8<abs(pseudorap)<2.4", NBIN-1, DMBINS);
   }
 
   // Resolution histograms
@@ -534,8 +534,8 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 
   double gen_cos_cs = 0., rec_cos_cs = 0., gen_phi_cs = 0., rec_phi_cs = 0.;
   
-  unsigned int n_gen = allDileptons[lgen].size();
-  unsigned int n_dil = allDileptons[lbest].size();
+  unsigned int n_gen = allDileptons[lGN].size();
+  unsigned int n_dil = allDileptons[lOP].size();
 
   int* type = new int[n_gen];
   for (unsigned i = 0; i < n_gen; i++) type[i] = -1;
@@ -609,7 +609,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 
     // Loop over all generated dimuons
     for (unsigned int i_dil = 0; i_dil < n_gen; i_dil++) {
-      const reco::CompositeCandidate& gen_dil = allDileptons[lgen].at(i_dil);
+      const reco::CompositeCandidate& gen_dil = allDileptons[lGN].at(i_dil);
       const reco::CandidateBaseRef& gen_mum = 
 	dileptonDaughterByCharge(gen_dil, -1);
       const reco::CandidateBaseRef& gen_mup = 
@@ -687,7 +687,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 	// dimuon information.  This will be used for obtaining sigmas used
 	// in convolutions for asymmetry fits.
 	if (n_dil == n_gen) {      
-	  const reco::CompositeCandidate& rec_dil = allDileptons[lbest].at(i_dil);
+	  const reco::CompositeCandidate& rec_dil = allDileptons[lOP].at(i_dil);
 	  const reco::CandidateBaseRef& rec_mum = 
 	    dileptonDaughterByCharge(rec_dil, -1);
 	  const reco::CandidateBaseRef& rec_mup = 
@@ -731,7 +731,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
   // Now loop over all reconstructed dimuons and store those to be fitted
   // (which lie inside desired reconstructed window).
   for (unsigned int i_dil = 0; i_dil < n_dil; i_dil++) {
-    const reco::CompositeCandidate& rec_dil = allDileptons[lbest].at(i_dil);
+    const reco::CompositeCandidate& rec_dil = allDileptons[lOP].at(i_dil);
     if (rec_dil.mass() > asymFitManager.fit_win(0) &&
 	rec_dil.mass() < asymFitManager.fit_win(1)) {
       if (nfit_used[0] == FIT_ARRAY_SIZE - 1)
@@ -820,13 +820,13 @@ void Zprime2muAsymmetry::fillFrameHistos() {
 
   for (int i_rec = 0; i_rec < 2; i_rec++) {
     // Trigger decision
-    if (i_rec <= l3 && !trigDecision.pass(i_rec))
+    if (i_rec <= lL3 && !trigDecision.pass(i_rec))
       break;
 
     //Look for an opposite-sign dilepton at this level of reconstruction.
 
     const reco::CompositeCandidateCollection& dileptons = 
-      i_rec == 0 ? allDileptons[lgen] : allDileptons[lbest];
+      i_rec == 0 ? allDileptons[lGN] : allDileptons[lOP];
     for (unsigned i_dil = 0; i_dil < dileptons.size(); i_dil++) {
       const reco::CompositeCandidate& dil = dileptons[i_dil];
       const reco::CandidateBaseRef& mum = dileptonDaughterByCharge(dil, -1);
@@ -975,13 +975,13 @@ void Zprime2muAsymmetry::fillFrameHistos() {
 	  rap_vs_cosCS[i_rec]->Fill(cos_cs[i_rec][i_dil], rap);
 
 	// A few resolution plots
-	if (i_rec > 0 && allDileptons[lgen].size() == allDileptons[lbest].size()) {
+	if (i_rec > 0 && allDileptons[lGN].size() == allDileptons[lOP].size()) {
 	  cosCSRes->Fill(cos_cs[i_rec][i_dil]-cos_cs[0][i_dil]);
 	  if (i_rec == 3) {
 	    cosCS3_diffsq_vs_cosCS0->Fill(cos_cs[0][i_dil],
                           (cos_cs[i_rec][i_dil]-cos_cs[0][i_dil])*
                           (cos_cs[i_rec][i_dil]-cos_cs[0][i_dil]));
-	    rap3_vs_rap0->Fill(allDileptons[lgen].at(i_dil).rapidity(), rap);
+	    rap3_vs_rap0->Fill(allDileptons[lGN].at(i_dil).rapidity(), rap);
 	  }
 	}
 	if (cos_cs[i_rec][i_dil] > 0.) {

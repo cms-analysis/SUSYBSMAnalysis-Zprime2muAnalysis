@@ -85,9 +85,8 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   for (int irec = 0; irec < MAX_LEVELS; irec++) {
     recLevelHelper.getLeptons(event, irec, allLeptons[irec]);
     recLevelHelper.getDileptons(event, irec, allDileptons[irec]);
-    sort(allDileptons[irec].begin(), allDileptons[irec].end(), reverse_mass_sort());
   }
-
+  
   // Dump the event if appropriate.
   if (verbosity >= VERBOSITY_SIMPLE)
     dumpEvent();
@@ -95,16 +94,16 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
 
 bool Zprime2muAnalysis::skipRecLevel(const int level) const {
   return
-    (level == lgen && !useGen && !useSim) ||
-    (!useTrigger && level >= l1 && level <= l3) ||
-    (!useReco && level >= lgmr) ||
-    (!useOtherMuonRecos && level > lgmr && level < lbest);
+    (level == lGN && !useGen && !useSim) ||
+    (!useTrigger && level >= lL1 && level <= lL3) ||
+    (!useReco && level >= lGR) ||
+    (!useOtherMuonRecos && level > lGR && level < lOP);
 }
 
 double Zprime2muAnalysis::resonanceMass(const reco::CompositeCandidate& dil) const {
   // Gen level muons don't have photons matched to them; we can take
   // the mass of the resonance directly from the MC record.
-  if (recLevelHelper.recLevel(dil) == lgen)
+  if (recLevelHelper.recLevel(dil) == lGN)
     return hardInteraction.resonance->mass();
 
   const reco::CandidateBaseRef& lep0 = dileptonDaughter(dil, 0);
@@ -132,24 +131,24 @@ void Zprime2muAnalysis::dumpEvent(const bool trigOnly) const {
   out << "\n******************************** Event " << eventNum
       << " (" << eventsDone << ")\n";
 
-  int imax = trigOnly ? l3 : lbest;
-  for (irec = trigOnly ? l1 : lgen; irec <= imax; irec++) {
-    if (irec >= lgmr)
+  int imax = trigOnly ? lL3 : lOP;
+  for (irec = trigOnly ? lL1 : lGN; irec <= imax; irec++) {
+    if (irec >= lGR)
       out << endl;
-    if (irec == lbest)
+    if (irec == lOP)
       out << "Best off-line muons: \n";
     for (imu = 0; imu < allLeptons[irec].size(); imu++)
       dumpLepton(out, allLeptons[irec][imu]);
     for (idil = 0; idil < allDileptons[irec].size(); idil++)
       dumpDilepton(out, allDileptons[irec][idil]);
-    if (irec == lgen)
+    if (irec == lGN)
       out << endl;
   }
   
   out << "\nDilepton masses at levels  ";
   for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
-    if (i_rec >= l1 && i_rec <= l3) continue;
-    out << " " << levelName(i_rec, true);
+    if (i_rec >= lL1 && i_rec <= lL3) continue;
+    out << " " << levelName(i_rec);
     if (i_rec < MAX_LEVELS-1) out << "     ";
   }
 
@@ -157,7 +156,7 @@ void Zprime2muAnalysis::dumpEvent(const bool trigOnly) const {
   for (unsigned int i_dil = 0; i_dil < maxDileptons; i_dil++) {
     out << "\n Dilepton # " << i_dil << "; dimu mass: ";
     for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
-      if (i_rec >= l1 && i_rec <= l3) continue;
+      if (i_rec >= lL1 && i_rec <= lL3) continue;
       if (allDileptons[i_rec].size() > i_dil)
 	out << allDileptons[i_rec][i_dil].mass();
       else
@@ -168,7 +167,7 @@ void Zprime2muAnalysis::dumpEvent(const bool trigOnly) const {
 
     out << "                res mass: ";
     for (int i_rec = 0; i_rec < MAX_LEVELS; i_rec++) {
-      if (i_rec >= l1 && i_rec <= l3)
+      if (i_rec >= lL1 && i_rec <= lL3)
 	continue;
       if (allDileptons[i_rec].size() > i_dil)
 	out << resonanceMass(allDileptons[i_rec][i_dil]);
@@ -191,12 +190,12 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
 
   const int level = recLevelHelper.recLevel(cand);
 
-  output << levelName(recLevelHelper.originalRecLevel(cand), true)
+  output << levelName(recLevelHelper.originalRecLevel(cand))
 	 << " #"        << setw(1) << recLevelHelper.id(cand)
 	 << " (-> GN #" << recLevelHelper.genMatchId(cand) << ")"
 	 << "  Q: "     << setw(2) << cand->charge();
 
-  if (level == lgen) {
+  if (level == lGN) {
     output << " Origin: " << setw(4) << motherId(cand)
 	   << " Phi: "    << setw(7) << setprecision(4) << cand->phi()
 	   << " Eta: "    << setw(7) << setprecision(4) << cand->eta()
@@ -204,7 +203,7 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
 	   << " P: "      << setw(7) << setprecision(5) << cand->p()
 	   << endl;
   }
-  else if (level == l1) {
+  else if (level == lL1) {
     int quality = -1;
     if (!doingElectrons) {
       const l1extra::L1MuonParticle& l1mu
@@ -218,7 +217,7 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
 	   << " P: "      << setw(7) << setprecision(5) << cand->p()
 	   << endl;
   }
-  else if (level == l2 || level == l3) {
+  else if (level == lL2 || level == lL3) {
     const reco::RecoCandidate& lep = toConcrete<reco::RecoCandidate>(cand);
     const reco::Track* tk = lep.track().get();
     output << " Phi: "      << setw(8) << setprecision(4) << cand->phi()

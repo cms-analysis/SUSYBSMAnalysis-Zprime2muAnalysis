@@ -94,8 +94,8 @@ void TriggerDecision::storeL1Decision(const edm::Event& event) {
     LogTrace("storeL1Decision") << out.str();
   }
 
-  trigWord[l1] = trigbits;
-  passTrig[l1] = trigbits != 0;
+  trigWord[lL1] = trigbits;
+  passTrig[lL1] = trigbits != 0;
 }
 
 void TriggerDecision::storeHLTDecision(const edm::Event& event) {
@@ -138,16 +138,16 @@ void TriggerDecision::storeHLTDecision(const edm::Event& event) {
   // TriggerObjects are in HLTDEBUG.) So, skip extracting L2 and L3
   // decisions separately for now.
 
-  trigWord[l2] = trigWord[l3] = hlt_trigbits;
-  passTrig[l2] = passTrig[l3] = hlt_trigbits != 0;
-  for (int l = l2; l <= l3; l++) 
+  trigWord[lL2] = trigWord[lL3] = hlt_trigbits;
+  passTrig[lL2] = passTrig[lL3] = hlt_trigbits != 0;
+  for (int l = lL2; l <= lL3; l++) 
     out << "  trigWord[l" << l << "]: " << trigWord[l] << endl;
 
   if (debug) LogTrace("storeHLTDecision") << out.str();
 }
 
 unsigned TriggerDecision::getWord(const int irec) const {
-  if (irec < 0 || irec > l3)
+  if (irec < 0 || irec > lL3)
     throw cms::Exception("trigWord")
       << "L" << irec << " trigger is unknown!\n";
 
@@ -158,7 +158,7 @@ bool TriggerDecision::pass(const int irec) const {
   // If we're ignoring trigger info, everything passes.
   if (!useTrigger) return true;
 
-  if (irec < 0 || irec > l3)
+  if (irec < 0 || irec > lL3)
     throw cms::Exception("passTrigger")
       << "L" << irec << " trigger is unknown!\n";
 
@@ -171,7 +171,7 @@ bool TriggerDecision::pass() const {
 
   unsigned int decision = 1;
 
-  for (int itrig = l1; itrig <= l3; itrig++)
+  for (int itrig = lL1; itrig <= lL3; itrig++)
     decision *= trigWord[itrig];
   
   return decision != 0;

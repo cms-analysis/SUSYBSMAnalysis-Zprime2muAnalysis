@@ -15,9 +15,9 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 // details about the number of rec levels stored, their names, etc.
-const int TRIG_LEVELS = 4; // Includes lgen == 0 as a placeholder.
-enum RecLevel { lgen, l1, l2, l3, lgmr, ltk, lfms, lpmr, lbest };
-const int MAX_LEVELS = lbest+1;
+const int TRIG_LEVELS = 4; // Includes lGN == 0 as a placeholder.
+enum RecLevel { lGN, lL1, lL2, lL3, lGR, lTK, lFS, lPR, lOP };
+const int MAX_LEVELS = lOP+1;
 
 // The names of the defined rec levels, as well as shortened versions.
 const std::string levelNames[MAX_LEVELS] = {
@@ -33,7 +33,7 @@ void checkRecLevel(const int level, const char* name);
 
 // Return either the short or the regular version of rec level's
 // name.
-const std::string& levelName(const int rec, bool shortVersion=false);
+const std::string& levelName(const int rec, bool shortVersion=true);
 
 class RecLevelHelper {
  public:
@@ -62,18 +62,18 @@ class RecLevelHelper {
   int id(const reco::CandidateBaseRef& cand) const;
 
   // Translate the Ref's product id to one of our rec levels, using
-  // the cached map. If the rec level turns out to be lbest, return
+  // the cached map. If the rec level turns out to be lOP, return
   // the original rec level using the stored map.
   int recLevel(const reco::CandidateBaseRef& cand) const;
 
   // Get the rec level for a dilepton, making sure that either all the
-  // daughter leptons have the same rec level, or else returning lbest,
+  // daughter leptons have the same rec level, or else returning lOP,
   // (since a "best" dilepton can be made up of leptons at different rec
   // levels).
   int recLevel(const reco::CompositeCandidate& cand) const;
 
   // Find the original rec level of cand; useful for "best" leptons to
-  // find which of ltk, lfms, lpmr the cocktail chose.
+  // find which of lTK, lFS, lPR the cocktail chose.
   int originalRecLevel(const reco::CandidateBaseRef& cand) const;
 
   // Get the four-vector of the closest photon found for cand.

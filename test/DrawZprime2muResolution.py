@@ -72,7 +72,45 @@ for var, title in [('Eta', '#eta'), ('Phi', '#phi'), ('Pt', 'pT')]:
                 h.SetMinimum(0.50)
                 h.SetMaximum(1.01)
                 h.Draw('hist e')
+
+def draw_efficiency(num_name, den_name, min=0.7, max=1.02):
+    hnum = histos.Get(num_name)
+    hden = histos.Get(den_name)
+    if None not in (hnum, hden):
+        h = hnum.Clone()
+        h.Divide(hnum, hden, 1, 1, 'B')
+        h.SetMinimum(min)
+        h.SetMaximum(max)
+        h.Draw('hist e')
     
+# Total - acceptance, trigger and "off-line" reconstruction - efficiency.
+pad = psd.new_page('Dilepton total rec. efficiency', (2,3))
+for rec in xrange(4,9):
+    pad.cd(rec-3).SetGrid(1)
+    draw_efficiency('DilRecEffVsMass%i1' % rec, 'DilRecEffVsMass00', min=0.5)
+
+# "Off-line" efficiency to find at least two muons, relative to events
+# in acceptance and accepted by the L1/HLT triggers.
+pad = psd.new_page('Two-lepton offline rec. efficiency', (2,3))
+for rec in xrange(4,9):
+    pad.cd(rec-3).SetGrid(1)
+    draw_efficiency('DilRecEffVsMass%i0' % rec, 'DilRecEffVsMass01')
+
+# "Off-line" efficiency to find opposite-sign dimuon, relative to
+# events in acceptance and accepted by the L1/HLT triggers, and with
+# two muons passing cuts.
+pad = psd.new_page('Dilepton w/ cuts offline rec. efficiency', (2,3))
+for rec in xrange(4,9):
+    pad.cd(rec-3).SetGrid(1)
+    draw_efficiency('DilRecEffVsMass%i1' % rec, 'DilRecEffVsMass%i2' % rec)
+
+# "Off-line" efficiency to find opposite-sign dimuon, relative to
+# events in acceptance and accepted by the L1/HLT triggers.
+pad = psd.new_page('Dilepton offline rec. efficiency', (2,3))
+for rec in xrange(4,9):
+    pad.cd(rec-3).SetGrid(1)
+    draw_efficiency('DilRecEffVsMass%i1' % rec, 'DilRecEffVsMass01')
+
 psd.rec_level_page(histos, 'no_gen', 'LeptonEtaDiff',  'Lepton #eta resolution')
 psd.rec_level_page(histos, 'no_gen', 'LeptonPhiDiff',  'Lepton #phi resolution')
 psd.rec_level_page(histos, 'no_gen', 'LeptonPtDiff',   'Lepton #DeltapT')

@@ -3,7 +3,7 @@
   \brief    Calculates and plots lepton/dilepton resolutions and efficiencies.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muResolution.cc,v 1.32 2008/12/10 00:06:11 tucker Exp $
+  \version  $Id: Zprime2muResolution.cc,v 1.33 2008/12/10 03:15:02 tucker Exp $
 */
 
 #include "TString.h"
@@ -129,6 +129,17 @@ void Zprime2muResolution::bookEfficiencyHistos() {
     EffVsEta[rec]->Sumw2();
     EffVsPhi[rec]->Sumw2();
     EffVsPt[rec]->Sumw2();
+  }
+
+  DilRecEffVsMass[0][0] = fs->make<TH1F>("DilRecEffVsMass00", "Gen mass, all",           27, 0, maxTrigMass);
+  DilRecEffVsMass[0][1] = fs->make<TH1F>("DilRecEffVsMass01", "Gen mass, in acceptance", 27, 0, maxTrigMass);
+  const TString dil_type[3] = { "2 l", "dil", "2 l, w/ cuts" };
+  for (int rec = lGR; rec < MAX_LEVELS; ++rec) {
+    TString level(levelName(rec));
+    for (int i = 0; i < 3; ++i) {
+      DilRecEffVsMass[rec][i] = fs->make<TH1F>(nameHist("DilRecEffVsMass", rec, i), "Gen mass, " + level + ", " + dil_type[i], 27, 0, maxTrigMass);
+      DilRecEffVsMass[rec][i]->Sumw2();
+    }
   }
 }
 
@@ -256,6 +267,28 @@ void Zprime2muResolution::fillTriggerEfficiencyHistos() {
       for (int i = 0; i < 3; ++i)
 	if (accept[i])
 	  TrigEffVsDilMass[rec][i]->Fill(gen_mass);
+
+  DilRecEffVsMass[lGN][0]->Fill(gen_mass);
+  if (trigDecision.pass()) {
+    if (accept[1])
+      DilRecEffVsMass[lGN][1]->Fill(gen_mass);
+
+    for (int rec = lGR; rec < MAX_LEVELS; ++rec) {
+      if (allLeptons[rec].size() > 1)
+	DilRecEffVsMass[rec][0]->Fill(gen_mass);
+      if (allDileptons[rec].size() > 0)
+	DilRecEffVsMass[rec][1]->Fill(gen_mass);
+      
+      unsigned passCut = 0;
+      for (reco::CandidateBaseRefVector::const_iterator lep = allLeptons[rec].begin(); lep != allLeptons[rec].end(); lep++) {
+	if (!cutHelper.leptonIsCut(**lep)) passCut++;
+	if (passCut > 1) break;
+      }
+
+      if (passCut > 1)
+	DilRecEffVsMass[rec][2]->Fill(gen_mass);
+    }
+  }      
 }
 
 void Zprime2muResolution::fillDileptonEfficiencyHistos() {

@@ -59,6 +59,7 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   TH1F* EffVsPt[MAX_LEVELS];
 
   TH1F* TrigEffVsDilMass[TRIG_LEVELS][3];
+  TH1F* DilRecEffVsMass[MAX_LEVELS][3];
 
   TH1F* LeptonEtaDiff[MAX_LEVELS];
   TH1F* LeptonPhiDiff[MAX_LEVELS];

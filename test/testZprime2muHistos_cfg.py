@@ -8,4 +8,4 @@ files = [
     ]
 
 process = makeZprime2muAnalysisProcess(files, skipPAT=True, disableElectrons=True)
-attachHistos(process, verbosity=2)
+attachHistos(process, verbosity=2) #, leptonsFromDileptons=True)

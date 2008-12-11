@@ -3,7 +3,7 @@
   \brief    Plots basic lepton and dilepton quantities for each rec level.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muHistos.cc,v 1.2 2008/12/10 00:01:14 tucker Exp $
+  \version  $Id: Zprime2muHistos.cc,v 1.3 2008/12/10 03:15:02 tucker Exp $
 */
 
 #include "TString.h"
@@ -22,6 +22,8 @@
 using namespace std;
 
 Zprime2muHistos::Zprime2muHistos(const edm::ParameterSet& config) : Zprime2muAnalysis(config) {
+  leptonsFromDileptons = config.getParameter<bool>("leptonsFromDileptons");
+
   // Get the parameters specific to the data sample on which we are running.
   string dataSet = config.getParameter<string>("dataSet");
   edm::ParameterSet dataSetConfig = config.getParameter<edm::ParameterSet>(dataSet);
@@ -42,8 +44,10 @@ void Zprime2muHistos::bookTriggerHistos() {
   for (int rec = lL1; rec <= lL3; ++rec) {
     TString level(levelName(rec));
 
+    // Trigger bits (see TriggerDecision.cc for definition).
     TriggerBits[rec] = fs->make<TH1F>(nameHist("TriggerBits", rec), level + " trigger bits", 8, 0, 8);
     
+    // Number of leptons per event for events that passed/failed the trigger.
     NLeptonsTriggered[rec] = fs->make<TH1F>(nameHist("NLeptonsTriggered", rec), "# leptons/triggered-event, " + level, 10, 0, 10);
     NLeptonsFailed[rec]    = fs->make<TH1F>(nameHist("NLeptonsFailed",    rec), "# leptons/failed-event, "    + level, 10, 0, 10);
   }
@@ -120,10 +124,10 @@ void Zprime2muHistos::bookDileptonHistos() {
     // Dilepton momenta: p, p_T, p_z.
     DileptonPt[rec] = fs->make<TH1F>(nameHist("DileptonPt", rec), level + " dil. pT", 100,  0,        0.5*peakMass);
     DileptonPz[rec] = fs->make<TH1F>(nameHist("DileptonPz", rec), level + " dil. pz", 100,  0, 1000 + upperMassWin);
-    DileptonP[rec]  = fs->make<TH1F>(nameHist("DileptonP",  rec), level + " dil. p",     100,  0, 1000 + upperMassWin);
+    DileptonP[rec]  = fs->make<TH1F>(nameHist("DileptonP",  rec), level + " dil. p",  100,  0, 1000 + upperMassWin);
 
     // Dilepton momenta versus pseudorapidity.
-    DileptonPVsEta[rec]  = fs->make<TProfile>(nameHist("DileptonPVsEta",  rec), level + " dil. p vs. #eta",     100, -6, 6);
+    DileptonPVsEta[rec]  = fs->make<TProfile>(nameHist("DileptonPVsEta",  rec), level + " dil. p vs. #eta",  100, -6, 6);
     DileptonPtVsEta[rec] = fs->make<TProfile>(nameHist("DileptonPtVsEta", rec), level + " dil. pT vs. #eta", 100, -6, 6);
 
     // Dilepton invariant mass.
@@ -138,7 +142,7 @@ void Zprime2muHistos::bookDileptonHistos() {
 
     // Plots comparing the daughter lepton momenta.
     DileptonDeltaPt[rec]  = fs->make<TH1F>(nameHist("DileptonDeltaPt",  rec), level + " dil. |pT^{1}| - |pT^{2}|",                100, 0, 100);
-    DileptonDeltaP[rec]   = fs->make<TH1F>(nameHist("DileptonDeltaP",   rec), level + " dil. |p^{1}| - |p^{2}|",                        100, 0, 100);
+    DileptonDeltaP[rec]   = fs->make<TH1F>(nameHist("DileptonDeltaP",   rec), level + " dil. |p^{1}| - |p^{2}|",                  100, 0, 100);
     DileptonPtErrors[rec] = fs->make<TH2F>(nameHist("DileptonPtErrors", rec), level + " dil. #sigma_{pT}^{1} v. #sigma_{pT}^{2}", 100, 0, 100, 100, 0, 100);
   }
 }
@@ -247,17 +251,29 @@ void Zprime2muHistos::fillDileptonDaughterHistos(const reco::CompositeCandidate&
   }
 }
 
+void Zprime2muHistos::fillLeptonHistos(const reco::CandidateBaseRef& lep, const int rec) {
+  fillBasicLeptonHistos(lep, rec);
+  
+  const reco::Muon* muon = toConcretePtr<reco::Muon>(lep);
+  if (muon) fillOfflineMuonHistos(muon, rec);
+  
+  const reco::GsfElectron* electron = toConcretePtr<reco::GsfElectron>(lep);
+  if (electron) fillOfflineElectronHistos(electron, rec);
+}
+
 void Zprime2muHistos::fillLeptonHistos(const int rec) {
   NLeptons[rec]->Fill(allLeptons[rec].size());
 
-  for (reco::CandidateBaseRefVector::const_iterator lep = allLeptons[rec].begin(); lep != allLeptons[rec].end(); ++lep) {
-    fillBasicLeptonHistos(*lep, rec);
-  
-    const reco::Muon* muon = toConcretePtr<reco::Muon>(*lep);
-    if (muon) fillOfflineMuonHistos(muon, rec);
-
-    const reco::GsfElectron* electron = toConcretePtr<reco::GsfElectron>(*lep);
-    if (electron) fillOfflineElectronHistos(electron, rec);
+  if (leptonsFromDileptons) {
+    // Only fill lepton histos from the leptons that made it into dileptons.
+    for (reco::CompositeCandidateCollection::const_iterator dil = allDileptons[rec].begin(); dil != allDileptons[rec].end(); ++dil)
+      for (unsigned i = 0; i < dil->numberOfDaughters(); ++i)
+	fillLeptonHistos(dileptonDaughter(*dil, i), rec);
+  }
+  else {
+    // Fill lepton histos from all leptons.
+    for (reco::CandidateBaseRefVector::const_iterator lep = allLeptons[rec].begin(); lep != allLeptons[rec].end(); ++lep)
+      fillLeptonHistos(*lep, rec);
   }
 }
 

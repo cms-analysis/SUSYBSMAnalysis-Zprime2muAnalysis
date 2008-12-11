@@ -10,5 +10,7 @@ files = [
 
 process = makeZprime2muAnalysisProcess(files, skipPAT=True, disableElectrons=True)
 
-attachHistos(process) # Run Histos, too.
-attachResolution(process, verbosity=2) #, dataSet='DY200')
+lepsFromDils = False
+
+attachHistos(process, leptonsFromDileptons=lepsFromDils) # Run Histos, too.
+attachResolution(process, verbosity=2, leptonsFromDileptons=lepsFromDils)

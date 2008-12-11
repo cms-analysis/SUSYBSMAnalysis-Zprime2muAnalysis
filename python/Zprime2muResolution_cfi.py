@@ -7,7 +7,8 @@ def attachResolution(process, **kwargs):
         'Zprime2muResolution',
         process.Zprime2muAnalysisCommon,
         dataSets,
-        dataSet = cms.string('Zp1000'),
+        dataSet = cms.string('Zp1000'),        # Which set of parameters from dataSets to use.
+        leptonsFromDileptons = cms.bool(False) # Whether only to fill the lepton plots from leptons that make it into dileptons.
         )
 
     process.analysisResolution = cms.Path(module)

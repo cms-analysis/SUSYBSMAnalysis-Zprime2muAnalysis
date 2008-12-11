@@ -7,7 +7,7 @@ sys.argv.remove('-b') # and don't mess up sys.argv
 class PSDrawer:
     def __init__(self, filename, datePages=False):
         gROOT.SetStyle("Plain");
-        #gStyle.SetFillColor(0);
+        gStyle.SetFillColor(0);
         if datePages:
             gStyle.SetOptDate();
         gStyle.SetOptStat(111111);
@@ -18,7 +18,12 @@ class PSDrawer:
         gStyle.SetMarkerStyle(8);
         gStyle.SetGridStyle(3);
         gStyle.SetPaperSize(TStyle.kA4);
-
+        gStyle.SetStatW(0.25);        # width of statistics box; default is 0.19
+        gStyle.SetStatFormat("6.4g"); # leave default format for now
+        gStyle.SetTitleFont(52,"XY"); # italic font for axis
+        gStyle.SetLabelFont(52,"XY"); # italic font for axis labels
+        gStyle.SetStatFont(52);       # italic font for stat. box
+  
         self.canvas = TCanvas('c1','',0,0,500,640)
         self.ps = TPostScript(filename, 111)
         self.filename = filename

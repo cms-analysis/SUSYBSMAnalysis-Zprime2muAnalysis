@@ -3,7 +3,7 @@
   \brief    Calculates and plots lepton/dilepton resolutions and efficiencies.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muResolution.cc,v 1.33 2008/12/10 03:15:02 tucker Exp $
+  \version  $Id: Zprime2muResolution.cc,v 1.34 2008/12/10 17:29:26 tucker Exp $
 */
 
 #include "TString.h"
@@ -19,6 +19,8 @@
 using namespace std;
 
 Zprime2muResolution::Zprime2muResolution(const edm::ParameterSet& config) : Zprime2muAnalysis(config) {
+  leptonsFromDileptons = config.getParameter<bool>("leptonsFromDileptons");
+
   // Get the parameters specific to the data sample on which we are running.
   string dataSet = config.getParameter<string>("dataSet");
   edm::ParameterSet dataSetConfig = config.getParameter<edm::ParameterSet>(dataSet);
@@ -396,18 +398,30 @@ void Zprime2muResolution::fillDileptonMassResolution(const reco::CompositeCandid
   ResonanceMassResVMass  [rec]->Fill(gen_res_mass, (res_mass - gen_res_mass)/gen_res_mass);
 }
 
-void Zprime2muResolution::fillLeptonHistos(const int rec) {
-  for (reco::CandidateBaseRefVector::const_iterator lep = allLeptons[rec].begin(); lep != allLeptons[rec].end(); ++lep) {
-    const reco::CandidateBaseRef& gen_lep = recLevelHelper.matchGenLepton(*lep);
+void Zprime2muResolution::fillLeptonHistos(const reco::CandidateBaseRef& lep, const int rec) {
+  const reco::CandidateBaseRef& gen_lep = recLevelHelper.matchGenLepton(lep);
 
-    if (gen_lep.isNonnull()) {
-      fillLeptonResolution(gen_lep, *lep, rec);
+  if (gen_lep.isNonnull()) {
+    fillLeptonResolution(gen_lep, lep, rec);
 
-      if (rec >= lGR) {
-	fillLeptonExtraMomentumResolution(gen_lep, *lep, rec);
-	fillChargeResolution(gen_lep, *lep, rec);
-      }
+    if (rec >= lGR) {
+      fillLeptonExtraMomentumResolution(gen_lep, lep, rec);
+      fillChargeResolution(gen_lep, lep, rec);
     }
+  }
+}
+
+void Zprime2muResolution::fillLeptonHistos(const int rec) {
+  if (leptonsFromDileptons) {
+    // Only fill lepton histos from the leptons that made it into dileptons.
+    for (reco::CompositeCandidateCollection::const_iterator dil = allDileptons[rec].begin(); dil != allDileptons[rec].end(); ++dil)
+      for (unsigned i = 0; i < dil->numberOfDaughters(); ++i)
+	fillLeptonHistos(dileptonDaughter(*dil, i), rec);
+  }
+  else {
+    // Fill lepton histos from all leptons.
+    for (reco::CandidateBaseRefVector::const_iterator lep = allLeptons[rec].begin(); lep != allLeptons[rec].end(); ++lep)
+      fillLeptonHistos(*lep, rec);
   }
 }
 

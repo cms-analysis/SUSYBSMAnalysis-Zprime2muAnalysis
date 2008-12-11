@@ -35,10 +35,12 @@ class Zprime2muHistos : public Zprime2muAnalysis {
   void fillBasicDileptonHistos(const reco::CompositeCandidate& dil, const int rec);
   void fillDileptonDaughterHistos(const reco::CompositeCandidate& dil, const int rec);
 
+  void fillLeptonHistos(const reco::CandidateBaseRef& lep, const int rec);
   void fillLeptonHistos(const int rec);
   void fillDileptonHistos(const int rec);
 
   // Parameters specified in the config file.
+  bool   leptonsFromDileptons;
   double peakMass;
   double lowerMassWin;
   double upperMassWin;

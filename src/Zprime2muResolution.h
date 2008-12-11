@@ -39,10 +39,12 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   void fillChargeResolution(const reco::CandidateBaseRef& gen_lep, const reco::CandidateBaseRef& lep, const int rec);
   void fillDileptonMassResolution(const reco::CompositeCandidate& gen_dil, const reco::CompositeCandidate& dil, const int rec);
 
+  void fillLeptonHistos(const reco::CandidateBaseRef& lep, const int rec);
   void fillLeptonHistos(const int rec);
   void fillDileptonHistos(const int rec);
 
   // Parameters specified in the config file.
+  bool   leptonsFromDileptons;
   double peakMass;
   double lowerMassWin;
   double upperMassWin;

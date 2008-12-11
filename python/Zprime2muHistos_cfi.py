@@ -7,7 +7,8 @@ def attachHistos(process, **kwargs):
         'Zprime2muHistos',
         process.Zprime2muAnalysisCommon,
         dataSets,
-        dataSet = cms.string('Zp1000'),
+        dataSet = cms.string('Zp1000'),        # Which set of parameters from dataSets to use.
+        leptonsFromDileptons = cms.bool(False) # Whether only to fill the lepton plots from leptons that make it into dileptons.
         )
 
     process.analysisHistos = cms.Path(module)

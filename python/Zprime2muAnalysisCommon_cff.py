@@ -307,33 +307,30 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             'CompositeTrajectoryFilterESProducer', 'NavigationSetter',
             'SiStripPedestalsFakeESSource', 'TrajectoryFilterESProducer',
             'ZDC', 'ZdcHardcodeGeometry', 'RunLumiMerging',
-            'TrackAssociator',#'RecoVertex/PrimaryVertexProducer',
+            'TrackAssociator', #'RecoVertex/PrimaryVertexProducer',
             'ConversionTrackCandidateProducer','GsfTrackProducer',
             'PhotonProducer','TrackProducerWithSCAssociation',
             'PartonSelector', 'JetPartonMatcher', 'Alignments',
             'L1GtConfigProducers', 'SiStripQualityESProducer',
-            'LikelihoodPdf', 'HemisphereAlgo', 'LikelihoodPdfProduct'
+            'LikelihoodPdf', 'HemisphereAlgo', 'LikelihoodPdfProduct',
+            'ObjectResolutionCalc'
             ),
         Zprime = cms.untracked.PSet(
-            threshold    = cms.untracked.string('DEBUG'),
+            threshold    = cms.untracked.string('INFO'),
             lineLength   = cms.untracked.int32(132),
             noLineBreaks = cms.untracked.bool(True)
-            ),
-        debugModules = cms.untracked.vstring(
-            'bestMuons', 'Zprime2muAnalysis', 'Zprime2muHistos', 'Zprime2muResolution',
-            'Zprime2muAsymmetry', 'Zprime2muMassReach'
             )
         )
 
     if not __debug:
         process.MessageLogger.Zprime.extension = cms.untracked.string('.out')
+        setattr(process.MessageLogger.Zprime, 'FwkReport', cms.untracked.PSet(reportEvery = cms.untracked.int32(500)))
         
         # Instead of line after line of limit psets in Zprime above, set
         # them all here.
         limitZero = cms.untracked.PSet(limit = cms.untracked.int32(0))
         for cat in process.MessageLogger.categories:
             setattr(process.MessageLogger.Zprime, cat, limitZero)
-        setattr(process.MessageLogger.Zprime, 'FwkReport', cms.untracked.PSet(reportEvery = cms.untracked.int32(500)))
 
     process.TFileService = cms.Service(
         'TFileService',

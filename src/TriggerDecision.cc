@@ -12,14 +12,13 @@
 
 using namespace std;
 
-void TriggerDecision::init(const edm::ParameterSet& config,
-			   const bool dbg) {
+void TriggerDecision::init(const edm::ParameterSet& config, const bool dbg) {
   debug = dbg;
 
-  doingElectrons     = config.getParameter<bool>("doingElectrons");
-  useTrigger         = config.getParameter<bool>("useTrigger");
-  l1GtObjectMap      = config.getParameter<edm::InputTag>("l1GtObjectMap");
-  hltResults         = config.getParameter<edm::InputTag>("hltResults");
+  doingElectrons = config.getParameter<bool>("doingElectrons");
+  useTrigger     = config.getParameter<bool>("useTrigger");
+  l1GtObjectMap  = config.getParameter<edm::InputTag>("l1GtObjectMap");
+  hltResults     = config.getParameter<edm::InputTag>("hltResults");
 
   if (useTrigger) {
     if (!doingElectrons) {
@@ -91,7 +90,7 @@ void TriggerDecision::storeL1Decision(const edm::Event& event) {
 
   if (debug) {
     out << " L1 official trigbits: " << trigbits;
-    LogTrace("storeL1Decision") << out.str();
+    edm::LogVerbatim("storeL1Decision") << out.str();
   }
 
   trigWord[lL1] = trigbits;
@@ -143,7 +142,7 @@ void TriggerDecision::storeHLTDecision(const edm::Event& event) {
   for (int l = lL2; l <= lL3; l++) 
     out << "  trigWord[l" << l << "]: " << trigWord[l] << endl;
 
-  if (debug) LogTrace("storeHLTDecision") << out.str();
+  if (debug) edm::LogVerbatim("storeHLTDecision") << out.str();
 }
 
 unsigned TriggerDecision::getWord(const int irec) const {

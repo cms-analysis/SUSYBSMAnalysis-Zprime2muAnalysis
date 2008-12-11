@@ -182,7 +182,7 @@ void Zprime2muAnalysis::dumpEvent(const bool trigOnly) const {
   }
 
   out << "\n********************************\n\n";
-  LogTrace("dumpEvent") << out.str();
+  edm::LogVerbatim("dumpEvent") << out.str();
 }
 
 void Zprime2muAnalysis::dumpLepton(ostream& output,

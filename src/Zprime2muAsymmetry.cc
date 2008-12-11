@@ -854,7 +854,7 @@ void Zprime2muAsymmetry::fillFrameHistos() {
 	  else if (i_part == 1) out << setw(4) << mup->charge() << "  | ";
 	  else out << "     | ";
 	  out << endl << tempV;
-	  LogTrace("fillFrameHistos") << out.str();
+	  edm::LogVerbatim("fillFrameHistos") << out.str();
 	}
       }
 
@@ -896,7 +896,7 @@ void Zprime2muAsymmetry::fillFrameHistos() {
 	  ((pb_star.Vect().Mag())*(pmum_star).Vect().Mag());
 
 	if (debug) 
-	  LogTrace("fillFrameHistos")
+	  edm::LogVerbatim("fillFrameHistos")
 	    << "Cosine theta^* in Gottfried-Jackson frame: " << cos_gj;
 	// fill Cosin theta histogram and forward and backward mass histos.
 	cosGJ[i_rec][0]->Fill(cos_gj);
@@ -920,7 +920,7 @@ void Zprime2muAsymmetry::fillFrameHistos() {
 	cos_gj_tag = (pb_star.Vect()*pmum_star.Vect())/
 	  ((pb_star.Vect().Mag())*(pmum_star).Vect().Mag());
 	if (debug)
-	  LogTrace("fillFrameHistos")
+	  edm::LogVerbatim("fillFrameHistos")
 	    << "Cos theta^* in tagged Gottfried-Jackson frame: " 
 	    << cos_gj_tag;
 
@@ -965,7 +965,7 @@ void Zprime2muAsymmetry::fillFrameHistos() {
 	  (temp3.Mag()*pmum_star.Vect().Mag());
 
 	if (debug)
-	  LogTrace("fillFrameHistos")
+	  edm::LogVerbatim("fillFrameHistos")
 	    << "Cosine theta^* in Collins-Soper frame: " 
 	    << cos_cs[i_rec][i_dil];
 
@@ -1007,7 +1007,7 @@ void Zprime2muAsymmetry::fillFrameHistos() {
 	if (vdil.Pz() != 0.)
 	  cos_cs_anal = (cos_cs_anal*vdil.Pz())/abs(vdil.Pz());
 	if (debug)
-	  LogTrace("fillFrameHistos")
+	  edm::LogVerbatim("fillFrameHistos")
 	    << "Cosine theta^* in Collins-Soper analytic frame: "
 	    << cos_cs_anal;
 
@@ -1031,7 +1031,7 @@ void Zprime2muAsymmetry::fillFrameHistos() {
 	cos_boost = (vdil.Vect()*pmum_star.Vect())/
 	  (vdil.Vect().Mag()*pmum_star.Vect().Mag());
 	if (debug)
-	  LogTrace("fillFrameHistos")
+	  edm::LogVerbatim("fillFrameHistos")
 	    << "Cosine theta^* in Baur-boost frame: " << cos_boost;
 
 	// Again fill the histos.
@@ -1096,7 +1096,7 @@ void Zprime2muAsymmetry::fillFrameHistos() {
 	    (vdil.Vect().Mag()*pmup_star.Vect().Mag());
 	}
 	if (debug)
-	  LogTrace("fillFrameHistos")
+	  edm::LogVerbatim("fillFrameHistos")
 	    << "Cosine theta^* in Wulz frame: " << cos_wulz;
 	cosW[i_rec]->Fill(cos_wulz);
 	if (cos_wulz > 0) {
@@ -1366,7 +1366,7 @@ void Zprime2muAsymmetry::fillParamHistos(bool fakeData) {
     genParticles.getByLabel(ev, "genParticles");
 
     if (verbosity >= VERBOSITY_SIMPLE && jentry % 1000 == 0)
-      LogTrace("fillParamHistos") << "fillParamHistos: " << jentry
+      edm::LogVerbatim("fillParamHistos") << "fillParamHistos: " << jentry
 				  << " events processed";
 
     // Remove effect from internal brem
@@ -1472,7 +1472,7 @@ void Zprime2muAsymmetry::fillParamHistos(bool fakeData) {
   }
   
   if (maxParamEvents < 0) maxParamEvents = jentry;
-  LogTrace("fillParamHistos") << "fillParamHistos: " << jentry
+  edm::LogVerbatim("fillParamHistos") << "fillParamHistos: " << jentry
 			      << " events processed";
 }
 
@@ -2172,7 +2172,7 @@ void Zprime2muAsymmetry::evalLikelihoods() {
       L[pdf][cnt] = neg2logML;
 
       if (verbosity >= VERBOSITY_TOOMUCH)
-	LogTrace("evalLikelihoods")
+	edm::LogVerbatim("evalLikelihoods")
 	  << "pdftype=" << pdf << " -2.0*log_ML=" << neg2logML
 	  << ", cov_status = " <<  cov_status << endl;
       if (L[pdf][cnt] > 60)
@@ -3034,7 +3034,7 @@ void Zprime2muAsymmetry::fitCosCS(TH1F* cos_hist, int params) {
   double norm = histo_integral*bin_width;
 
   if (verbosity >= VERBOSITY_TOOMUCH)
-    LogTrace("fitCosCS")
+    edm::LogVerbatim("fitCosCS")
       << "fitHistos: " << title << " integral = " << histo_integral
       << " bin width = " << bin_width
       << " norm = " << norm;
@@ -3063,7 +3063,7 @@ void Zprime2muAsymmetry::fitCosCS(TH1F* cos_hist, int params) {
   // to sum of contents of histo.
   double function_integral = f1->Integral(-1.,1.);
   if (verbosity >= VERBOSITY_TOOMUCH)
-    LogTrace("fitCosCS")
+    edm::LogVerbatim("fitCosCS")
       << "Integral of function -1 to 1: " << function_integral
       << "\nIntegral of function / bin width: " << function_integral/bin_width
       << "\nSum of bins of histo: " <<  histo_integral;

@@ -3,7 +3,7 @@
   \brief    Calculates and plots lepton/dilepton resolutions and efficiencies.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muResolution.cc,v 1.34 2008/12/10 17:29:26 tucker Exp $
+  \version  $Id: Zprime2muResolution.cc,v 1.35 2008/12/11 14:49:40 tucker Exp $
 */
 
 #include "TString.h"
@@ -426,11 +426,12 @@ void Zprime2muResolution::fillLeptonHistos(const int rec) {
 }
 
 void Zprime2muResolution::fillDileptonHistos(const int rec) {
-  // Only one dilepton at generator level to choose.
-  const reco::CompositeCandidate& gen_dil = allDileptons[lGN][0];
+  if (allDileptons[lGN].size() > 0) {
+    // Only one dilepton at generator level to choose.
+    const reco::CompositeCandidate& gen_dil = allDileptons[lGN].at(0);
 
-  for (reco::CompositeCandidateCollection::const_iterator dil = allDileptons[rec].begin(); dil != allDileptons[rec].end(); ++dil) {
-    fillDileptonMassResolution(gen_dil, *dil, rec);
+    for (reco::CompositeCandidateCollection::const_iterator dil = allDileptons[rec].begin(); dil != allDileptons[rec].end(); ++dil)
+      fillDileptonMassResolution(gen_dil, *dil, rec);
   }
 }
 

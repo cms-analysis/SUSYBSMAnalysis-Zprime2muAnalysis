@@ -8,9 +8,11 @@ files = [
     'file:/scratchdisk3/tucker/ZPSSMmumu_M1000_Mcut400_10TeV_IDEAL_V9_RAW2DIGI_RECO_1-10.root'
     ]
 
-process = makeZprime2muAnalysisProcess(files, skipPAT=True, disableElectrons=True)
+process = makeZprime2muAnalysisProcess(files, skipPAT=True, disableElectrons=True) #, useTrigger=False)
 
-lepsFromDils = False
+attachHistos(process) # Run Histos, too.
+attachResolution(process, verbosity=2)
 
-attachHistos(process, leptonsFromDileptons=lepsFromDils) # Run Histos, too.
-attachResolution(process, verbosity=2, leptonsFromDileptons=lepsFromDils)
+#for module in [process.Zprime2muHistos, process.Zprime2muResolution]:
+    #setattr(module, 'leptonsFromDileptons', True)
+    #setattr(module, 'dataSet', 'DY200')

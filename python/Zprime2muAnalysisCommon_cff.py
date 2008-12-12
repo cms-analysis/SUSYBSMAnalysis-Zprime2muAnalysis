@@ -4,7 +4,7 @@ import FWCore.ParameterSet.Config as cms
 __debug = False
 
 # Info about the defined rec levels.
-recLevels = ['GN','L1','L2','L3','GR','TK','FS','PR','OP']
+recLevels = ['GN','L1','L2','L3','GR','TK','FS','PR','OP','TR']
 numRecLevels = len(recLevels)
 # Make enums for the reclevels to avoid magic numbers below.
 for i, rec in enumerate(recLevels):
@@ -20,7 +20,8 @@ muonCollections = [
     'muCandTK',
     'muCandFS',
     'muCandPR',
-    'bestMuons'
+    'muCandOP',
+    'muCandTR'
     ]
 
 # The InputTag names for the electron collections.
@@ -38,6 +39,7 @@ electronCollections = [
     None,
     None,
     'selectedLayer1Electrons',
+    None
     ]
 
 # Dilepton construction specifiers (see docstring in the main method
@@ -117,6 +119,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                                  useHLTDEBUG=False,
                                  minGenPt=1.0,
                                  cutMask=cuts['TeVmu'],
+                                 bestRecLevel=lOP,
                                  muons=muonCollections,
                                  electrons=electronCollections):
     '''Return a CMSSW process for running Zprime2muAnalysis-derived
@@ -489,9 +492,9 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         # Make tracker-only reco::Muons out of the tracker tracks in
         # the muons collection.
         process.muCandTK = refitMuons.clone(
-            src           = defaultMuons,
-            fromCocktail  = False,
-            tevMuonTracks = 'none',
+            src              = defaultMuons,
+            fromCocktail     = False,
+            tevMuonTracks    = 'none',
             fromTrackerTrack = cms.untracked.bool(True)
             )
 
@@ -516,14 +519,23 @@ def makeZprime2muAnalysisProcess(fileNames=[],
 
             # Use the official TeV muon cocktail code to pick the best
             # muons using the supplied TeV refit tracks.
-            process.bestMuons = refitMuons.clone(
+            process.muCandOP = refitMuons.clone(
                 src           = defaultMuons,
                 fromCocktail  = True,
                 tevMuonTracks = tevMuons
                 )
         
+            # Use the TMR cocktail code to pick muons using the
+            # supplied TeV refit tracks.
+            process.muCandTR = refitMuons.clone(
+                src           = defaultMuons,
+                fromCocktail  = False,
+                fromTMR       = True,
+                tevMuonTracks = tevMuons
+                )
+        
             process.pmuTeVReco = cms.Path(process.muCandFS * process.muCandPR *
-                                          process.bestMuons)
+                                          process.muCandOP * process.muCandTR)
 
     ####################################################################
     ## Same for the electrons
@@ -647,10 +659,8 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         useTrigger        = cms.bool(useTrigger),
         useOtherMuonRecos = cms.bool(useOtherMuonRecos),
         cutMask           = cms.uint32(cutMask),
-
+        bestRecLevel      = cms.int32(bestRecLevel),
         dateHistograms    = cms.untracked.bool(True),
-
-        #resonanceIds      = cms.vint32(32, 23, 39, 5000039),
 
         ################################################################
         ## Input tags for trigger paths and particles.
@@ -870,11 +880,14 @@ def setMuonAlignment(process, connectString, tagDTAlignmentRcd, tagDTAlignmentEr
 ################################################################################
 
 # so 'from module import *' doesn't clutter the user's namespace
-__all__ = ['oppSign', 'oppSignMP', 'likeSignPos', 'likeSignNeg', 'diMuons',
-           'diElectrons', 'muonElectron', 'electronMuon', 'cuts',
-           'makeZprime2muAnalysisProcess', 'attachAnalysis',
-           'attachOutputModule', 'poolAllFiles', 'setTrackerAlignment',
-           'setMuonAlignment']           
+__all__ = [
+    'oppSign', 'oppSignMP', 'likeSignPos', 'likeSignNeg', 'diMuons',
+    'diElectrons', 'muonElectron', 'electronMuon', 'cuts',
+    'makeZprime2muAnalysisProcess', 'attachAnalysis',
+    'attachOutputModule', 'poolAllFiles', 'setTrackerAlignment',
+    'setMuonAlignment',
+    'lGN','lL1','lL2','lL3','lGR','lTK','lFS','lPR','lOP','lTR'
+    ]
 
 # To debug this config, you can do from the shell:
 #   python Zprime2muAnalysisCommon_cff.py

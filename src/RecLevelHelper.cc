@@ -16,6 +16,11 @@ void checkRecLevel(const int level, const char* name) {
       << "invalid level " << level << " in " << name << "!\n";
 }
 
+bool isCocktailLevel(const int level) {
+  checkRecLevel(level, "isCocktail");
+  return level == lOP || level == lTR;
+}
+
 const std::string& levelName(const int rec, bool shortVersion) {
   checkRecLevel(rec, "levelName");
   if (shortVersion) return levelNamesShort[rec];
@@ -23,6 +28,8 @@ const std::string& levelName(const int rec, bool shortVersion) {
 }
 
 void RecLevelHelper::init(const edm::ParameterSet& config) {
+  bestRecLevel = config.getParameter<int>("bestRecLevel");
+
   for (int i = 0; i < MAX_LEVELS; i++) {
     string tagname = "leptons" + levelName(i);
     lepInputs[i] = config.exists(tagname) ? config.getParameter<edm::InputTag>(tagname) : edm::InputTag();
@@ -45,11 +52,6 @@ bool RecLevelHelper::get(const edm::Event& event, int level,
   event.getByLabel(tag, handle);
 
   if (handle.failedToGet()) {
-    // If there was no "best" collection in the event, try to use the
-    // default global leptons (GMR).
-    if (level == lOP)
-      return get(event, lGR, tag, coll);
-    
     if (!warned[level]) {
       string inp = tag.encode();
       // Don't bother to warn about collections that are supposed to be missing.
@@ -161,17 +163,22 @@ int RecLevelHelper::recLevel(const reco::CompositeCandidate& dil) const {
     int r = recLevel(dileptonDaughter(dil, ilep));
     if (rec >= 0) {
       if (r != rec)
-	return lOP;
+	return -1;
     }
     else
       rec = r;
   }
   return rec;
-}  
+} 
 
 int RecLevelHelper::originalRecLevel(const reco::CandidateBaseRef& cand) const {
   int level = recLevel(cand);
-  if (level != lOP)
+  return level;
+
+  /*
+  // Disabled until matchOfflineLepton() is implemented.
+
+  if (!isCocktailLevel(level))
     return level;
 
   // Try to look in the original collections the cocktail muon chose
@@ -187,7 +194,10 @@ int RecLevelHelper::originalRecLevel(const reco::CandidateBaseRef& cand) const {
       return level;
   }
   
-  return lOP;
+  // If we didn't find it, assume it came from whatever the current
+  // "best" level is (either OP or TR, currently).
+  return bestRecLevel;
+  */
 }
 
 reco::Particle::LorentzVector

@@ -16,20 +16,23 @@
 
 // details about the number of rec levels stored, their names, etc.
 const int TRIG_LEVELS = 4; // Includes lGN == 0 as a placeholder.
-enum RecLevel { lGN, lL1, lL2, lL3, lGR, lTK, lFS, lPR, lOP };
-const int MAX_LEVELS = lOP+1;
+enum RecLevel { lGN, lL1, lL2, lL3, lGR, lTK, lFS, lPR, lOP, lTR };
+const int MAX_LEVELS = lTR+1;
 
 // The names of the defined rec levels, as well as shortened versions.
 const std::string levelNames[MAX_LEVELS] = {
-  "Gen", " L1", " L2", " L3", "GMR", "Tracker-only", "TPFMS", "PMR", "OPT"
+  "Gen", " L1", " L2", " L3", "GMR", "Tracker-only", "TPFMS", "PMR", "OPT", "TMR"
 };
 const std::string levelNamesShort[MAX_LEVELS] = {
-  "GN", "L1", "L2", "L3", "GR", "TK", "FS", "PR", "OP"
+  "GN", "L1", "L2", "L3", "GR", "TK", "FS", "PR", "OP", "TR"
 };
 
 // Perform a sanity check on the rec level passed, throwing an
 // exception if it is out of range.
 void checkRecLevel(const int level, const char* name);
+
+// Whether the rec level is expected to be a "cocktail".
+bool isCocktailLevel(const int level);
 
 // Return either the short or the regular version of rec level's
 // name.
@@ -62,14 +65,15 @@ class RecLevelHelper {
   int id(const reco::CandidateBaseRef& cand) const;
 
   // Translate the Ref's product id to one of our rec levels, using
-  // the cached map. If the rec level turns out to be lOP, return
-  // the original rec level using the stored map.
+  // the cached map. If the rec level turns out to be one of the
+  // cocktail levels, return the original rec level using the stored
+  // map.
   int recLevel(const reco::CandidateBaseRef& cand) const;
 
   // Get the rec level for a dilepton, making sure that either all the
-  // daughter leptons have the same rec level, or else returning lOP,
-  // (since a "best" dilepton can be made up of leptons at different rec
-  // levels).
+  // daughter leptons have the same rec level, or else returning -1,
+  // (since a dilepton made out of cocktail muons can be made up of
+  // leptons at different rec levels).
   int recLevel(const reco::CompositeCandidate& cand) const;
 
   // Find the original rec level of cand; useful for "best" leptons to
@@ -94,8 +98,11 @@ class RecLevelHelper {
     matchOfflineLepton(const reco::CandidateBaseRef& lep,
 		       const int level) const;
 
-
  private:
+  // Which rec level is supposed to be the "best" one (either OP or
+  // TR, currently).
+  int bestRecLevel;
+
   // The arrays of InputTags which maps rec level number to the EDM
   // collections.
   edm::InputTag lepInputs[MAX_LEVELS];

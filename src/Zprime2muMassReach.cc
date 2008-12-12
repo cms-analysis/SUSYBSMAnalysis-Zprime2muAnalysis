@@ -185,7 +185,7 @@ void Zprime2muMassReach::dilMassPlots(const bool debug) {
   // "Off-line" dileptons in events passing the trigger and quality cuts
   for (int i = 0; i < 2; i++) {
     const reco::CompositeCandidateCollection& dileptons =
-      i == 1 ? allDileptons[lOP] : allDileptons[lGR];
+      i == 1 ? allDileptons[lBest] : allDileptons[lGR];
 
     if (dileptons.size() > 0) {
       recm = resonanceMass(dileptons[0]); // highest mass dilepton
@@ -240,7 +240,7 @@ void Zprime2muMassReach::fillMassArrays() {
 
   // Reconstructed dileptons
   const reco::CompositeCandidateCollection& dileptons = 
-    kGMR ? allDileptons[lGR] : allDileptons[lOP];
+    kGMR ? allDileptons[lGR] : allDileptons[lBest];
   for (unsigned idi = 0; idi < dileptons.size(); idi++) {
     // Check the "off-line" track quality and apply the cuts
     if (nfit_recmass_used[idx] < MASS_FIT_ARRAY_SIZE) {

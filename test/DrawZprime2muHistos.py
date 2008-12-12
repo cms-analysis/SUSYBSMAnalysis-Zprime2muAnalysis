@@ -9,8 +9,10 @@ from ROOT import TFile
 if len(sys.argv) > 1: rootFile = sys.argv[1]
 else:                 rootFile = 'zp2mu_histos.root'
 
-if len(sys.argv) > 2: outputFile = sys.argv[2]
-else:                 outputFile = 'histos.ps'
+if len(sys.argv) > 2:
+    outputFile = sys.argv[2]
+else:
+    outputFile = os.path.basename(rootFile).replace('.root', '.histos.ps')
 
 if not os.path.isfile(rootFile):
     sys.stderr.write('input file %s does not exist!\n' % rootFile)
@@ -25,7 +27,7 @@ psd = PSDrawer(outputFile)
 ################################################################################
 
 pad = psd.new_page('Trigger information', (3,3))
-for rec in xrange(1,4):
+for rec in xrange(psd.TRIG_START, psd.OFFLINE_START):
     offset = 3*(rec-1)
     pad.cd(offset+1).SetLogy(1)
     psd.draw_if(histos, 'TriggerBits%i' % rec)

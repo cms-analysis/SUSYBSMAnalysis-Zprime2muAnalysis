@@ -79,6 +79,10 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // included only in the full RECO tier;
   bool usingAODOnly;
 
+  // which rec level is to be taken as the "best" one (e.g. used by
+  // analyses);
+  int lBest;
+
   // basic quantities for the chosen lepton (muon or electron);
   unsigned int leptonFlavor; // PDG ID
   double       leptonMass;   // in GeV/c^2

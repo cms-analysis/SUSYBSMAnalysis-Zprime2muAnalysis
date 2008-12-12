@@ -5,6 +5,12 @@ from ROOT import *
 sys.argv.remove('-b') # and don't mess up sys.argv
 
 class PSDrawer:
+    GEN = 0
+    REC_START = 1
+    TRIG_START = 1
+    OFFLINE_START = 4
+    MAX_LEVELS = 10
+    
     def __init__(self, filename, datePages=False):
         gROOT.SetStyle("Plain");
         gStyle.SetFillColor(0);
@@ -58,16 +64,16 @@ class PSDrawer:
     def rec_level_page(self, histos, page_type, histo_base_name, page_title, draw_opt='', log_scale=False, fit_gaus=False):
         if page_type == 'all':
             div = (2,5)
-            levels = xrange(9)
+            levels = xrange(self.MAX_LEVELS)
         elif page_type == 'offline':
             div = (2,3)
-            levels = xrange(4,9)
+            levels = xrange(self.OFFLINE_START, self.MAX_LEVELS)
         elif page_type == 'no_gen':
-            div = (2,4)
-            levels = xrange(1,9)
+            div = (2,5)
+            levels = xrange(self.REC_START, self.MAX_LEVELS)
         elif page_type == 'no_trig':
-            div = (2,3)
-            levels = [0] + range(4,9)
+            div = (2,4)
+            levels = [self.GEN] + range(self.OFFLINE_START, self.MAX_LEVELS)
         else:
             raise ValueError, 'page_type %s not recognized' % page_type
 

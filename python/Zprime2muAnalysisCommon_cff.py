@@ -119,6 +119,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                                  chargesForDileptons=oppSign,
                                  maxDileptons=1,
                                  skipPAT=False,
+                                 runOnPATTuple=False,
                                  useHLTDEBUG=False,
                                  minGenPt=1.0,
                                  cutMask=cuts['TeVmu'],
@@ -240,6 +241,13 @@ def makeZprime2muAnalysisProcess(fileNames=[],
 
     if len(muons) != numRecLevels or len(electrons) != numRecLevels:
         raise RuntimeError, 'at least one of the muon and electron collections is not the right length'
+
+    if runOnPATTuple:
+        skipPAT = True
+        disableElectrons = True
+        useSim = False
+        photons = 'selectedLayer1Photons'
+        defaultMuons = 'selectedLayer1Muons'
 
     if disableElectrons:
         for i in xrange(numRecLevels):

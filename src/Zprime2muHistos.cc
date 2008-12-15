@@ -3,7 +3,7 @@
   \brief    Plots basic lepton and dilepton quantities for each rec level.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muHistos.cc,v 1.3 2008/12/10 03:15:02 tucker Exp $
+  \version  $Id: Zprime2muHistos.cc,v 1.4 2008/12/11 14:49:40 tucker Exp $
 */
 
 #include "TString.h"
@@ -93,9 +93,9 @@ void Zprime2muHistos::bookOfflineLeptonHistos() {
     
     // Track hit counts.
     NPxHits[rec] = fs->make<TH1F>(nameHist("NPxHits", rec), level + " # pixel hits",    8, 0,  8);
-    NStHits[rec] = fs->make<TH1F>(nameHist("NStHits", rec), level + " # strip hits",   26, 0, 26);
-    NTkHits[rec] = fs->make<TH1F>(nameHist("NTkHits", rec), level + " # tracker hits", 33, 0, 33);
-    NMuHits[rec] = fs->make<TH1F>(nameHist("NMuHits", rec), level + " # muon hits",    51, 0, 51);
+    NStHits[rec] = fs->make<TH1F>(nameHist("NStHits", rec), level + " # strip hits",   30, 0, 30);
+    NTkHits[rec] = fs->make<TH1F>(nameHist("NTkHits", rec), level + " # tracker hits", 40, 0, 40);
+    NMuHits[rec] = fs->make<TH1F>(nameHist("NMuHits", rec), level + " # muon hits",    55, 0, 55);
     NHits[rec]   = fs->make<TH1F>(nameHist("NHits",   rec), level + " # hits",         78, 0, 78);
 
     // Other track variables.
@@ -141,8 +141,8 @@ void Zprime2muHistos::bookDileptonHistos() {
     DileptonSigns[rec]->GetXaxis()->SetBinLabel(3, "++");
 
     // Plots comparing the daughter lepton momenta.
-    DileptonDeltaPt[rec]  = fs->make<TH1F>(nameHist("DileptonDeltaPt",  rec), level + " dil. |pT^{1}| - |pT^{2}|",                100, 0, 100);
-    DileptonDeltaP[rec]   = fs->make<TH1F>(nameHist("DileptonDeltaP",   rec), level + " dil. |p^{1}| - |p^{2}|",                  100, 0, 100);
+    DileptonDeltaPt[rec]  = fs->make<TH1F>(nameHist("DileptonDeltaPt",  rec), level + " dil. |pT^{1}| - |pT^{2}|",                100, -100, 100);
+    DileptonDeltaP[rec]   = fs->make<TH1F>(nameHist("DileptonDeltaP",   rec), level + " dil. |p^{1}| - |p^{2}|",                  100, -500, 500);
     DileptonPtErrors[rec] = fs->make<TH2F>(nameHist("DileptonPtErrors", rec), level + " dil. #sigma_{pT}^{1} v. #sigma_{pT}^{2}", 100, 0, 100, 100, 0, 100);
   }
 }
@@ -154,7 +154,7 @@ void Zprime2muHistos::fillTriggerHistos() {
     unsigned n = allLeptons[rec].size();
     if (trigDecision.pass(rec))
       NLeptonsTriggered[rec]->Fill(n);
-    else                        
+    else
       NLeptonsFailed[rec]->Fill(n);
   }
 }

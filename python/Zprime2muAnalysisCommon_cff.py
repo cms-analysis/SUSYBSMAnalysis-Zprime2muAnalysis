@@ -84,18 +84,21 @@ cuts['Top']          = cuts['TopSkim'] | cuts['TopLeptonId'] | cuts['TopIsolatio
 # later. The order of the modules in this list will be obeyed by
 # CMSSW.
 __path = None
-def addToPath(process, name, prodobj):
+def pathAppend(prodobj):
     global __path
     if __path is None: __path  = prodobj
     else:              __path *= prodobj
+    
+def addToPath(process, name, prodobj):
+    pathAppend(prodobj)
     setattr(process, name, prodobj)
 
-def finalizePath():
+def finalizePath(process, pathName):
     global __path
-    p = cms.Path(__path)
-    __path = None
-    return p
-
+    if __path is not None:
+        p = cms.Path(__path)
+        __path = None
+        setattr(process, pathName, p)
 
 def makeZprime2muAnalysisProcess(fileNames=[],
                                  maxEvents=-1,
@@ -121,7 +124,10 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                                  cutMask=cuts['TeVmu'],
                                  bestRecLevel=lOP,
                                  muons=muonCollections,
-                                 electrons=electronCollections):
+                                 electrons=electronCollections,
+                                 photons='photons',
+                                 defaultMuons='muons',
+                                 tevMuons='tevMuons'):
     '''Return a CMSSW process for running Zprime2muAnalysis-derived
     code. See e.g. testZprime2muResolution_cfg.py for example use.
 
@@ -147,9 +153,9 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     (i.e. which collections are in allLeptons in the code). Default is
     False, so we run on muons.
     
-    useGen/Sim/Reco: whether to expect information from GEN, SIM or
-    RECO branches. (The expectation from RECO is modified by the
-    usingAODOnly parameter below.)
+    useGen/Sim/Trigger/Reco: whether to expect information from GEN,
+    SIM, HLT, or RECO branches. (The expectation from RECO is modified
+    by the usingAODOnly parameter below.)
     
     usingAODOnly: if True, do not expect to be able to get information
     that is not in AOD, such as rechits.
@@ -157,6 +163,13 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     useOtherMuonRecos: whether to expect the extra TeV muon tracks and
     the track-to-track maps for them in the input files.
 
+      Comment: the use* flags listed above are merely shortcuts used
+      to disable the appropriate rec levels. They are used in the
+      "sanity check" section below to set in the muons/electrons list
+      the appropriate rec levels to None if they are to be
+      disabled. After that, they are not checked directly, but rather
+      the individual rec levels themselves are checked for None-ness.
+      
     recoverBrem: whether to expect a collection of reconstructed
     photons in the input files in order to construct "resonances",
     i.e. add closest photons to the dimuons made.
@@ -171,10 +184,6 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     conditionsGlobalTag: if performing re-reconstruction on the fly,
     this sets the globalTag for database conditions (e.g. alignment,
     calibration, etc.)
-
-    useTrigger: whether to expect to be able to get trigger
-    collections (i.e. those destined for L1-L3 rec levels) from the
-    file.
 
     dumpHardInteraction: if True, use ParticleListDrawer to dump the
     generator info on the hard interaction particles.
@@ -220,8 +229,9 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     "TeVmu" selection: lepton pT > 20 GeV, and tracker isolation sumPt
     < 10 GeV.
 
-    muons/electrons: for experts who wish to directly specify the
-    collections to be used for each rec level.
+    muons/electrons/photons/defaultMuons/tevMuons: for experts who
+    wish to directly specify the collections to be used for each rec
+    level.
     '''
 
     ####################################################################
@@ -400,201 +410,214 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         process.psimParticleCandidates = cms.Path(process.simParticleCandidates)
 
     ####################################################################
+    ## Below we want to make the EDProducer object and add it to a
+    ## path only if the collection is declared to be in use by being
+    ## in the muons or electrons list (these collections define the
+    ## rec levels). To simplify the logic (remove a lot of "if 'X' in
+    ## muons" calls and indentation), make a helper function to
+    ## encapsulate this functionality.
+    ####################################################################
+
+    EDProducerType = type(cms.EDProducer('dummy'))
+    
+    def appendIfUsing(name, *args, **kwargs):
+        if name in muons or name in electrons:
+            if len(args) == 1 and type(args[0]) == EDProducerType:
+                # If the first argument after name is an EDProducer
+                # object, go ahead and use it as passed in. This
+                # enables using cms.EDProducer.clone().
+                prodobj = args[0]
+            else:
+                # Otherwise, make a new EDProducer object, passing the
+                # rest of the positional and keyword arguments to it.
+                # *args, **kwargs is a python idiom.
+                prodobj = cms.EDProducer(*args, **kwargs)
+            addToPath(process, name, prodobj)
+    
+    ####################################################################
     ## Produce/clone/copy/do whatever to the needed muon collections.
     ####################################################################
 
-    if useGen:
+    if 'muCandGN' in muons:
         process.genMuons = cms.EDProducer(
             'CandViewSelector',
             src = cms.InputTag('genParticles'),
             cut = cms.string('abs(pdgId) = 13 & status = 1 & pt > %f' % minGenPt)
             )
-
+        pathAppend(process.genMuons)
         GNtags = cms.VInputTag(cms.InputTag('genMuons'))
+        
         if useSim:
             process.simMuons = cms.EDProducer(
                 'CandViewSelector',
                 src = cms.InputTag('simParticleCandidates'),
                 cut = cms.string('abs(pdgId) = 13 & status = 1 & pt > %f' % minGenPt)
                 )
-            
-            process.psimMuons = cms.Path(process.simMuons)
-
+            pathAppend(process.simMuons)
             GNtags.append(cms.InputTag('simMuons'))
-            
+
         process.muCandGN = cms.EDProducer(
             'CandViewMerger',
             src = GNtags
             )
-        
-        process.pmuCandGN = cms.Path(process.genMuons * process.muCandGN)
+        pathAppend(process.muCandGN)
 
-    if useTrigger:
-        # 'Sanitize' the L1 muons, i.e. shift their phi values from
-        # the bin edge to the bin center (an offset of 0.0218 rad).
-        process.muCandL1 = cms.EDProducer(
-            'L1MuonSanitizer',
-            src = cms.InputTag('hltL1extraParticles')
-            )
-    
-        if useHLTDEBUG:
-            # 'Sanitize' the L2 muons, i.e. in case there is no
-            # hltL2MuonCandidates collection in the event, put an empty
-            # one in (otherwise just copy the existing one).
-            process.muCandL2 = cms.EDProducer(
-                'L2MuonSanitizer',
-                src = cms.InputTag('hltL2MuonCandidates')
-                )
+    # 'Sanitize' the L1 muons, i.e. shift their phi values from
+    # the bin edge to the bin center (an offset of 0.0218 rad).
+    appendIfUsing('muCandL1', 'L1MuonSanitizer',
+                  src = cms.InputTag('hltL1extraParticles')
+                  )
 
-            # 'Sanitize' the L3 muons, i.e. make up reco::Muons from
-            # reco::MuonTrackLinks (the hltL3MuonCandidates drop some of
-            # the extra track information, while the
-            # MuonTrackLinksCollection hltL3Muons appropriately has links
-            # to all 3 tracks).
-            process.muCandL3 = cms.EDProducer(
-                'L3MuonSanitizer',
-                src = cms.InputTag('hltL3Muons')
-                )
-        else:
-            process.muCandL2 = cms.EDProducer(
-                'HLTLeptonsFromTriggerEvent',
-                src = cms.VInputTag(cms.InputTag('hltL2MuonCandidates::HLT'))
-                )
+    if useHLTDEBUG:
+        # 'Sanitize' the L2 muons, i.e. in case there is no
+        # hltL2MuonCandidates collection in the event, put an empty
+        # one in (otherwise just copy the existing one).
+        appendIfUsing('muCandL2', 'L2MuonSanitizer',
+                      src = cms.InputTag('hltL2MuonCandidates')
+                      )
 
-            process.muCandL3 = cms.EDProducer(
-                'HLTLeptonsFromTriggerEvent',
-                src = cms.VInputTag(cms.InputTag('hltL3MuonCandidates::HLT'))
-                )
+        # 'Sanitize' the L3 muons, i.e. make up reco::Muons from
+        # reco::MuonTrackLinks (the hltL3MuonCandidates drop some of
+        # the extra track information, while the
+        # MuonTrackLinksCollection hltL3Muons appropriately has links
+        # to all 3 tracks).
+        appendIfUsing('muCandL3', 'L3MuonSanitizer',
+                      src = cms.InputTag('hltL3Muons')
+                      )
+    else:
+        # Extract the L2 and L3 muons from the hltTriggerSummaryAOD
+        # object.
+        appendIfUsing('muCandL2', 'HLTLeptonsFromTriggerEvent',
+                      src = cms.VInputTag(cms.InputTag('hltL2MuonCandidates::HLT'))
+                      )
 
-        process.pmuTrig = cms.Path(process.muCandL1 * process.muCandL2 *
-                                   process.muCandL3)
-        
-    if useReco:
-        # Use the right collection of muons depending on whether we've
-        # done track re-reconstruction.
-        if performTrackReReco:
-            defaultMuons = 'muons2'
-            tevMuons = 'tevMuons2'
-        else:
-            defaultMuons = 'muons'
-            tevMuons = 'tevMuons'
+        appendIfUsing('muCandL3', 'HLTLeptonsFromTriggerEvent',
+                      src = cms.VInputTag(cms.InputTag('hltL3MuonCandidates::HLT'))
+                      )
 
-        from RecoMuon.MuonIdentification.refitMuons_cfi import refitMuons
-        
-        # Copy only the GlobalMuons from the default muon collection,
-        # ignoring the TrackerMuons and CaloMuons for now.
-        process.muCandGR = refitMuons.clone(
-            src           = defaultMuons,
-            fromCocktail  = False,
-            tevMuonTracks = 'none'
-            )
+    # Use the right collection of muons depending on whether we've
+    # done track re-reconstruction.
+    if performTrackReReco:
+        defaultMuons += '2'
+        tevMuons += '2'
 
-        # Make tracker-only reco::Muons out of the tracker tracks in
-        # the muons collection.
-        process.muCandTK = refitMuons.clone(
-            src              = defaultMuons,
-            fromCocktail     = False,
-            tevMuonTracks    = 'none',
-            fromTrackerTrack = cms.untracked.bool(True)
-            )
+    from RecoMuon.MuonIdentification.refitMuons_cfi import refitMuons
 
-        process.pmuReco = cms.Path(process.muCandGR * process.muCandTK)
-        
-        if useOtherMuonRecos:
-            # Make first-muon-station (FMS) reco::Muons using the supplied
-            # TeV refit tracks.
-            process.muCandFS = refitMuons.clone(
-                src           = defaultMuons,
-                fromCocktail  = False,
-                tevMuonTracks = tevMuons + ':firstHit'
-                )
+    # Copy only the GlobalMuons from the default muon collection,
+    # ignoring the TrackerMuons and CaloMuons for now.
+    appendIfUsing('muCandGR', refitMuons.clone(
+        src           = defaultMuons,
+        fromCocktail  = False,
+        tevMuonTracks = 'none'
+        ))
 
-            # Make picky-muon-reconstructor (PMR) reco::Muons using the
-            # supplied TeV refit tracks.
-            process.muCandPR = refitMuons.clone(
-                src           = defaultMuons,
-                fromCocktail  = False,
-                tevMuonTracks = tevMuons + ':picky'
-                )
+    # Make tracker-only reco::Muons out of the tracker tracks in
+    # the muons collection.
+    appendIfUsing('muCandTK', refitMuons.clone(
+        src              = defaultMuons,
+        fromCocktail     = False,
+        tevMuonTracks    = 'none',
+        fromTrackerTrack = cms.untracked.bool(True)
+        ))
 
-            # Use the official TeV muon cocktail code to pick the best
-            # muons using the supplied TeV refit tracks.
-            process.muCandOP = refitMuons.clone(
-                src           = defaultMuons,
-                fromCocktail  = True,
-                tevMuonTracks = tevMuons
-                )
-        
-            # Use the TMR cocktail code to pick muons using the
-            # supplied TeV refit tracks.
-            process.muCandTR = refitMuons.clone(
-                src           = defaultMuons,
-                fromCocktail  = False,
-                fromTMR       = True,
-                tevMuonTracks = tevMuons
-                )
-        
-            process.pmuTeVReco = cms.Path(process.muCandFS * process.muCandPR *
-                                          process.muCandOP * process.muCandTR)
+    # Make first-muon-station (FMS) reco::Muons using the supplied
+    # TeV refit tracks.
+    appendIfUsing('muCandFS', refitMuons.clone(
+        src           = defaultMuons,
+        fromCocktail  = False,
+        tevMuonTracks = tevMuons + ':firstHit'
+        ))
+
+    # Make picky-muon-reconstructor (PMR) reco::Muons using the
+    # supplied TeV refit tracks.
+    appendIfUsing('muCandPR', refitMuons.clone(
+        src           = defaultMuons,
+        fromCocktail  = False,
+        tevMuonTracks = tevMuons + ':picky'
+        ))
+
+    # Use the official TeV muon cocktail code to pick the best
+    # muons using the supplied TeV refit tracks.
+    appendIfUsing('muCandOP', refitMuons.clone(
+        src           = defaultMuons,
+        fromCocktail  = True,
+        tevMuonTracks = tevMuons
+        ))
+
+    # Use the TMR cocktail code to pick muons using the
+    # supplied TeV refit tracks.
+    appendIfUsing('muCandTR', refitMuons.clone(
+        src           = defaultMuons,
+        fromCocktail  = False,
+        fromTMR       = True,
+        tevMuonTracks = tevMuons
+        ))
+
+    finalizePath(process, 'pMuons')
 
     ####################################################################
     ## Same for the electrons
     ####################################################################
 
-    if useGen:
+    if 'elCandGN' in electrons:
         process.genElectrons = cms.EDProducer(
             'CandViewSelector',
             src = cms.InputTag('genParticles'),
             cut = cms.string('abs(pdgId) = 11 & status = 1 & pt > %f' % minGenPt)
             )
-
+        pathAppend(process.genElectrons)
         GNtags = cms.VInputTag(cms.InputTag('genElectrons'))
+        
         if useSim:
             process.simElectrons = cms.EDProducer(
                 'CandViewSelector',
                 src = cms.InputTag('simParticleCandidates'),
                 cut = cms.string('abs(pdgId) = 11 & status = 1 & pt > %f' % minGenPt)
                 )
-            
-            process.psimElectrons = cms.Path(process.simElectrons)
-
+            pathAppend(process.simElectrons)
             GNtags.append(cms.InputTag('simElectrons'))
     
         process.elCandGN = cms.EDProducer(
             'CandViewMerger',
             src = GNtags
             )
+        pathAppend(process.elCandGN)
 
-        process.pelCandGN = cms.Path(process.genElectrons * process.elCandGN)
+    appendIfUsing('elCandL1', 'CandViewMerger',
+                  src = cms.VInputTag(cms.InputTag('hltL1extraParticles','NonIsolated'), cms.InputTag('hltL1extraParticles','Isolated'))
+                  )
 
-    if useTrigger:
-        process.elCandL1 = cms.EDProducer(
-            'CandViewMerger',
-            src = cms.VInputTag(
-            cms.InputTag('hltL1extraParticles','NonIsolated'),
-            cms.InputTag('hltL1extraParticles','Isolated'))
-            )
+    if useHLTDEBUG:
+        # For electrons, the HLT makes its decision based off of the
+        # l1(Non)IsoRecoEcalCandidate and the
+        # pixelMatchElectronsL1(Non)IsoForHLT collections. I choose to
+        # call them L2 and L3 electrons here, respectively.
 
-        if useHLTDEBUG:
-            # For electrons, the HLT makes its decision based off of the
-            # l1(Non)IsoRecoEcalCandidate and the
-            # pixelMatchElectronsL1(Non)IsoForHLT collections. I choose to
-            # call them L2 and L3 electrons here, respectively.
+        # 'Sanitize' the L2 & L3 electrons, i.e. in case there is no
+        # collection in the event, put an empty one in (otherwise just
+        # copy the existing one).
 
-            # 'Sanitize' the L2 & L3 electrons, i.e. in case there is no
-            # collection in the event, put an empty one in (otherwise just
-            # copy the existing one).
-
+        if 'elCandL2' in electrons:
             process.elCandL2NonIso = cms.EDProducer(
                 'L2ElectronSanitizer',
                 src = cms.InputTag('hltL1NonIsoRecoEcalCandidate')
                 )
-
+            
             process.elCandL2Iso = cms.EDProducer(
                 'L2ElectronSanitizer',
                 src = cms.InputTag('hltL1IsoRecoEcalCandidate')
                 )
 
+            process.elCandL2 = cms.EDProducer(
+                'CandViewMerger',
+                src = cms.VInputTag(cms.InputTag('elCandL2NonIso'), cms.InputTag('elCandL2Iso'))
+                )
+            
+            pathAppend(process.elCandL2NonIso)
+            pathAppend(process.elCandL2Iso)
+            pathAppend(process.elCandL2)
+
+        if 'elCandL3' in electrons:
             process.elCandL3NonIso = cms.EDProducer(
                 'L3ElectronSanitizer',
                 src = cms.InputTag('hltPixelMatchElectronsL1NonIso')
@@ -605,42 +628,25 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                 src = cms.InputTag('hltPixelMatchElectronsL1Iso')
                 )
 
-            process.elCandL2 = cms.EDProducer(
-                'CandViewMerger',
-                src = cms.VInputTag(
-                cms.InputTag('elCandL2NonIso'),
-                cms.InputTag('elCandL2Iso'))
-                )
-
             process.elCandL3 = cms.EDProducer(
                 'CandViewMerger',
-                src = cms.VInputTag(
-                cms.InputTag('elCandL3NonIso'),
-                cms.InputTag('elCandL3Iso'))
+                src = cms.VInputTag(cms.InputTag('elCandL3NonIso'), cms.InputTag('elCandL3Iso'))
                 )
 
-            process.pelTrig = cms.Path(process.elCandL1 * process.elCandL2NonIso *
-                                       process.elCandL2Iso * process.elCandL3NonIso *
-                                       process.elCandL3Iso * process.elCandL2 *
-                                       process.elCandL3)
-        else:
-            process.elCandL2 = cms.EDProducer(
-                'HLTLeptonsFromTriggerEvent',
-                src = cms.VInputTag(
-                cms.InputTag('hltL1NonIsoRecoEcalCandidate::HLT'),
-                cms.InputTag('hltL1IsoRecoEcalCandidate::HLT'))
-                )
+            pathAppend(process.elCandL2NonIso)
+            pathAppend(process.elCandL2Iso)
+            pathAppend(process.elCandL3)
+    else:
+        appendIfUsing('elCandL2', 'HLTLeptonsFromTriggerEvent',
+                      src = cms.VInputTag(cms.InputTag('hltL1NonIsoRecoEcalCandidate::HLT'), cms.InputTag('hltL1IsoRecoEcalCandidate::HLT'))
+                      )
 
-            process.elCandL3 = cms.EDProducer(
-                'HLTLeptonsFromTriggerEvent',
-                src = cms.VInputTag(
-                cms.InputTag('hltPixelMatchElectronsL1NonIso::HLT'),
-                cms.InputTag('hltPixelMatchElectronsL1Iso::HLT'))
-                )
+        appendIfUsing('elCandL3', 'HLTLeptonsFromTriggerEvent',
+                      src = cms.VInputTag(cms.InputTag('hltPixelMatchElectronsL1NonIso::HLT'), cms.InputTag('hltPixelMatchElectronsL1Iso::HLT'))
+                      )
 
-            process.pelTrig = cms.Path(process.elCandL1 * process.elCandL2 * process.elCandL3)
-                
-
+    finalizePath(process, 'pElectrons')
+    
     ####################################################################
     ## Common module configuration parameters.
     ####################################################################
@@ -715,7 +721,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             )
         addToPath(process, 'genMatch' + recLevels[irec], prod)
 
-    process.genMatchPath = finalizePath()
+    finalizePath(process, 'genMatchPath')
 
     # Match all muons to their single closest photons (within dR <
     # 0.1) to try and recover energy lost to brem later. (Don't bother
@@ -727,12 +733,12 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             prod = cms.EDProducer(
                 'TrivialDeltaRViewMatcher',
                 src     = cms.InputTag(muons[rec]),
-                matched = cms.InputTag('photons'),
+                matched = cms.InputTag(photons),
                 distMin = cms.double(0.1)
                 )
             addToPath(process, 'photonMatch' + recLevels[rec], prod)
 
-        process.photonMatchPath = finalizePath()
+        finalizePath(process, 'photonMatchPath')
 
     ####################################################################
     ## Dilepton construction. Make the requested dileptons, by default
@@ -795,7 +801,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                                   )
             addToPath(process, 'dileptons' + recLevels[rec], prod)
 
-    process.dileptonPath = finalizePath()
+    finalizePath(process, 'dileptonPath')
 
     # Set up the "main" dileptons -- the ones the analysis module is
     # supposed to use by default.
@@ -881,6 +887,7 @@ def setMuonAlignment(process, connectString, tagDTAlignmentRcd, tagDTAlignmentEr
 
 # so 'from module import *' doesn't clutter the user's namespace
 __all__ = [
+    'muonCollections', 'electronCollections',
     'oppSign', 'oppSignMP', 'likeSignPos', 'likeSignNeg', 'diMuons',
     'diElectrons', 'muonElectron', 'electronMuon', 'cuts',
     'makeZprime2muAnalysisProcess', 'attachAnalysis',

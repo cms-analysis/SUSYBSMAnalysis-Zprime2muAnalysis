@@ -711,7 +711,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             'TrivialDeltaRViewMatcher',
             src     = cms.InputTag(muons[irec]),
             matched = cms.InputTag(muons[jrec]),
-            distMin = cms.double(0.7072)
+            distMin = cms.double(0.5)
             )
         addToPath(process, 'genMatch' + recLevels[irec], prod)
 

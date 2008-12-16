@@ -1,8 +1,0 @@
-# CMSSW_1_6_11 are _1_6_12 are recommended for processing CSA07 sample
-
-to process CSA07 soups, need check out the following pakage
-in CMSSW_1_6_x/src  directory
-cvs co -r V09-19-03-03 PhysicsTools/HepMCCandAlgos
-cd PhysicsTools/HepMCCandAlgos
-scramv1 b
-

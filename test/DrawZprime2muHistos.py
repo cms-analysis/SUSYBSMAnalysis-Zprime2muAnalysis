@@ -38,7 +38,7 @@ for rec in xrange(psd.TRIG_START, psd.OFFLINE_START):
 
 psd.rec_level_page(histos, 'all', 'NLeptons',      '# leptons/event', log_scale=True)
 psd.rec_level_page(histos, 'all', 'LeptonEta',     'Lepton #eta')
-psd.rec_level_page(histos, 'all', 'LeptonRap',     'Lepton rapidity')
+#psd.rec_level_page(histos, 'all', 'LeptonRap',     'Lepton rapidity')
 psd.rec_level_page(histos, 'all', 'LeptonPhi',     'Lepton #phi')
 psd.rec_level_page(histos, 'all', 'LeptonPt',      'Lepton pT')
 psd.rec_level_page(histos, 'all', 'LeptonPz',      'Lepton pz')

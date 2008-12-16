@@ -18,6 +18,7 @@ class Zprime2muResolution : public Zprime2muAnalysis {
  public:
   explicit Zprime2muResolution(const edm::ParameterSet&);
   void analyze(const edm::Event&, const edm::EventSetup&);
+  void endJob();
 
  private:
   void bookGenLevelHistos();
@@ -42,6 +43,8 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   void fillLeptonHistos(const reco::CandidateBaseRef& lep, const int rec);
   void fillLeptonHistos(const int rec);
   void fillDileptonHistos(const int rec);
+
+  void makeRMSHist(const TProfile* prof) const;
 
   // Parameters specified in the config file.
   bool   leptonsFromDileptons;

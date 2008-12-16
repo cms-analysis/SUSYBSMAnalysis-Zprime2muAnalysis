@@ -4,7 +4,7 @@
 
 import os, sys
 from PSDrawer import PSDrawer
-from ROOT import TFile
+from ROOT import TFile, TLatex, gStyle
  
 if len(sys.argv) > 1: rootFile = sys.argv[1]
 else:                 rootFile = 'zp2mu_histos.root'
@@ -42,6 +42,32 @@ h.Divide(hd)
 pad.cd(3)
 h.Draw()
 
+def draw_efficiency(num_name, den, min=0.7, max=1.02):
+    hnum = histos.Get(num_name)
+    if type(den) == type(''):
+        hden = histos.Get(den)
+    else:
+        hden = den
+        
+    if None not in (hnum, hden):
+        h = hnum.Clone()
+        h.Divide(hnum, hden, 1, 1, 'B')
+        h.SetMinimum(min)
+        h.SetMaximum(max)
+        h.Draw('hist e')
+
+        # Calculate and draw total efficiency.
+        effpct = 100.0*hnum.GetEntries()/hden.GetEntries()
+        eff = '#varepsilon = %.1f%%' % effpct
+        t = TLatex()
+        t.SetTextSize(0.1)
+        t.SetNDC()
+        t.DrawLatex(0.5, 0.3, eff)
+
+        return h
+
+gStyle.SetOptStat(1111)
+
 pad = psd.new_page('Trigger efficiency', (3,4))
 gen_hists = [histos.Get('TrigEffVsDilMass0%i' % i) for i in range(3)]
 for i, h in enumerate(gen_hists):
@@ -51,40 +77,18 @@ for i, h in enumerate(gen_hists):
 for rec in xrange(psd.TRIG_START, psd.OFFLINE_START):
     for i, hgen in enumerate(gen_hists):
         pad.cd(3*rec + i + 1).SetGrid(1)
-        hnum = histos.Get('TrigEffVsDilMass%i%i' % (rec, i))
-        if hnum is not None:
-            h = hnum.Clone()
-            h.Divide(hnum, hgen, 1, 1, 'B')
-            h.SetMinimum(0.89)
-            h.SetMaximum(1.01)
-            s = hgen.GetTitle().replace('Gen mass, GN,', '')
-            h.SetTitle('Trigger eff. (%s), L%i' % (s, rec))
-            h.Draw('hist e')
-
+        h = draw_efficiency('TrigEffVsDilMass%i%i' % (rec, i), hgen, 0.89, 1.01)
+        if h is not None:
+            h.SetTitle('Trigger eff. (%s), L%i' % (hgen.GetTitle().replace('Gen mass, GN,', ''), rec))
+                        
 for var, title in [('Eta', '#eta'), ('Phi', '#phi'), ('Pt', 'pT')]:
     pad = psd.new_page('Reconstruction efficiency vs. %s' % title, (2,5))
     hgen = histos.Get('EffVs%s0' % var)
     if hgen is not None:
         for rec in xrange(psd.REC_START, psd.MAX_LEVELS):
             pad.cd(rec).SetGrid(i)
-            hnum = histos.Get('EffVs%s%i' % (var, rec))
-            if hnum is not None:
-                h = hnum.Clone()
-                h.Divide(hnum, hgen, 1, 1, 'B')
-                h.SetMinimum(0.50)
-                h.SetMaximum(1.01)
-                h.Draw('hist e')
+            draw_efficiency('EffVs%s%i' % (var, rec), hgen, 0.5, 1.01)
 
-def draw_efficiency(num_name, den_name, min=0.7, max=1.02):
-    hnum = histos.Get(num_name)
-    hden = histos.Get(den_name)
-    if None not in (hnum, hden):
-        h = hnum.Clone()
-        h.Divide(hnum, hden, 1, 1, 'B')
-        h.SetMinimum(min)
-        h.SetMaximum(max)
-        h.Draw('hist e')
-    
 # Total - acceptance, trigger and "off-line" reconstruction - efficiency.
 pad = psd.new_page('Dilepton total rec. efficiency', (2,3))
 for rec in xrange(psd.OFFLINE_START, psd.MAX_LEVELS):
@@ -113,35 +117,37 @@ for rec in xrange(psd.OFFLINE_START, psd.MAX_LEVELS):
     pad.cd(rec-3).SetGrid(1)
     draw_efficiency('DilRecEffVsMass%i1' % rec, 'DilRecEffVsMass01')
 
-psd.rec_level_page(histos, 'no_gen', 'LeptonEtaDiff',  'Lepton #eta resolution')
-psd.rec_level_page(histos, 'no_gen', 'LeptonPhiDiff',  'Lepton #phi resolution')
+gStyle.SetOptStat(111111)
+
+psd.rec_level_page(histos, 'no_gen', 'LeptonEtaDiff',  'Lepton #eta resolution', fit_gaus=True)
+psd.rec_level_page(histos, 'no_gen', 'LeptonPhiDiff',  'Lepton #phi resolution', fit_gaus=True)
 psd.rec_level_page(histos, 'no_gen', 'LeptonPtDiff',   'Lepton #DeltapT')
 psd.rec_level_page(histos, 'no_gen', 'LeptonPtRes',    'Lepton pT resolution',   fit_gaus=True)
 psd.rec_level_page(histos, 'no_gen', 'LeptonPRes',     'Lepton p resolution',    fit_gaus=True)
 
-psd.rec_level_page(histos, 'no_gen',  'LeptonInvPtRes',        'Lepton 1/pT resolution',            fit_gaus=True)
-psd.rec_level_page(histos, 'offline', 'LeptonInvPtResVPtGen',  'Lepton 1/pT resolution vs. gen pT')
-psd.rec_level_page(histos, 'offline', 'LeptonInvPtResBarrel',  'Lepton 1/pT resolution, barrel',    fit_gaus=True)
-psd.rec_level_page(histos, 'offline', 'LeptonInvPtResEndcap',  'Lepton 1/pT resolution, endcap',    fit_gaus=True)
-psd.rec_level_page(histos, 'offline', 'LeptonInvPtPull',       'Lepton 1/pT pulls',                 fit_gaus=True)
-psd.rec_level_page(histos, 'offline', 'LeptonInvPtPullBarrel', 'Lepton 1/pT pulls, barrel',         fit_gaus=True)
-psd.rec_level_page(histos, 'offline', 'LeptonInvPtPullEndcap', 'Lepton 1/pT pulls, endcap',         fit_gaus=True)
+psd.rec_level_page(histos, 'no_gen',  'LeptonInvPtRes',          'Lepton 1/pT resolution',            fit_gaus=True)
+psd.rec_level_page(histos, 'offline', 'RMSLeptonInvPtResVPtGen', 'Lepton 1/pT resolution vs. gen pT')
+psd.rec_level_page(histos, 'offline', 'LeptonInvPtResBarrel',    'Lepton 1/pT resolution, barrel',    fit_gaus=True)
+psd.rec_level_page(histos, 'offline', 'LeptonInvPtResEndcap',    'Lepton 1/pT resolution, endcap',    fit_gaus=True)
+psd.rec_level_page(histos, 'offline', 'LeptonInvPtPull',         'Lepton 1/pT pulls',                 fit_gaus=True)
+psd.rec_level_page(histos, 'offline', 'LeptonInvPtPullBarrel',   'Lepton 1/pT pulls, barrel',         fit_gaus=True)
+psd.rec_level_page(histos, 'offline', 'LeptonInvPtPullEndcap',   'Lepton 1/pT pulls, endcap',         fit_gaus=True)
 
-psd.rec_level_page(histos, 'no_gen',  'LeptonInvPRes',        'Lepton 1/p resolution',           fit_gaus=True)
-psd.rec_level_page(histos, 'offline', 'LeptonInvPResVPGen',   'Lepton 1/p resolution vs. gen p')
-psd.rec_level_page(histos, 'offline', 'LeptonInvPPull',       'Lepton 1/p pulls',                fit_gaus=True)
-psd.rec_level_page(histos, 'offline', 'LeptonInvPResBarrel',  'Lepton 1/p resolution, barrel',   fit_gaus=True)
-psd.rec_level_page(histos, 'offline', 'LeptonInvPResEndcap',  'Lepton 1/p resolution, endcap',   fit_gaus=True)
-psd.rec_level_page(histos, 'offline', 'LeptonInvPPullBarrel', 'Lepton 1/p pulls, barrel',        fit_gaus=True)
-psd.rec_level_page(histos, 'offline', 'LeptonInvPPullEndcap', 'Lepton 1/p pulls, endcap',        fit_gaus=True)
+psd.rec_level_page(histos, 'no_gen',  'LeptonInvPRes',         'Lepton 1/p resolution',           fit_gaus=True)
+psd.rec_level_page(histos, 'offline', 'RMSLeptonInvPResVPGen', 'Lepton 1/p resolution vs. gen p')
+psd.rec_level_page(histos, 'offline', 'LeptonInvPPull',        'Lepton 1/p pulls',                fit_gaus=True)
+psd.rec_level_page(histos, 'offline', 'LeptonInvPResBarrel',   'Lepton 1/p resolution, barrel',   fit_gaus=True)
+psd.rec_level_page(histos, 'offline', 'LeptonInvPResEndcap',   'Lepton 1/p resolution, endcap',   fit_gaus=True)
+psd.rec_level_page(histos, 'offline', 'LeptonInvPPullBarrel',  'Lepton 1/p pulls, barrel',        fit_gaus=True)
+psd.rec_level_page(histos, 'offline', 'LeptonInvPPullEndcap',  'Lepton 1/p pulls, endcap',        fit_gaus=True)
 
 psd.rec_level_page(histos, 'offline', 'DileptonMassRes',    'Dilepton mass resolution (dil - gen dil)',  fit_gaus=True)
 psd.rec_level_page(histos, 'offline', 'DileptonResMassRes', 'Dilepton mass resolution (dil - gen res)',  fit_gaus=True)
 psd.rec_level_page(histos, 'offline', 'ResonanceMassRes',   'Resonance mass resolution (res - gen res)', fit_gaus=True)
 
-psd.rec_level_page(histos, 'offline', 'DileptonMassResVMass',    'Dilepton mass resolution (dil - gen dil) vs. mass')
-psd.rec_level_page(histos, 'offline', 'DileptonResMassResVMass', 'Dilepton mass resolution (dil - gen res) vs. mass')
-psd.rec_level_page(histos, 'offline', 'ResonanceMassResVMass',   'Resonance mass resolution (res - gen res) vs. mass')
+psd.rec_level_page(histos, 'offline', 'RMSDileptonMassResVMass',    'Dilepton mass resolution (dil - gen dil) vs. mass')
+psd.rec_level_page(histos, 'offline', 'RMSDileptonResMassResVMass', 'Dilepton mass resolution (dil - gen res) vs. mass')
+psd.rec_level_page(histos, 'offline', 'RMSResonanceMassResVMass',   'Resonance mass resolution (res - gen res) vs. mass')
 
 psd.rec_level_page(histos, 'offline', 'ChargeDiff', 'Lepton charge assignment', log_scale=True)
 

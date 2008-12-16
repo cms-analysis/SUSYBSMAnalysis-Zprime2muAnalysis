@@ -3,7 +3,7 @@
   \brief    Calculates and plots lepton/dilepton resolutions and efficiencies.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muResolution.cc,v 1.35 2008/12/11 14:49:40 tucker Exp $
+  \version  $Id: Zprime2muResolution.cc,v 1.36 2008/12/11 20:53:59 tucker Exp $
 */
 
 #include "TString.h"
@@ -327,9 +327,12 @@ void Zprime2muResolution::fillLeptonExtraMomentumResolution(const reco::Candidat
   const double inv_pt_diff = 1/lep->pt() - inv_gen_pt;
   const double inv_p_diff  = 1/lep->p()  - inv_gen_p;
 
+  const double inv_pt_res = inv_pt_diff/inv_gen_pt;
+  const double inv_p_res  = inv_p_diff /inv_gen_p;
+
   // Inverse momentum resolutions as a function of generated momenta.
-  LeptonInvPtResVPtGen[rec]->Fill(1/inv_gen_pt, inv_pt_diff/inv_gen_pt);
-  LeptonInvPResVPGen  [rec]->Fill(1/inv_gen_p,  inv_p_diff /inv_gen_p);
+  LeptonInvPtResVPtGen[rec]->Fill(1/inv_gen_pt, inv_pt_res*inv_pt_res);
+  LeptonInvPResVPGen  [rec]->Fill(1/inv_gen_p,  inv_p_res*inv_p_res);
   
   // Try to get the reconstructed momentum errors for pulls.
   double inv_pt_error, inv_p_error;
@@ -354,8 +357,8 @@ void Zprime2muResolution::fillLeptonExtraMomentumResolution(const reco::Candidat
   // The above inverse momentum resolutions and pulls, except
   // separately for barrel and endcap.
   if (fabs(gen_lep->eta()) < 1.04) {
-    LeptonInvPtResBarrel[rec]->Fill(inv_pt_diff/inv_gen_pt);
-    LeptonInvPResBarrel [rec]->Fill(inv_p_diff /inv_gen_p);
+    LeptonInvPtResBarrel[rec]->Fill(inv_pt_res);
+    LeptonInvPResBarrel [rec]->Fill(inv_p_res);
     
     if (errorOK) {
       LeptonInvPtPullBarrel[rec]->Fill(inv_pt_diff/inv_pt_error);
@@ -363,8 +366,8 @@ void Zprime2muResolution::fillLeptonExtraMomentumResolution(const reco::Candidat
     }
   }
   else {
-    LeptonInvPtResEndcap[rec]->Fill(inv_pt_diff/inv_gen_pt);
-    LeptonInvPResEndcap [rec]->Fill(inv_p_diff /inv_gen_p);
+    LeptonInvPtResEndcap[rec]->Fill(inv_pt_res);
+    LeptonInvPResEndcap [rec]->Fill(inv_p_res);
     
     if (errorOK) {
       LeptonInvPtPullEndcap[rec]->Fill(inv_pt_diff/inv_pt_error);
@@ -389,13 +392,17 @@ void Zprime2muResolution::fillDileptonMassResolution(const reco::CompositeCandid
   const double res_mass     = resonanceMass(dil);
   const double gen_res_mass = resonanceMass(gen_dil);
 
-  DileptonMassRes   [rec]->Fill((mass     - gen_mass)    /gen_mass);
-  DileptonResMassRes[rec]->Fill((mass     - gen_res_mass)/gen_res_mass);
-  ResonanceMassRes  [rec]->Fill((res_mass - gen_res_mass)/gen_res_mass);
+  const double rdil    = mass    /gen_mass     - 1;
+  const double rdilres = mass    /gen_res_mass - 1;
+  const double rres    = res_mass/gen_res_mass - 1;
+  
+  DileptonMassRes   [rec]->Fill(rdil);
+  DileptonResMassRes[rec]->Fill(rdilres);
+  ResonanceMassRes  [rec]->Fill(rres);
 
-  DileptonMassResVMass   [rec]->Fill(gen_mass,     (mass     - gen_mass)    /gen_mass);
-  DileptonResMassResVMass[rec]->Fill(gen_res_mass, (mass     - gen_res_mass)/gen_res_mass);
-  ResonanceMassResVMass  [rec]->Fill(gen_res_mass, (res_mass - gen_res_mass)/gen_res_mass);
+  DileptonMassResVMass   [rec]->Fill(gen_mass,     rdil*rdil);
+  DileptonResMassResVMass[rec]->Fill(gen_res_mass, rdilres*rdilres);
+  ResonanceMassResVMass  [rec]->Fill(gen_res_mass, rres*rres);
 }
 
 void Zprime2muResolution::fillLeptonHistos(const reco::CandidateBaseRef& lep, const int rec) {
@@ -449,6 +456,38 @@ void Zprime2muResolution::analyze(const edm::Event& event, const edm::EventSetup
     fillLeptonHistos(rec);
     if (rec >= lGR)
       fillDileptonHistos(rec);
+  }
+}
+
+void Zprime2muResolution::makeRMSHist(const TProfile* prof) const {
+  // Produce a histogram whose bins and errors are from RMS of the
+  // bins of the TProfile passed in.
+  int nbins = prof->GetNbinsX();
+  TAxis* axis = prof->GetXaxis();
+  TString RMS("RMS");
+  TH1F* h = fs->make<TH1F>(RMS + prof->GetName(), RMS + TString(" ") + prof->GetTitle(),
+			   nbins, axis->GetXmin(), axis->GetXmax());
+  for (int ibin = 1; ibin <= nbins; ibin++) {
+    double f_bin   = prof->GetBinContent(ibin);
+    double ent_bin = prof->GetBinEntries(ibin);
+
+    f_bin = f_bin > 0 ? sqrt(f_bin) : 0;
+    double err_bin = ent_bin > 0 ? f_bin/sqrt(2*ent_bin) : 0;
+
+    h->SetBinContent(ibin, f_bin);
+    h->SetBinError(ibin, err_bin);
+  }
+}
+
+void Zprime2muResolution::endJob() {
+  Zprime2muAnalysis::endJob();
+
+  for (int rec = lGR; rec < MAX_LEVELS; ++rec) {
+    makeRMSHist(LeptonInvPtResVPtGen[rec]);
+    makeRMSHist(LeptonInvPResVPGen[rec]);
+    makeRMSHist(DileptonMassResVMass[rec]);
+    makeRMSHist(DileptonResMassResVMass[rec]);
+    makeRMSHist(ResonanceMassResVMass[rec]);
   }
 }
 

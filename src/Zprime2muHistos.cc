@@ -3,7 +3,7 @@
   \brief    Plots basic lepton and dilepton quantities for each rec level.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muHistos.cc,v 1.4 2008/12/11 14:49:40 tucker Exp $
+  \version  $Id: Zprime2muHistos.cc,v 1.5 2008/12/15 18:03:01 slava Exp $
 */
 
 #include "TString.h"
@@ -296,6 +296,11 @@ void Zprime2muHistos::analyze(const edm::Event& event, const edm::EventSetup& eS
   fillTriggerHistos();
 
   for (int rec = 0; rec < MAX_LEVELS; ++rec) {
+    // Only fill the remaining histograms if the event passed the
+    // trigger.
+    if (rec > 0 && !trigDecision.pass_all(rec))
+      continue;
+
     fillLeptonHistos(rec);
     if (rec == lGN || rec > lL3)
       fillDileptonHistos(rec);

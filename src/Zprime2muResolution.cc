@@ -3,7 +3,7 @@
   \brief    Calculates and plots lepton/dilepton resolutions and efficiencies.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muResolution.cc,v 1.36 2008/12/11 20:53:59 tucker Exp $
+  \version  $Id: Zprime2muResolution.cc,v 1.37 2008/12/16 18:49:33 tucker Exp $
 */
 
 #include "TString.h"
@@ -207,14 +207,11 @@ void Zprime2muResolution::fillGenLevelHistos() {
 }
 
 void Zprime2muResolution::fillLeptonEfficiencyHistos() {
-  // Efficiency to reconstruct muons from Z' decays at various trigger 
-  // levels and by various off-line reconstructors.  L1/HLT efficiencies
-  // are not included.
+  // Efficiency to reconstruct leptons at various trigger levels and
+  // by various off-line reconstructors. L1/HLT efficiencies are not
+  // included.
 
   for (reco::CandidateBaseRefVector::const_iterator gen_lep = allLeptons[lGN].begin(); gen_lep != allLeptons[lGN].end(); ++gen_lep) {
-    // Only calculate efficiency for muons coming from the resonance.
-    if (!HardInteraction::IsResonance(motherId(*gen_lep))) continue;
-    
     double gen_eta = (*gen_lep)->eta();
     double gen_phi = (*gen_lep)->phi();
     double gen_pt  = (*gen_lep)->pt();
@@ -222,12 +219,12 @@ void Zprime2muResolution::fillLeptonEfficiencyHistos() {
 
     // Fill the denominator histos.
     EffVsEta[0]->Fill(gen_eta);
-    EffVsPhi[0]->Fill(gen_phi);
-    EffVsPt[0]->Fill(gen_pt);
+    if (fabs(gen_eta) < 2.45) {
+      EffVsPhi[0]->Fill(gen_phi);
+      EffVsPt[0]->Fill(gen_pt);
+    }
 
     for (int rec = lL1; rec < MAX_LEVELS; ++rec) {
-      //if (!trigDecision.pass(i)) continue;
-
       // If there is a matched lepton at this rec level, fill the
       // numerator histos.
       bool matched = false;
@@ -240,8 +237,10 @@ void Zprime2muResolution::fillLeptonEfficiencyHistos() {
 
       if (matched) {
 	EffVsEta[rec]->Fill(gen_eta);
-	EffVsPhi[rec]->Fill(gen_phi);
-	EffVsPt[rec]->Fill(gen_pt);
+	if (fabs(gen_eta) < 2.45) {
+	  EffVsPhi[rec]->Fill(gen_phi);
+	  EffVsPt[rec]->Fill(gen_pt);
+	}
       }
     }
   }
@@ -448,11 +447,16 @@ void Zprime2muResolution::analyze(const edm::Event& event, const edm::EventSetup
 
   fillGenLevelHistos();
 
-  fillLeptonEfficiencyHistos();
   fillTriggerEfficiencyHistos();
+
+  fillLeptonEfficiencyHistos();
   fillDileptonEfficiencyHistos();
 
   for (int rec = lL1; rec < MAX_LEVELS; ++rec) {
+    // Remaining histos are only filled if the event passed the trigger.
+    if (!trigDecision.pass_all(rec))
+      return;
+
     fillLeptonHistos(rec);
     if (rec >= lGR)
       fillDileptonHistos(rec);

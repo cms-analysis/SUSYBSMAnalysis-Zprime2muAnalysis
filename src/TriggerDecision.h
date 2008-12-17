@@ -39,6 +39,10 @@ class TriggerDecision {
   // Check if we passed the trigger overall.
   bool pass() const;
 
+  // If a trigger level is queried, return its result; otherwise if an
+  // offline level is passed in, return the overall trigger result.
+  bool pass_all(const int irec) const;
+
  private:
   bool debug;
 

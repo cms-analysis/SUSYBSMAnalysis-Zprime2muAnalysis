@@ -176,3 +176,7 @@ bool TriggerDecision::pass() const {
   return decision != 0;
 }
 
+bool TriggerDecision::pass_all(const int irec) const {
+  if (irec <= lL3) return pass(irec);
+  else return pass();
+}

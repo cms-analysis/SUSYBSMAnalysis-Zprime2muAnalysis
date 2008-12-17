@@ -3,7 +3,7 @@
   \brief    Calculates and plots lepton/dilepton resolutions and efficiencies.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muResolution.cc,v 1.37 2008/12/16 18:49:33 tucker Exp $
+  \version  $Id: Zprime2muResolution.cc,v 1.38 2008/12/17 15:25:04 tucker Exp $
 */
 
 #include "TString.h"
@@ -20,6 +20,7 @@ using namespace std;
 
 Zprime2muResolution::Zprime2muResolution(const edm::ParameterSet& config) : Zprime2muAnalysis(config) {
   leptonsFromDileptons = config.getParameter<bool>("leptonsFromDileptons");
+  doQoverP = config.getParameter<bool>("doQoverP");
 
   // Get the parameters specific to the data sample on which we are running.
   string dataSet = config.getParameter<string>("dataSet");
@@ -320,18 +321,34 @@ void Zprime2muResolution::fillLeptonResolution(const reco::CandidateBaseRef& gen
 void Zprime2muResolution::fillLeptonExtraMomentumResolution(const reco::CandidateBaseRef& gen_lep, const reco::CandidateBaseRef& lep, const int rec) {
   // More histograms (pulls, profiles) for offline reconstructed
   // leptons.
-  const double inv_gen_pt  = 1/gen_lep->pt();
-  const double inv_gen_p   = 1/gen_lep->p();
+  double inv_gen_pt, inv_gen_p, inv_pt, inv_p;
+  
+  if (doQoverP) {
+    const int gen_q = gen_lep->charge();
+    inv_gen_pt  = gen_q/gen_lep->pt();
+    inv_gen_p   = gen_q/gen_lep->p();
+    
+    const int q = lep->charge();
+    inv_pt = q/lep->pt();
+    inv_p  = q/lep->p();
+  }
+  else {
+    inv_gen_pt  = 1/gen_lep->pt();
+    inv_gen_p   = 1/gen_lep->p();
+    
+    inv_pt = 1/lep->pt();
+    inv_p  = 1/lep->p();
+  }
 
-  const double inv_pt_diff = 1/lep->pt() - inv_gen_pt;
-  const double inv_p_diff  = 1/lep->p()  - inv_gen_p;
+  const double inv_pt_diff = inv_pt - inv_gen_pt;
+  const double inv_p_diff  = inv_p  - inv_gen_p;
 
   const double inv_pt_res = inv_pt_diff/inv_gen_pt;
   const double inv_p_res  = inv_p_diff /inv_gen_p;
 
   // Inverse momentum resolutions as a function of generated momenta.
-  LeptonInvPtResVPtGen[rec]->Fill(1/inv_gen_pt, inv_pt_res*inv_pt_res);
-  LeptonInvPResVPGen  [rec]->Fill(1/inv_gen_p,  inv_p_res*inv_p_res);
+  LeptonInvPtResVPtGen[rec]->Fill(gen_lep->pt(), inv_pt_res*inv_pt_res);
+  LeptonInvPResVPGen  [rec]->Fill(gen_lep->p(),  inv_p_res*inv_p_res);
   
   // Try to get the reconstructed momentum errors for pulls.
   double inv_pt_error, inv_p_error;
@@ -343,7 +360,7 @@ void Zprime2muResolution::fillLeptonExtraMomentumResolution(const reco::Candidat
     if (tk) {
       errorOK = true;
       inv_pt_error = invPtError(tk);
-      inv_p_error  = invPtError(tk);
+      inv_p_error  = invPError(tk);
     }
   }      
 

@@ -47,7 +47,9 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   void makeRMSHist(const TProfile* prof) const;
 
   // Parameters specified in the config file.
-  bool   leptonsFromDileptons;
+  bool leptonsFromDileptons;
+  bool doQoverP;
+
   double peakMass;
   double lowerMassWin;
   double upperMassWin;

@@ -3,7 +3,7 @@
   \brief    Plots basic lepton and dilepton quantities for each rec level.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muHistos.cc,v 1.5 2008/12/15 18:03:01 slava Exp $
+  \version  $Id: Zprime2muHistos.cc,v 1.6 2008/12/17 15:23:45 tucker Exp $
 */
 
 #include "TString.h"
@@ -139,6 +139,7 @@ void Zprime2muHistos::bookDileptonHistos() {
     DileptonSigns[rec]->GetXaxis()->SetBinLabel(1, "+-");
     DileptonSigns[rec]->GetXaxis()->SetBinLabel(2, "--");
     DileptonSigns[rec]->GetXaxis()->SetBinLabel(3, "++");
+    DileptonSigns[rec]->GetXaxis()->SetLabelSize(0.10);
 
     // Plots comparing the daughter lepton momenta.
     DileptonDeltaPt[rec]  = fs->make<TH1F>(nameHist("DileptonDeltaPt",  rec), level + " dil. |pT^{1}| - |pT^{2}|",                100, -100, 100);
@@ -154,8 +155,13 @@ void Zprime2muHistos::fillTriggerHistos() {
     unsigned n = allLeptons[rec].size();
     if (trigDecision.pass(rec))
       NLeptonsTriggered[rec]->Fill(n);
-    else
+    else {
       NLeptonsFailed[rec]->Fill(n);
+
+      // Do not fill histos for next trigger level(s) if the current one
+      // did not fire.
+      return;
+    }
   }
 }
 

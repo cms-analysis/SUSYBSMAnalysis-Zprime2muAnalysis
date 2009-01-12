@@ -57,12 +57,14 @@ def draw_efficiency(num_name, den, min=0.7, max=1.02):
         h.Draw('hist e')
 
         # Calculate and draw total efficiency.
-        effpct = 100.0*hnum.GetEntries()/hden.GetEntries()
-        eff = '#varepsilon = %.1f%%' % effpct
-        t = TLatex()
-        t.SetTextSize(0.1)
-        t.SetNDC()
-        t.DrawLatex(0.5, 0.3, eff)
+        nden = hden.GetEntries()
+        if nden > 0:
+            effpct = 100.0*hnum.GetEntries()/nden
+            eff = '#varepsilon = %.1f%%' % effpct
+            t = TLatex()
+            t.SetTextSize(0.1)
+            t.SetNDC()
+            t.DrawLatex(0.5, 0.3, eff)
 
         return h
 

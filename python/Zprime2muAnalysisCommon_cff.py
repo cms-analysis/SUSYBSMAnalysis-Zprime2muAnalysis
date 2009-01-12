@@ -558,7 +558,8 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         src           = defaultMuons,
         fromCocktail  = False,
         fromTMR       = True,
-        tevMuonTracks = tevMuons
+        tevMuonTracks = tevMuons,
+        TMRcut        = cms.untracked.double(3.5)
         ))
 
     finalizePath(process, 'pMuons')

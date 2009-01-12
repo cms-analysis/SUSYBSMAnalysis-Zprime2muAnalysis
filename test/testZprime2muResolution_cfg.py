@@ -10,6 +10,11 @@ files = [
 
 process = makeZprime2muAnalysisProcess(files, skipPAT=True, disableElectrons=True) #, useTrigger=False)
 
+#import os
+#tmrcut = float(os.environ['TMRCUT'])
+#print 'Using TMR cut', tmrcut
+#process.muCandTR.TMRcut = cms.untracked.double(tmrcut)
+
 attachHistos(process) # Run Histos, too.
 attachResolution(process, verbosity=2)
 

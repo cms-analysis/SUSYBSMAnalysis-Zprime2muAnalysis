@@ -25,6 +25,7 @@ class Zprime2muHistos : public Zprime2muAnalysis {
   void bookBasicLeptonHistos();
   void bookOfflineLeptonHistos();
   void bookDileptonHistos();
+  void bookMiscHistos();
 
   void fillTriggerHistos();
   void fillBasicLeptonHistos(const reco::CandidateBaseRef& lep, const int rec);
@@ -38,6 +39,8 @@ class Zprime2muHistos : public Zprime2muAnalysis {
   void fillLeptonHistos(const reco::CandidateBaseRef& lep, const int rec);
   void fillLeptonHistos(const int rec);
   void fillDileptonHistos(const int rec);
+
+  void fillTeVMuonComparisonHistos(const edm::Event& event);
 
   // Parameters specified in the config file.
   bool   leptonsFromDileptons;
@@ -98,6 +101,11 @@ class Zprime2muHistos : public Zprime2muAnalysis {
   TH1F* DileptonDeltaPt[MAX_LEVELS];
   TH1F* DileptonDeltaP[MAX_LEVELS];
   TH2F* DileptonPtErrors[MAX_LEVELS];
+
+  // TeV muon refit comparison plots. Here we really waste a lot of
+  // pointers, as only unique unordered pairs of (lGR, lTK, lFS, lPR)
+  // get filled. C'est la vie.
+  TH2F* TeVMuonLnProb[MAX_LEVELS][MAX_LEVELS];
 };
 
 #endif // ZP2MUHISTOS_H

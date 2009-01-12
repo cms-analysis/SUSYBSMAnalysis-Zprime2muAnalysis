@@ -3,7 +3,7 @@
   \brief    Plots basic lepton and dilepton quantities for each rec level.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muHistos.cc,v 1.6 2008/12/17 15:23:45 tucker Exp $
+  \version  $Id: Zprime2muHistos.cc,v 1.7 2008/12/18 16:43:15 slava Exp $
 */
 
 #include "TString.h"
@@ -14,8 +14,11 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
+#include "DataFormats/MuonReco/interface/MuonCocktails.h"
 #include "DataFormats/MuonReco/interface/MuonIsolation.h"
+#include "DataFormats/MuonReco/interface/MuonFwd.h"
 #include "DataFormats/TrackReco/interface/HitPattern.h"
+#include "DataFormats/TrackReco/interface/TrackToTrackMap.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muHistos.h"
 
@@ -38,6 +41,7 @@ Zprime2muHistos::Zprime2muHistos(const edm::ParameterSet& config) : Zprime2muAna
   bookBasicLeptonHistos();
   bookOfflineLeptonHistos();
   bookDileptonHistos();
+  bookMiscHistos();
 }
 
 void Zprime2muHistos::bookTriggerHistos() {
@@ -145,6 +149,16 @@ void Zprime2muHistos::bookDileptonHistos() {
     DileptonDeltaPt[rec]  = fs->make<TH1F>(nameHist("DileptonDeltaPt",  rec), level + " dil. |pT^{1}| - |pT^{2}|",                100, -100, 100);
     DileptonDeltaP[rec]   = fs->make<TH1F>(nameHist("DileptonDeltaP",   rec), level + " dil. |p^{1}| - |p^{2}|",                  100, -500, 500);
     DileptonPtErrors[rec] = fs->make<TH2F>(nameHist("DileptonPtErrors", rec), level + " dil. #sigma_{pT}^{1} v. #sigma_{pT}^{2}", 100, 0, 100, 100, 0, 100);
+  }
+}
+
+void Zprime2muHistos::bookMiscHistos() {
+  for (int irec = lGR; irec <= lPR; ++irec) {
+    for (int jrec = irec + 1; jrec <= lPR; ++jrec) {
+      TeVMuonLnProb[irec][jrec] = fs->make<TH2F>(nameHist("TeVMuonLnProb", irec, jrec), "-ln(#chi^{2}/ndof prob)", 100, 0, 100, 50, 0, 50);
+      TeVMuonLnProb[irec][jrec]->GetXaxis()->SetTitle("-ln(P), " + TString(levelName(irec)));
+      TeVMuonLnProb[irec][jrec]->GetYaxis()->SetTitle("-ln(P), " + TString(levelName(jrec)));
+    }
   }
 }
 
@@ -295,11 +309,59 @@ void Zprime2muHistos::fillDileptonHistos(const int rec) {
   }
 }
 
+void Zprime2muHistos::fillTeVMuonComparisonHistos(const edm::Event& event) {
+  using namespace edm;
+  using namespace reco;
+
+  // Loop over all GR muons to access the refit tracks directly
+  // through the track-to-track map so we know which FS muon maps to
+  // which TK muon, etc. Could be reworked if/when we have a module
+  // that maps e.g. FS reco::Muons to TK, but probably not necessary.
+    
+  Handle<MuonCollection> muons;
+  Handle<TrackToTrackMap> firstHit;
+  Handle<TrackToTrackMap> picky;;
+
+  event.getByLabel("muons", muons);
+  event.getByLabel("tevMuons", "firstHit", firstHit);
+  event.getByLabel("tevMuons", "picky",    picky);
+
+  // If we couldn't access something, just return without filling any histos.
+  if (muons.failedToGet() || firstHit.failedToGet() || picky.failedToGet())
+    return;
+
+  for (MuonCollection::const_iterator muon = muons->begin(); muon != muons->end(); ++muon) {
+    if (!muon->isGlobalMuon()) continue;
+    
+    // Levels lGN-lL3, lOP, lTR are wasted here for sake of
+    // clarity. TrackRef is a small object, though.
+    TrackRef track[MAX_LEVELS];
+
+    track[lGR] = muon->globalTrack();
+    track[lTK] = muon->innerTrack();
+    TrackToTrackMap::const_iterator fh, pr;
+    if ((fh = firstHit->find(track[lGR])) != firstHit->end()) track[lFS] = fh->val;
+    if ((pr = picky   ->find(track[lGR])) != picky   ->end()) track[lPR] = pr->val;
+
+    for (int irec = lGR; irec <= lPR; ++irec) {
+      for (int jrec = irec + 1; jrec <= lPR; ++jrec) {
+	if (track[irec].isAvailable() && track[jrec].isAvailable()) {
+	  TeVMuonLnProb[irec][jrec]->Fill(muon::trackProbability(track[irec]),
+					  muon::trackProbability(track[jrec]));
+	}
+      }
+    }
+	  
+  }
+}
+
 void Zprime2muHistos::analyze(const edm::Event& event, const edm::EventSetup& eSetup) {
   // Delegate filling our lepton vectors to the parent class.
   Zprime2muAnalysis::analyze(event, eSetup);
 
   fillTriggerHistos();
+
+  fillTeVMuonComparisonHistos(event);
 
   for (int rec = 0; rec < MAX_LEVELS; ++rec) {
     // Only fill the remaining histograms if the event passed the

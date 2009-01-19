@@ -9,9 +9,10 @@ class PSDrawer:
     REC_START = 1
     TRIG_START = 1
     OFFLINE_START = 4
+    COCKTAIL_START = 8
     MAX_LEVELS = 10
     
-    def __init__(self, filename, datePages=False):
+    def __init__(self, filename, datePages=False, asPDF=False):
         gROOT.SetStyle("Plain");
         gStyle.SetFillColor(0);
         if datePages:
@@ -37,6 +38,8 @@ class PSDrawer:
         self.t = TText()
         self.t.SetTextFont(32)
         self.t.SetTextSize(0.025)
+        
+        self.asPDF = asPDF
 
     def __del__(self):
         self.close()
@@ -61,7 +64,7 @@ class PSDrawer:
         if h: h.Draw(draw_opt)
         return h
 
-    def rec_level_page(self, histos, page_type, histo_base_name, page_title, draw_opt='', log_scale=False, fit_gaus=False):
+    def rec_level_page(self, histos, page_type, histo_base_name, page_title, draw_opt='', log_scale=False, fit_gaus=False, hist_cmds=None):
         if page_type == 'all':
             div = (2,5)
             levels = xrange(self.MAX_LEVELS)
@@ -74,23 +77,37 @@ class PSDrawer:
         elif page_type == 'no_trig':
             div = (2,4)
             levels = [self.GEN] + range(self.OFFLINE_START, self.MAX_LEVELS)
+        elif page_type == 'cocktail':
+            div = (1,2)
+            levels = xrange(self.COCKTAIL_START, self.MAX_LEVELS)
         else:
             raise ValueError, 'page_type %s not recognized' % page_type
 
         pad = self.new_page(page_title, div)
+        subpads = []
         for i, level in enumerate(levels):
             subpad = pad.cd(i+1)
+            subpads.append(subpad)
             if log_scale: subpad.SetLogy(1)
             h = histos.Get('%s%i' % (histo_base_name, level))
             if h is not None:
+                if hist_cmds is not None:
+                    for fn, args in hist_cmds:
+                        t = type(args)
+                        if t != type(()) or t != type([]):
+                            args = (args,)
+                        getattr(h, fn)(*args)
                 h.Draw(draw_opt)
                 if fit_gaus:
                     h.Fit('gaus', 'Q')
+        return subpads
 
     def close(self):
         self.canvas.Update()
         self.ps.Close()
         # New ROOT TPostScript breaks gv page number titles.
         os.system("sed --in-place -e 's/Page: (number /Page: (/g' %s" % self.filename)
+        if self.asPDF:
+            os.system('ps2pdf %s' % self.filename)
         
 __all__ = ['PSDrawer']

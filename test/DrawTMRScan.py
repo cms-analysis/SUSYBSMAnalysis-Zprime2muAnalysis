@@ -27,7 +27,7 @@ output_file = 'TMRscan.ps'
 # Range of cut values to look at on the plots.
 cut_range = (0, 20)
 # Proposed cut value (to be tweaked after looking at the plots).
-proposed_cut = 3.5
+proposed_cut = 4
 
 import sys
 import glob
@@ -37,11 +37,20 @@ from ROOT import TFile, TGraph, TLine, kRed
 
 # Make some arrays for TGraphs.
 cut = array('d')
-stats = {
+hist_names = [
+    'LeptonInvPtRes',
+    'DileptonMassRes',
+    'TMRSelectedResolution0',
+    'TMRRejectedResolution0',
+    'TMRSelectedResolution1',
+    'TMRRejectedResolution1',
+    'TMRSelectedResolution',
+    'TMRRejectedResolution'
+    ]
+stats = {}
+for name in hist_names:
     # Order of tuple is entries, underflows, overflows, sigmas, rms
-    'LeptonInvPtRes':  (array('d'), array('d'), array('d'), array('d'), array('d')),
-    'DileptonMassRes': (array('d'), array('d'), array('d'), array('d'), array('d'))
-    }
+    stats[name] = (array('d'), array('d'), array('d'), array('d'), array('d'), array('d'))
 
 # Loop over every root file and extract the results of the fits.
 for fn in glob.glob('%s*.root' % root_file_dir):
@@ -50,17 +59,32 @@ for fn in glob.glob('%s*.root' % root_file_dir):
     cut.append(c)
 
     f = TFile(fn)
+    histos = f.Zprime2muResolution
+    if histos is None:
+        continue
 
-    for base_name, (entries, under, over, sigma, rms) in stats.items():
-        h = f.Zprime2muResolution.Get('%s%i' % (base_name, rec_level))
+    for base_name, (entries, under, over, rms, sigma, chi2) in stats.items():
+        
+        if 'TMR' not in base_name:
+            h = histos.Get('%s%i' % (base_name, rec_level))
+        else:
+            h = histos.Get(base_name)
+            if h is None:
+                h0 = histos.Get('%s0' % base_name)
+                h1 = histos.Get('%s1' % base_name)
+                h = h0.Clone()
+                h.Add(h1)
+                h.SetName(base_name)
         h.Fit('gaus','Q')
 
         entries.append(h.GetEntries())
         under.append(h.GetBinContent(0))
         over.append(h.GetBinContent(h.GetNbinsX()+1))
 
-        sigma.append(h.GetFunction('gaus').GetParameter(2))
         rms.append(h.GetRMS())
+        fit = h.GetFunction('gaus')
+        sigma.append(fit.GetParameter(2))
+        chi2.append(fit.GetChisquare()/fit.GetNDF())
 
     f.Close()
 
@@ -68,24 +92,25 @@ for fn in glob.glob('%s*.root' % root_file_dir):
 psd = PSDrawer(output_file)
 
 graphs = []
-names = ['Entries', 'Underflows', 'Overflows', 'Sigma (fraction)', 'RMS (fraction)']
-for base_name, arrays in stats.items():
+names = ['Entries', 'Underflows', 'Overflows', 'RMS', 'Sigma'] #, 'Fit #chi^{2}/dof']
+for base_name in hist_names:
+    arrays = stats[base_name]
     pad = psd.new_page(base_name, (2,3))
-    for i, a in enumerate(arrays):
+    for i, n in enumerate(names):
         pad.cd(i+1)
         
-        g = TGraph(len(cut), cut, a)
+        g = TGraph(len(cut), cut, arrays[i])
         graphs.append(g) # Need to keep the graph object around.
         
         g.SetMarkerSize(0.6)
         g.GetXaxis().SetTitle('cut')
-        g.SetTitle(names[i])
+        g.SetTitle(n)
         
         g.Draw('AP')
 
 # Draw a scatterplot of the track probabilities, with the proposed cut
 # value superimposed.
-f = TFile('%s%.1f.root' % (root_file_dir, proposed_cut))
+f = TFile('%s%f.root' % (root_file_dir, proposed_cut))
 h = f.Zprime2muHistos.Get('TeVMuonLnProb56')
 if h is None:
     raise RuntimeError, 'input file does not contain the histogram!'
@@ -106,6 +131,28 @@ maxTK = 10
 l = TLine(0, proposed_cut, maxTK, proposed_cut + maxTK)
 l.SetLineColor(kRed)
 l.Draw()
+
+# Also check the selected/rejected resolutions.
+pad = psd.new_page('TMR selected/rejected 1/pT resolution', (2,3))
+j = 1
+histos = f.Zprime2muResolution
+for i in [0,1,2]:
+    for type in ['Selected', 'Rejected']:
+        pad.cd(j)
+        j += 1
+        if i == 2:
+            h0 = histos.Get('TMR%sResolution0' % type)
+            h1 = histos.Get('TMR%sResolution1' % type)
+            h = h0.Clone()
+            h.Add(h1)
+            h.SetName('TMR%sResolution' % type)
+            h.SetTitle('inv pT res')
+        else:
+            h = histos.Get('TMR%sResolution%i' % (type, i))
+        if h is not None:
+            h.Draw()
+            h.Fit('gaus', 'Q')
+
 
 psd.close()
     

@@ -80,5 +80,7 @@ psd.rec_level_page(histos, 'no_trig', 'DileptonDeltaPt',  'Dilepton |pT^{1}| - |
 psd.rec_level_page(histos, 'no_trig', 'DileptonDeltaP',   'Dilepton |p^{1}| - |p^{2}|')
 psd.rec_level_page(histos, 'no_trig', 'DileptonPtErrors', 'Dilepton #sigma_{pT}^{1} v. #sigma_{pT}^{2}')
 
+psd.rec_level_page(histos, 'cocktail', 'TeVMuonCocktailSource', 'Original rec level of cocktail muons', draw_opt='HIST TEXT0', hist_cmds=[('SetMarkerSize', 1), ('SetStats', 0)])
+
 psd.close()
 f.Close()

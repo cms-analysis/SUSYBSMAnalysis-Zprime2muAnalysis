@@ -140,8 +140,8 @@ void Zprime2muAnalysis::dumpEvent(const bool trigOnly) const {
   for (irec = trigOnly ? lL1 : lGN; irec < imax; irec++) {
     if (irec >= lGR)
       out << endl;
-    if (irec == lOP)
-      out << "Best off-line muons: \n";
+    if (irec >= lOP)
+      out << levelName(irec) << " cocktail muons:\n";
     for (imu = 0; imu < allLeptons[irec].size(); imu++)
       dumpLepton(out, allLeptons[irec][imu]);
     for (idil = 0; idil < allDileptons[irec].size(); idil++)

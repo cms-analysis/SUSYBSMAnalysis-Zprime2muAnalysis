@@ -525,7 +525,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         src              = defaultMuons,
         fromCocktail     = False,
         tevMuonTracks    = 'none',
-        fromTrackerTrack = cms.untracked.bool(True)
+        fromTrackerTrack = cms.bool(True)
         ))
 
     # Make first-muon-station (FMS) reco::Muons using the supplied
@@ -559,7 +559,6 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         fromCocktail  = False,
         fromTMR       = True,
         tevMuonTracks = tevMuons,
-        TMRcut        = cms.untracked.double(3.5)
         ))
 
     finalizePath(process, 'pMuons')

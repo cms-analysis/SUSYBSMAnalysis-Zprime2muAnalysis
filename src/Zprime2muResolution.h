@@ -26,6 +26,7 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   void bookLeptonResolutionHistos();
   void bookChargeResolutionHistos();
   void bookDileptonResolutionHistos();
+  void bookMiscHistos();
 
   int encodeLeptonOrigin(const int id) const;
 
@@ -43,6 +44,8 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   void fillLeptonHistos(const reco::CandidateBaseRef& lep, const int rec);
   void fillLeptonHistos(const int rec);
   void fillDileptonHistos(const int rec);
+
+  void fillTMRResolution();
 
   void makeRMSHist(const TProfile* prof) const;
 
@@ -109,6 +112,9 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   TProfile* DileptonMassResVMass[MAX_LEVELS];
   TProfile* DileptonResMassResVMass[MAX_LEVELS];
   TProfile* ResonanceMassResVMass[MAX_LEVELS];
+
+  TH1F* TMRSelectedResolution[2]; // index is when TMR is TK, FS
+  TH1F* TMRRejectedResolution[2]; // ditto
 };
 
 #endif // ZP2MURESOLUTION_H

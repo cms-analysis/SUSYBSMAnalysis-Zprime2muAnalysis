@@ -3,7 +3,7 @@
   \brief    Calculates and plots lepton/dilepton resolutions and efficiencies.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muResolution.cc,v 1.38 2008/12/17 15:25:04 tucker Exp $
+  \version  $Id: Zprime2muResolution.cc,v 1.39 2008/12/17 16:36:57 tucker Exp $
 */
 
 #include "TString.h"
@@ -37,6 +37,7 @@ Zprime2muResolution::Zprime2muResolution(const edm::ParameterSet& config) : Zpri
   bookChargeResolutionHistos();
   bookEfficiencyHistos();
   bookDileptonResolutionHistos();
+  bookMiscHistos();
 }
 
 void Zprime2muResolution::bookGenLevelHistos() {
@@ -157,6 +158,14 @@ void Zprime2muResolution::bookDileptonResolutionHistos() {
     DileptonMassResVMass[rec]    = fs->make<TProfile>(nameHist("DileptonMassResVMass",    rec), level + " (dil. mass - gen dil. mass)/(gen dil. mass)", 50, lowerMassWin, upperMassWin, -0.3, 0.3);
     DileptonResMassResVMass[rec] = fs->make<TProfile>(nameHist("DileptonResMassResVMass", rec), level + " (dil. mass - gen res. mass)/(gen res. mass)", 50, lowerMassWin, upperMassWin, -0.3, 0.3);
     ResonanceMassResVMass[rec]   = fs->make<TProfile>(nameHist("ResonanceMassResVMass",   rec), level + " (res. mass - gen res. mass)/(gen res. mass)", 50, lowerMassWin, upperMassWin, -0.3, 0.3);
+  }
+}
+
+void Zprime2muResolution::bookMiscHistos() {
+  const TString type[2] = { "TK", "FS" };
+  for (unsigned i = 0; i < 2; ++i) {
+    TMRSelectedResolution[i] = fs->make<TH1F>(nameHist("TMRSelectedResolution", i), type[i]   + " inv pT res", 100, -0.3, 0.3);
+    TMRRejectedResolution[i] = fs->make<TH1F>(nameHist("TMRRejectedResolution", i), type[1-i] + " inv pT res", 100, -0.3, 0.3);
   }
 }
 
@@ -458,6 +467,60 @@ void Zprime2muResolution::fillDileptonHistos(const int rec) {
   }
 }
 
+void Zprime2muResolution::fillTMRResolution() {
+  // For every TMR cocktail muon, plot the resolution of the
+  // selected muons and the rejected muons separately to show that
+  // the cocktail is indeed choosing better-reconstructed tracks.
+  // 
+  // This probably could be implemented nicer if we bring back
+  // something like the by-seed matches.
+  unsigned ilep = 0;
+  for (reco::CandidateBaseRefVector::const_iterator lep = allLeptons[lTR].begin(); lep != allLeptons[lTR].end(); ++lep, ++ilep) {
+    const reco::CandidateBaseRef& gen_lep = recLevelHelper.matchGenLepton(*lep);
+    if (gen_lep.isNonnull()) {
+      const reco::Muon* mu = toConcretePtr<reco::Muon>(*lep);
+      if (mu != 0) {
+	double inv_gen_pt = 1/gen_lep->pt();
+	double inv_rejected_pt = -999;
+	double inv_selected_pt = 1/(*lep)->pt();
+	int selected_level = recLevelHelper.originalRecLevel(*lep);
+
+	const reco::TrackRef& tracker_track = mu->innerTrack();
+	if (tracker_track.isAvailable()) {
+	  if (selected_level == lFS) {
+	    // The selected is the first-hit muon, and the rejected is
+	    // the tracker-only muon.
+	    inv_rejected_pt = 1/tracker_track->pt();
+	  }
+	  else if (selected_level == lTK) {
+	    // Now the selected is the tracker-only muon, so we need to
+	    // search the first-hit muons for the rejected one. The
+	    // tracker tracks should be equal (in fact, their Refs should
+	    // be) -- try to find it that way.
+	    for (reco::CandidateBaseRefVector::const_iterator fs = allLeptons[lFS].begin(); fs != allLeptons[lFS].end(); ++fs) {
+	      const reco::Muon* fs_mu = toConcretePtr<reco::Muon>(*fs);
+	      if (fs_mu != 0 && fs_mu->innerTrack() == tracker_track)
+		inv_rejected_pt = 1/(*fs)->pt();
+	    }
+	  }
+	  else
+	    edm::LogWarning("fillTMRResolution") << "invalid original level " << selected_level << "for TMR muon " << ilep;
+	}
+
+	// Fill 1/pt resolution.
+	if (inv_rejected_pt > 0) {
+	  int which = selected_level == lFS;
+	  TMRSelectedResolution[which]->Fill(inv_selected_pt/inv_gen_pt - 1);
+	  TMRRejectedResolution[which]->Fill(inv_rejected_pt/inv_gen_pt - 1);
+	}
+	//else edm::LogWarning("fillTMRResolution") << "couldn't find rejected pt for TMR muon " << ilep << " of original level " << selected_level;
+      }
+      //else edm::LogWarning("fillTMRResolution") << "couldn't cast to Muon class for TMR muon " << ilep;
+    }
+    //else edm::LogWarning("fillTMRResolution") << "couldn't match to MC for TMR muon " << ilep;
+  }
+}
+
 void Zprime2muResolution::analyze(const edm::Event& event, const edm::EventSetup& eSetup) {
   // Delegate filling our lepton vectors to the parent class.
   Zprime2muAnalysis::analyze(event, eSetup);
@@ -468,6 +531,8 @@ void Zprime2muResolution::analyze(const edm::Event& event, const edm::EventSetup
 
   fillLeptonEfficiencyHistos();
   fillDileptonEfficiencyHistos();
+
+  fillTMRResolution();
 
   for (int rec = lL1; rec < MAX_LEVELS; ++rec) {
     // Remaining histos are only filled if the event passed the trigger.

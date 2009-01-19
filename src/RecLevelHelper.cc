@@ -1,12 +1,14 @@
 #include <string>
 
 #include "DataFormats/Common/interface/Handle.h"
+#include "DataFormats/MuonReco/interface/Muon.h"
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/RecLevelHelper.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 
 using namespace std;
 
@@ -105,6 +107,26 @@ void RecLevelHelper::storeRecLevelMap(const edm::Event& event) {
     int key = int(view.id().id());
     if (recLevelMap.find(key) == recLevelMap.end())
       recLevelMap[key] = rec;
+
+    // So that we can figure out from which rec level a cocktail muon
+    // originated, store a map of the product ids of the Track objects
+    // for each of the possible constituent muons (e.g. rec level lGR
+    // should map to the product id for the recoTracks_globalMuons_*_*
+    // branch, etc.) We can store this in the same map as the above
+    // since the product ids are guaranteed to be unique for each
+    // branch (at least on a per-event basis).
+    if (!isCocktailLevel(rec)) {
+      // Get the track from the first muon in the collection for this
+      // rec level. If there are no muons for this rec level, then we
+      // won't be matching to this rec level this event anyway.
+      if (view.size() > 0) {
+	const reco::Muon* mu = toConcretePtr<reco::Muon>(view.at(0));
+	if (mu != 0) {
+	  int id = int(mu->globalTrack().id().id());
+	  recLevelMap[id] = rec;
+	}
+      }
+    }
   }
 }
 
@@ -173,31 +195,26 @@ int RecLevelHelper::recLevel(const reco::CompositeCandidate& dil) const {
 
 int RecLevelHelper::originalRecLevel(const reco::CandidateBaseRef& cand) const {
   int level = recLevel(cand);
-  return level;
-
-  /*
-  // Disabled until matchOfflineLepton() is implemented.
-
   if (!isCocktailLevel(level))
     return level;
 
-  // Try to look in the original collections the cocktail muon chose
-  // from to see which level it came from.
-  for (level = lGR; level <= lPR; level++) {
-    // If the closest lepton at the other level has the same
-    // four-vector, charge, and vertex, this level is from where the
-    // cocktail muon came.
-    const reco::CandidateBaseRef& clos = matchOfflineLepton(cand, level);
-    if (clos.isNonnull() &&
-	cand->p4() == clos->p4() && cand->charge() == clos->charge() &&
-	cand->vertex() == clos->vertex())
-      return level;
+  // If we have a cocktail muon, then use its main track and the track
+  // product id -> rec level map stored earlier to figure out what the
+  // original rec level was.
+  const reco::Muon* mu = toConcretePtr<reco::Muon>(cand);
+  if (mu != 0) {
+    int id = mu->globalTrack().id().id();
+    map<int,int>::const_iterator c = recLevelMap.find(id);
+    if (c != recLevelMap.end())
+      return c->second;
   }
-  
-  // If we didn't find it, assume it came from whatever the current
-  // "best" level is (either OP or TR, currently).
-  return bestRecLevel;
-  */
+
+  // If we failed to find it, just return the cocktail level. (One way
+  // to get get here is if cand is a cocktail muon produced by the
+  // "official" method tevOptimized(), since it can return a GMR track
+  // that has been refit once ("tevMuons_default"). Zprime2muAnalysis
+  // does not currently use these tracks.)
+  return level;
 }
 
 reco::Particle::LorentzVector

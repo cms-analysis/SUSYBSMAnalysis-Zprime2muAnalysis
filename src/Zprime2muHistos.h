@@ -106,6 +106,7 @@ class Zprime2muHistos : public Zprime2muAnalysis {
   // pointers, as only unique unordered pairs of (lGR, lTK, lFS, lPR)
   // get filled. C'est la vie.
   TH2F* TeVMuonLnProb[MAX_LEVELS][MAX_LEVELS];
+  TH1F* TeVMuonCocktailSource[MAX_LEVELS];
 };
 
 #endif // ZP2MUHISTOS_H

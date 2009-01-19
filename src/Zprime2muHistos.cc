@@ -3,7 +3,7 @@
   \brief    Plots basic lepton and dilepton quantities for each rec level.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muHistos.cc,v 1.7 2008/12/18 16:43:15 slava Exp $
+  \version  $Id: Zprime2muHistos.cc,v 1.8 2009/01/12 16:49:55 tucker Exp $
 */
 
 #include "TString.h"
@@ -160,6 +160,12 @@ void Zprime2muHistos::bookMiscHistos() {
       TeVMuonLnProb[irec][jrec]->GetYaxis()->SetTitle("-ln(P), " + TString(levelName(jrec)));
     }
   }
+
+  for (int irec = lOP; irec <= lTR; ++irec) {
+    TeVMuonCocktailSource[irec] = fs->make<TH1F>(nameHist("TeVMuonCocktailSource", irec), levelName(irec).c_str(), MAX_LEVELS-lGR, lGR, MAX_LEVELS);
+    for (int jrec = lGR; jrec < MAX_LEVELS; ++jrec)
+      TeVMuonCocktailSource[irec]->GetXaxis()->SetBinLabel(jrec - lGR + 1, levelName(jrec).c_str());
+  }
 }
 
 void Zprime2muHistos::fillTriggerHistos() {
@@ -190,6 +196,10 @@ void Zprime2muHistos::fillBasicLeptonHistos(const reco::CandidateBaseRef& lep, c
 
   LeptonPtVsEta[rec]->Fill(lep->eta(), lep->pt());
   LeptonPVsEta[rec] ->Fill(lep->eta(), lep->p());
+
+  // Fill this here since we have the CandidateBaseRef.
+  if (rec >= lOP)
+    TeVMuonCocktailSource[rec]->Fill(recLevelHelper.originalRecLevel(lep));
 }
 
 void Zprime2muHistos::fillOfflineMuonHistos(const reco::Muon* lep, const int rec) {

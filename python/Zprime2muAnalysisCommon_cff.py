@@ -246,6 +246,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         skipPAT = True
         disableElectrons = True
         useSim = False
+        useOtherMuonRecos = False
         photons = 'selectedLayer1Photons'
         defaultMuons = 'selectedLayer1Muons'
 

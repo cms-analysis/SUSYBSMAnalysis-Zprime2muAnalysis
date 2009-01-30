@@ -315,16 +315,16 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
     output << "   MuonFit Pt: " << setw(7) << stapt << " +/- " << stapterr
 	   << "   MuonFit Chi2: " << setw(8) << stachi2 << endl;
 
+    output << "   Vertex position:        " << setw(11) << cand->vx() 
+	   << " "                    << setw(11) << cand->vy() 
+	   << " "                    << setw(11) << cand->vz() << endl;
     if (globalTrack != 0) {
-      output << "   Vertex position: " << setw(11) << cand->vx() 
-	     << " "                    << setw(11) << cand->vy() 
-	     << " "                    << setw(11) << cand->vz() << endl;
       if (globalTrack->extra().isAvailable())
-	output << "   Track. position: " << setw(11) << globalTrack->innerPosition().X()
+	output << "   Innermost hit position: " << setw(11) << globalTrack->innerPosition().X()
 	       << " "                    << setw(11) << globalTrack->innerPosition().Y()
 	       << " "                    << setw(11) << globalTrack->innerPosition().Z()
 	       << endl;
-      output << "   Track. position: " << setw(11) << globalTrack->vx()
+      output << "   Ref. point position:    " << setw(11) << globalTrack->vx()
 	     << " "                    << setw(11) << globalTrack->vy()
 	     << " "                    << setw(11) << globalTrack->vz()
 	     << endl;

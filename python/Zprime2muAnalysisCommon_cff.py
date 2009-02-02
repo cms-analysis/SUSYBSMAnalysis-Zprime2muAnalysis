@@ -114,6 +114,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                                  performTrackReReco=False,
                                  conditionsGlobalTag='IDEAL_V9::All',
                                  dumpHardInteraction=False,
+                                 strictGenDilepton=True,
                                  dumpTriggerSummary=False,
                                  flavorsForDileptons=diMuons,
                                  chargesForDileptons=oppSign,
@@ -188,6 +189,15 @@ def makeZprime2muAnalysisProcess(fileNames=[],
 
     dumpHardInteraction: if True, use ParticleListDrawer to dump the
     generator info on the hard interaction particles.
+
+    strictGenDilepton: if True, require the dilepton produced at gen
+    level to have leptons that have the same generated mother as
+    specified in the MC record (or, in the case of leptons that have
+    radiated photons, try to find the first non-lepton ancestor of
+    each and compare those). Set this to False for CompHEP or other
+    samples which do not have the resonance listed in the MC record;
+    the dilepton will then be constructed using final state muons in
+    the same way as for all the other rec levels.
 
     dumpTriggerSummary: if True, use TriggerSummaryAnalyzerAOD to dump
     the information in the hltTriggerSummaryAOD object (which is the
@@ -780,7 +790,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         # this enables us to get the reference to the original lepton
         # that makes up the dilepton we're looking at in the code.
         combiner = 'CandViewShallowCloneCombiner'
-        if rec == 0:
+        if rec == 0 and strictGenDilepton:
             # At generator level, look only at the leptons which came
             # from the resonance.
             combiner = 'GenDil' + combiner
@@ -805,6 +815,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             # Produce the dileptons after cuts and overlap removal.
             prod = cms.EDProducer('DileptonPicker',
                                   src          = cms.InputTag(name),
+                                  doingGen     = cms.bool(rec == 0 and strictGenDilepton),
                                   maxDileptons = cms.uint32(maxDileptons),
                                   cutMask      = cms.uint32(cutMask)
                                   )

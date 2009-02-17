@@ -20,7 +20,7 @@ void checkRecLevel(const int level, const char* name) {
 
 bool isCocktailLevel(const int level) {
   checkRecLevel(level, "isCocktail");
-  return level == lOP || level == lTR;
+  return level >= lOP && level < MAX_LEVELS;
 }
 
 const std::string& levelName(const int rec, bool shortVersion) {

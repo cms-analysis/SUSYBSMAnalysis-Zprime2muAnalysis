@@ -4,13 +4,17 @@ sys.argv.append('-b') # start ROOT in batch mode
 from ROOT import *
 sys.argv.remove('-b') # and don't mess up sys.argv
 
+from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysisCommon_cff import recLevels
+
+print 'In PSDrawer, recLevels are', recLevels
+
 class PSDrawer:
-    GEN = 0
-    REC_START = 1
-    TRIG_START = 1
-    OFFLINE_START = 4
-    COCKTAIL_START = 8
-    MAX_LEVELS = 10
+    GEN = recLevels.index('GN')
+    REC_START = recLevels.index('GN') + 1
+    TRIG_START = recLevels.index('L1')
+    OFFLINE_START = recLevels.index('GR')
+    COCKTAIL_START = recLevels.index('OP')
+    MAX_LEVELS = len(recLevels)
     
     def __init__(self, filename, datePages=False, asPDF=False):
         gROOT.SetStyle("Plain");
@@ -64,7 +68,7 @@ class PSDrawer:
         if h: h.Draw(draw_opt)
         return h
 
-    def rec_level_page(self, histos, page_type, histo_base_name, page_title, draw_opt='', log_scale=False, fit_gaus=False, hist_cmds=None):
+    def div_levels(self, page_type):
         if page_type == 'all':
             div = (2,5)
             levels = xrange(self.MAX_LEVELS)
@@ -82,14 +86,17 @@ class PSDrawer:
             levels = xrange(self.COCKTAIL_START, self.MAX_LEVELS)
         else:
             raise ValueError, 'page_type %s not recognized' % page_type
+        return div, levels
 
+    def rec_level_page(self, histos, page_type, histo_base_name, page_title, draw_opt='', log_scale=False, fit_gaus=False, hist_cmds=None):
+        div, levels = self.div_levels(page_type)
         pad = self.new_page(page_title, div)
         subpads = []
         for i, level in enumerate(levels):
             subpad = pad.cd(i+1)
             subpads.append(subpad)
             if log_scale: subpad.SetLogy(1)
-            h = histos.Get('%s%i' % (histo_base_name, level))
+            h = histos.Get('%s%X' % (histo_base_name, level))
             if h is not None:
                 if hist_cmds is not None:
                     for fn, args in hist_cmds:

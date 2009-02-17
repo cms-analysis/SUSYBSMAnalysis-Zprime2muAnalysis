@@ -82,42 +82,45 @@ for rec in xrange(psd.TRIG_START, psd.OFFLINE_START):
         h = draw_efficiency('TrigEffVsDilMass%i%i' % (rec, i), hgen, 0.89, 1.01)
         if h is not None:
             h.SetTitle('Trigger eff. (%s), L%i' % (hgen.GetTitle().replace('Gen mass, GN,', ''), rec))
-                        
+
+div, levels = psd.div_levels('no_gen')
 for var, title in [('Eta', '#eta'), ('Phi', '#phi'), ('Pt', 'pT')]:
-    pad = psd.new_page('Reconstruction efficiency vs. %s' % title, (2,5))
+    pad = psd.new_page('Reconstruction efficiency vs. %s' % title, div)
     hgen = histos.Get('EffVs%s0' % var)
     if hgen is not None:
-        for rec in xrange(psd.REC_START, psd.MAX_LEVELS):
+        for rec in levels:
             pad.cd(rec).SetGrid(i)
-            draw_efficiency('EffVs%s%i' % (var, rec), hgen, 0.5, 1.01)
+            draw_efficiency('EffVs%s%X' % (var, rec), hgen, 0.5, 1.01)
+
+div, levels = psd.div_levels('offline')
 
 # Total - acceptance, trigger and "off-line" reconstruction - efficiency.
-pad = psd.new_page('Dilepton total rec. efficiency', (2,3))
-for rec in xrange(psd.OFFLINE_START, psd.MAX_LEVELS):
+pad = psd.new_page('Dilepton total rec. efficiency', div)
+for rec in levels:
     pad.cd(rec-3).SetGrid(1)
-    draw_efficiency('DilRecEffVsMass%i1' % rec, 'DilRecEffVsMass00', min=0.5)
+    draw_efficiency('DilRecEffVsMass%X1' % rec, 'DilRecEffVsMass00', min=0.5)
 
 # "Off-line" efficiency to find at least two muons, relative to events
 # in acceptance and accepted by the L1/HLT triggers.
-pad = psd.new_page('Two-lepton offline rec. efficiency', (2,3))
-for rec in xrange(psd.OFFLINE_START, psd.MAX_LEVELS):
+pad = psd.new_page('Two-lepton offline rec. efficiency', div)
+for rec in levels:
     pad.cd(rec-3).SetGrid(1)
-    draw_efficiency('DilRecEffVsMass%i0' % rec, 'DilRecEffVsMass01')
+    draw_efficiency('DilRecEffVsMass%X0' % rec, 'DilRecEffVsMass01')
 
 # "Off-line" efficiency to find opposite-sign dimuon, relative to
 # events in acceptance and accepted by the L1/HLT triggers, and with
 # two muons passing cuts.
-pad = psd.new_page('Dilepton w/ cuts offline rec. efficiency', (2,3))
-for rec in xrange(psd.OFFLINE_START, psd.MAX_LEVELS):
+pad = psd.new_page('Dilepton w/ cuts offline rec. efficiency', div)
+for rec in levels:
     pad.cd(rec-3).SetGrid(1)
-    draw_efficiency('DilRecEffVsMass%i1' % rec, 'DilRecEffVsMass%i2' % rec)
+    draw_efficiency('DilRecEffVsMass%X1' % rec, 'DilRecEffVsMass%X2' % rec)
 
 # "Off-line" efficiency to find opposite-sign dimuon, relative to
 # events in acceptance and accepted by the L1/HLT triggers.
-pad = psd.new_page('Dilepton offline rec. efficiency', (2,3))
-for rec in xrange(psd.OFFLINE_START, psd.MAX_LEVELS):
+pad = psd.new_page('Dilepton offline rec. efficiency', div)
+for rec in levels:
     pad.cd(rec-3).SetGrid(1)
-    draw_efficiency('DilRecEffVsMass%i1' % rec, 'DilRecEffVsMass01')
+    draw_efficiency('DilRecEffVsMass%X1' % rec, 'DilRecEffVsMass01')
 
 gStyle.SetOptStat(111111)
 
@@ -128,7 +131,7 @@ psd.rec_level_page(histos, 'no_gen', 'LeptonPtRes',    'Lepton pT resolution',  
 psd.rec_level_page(histos, 'no_gen', 'LeptonPRes',     'Lepton p resolution',    fit_gaus=True)
 
 psd.rec_level_page(histos, 'no_gen',  'LeptonInvPtRes',          'Lepton 1/pT resolution',            fit_gaus=True)
-psd.rec_level_page(histos, 'offline', 'RMSLeptonInvPtResVPtGen', 'Lepton 1/pT resolution vs. gen pT')
+psd.rec_level_page(histos, 'offline', 'RMSLeptonInvPtResVPtGen', 'Lepton 1/pT resolution vs. gen pT', hist_cmds=[('SetMaximum', 0.5)])
 psd.rec_level_page(histos, 'offline', 'LeptonInvPtResBarrel',    'Lepton 1/pT resolution, barrel',    fit_gaus=True)
 psd.rec_level_page(histos, 'offline', 'LeptonInvPtResEndcap',    'Lepton 1/pT resolution, endcap',    fit_gaus=True)
 psd.rec_level_page(histos, 'offline', 'LeptonInvPtPull',         'Lepton 1/pT pulls',                 fit_gaus=True)
@@ -136,7 +139,7 @@ psd.rec_level_page(histos, 'offline', 'LeptonInvPtPullBarrel',   'Lepton 1/pT pu
 psd.rec_level_page(histos, 'offline', 'LeptonInvPtPullEndcap',   'Lepton 1/pT pulls, endcap',         fit_gaus=True)
 
 psd.rec_level_page(histos, 'no_gen',  'LeptonInvPRes',         'Lepton 1/p resolution',           fit_gaus=True)
-psd.rec_level_page(histos, 'offline', 'RMSLeptonInvPResVPGen', 'Lepton 1/p resolution vs. gen p')
+psd.rec_level_page(histos, 'offline', 'RMSLeptonInvPResVPGen', 'Lepton 1/p resolution vs. gen p', hist_cmds=[('SetMaximum', 0.5)])
 psd.rec_level_page(histos, 'offline', 'LeptonInvPPull',        'Lepton 1/p pulls',                fit_gaus=True)
 psd.rec_level_page(histos, 'offline', 'LeptonInvPResBarrel',   'Lepton 1/p resolution, barrel',   fit_gaus=True)
 psd.rec_level_page(histos, 'offline', 'LeptonInvPResEndcap',   'Lepton 1/p resolution, endcap',   fit_gaus=True)
@@ -153,11 +156,11 @@ psd.rec_level_page(histos, 'offline', 'RMSResonanceMassResVMass',   'Resonance m
 
 psd.rec_level_page(histos, 'offline', 'ChargeDiff', 'Lepton charge assignment', log_scale=True)
 
-pad = psd.new_page('Charge misassignment vs. 1/pT', (2,3))
-for rec in xrange(psd.OFFLINE_START, psd.MAX_LEVELS):
+pad = psd.new_page('Charge misassignment vs. 1/pT', div)
+for rec in levels:
     pad.cd(rec-3)
-    hwrong = histos.Get('ChargeWrongVInvPt%i' % rec)
-    hright = histos.Get('ChargeRightVInvPt%i' % rec)
+    hwrong = histos.Get('ChargeWrongVInvPt%X' % rec)
+    hright = histos.Get('ChargeRightVInvPt%X' % rec)
     if None not in (hwrong, hright):
         h = hwrong.Clone()
         h.Divide(hright)

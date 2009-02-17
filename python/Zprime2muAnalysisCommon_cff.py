@@ -3,44 +3,36 @@ import FWCore.ParameterSet.Config as cms
 
 __debug = False
 
-# Info about the defined rec levels.
-recLevels = ['GN','L1','L2','L3','GR','TK','FS','PR','OP','TR']
+# Info about the defined rec levels. Magic happens here to synchronize
+# the number/names of rec levels with those defined in
+# RecLevelHelper.h.
+recLevelsText = file(os.path.join(os.getenv('CMSSW_BASE'),
+                                  'src/SUSYBSMAnalysis/Zprime2muAnalysis/src/RecLevelHelper.h')).read()
+_rn = recLevelsText.index('levelNamesShort')
+_rb = recLevelsText.index('{', _rn) + 1
+_re = recLevelsText.index('}', _rn)
+
+recLevels = eval('[%s]' % recLevelsText[_rb:_re])
 numRecLevels = len(recLevels)
 # Make enums for the reclevels to avoid magic numbers below.
 for i, rec in enumerate(recLevels):
     locals()['l' + rec] = i
 
 # The InputTag names for the muon collections.
-muonCollections = [
-    'muCandGN',
-    'muCandL1', # hltL1extraParticles
-    'muCandL2', # hltL2MuonCandidates
-    'muCandL3', # hltL3MuonCandidates
-    'muCandGR',
-    'muCandTK',
-    'muCandFS',
-    'muCandPR',
-    'muCandOP',
-    'muCandTR'
-    ]
+muonCollections = ['muCand%s' % rec for rec in recLevels]
+#muonCollections[lL1] = 'hltL1extraParticles'
+#muonCollections[lL2] = 'hltL2MuonCandidates'
+#muonCollections[lL3] = 'hltL3MuonCandidates'
 
-# The InputTag names for the electron collections.
-#
-# (None specifies that that rec level is to be skipped, especially
-# during dilepton construction since the CandCombiner modules throw
-# exceptions if the collection is not found.)
-electronCollections = [
-    'elCandGN',
-    'elCandL1',
-    'elCandL2',
-    'elCandL3',
-    'pixelMatchGsfElectrons',
-    None,
-    None,
-    None,
-    'selectedLayer1Electrons',
-    None
-    ]
+# The InputTag names for the electron collections. (None specifies
+# that that rec level is to be skipped, especially during dilepton
+# construction since the CandCombiner modules throw exceptions if the
+# collection is not found.)
+electronCollections = [c.replace('mu','el') for c in muonCollections]
+for rec in xrange(lGR, len(electronCollections)):
+    electronCollections[rec] = None
+electronCollections[lGR] = 'pixelMatchGsfElectrons'
+electronCollections[lOP] = 'selectedLayer1Electrons'
 
 # Dilepton construction specifiers (see docstring in the main method
 # make...() below).

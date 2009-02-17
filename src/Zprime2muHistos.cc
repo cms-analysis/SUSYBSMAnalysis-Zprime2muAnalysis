@@ -3,7 +3,7 @@
   \brief    Plots basic lepton and dilepton quantities for each rec level.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muHistos.cc,v 1.8 2009/01/12 16:49:55 tucker Exp $
+  \version  $Id: Zprime2muHistos.cc,v 1.9 2009/01/19 11:30:58 tucker Exp $
 */
 
 #include "TString.h"
@@ -161,7 +161,7 @@ void Zprime2muHistos::bookMiscHistos() {
     }
   }
 
-  for (int irec = lOP; irec <= lTR; ++irec) {
+  for (int irec = lOP; irec < MAX_LEVELS; ++irec) {
     TeVMuonCocktailSource[irec] = fs->make<TH1F>(nameHist("TeVMuonCocktailSource", irec), levelName(irec).c_str(), MAX_LEVELS-lGR, lGR, MAX_LEVELS);
     for (int jrec = lGR; jrec < MAX_LEVELS; ++jrec)
       TeVMuonCocktailSource[irec]->GetXaxis()->SetBinLabel(jrec - lGR + 1, levelName(jrec).c_str());

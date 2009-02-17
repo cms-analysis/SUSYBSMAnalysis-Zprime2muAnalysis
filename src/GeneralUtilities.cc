@@ -39,12 +39,17 @@ ostream& operator<<(ostream& out, const reco::Candidate* par) {
 // ROOT helpers.
 ////////////////////////////////////////////////////////////////////
 
+char nameHistChar(Long_t i) {
+  if (i < 10) return char(48 + i); // '0', '1', ...
+  else        return char(55 + i); // 'A', 'B', ...
+}
+
 TString nameHist(const char* name, Long_t i, Long_t j, Long_t k, Long_t l, Long_t m) {
-  TString s = TString(name) + i;
-  if (j >= 0) s += j;
-  if (k >= 0) s += k;
-  if (l >= 0) s += l;
-  if (m >= 0) s += m;
+  TString s = TString(name) + nameHistChar(i);
+  if (j >= 0) s += nameHistChar(j);
+  if (k >= 0) s += nameHistChar(k);
+  if (l >= 0) s += nameHistChar(l);
+  if (m >= 0) s += nameHistChar(m);
   return s;
 }
 

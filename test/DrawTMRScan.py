@@ -13,8 +13,13 @@
 # end
 #
 # This also requires in testZprime2muResolution_cfg.py the four lines
-# that obtain the cut value from the environment variable TMRCUT to be
-# uncommented.
+# below that obtain the cut value from the environment variable TMRCUT
+# (to be placed after the makeZprime2muAnalysis() call):
+#
+# import os
+# tmrcut = float(os.environ['TMRCUT'])
+# print 'Using TMR cut', tmrcut
+# process.muCandTR.TMRcut = cms.untracked.double(tmrcut)
 #
 # 
 

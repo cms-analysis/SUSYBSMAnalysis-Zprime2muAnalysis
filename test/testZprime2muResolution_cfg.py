@@ -5,19 +5,14 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muHistos_cfi import *
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muResolution_cfi import *
 
 files = [
-    'file:/scratchdisk3/tucker/ZPSSMmumu_M1000_Mcut400_10TeV_IDEAL_V9_RAW2DIGI_RECO_1-10.root'
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_1_12/ZPSSMmumu_M1000_Mcut400_10TeV_IDEAL_V9_RAW2DIGI_RECO_1-10.root'
     ]
 
 process = makeZprime2muAnalysisProcess(files, skipPAT=True, disableElectrons=True) #, useTrigger=False)
-
-#import os
-#tmrcut = float(os.environ['TMRCUT'])
-#print 'Using TMR cut', tmrcut
-#process.muCandTR.TMRcut = cms.double(tmrcut)
 
 attachHistos(process) # Run Histos, too.
 attachResolution(process, verbosity=2)
 
 #for module in [process.Zprime2muHistos, process.Zprime2muResolution]:
     #setattr(module, 'leptonsFromDileptons', True)
-    #setattr(module, 'dataSet', 'DY200')
+    #setattr(module, 'dataSet', 'DY40')

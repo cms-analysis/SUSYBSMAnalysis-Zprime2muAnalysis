@@ -4,7 +4,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysisCommon_cff import *
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muHistos_cfi import *
 
 files = [
-    'file:/scratchdisk3/tucker/ZPSSMmumu_M1000_Mcut400_10TeV_IDEAL_V9_RAW2DIGI_RECO_1-10.root'
+    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_2_1_12/ZPSSMmumu_M1000_Mcut400_10TeV_IDEAL_V9_RAW2DIGI_RECO_1-10.root'
     ]
 
 process = makeZprime2muAnalysisProcess(files, skipPAT=True, disableElectrons=True)

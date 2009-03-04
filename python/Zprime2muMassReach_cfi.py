@@ -28,8 +28,6 @@ def attachMassReach(process, **kwargs):
         # reconstructed masses
         fitGenMass     = cms.bool(False),
         fitRecMass     = cms.bool(True),
-
-        nGenEvents     = cms.vuint32(1000,1000,1000)
         )
 
     process.analysis = cms.Path(module)

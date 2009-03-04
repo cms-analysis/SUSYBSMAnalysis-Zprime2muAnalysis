@@ -306,15 +306,9 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         #IgnoreCompletely = cms.untracked.vstring('ProductNotFound')
         )
 
-    if __debug:
-        process.options.wantSummary = cms.untracked.bool(True)
-        outFile = 'cout'
-    else:
-        outFile = 'Zprime'
-        
     process.MessageLogger = cms.Service(
         'MessageLogger',
-        destinations = cms.untracked.vstring(outFile),
+        destinations = cms.untracked.vstring('Zprime'),
         categories = cms.untracked.vstring(
             #'FwkJob', 'FwkReport', 'Root_Warning',
             'Root_NoDictionary', 'RFIOFileDebug',
@@ -341,29 +335,31 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             ),
         Zprime = cms.untracked.PSet(
             threshold    = cms.untracked.string('INFO'),
-            lineLength   = cms.untracked.int32(132),
-            noLineBreaks = cms.untracked.bool(True)
+            noLineBreaks = cms.untracked.bool(True),
+            extension    = cms.untracked.string('.out'),
+            FwkReport    = cms.untracked.PSet(reportEvery = cms.untracked.int32(500))
             )
         )
 
-    if not __debug:
-        process.MessageLogger.Zprime.extension = cms.untracked.string('.out')
-        setattr(process.MessageLogger.Zprime, 'FwkReport', cms.untracked.PSet(reportEvery = cms.untracked.int32(500)))
+    if __debug:
+        process.MessageLogger.destinations[0] = 'cout'
+        process.MessageLogger.cout = cms.untracked.PSet(threshold = cms.untracked.string('DEBUG'))
+        process.MessageLogger.debugModules = cms.untracked.vstring('*')
+        process.options.wantSummary = cms.untracked.bool(True)
         
+        process.Tracer = cms.Service('Tracer')
+        process.SimpleMemoryCheck = cms.Service('SimpleMemoryCheck')
+    else:
         # Instead of line after line of limit psets in Zprime above, set
         # them all here.
         limitZero = cms.untracked.PSet(limit = cms.untracked.int32(0))
         for cat in process.MessageLogger.categories:
             setattr(process.MessageLogger.Zprime, cat, limitZero)
-
+    
     process.TFileService = cms.Service(
         'TFileService',
         fileName = cms.string('zp2mu_histos.root')
         )
-    
-    if __debug:
-        process.Tracer = cms.Service('Tracer')
-        process.SimpleMemoryCheck = cms.Service('SimpleMemoryCheck')
     
     if performTrackReReco:
         process.include('SUSYBSMAnalysis/Zprime2muAnalysis/data/TrackReReco.cff')
@@ -374,7 +370,6 @@ def makeZprime2muAnalysisProcess(fileNames=[],
 
     if useGen and dumpHardInteraction:
         process.include("SimGeneral/HepPDTESSource/data/pythiapdt.cfi")
-        
         process.printTree = cms.EDAnalyzer(
             'ParticleListDrawer',
             maxEventsToPrint = cms.untracked.int32(-1),
@@ -382,7 +377,6 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             printOnlyHardInteraction = cms.untracked.bool(True),
             useMessageLogger = cms.untracked.bool(True)
             )
-        
         process.ptree = cms.Path(process.printTree)
 
     if useTrigger and dumpTriggerSummary:

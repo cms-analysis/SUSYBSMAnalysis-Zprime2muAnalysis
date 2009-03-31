@@ -20,9 +20,6 @@ for i, rec in enumerate(recLevels):
 
 # The InputTag names for the muon collections.
 muonCollections = ['muCand%s' % rec for rec in recLevels]
-#muonCollections[lL1] = 'hltL1extraParticles'
-#muonCollections[lL2] = 'hltL2MuonCandidates'
-#muonCollections[lL3] = 'hltL3MuonCandidates'
 
 # The InputTag names for the electron collections. (None specifies
 # that that rec level is to be skipped, especially during dilepton
@@ -33,6 +30,11 @@ for rec in xrange(lGR, len(electronCollections)):
     electronCollections[rec] = None
 electronCollections[lGR] = 'pixelMatchGsfElectrons'
 electronCollections[lOP] = 'selectedLayer1Electrons'
+
+# The InputTags for the L1 collections (needs to be configurable to
+# support FastSim).
+l1InputLabel = 'hltL1extraParticles' # 'l1extraParticles' for FastSim
+l1MapLabel   = 'hltL1GtObjectMap'    # 'gtDigis'           "     "
 
 # Dilepton construction specifiers (see docstring in the main method
 # make...() below).
@@ -117,6 +119,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                                  minGenPt=3.0,
                                  cutMask=cuts['TeVmu'],
                                  bestRecLevel=lOP,
+                                 inputIsFastSim=False,
                                  muons=muonCollections,
                                  electrons=electronCollections,
                                  photons='photons',
@@ -152,10 +155,13 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     by the usingAODOnly parameter below.)
     
     usingAODOnly: if True, do not expect to be able to get information
-    that is not in AOD, such as rechits.
+    that is not in AOD, such as rechits. Also turns off looking at
+    GEN/SIM collections.
 
     useOtherMuonRecos: whether to expect the extra TeV muon tracks and
-    the track-to-track maps for them in the input files.
+    the track-to-track maps for them in the input files. If True, then
+    the OP rec level is a copy of GR, and the TR level is a copy of
+    TK.
 
       Comment: the use* flags listed above are merely shortcuts used
       to disable the appropriate rec levels. They are used in the
@@ -232,6 +238,12 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     "TeVmu" selection: lepton pT > 20 GeV, and tracker isolation sumPt
     < 10 GeV.
 
+    inputIsFastSim: whether the input file has been produced by
+    FastSim or not. If so, then some collection names need to be
+    changed (the L1/HLT collections and trigger bitmaps), and TeV
+    muons should be turned off since they are not produced (this
+    latter part will be fixed in 3_1_X).
+    
     muons/electrons/photons/defaultMuons/tevMuons: for experts who
     wish to directly specify the collections to be used for each rec
     level.
@@ -252,6 +264,13 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         photons = 'selectedLayer1Photons'
         defaultMuons = 'selectedLayer1Muons'
 
+    if inputIsFastSim:
+        useOtherMuonRecos = False
+        global l1InputLabel
+        global l1MapLabel
+        l1InputLabel = 'l1extraParticles'
+        l1MapLabel = 'gtDigis'
+        
     if disableElectrons:
         for i in xrange(numRecLevels):
             electrons[i] = None
@@ -274,6 +293,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         for i in xrange(lTK+1, lPR+1):
             muons[i] = None
         muons[lOP] = muons[lGR]
+        muons[lTR] = muons[lTK]
 
     if not useTrigger:
         for i in xrange(lL1, lL3+1):
@@ -306,15 +326,9 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         #IgnoreCompletely = cms.untracked.vstring('ProductNotFound')
         )
 
-    if __debug:
-        process.options.wantSummary = cms.untracked.bool(True)
-        outFile = 'cout'
-    else:
-        outFile = 'Zprime'
-        
     process.MessageLogger = cms.Service(
         'MessageLogger',
-        destinations = cms.untracked.vstring(outFile),
+        destinations = cms.untracked.vstring('Zprime'),
         categories = cms.untracked.vstring(
             #'FwkJob', 'FwkReport', 'Root_Warning',
             'Root_NoDictionary', 'RFIOFileDebug',
@@ -341,29 +355,31 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             ),
         Zprime = cms.untracked.PSet(
             threshold    = cms.untracked.string('INFO'),
-            lineLength   = cms.untracked.int32(132),
-            noLineBreaks = cms.untracked.bool(True)
+            noLineBreaks = cms.untracked.bool(True),
+            extension    = cms.untracked.string('.out'),
+            FwkReport    = cms.untracked.PSet(reportEvery = cms.untracked.int32(500))
             )
         )
 
-    if not __debug:
-        process.MessageLogger.Zprime.extension = cms.untracked.string('.out')
-        setattr(process.MessageLogger.Zprime, 'FwkReport', cms.untracked.PSet(reportEvery = cms.untracked.int32(500)))
+    if __debug:
+        process.MessageLogger.destinations[0] = 'cout'
+        process.MessageLogger.cout = cms.untracked.PSet(threshold = cms.untracked.string('DEBUG'))
+        process.MessageLogger.debugModules = cms.untracked.vstring('*')
+        process.options.wantSummary = cms.untracked.bool(True)
         
+        process.Tracer = cms.Service('Tracer')
+        process.SimpleMemoryCheck = cms.Service('SimpleMemoryCheck')
+    else:
         # Instead of line after line of limit psets in Zprime above, set
         # them all here.
         limitZero = cms.untracked.PSet(limit = cms.untracked.int32(0))
         for cat in process.MessageLogger.categories:
             setattr(process.MessageLogger.Zprime, cat, limitZero)
-
+    
     process.TFileService = cms.Service(
         'TFileService',
         fileName = cms.string('zp2mu_histos.root')
         )
-    
-    if __debug:
-        process.Tracer = cms.Service('Tracer')
-        process.SimpleMemoryCheck = cms.Service('SimpleMemoryCheck')
     
     if performTrackReReco:
         process.include('SUSYBSMAnalysis/Zprime2muAnalysis/data/TrackReReco.cff')
@@ -374,7 +390,6 @@ def makeZprime2muAnalysisProcess(fileNames=[],
 
     if useGen and dumpHardInteraction:
         process.include("SimGeneral/HepPDTESSource/data/pythiapdt.cfi")
-        
         process.printTree = cms.EDAnalyzer(
             'ParticleListDrawer',
             maxEventsToPrint = cms.untracked.int32(-1),
@@ -382,7 +397,6 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             printOnlyHardInteraction = cms.untracked.bool(True),
             useMessageLogger = cms.untracked.bool(True)
             )
-        
         process.ptree = cms.Path(process.printTree)
 
     if useTrigger and dumpTriggerSummary:
@@ -476,7 +490,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     # 'Sanitize' the L1 muons, i.e. shift their phi values from
     # the bin edge to the bin center (an offset of 0.0218 rad).
     appendIfUsing('muCandL1', 'L1MuonSanitizer',
-                  src = cms.InputTag('hltL1extraParticles')
+                  src = cms.InputTag(l1InputLabel)
                   )
 
     if useHLTDEBUG:
@@ -595,7 +609,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         pathAppend(process.elCandGN)
 
     appendIfUsing('elCandL1', 'CandViewMerger',
-                  src = cms.VInputTag(cms.InputTag('hltL1extraParticles','NonIsolated'), cms.InputTag('hltL1extraParticles','Isolated'))
+                  src = cms.VInputTag(cms.InputTag(l1InputLabel,'NonIsolated'), cms.InputTag(l1InputLabel,'Isolated'))
                   )
 
     if useHLTDEBUG:
@@ -682,7 +696,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         ################################################################
         ## Input tags for trigger paths and particles.
         ################################################################
-        l1GtObjectMap = cms.InputTag('hltL1GtObjectMap'),
+        l1GtObjectMap = cms.InputTag(l1MapLabel),
         # Every process puts a TriggerResults product into the event;
         # pick the HLT one.
         hltResults = cms.InputTag('TriggerResults','','HLT')

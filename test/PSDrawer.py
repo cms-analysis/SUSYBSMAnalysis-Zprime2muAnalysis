@@ -95,8 +95,8 @@ class PSDrawer:
         for i, level in enumerate(levels):
             subpad = pad.cd(i+1)
             subpads.append(subpad)
-            if log_scale: subpad.SetLogy(1)
             h = histos.Get('%s%X' % (histo_base_name, level))
+            if log_scale and h.GetEntries() > 0: subpad.SetLogy(1)
             if h is not None:
                 if hist_cmds is not None:
                     for fn, args in hist_cmds:

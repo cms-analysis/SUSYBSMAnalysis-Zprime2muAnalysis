@@ -1,22 +1,16 @@
 import os
 import FWCore.ParameterSet.Config as cms
 
+from tools import parse_enum, rec_levels
+
 __debug = False
 
-# Info about the defined rec levels. Magic happens here to synchronize
-# the number/names of rec levels with those defined in
-# RecLevelHelper.h.
-recLevelsText = file(os.path.join(os.getenv('CMSSW_BASE'),
-                                  'src/SUSYBSMAnalysis/Zprime2muAnalysis/src/RecLevelHelper.h')).read()
-_rn = recLevelsText.index('levelNamesShort')
-_rb = recLevelsText.index('{', _rn) + 1
-_re = recLevelsText.index('}', _rn)
-
-recLevels = eval('[%s]' % recLevelsText[_rb:_re])
+# Info about the defined rec levels.
+recLevelDict, recLevels = rec_levels()
 numRecLevels = len(recLevels)
-# Make enums for the reclevels to avoid magic numbers below.
-for i, rec in enumerate(recLevels):
-    locals()['l' + rec] = i
+# Make constants for the reclevels to avoid magic numbers for them below.
+for enum, value in recLevelDict.items():
+    exec '%s = %i' % (enum, value)
 
 # The InputTag names for the muon collections.
 muonCollections = ['muCand%s' % rec for rec in recLevels]
@@ -51,15 +45,9 @@ electronMuon = ('electrons', 'muons')
 # happens here to get the cut bit values directly from CutHelper.h so
 # we don't have to worry about keeping them consistent between the two
 # files.
-cutHelperText = file(os.path.join(os.getenv('CMSSW_BASE'),
-                                  'src/SUSYBSMAnalysis/Zprime2muAnalysis/src/CutHelper.h')).read().split('CutCutCut')[1]
-cutHelperText = ''.join([line.split('//')[0].strip() for line in cutHelperText.split('\n')])
-cutHelperText = [enum.strip().split('=') for enum in cutHelperText.split(',') if enum]
-cutHelperText = [(x, eval(y)) for x, y in cutHelperText]
-cuts = dict(cutHelperText)
+cuts = parse_enum('src/SUSYBSMAnalysis/Zprime2muAnalysis/src/CutHelper.h', 'CutResult')
 
-# Now that that nastiness is over, use the cuts so defined and make
-# some sets of cuts:
+# Now use the cuts so defined and make some sets of them:
 # AN 2007/038 cuts (pT > 20 and isolation dR sumPt < 10)
 cuts['TeVmu'] = cuts['PT'] | cuts['ISO'];
 # AN 2008/044 e mu bkg study cuts (pT > 80).
@@ -578,6 +566,58 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         tevMuonTracks = tevMuons,
         ))
 
+    appendIfUsing('muCandOP2', refitMuons.clone(
+        src               = defaultMuons,
+        fromCocktail      = True,
+        fromNewPMCocktail = True,
+        tevMuonTracks     = tevMuons
+        ))
+
+    appendIfUsing('muCandGR2', refitMuons.clone(
+        src           = defaultMuons,
+        fromCocktail  = False,
+        tevMuonTracks = tevMuons + ':default'
+        ))
+
+    appendIfUsing('muCandSS1', refitMuons.clone(
+        src           = defaultMuons,
+        fromCocktail  = False,
+        fromSigmaSwitch = True,
+        nSigmaSwitch  = 1, 
+        tevMuonTracks = 'none',
+        ))
+
+    appendIfUsing('muCandSS2', refitMuons.clone(
+        src             = defaultMuons,
+        fromCocktail    = False,
+        fromSigmaSwitch = True,
+        nSigmaSwitch    = 2, 
+        tevMuonTracks   = 'none',
+        ))
+
+    appendIfUsing('muCandSS3', refitMuons.clone(
+        src             = defaultMuons,
+        fromCocktail    = False,
+        fromSigmaSwitch = True,
+        nSigmaSwitch    = 3, 
+        tevMuonTracks   = 'none',
+        ))
+
+    appendIfUsing('muCandCC', refitMuons.clone(
+        src           = defaultMuons,
+        fromCocktail  = False,
+        frompTSwitch  = True,
+        tevMuonTracks = 'none',
+        ))
+
+    appendIfUsing('muCandTS', refitMuons.clone(
+        src           = defaultMuons,
+        fromCocktail  = False,
+        fromTMR       = True,
+        frompTSwitch  = True,
+        tevMuonTracks = tevMuons
+        ))
+
     finalizePath(process, 'pMuons')
 
     ####################################################################
@@ -925,5 +965,7 @@ __all__ = [
 # To debug this config, you can do from the shell:
 #   python Zprime2muAnalysisCommon_cff.py
 if __name__ == '__main__':
+    import sys
     process = makeZprime2muAnalysisProcess(['file:/dev/null'], 42, skipPAT=True)
-    print process.dumpConfig()
+    if 'silent' not in sys.argv:
+        print process.dumpConfig()

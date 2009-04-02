@@ -131,7 +131,7 @@ psd.rec_level_page(histos, 'no_gen', 'LeptonPtRes',    'Lepton pT resolution',  
 psd.rec_level_page(histos, 'no_gen', 'LeptonPRes',     'Lepton p resolution',    fit_gaus=True)
 
 psd.rec_level_page(histos, 'no_gen',  'LeptonInvPtRes',          'Lepton 1/pT resolution',            fit_gaus=True)
-psd.rec_level_page(histos, 'offline', 'RMSLeptonInvPtResVPtGen', 'Lepton 1/pT resolution vs. gen pT', hist_cmds=[('SetMaximum', 0.5)])
+psd.rec_level_page(histos, 'offline', 'LeptonInvPtResVPtGen',    'Lepton 1/pT resolution vs. gen pT', hist_cmds=[('SetMaximum', 0.5)], prof2rms=True)
 psd.rec_level_page(histos, 'offline', 'LeptonInvPtResBarrel',    'Lepton 1/pT resolution, barrel',    fit_gaus=True)
 psd.rec_level_page(histos, 'offline', 'LeptonInvPtResEndcap',    'Lepton 1/pT resolution, endcap',    fit_gaus=True)
 psd.rec_level_page(histos, 'offline', 'LeptonInvPtPull',         'Lepton 1/pT pulls',                 fit_gaus=True)
@@ -139,7 +139,7 @@ psd.rec_level_page(histos, 'offline', 'LeptonInvPtPullBarrel',   'Lepton 1/pT pu
 psd.rec_level_page(histos, 'offline', 'LeptonInvPtPullEndcap',   'Lepton 1/pT pulls, endcap',         fit_gaus=True)
 
 psd.rec_level_page(histos, 'no_gen',  'LeptonInvPRes',         'Lepton 1/p resolution',           fit_gaus=True)
-psd.rec_level_page(histos, 'offline', 'RMSLeptonInvPResVPGen', 'Lepton 1/p resolution vs. gen p', hist_cmds=[('SetMaximum', 0.5)])
+psd.rec_level_page(histos, 'offline', 'LeptonInvPResVPGen',    'Lepton 1/p resolution vs. gen p', hist_cmds=[('SetMaximum', 0.5)], prof2rms=True)
 psd.rec_level_page(histos, 'offline', 'LeptonInvPPull',        'Lepton 1/p pulls',                fit_gaus=True)
 psd.rec_level_page(histos, 'offline', 'LeptonInvPResBarrel',   'Lepton 1/p resolution, barrel',   fit_gaus=True)
 psd.rec_level_page(histos, 'offline', 'LeptonInvPResEndcap',   'Lepton 1/p resolution, endcap',   fit_gaus=True)
@@ -150,9 +150,9 @@ psd.rec_level_page(histos, 'offline', 'DileptonMassRes',    'Dilepton mass resol
 psd.rec_level_page(histos, 'offline', 'DileptonResMassRes', 'Dilepton mass resolution (dil - gen res)',  fit_gaus=True)
 psd.rec_level_page(histos, 'offline', 'ResonanceMassRes',   'Resonance mass resolution (res - gen res)', fit_gaus=True)
 
-psd.rec_level_page(histos, 'offline', 'RMSDileptonMassResVMass',    'Dilepton mass resolution (dil - gen dil) vs. mass')
-psd.rec_level_page(histos, 'offline', 'RMSDileptonResMassResVMass', 'Dilepton mass resolution (dil - gen res) vs. mass')
-psd.rec_level_page(histos, 'offline', 'RMSResonanceMassResVMass',   'Resonance mass resolution (res - gen res) vs. mass')
+psd.rec_level_page(histos, 'offline', 'DileptonMassResVMass',    'Dilepton mass resolution (dil - gen dil) vs. mass', prof2rms=True)
+psd.rec_level_page(histos, 'offline', 'DileptonResMassResVMass', 'Dilepton mass resolution (dil - gen res) vs. mass', prof2rms=True)
+psd.rec_level_page(histos, 'offline', 'ResonanceMassResVMass',   'Resonance mass resolution (res - gen res) vs. mass', prof2rms=True)
 
 psd.rec_level_page(histos, 'offline', 'ChargeDiff', 'Lepton charge assignment', log_scale=True)
 

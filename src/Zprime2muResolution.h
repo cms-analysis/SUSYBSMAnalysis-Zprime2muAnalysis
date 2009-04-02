@@ -4,7 +4,6 @@
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TProfile.h"
-#include "TString.h"
 
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/Candidate/interface/CompositeCandidate.h"
@@ -18,7 +17,6 @@ class Zprime2muResolution : public Zprime2muAnalysis {
  public:
   explicit Zprime2muResolution(const edm::ParameterSet&);
   void analyze(const edm::Event&, const edm::EventSetup&);
-  void endJob();
 
  private:
   void bookGenLevelHistos();
@@ -46,8 +44,6 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   void fillDileptonHistos(const int rec);
 
   void fillTMRResolution();
-
-  void makeRMSHist(const TProfile* prof) const;
 
   // Parameters specified in the config file.
   bool leptonsFromDileptons;

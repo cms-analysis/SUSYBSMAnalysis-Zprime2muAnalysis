@@ -1,9 +1,9 @@
 /**
   \class    Zprime2muResolution
-  \brief    Calculates and plots lepton/dilepton resolutions and efficiencies.
+  \brief    Calculates and histograms lepton/dilepton resolutions and efficiencies.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muResolution.cc,v 1.39 2008/12/17 16:36:57 tucker Exp $
+  \version  $Id: Zprime2muResolution.cc,v 1.40 2009/01/19 11:32:11 tucker Exp $
 */
 
 #include "TString.h"
@@ -542,38 +542,6 @@ void Zprime2muResolution::analyze(const edm::Event& event, const edm::EventSetup
     fillLeptonHistos(rec);
     if (rec >= lGR)
       fillDileptonHistos(rec);
-  }
-}
-
-void Zprime2muResolution::makeRMSHist(const TProfile* prof) const {
-  // Produce a histogram whose bins and errors are from RMS of the
-  // bins of the TProfile passed in.
-  int nbins = prof->GetNbinsX();
-  TAxis* axis = prof->GetXaxis();
-  TString RMS("RMS");
-  TH1F* h = fs->make<TH1F>(RMS + prof->GetName(), RMS + TString(" ") + prof->GetTitle(),
-			   nbins, axis->GetXmin(), axis->GetXmax());
-  for (int ibin = 1; ibin <= nbins; ibin++) {
-    double f_bin   = prof->GetBinContent(ibin);
-    double ent_bin = prof->GetBinEntries(ibin);
-
-    f_bin = f_bin > 0 ? sqrt(f_bin) : 0;
-    double err_bin = ent_bin > 0 ? f_bin/sqrt(2*ent_bin) : 0;
-
-    h->SetBinContent(ibin, f_bin);
-    h->SetBinError(ibin, err_bin);
-  }
-}
-
-void Zprime2muResolution::endJob() {
-  Zprime2muAnalysis::endJob();
-
-  for (int rec = lGR; rec < MAX_LEVELS; ++rec) {
-    makeRMSHist(LeptonInvPtResVPtGen[rec]);
-    makeRMSHist(LeptonInvPResVPGen[rec]);
-    makeRMSHist(DileptonMassResVMass[rec]);
-    makeRMSHist(DileptonResMassResVMass[rec]);
-    makeRMSHist(ResonanceMassResVMass[rec]);
   }
 }
 

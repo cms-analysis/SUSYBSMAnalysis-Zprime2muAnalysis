@@ -566,58 +566,6 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         tevMuonTracks = tevMuons,
         ))
 
-    appendIfUsing('muCandOP2', refitMuons.clone(
-        src               = defaultMuons,
-        fromCocktail      = True,
-        fromNewPMCocktail = True,
-        tevMuonTracks     = tevMuons
-        ))
-
-    appendIfUsing('muCandGR2', refitMuons.clone(
-        src           = defaultMuons,
-        fromCocktail  = False,
-        tevMuonTracks = tevMuons + ':default'
-        ))
-
-    appendIfUsing('muCandSS1', refitMuons.clone(
-        src           = defaultMuons,
-        fromCocktail  = False,
-        fromSigmaSwitch = True,
-        nSigmaSwitch  = 1, 
-        tevMuonTracks = 'none',
-        ))
-
-    appendIfUsing('muCandSS2', refitMuons.clone(
-        src             = defaultMuons,
-        fromCocktail    = False,
-        fromSigmaSwitch = True,
-        nSigmaSwitch    = 2, 
-        tevMuonTracks   = 'none',
-        ))
-
-    appendIfUsing('muCandSS3', refitMuons.clone(
-        src             = defaultMuons,
-        fromCocktail    = False,
-        fromSigmaSwitch = True,
-        nSigmaSwitch    = 3, 
-        tevMuonTracks   = 'none',
-        ))
-
-    appendIfUsing('muCandCC', refitMuons.clone(
-        src           = defaultMuons,
-        fromCocktail  = False,
-        frompTSwitch  = True,
-        tevMuonTracks = 'none',
-        ))
-
-    appendIfUsing('muCandTS', refitMuons.clone(
-        src           = defaultMuons,
-        fromCocktail  = False,
-        fromTMR       = True,
-        frompTSwitch  = True,
-        tevMuonTracks = tevMuons
-        ))
-
     finalizePath(process, 'pMuons')
 
     ####################################################################

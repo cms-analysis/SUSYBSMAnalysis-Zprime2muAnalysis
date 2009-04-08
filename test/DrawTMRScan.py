@@ -37,7 +37,7 @@ proposed_cut = 4
 import sys
 import glob
 from array import array
-from PSDrawer import PSDrawer
+from SUSYBSMAnalysis.Zprime2muAnalysis.PSDrawer import PSDrawer
 from ROOT import TFile, TGraph, TLine, kRed
 
 # Make some arrays for TGraphs.

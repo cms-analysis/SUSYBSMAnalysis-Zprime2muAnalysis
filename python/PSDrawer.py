@@ -9,9 +9,8 @@ sys.argv.remove('-b') # and don't mess up sys.argv
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import rec_levels, rec_level_code
 recLevelDict, recLevels = rec_levels()
-print 'In PSDrawer, recLevels are', recLevels
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import make_rms_hist
+from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import apply_hist_commands, make_rms_hist
 
 class PSDrawer:
     GEN = recLevels.index('GN')
@@ -20,7 +19,23 @@ class PSDrawer:
     OFFLINE_START = recLevels.index('GR')
     COCKTAIL_START = recLevels.index('OP')
     MAX_LEVELS = len(recLevels)
-    
+
+    divs = {
+        'all':      (2,5),
+        'offline':  (2,3),
+        'no_gen':   (2,5),
+        'no_trig':  (2,4),
+        'cocktail': (1,2)
+        }
+
+    levels = {
+        'all':      range(MAX_LEVELS),
+        'offline':  range(OFFLINE_START, MAX_LEVELS),
+        'no_gen':   range(REC_START, MAX_LEVELS),
+        'no_trig':  [GEN] + range(OFFLINE_START, MAX_LEVELS),
+        'cocktail': range(COCKTAIL_START, MAX_LEVELS)
+        }        
+        
     def __init__(self, filename, datePages=False, asPDF=False):
         gROOT.SetStyle("Plain");
         gStyle.SetFillColor(0);
@@ -49,6 +64,7 @@ class PSDrawer:
         self.t.SetTextSize(0.025)
         
         self.asPDF = asPDF
+        self.closed = False
 
     def __del__(self):
         self.close()
@@ -74,23 +90,8 @@ class PSDrawer:
         return h
 
     def div_levels(self, page_type):
-        if page_type == 'all':
-            div = (2,5)
-            levels = xrange(self.MAX_LEVELS)
-        elif page_type == 'offline':
-            div = (2,3)
-            levels = xrange(self.OFFLINE_START, self.MAX_LEVELS)
-        elif page_type == 'no_gen':
-            div = (2,5)
-            levels = xrange(self.REC_START, self.MAX_LEVELS)
-        elif page_type == 'no_trig':
-            div = (2,4)
-            levels = [self.GEN] + range(self.OFFLINE_START, self.MAX_LEVELS)
-        elif page_type == 'cocktail':
-            div = (1,2)
-            levels = xrange(self.COCKTAIL_START, self.MAX_LEVELS)
-        else:
-            raise ValueError, 'page_type %s not recognized' % page_type
+        div = self.divs[page_type]
+        levels = self.levels[page_type]
         if div[0]*div[1] < len(levels):
             raise RuntimeError, 'not enough divisions (%i) for number of levels (%i)' % (div[0]*div[1], len(levels))
         return div, levels
@@ -107,24 +108,25 @@ class PSDrawer:
                 if prof2rms: # and type(h) == type(TProfile) should check this, but not so straightforward
                     h = make_rms_hist(h)
                 if log_scale and h.GetEntries() > 0: subpad.SetLogy(1)
-                if hist_cmds is not None:
-                    for fn, args in hist_cmds:
-                        t = type(args)
-                        if t != type(()) or t != type([]):
-                            args = (args,)
-                        getattr(h, fn)(*args)
+                apply_hist_commands(h, hist_cmds)
                 h.Draw(draw_opt)
                 if fit_gaus:
                     h.Fit('gaus', 'Q')
         return subpads
 
     def close(self):
+        if self.closed:
+            return
         self.canvas.Update()
         self.ps.Close()
         # New ROOT TPostScript breaks gv page number titles.
+        print 'PSDrawer through with file, sedding titles...'
         os.system("sed --in-place -e 's/Page: (number /Page: (/g' %s" % self.filename)
         if self.asPDF:
+            print 'Converting to PDF...'
             os.system('ps2pdf %s' % self.filename)
+            os.system('rm %s' % self.filename)
+        self.closed = True
 
 class PSDrawerIterator:
     def __init__(self, psd, title, div=(2,2)):
@@ -146,6 +148,15 @@ class PSDrawerIterator:
             self.pad = self.psd.new_page(t, self.div)
             self.cd = 1
         return self.pad.cd(self.cd)
+
+if len(recLevels) > 10:
+    # Should reorganize using PSDrawerIterator, but for now settle
+    # for a hack.
+    PSDrawer.divs['all']      = (3,6)
+    PSDrawer.divs['offline']  = (3,5)
+    PSDrawer.divs['no_gen']   = (4,4)
+    PSDrawer.divs['no_trig']  = (2,7)
+    PSDrawer.divs['cocktail'] = (2,4)
 
 __all__ = ['PSDrawer', 'PSDrawerIterator']
 

@@ -3,7 +3,7 @@
 # usage: DrawZprime2muHistos.py [zp2mu_histos.root [histos.ps]
 
 import os, sys
-from PSDrawer import PSDrawer
+from SUSYBSMAnalysis.Zprime2muAnalysis.PSDrawer import PSDrawer
 from ROOT import TFile
     
 if len(sys.argv) > 1: rootFile = sys.argv[1]

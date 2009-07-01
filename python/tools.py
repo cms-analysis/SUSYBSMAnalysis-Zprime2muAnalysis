@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-def parse_enum(cpp_file, enum_name):
+def parse_enum(cpp_file, enum_name, as_list=False, drop_last=False, remove_substr=None):
     """Poor man's C++ enum parsing."""
     import os
     src_text = open(os.path.join(os.getenv('CMSSW_BASE'), cpp_file)).read()
@@ -13,6 +13,8 @@ def parse_enum(cpp_file, enum_name):
     enum = {}
     i = -1
 
+    last = None
+    
     items = []
     for item in src_text.split(','):
         item = item.strip()
@@ -23,7 +25,24 @@ def parse_enum(cpp_file, enum_name):
             i = eval(value.strip())
         else:
             i += 1
-        enum[item.strip()] = i
+            
+        item = item.strip()
+        if remove_substr is not None:
+            item = item.replace(remove_substr, '')
+
+        if last is None or i >= last[1]:
+            last = (item, i)
+
+        enum[item] = i
+
+    if drop_last:
+        del enum[last[0]]
+
+    if as_list:
+        enum = enum.items()
+        enum.sort(key=lambda x: x[1])
+        enum = [x[0] for x in enum]
+
     return enum
     
 def rec_level_code(rec):

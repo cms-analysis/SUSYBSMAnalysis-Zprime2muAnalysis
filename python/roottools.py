@@ -28,6 +28,11 @@ def apply_hist_commands(hist, hist_cmds=None):
             args = (args,)
         getattr(hist, fn)(*args)
 
+def core_gaussian(hist, factor):
+    core_mean  = hist.GetMean()
+    core_width = factor*hist.GetRMS()
+    return ROOT.TF1('core', 'gaus', core_mean - core_width, core_mean + core_width)
+
 def fit_gaussian(hist, factor=None, draw=False):
     """Fit a Gaussian to the histogram, and return a dict with fitted
     parameters and errors. If factor is supplied, fit only to range in
@@ -179,6 +184,8 @@ def set_zp2mu_style(date_pages=False):
     ROOT.gStyle.SetTitleFont(52, 'XY')
     ROOT.gStyle.SetLabelFont(52, 'XY')
     ROOT.gStyle.SetStatFont(52)
+    ROOT.gErrorIgnoreLevel = 1001 # Suppress TCanvas::SaveAs messages.
 
-__all__ = ['apply_hist_commands', 'get_bin_content_error', 'get_integral',
+__all__ = ['apply_hist_commands', 'core_gaussian', 'fit_gaussian',
+           'get_bin_content_error', 'get_integral',
            'get_hist_stats', 'make_rms_hist', 'set_zp2mu_style']

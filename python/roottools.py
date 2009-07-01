@@ -3,9 +3,9 @@
 import sys
 from array import array
 
-sys.argv.append('-b') # start ROOT in batch mode
-from ROOT import TH1F, TVirtualFitter
-sys.argv.remove('-b') # and don't mess up sys.argv
+sys.argv.append('-b')     # Start ROOT in batch mode;
+import ROOT; ROOT.TCanvas # make sure libGui gets initialized while '-b' is specified;
+sys.argv.remove('-b')     # and don't mess up sys.argv.
 
 def apply_hist_commands(hist, hist_cmds=None):
     """With hist_cmds a list of n-tuples, where the first entry of the
@@ -28,6 +28,30 @@ def apply_hist_commands(hist, hist_cmds=None):
             args = (args,)
         getattr(hist, fn)(*args)
 
+def fit_gaussian(hist, factor=None, draw=False):
+    """Fit a Gaussian to the histogram, and return a dict with fitted
+    parameters and errors. If factor is supplied, fit only to range in
+    hist.mean +/- factor * hist.rms.
+    """
+
+    if draw:
+        opt = 'qr'
+    else:
+        opt = 'qr0'
+
+    if factor is not None:
+        fcn = core_gaussian(hist, factor)
+        hist.Fit(fcn, opt)
+    else:
+        hist.Fit('gaus', opt)
+        fcn = hist.GetFunction('gaus')
+        
+    return {
+        'constant': (fcn.GetParameter(0), fcn.GetParError(0)),
+        'mu':       (fcn.GetParameter(1), fcn.GetParError(1)),
+        'sigma':    (fcn.GetParameter(2), fcn.GetParError(2))
+        }
+    
 def get_bin_content_error(hist, value):
     """For the given histogram, find the bin corresponding to the
     value and return its contents and associated
@@ -53,27 +77,23 @@ def get_integral(hist, xlo, xhi):
         wsq += hist.GetBinError(i)**2
     return integral, wsq**0.5
 
-def get_hist_stats(hist, extended=False, fcnname='gaus'):
+def get_hist_stats(hist, factor=None):
     """For the given histogram, return a five-tuple of the number of
     entries, the underflow and overflow counts, the fitted sigma
     (using the function specified by fcnname, which must be an
-    already-made TF1 whose parameter(2) is the value used), and the
+    already-made ROOT.TF1 whose parameter(2) is the value used), and the
     RMS.
     """
-    
-    if hist.GetFunction(fcnname) is None:
-        hist.Fit(fcnname,'Q')
-    
-    entries = hist.GetEntries()
-    under = hist.GetBinContent(0)
-    over = hist.GetBinContent(hist.GetNbinsX()+1)
-    sigma = hist.GetFunction(fcnname).GetParameter(2)
-    rms = hist.GetRMS()
-    if extended:
-        sigma = (sigma, hist.GetFunction(fcnname).GetParError(2))
-        rms = (rms, hist.GetRMSError())
-    
-    return entries, under, over, sigma, rms
+
+    results = fit_gaussian(hist, factor)
+    results.update({
+        'entries': hist.GetEntries(),
+        'under':   hist.GetBinContent(0),
+        'over':    hist.GetBinContent(hist.GetNbinsX()+1),
+        'mean':    (hist.GetMean(), hist.GetMeanError()),
+        'rms':     (hist.GetRMS(), hist.GetRMSError())
+        })
+    return results
 
 def make_rms_hist(prof, name='', bins=None, cache={}):
     """Takes an input TProfile and produces a histogram whose bin contents are
@@ -103,7 +123,7 @@ def make_rms_hist(prof, name='', bins=None, cache={}):
     if bins:
         if type(bins) == type([]):
             bins = array('f', bins)
-        new_hist = TH1F(name, title, len(bins)-1, bins)
+        new_hist = ROOT.TH1F(name, title, len(bins)-1, bins)
         new_axis = new_hist.GetXaxis()
         new_bins = {}
         for old_bin in xrange(1, nbins+1):
@@ -118,7 +138,7 @@ def make_rms_hist(prof, name='', bins=None, cache={}):
                 val[0] /= val[1]
         contents = new_bins.items()
     else:
-        new_hist = TH1F(name, title, nbins, old_axis.GetXmin(), old_axis.GetXmax())
+        new_hist = ROOT.TH1F(name, title, nbins, old_axis.GetXmin(), old_axis.GetXmax())
         for old_bin in xrange(1, nbins+1):
             f_bin = float(prof.GetBinContent(old_bin))
             ent_bin = float(prof.GetBinEntries(old_bin))
@@ -141,5 +161,24 @@ def make_rms_hist(prof, name='', bins=None, cache={}):
     cache[name] = new_hist
     return new_hist
 
-__all__ = ['get_bin_content_error', 'get_integral', 'get_hist_stats', 'make_rms_hist']
+def set_zp2mu_style(date_pages=False):
+    ROOT.gROOT.SetStyle('Plain')
+    ROOT.gStyle.SetFillColor(0)
+    if date_pages:
+        ROOT.gStyle.SetOptDate()
+    ROOT.gStyle.SetOptStat(111111)
+    ROOT.gStyle.SetOptFit(1111)
+    ROOT.gStyle.SetPadTickX(1)
+    ROOT.gStyle.SetPadTickY(1)
+    ROOT.gStyle.SetMarkerSize(.1)
+    ROOT.gStyle.SetMarkerStyle(8)
+    ROOT.gStyle.SetGridStyle(3)
+    ROOT.gStyle.SetPaperSize(ROOT.TStyle.kA4)
+    ROOT.gStyle.SetStatW(0.25)
+    ROOT.gStyle.SetStatFormat('6.4g')
+    ROOT.gStyle.SetTitleFont(52, 'XY')
+    ROOT.gStyle.SetLabelFont(52, 'XY')
+    ROOT.gStyle.SetStatFont(52)
 
+__all__ = ['apply_hist_commands', 'get_bin_content_error', 'get_integral',
+           'get_hist_stats', 'make_rms_hist', 'set_zp2mu_style']

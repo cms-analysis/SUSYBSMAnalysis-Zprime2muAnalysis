@@ -10,7 +10,7 @@ sys.argv.remove('-b') # and don't mess up sys.argv
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import rec_levels, rec_level_code
 recLevelDict, recLevels = rec_levels()
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import apply_hist_commands, make_rms_hist
+from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import apply_hist_commands, make_rms_hist, set_zp2mu_style
 
 class PSDrawer:
     GEN = recLevels.index('GN')
@@ -36,25 +36,8 @@ class PSDrawer:
         'cocktail': range(COCKTAIL_START, MAX_LEVELS)
         }        
         
-    def __init__(self, filename, datePages=False, asPDF=False):
-        gROOT.SetStyle("Plain");
-        gStyle.SetFillColor(0);
-        if datePages:
-            gStyle.SetOptDate();
-        gStyle.SetOptStat(111111);
-        gStyle.SetOptFit(1111);
-        gStyle.SetPadTickX(1);
-        gStyle.SetPadTickY(1);
-        gStyle.SetMarkerSize(.1);
-        gStyle.SetMarkerStyle(8);
-        gStyle.SetGridStyle(3);
-        gStyle.SetPaperSize(TStyle.kA4);
-        gStyle.SetStatW(0.25);        # width of statistics box; default is 0.19
-        gStyle.SetStatFormat("6.4g"); # leave default format for now
-        gStyle.SetTitleFont(52,"XY"); # italic font for axis
-        gStyle.SetLabelFont(52,"XY"); # italic font for axis labels
-        gStyle.SetStatFont(52);       # italic font for stat. box
-  
+    def __init__(self, filename, date_pages=False, as_pdf=False):
+        set_zp2mu_style(date_pages)
         self.canvas = TCanvas('c1','',0,0,500,640)
         self.ps = TPostScript(filename, 111)
         self.filename = filename
@@ -63,7 +46,7 @@ class PSDrawer:
         self.t.SetTextFont(32)
         self.t.SetTextSize(0.025)
         
-        self.asPDF = asPDF
+        self.as_pdf = as_pdf
         self.closed = False
 
     def __del__(self):
@@ -119,13 +102,14 @@ class PSDrawer:
             return
         self.canvas.Update()
         self.ps.Close()
-        # New ROOT TPostScript breaks gv page number titles.
-        print 'PSDrawer through with file, sedding titles...'
-        os.system("sed --in-place -e 's/Page: (number /Page: (/g' %s" % self.filename)
-        if self.asPDF:
+        if self.as_pdf:
             print 'Converting to PDF...'
             os.system('ps2pdf %s' % self.filename)
             os.system('rm %s' % self.filename)
+        else:
+            # New ROOT TPostScript breaks gv page number titles.
+            print 'PSDrawer through with file, sedding titles...'
+            os.system("sed --in-place -e 's/Page: (number /Page: (/g' %s" % self.filename)
         self.closed = True
 
 class PSDrawerIterator:
@@ -139,6 +123,9 @@ class PSDrawerIterator:
         self.pagecount = 0
 
     def next(self):
+        if self.pad:
+            self.pad.Update()
+            self.psd.canvas.Update()
         self.cd += 1
         if self.cd > self.pagesize or self.pad == None:
             self.pagecount += 1
@@ -174,5 +161,3 @@ if __name__ == '__main__':
         else:
             h2.Draw()
     psd.close()
-    
-

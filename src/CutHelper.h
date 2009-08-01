@@ -36,13 +36,13 @@ public:
   void initEvent(const edm::Event& evt);
   void setCutMask(const unsigned mask) { _cutMask = mask; }
 
-  bool collinearMuon(const reco::PixelMatchGsfElectron* electron) const;
+  bool collinearMuon(const reco::GsfElectron* electron) const;
 
   double calcIsolationS(const reco::Muon* muon) const;
-  double calcIsolationS(const reco::PixelMatchGsfElectron* electron) const;
+  double calcIsolationS(const reco::GsfElectron* electron) const;
   bool passIsolationS(double S, double pt) const;
 
-  unsigned electronIsCut(const reco::PixelMatchGsfElectron* electron,
+  unsigned electronIsCut(const reco::GsfElectron* electron,
 			 unsigned cutMask=0) const;
   unsigned muonIsCut(const reco::Muon* muon,
 		     unsigned cutMask=0) const;

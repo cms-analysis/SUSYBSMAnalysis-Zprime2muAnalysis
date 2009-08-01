@@ -3,7 +3,7 @@
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/JetReco/interface/CaloJet.h"
-#include "PhysicsTools/Utilities/interface/deltaR.h"
+#include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
@@ -101,23 +101,23 @@ void CutHelper::_cacheTrigger() {
 void CutHelper::_cacheMET() {
   _eventOK();
 
-  Handle<View<pat::METType> > METs;
+  Handle<pat::METCollection> METs;
   event->getByLabel("selectedLayer1METs", METs);
-  const pat::MET* theMET = toConcretePtr<pat::MET>(METs->at(0));
+  const pat::MET& theMET(METs->at(0));
 
   // Top group MET cut: do not correct for JES, but correct for
   // muons. They only correct for muons that pass the cuts, while
   // the default MET muon correction uses all muons. They say it is
   // a negligible difference, though, so try using the default.
-  METx_uncorrJES = theMET->corEx(pat::MET::uncorrJES);
-  METy_uncorrJES = theMET->corEy(pat::MET::uncorrJES);
+  METx_uncorrJES = theMET.corEx(pat::MET::uncorrJES);
+  METy_uncorrJES = theMET.corEy(pat::MET::uncorrJES);
   MET_uncorrJES  = sqrt(METx_uncorrJES*METx_uncorrJES + METy_uncorrJES*METy_uncorrJES);
 
   // Go ahead and store the JES-corrected (default) MET, but it isn't
   // used yet.
-  METx = theMET->px();
-  METy = theMET->py();
-  MET  = theMET->pt();
+  METx = theMET.px();
+  METy = theMET.py();
+  MET  = theMET.pt();
 }
 
 void CutHelper::_cacheZvetoed() {
@@ -252,7 +252,7 @@ unsigned CutHelper::electronIsCut(const GsfElectron* electron, unsigned cutMask)
 
   if (cutMask & ELTIGHT) {
     const pat::Electron* patEl = toConcretePtr<pat::Electron>(*((Candidate*)electron));
-    if (patEl != 0 && patEl->leptonID("tight") == 0)
+    if (patEl != 0 && patEl->electronID("tight") == 0)
       result |= ELTIGHT;
   }
 

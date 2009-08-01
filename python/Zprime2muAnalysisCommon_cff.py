@@ -93,7 +93,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                                  useOtherMuonRecos=True,
                                  recoverBrem=True,
                                  disableElectrons=True,
-                                 performTrackReReco=False,
+                                 performReReco=False,
                                  conditionsGlobalTag='IDEAL_V9::All',
                                  dumpHardInteraction=False,
                                  strictGenDilepton=True,
@@ -295,7 +295,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     
     if chargesForDileptons not in [oppSign, oppSignMP, likeSignPos, likeSignNeg]:
         raise RuntimeError, 'bad input for chargesForDileptons'        
-    
+
     ####################################################################
     ## Set up the CMSSW process and useful services.
     ####################################################################
@@ -368,14 +368,29 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         'TFileService',
         fileName = cms.string('zp2mu_histos.root')
         )
-    
-    if performTrackReReco:
-        process.include('SUSYBSMAnalysis/Zprime2muAnalysis/data/TrackReReco.cff')
-        process.pReReco = cms.Path(process.trackReReco)
 
-        process.include('Configuration/StandardSequences/data/FrontierConditions_GlobalTag.cff')
-        process.GlobalTag.globaltag = conditionsGlobalTag
+    # Expert option: if the user wants to use a global tag but also
+    # wants to set an es_prefer for a different record, can pass
+    # conditionsGlobalTag=('TAG_NAME::All', False) to cause us to use
+    # the noesprefer version.
+    if type(conditionsGlobalTag) == type(()):
+        conditionsGlobalTag, prefer_global_tag = conditionsGlobalTag
+    else:
+        prefer_global_tag = True
 
+    # If doing reconstruction or the PAT, need some common things
+    # like geometry, magnetic field, and conditions.
+    if performReReco or not skipPAT:
+        process.load("Configuration.StandardSequences.Geometry_cff")
+        if prefer_global_tag:
+            process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+        else:
+            process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_noesprefer_cff')
+            process.es_prefer_cscBadChambers = cms.ESPrefer('PoolDBESSource', 'cscBadChambers')
+            del process.DTFakeVDriftESProducer
+        process.GlobalTag.globaltag = cms.string(conditionsGlobalTag)
+        process.load("Configuration.StandardSequences.MagneticField_cff")
+        
     if useGen and dumpHardInteraction:
         process.include("SimGeneral/HepPDTESSource/data/pythiapdt.cfi")
         process.printTree = cms.EDAnalyzer(
@@ -395,18 +410,22 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         process.ptrigAnalyzer = cms.Path(process.trigAnalyzer)
 
     ####################################################################
+    ## Re-reconstruct, if instructed to do so (useful if switching
+    ## e.g. alignment).
+    ####################################################################
+
+    if performReReco:
+        process.load('Configuration.StandardSequences.RawToDigi_cff')
+        process.load('Configuration.StandardSequences.Reconstruction_cff')
+        process.pReReco = cms.Path(process.RawToDigi * process.reconstruction)
+ 
+    ####################################################################
     ## Run PAT layers 0 and 1 (unless instructed to skip them).
     ####################################################################
 
     if not skipPAT:
-        process.load("Configuration.StandardSequences.Geometry_cff")
-        process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
-        process.GlobalTag.globaltag = cms.string(conditionsGlobalTag)
-        process.load("Configuration.StandardSequences.MagneticField_cff")
-
         process.load("PhysicsTools.PatAlgos.patLayer0_cff")
         process.load("PhysicsTools.PatAlgos.patLayer1_cff")
-
         process.pPAT = cms.Path(process.patLayer0 + process.patLayer1)
 
     ####################################################################
@@ -507,12 +526,6 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         appendIfUsing('muCandL3', 'HLTLeptonsFromTriggerEvent',
                       src = cms.VInputTag(cms.InputTag('hltL3MuonCandidates::HLT'))
                       )
-
-    # Use the right collection of muons depending on whether we've
-    # done track re-reconstruction.
-    if performTrackReReco:
-        defaultMuons += '2'
-        tevMuons += '2'
 
     from RecoMuon.MuonIdentification.refitMuons_cfi import refitMuons
 
@@ -868,35 +881,36 @@ def poolAllFiles(pattern):
 
 # Function to select a set of alignment constants. Useful when doing
 # track re-reconstruction.
+def setAlignment(process, name, connect, **kwargs):
+    if len(kwargs) == 0:
+        raise ValueError, 'must specify at least one record parameter'
+    
+    from CondCore.DBCommon.CondDBSetup_cfi import CondDBSetup
+    alignment_source = cms.ESSource('PoolDBESSource',
+        CondDBSetup,
+        connect = cms.string(connect),
+        toGet = cms.VPSet()
+    )
+
+    for record, tag in kwargs.iteritems():
+        alignment_source.toGet.append(cms.PSet(record = cms.string(record), tag = cms.string(tag)))
+
+    setattr(process, name, alignment_source)
+    process.prefer(name)
+
+    #code = "cms.ESPrefer('PoolDBESSource', name, %s)" % ', '.join(['%s=cms.vstring("%s")' % x for x in kwargs.iteritems()])
+    #setattr(process, name + '_es_prefer', eval(code))
+
 def setTrackerAlignment(process, connectString, tagTrackerAlignmentRcd, tagTrackerAlignmentErrorRcd):
-    process.include('CondCore/DBCommon/data/CondDBSetup.cfi')
-
-    process.trackerAlignment = cms.ESSource('PoolDBESSource',
-                                            process.CondDBSetup,
-                                            connect = cms.string(connectString),
-                                            toGet = cms.VPSet(
-        cms.PSet(record = cms.string('TrackerAlignmentRcd'), tag = cms.string(tagTrackerAlignmentRcd)),
-        cms.PSet(record = cms.string('TrackerAlignmentErrorRcd'), tag = cms.string(tagTrackerAlignmentErrorRcd)),
-        ))
-
-    process.prefer("trackerAlignment")
-
+    setAlignment(process, 'trackerAlignment', connectString,
+                 TrackerAlignmentRcd      = tagTrackerAlignmentRcd,
+                 TrackerAlignmentErrorRcd = tagTrackerAlignmentErrorRcd)
+                        
 def setMuonAlignment(process, connectString, tagDTAlignmentRcd, tagDTAlignmentErrorRcd, tagCSCAlignmentRcd, tagCSCAlignmentErrorRcd):
-    process.include('CondCore/DBCommon/data/CondDBSetup.cfi')
-
-    process.muonAlignment = cms.ESSource('PoolDBESSource',
-                                         process.CondDBSetup,
-                                         connect = cms.string(connectString),
-                                         toGet = cms.VPSet(
-        cms.PSet(record = cms.string('DTAlignmentRcd'), tag = cms.string(tagDTAlignmentRcd)),
-        cms.PSet(record = cms.string('DTAlignmentErrorRcd'), tag = cms.string(tagDTAlignmentErrorRcd)),
-        cms.PSet(record = cms.string('CSCAlignmentRcd'), tag = cms.string(tagCSCAlignmentRcd)),
-        cms.PSet(record = cms.string('CSCAlignmentErrorRcd'), tag = cms.string(tagCSCAlignmentErrorRcd)),
-        ))
-
-    process.prefer("muonAlignment")
-
-
+    setAlignment(process, 'muonAlignment', connectString,
+                 DTAlignmentRcd  = tagDTAlignmentRcd,  DTAlignmentErrorRcd  = tagDTAlignmentErrorRcd,
+                 CSCAlignmentRcd = tagCSCAlignmentRcd, CSCAlignmentErrorRcd = tagCSCAlignmentErrorRcd)
+    
 ################################################################################
 
 # so 'from module import *' doesn't clutter the user's namespace
@@ -905,8 +919,9 @@ __all__ = [
     'oppSign', 'oppSignMP', 'likeSignPos', 'likeSignNeg', 'diMuons',
     'diElectrons', 'muonElectron', 'electronMuon', 'cuts',
     'makeZprime2muAnalysisProcess', 'attachAnalysis',
-    'attachOutputModule', 'poolAllFiles', 'setTrackerAlignment',
-    'setMuonAlignment',
+    'attachOutputModule', 'poolAllFiles',
+    'setAlignment', 'setTrackerAlignment', 'setMuonAlignment',
+    'setEventsToProcess',
     'lGN','lL1','lL2','lL3','lGR','lTK','lFS','lPR','lOP','lTR'
     ]
 
@@ -914,6 +929,6 @@ __all__ = [
 #   python Zprime2muAnalysisCommon_cff.py
 if __name__ == '__main__':
     import sys
-    process = makeZprime2muAnalysisProcess(['file:/dev/null'], 42, skipPAT=True)
+    process = makeZprime2muAnalysisProcess(['file:/dev/null'], 42, skipPAT=True, performReReco=True)
     if 'silent' not in sys.argv:
         print process.dumpConfig()

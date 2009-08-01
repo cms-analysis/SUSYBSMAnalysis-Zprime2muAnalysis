@@ -10,8 +10,8 @@
 
 <library file=GenDilCandViewShallowCloneCombiner.cc name=GenDilCandViewShallowCloneCombiner>
   <use name=DataFormats/Candidate>
-  <use name=PhysicsTools/CandAlgos>
-  <use name=PhysicsTools/UtilAlgos>
+  <use name=CommonTools/CandAlgos>
+  <use name=CommonTools/UtilAlgos>
 </library>
 
 <library file=HLTLeptonSanitizer.cc,L1MuonSanitizer.cc,L3MuonSanitizer.cc name=TriggerLeptonSanitizers>

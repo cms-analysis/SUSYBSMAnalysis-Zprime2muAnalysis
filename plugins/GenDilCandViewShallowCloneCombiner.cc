@@ -3,9 +3,9 @@
 
 #include "FWCore/Framework/interface/MakerMacros.h"
 
-#include "PhysicsTools/CandAlgos/interface/CandCombiner.h"
-#include "PhysicsTools/UtilAlgos/interface/ParameterAdapter.h"
-#include "PhysicsTools/UtilAlgos/interface/StringCutObjectSelector.h"
+#include "CommonTools/CandAlgos/interface/CandCombiner.h"
+#include "CommonTools/UtilAlgos/interface/ParameterAdapter.h"
+#include "CommonTools/UtilAlgos/interface/StringCutObjectSelector.h"
 
 struct GenDilPairSelector {
   template<typename T1, typename T2>

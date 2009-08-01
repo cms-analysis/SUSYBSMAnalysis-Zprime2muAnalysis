@@ -21,32 +21,8 @@ void TriggerDecision::init(const edm::ParameterSet& config, const bool dbg) {
   hltResults     = config.getParameter<edm::InputTag>("hltResults");
 
   if (useTrigger) {
-    if (!doingElectrons) {
-      // Level-1 paths we want to use for the trigger decision.
-      l1Paths.push_back("L1_SingleMu7");
-      l1Paths.push_back("L1_DoubleMu3");
-
-      // Level-2 paths (actually, the names of the modules ran)
-      hltModules[0].push_back("SingleMuNoIsoL2PreFiltered");
-      hltModules[0].push_back("DiMuonNoIsoL2PreFiltered");
-      // Level-3 paths (module names)
-      hltModules[1].push_back("SingleMuNoIsoL3PreFiltered");
-      hltModules[1].push_back("DiMuonNoIsoL3PreFiltered");
-
-      // HLT paths (the logical ANDs of L2 and L3 single/dimuon paths
-      // above) in 2E30 menu.
-      hltPaths.push_back("HLT_Mu15");      // former HLT1MuonNonIso
-      hltPaths.push_back("HLT_DoubleMu3"); // former HLT2MuonNonIso
-    }
-    else {
-      l1Paths.push_back("L1_SingleEG15");
-
-      // For now, just look at the overall HLT decision for electrons.
-      // JMTBAD trigger names have changed; which are the "right" ones for electrons?
-      hltPaths.push_back("HLT_EM80");
-      hltPaths.push_back("HLT_EM200");
-      //hltPaths.push_back("HLT1ElectronRelaxed");
-    }
+    l1Paths  = config.getParameter<vector<string> >("l1Paths");
+    hltPaths = config.getParameter<vector<string> >("hltPaths");
   }
 }
 

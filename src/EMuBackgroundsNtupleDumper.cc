@@ -6,6 +6,7 @@
 #include "DataFormats/Common/interface/Handle.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/Common/interface/View.h"
+#include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/MuonReco/interface/Muon.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/MET.h"
@@ -20,10 +21,8 @@
 
 //#include "PhysicsTools/HepMCCandAlgos/interface/CSA07ProcessId.h"
 #include "PhysicsTools/UtilAlgos/interface/TFileService.h"
-#include "PhysicsTools/Utilities/interface/deltaR.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GenEventTopology.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/RedoElectronId.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/EMuBackgroundsNtupleDumper.h"
 
 template <typename CollType, typename LabelType>
@@ -203,7 +202,7 @@ void jmt_event_add_lepton(jmt_event_t& ev,
 
   const pat::Electron* patEl = dynamic_cast<const pat::Electron*>(cand);
   if (patEl != 0)
-    ev.lepton_id[n] = patEl->leptonID("tight") ? 1 : -1;
+    ev.lepton_id[n] = patEl->electronID("tight") ? 1 : -1;
 
   const reco::Track* tk = 0;
 
@@ -222,7 +221,7 @@ void jmt_event_add_lepton(jmt_event_t& ev,
   }
 
   if (muon == 0) {
-    const reco::PixelMatchGsfElectron* electron = dynamic_cast<const reco::PixelMatchGsfElectron*>(cand);
+    const reco::GsfElectron* electron = dynamic_cast<const reco::GsfElectron*>(cand);
     if (electron != 0) {
       // electron id variables
       ev.h_over_e[n]     = electron->hadronicOverEm();
@@ -230,7 +229,9 @@ void jmt_event_add_lepton(jmt_event_t& ev,
       ev.delta_eta_in[n] = electron->deltaEtaSuperClusterTrackAtVtx();
 
       float eta = electron->eta();
-      ev.sigma_eta_eta[n] = sqrt(getClusterShape(electron, event)->covEtaEta());
+      assert(0); // prevent trying to use this method until we figure
+		 // out how to get covEtaEta in the new version
+      //ev.sigma_eta_eta[n] = sqrt(getClusterShape(electron, event)->covEtaEta());
       if (eta >= 1.479) ev.sigma_eta_eta[n] = ev.sigma_eta_eta[n] - 0.02*(fabs(eta) - 2.3);
 
       ev.e_seed_over_p_in[n] = electron->superCluster()->seed()->energy()/electron->trackMomentumAtVtx().R();
@@ -238,7 +239,7 @@ void jmt_event_add_lepton(jmt_event_t& ev,
       // electron isolation
       const reco::GsfTrackRef& elTk = electron->gsfTrack();
       edm::Handle<reco::TrackCollection> tracks;
-      if (elTk.isNonnull() && getByLabel(event, tracks, "ctfWithMaterialTracks")) {
+      if (elTk.isNonnull() && getByLabel(event, tracks, "generalTracks")) { // JMTBAD need to not hardcode this and other labels...
 	reco::TrackCollection::const_iterator tk = tracks->begin();
 	for ( ; tk != tracks->end(); ++tk) {
 	  double pt = tk->pt();

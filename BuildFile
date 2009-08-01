@@ -10,15 +10,12 @@
 <use name=DataFormats/MuonReco>
 <use name=DataFormats/PatCandidates>
 
-<use name=Foundation/PluginManager>
-
 <use name=FWCore/Framework>
 <use name=FWCore/ParameterSet>
 
 <use name=PhysicsTools/CandUtils>
 <use name=PhysicsTools/UtilAlgos>
 
-<use name=SimDataFormats/HepMCProduct>
 <use name=SimDataFormats/Track>
 
 <flags EDM_PLUGIN=1>

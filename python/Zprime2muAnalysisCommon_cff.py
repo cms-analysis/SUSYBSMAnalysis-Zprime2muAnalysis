@@ -318,34 +318,34 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         'MessageLogger',
         destinations = cms.untracked.vstring('Zprime'),
         categories = cms.untracked.vstring(
-            #'FwkJob', 'FwkReport', 'Root_Warning',
-            'Root_NoDictionary', 'RFIOFileDebug',
-            'DDLParser', 'PixelGeom', 'EcalGeom', 'TIBGeom', 'TIDGeom',
-            'TOBGeom', 'TECGeom', 'SFGeom', 'HCalGeom', 'TrackerGeom',
-            'GeometryConfiguration', 'HcalHardcodeGeometry',
-            'PoolDBESSource', 'TkDetLayers', 'TkNavigation',
-            'Done', 'CSC', 'EcalTrivialConditionRetriever',
-            'Geometry', 'GlobalMuonTrajectoryBuilder', 'HCAL', 'Muon',
-            'RecoMuon', 'setEvent', 'Starting', 'TrackProducer',
-            'trajectories', 'DetLayers', 'RadialStripTopology',
-            'SiStripPedestalsFakeESSource', 'TrackingRegressionTest',
-            'CaloExtractorByAssociator', 'CaloGeometryBuilder'
-            'CompositeTrajectoryFilterESProducer', 'NavigationSetter',
-            'SiStripPedestalsFakeESSource', 'TrajectoryFilterESProducer',
-            'ZDC', 'ZdcHardcodeGeometry', 'RunLumiMerging',
-            'TrackAssociator', #'RecoVertex/PrimaryVertexProducer',
-            'ConversionTrackCandidateProducer','GsfTrackProducer',
-            'PhotonProducer','TrackProducerWithSCAssociation',
-            'PartonSelector', 'JetPartonMatcher', 'Alignments',
-            'L1GtConfigProducers', 'SiStripQualityESProducer',
-            'LikelihoodPdf', 'HemisphereAlgo', 'LikelihoodPdfProduct',
-            'ObjectResolutionCalc'
+        #    #'FwkJob', 'FwkReport', 'Root_Warning',
+        #    'Root_NoDictionary', 'RFIOFileDebug',
+        #    'DDLParser', 'PixelGeom', 'EcalGeom', 'TIBGeom', 'TIDGeom',
+        #    'TOBGeom', 'TECGeom', 'SFGeom', 'HCalGeom', 'TrackerGeom',
+        #    'GeometryConfiguration', 'HcalHardcodeGeometry',
+        #    'PoolDBESSource', 'TkDetLayers', 'TkNavigation',
+        #    'Done', 'CSC', 'EcalTrivialConditionRetriever',
+        #    'Geometry', 'GlobalMuonTrajectoryBuilder', 'HCAL', 'Muon',
+        #    'RecoMuon', 'setEvent', 'Starting', 'TrackProducer',
+        #    'trajectories', 'DetLayers', 'RadialStripTopology',
+        #    'SiStripPedestalsFakeESSource', 'TrackingRegressionTest',
+        #    'CaloExtractorByAssociator', 'CaloGeometryBuilder'
+        #    'CompositeTrajectoryFilterESProducer', 'NavigationSetter',
+        #    'TrajectoryFilterESProducer',
+        #    'ZDC', 'ZdcHardcodeGeometry', 'RunLumiMerging',
+        #    'TrackAssociator', #'RecoVertex/PrimaryVertexProducer',
+        #    'ConversionTrackCandidateProducer','GsfTrackProducer',
+        #    'PhotonProducer','TrackProducerWithSCAssociation',
+        #    'PartonSelector', 'JetPartonMatcher', 'Alignments',
+        #    'L1GtConfigProducers', 'SiStripQualityESProducer',
+        #    'LikelihoodPdf', 'HemisphereAlgo', 'LikelihoodPdfProduct',
+        #    'ObjectResolutionCalc'
             ),
         Zprime = cms.untracked.PSet(
             threshold    = cms.untracked.string('INFO'),
             noLineBreaks = cms.untracked.bool(True),
             extension    = cms.untracked.string('.out'),
-            FwkReport    = cms.untracked.PSet(reportEvery = cms.untracked.int32(500))
+            #FwkReport    = cms.untracked.PSet(reportEvery = cms.untracked.int32(500))
             )
         )
 
@@ -700,8 +700,19 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         l1GtObjectMap = cms.InputTag(l1MapLabel),
         # Every process puts a TriggerResults product into the event;
         # pick the HLT one.
-        hltResults = cms.InputTag('TriggerResults','','HLT')
+        hltResults = cms.InputTag('TriggerResults','','HLT'),
+        # Trigger paths we use: the result is the OR of these. These
+        # are the highest pT muon triggers in the 8E29 menu. The 1E31
+        # menu has in addition L1_SingleMu10 which seeds HLT_Mu15.
+        l1Paths = cms.vstring('L1_SingleMu7', 'L1_DoubleMu3'),
+        hltPaths = cms.vstring('HLT_Mu9', 'HLT_DoubleMu3'),
         )
+
+    if doingElectrons:
+        # Need to find out what triggers HEEP is using -- was
+        # L1_SingleEG15, HLT_EM80, HLT_EM200 in 2E30 menu in 2_X_Y.
+        l1Paths = cms.vstring('L1_SingleEG8')
+        hltPaths = cms.vstring('HLT_Ele20_LW_L1R')
 
     ####################################################################
     ## Input tags for leptons at the different rec levels, in order;

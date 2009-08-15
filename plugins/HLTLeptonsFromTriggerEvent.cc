@@ -26,16 +26,19 @@ private:
   virtual void endJob() {}
 
   bool isWanted(const InputTag& tag) const;
-  vector<InputTag> src;
+  InputTag summary;
+  vector<InputTag> leptons;
 };
 
-HLTLeptonsFromTriggerEvent::HLTLeptonsFromTriggerEvent(const ParameterSet& cfg) {
-  src = cfg.getParameter<vector<InputTag> >("src");
+HLTLeptonsFromTriggerEvent::HLTLeptonsFromTriggerEvent(const ParameterSet& cfg) 
+  : summary(cfg.getParameter<InputTag>("summary")),
+    leptons(cfg.getParameter<vector<InputTag> >("leptons"))
+{
   produces<vector<reco::RecoChargedCandidate> >();
 }
 
 bool HLTLeptonsFromTriggerEvent::isWanted(const InputTag& tag) const {
-  for (vector<InputTag>::const_iterator stag = src.begin(); stag != src.end(); ++stag)
+  for (vector<InputTag>::const_iterator stag = leptons.begin(); stag != leptons.end(); ++stag)
     if (*stag == tag) return true;
   return false;
 }
@@ -43,11 +46,14 @@ bool HLTLeptonsFromTriggerEvent::isWanted(const InputTag& tag) const {
 void HLTLeptonsFromTriggerEvent::produce(Event& event,
 					 const EventSetup& eSetup) {
   Handle<trigger::TriggerEvent> trigEvent;
-  event.getByLabel("hltTriggerSummaryAOD", trigEvent);
+  event.getByLabel(summary, trigEvent);
 
   auto_ptr<vector<reco::RecoChargedCandidate> > cands(new vector<reco::RecoChargedCandidate>);
 
   if (trigEvent.isValid()) {
+    // The TriggerEvent object keeps a list of objects that fired a
+    // trigger, labeled by the original module name. Determine which
+    // entries we're to keep below.
     vector<pair<int, int> > inds;
     int ind_prev = 0;
     for (trigger::size_type iC = 0; iC < trigEvent->sizeCollections(); ++iC) {
@@ -56,6 +62,7 @@ void HLTLeptonsFromTriggerEvent::produce(Event& event,
       ind_prev = trigEvent->collectionKey(iC);
     }
 
+    // Run over all the start/stop indices to grab the wanted entries.
     for (unsigned i = 0; i < inds.size(); ++i) {
       int ind_first = inds[i].first, ind_last = inds[i].second;
       if (ind_first >= 0 && ind_last >= ind_first) {
@@ -84,13 +91,10 @@ void HLTLeptonsFromTriggerEvent::produce(Event& event,
 	  cands->push_back(cand);
 	}
       }
-    }  
+    }
   }
-  // Fail silently to prevent spamming messages. The user will know when
-  // something is amiss from empty plots.
-  //else
-  //  edm::LogWarning("HLTLeptonsFromTriggerEvent")
-  //    << "no collection " << src << " in event; producing empty collection";
+  else
+    LogWarning("HLTLeptonsFromTriggerEvent") << "no TriggerEvent record " << summary << " in event; producing empty collection.";
 
   event.put(cands);
 }

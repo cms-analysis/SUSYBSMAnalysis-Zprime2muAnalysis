@@ -82,6 +82,22 @@ Zp1000 = cms.PSet(
   maxTrigMass = cms.double(5.4),
 ),
 
+Zp1200 = cms.PSet(
+  peakMass = cms.double(1200.0),
+  lowerMassWin = cms.double(600.0),
+  upperMassWin = cms.double(1800.0),
+  binSize = cms.int32(24),
+  maxTrigMass = cms.double(5.4),
+),
+
+Zp1300 = cms.PSet(
+  peakMass = cms.double(1300.0),
+  lowerMassWin = cms.double(600.0),
+  upperMassWin = cms.double(1800.0),
+  binSize = cms.int32(24),
+  maxTrigMass = cms.double(5.4),
+),
+
 Zp1500 = cms.PSet(
   peakMass = cms.double(1500.0),
   lowerMassWin = cms.double(1000.0),

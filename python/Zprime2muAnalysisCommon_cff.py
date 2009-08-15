@@ -112,7 +112,8 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                                  electrons=electronCollections,
                                  photons='photons',
                                  defaultMuons='muons',
-                                 tevMuons='tevMuons'):
+                                 tevMuons='tevMuons',
+                                 hltProcessName='HLT'):
     '''Return a CMSSW process for running Zprime2muAnalysis-derived
     code. See e.g. testZprime2muResolution_cfg.py for example use.
 
@@ -235,6 +236,10 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     muons/electrons/photons/defaultMuons/tevMuons: for experts who
     wish to directly specify the collections to be used for each rec
     level.
+
+    hltProcessName: now that HLT is typically run twice for 1E31 and
+    8E29 menus and the results for both are kept, this specifies which
+    is to be used (e.g. "HLT" or "HLT8E29").
     '''
 
     ####################################################################
@@ -317,30 +322,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     process.MessageLogger = cms.Service(
         'MessageLogger',
         destinations = cms.untracked.vstring('Zprime'),
-        categories = cms.untracked.vstring(
-        #    #'FwkJob', 'FwkReport', 'Root_Warning',
-        #    'Root_NoDictionary', 'RFIOFileDebug',
-        #    'DDLParser', 'PixelGeom', 'EcalGeom', 'TIBGeom', 'TIDGeom',
-        #    'TOBGeom', 'TECGeom', 'SFGeom', 'HCalGeom', 'TrackerGeom',
-        #    'GeometryConfiguration', 'HcalHardcodeGeometry',
-        #    'PoolDBESSource', 'TkDetLayers', 'TkNavigation',
-        #    'Done', 'CSC', 'EcalTrivialConditionRetriever',
-        #    'Geometry', 'GlobalMuonTrajectoryBuilder', 'HCAL', 'Muon',
-        #    'RecoMuon', 'setEvent', 'Starting', 'TrackProducer',
-        #    'trajectories', 'DetLayers', 'RadialStripTopology',
-        #    'SiStripPedestalsFakeESSource', 'TrackingRegressionTest',
-        #    'CaloExtractorByAssociator', 'CaloGeometryBuilder'
-        #    'CompositeTrajectoryFilterESProducer', 'NavigationSetter',
-        #    'TrajectoryFilterESProducer',
-        #    'ZDC', 'ZdcHardcodeGeometry', 'RunLumiMerging',
-        #    'TrackAssociator', #'RecoVertex/PrimaryVertexProducer',
-        #    'ConversionTrackCandidateProducer','GsfTrackProducer',
-        #    'PhotonProducer','TrackProducerWithSCAssociation',
-        #    'PartonSelector', 'JetPartonMatcher', 'Alignments',
-        #    'L1GtConfigProducers', 'SiStripQualityESProducer',
-        #    'LikelihoodPdf', 'HemisphereAlgo', 'LikelihoodPdfProduct',
-        #    'ObjectResolutionCalc'
-            ),
+        categories = cms.untracked.vstring(),
         Zprime = cms.untracked.PSet(
             threshold    = cms.untracked.string('INFO'),
             noLineBreaks = cms.untracked.bool(True),
@@ -405,7 +387,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     if useTrigger and dumpTriggerSummary:
         process.trigAnalyzer = cms.EDAnalyzer(
             'TriggerSummaryAnalyzerAOD',
-            inputTag = cms.InputTag('hltTriggerSummaryAOD')
+            inputTag = cms.InputTag('hltTriggerSummaryAOD', '', hltProcessName)
             )
         process.ptrigAnalyzer = cms.Path(process.trigAnalyzer)
 
@@ -520,11 +502,13 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         # Extract the L2 and L3 muons from the hltTriggerSummaryAOD
         # object.
         appendIfUsing('muCandL2', 'HLTLeptonsFromTriggerEvent',
-                      src = cms.VInputTag(cms.InputTag('hltL2MuonCandidates::HLT'))
+                      summary = cms.InputTag('hltTriggerSummaryAOD', '', hltProcessName),
+                      leptons = cms.VInputTag(cms.InputTag('hltL2MuonCandidates', '', hltProcessName))
                       )
 
         appendIfUsing('muCandL3', 'HLTLeptonsFromTriggerEvent',
-                      src = cms.VInputTag(cms.InputTag('hltL3MuonCandidates::HLT'))
+                      summary = cms.InputTag('hltTriggerSummaryAOD', '', hltProcessName),
+                      leptons = cms.VInputTag(cms.InputTag('hltL3MuonCandidates', '', hltProcessName))
                       )
 
     from RecoMuon.MuonIdentification.refitMuons_cfi import refitMuons
@@ -664,11 +648,13 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             pathAppend(process.elCandL3)
     else:
         appendIfUsing('elCandL2', 'HLTLeptonsFromTriggerEvent',
-                      src = cms.VInputTag(cms.InputTag('hltL1NonIsoRecoEcalCandidate::HLT'), cms.InputTag('hltL1IsoRecoEcalCandidate::HLT'))
+                      summary = cms.InputTag('hltTriggerSummaryAOD', '', hltProcessName),
+                      src = cms.VInputTag(cms.InputTag('hltL1NonIsoRecoEcalCandidate', '', hltProcessName), cms.InputTag('hltL1IsoRecoEcalCandidate', '', hltProcessName))
                       )
 
         appendIfUsing('elCandL3', 'HLTLeptonsFromTriggerEvent',
-                      src = cms.VInputTag(cms.InputTag('hltPixelMatchElectronsL1NonIso::HLT'), cms.InputTag('hltPixelMatchElectronsL1Iso::HLT'))
+                      summary = cms.InputTag('hltTriggerSummaryAOD', '', hltProcessName),
+                      src = cms.VInputTag(cms.InputTag('hltPixelMatchElectronsL1NonIso', '', hltProcessName), cms.InputTag('hltPixelMatchElectronsL1Iso', '', hltProcessName))
                       )
 
     finalizePath(process, 'pElectrons')
@@ -700,7 +686,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         l1GtObjectMap = cms.InputTag(l1MapLabel),
         # Every process puts a TriggerResults product into the event;
         # pick the HLT one.
-        hltResults = cms.InputTag('TriggerResults','','HLT'),
+        hltResults = cms.InputTag('TriggerResults', '', hltProcessName),
         # Trigger paths we use: the result is the OR of these. These
         # are the highest pT muon triggers in the 8E29 menu. The 1E31
         # menu has in addition L1_SingleMu10 which seeds HLT_Mu15.
@@ -932,7 +918,6 @@ __all__ = [
     'makeZprime2muAnalysisProcess', 'attachAnalysis',
     'attachOutputModule', 'poolAllFiles',
     'setAlignment', 'setTrackerAlignment', 'setMuonAlignment',
-    'setEventsToProcess',
     'lGN','lL1','lL2','lL3','lGR','lTK','lFS','lPR','lOP','lTR'
     ]
 

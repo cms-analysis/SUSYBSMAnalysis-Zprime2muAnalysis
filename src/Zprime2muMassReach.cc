@@ -130,8 +130,8 @@ void Zprime2muMassReach::endJob() {
   if (resModel == "Zssm" || resModel == "Zpsi" || resModel == "Zeta" ||
       resModel == "Zchi" || resModel == "Zlrm" || resModel == "Zalrm") {
     // 1, 3, and 5 TeV Z's
-    if (resMassId == 1000 || resMassId == 1500 || resMassId == 2000 ||
-	resMassId == 3000 || resMassId == 5000) {
+    if (resMassId == 1000 || resMassId == 1200 || resMassId == 1500 ||
+	resMassId == 2000 || resMassId == 3000 || resMassId == 5000) {
       avail = true;
     }
   }

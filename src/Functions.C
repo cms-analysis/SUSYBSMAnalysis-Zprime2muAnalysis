@@ -448,7 +448,9 @@ double lorengauPlusExpbckgNorm(double *x, double *par) {
   static double funorm = 0.0;
 #endif
   bool renorm_sig = false, renorm_bkg = false;
-  const  double mass_min =  400.; // for 1 TeV
+  // const  double mass_min =  400.; // for 1 TeV
+  // const  double mass_max = 1600.;
+  const  double mass_min =  600.; // for 1.2 TeV
   const  double mass_max = 1600.;
   // const  double mass_min = 1000.; // for 1.5 TeV
   // const  double mass_min =  600.;

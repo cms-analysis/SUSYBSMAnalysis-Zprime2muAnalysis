@@ -2,6 +2,36 @@ import FWCore.ParameterSet.Config as cms
 
 dataSets = cms.PSet(
 
+# 50pb-1 Early paper excercise
+Zssm1200_EPE = cms.PSet(
+    # Model name and its id (true peak mass).
+    resModel = cms.string('Zssm'),
+    resMassId = cms.uint32(1200),
+    # Number of bins and mass window for plots.
+    nBins = cms.uint32(24),
+    massWin = cms.vdouble(600.0, 1800.0),
+    # Lower and upper mass limits, used to pre-select events based on
+    # true dimuon masses to avoid double-counting.
+    # Order of GenMass and other arrays: signal, bckg #1, bckg #2
+    # (see doc/README). 
+    lowerGenMass = cms.vdouble(600.0, 600.0, 200.0),
+    upperGenMass = cms.vdouble(99999.0, 99999.0, 600.0),
+    # Production cross-section times branching ratio, in fb (PYTHIA 6.227S,
+    # CTEQ6L)
+    XSec = cms.vdouble(111, 54, 1620),
+    # Event weights for 50pb-1 (0.2775, 0.135, 4.050)
+    
+    # K-factors.  Currently use the mass-average value of QCD NNLO/LO K-factor,
+    # 1.35 +/- 0.05, calculated by M. Schmitt (SUSY/BSM meeting, Dec.16, 2005).
+    KFactor = cms.vdouble(1.35, 1.35, 1.35),
+    # Filter efficiency.
+    effFilter = cms.vdouble(1.0, 1.0, 1.0),
+    # Number of *generated* events in each sample.  Used to switch between
+    # samples, and for normalization of histograms.
+    nGenEvents = cms.vuint32(20000, 20000, 20000)
+),
+
+
 # Physics TDR parameters.
 Zssm1000_PTDR = cms.PSet(
     # Model name and its id (true peak mass).

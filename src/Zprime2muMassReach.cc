@@ -1672,8 +1672,8 @@ void Zprime2muMassReach::analyzeUnbinnedMassFits(
       LogTrace("analyzeUMF") 
 	<< " Binned K-S prob: " << massHisto->KolmogorovTest(RecMassFitData);
 
-    TCanvas *c1 = new TCanvas("c1", "", 0, 0, 500, 700); // for .ps
-    // TCanvas *c1 = new TCanvas("c1", "", 0, 0, 500, 500); // for .eps
+    TCanvas *c1 = new TCanvas("c4", "", 0, 0, 500, 700); // for .ps
+    // TCanvas *c1 = new TCanvas("c4", "", 0, 0, 500, 500); // for .eps
 
     ostringstream s_iexp;
     s_iexp << "_exp" << iexp;
@@ -1805,7 +1805,7 @@ void Zprime2muMassReach::ks(vector<evt> data, TF1 *func,
 
 void Zprime2muMassReach::drawUnbinnedMassFitsHistos() {
   // Draw the results of unbinned maximum likelihood mass fits.
-  TCanvas *c1 = new TCanvas("c1", "", 0, 0, 500, 700);
+  TCanvas *c1 = new TCanvas("c5", "", 0, 0, 500, 700);
 
   int page = 0;
   ostringstream strpage;

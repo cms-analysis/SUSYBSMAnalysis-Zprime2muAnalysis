@@ -3,87 +3,30 @@ import FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysisCommon_cff import *
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muMassReach_cfi import *
 
+gtag = "MC_31X_V3"
+dir = "rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/"
+attr = "_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_"
+
+signame = "ZPSSMmumu_M1000_Mcut400"
+sigdir = signame + "-" + gtag + "/"
+signal = "PYTHIA6_" + signame + attr + gtag
+
+bckg1name = "DYmumu_Mcut500"
+bckg2name = "DYmumu_Mcut200"
+
+bckg1dir = bckg1name + "/" + gtag
+bckg2dir = bckg2name + "/" + gtag
+
+bckg1 = bckg1name + attr + gtag
+bckg2 = bckg2name + attr + gtag
+
 files = [
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_1.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_2.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_3.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_4.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_5.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_6.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_7.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_8.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_9.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_10.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_11.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_12.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_13.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_14.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_15.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_16.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_17.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_18.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_19.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_20.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_21.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_22.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_23.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_24.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/ZPSSMmumu_M1200_Mcut600-MC_31X_V3/PYTHIA6_ZPSSMmumu_M1200_Mcut600_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_25.root',
+    dir + sigdir + signal + "_1.root",
+    dir + bckg1dir + bckg1 + "_1.root",
+    dir + bckg2dir + bckg2 + "_1.root"
 #    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_1_6_7/Zssm1000_fm_RECO.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_1.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_2.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_3.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_4.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_5.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_6.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_7.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_8.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_9.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_10.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_11.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_12.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_13.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_14.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_15.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_16.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_17.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_18.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_19.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_20.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_21.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_22.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_23.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_24.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut500-MC_31X_V3/PYTHIA6_DYmumu_Mcut500_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_25.root',
+#    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_1_6_7/dy_above400_RECO.root',
 #    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_1_6_7/dy_above200_RECO.root'
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_1.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_2.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_3.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_4.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_5.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_6.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_7.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_8.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_9.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_10.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_11.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_12.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_13.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_14.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_15.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_16.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_17.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_18.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_19.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_20.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_21.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_22.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_23.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_24.root',
-    'rfio:/castor/cern.ch/user/t/tucker/CMSSW_3_1_2/DYmumu_Mcut200-MC_31X_V3/PYTHIA6_DYmumu_Mcut200_10TeV_cff_py_GEN_SIM_DIGI_L1_DIGI2RAW_HLT_HLT8E29_RECO_MC_31X_V3_25.root'
-#   'file:/data0/slava/data/ZPSSMmumu_M1000_Mcut400_1.root',
-#   'file:/data0/slava/data/ZPSSMmumu_M1000_Mcut400_1.root',
-#   'file:/data0/slava/data/ZPSSMmumu_M1000_Mcut400_1.root'
     ]
 
 # process = makeZprime2muAnalysisProcess(files)
@@ -104,7 +47,7 @@ process.Zprime2muMassReach.verbosity = 0
 process.source.duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
 
 
-process.Zprime2muMassReach.dataSet       = "Zssm1200_EPE"
+#process.Zprime2muMassReach.dataSet       = "Zssm1200_EPE"
 
 #process.Zprime2muMassReach.dataSet       = "Zpsi1000"
 #process.Zprime2muMassReach.dataSet       = "Zssm1500"
@@ -117,5 +60,6 @@ process.Zprime2muMassReach.dataSet       = "Zssm1200_EPE"
 #process.Zprime2muMassReach.FixedFWHM     = False
 #process.Zprime2muMassReach.ExpPlots      = True
 #process.Zprime2muMassReach.BinnedFit     = True
-process.Zprime2muMassReach.intLumi       = 0.05
+#process.Zprime2muMassReach.intLumi       = 0.05
+#process.Zprime2muMassReach.intLumi       = 0.1
 

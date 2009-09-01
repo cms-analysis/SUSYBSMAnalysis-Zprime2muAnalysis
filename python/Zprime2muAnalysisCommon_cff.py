@@ -312,6 +312,8 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             'PoolSource',
             fileNames = cms.untracked.vstring(*fileNames)
             )
+        print 'Setting noDuplicateCheck mode...'
+        process.source.duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
 
     process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(maxEvents))
 
@@ -853,10 +855,12 @@ def makeZprime2muAnalysisProcess(fileNames=[],
 
 # Function to attach simple EDAnalyzers that don't need any
 # parameters. Allows skipping of making data/Zprime2mu*_cfi.py files.
-def attachAnalysis(process, name, **kwargs):
+def attachAnalysis(process, name, mod_name=None, **kwargs):
+    if mod_name is None:
+        mod_name = name
     analyzer = cms.EDAnalyzer(name, process.Zprime2muAnalysisCommon)
-    setattr(process, name, analyzer)
-    setattr(process, name + 'Path', cms.Path(getattr(process, name)))
+    setattr(process, mod_name, analyzer)
+    setattr(process, mod_name + 'Path', cms.Path(analyzer))
     for key, val in kwargs.items():
         setattr(analyzer, key, val)
 

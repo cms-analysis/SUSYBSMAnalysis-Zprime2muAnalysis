@@ -42,6 +42,11 @@ h.Divide(hd)
 pad.cd(3)
 h.Draw()
 
+def clone_and_cache(h, _cache=[]):
+    nh = h.Clone()
+    _cache.append(nh)
+    return nh
+
 def draw_efficiency(num_name, den, min=0.7, max=1.02):
     hnum = histos.Get(num_name)
     if type(den) == type(''):
@@ -50,7 +55,7 @@ def draw_efficiency(num_name, den, min=0.7, max=1.02):
         hden = den
         
     if None not in (hnum, hden):
-        h = hnum.Clone()
+        h = clone_and_cache(hnum)
         h.Divide(hnum, hden, 1, 1, 'B')
         h.SetMinimum(min)
         h.SetMaximum(max)
@@ -162,10 +167,10 @@ for rec in levels:
     hwrong = histos.Get('ChargeWrongVInvPt%X' % rec)
     hright = histos.Get('ChargeRightVInvPt%X' % rec)
     if None not in (hwrong, hright):
-        h = hwrong.Clone()
+        h = clone_and_cache(hwrong)
         h.Divide(hright)
         h.SetTitle(h.GetTitle().replace('wrong q', '(wrong q)/(right q)'))
-        h.Draw()
+
 
 psd.close()
 f.Close()

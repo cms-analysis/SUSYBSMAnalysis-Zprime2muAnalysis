@@ -14,11 +14,11 @@ signal = "PYTHIA6_" + signame + attr + gtag
 bckg1name = "DYmumu_Mcut500"
 bckg2name = "DYmumu_Mcut200"
 
-bckg1dir = bckg1name + "/" + gtag
-bckg2dir = bckg2name + "/" + gtag
+bckg1dir = bckg1name + "-" + gtag + '/'
+bckg2dir = bckg2name + "-" + gtag + '/'
 
-bckg1 = bckg1name + attr + gtag
-bckg2 = bckg2name + attr + gtag
+bckg1 = 'PYTHIA6_' + bckg1name + attr + gtag
+bckg2 = 'PYTHIA6_' + bckg2name + attr + gtag
 
 files = [
     dir + sigdir + signal + "_1.root",
@@ -43,9 +43,6 @@ process = makeZprime2muAnalysisProcess(files, maxEvents=-1, skipPAT=True, disabl
     
 attachMassReach(process)
 process.Zprime2muMassReach.verbosity = 0
-
-process.source.duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
-
 
 #process.Zprime2muMassReach.dataSet       = "Zssm1200_EPE"
 

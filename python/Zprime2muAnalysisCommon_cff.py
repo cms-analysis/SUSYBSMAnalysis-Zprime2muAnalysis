@@ -516,7 +516,11 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     from RecoMuon.MuonIdentification.refitMuons_cfi import refitMuons
 
     # Copy only the GlobalMuons from the default muon collection,
-    # ignoring the TrackerMuons and CaloMuons for now.
+    # ignoring the TrackerMuons and CaloMuons for now. Since 3_1_0,
+    # this is now what was called the sigma switch, which uses the
+    # tracker-only track if both the tracker-only and global pT were
+    # below 200 GeV, or if the q/p of the two tracks differ by more
+    # than twice the tracker-only error on q/p.
     appendIfUsing('muCandGR', refitMuons.clone(
         src           = defaultMuons,
         fromCocktail  = False,

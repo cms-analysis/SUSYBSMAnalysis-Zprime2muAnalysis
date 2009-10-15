@@ -27,7 +27,7 @@ electronCollections[lOP] = 'selectedLayer1Electrons'
 
 # The InputTags for the L1 collections (needs to be configurable to
 # support FastSim).
-l1InputLabel = 'hltL1extraParticles' # 'l1extraParticles' for FastSim
+l1InputLabel = 'l1extraParticles' # 'l1extraParticles' for FastSim
 l1MapLabel   = 'hltL1GtObjectMap'    # 'gtDigis'           "     "
 
 # Dilepton construction specifiers (see docstring in the main method
@@ -93,8 +93,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                                  useOtherMuonRecos=True,
                                  recoverBrem=True,
                                  disableElectrons=True,
-                                 performReReco=False,
-                                 conditionsGlobalTag='IDEAL_V9::All',
+                                 conditionsGlobalTag='MC_31X_V3::All',
                                  dumpHardInteraction=False,
                                  strictGenDilepton=True,
                                  dumpTriggerSummary=False,
@@ -113,7 +112,8 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                                  photons='photons',
                                  defaultMuons='muons',
                                  tevMuons='tevMuons',
-                                 hltProcessName='HLT'):
+                                 hltProcessName='HLT',
+                                 processName='Zprime2muAnalysis'):
     '''Return a CMSSW process for running Zprime2muAnalysis-derived
     code. See e.g. testZprime2muResolution_cfg.py for example use.
 
@@ -165,14 +165,10 @@ def makeZprime2muAnalysisProcess(fileNames=[],
 
     disableElectrons: whether to completely kill electrons from being
     accessed.
-
-    performTrackReReco: if set, re-run track, muon, and photon
-    reconstruction on-the-fly before running any analysis
-    paths. Does this work in 2_1/2_2?
             
-    conditionsGlobalTag: if performing re-reconstruction on the fly,
-    this sets the globalTag for database conditions (e.g. alignment,
-    calibration, etc.)
+    conditionsGlobalTag: this sets the globalTag for database
+    conditions (e.g. alignment, calibration, etc.) needed for trigger
+    redigitization/l1extra production, or for the PAT.
 
     dumpHardInteraction: if True, use ParticleListDrawer to dump the
     generator info on the hard interaction particles.
@@ -301,11 +297,18 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     if chargesForDileptons not in [oppSign, oppSignMP, likeSignPos, likeSignNeg]:
         raise RuntimeError, 'bad input for chargesForDileptons'        
 
+    need_global_tag = False
+    need_l1extra = False
+    
+    if 'muCandL1' in muons or 'elCandL1' in electrons:
+        need_global_tag = True
+        need_l1extra = True
+
     ####################################################################
     ## Set up the CMSSW process and useful services.
     ####################################################################
 
-    process = cms.Process('Zprime2muAnalysis')
+    process = cms.Process(processName)
 
     if fileNames:
         process.source = cms.Source(
@@ -324,7 +327,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     process.MessageLogger = cms.Service(
         'MessageLogger',
         destinations = cms.untracked.vstring('Zprime'),
-        categories = cms.untracked.vstring(),
+        categories = cms.untracked.vstring('Alignments', 'EcalElectronicsMapper', 'EcalRawToDigi', 'EventSetupDependency', 'GCT', 'Geometry', 'HCAL', 'path', 'SiPixelRawToDigi', 'SiStripDetInfoFileReader', 'SiStripQualityESProducer'),
         Zprime = cms.untracked.PSet(
             threshold    = cms.untracked.string('INFO'),
             noLineBreaks = cms.untracked.bool(True),
@@ -348,33 +351,54 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         for cat in process.MessageLogger.categories:
             setattr(process.MessageLogger.Zprime, cat, limitZero)
     
-    process.TFileService = cms.Service(
-        'TFileService',
-        fileName = cms.string('zp2mu_histos.root')
-        )
-
-    # Expert option: if the user wants to use a global tag but also
-    # wants to set an es_prefer for a different record, can pass
-    # conditionsGlobalTag=('TAG_NAME::All', False) to cause us to use
-    # the noesprefer version.
-    if type(conditionsGlobalTag) == type(()):
-        conditionsGlobalTag, prefer_global_tag = conditionsGlobalTag
-    else:
-        prefer_global_tag = True
+    process.TFileService = cms.Service('TFileService', fileName = cms.string('zp2mu_histos.root'))
 
     # If doing reconstruction or the PAT, need some common things
     # like geometry, magnetic field, and conditions.
-    if performReReco or not skipPAT:
+    if not skipPAT:
         process.load("Configuration.StandardSequences.Geometry_cff")
-        if prefer_global_tag:
-            process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-        else:
-            process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_noesprefer_cff')
-            process.es_prefer_cscBadChambers = cms.ESPrefer('PoolDBESSource', 'cscBadChambers')
-            del process.DTFakeVDriftESProducer
-        process.GlobalTag.globaltag = cms.string(conditionsGlobalTag)
         process.load("Configuration.StandardSequences.MagneticField_cff")
+        need_global_tag = True
+
+    if need_global_tag:
+        process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+        process.GlobalTag.globaltag = cms.string(conditionsGlobalTag)
+
+    # Since some version of CMSSW 3, l1extraParticles are either not
+    # made or are transient. Make them.
+    if need_l1extra:
+        # For the samples on CASTOR in directory ~tucker/CMSSW_3_1_2,
+        # the digitization step in the RECO sequence (the digis that
+        # are extant in these files) was done using the 8E29 menu. If
+        # we're not using that menu, redo digitization (raw for both
+        # HLT and HLT8E29 are in these files).
+        if 'STARTUP' not in conditionsGlobalTag:
+            process.load("Configuration.StandardSequences.Geometry_cff")
+            process.load('Configuration.StandardSequences.RawToDigi_cff')
+            digitag = 'rawDataCollector::HLT'
+            process.scalersRawToDigi.scalersInputTag = digitag
+            process.csctfDigis.producer = digitag
+            process.dttfDigis.DTTF_FED_Source = digitag
+            process.gctDigis.inputLabel = digitag
+            process.gtDigis.DaqGtInputTag = digitag
+            process.siPixelDigis.InputLabel = digitag
+            # ecal digi producer can't take an InputTag, and using the
+            # string in the ::HLT form above just makes it throw an
+            # exception (it doesn't see that HLT is supposed to be the
+            # process name, instead taking ::HLT as part of the module
+            # label.)
+            #process.ecalDigis.InputLabel = digitag 
+            process.ecalPreshowerDigis.sourceTag = digitag
+            process.hcalDigis.InputLabel = digitag
+            process.muonCSCDigis.InputObjects = digitag
+            process.muonDTDigis.inputLabel = digitag
+            process.muonRPCDigis.InputLabel = digitag
+            process.gtEvmDigis.EvmGtInputTag = digitag
+            process.praw2digi = cms.Path(process.RawToDigi)
         
+        process.load('L1Trigger.Configuration.L1Extra_cff')
+        process.pl1extra = cms.Path(process.L1Extra)
+
     if useGen and dumpHardInteraction:
         process.include("SimGeneral/HepPDTESSource/data/pythiapdt.cfi")
         process.printTree = cms.EDAnalyzer(
@@ -387,22 +411,13 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         process.ptree = cms.Path(process.printTree)
 
     if useTrigger and dumpTriggerSummary:
+        process.load('L1Trigger.L1ExtraFromDigis.l1extratest_cfi')
         process.trigAnalyzer = cms.EDAnalyzer(
             'TriggerSummaryAnalyzerAOD',
             inputTag = cms.InputTag('hltTriggerSummaryAOD', '', hltProcessName)
             )
-        process.ptrigAnalyzer = cms.Path(process.trigAnalyzer)
+        process.ptrigAnalyzer = cms.Path(process.l1extratest*process.trigAnalyzer)
 
-    ####################################################################
-    ## Re-reconstruct, if instructed to do so (useful if switching
-    ## e.g. alignment).
-    ####################################################################
-
-    if performReReco:
-        process.load('Configuration.StandardSequences.RawToDigi_cff')
-        process.load('Configuration.StandardSequences.Reconstruction_cff')
-        process.pReReco = cms.Path(process.RawToDigi * process.reconstruction)
- 
     ####################################################################
     ## Run PAT layers 0 and 1 (unless instructed to skip them).
     ####################################################################
@@ -478,6 +493,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             )
         pathAppend(process.muCandGN)
 
+    
     # 'Sanitize' the L1 muons, i.e. shift their phi values from
     # the bin edge to the bin center (an offset of 0.0218 rad).
     appendIfUsing('muCandL1', 'L1MuonSanitizer',
@@ -870,7 +886,7 @@ def attachAnalysis(process, name, mod_name=None, **kwargs):
 
 # Attach a PoolOutputModule to the process, by default dumping all
 # branches (useful for inspecting the file).
-def attachOutputModule(process, fileName='/scratchdisk1/tucker/out.root'):
+def attachOutputModule(process, fileName='/scratchdisk2/tucker/zp2muout.root'):
     process.out = cms.OutputModule(
         'PoolOutputModule',
         fileName = cms.untracked.string(fileName)
@@ -933,6 +949,6 @@ __all__ = [
 #   python Zprime2muAnalysisCommon_cff.py
 if __name__ == '__main__':
     import sys
-    process = makeZprime2muAnalysisProcess(['file:/dev/null'], 42, skipPAT=True, performReReco=True)
+    process = makeZprime2muAnalysisProcess(['file:/dev/null'], 42, skipPAT=True)
     if 'silent' not in sys.argv:
         print process.dumpConfig()

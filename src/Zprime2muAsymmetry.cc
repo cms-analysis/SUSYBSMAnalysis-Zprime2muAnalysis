@@ -19,6 +19,7 @@
 #include "TROOT.h"
 #include "TStyle.h"
 #include "TText.h"
+#include "TTree.h"
 
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
@@ -92,6 +93,9 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   // parameterization sample
   internalBremOn = config.getParameter<bool>("internalBremOn");
 
+  // Energy of each incoming proton (in GeV).
+  beamEnergy = 5000;
+
   // whether to fix b for the simple 1-D fits
   fixbIn1DFit = config.getParameter<bool>("fixbIn1DFit");
 
@@ -120,9 +124,9 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
     dataSetConfig.getUntrackedParameter<string>("outputFileBase");
   genSampleFiles = dataSetConfig.getParameter<vector<string> >("genSampleFiles");
   peakMass = dataSetConfig.getParameter<double>("peakMass");
-
+  
   // let the asymFitManager take care of setting mass_type, etc.
-  asymFitManager.setConstants(dataSetConfig, onPeak, peakMass);
+  asymFitManager.setConstants(dataSetConfig, onPeak, peakMass, beamEnergy);
 
   // turn on/off the fit prints in AsymFunctions
   asymDebug = verbosity >= VERBOSITY_SIMPLE;
@@ -812,8 +816,8 @@ void Zprime2muAsymmetry::fillFrameHistos() {
   double cos_cs[2][MAX_DILEPTONS];
   double cos_boost, cos_wulz;
 
-  TLorentzVector pp1(0., 0., 7000., 7000.);
-  TLorentzVector pp2(0., 0.,-7000., 7000.);
+  TLorentzVector pp1(0., 0., beamEnergy, beamEnergy);
+  TLorentzVector pp2(0., 0.,-beamEnergy, beamEnergy);
   TLorentzVector pb_star, pt_star, pmum_star, pmup_star;
   TVector3 temp3;
 
@@ -1229,18 +1233,40 @@ void Zprime2muAsymmetry::calcFrameAsym() {
 }
 
 void Zprime2muAsymmetry::dumpFitData() {
-  string fn = "dumpFitData." + outputFileBase + ".txt";
-  fstream f(fn.c_str(), ios::out);
+  string fn = "dumpFitData." + outputFileBase + ".root";
+  TFile dump(fn.c_str(), "RECREATE");
 
-  for (int i = 0; i < 2; i++) {
-    f << "#i=" << i << " nfit_used[i]=" << nfit_used[i] << endl;
-    for (int j = 0; j < nfit_used[i]; j++)
-      f << cos_theta_cs_data[i][j] << '\t' << mass_dil_data[i][j] << '\t'
-	<< rap_dil_data[i][j] << '\t' << pt_dil_data[i][j] << '\t'
-	<< phi_dil_data[i][j] << '\t' << phi_cs_data[i][j] << endl;
+  AsymFitData x;
+
+  TTree* ts[2] = {0};
+
+  for (int i = 0; i < 2; ++i) {
+    TTree* t = ts[i] = new TTree(i == 0 ? "gen" : "rec", "");
+    t->Branch("cos_cs", &x.cos_cs,   "cos_cs/D");
+    t->Branch("rap",    &x.rapidity, "rap/D");
+    t->Branch("mass",   &x.mass,     "mass/D");
+    t->Branch("pt",     &x.pT,       "pt/D");
+    t->Branch("phi",    &x.phi,      "phi/D");
+    t->Branch("phi_cs", &x.phi_cs,   "phi_cs/D");
+
+    for (int j = 0; j < nfit_used[i]; ++j) {
+      x.cos_cs   = cos_theta_cs_data[i][j];
+      x.rapidity = rap_dil_data     [i][j];
+      x.mass     = mass_dil_data    [i][j];
+      x.pT       = pt_dil_data      [i][j];
+      x.phi      = phi_dil_data     [i][j];
+      x.phi_cs   = phi_cs_data      [i][j];
+      
+      t->Fill();
+    }
   }
 
-  f.close();
+  dump.Write();
+  dump.Close();
+
+  // don't delete trees! pointers are already invalid from being owned
+  // by the TFile.
+  ts[0] = ts[1] = 0;
 
   // dump the generated pre-acceptance-cut cos_cs distribution
   fn = "angDist." + outputFileBase + ".txt";
@@ -2444,23 +2470,25 @@ void Zprime2muAsymmetry::fitAsymmetry() {
     TBackCompFitter* jmt_tbcf = dynamic_cast<TBackCompFitter*>(unbfitter->getFitter());
     
     // covariance matrix between afb and b, in order {V_afb,afb, V_afb,b, V_b,b }
-    double cov[3] = {0};
+    double cov[3] = {-999, -999, -999};
     double* covmat = unbfitter->getFitter()->GetCovarianceMatrix();
 
-    if (jmt_tbcf == 0) {
-      int npar = ((TFMultiD*)gROOT->GetFunction("f_recmd"))->GetNpar();
-      // minuit reorganizes the order of the parameters to put the unfixed
-      // at the end, so A_fb and b are now the first two pars (apparently)
-      cov[0] = covmat[0];
-      cov[1] = covmat[1];
-      cov[2] = covmat[npar];
-    }
-    else {
-      // TBackCompFitter's returned covariance matrix doesn't contain
-      // the fixed parameters, so it is a nfreepar^2 = 4 length array.
-      cov[0] = covmat[0];
-      cov[1] = covmat[1];
-      cov[2] = covmat[3];
+    if (covmat) {
+      if (jmt_tbcf == 0) {
+	int npar = ((TFMultiD*)gROOT->GetFunction("f_recmd"))->GetNpar();
+	// minuit reorganizes the order of the parameters to put the unfixed
+	// at the end, so A_fb and b are now the first two pars (apparently)
+	cov[0] = covmat[0];
+	cov[1] = covmat[1];
+	cov[2] = covmat[npar];
+      }
+      else {
+	// TBackCompFitter's returned covariance matrix doesn't contain
+	// the fixed parameters, so it is a nfreepar^2 = 4 length array.
+	cov[0] = covmat[0];
+	cov[1] = covmat[1];
+	cov[2] = covmat[3];
+      }
     }
 
     // correlation coefficient between A_fb and b

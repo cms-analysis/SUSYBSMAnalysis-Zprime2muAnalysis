@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "TBranch.h"
+#include "TBackCompFitter.h"
 #include "TCanvas.h"
 #include "TF1.h"
 #include "TFile.h"
@@ -19,7 +19,6 @@
 #include "TROOT.h"
 #include "TStyle.h"
 #include "TText.h"
-#include "TTree.h"
 
 #include "DataFormats/Candidate/interface/Candidate.h"
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
@@ -65,7 +64,7 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
 
   // choose the type of fit (magic number in the cfg, but
   // is an enum FITTYPE here in the code)
-  FITTYPE fitType = FITTYPE(config.getParameter<int>("fitType"));
+  fitType = FITTYPE(config.getParameter<int>("fitType"));
 
   // convenient flag for checking to see if we're doing graviton studies
   doingGravFit = fitType >= GRAV;
@@ -1751,20 +1750,21 @@ void Zprime2muAsymmetry::getAsymParams() {
   pad[page]->Draw();
   pad[page]->Divide(1, 2);
   pad[page]->cd(1); 
-  TF1 *f_mass;
+  TF1* f_mass = 0;
   int nPars = 3;
-  double par_norm = 7000.; // initial values of normalization constant,
-  double par_mean = peakMass; // mean, and
-  double par_fwhm = 2.*sqrt(par_mean);      // fwhm
 
   const AsymFitManager& amg = asymFitManager;
+  
+  double par_norm = h_mass_dil[1]->Integral(h_mass_dil[1]->FindBin(amg.fit_win(0)), h_mass_dil[1]->FindBin(amg.fit_win(1)));
+  double par_mean = peakMass;
+  double par_fwhm = 2.*sqrt(par_mean);
 
   if (amg.mass_type() == MASS_EXP) {
     cout << "\n#### fitting falling exp to dil mass\n";
     f_mass = new TF1("f_mass", expBckg,
 		     amg.fit_win(0), amg.fit_win(1), nPars);
     f_mass->SetParNames("Norm",  "Slope", "Integral");
-    f_mass->SetParameters(par_norm, 0., 1.);
+    f_mass->SetParameters(par_norm, -1, 1.);
     //f_mass->SetParLimits(0, 100., 1.e9);
     //f_mass->SetParLimits(1, 0., -10.);
     f_mass->FixParameter(2, 1.);
@@ -1803,7 +1803,7 @@ void Zprime2muAsymmetry::getAsymParams() {
   delete f_mass;
   page++;
   c1->Update();
-    
+  
   ps->NewPage();
   c1->Clear();
   c1->cd(0);
@@ -2441,20 +2441,30 @@ void Zprime2muAsymmetry::fitAsymmetry() {
     double logML;
     int cov_status = unbfitter->unbinnedFitExec("f_recmd", "", n2fit, fit_data, weights, logML);
       
+    TBackCompFitter* jmt_tbcf = dynamic_cast<TBackCompFitter*>(unbfitter->getFitter());
+    
+    // covariance matrix between afb and b, in order {V_afb,afb, V_afb,b, V_b,b }
+    double cov[3] = {0};
     double* covmat = unbfitter->getFitter()->GetCovarianceMatrix();
-    int npar = ((TFMultiD*)gROOT->GetFunction("f_recmd"))->GetNpar();
 
-    ostringstream covMatrix;
-    // minuit reorganizes the order of the parameters to put the unfixed
-    // at the end, so A_fb and b are now the first two pars (apparently)
-    for (int mi = 0; mi < 2; mi++) {
-      for (int mj = 0; mj < 2; mj++)
-	covMatrix << setw(10) << covmat[mi+npar*mj] << "\t";
-      covMatrix << endl;
+    if (jmt_tbcf == 0) {
+      int npar = ((TFMultiD*)gROOT->GetFunction("f_recmd"))->GetNpar();
+      // minuit reorganizes the order of the parameters to put the unfixed
+      // at the end, so A_fb and b are now the first two pars (apparently)
+      cov[0] = covmat[0];
+      cov[1] = covmat[1];
+      cov[2] = covmat[npar];
+    }
+    else {
+      // TBackCompFitter's returned covariance matrix doesn't contain
+      // the fixed parameters, so it is a nfreepar^2 = 4 length array.
+      cov[0] = covmat[0];
+      cov[1] = covmat[1];
+      cov[2] = covmat[3];
     }
 
     // correlation coefficient between A_fb and b
-    double rho = covmat[1]/sqrt(covmat[0]*covmat[1+npar]);
+    double rho = cov[1]/sqrt(cov[0]*cov[2]);
     
     // Save results to external file
     outfile << fit_announce.str() << endl
@@ -2474,7 +2484,9 @@ void Zprime2muAsymmetry::fitAsymmetry() {
     outfile << "   b = " << setw(8) << setprecision(3) << par 
 	    << " +/- " << eparab << endl
 	    << "-2*log_ML = " << setprecision(6) << -2.*logML << endl
-	    << "covariance matrix:\n" << covMatrix.str()
+	    << "covariance matrix:\n"
+	    << setw(10) << cov[0] << setw(10) << cov[1] << endl
+ 	    << setw(20)                       << cov[2] << endl
 	    << "correlation coefficient: " << rho << endl
 	    << "covariance matrix status: " << cov_status << "\n\n"; 
     outfile.flush();

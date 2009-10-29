@@ -1436,8 +1436,8 @@ void calc4Vectors(AsymFitData& x,  TLorentzVector& v_dil,
   v_dil.SetPtEtaPhiM(pt_dil, eta_dil, phi_dil, mass_dil);
 
   // Boost beam and target into dilepton CM frame
-  TLorentzVector v_pp1(0., 0., -7000., 7000.);
-  TLorentzVector v_pp2(0., 0.,  7000., 7000.);
+  TLorentzVector v_pp1(0., 0., -asymFitManager.beam_energy(), asymFitManager.beam_energy());
+  TLorentzVector v_pp2(0., 0.,  asymFitManager.beam_energy(), asymFitManager.beam_energy());
   TLorentzVector v_beam, v_targ;
   v_pp1.Boost(-v_dil.BoostVector());
   v_pp2.Boost(-v_dil.BoostVector());
@@ -1620,8 +1620,8 @@ double calcPhiCSAnal(double px_mum, double py_mum, double px_mup,
   // Approximate the longitudinal momentum of the quark to be in the same 
   // direction as that of the dilepton (here the beam is defined as the 
   // direction of the quark).
-  if (v_dil.Pz() > 0.) v3_beam.SetXYZ(0., 0., 7000.);
-  else  v3_beam.SetXYZ(0., 0., -7000.);
+  if (v_dil.Pz() > 0.) v3_beam.SetXYZ(0., 0., asymFitManager.beam_energy());
+  else  v3_beam.SetXYZ(0., 0., -asymFitManager.beam_energy());
 
   // Make a transverse unit vector in the direction of beam x dilepton
   v3_R_T = (v3_beam.Cross(v_dil.Vect())).Unit();
@@ -1673,8 +1673,8 @@ void calcCSQuantities(TLorentzVector v_dil, TLorentzVector v_mum,
   TVector3 v3_mum = v_mum.Vect();
 
   // Boost beam and targe 4-vectors into dilepton CM frame
-  TLorentzVector v_pp1(0., 0., -7000., 7000.);
-  TLorentzVector v_pp2(0., 0.,  7000., 7000.);
+  TLorentzVector v_pp1(0., 0., -asymFitManager.beam_energy(), asymFitManager.beam_energy());
+  TLorentzVector v_pp2(0., 0.,  asymFitManager.beam_energy(), asymFitManager.beam_energy());
   TLorentzVector v_beam, v_targ;
   v_pp1.Boost(-v_dil.BoostVector());
   v_pp2.Boost(-v_dil.BoostVector());

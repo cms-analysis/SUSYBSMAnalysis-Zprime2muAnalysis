@@ -40,18 +40,23 @@ class AsymFitManager;
 
 class AsymFitManager {
  public:
-  AsymFitManager() {
-    // initialize the mistag calculation using CTEQ6L pdfs with a
-    // nominal cms energy of 14 TeV
-    mistagCalc = new MistagCalc(14000, "cteq6l.LHpdf");
-  }
+  AsymFitManager(): 
+    mistagCalc(0)
+  {}
 
   ~AsymFitManager() {
     delete mistagCalc;
   }
 
   void setConstants(const edm::ParameterSet& pset, bool onPeak,
-		    double peakMass) {
+		    double peakMass, double beamEnergy) {
+    // initialize the mistag calculation using CTEQ6L pdfs
+    if (mistagCalc) {
+      delete mistagCalc;
+      mistagCalc = 0;
+    }
+    mistagCalc = new MistagCalc(2*beamEnergy, "cteq6l.LHpdf");
+
     _mass_type = pset.getParameter<int>("massDistType");
     _max_rap = pset.getParameter<double>("maxRapidity");
     _max_pt = pset.getParameter<double>("maxPt");
@@ -60,6 +65,7 @@ class AsymFitManager {
     _fit_win = pset.getParameter<std::vector<double> >(fitWinType);
     _gen_win = pset.getParameter<std::vector<double> >("genWindow");
     _peak_mass = peakMass;
+    _beam_energy = beamEnergy;
     _rec_sigma = pset.getParameter<std::vector<double> >("recSigma");
 
     // JMTBAD *sigh*
@@ -107,6 +113,7 @@ class AsymFitManager {
   double limit_low(unsigned int i) const { return _limit_low[i]; }
   double limit_upp(unsigned int i) const { return _limit_upp[i]; }
   double peak_mass() const { return _peak_mass; }
+  double beam_energy() const { return _beam_energy; }
 
   // accessors for specific rec sigmas
   double recSigmaCosCS() const { return _rec_sigma[SIGMA_COSCS]; }
@@ -158,6 +165,7 @@ class AsymFitManager {
   std::vector<double> _fit_win;
   std::vector<double> _gen_win;
   double _peak_mass;
+  double _beam_energy;
   // These sigma are the reconstructed - generated for dilepton pt, rap, mass, 
   // phi, cos_cs, and phi_cs.  They are taken from DY generated above 1 TeV.
   // order: cos_cs, rapidity, pT, phi, mass, phi_cs (see above enum)

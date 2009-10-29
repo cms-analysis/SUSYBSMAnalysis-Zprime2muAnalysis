@@ -163,6 +163,7 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   std::string paramCacheFile;
   bool calcParamsOnly;
   bool internalBremOn;
+  double beamEnergy;
   bool fixbIn1DFit;
   bool useCosTrueInFit;
   bool artificialCosCS;

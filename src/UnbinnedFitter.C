@@ -11,6 +11,9 @@
 #include "TMath.h"
 #include "TROOT.h"
 
+#include "TBackCompFitter.h"
+#include "Fit/Fitter.h"
+
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
@@ -234,7 +237,7 @@ int UnbinnedFitter::unbinnedFitExec(const char *funcname,
 	<< "; sum of the weights = " << sum_fitweight << endl;
 
   // Create and set up the fitter.  Argument is maximum number of params
-  tFitter = TVirtualFitter::Fitter(0,5);
+  tFitter = TVirtualFitter::Fitter(0,npar);
   tFitter->Clear();
   tFitter->SetFCN(unbinnedFitLikelihoodFCN);
 
@@ -249,6 +252,8 @@ int UnbinnedFitter::unbinnedFitExec(const char *funcname,
     tFitter->ExecuteCommand("SET NOW",   arglist,0);
   }
 
+  TBackCompFitter* jmt_tbcf = dynamic_cast<TBackCompFitter*>(tFitter);
+
   // Setup the parameters (#, name, start, step, min, max)
   double min, max;
   for (i = 0; i < npar; i++) {
@@ -259,6 +264,14 @@ int UnbinnedFitter::unbinnedFitExec(const char *funcname,
     double start = fitfuncMultiD->GetParameter(i);
     double step  = fabs(start)/100.;
     if (start == 0.) step = 0.001;   
+
+    // Temp fix for bug in TBackCompFitter.
+    if (jmt_tbcf != 0) {
+      std::vector<ROOT::Fit::ParameterSettings> & parlist = jmt_tbcf->GetFitConfig().ParamsSettings(); 
+      if (i >= (int) parlist.size())
+	parlist.resize(i+1);
+    }
+
     if (min < max) {
       tFitter->SetParameter(i, fitfuncMultiD->GetParName(i), start, step, min, max);
     }
@@ -435,6 +448,8 @@ int UnbinnedFitter::unbinnedFitExec(const char *funcname,
     tFitter->ExecuteCommand("SET NOW",   arglist,0);
   }
 
+  TBackCompFitter* jmt_tbcf = dynamic_cast<TBackCompFitter*>(tFitter);
+
   // Setup the parameters (#, name, start, step, min, max)
   double min, max;
   for (i = 0; i < npar; i++) {
@@ -445,6 +460,14 @@ int UnbinnedFitter::unbinnedFitExec(const char *funcname,
     double start = fitfunc->GetParameter(i);
     double step  = fabs(start)/100.;
     if (start == 0.) step = 0.001;
+
+    // Temp fix for bug in TBackCompFitter.
+    if (jmt_tbcf != 0) {
+      std::vector<ROOT::Fit::ParameterSettings> & parlist = jmt_tbcf->GetFitConfig().ParamsSettings(); 
+      if (i >= (int) parlist.size())
+	parlist.resize(i+1);
+    }
+
     if (min < max) {
       tFitter->SetParameter(i, fitfunc->GetParName(i), start, step, min, max);
     }

@@ -17,9 +17,6 @@
 //#define EML_1
 //#define EML_2
 
-extern void UnbinnedFitLikelihoodFCN(int &npar, double *gin, double &f,
-				     double *u, int flag);
-
 class UnbinnedFitter {
  public:
   UnbinnedFitter();

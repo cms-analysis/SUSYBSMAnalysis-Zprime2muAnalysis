@@ -113,7 +113,8 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                                  defaultMuons='muons',
                                  tevMuons='tevMuons',
                                  hltProcessName='HLT',
-                                 processName='Zprime2muAnalysis'):
+                                 processName='Zprime2muAnalysis',
+                                 fromNtuple=False):
     '''Return a CMSSW process for running Zprime2muAnalysis-derived
     code. See e.g. testZprime2muResolution_cfg.py for example use.
 
@@ -307,6 +308,9 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     ####################################################################
     ## Set up the CMSSW process and useful services.
     ####################################################################
+
+    if fromNtuple and processName == 'Zprime2muAnalysis':
+        processName += '2'
 
     process = cms.Process(processName)
 
@@ -719,8 +723,8 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     if doingElectrons:
         # Need to find out what triggers HEEP is using -- was
         # L1_SingleEG15, HLT_EM80, HLT_EM200 in 2E30 menu in 2_X_Y.
-        l1Paths = cms.vstring('L1_SingleEG8')
-        hltPaths = cms.vstring('HLT_Ele20_LW_L1R')
+        process.Zprime2muAnalysisCommon.l1Paths = cms.vstring('L1_SingleEG8')
+        process.Zprime2muAnalysisCommon.hltPaths = cms.vstring('HLT_Ele20_LW_L1R')
 
     ####################################################################
     ## Input tags for leptons at the different rec levels, in order;
@@ -866,6 +870,17 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         process.EventContentAnalyzer = cms.EDAnalyzer('EventContentAnalyzer')
         process.pECA = cms.Path(process.EventContentAnalyzer)        
 
+    if fromNtuple:
+        # Should probably just never make the modules and paths in the
+        # above, but this works for now.
+        del process.praw2digi
+        del process.pl1extra
+        del process.psimParticleCandidates
+        del process.pMuons
+        del process.genMatchPath
+        del process.photonMatchPath
+        del process.dileptonPath
+        
     print 'Zprime2muAnalysis base process built!'
     return process
 
@@ -893,6 +908,91 @@ def attachOutputModule(process, fileName='/scratchdisk2/tucker/zp2muout.root'):
         )
     process.endp = cms.EndPath(process.out)
 
+def dumpNtuple(process, fileName):
+    attachOutputModule(process, fileName)
+    process.out.outputCommands = cms.untracked.vstring(
+        'drop *',
+        #'keep edmHepMCProduct_generator__HLT',
+        'keep edmTriggerResults_TriggerResults__HLT',
+        #'keep GenEventInfoProduct_generator__HLT',
+        #'keep ints_genParticles__HLT',
+        'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__HLT',
+        'keep recoGenParticles_genParticles__HLT',
+        #'keep SimTracks_g4SimHits__HLT',
+        #'keep SimVertexs_g4SimHits__HLT',
+        #'keep triggerTriggerEvent_hltTriggerSummaryAOD__HLT',
+        'keep edmTriggerResults_TriggerResults__HLT8E29',
+        #'keep triggerTriggerEvent_hltTriggerSummaryAOD__HLT8E29',
+        'keep edmErrorSummaryEntrys_logErrorHarvester__*',
+        'keep recoMuons_muons__*',
+        'keep recoPhotonCores_photonCore__*',
+        'keep recoPhotons_photons__*',
+        'keep recoTrackExtras_generalTracks__*',
+        'keep recoTrackExtras_globalMuons__*',
+        'keep recoTrackExtras_standAloneMuons__*',
+        'keep recoTrackExtras_tevMuons_default_*',
+        'keep recoTrackExtras_tevMuons_firstHit_*',
+        'keep recoTrackExtras_tevMuons_picky_*',
+        'keep recoTracks_generalTracks__*',
+        'keep recoTracks_globalMuons__*',
+        'keep recoTracks_standAloneMuons_UpdatedAtVtx_*',
+        'keep recoTracks_tevMuons_default_*',
+        'keep recoTracks_tevMuons_firstHit_*',
+        'keep recoTracks_tevMuons_picky_*',
+        'keep recoTracksToOnerecoTracksAssociation_standAloneMuons__*',
+        'keep recoTracksToOnerecoTracksAssociation_tevMuons_default_*',
+        'keep recoTracksToOnerecoTracksAssociation_tevMuons_firstHit_*',
+        'keep recoTracksToOnerecoTracksAssociation_tevMuons_picky_*',
+        'keep TrackingRecHitsOwned_generalTracks__*',
+        'keep TrackingRecHitsOwned_globalMuons__*',
+        'keep TrackingRecHitsOwned_standAloneMuons__*',
+        'keep TrackingRecHitsOwned_tevMuons_default_*',
+        'keep TrackingRecHitsOwned_tevMuons_firstHit_*',
+        'keep TrackingRecHitsOwned_tevMuons_picky_*',
+        #'keep edmTriggerResults_TriggerResults__Zprime2muAnalysis',
+        'keep recoCandidateedmViewrecoCandidateedmViewuintrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaserecoCandidateedmRefToBaseedmOneToOneGenericedmAssociationMap_genMatchFS__*',
+        'keep recoCandidateedmViewrecoCandidateedmViewuintrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaserecoCandidateedmRefToBaseedmOneToOneGenericedmAssociationMap_genMatchGR__*',
+        'keep recoCandidateedmViewrecoCandidateedmViewuintrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaserecoCandidateedmRefToBaseedmOneToOneGenericedmAssociationMap_genMatchL1__*',
+        'keep recoCandidateedmViewrecoCandidateedmViewuintrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaserecoCandidateedmRefToBaseedmOneToOneGenericedmAssociationMap_genMatchL2__*',
+        'keep recoCandidateedmViewrecoCandidateedmViewuintrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaserecoCandidateedmRefToBaseedmOneToOneGenericedmAssociationMap_genMatchL3__*',
+        'keep recoCandidateedmViewrecoCandidateedmViewuintrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaserecoCandidateedmRefToBaseedmOneToOneGenericedmAssociationMap_genMatchOP__*',
+        'keep recoCandidateedmViewrecoCandidateedmViewuintrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaserecoCandidateedmRefToBaseedmOneToOneGenericedmAssociationMap_genMatchPR__*',
+        'keep recoCandidateedmViewrecoCandidateedmViewuintrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaserecoCandidateedmRefToBaseedmOneToOneGenericedmAssociationMap_genMatchTK__*',
+        'keep recoCandidateedmViewrecoCandidateedmViewuintrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaserecoCandidateedmRefToBaseedmOneToOneGenericedmAssociationMap_genMatchTR__*',
+        'keep recoCandidateedmViewrecoCandidateedmViewuintrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaserecoCandidateedmRefToBaseedmOneToOneGenericedmAssociationMap_photonMatchFS__*',
+        'keep recoCandidateedmViewrecoCandidateedmViewuintrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaserecoCandidateedmRefToBaseedmOneToOneGenericedmAssociationMap_photonMatchGR__*',
+        'keep recoCandidateedmViewrecoCandidateedmViewuintrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaserecoCandidateedmRefToBaseedmOneToOneGenericedmAssociationMap_photonMatchOP__*',
+        'keep recoCandidateedmViewrecoCandidateedmViewuintrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaserecoCandidateedmRefToBaseedmOneToOneGenericedmAssociationMap_photonMatchPR__*',
+        'keep recoCandidateedmViewrecoCandidateedmViewuintrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaserecoCandidateedmRefToBaseedmOneToOneGenericedmAssociationMap_photonMatchTK__*',
+        'keep recoCandidateedmViewrecoCandidateedmViewuintrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaseProdrecoCandidateedmRefToBaserecoCandidateedmRefToBaseedmOneToOneGenericedmAssociationMap_photonMatchTR__*',
+        #'keep recoCandidatesOwned_genMuons__*',
+        #'keep recoGenParticles_simParticleCandidates__*',
+        #'keep recoCandidatesOwned_simMuons__*',
+        'keep recoCompositeCandidates_dileptonsFS__*',
+        'keep recoCompositeCandidates_dileptonsGN__*',
+        'keep recoCompositeCandidates_dileptonsGR__*',
+        'keep recoCompositeCandidates_dileptonsOP__*',
+        'keep recoCompositeCandidates_dileptonsPR__*',
+        'keep recoCompositeCandidates_dileptonsTK__*',
+        'keep recoCompositeCandidates_dileptonsTR__*',
+        #'keep recoCompositeCandidates_rawDileptonsFS__*',
+        #'keep recoCompositeCandidates_rawDileptonsGR__*',
+        #'keep recoCompositeCandidates_rawDileptonsOP__*',
+        #'keep recoCompositeCandidates_rawDileptonsPR__*',
+        #'keep recoCompositeCandidates_rawDileptonsTK__*',
+        #'keep recoCompositeCandidates_rawDileptonsTR__*',
+        'keep recoCandidatesOwned_muCandGN__*',
+        'keep l1extraL1MuonParticles_muCandL1__*',
+        'keep recoRecoChargedCandidates_muCandL2__*',
+        'keep recoRecoChargedCandidates_muCandL3__*',
+        'keep recoMuons_muCandFS__*',
+        'keep recoMuons_muCandGR__*',
+        'keep recoMuons_muCandOP__*',
+        'keep recoMuons_muCandPR__*',
+        'keep recoMuons_muCandTK__*',
+        'keep recoMuons_muCandTR__*',
+        )
+    
 # Return a list of files suitable for passing into a PoolSource,
 # obtained by globbing using the pattern passed in (which includes the
 # path to them).
@@ -940,7 +1040,7 @@ __all__ = [
     'oppSign', 'oppSignMP', 'likeSignPos', 'likeSignNeg', 'diMuons',
     'diElectrons', 'muonElectron', 'electronMuon', 'cuts',
     'makeZprime2muAnalysisProcess', 'attachAnalysis',
-    'attachOutputModule', 'poolAllFiles',
+    'attachOutputModule', 'dumpNtuple', 'poolAllFiles',
     'setAlignment', 'setTrackerAlignment', 'setMuonAlignment',
     'lGN','lL1','lL2','lL3','lGR','lTK','lFS','lPR','lOP','lTR'
     ]

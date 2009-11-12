@@ -1414,7 +1414,8 @@ double Zprime2muMassReach::unbinnedMassFit(int nentries,
   }
   else {
     edm::LogWarning("unbinnedMassFit")
-      << "+++ fit has not converged, skipping this experiment +++!";
+      << "+++ fit has not converged: status = " << fit_status
+      << ", skipping this experiment +++!";
     log_ML = 0.;
   }
   
@@ -1760,7 +1761,9 @@ void Zprime2muMassReach::analyzeUnbinnedMassFits(
     }
 
     ps->Close();
+    delete ps;
     delete massHisto;
+    delete c1;
   }
   delete fsum;
   //delete fbkg; //??
@@ -2092,6 +2095,7 @@ void Zprime2muMassReach::drawUnbinnedMassFitsHistos() {
     c1->Update();
   }
   ps->Close();
+  delete c1;
   delete fgaus;
 
   // Selected plots for talks/papers

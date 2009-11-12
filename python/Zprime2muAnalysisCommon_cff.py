@@ -22,8 +22,7 @@ muonCollections = ['muCand%s' % rec for rec in recLevels]
 electronCollections = [c.replace('mu','el') for c in muonCollections]
 for rec in xrange(lGR, len(electronCollections)):
     electronCollections[rec] = None
-electronCollections[lGR] = 'pixelMatchGsfElectrons'
-electronCollections[lOP] = 'selectedLayer1Electrons'
+electronCollections[lOP] = 'heepElectrons'
 
 # The InputTags for the L1 collections (needs to be configurable to
 # support FastSim).
@@ -87,6 +86,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                                  doingElectrons=False,
                                  useGen=True,
                                  useSim=True,
+                                 useRaw=True,
                                  useReco=True,
                                  usingAODOnly=False,
                                  useTrigger=True,
@@ -266,7 +266,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             electrons[i] = None
         
     if usingAODOnly:
-        useGen = useSim = False
+        useGen = useSim = useRaw = False
         
     if not useGen:
         useSim = False
@@ -370,7 +370,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
 
     # Since some version of CMSSW 3, l1extraParticles are either not
     # made or are transient. Make them.
-    if need_l1extra:
+    if useRaw and need_l1extra:
         # For the samples on CASTOR in directory ~tucker/CMSSW_3_1_2,
         # the digitization step in the RECO sequence (the digis that
         # are extant in these files) was done using the 8E29 menu. If
@@ -675,13 +675,24 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     else:
         appendIfUsing('elCandL2', 'HLTLeptonsFromTriggerEvent',
                       summary = cms.InputTag('hltTriggerSummaryAOD', '', hltProcessName),
-                      src = cms.VInputTag(cms.InputTag('hltL1NonIsoRecoEcalCandidate', '', hltProcessName), cms.InputTag('hltL1IsoRecoEcalCandidate', '', hltProcessName))
+                      leptons = cms.VInputTag(cms.InputTag('hltL1NonIsoRecoEcalCandidate', '', hltProcessName), cms.InputTag('hltL1IsoRecoEcalCandidate', '', hltProcessName))
                       )
 
         appendIfUsing('elCandL3', 'HLTLeptonsFromTriggerEvent',
                       summary = cms.InputTag('hltTriggerSummaryAOD', '', hltProcessName),
-                      src = cms.VInputTag(cms.InputTag('hltPixelMatchElectronsL1NonIso', '', hltProcessName), cms.InputTag('hltPixelMatchElectronsL1Iso', '', hltProcessName))
+                      leptons = cms.VInputTag(cms.InputTag('hltPixelMatchElectronsL1NonIso', '', hltProcessName), cms.InputTag('hltPixelMatchElectronsL1Iso', '', hltProcessName))
                       )
+
+    try:
+        from SHarper.HEEPAnalyzer.HEEPSelectionCuts_cfi import heepBarrelCuts, heepEndcapCuts
+        appendIfUsing('heepElectrons', 'SimpleHEEPSelector',
+                      src = cms.InputTag('gsfElectrons'),
+                      barrelCuts = heepBarrelCuts,
+                      endcapCuts = heepEndcapCuts
+                      )
+    except ImportError:
+        # If the user hasn't checked out HEEPAnalyzer, skip it.
+        pass
 
     finalizePath(process, 'pElectrons')
     
@@ -724,7 +735,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         # Need to find out what triggers HEEP is using -- was
         # L1_SingleEG15, HLT_EM80, HLT_EM200 in 2E30 menu in 2_X_Y.
         process.Zprime2muAnalysisCommon.l1Paths = cms.vstring('L1_SingleEG8')
-        process.Zprime2muAnalysisCommon.hltPaths = cms.vstring('HLT_Ele20_LW_L1R')
+        process.Zprime2muAnalysisCommon.hltPaths = cms.vstring('HLT_Ele15_SW_L1R')
 
     ####################################################################
     ## Input tags for leptons at the different rec levels, in order;
@@ -751,21 +762,16 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     # Closest (deltaR) matching to MC truth.
     for irec in xrange(lL1, numRecLevels):
         jrec = lGN
-        
-        if doingElectrons:
-            fromColl = electrons[irec]
-            toColl   = electrons[jrec]
-        else:
-            fromColl = muons[irec]
-            toColl   = muons[jrec]
 
+        fromColl = lepcoll[irec]
+        toColl   = lepcoll[jrec]
         if fromColl is None or toColl is None:
             continue
 
         prod = cms.EDProducer(
             'TrivialDeltaRViewMatcher',
-            src     = cms.InputTag(muons[irec]),
-            matched = cms.InputTag(muons[jrec]),
+            src     = cms.InputTag(fromColl),
+            matched = cms.InputTag(toColl),
             distMin = cms.double(0.5)
             )
         addToPath(process, 'genMatch' + recLevels[irec], prod)

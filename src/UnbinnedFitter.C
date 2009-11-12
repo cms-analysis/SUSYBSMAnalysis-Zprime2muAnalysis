@@ -237,6 +237,13 @@ int UnbinnedFitter::unbinnedFitExec(const char *funcname,
 	<< "; sum of the weights = " << sum_fitweight << endl;
 
   // Create and set up the fitter.  Argument is maximum number of params
+  
+  // Force deletion of the existing fitter to ensure that we don't get
+  // a TBackCompFitter (it's buggy/incompatible with MINUIT-faithful
+  // TFitter!). Are we allowed to delete this pointer? I.e. is there a
+  // better way to force getting rid of the TBackCompFitter?
+  delete TVirtualFitter::GetFitter();
+
   tFitter = TVirtualFitter::Fitter(0,npar);
   tFitter->Clear();
   tFitter->SetFCN(unbinnedFitLikelihoodFCN);
@@ -435,6 +442,7 @@ int UnbinnedFitter::unbinnedFitExec(const char *funcname,
 	<< "; sum of the weights = " << sum_fitweight << endl;
 
   // Create and set up the fitter.  Argument is maximum number of params
+  delete TVirtualFitter::GetFitter();
   tFitter = TVirtualFitter::Fitter(0, npar);
   tFitter->Clear();
   tFitter->SetFCN(unbinnedFitLikelihoodFCN);

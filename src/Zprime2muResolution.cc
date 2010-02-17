@@ -3,7 +3,7 @@
   \brief    Calculates and histograms lepton/dilepton resolutions and efficiencies.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muResolution.cc,v 1.40 2009/01/19 11:32:11 tucker Exp $
+  \version  $Id: Zprime2muResolution.cc,v 1.41 2009/04/02 12:19:50 tucker Exp $
 */
 
 #include "TString.h"
@@ -44,8 +44,8 @@ void Zprime2muResolution::bookGenLevelHistos() {
   const int nx = 20;
   LeptonOrigin[0] = fs->make<TH1F>("LeptonOrigin0", "Particle Id of Mother of all leptons",                 nx, 0, nx);
   LeptonOrigin[1] = fs->make<TH1F>("LeptonOrigin1", "Particle Id of Mother of opp-sign dilepton daughters", nx, 0, nx);
-  char *mother[nx] = {"  ","pi","K ","K0","eta","rho","c ","b ","tau","  ",
-		      "Z ","W ","H ","Z'","G*","  ","  ","  ","  ","  "};
+  const char *mother[nx] = {"  ","pi","K ","K0","eta","rho","c ","b ","tau","  ",
+			    "Z ","W ","H ","Z'","G*","  ","  ","  ","  ","  "};
   for (int i = 0; i < nx; i++) {
     LeptonOrigin[0]->GetXaxis()->SetBinLabel(i+1, mother[i]);
     LeptonOrigin[1]->GetXaxis()->SetBinLabel(i+1, mother[i]);

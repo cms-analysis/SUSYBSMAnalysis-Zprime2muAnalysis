@@ -55,7 +55,8 @@ class AsymFitManager {
       delete mistagCalc;
       mistagCalc = 0;
     }
-    mistagCalc = new MistagCalc(2*beamEnergy, "cteq6l.LHpdf");
+    char pdfname[] = "cteq6l.LHpdf";
+    mistagCalc = new MistagCalc(2*beamEnergy, pdfname);
 
     _mass_type = pset.getParameter<int>("massDistType");
     _max_rap = pset.getParameter<double>("maxRapidity");

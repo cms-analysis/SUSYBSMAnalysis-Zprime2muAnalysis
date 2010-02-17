@@ -1,4 +1,5 @@
 #include <cmath>
+#include <cstring>
 #include <iostream>
 
 #include "MistagCalc.h"
@@ -8,7 +9,7 @@ const double MistagCalc::chgsq[2] = {4./9, 1./9};
 
 MistagCalc::MistagCalc(const double sqrt_s_, char* pdfName, int subset)
   : sqrt_s(sqrt_s_) {
-  lhapdf::initpdfsetbyname_(pdfName, strlen(pdfName));
+  lhapdf::initpdfsetbyname_(pdfName, std::strlen(pdfName));
   lhapdf::initpdf_(subset);
 }
 

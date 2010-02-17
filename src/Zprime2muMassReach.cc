@@ -31,10 +31,10 @@ int Zprime2muMassReach::nfit_genmass_used[NF] = {0};
 int Zprime2muMassReach::nfit_recmass_used[NF] = {0};
 
 // Generated and reconstructed mass, gen. and rec. event number, and sample id.
-double Zprime2muMassReach::fit_genmass[NF][MASS_FIT_ARRAY_SIZE] = {0.};
-double Zprime2muMassReach::fit_recmass[NF][MASS_FIT_ARRAY_SIZE] = {0.};
-int    Zprime2muMassReach::fit_genevent[NF][MASS_FIT_ARRAY_SIZE] = {0};
-int    Zprime2muMassReach::fit_recevent[NF][MASS_FIT_ARRAY_SIZE] = {0};
+double Zprime2muMassReach::fit_genmass[NF][MASS_FIT_ARRAY_SIZE] = {{0.}};
+double Zprime2muMassReach::fit_recmass[NF][MASS_FIT_ARRAY_SIZE] = {{0.}};
+int    Zprime2muMassReach::fit_genevent[NF][MASS_FIT_ARRAY_SIZE] = {{0}};
+int    Zprime2muMassReach::fit_recevent[NF][MASS_FIT_ARRAY_SIZE] = {{0}};
 int    Zprime2muMassReach::fit_sid[NF] = {0};
 
 const double Zprime2muMassReach::fwhm_over_sigma = 2.*sqrt(2.*log(2.));

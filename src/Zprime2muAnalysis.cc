@@ -249,6 +249,7 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
     const reco::Track* trackerTrack = 0;
     const reco::Track* standAloneTrack = 0;
     double sumptr03 = -999;
+    bool is_tracker_muon = false;
 
     const reco::RecoCandidate& lep = toConcrete<reco::RecoCandidate>(cand);
     if (doingElectrons) {
@@ -260,13 +261,19 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
       standAloneTrack = lep.standAloneMuon().get();
 
       const reco::Muon* mu = toConcretePtr<reco::Muon>(cand);
-      if (mu && mu->isIsolationValid()) sumptr03 = mu->isolationR03().sumPt;
+      if (mu) {
+	if (mu->isIsolationValid()) 
+	  sumptr03 = mu->isolationR03().sumPt;
+	
+	is_tracker_muon = mu->isTrackerMuon();
+      }
     }
     
     output << " Phi: "      << setw(8) << setprecision(4) << cand->phi()
 	   << "      Eta: " << setw(8) << setprecision(4) << cand->eta()
+           << "      TrackerMuon: " << is_tracker_muon
 	   << endl;
- 
+
     if (globalTrack) {
       const reco::HitPattern& hp = globalTrack->hitPattern();
       int px = hp.numberOfValidPixelHits();

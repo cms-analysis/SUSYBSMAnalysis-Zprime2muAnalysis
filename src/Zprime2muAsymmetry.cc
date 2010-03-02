@@ -189,8 +189,8 @@ void Zprime2muAsymmetry::analyze(const edm::Event& event,
   fillFrameHistos();
 }
 
-void Zprime2muAsymmetry::beginJob(const edm::EventSetup& eSetup) {
-  Zprime2muAnalysis::beginJob(eSetup);
+void Zprime2muAsymmetry::beginJob() {
+  Zprime2muAnalysis::beginJob();
 
   getAsymParams();
   if (calcParamsOnly)
@@ -269,10 +269,10 @@ void Zprime2muAsymmetry::bookFitHistos() {
   AsymFitSmearHisto[4] = fs->make<TH2F>("AsymFitSmearHisto4", "Rec cos_CS vs Gen cos_CS", 20, -1., 1., 20, -1., 1.);
   AsymFitSmearHisto[5] = fs->make<TH2F>("AsymFitSmearHisto5", "Rec phi_CS vs Gen phi_CS", 20, 0., twoPi, 20, 0., twoPi);
 
-  AsymFitSmearHistoDif[0] = fs->make<TH1F>("AsymFitSmearHistoDif1", "Dil Rec Pt - Gen Pt",     50, -200., 200.);
-  AsymFitSmearHistoDif[1] = fs->make<TH1F>("AsymFitSmearHistoDif2", "Dil Rec Rap - Gen Rap",   50, -.1, .1);
+  AsymFitSmearHistoDif[0] = fs->make<TH1F>("AsymFitSmearHistoDif1", "Dil Rec Pt - Gen Pt",     50, -50., 50.);
+  AsymFitSmearHistoDif[1] = fs->make<TH1F>("AsymFitSmearHistoDif2", "Dil Rec Rap - Gen Rap",   50, -.06, .06);
   AsymFitSmearHistoDif[2] = fs->make<TH1F>("AsymFitSmearHistoDif3", "Dil Rec Phi - Gen Phi",   50, -1., 1.);
-  AsymFitSmearHistoDif[3] = fs->make<TH1F>("AsymFitSmearHistoDif4", "Dil Rec Mass - Gen Mass", 50, -300.,300.);
+  AsymFitSmearHistoDif[3] = fs->make<TH1F>("AsymFitSmearHistoDif4", "Dil Rec Mass - Gen Mass", 50, -100.,100.);
   AsymFitSmearHistoDif[4] = fs->make<TH1F>("AsymFitSmearHistoDif5", "Rec cos_cs - Gen cos_cs", 50, -1.e-3, 1.e-3);
   AsymFitSmearHistoDif[5] = fs->make<TH1F>("AsymFitSmearHistoDif6", "Rec phi_cs - Gen phi_cs", 50, -1., 1.);
 
@@ -2480,7 +2480,7 @@ void Zprime2muAsymmetry::fitAsymmetry() {
 	// at the end, so A_fb and b are now the first two pars (apparently)
 	cov[0] = covmat[0];
 	cov[1] = covmat[1];
-	cov[2] = covmat[npar];
+	cov[2] = covmat[npar+1];
       }
       else {
 	// TBackCompFitter's returned covariance matrix doesn't contain
@@ -2513,8 +2513,8 @@ void Zprime2muAsymmetry::fitAsymmetry() {
 	    << " +/- " << eparab << endl
 	    << "-2*log_ML = " << setprecision(6) << -2.*logML << endl
 	    << "covariance matrix:\n"
-	    << setw(10) << cov[0] << setw(10) << cov[1] << endl
- 	    << setw(20)                       << cov[2] << endl
+	    << setw(15) << cov[0] << setw(15) << cov[1] << endl
+ 	    << setw(30)                       << cov[2] << endl
 	    << "correlation coefficient: " << rho << endl
 	    << "covariance matrix status: " << cov_status << "\n\n"; 
     outfile.flush();

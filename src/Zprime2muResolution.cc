@@ -3,7 +3,7 @@
   \brief    Calculates and histograms lepton/dilepton resolutions and efficiencies.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muResolution.cc,v 1.41 2009/04/02 12:19:50 tucker Exp $
+  \version  $Id: Zprime2muResolution.cc,v 1.42 2010/02/17 14:08:15 tucker Exp $
 */
 
 #include "TString.h"
@@ -167,6 +167,13 @@ void Zprime2muResolution::bookMiscHistos() {
     TMRSelectedResolution[i] = fs->make<TH1F>(nameHist("TMRSelectedResolution", i), type[i]   + " inv pT res", 100, -0.3, 0.3);
     TMRRejectedResolution[i] = fs->make<TH1F>(nameHist("TMRRejectedResolution", i), type[1-i] + " inv pT res", 100, -0.3, 0.3);
   }
+
+  TrackerMuonId = fs->make<TH1F>("TrackerMuonId", "Tracker muon 'efficiency'", n_tmids, 0, n_tmids);
+  TrackerMuonId->GetXaxis()->SetBinLabel(1 + is_tm,         "TM");
+  TrackerMuonId->GetXaxis()->SetBinLabel(1 + bad_gen_match, "bad gen match");
+  TrackerMuonId->GetXaxis()->SetBinLabel(1 + bad_cast,      "bad cast");
+  TrackerMuonId->GetXaxis()->SetBinLabel(1 + not_tm_res,    "not TM (res #mu)");
+  TrackerMuonId->GetXaxis()->SetBinLabel(1 + not_tm_other,  "not TM (other #mu)");
 }
 
 int Zprime2muResolution::encodeLeptonOrigin(const int id) const {
@@ -521,6 +528,31 @@ void Zprime2muResolution::fillTMRResolution() {
   }
 }
 
+void Zprime2muResolution::fillMiscHistos() {
+  for (reco::CandidateBaseRefVector::const_iterator lep = allLeptons[lGR].begin(); lep != allLeptons[lGR].end(); ++lep) {
+    const reco::CandidateBaseRef& gen_lep = recLevelHelper.matchGenLepton(*lep);
+    if (gen_lep.isNonnull()) {
+      const reco::Muon* mu = toConcretePtr<reco::Muon>(*lep);
+      if (mu != 0) {
+	if (mu->isTrackerMuon())
+	  TrackerMuonId->Fill(is_tm);
+	else {
+	  if (hardInteraction.IsResonance(motherId(gen_lep)))
+	    TrackerMuonId->Fill(not_tm_res);
+	  else
+	    TrackerMuonId->Fill(not_tm_other);
+	}
+      }
+      else
+	TrackerMuonId->Fill(bad_cast);
+    }
+    else
+      TrackerMuonId->Fill(bad_gen_match);
+  }
+
+  fillTMRResolution();
+}
+
 void Zprime2muResolution::analyze(const edm::Event& event, const edm::EventSetup& eSetup) {
   // Delegate filling our lepton vectors to the parent class.
   Zprime2muAnalysis::analyze(event, eSetup);
@@ -532,7 +564,7 @@ void Zprime2muResolution::analyze(const edm::Event& event, const edm::EventSetup
   fillLeptonEfficiencyHistos();
   fillDileptonEfficiencyHistos();
 
-  fillTMRResolution();
+  fillMiscHistos();
 
   for (int rec = lL1; rec < MAX_LEVELS; ++rec) {
     // Remaining histos are only filled if the event passed the trigger.

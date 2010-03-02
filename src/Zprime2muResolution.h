@@ -44,6 +44,7 @@ class Zprime2muResolution : public Zprime2muAnalysis {
   void fillDileptonHistos(const int rec);
 
   void fillTMRResolution();
+  void fillMiscHistos();
 
   // Parameters specified in the config file.
   bool leptonsFromDileptons;
@@ -111,6 +112,9 @@ class Zprime2muResolution : public Zprime2muAnalysis {
 
   TH1F* TMRSelectedResolution[2]; // index is when TMR is TK, FS
   TH1F* TMRRejectedResolution[2]; // ditto
+
+  enum tmids { is_tm, bad_gen_match, bad_cast, not_tm_res, not_tm_other, n_tmids };
+  TH1F* TrackerMuonId;
 };
 
 #endif // ZP2MURESOLUTION_H

@@ -37,7 +37,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   explicit Zprime2muAnalysis(const edm::ParameterSet&);
   virtual ~Zprime2muAnalysis() {}
 
-  virtual void beginJob(const edm::EventSetup&) {}
+  virtual void beginJob() {}
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
   virtual void endJob() {}
 

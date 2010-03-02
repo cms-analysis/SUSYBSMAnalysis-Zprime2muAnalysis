@@ -21,7 +21,7 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   explicit Zprime2muAsymmetry(const edm::ParameterSet&);
   ~Zprime2muAsymmetry();
 
-  void beginJob(const edm::EventSetup&);
+  void beginJob();
   void analyze(const edm::Event&, const edm::EventSetup&);
   void endJob();
 

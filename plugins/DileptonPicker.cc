@@ -14,12 +14,9 @@ using namespace reco;
 class DileptonPicker : public EDProducer {
 public:
   explicit DileptonPicker(const ParameterSet&);
-  ~DileptonPicker() {}
   
 private:
-  virtual void beginJob(const EventSetup&) {}
   virtual void produce(Event&, const EventSetup&);
-  virtual void endJob() {}
   
   InputTag src;
   unsigned maxDileptons;

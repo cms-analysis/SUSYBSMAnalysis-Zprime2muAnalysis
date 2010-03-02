@@ -18,12 +18,9 @@ using namespace edm;
 class HLTLeptonsFromTriggerEvent : public EDProducer {
 public:
   explicit HLTLeptonsFromTriggerEvent(const ParameterSet&);
-  ~HLTLeptonsFromTriggerEvent() {}
   
 private:
-  virtual void beginJob(const EventSetup&) {}
   virtual void produce(Event&, const EventSetup&);
-  virtual void endJob() {}
 
   bool isWanted(const InputTag& tag) const;
   InputTag summary;

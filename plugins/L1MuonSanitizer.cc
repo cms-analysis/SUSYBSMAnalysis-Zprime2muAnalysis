@@ -22,12 +22,9 @@ const double ptMin = 1e-3;
 class L1MuonSanitizer : public EDProducer {
 public:
   explicit L1MuonSanitizer(const ParameterSet&);
-  ~L1MuonSanitizer() {}
 
 private:
-  virtual void beginJob(const EventSetup&) {}
   virtual void produce(Event&, const EventSetup&);
-  virtual void endJob() {}
 
   InputTag src;
 };

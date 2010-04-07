@@ -1079,7 +1079,7 @@ double asymResSmearNorm6D(double *x, double *par) {
   // Loop over all dimensions
   for (int i = 0; i < 6; i++) {
     // Is this variable one that needs normalization done
-    if (do_norm_of_var) {
+    if (do_norm_of_var[i]) {
       // This next calculation can be derived by starting with a general
       // smeared function (over limits from a_lim to b_lim), 
       // int(f(x)*Gaus(x-x0, SIGMA)*dx), and integrating

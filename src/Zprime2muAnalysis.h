@@ -7,6 +7,8 @@
 
 #include "TLorentzVector.h"
 
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -15,8 +17,6 @@
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/Candidate/interface/CompositeCandidate.h"
 #include "DataFormats/Candidate/interface/CompositeCandidateFwd.h"
-
-#include "PhysicsTools/UtilAlgos/interface/TFileService.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/CutHelper.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"

@@ -1,6 +1,8 @@
 #ifndef ASYMFITDATA_H
 #define ASYMFITDATA_H
 
+#include <ostream>
+
 enum CUTSTATUS { NOTCUT=0, ETACUT=0x01, PTCUT=0x02 };
 
 struct AsymFitData {

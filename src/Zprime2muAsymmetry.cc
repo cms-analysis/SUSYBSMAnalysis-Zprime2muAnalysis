@@ -1406,6 +1406,112 @@ void Zprime2muAsymmetry::evalLikelihoods() {
 #endif
 }
 
+void Zprime2muAsymmetry::countAsymmetry(const int which, double& Afb, double& eAfb) {
+  double F = 0, B = 0, dil_avg = 0;
+  for (int i = 0; i < nfit_used[which]; ++i) { 
+    double cos = cos_theta_cs_data[which][i]; 
+    double rap = rap_dil_data[which][i]; 
+    double omega = asymFitManager.h_rap_mistag_prob->GetBinContent(asymFitManager.h_rap_mistag_prob->FindBin(fabs(rap)));
+    if (cos > 0)
+      F += 1;
+    else
+      B += 1;
+
+    dil_avg += 1 - 2*omega;
+  }
+
+  double N = F+B;
+  dil_avg /= N;
+
+  Afb = (F-B)/N/dil_avg;
+  eAfb = 2/N/dil_avg*sqrt(F*B/N);
+}
+    
+void Zprime2muAsymmetry::asymmetryByEventWeighting(const int which, double& Afb, double& eAfb) {
+  // Following A. Bodek, arXiv:0911.2850, section 5, rapidity bins only.
+  double A1 = 0, A2 = 0, B1 = 0, B2 = 0, VA1 = 0, VA2 = 0, VB1 = 0, VB2 = 0;
+  for (int i = 0; i < nfit_used[which]; ++i) {
+    double cos = cos_theta_cs_data[which][i];
+    double rap = rap_dil_data[which][i];
+
+    double omega = asymFitManager.h_rap_mistag_prob->GetBinContent(asymFitManager.h_rap_mistag_prob->FindBin(fabs(rap)));
+    double kB = 1-2*omega;
+    double kA = kB*kB;
+    
+    if (cos > 0) {
+      A1 += kA;
+      B1 += kB;
+      VA1 += kA*kA;
+      VB1 += kB*kB;
+    }
+    else {
+      A2 += kA;
+      B2 += kB;
+      VA2 += kA*kA;
+      VB2 += kB*kB;
+    }
+  }
+
+  double cross = A2*B1 + A1*B2;
+  double E12 = VB1/B1/B1;
+  double E22 = VB2/B2/B2;
+  double A = A1 + A2;
+
+  Afb = (B1-B2)/(A1+A2);
+  eAfb = sqrt(E12+E22)*cross/A/A;
+}
+    
+void Zprime2muAsymmetry::asymmetryByEventWeightingWithAngularInfo(const int which, double& Afb, double& eAfb, bool use_h, bool bin_x) {
+  // Following A. Bodek, arXiv:0911.2850, section 7.
+  double A1 = 0, A2 = 0, B1 = 0, B2 = 0, VA1 = 0, VA2 = 0, VB1 = 0, VB2 = 0;
+  for (int i = 0; i < nfit_used[which]; ++i) {
+    double cos = cos_theta_cs_data[which][i];
+    double rap = rap_dil_data[which][i];
+    double pt = pt_dil_data[which][i];
+    double mass = mass_dil_data[which][i];
+
+    double omega = asymFitManager.h_rap_mistag_prob->GetBinContent(asymFitManager.h_rap_mistag_prob->FindBin(fabs(rap)));
+    double kB = 1-2*omega;
+    double kA = kB*kB;
+    
+    double x = fabs(cos);
+    if (bin_x) // use 10 bins in x.
+      x = int(x*10)/10.;
+    
+    double h = 0;
+    if (use_h) {
+      h = pt/mass;
+      h = h*h;
+      h = 0.5 * h/(1+h) * (1 - 3*x*x);
+    }
+
+    double zd = 1 + x*x + h;
+    double z1 = 0.5*x*x/zd/zd/zd;
+    double z2 = 0.5*x/zd/zd;
+
+    if (cos > 0) {
+      A1 += z1*kA;
+      B1 += z2*kB;
+      VA1 += z1*z1*kA*kA;
+      VB1 += z2*z2*kB*kB;
+    }
+    else {
+      A2 += z1*kA;
+      B2 += z2*kB;
+      VA2 += z1*z1*kA*kA;
+      VB2 += z2*z2*kB*kB;
+    }
+  }
+
+  double cross = A2*B1 + A1*B2;
+  double E12 = VB1/B1/B1;
+  double E22 = VB2/B2/B2;
+  double A = A1 + A2;
+
+  Afb = 0.375*(B1-B2)/(A1+A2);
+  eAfb = 0.375*sqrt(E12+E22)*cross/A/A;
+}
+
 void Zprime2muAsymmetry::fitAsymmetry() {
   // Do the asymmetry fit using different combinations:
   // generated/reconstructed data, smearing on/off
@@ -1509,6 +1615,35 @@ void Zprime2muAsymmetry::fitAsymmetry() {
   fitter->GetErrors(2, eplus, eminus, eparab, globcc);
   outfile << "   b = " << setw(8) << setprecision(3) << par 
 	  << " +/- " << eparab << endl << endl;
+
+  enum { gen, rec };
+  outfile << "gen level:\n";
+  countAsymmetry(gen, recAfb, e_recAfb);
+  outfile << "counting with avg dilution:                                    " << setprecision(3) << setw(5) << recAfb << " +/- " << e_recAfb << "\n";
+  asymmetryByEventWeighting(gen, recAfb, e_recAfb);
+  outfile << "event weighting:                                               " << setprecision(3) << setw(5) << recAfb << " +/- " << e_recAfb << "\n";
+  asymmetryByEventWeightingWithAngularInfo(gen, recAfb, e_recAfb);
+  outfile << "event weighting with angular info:                             " << setprecision(3) << setw(5) << recAfb << " +/- " << e_recAfb << "\n";
+  asymmetryByEventWeightingWithAngularInfo(gen, recAfb, e_recAfb, false);
+  outfile << "event weighting with angular info, don't use h(theta):         " << setprecision(3) << setw(5) << recAfb << " +/- " << e_recAfb << "\n";
+  asymmetryByEventWeightingWithAngularInfo(gen, recAfb, e_recAfb, true, false);
+  outfile << "event weighting with angular info, don't bin cos_theta:        " << setprecision(3) << setw(5) << recAfb << " +/- " << e_recAfb << "\n";
+  asymmetryByEventWeightingWithAngularInfo(gen, recAfb, e_recAfb, false, false);
+  outfile << "event weighting with angular info, don't use h, don't bin cos: " << setprecision(3) << setw(5) << recAfb << " +/- " << e_recAfb << "\n";
+  outfile << "\nrec level:\n";
+  countAsymmetry(rec, recAfb, e_recAfb);
+  outfile << "counting with avg dilution:                                    " << setprecision(3) << setw(5) << recAfb << " +/- " << e_recAfb << "\n";
+  asymmetryByEventWeighting(rec, recAfb, e_recAfb);
+  outfile << "event weighting:                                               " << setprecision(3) << setw(5) << recAfb << " +/- " << e_recAfb << "\n";
+  asymmetryByEventWeightingWithAngularInfo(rec, recAfb, e_recAfb);
+  outfile << "event weighting with angular info:                             " << setprecision(3) << setw(5) << recAfb << " +/- " << e_recAfb << "\n";
+  asymmetryByEventWeightingWithAngularInfo(rec, recAfb, e_recAfb, false);
+  outfile << "event weighting with angular info, don't use h(theta):         " << setprecision(3) << setw(5) << recAfb << " +/- " << e_recAfb << "\n";
+  asymmetryByEventWeightingWithAngularInfo(rec, recAfb, e_recAfb, true, false);
+  outfile << "event weighting with angular info, don't bin cos_theta:        " << setprecision(3) << setw(5) << recAfb << " +/- " << e_recAfb << "\n";
+  asymmetryByEventWeightingWithAngularInfo(rec, recAfb, e_recAfb, false, false);
+  outfile << "event weighting with angular info, don't use h, don't bin cos: " << setprecision(3) << setw(5) << recAfb << " +/- " << e_recAfb << "\n";
+  outfile << "\n";
 
   // loop over the 6 high-level fitting functions
 

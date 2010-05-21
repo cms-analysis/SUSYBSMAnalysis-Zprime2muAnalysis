@@ -50,6 +50,11 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
 
   TFMultiD* getNewFitFcn(int fitType);
   void evalLikelihoods();
+
+  void countAsymmetry(const int which, double& Afb, double& eAfb);
+  void asymmetryByEventWeighting(const int which, double& Afb, double& eAfb);
+  void asymmetryByEventWeightingWithAngularInfo(const int which, double& Afb, double& eAfb, bool use_h=true, bool bin_x=true);
+
   void fitAsymmetry();
 
   void fitCosCS(TH1F* cos_hist, int params);

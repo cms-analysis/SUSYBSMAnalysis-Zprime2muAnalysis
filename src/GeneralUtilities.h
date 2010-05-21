@@ -22,6 +22,8 @@ std::ostream& operator<<(std::ostream& out, const reco::Candidate& par);
 // ROOT helpers.
 ////////////////////////////////////////////////////////////////////
 
+TLorentzVector makeTLV(const reco::Candidate::LorentzVector& lv);
+
 // Build a string containing a name for a histogram -- useful inside
 // loops when booking histos.
 TString nameHist(const char* name, Long_t i, Long_t j=-1, Long_t k=-1, Long_t l=-1, Long_t m=-1);

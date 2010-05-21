@@ -39,6 +39,12 @@ ostream& operator<<(ostream& out, const reco::Candidate* par) {
 // ROOT helpers.
 ////////////////////////////////////////////////////////////////////
 
+TLorentzVector makeTLV(const reco::Candidate::LorentzVector& lv) {
+  TLorentzVector v;
+  v.SetPtEtaPhiM(lv.pt(), lv.eta(), lv.phi(), lv.mass());
+  return v;
+}
+
 char nameHistChar(Long_t i) {
   if (i < 10) return char(48 + i); // '0', '1', ...
   else        return char(55 + i); // 'A', 'B', ...

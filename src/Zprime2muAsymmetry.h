@@ -19,9 +19,7 @@ const int FIT_ARRAY_SIZE = 50000;// max size of arrays for unbinned fits.
 class Zprime2muAsymmetry : public Zprime2muAnalysis {
  public:
   explicit Zprime2muAsymmetry(const edm::ParameterSet&);
-  ~Zprime2muAsymmetry();
 
-  void beginJob();
   void analyze(const edm::Event&, const edm::EventSetup&);
   void endJob();
 
@@ -50,13 +48,6 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   void fillFitData(const edm::Event& event);
   void dumpFitData();
 
-  bool computeFitQuantities(const reco::GenParticleCollection&, 
-			    int eventNum, AsymFitData& data);
-
-  void bookParamHistos();
-  void fillParamHistos(bool fakeData);
-  void getAsymParams();
-
   TFMultiD* getNewFitFcn(int fitType);
   void evalLikelihoods();
   void fitAsymmetry();
@@ -65,66 +56,74 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   void drawFrameHistos();
   void drawFitHistos();
 
-  void deleteHistos();
+  TH1F* h_genCosNoCut;
+  TH2F* AsymFitSmearHisto[6];
+  TH1F* AsymFitHistoGen[6];
+  TH1F* AsymFitHistoRec[6];
+  TH1F* AsymFitSmearHistoDif[6];
+  TH1F* AsymFitHistoGenSmeared[6];
+  TH1F* AsymFitHistoGenByType[2][6];
+  TH1F* AsymFitHistoRecByType[2][6];
 
-  std::string print(const reco::Candidate& par) const;
+  TH1F* cosGJ[2][2];
+  TH1F* cosCS[2][2];
+  TH1F* cosBoost[2];
+  TH1F* cosW[2];
+  TH1F* cosCSRes;
+  TH2F* rap_vs_cosCS[2];
+  TH2F* rap3_vs_rap0;
+  TH1F* FMassGJ[2][2];
+  TH1F* FMassCS[2][2];
+  TH1F* BMassGJ[2][2];
+  TH1F* BMassCS[2][2];
+  TH1F* AMassGJ[2][2];
+  TH1F* AMassCS[2][2];
+  TH1F* FMassBoost[2];
+  TH1F* FMassW[2];
+  TH1F* BMassBoost[2];
+  TH1F* BMassW[2];
+  TH1F* AMassBoost[2];
+  TH1F* AMassW[2];
+  TH1F* FRapGJ[2][2];
+  TH1F* FRapCS[2][2];
+  TH1F* BRapGJ[2][2];
+  TH1F* BRapCS[2][2];
+  TH1F* ARapGJ[2][2];
+  TH1F* ARapCS[2][2];
+  TH1F* FRapBoost[2];
+  TH1F* FRapW[2];
+  TH1F* BRapBoost[2];
+  TH1F* BRapW[2];
+  TH1F* ARapBoost[2];
+  TH1F* ARapW[2];
+  TH1F* FPseudGJ[2];
+  TH1F* FPseudCS[2];
+  TH1F* BPseudGJ[2];
+  TH1F* BPseudCS[2];
+  TH1F* FPseudBoost[2];
+  TH1F* FPseudW[2];
+  TH1F* BPseudBoost[2];
+  TH1F* BPseudW[2];
+  TH1F* FMBoostCut[2][6];
+  TH1F* BMBoostCut[2][6];
+  TH1F* AsymMBoostCut[2][6];
+  TProfile* cosCS3_diffsq_vs_cosCS0;
 
-  // store the event number so we don't have to get it from the edm
-  // object every time
-  int eventNum;
-  TH1F *h_genCosNoCut;
-  TH2F *AsymFitSmearHisto[6];
-  TH1F *AsymFitHistoGen[6], *AsymFitHistoRec[6], *AsymFitSmearHistoDif[6];
-  TH1F *AsymFitHistoGenSmeared[6];
-  // look at the angular distributions separately by type
-  TH1F *AsymFitHistoGenByType[2][6], *AsymFitHistoRecByType[2][6];
-
-  TH1F *cosGJ[2][2], *cosCS[2][2];
-  TH1F *cosBoost[2], *cosW[2];
-  TH1F *cosCSRes;
-  TH2F *rap_vs_cosCS[2], *rap3_vs_rap0;
-  TH1F *FMassGJ[2][2], *FMassCS[2][2];
-  TH1F *BMassGJ[2][2], *BMassCS[2][2];
-  TH1F *AMassGJ[2][2], *AMassCS[2][2];
-  TH1F *FMassBoost[2], *FMassW[2];
-  TH1F *BMassBoost[2], *BMassW[2];
-  TH1F *AMassBoost[2], *AMassW[2];
-  TH1F *FRapGJ[2][2],  *FRapCS[2][2];
-  TH1F *BRapGJ[2][2],  *BRapCS[2][2];
-  TH1F *ARapGJ[2][2],  *ARapCS[2][2];
-  TH1F *FRapBoost[2],  *FRapW[2];
-  TH1F *BRapBoost[2],  *BRapW[2];
-  TH1F *ARapBoost[2],  *ARapW[2];
-  TH1F *FPseudGJ[2],   *FPseudCS[2];
-  TH1F *BPseudGJ[2],   *BPseudCS[2];
-  TH1F *FPseudBoost[2],*FPseudW[2];
-  TH1F *BPseudBoost[2],*BPseudW[2];
-  TProfile *cosCS3_diffsq_vs_cosCS0;
-  TH1F *FMBoostCut[2][6];
-  TH1F *BMBoostCut[2][6];
-  TH1F *AsymMBoostCut[2][6];
-
-  // histos used to get the mistag parameterizations
-  TH1F *h_mass_dil[2];
-  TH1F *h_rap_mistag, *h_rap_nomistag;
-  TH1F *h_mistag[6][3];
-  TH2F *h2_mistag[4];
-  TH2F *h2_pTrap, *h2_pTrap_mistag;
-  TH2F *h2_rap_cos_mistag, *h2_rap_cos_nomistag;
-  TH2F *h2_rap_cos_p;
-  TH1F *h_cos_mistag, *h_cos_cs, *h_cos_mistag_prob;
-  TH1F *h_rap_dil[2], *h_pt_dil;
-  TH1F *h_phi_cs;
-
-  TH1F *h_cos_theta_true, *h_cos_theta_cs_acc;
-  TH1F *h_cos_theta_cs, *h_cos_theta_cs_fixed;
-  TH1F *h_cos_theta_cs_rec;
-  TH1F *h_b_mass, *h_f_mass, *h_b_smass, *h_f_smass;
-  TH1F *h_gen_sig[2];
-  TH2F *h2_rap_cos_d[2];
-  TH2F *h2_rap_cos_d_uncut[2];
-  TH2F *h2_rap_cos_d_rec;
-  TH1F *mistagProbEvents[3];
+  TH1F* h_cos_theta_true;
+  TH1F* h_cos_theta_cs_acc;
+  TH1F* h_cos_theta_cs_acc_fixed;
+  TH1F* h_cos_theta_cs;
+  TH1F* h_cos_theta_cs_fixed;
+  TH1F* h_cos_theta_cs_rec;
+  TH1F* h_b_mass;
+  TH1F* h_f_mass;
+  TH1F* h_b_smass;
+  TH1F* h_f_smass;
+  TH1F* h_gen_sig[2];
+  TH2F* h2_rap_cos_d[2];
+  TH2F* h2_rap_cos_d_uncut[2];
+  TH2F* h2_rap_cos_d_rec;
+  TH1F* mistagProbEvents[3];
 
   // Data arrays for unbinned fits.  Fixed size arrays for now.
   // Order of the arrays: generated events, reconstructed events,
@@ -150,20 +149,12 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   std::vector<double> angDist;
 
   // config file parameters
-  std::string outputFileBase;
-  std::vector<std::string> genSampleFiles;
-  double peakMass;
-  bool onPeak;
   bool noFit;
   bool onlyEvalLLR;
   FITTYPE fitType;
   int numFits;
-  int maxParamEvents;
-  bool useCachedParams;
   std::string paramCacheFile;
-  bool calcParamsOnly;
   bool internalBremOn;
-  double beamEnergy;
   bool fixbIn1DFit;
   bool useCosTrueInFit;
   bool artificialCosCS;

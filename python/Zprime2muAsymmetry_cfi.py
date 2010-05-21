@@ -1,14 +1,13 @@
 import FWCore.ParameterSet.Config as cms
 
-from AsymmetryDataSets_cff import dataSets
+from AsymFitManager_cff import AsymFitManager
 
 def attachAsymmetry(process, **kwargs):
     module = process.Zprime2muAsymmetry = cms.EDAnalyzer(
         'Zprime2muAsymmetry',
         process.Zprime2muAnalysisCommon,
-        dataSets,
-        dataSet = cms.string('dy_above400'),
-        
+        AsymFitManager,
+
         # if noFit is true, only make the histograms -- useful for
         # getting the recSigma information for above
         noFit = cms.bool(False),
@@ -26,21 +25,8 @@ def attachAsymmetry(process, **kwargs):
         # rec+rec)
         numFits = cms.int32(6),
         
-        # max number of events to read from the parameterization
-        # sample
-        maxParamEvents = cms.int32(-1),
-        
-        # whether to use the cached parameterization
-        useCachedParams = cms.bool(False),
-        
         # the name of the root file that holds the cached parameters
-        paramCacheFile = cms.string('cached.root'),
-        
-        # whether only to calculate the parameterization
-        calcParamsOnly = cms.bool(False),
-        
-        # whether to use the on-peak fit window or the off-peak one
-        onPeak = cms.bool(True),
+        paramCacheFile = cms.string('AsymmetryParametrizer.root'),
         
         # whether bremsstrahlung was turned on for the generated
         # events
@@ -54,14 +40,6 @@ def attachAsymmetry(process, **kwargs):
         
         # whether to correct the cos_cs values using MC truth
         artificialCosCS = cms.bool(False),
-        
-        # whether to use the mistag correction (i.e. to include
-        # omega(y) in the pdf)
-        correctMistags = cms.bool(True),
-        
-        # whether to use the calculation of the mistag prob instead of
-        # the parameterization
-        calculateMistag = cms.bool(True)
         )
 
     process.analysis = cms.Path(module)

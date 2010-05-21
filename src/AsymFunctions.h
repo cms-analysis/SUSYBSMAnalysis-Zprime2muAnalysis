@@ -1,5 +1,5 @@
-#ifndef ASYM_FUNCTIONS_h
-#define ASYM_FUNCTIONS_h
+#ifndef AsymFunctions_h
+#define AsymFunctions_h
 
 #include "TH1F.h"
 #include "TH2F.h"
@@ -8,24 +8,8 @@
 #include "AsymFitData.h"
 #include "AsymFitManager.h"
 
-extern bool correctMistags;
 extern bool doingGravFit;
-extern bool calculateMistag;
-extern const bool useMistagHist;
 extern bool asymDebug;
-extern double mistag_pars[6];
-extern double mass_pars[7];
-extern double rap_pars[5];
-extern double pt_pars[5];
-extern double phi_cs_pars[5];
-extern int nMistagBins;
-extern TH2F* h2_mistagProb;
-extern TH1F* h_rap_mistag_prob;
-extern TH1F* h_cos_true_mistag_prob;
-extern TH1F* h_pL_mistag_prob;
-extern TH2F* h2_pL_mistag_prob;
-extern TH2F* h2_cos_cs_vs_true;
-extern TH2F* h2_pTrap_mistag_prob;
 
 extern AsymFitManager asymFitManager;
 
@@ -45,8 +29,6 @@ const double MUP_PT_MIN = PTMIN;
 const double MUM_PT_MIN = PTMIN;
 
 const double MUMASS = 0.10566; // GeV/c^2
-
-enum MASS_TYPE { MASS_EXP=1, MASS_LOR, MASS_LOREXP };
 
 double asym_2_PDF(double *x, double *par);
 // asym_3_PDF is now a function pointer, initialized in AsymFunctions.C

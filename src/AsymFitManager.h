@@ -1,111 +1,64 @@
-#ifndef ASYMFITMANAGER_H
-#define ASYMFITMANAGER_H
+#ifndef AsymFitManager_h
+#define AsymFitManager_h
 
-#include <string>
+#include <ostream>
 #include <vector>
 
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "FWCore/Utilities/interface/Exception.h"
+#include "TH1F.h"
+#include "TH2F.h"
+
+namespace edm {
+  class ParameterSet;
+}
+
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/MistagCalc.h"
-
-// forward declare for AsymFunctions.h
-class AsymFitManager;
-
-#include "AsymFunctions.h"
 
 // AsymFitManager is designed to protect some constants that are used
 // by the fitting routines that used to be compiled global constants,
 // but now are read in from a cfg file. With accessors, this should
 // protect them.  We would put all the fitting functions in a class
-// together with these constants, but ROOT cannot use a member
-// function with its TF1 class for fitting!
+// together with these constants, but eh...
 
 // AsymFitManager also is responsible for switching the cos_cs pdf,
 // the asym_3_PDF function pointer in AsymFunctions.C; since we need
 // to be able to fit to different forms (for true asymmetry fits, for
 // gravitons, etc).
 
-// Issue: will the compiler inline the accessors correctly, so that
-// the calls are quick? The accessor will be called inside the
-// high-level fit functions, e.g. recAsym2D, so they shouldn't be
-// called *too* many times.  Explicitly inline them, just in
-// case, but does this help?
-
 // Also, we can still forget to set all the values before calling the
 // accessors, but this is at least a little safer, code-wise (we won't
 // later be able to easily overwrite the values).
 
-// JMTBAD ROOT 5.16 now can use a class member function! What version
-// of CMSSW uses this ROOT version?
-
 class AsymFitManager {
  public:
-  AsymFitManager(): 
-    mistagCalc(0)
+  AsymFitManager() 
+    : _mistag_calc(0),
+      h2_mistagProb(0),
+      h_rap_mistag_prob(0),
+      h_cos_true_mistag_prob(0),
+      h_pL_mistag_prob(0),
+      h2_pL_mistag_prob(0),
+      h2_cos_cs_vs_true(0),
+      h2_pTrap_mistag_prob(0)
   {}
 
   ~AsymFitManager() {
-    delete mistagCalc;
+    delete _mistag_calc;
+    delete h2_mistagProb;
+    delete h_rap_mistag_prob;
+    delete h_cos_true_mistag_prob;
+    delete h_pL_mistag_prob;
+    delete h2_pL_mistag_prob;
+    delete h2_cos_cs_vs_true;
+    delete h2_pTrap_mistag_prob;
   }
 
-  void setConstants(const edm::ParameterSet& pset, bool onPeak,
-		    double peakMass, double beamEnergy) {
-    // initialize the mistag calculation using CTEQ6L pdfs
-    if (mistagCalc) {
-      delete mistagCalc;
-      mistagCalc = 0;
-    }
-    char pdfname[] = "cteq6l.LHpdf";
-    mistagCalc = new MistagCalc(2*beamEnergy, pdfname);
+  void setConstants(const edm::ParameterSet& pset);
+  void loadParametrization(const char* cache_fn);
 
-    _mass_type = pset.getParameter<int>("massDistType");
-    _max_rap = pset.getParameter<double>("maxRapidity");
-    _max_pt = pset.getParameter<double>("maxPt");
-    std::string fitWinType = "fitWindow";
-    fitWinType += (onPeak ? "OnPeak" : "OffPeak");
-    _fit_win = pset.getParameter<std::vector<double> >(fitWinType);
-    _gen_win = pset.getParameter<std::vector<double> >("genWindow");
-    _peak_mass = peakMass;
-    _beam_energy = beamEnergy;
-    _rec_sigma = pset.getParameter<std::vector<double> >("recSigma");
-
-    // JMTBAD *sigh*
-    _a_lim[0] = -1;
-    _a_lim[1] = -_max_rap;
-    _a_lim[2] = 2e-6;
-    _a_lim[3] = 0;
-    _a_lim[4] = _fit_win[0];
-    _a_lim[5] = 0;
-    _b_lim[0] = 1;
-    _b_lim[1] = _max_rap;
-    _b_lim[2] = _max_pt;
-    _b_lim[3] = 2*TMath::Pi();
-    _b_lim[4] = _fit_win[1];
-    _b_lim[5] = 2*TMath::Pi();
-    _limit_low[0] = -1;
-    _limit_low[1] = -999;
-    _limit_low[2] = 2e-6;
-    _limit_low[3] = 0;
-    _limit_low[4] = 0.1;
-    _limit_low[5] = 0;
-    _limit_upp[0] = 1;
-    _limit_upp[1] = 999;
-    _limit_upp[2] = 10*_max_pt;
-    _limit_upp[3] = 2*TMath::Pi();
-    _limit_upp[4] = 1e20;
-    _limit_upp[5] = 2*TMath::Pi();
-
-    // the default is already initialized in AsymFunctions.C,
-    // but do it here to get everything synchronized
-    setPDF(ASYM);
-  }
-
-  // accessors for the constants (no bounds checking!)
   int mass_type() const { return _mass_type; } 
   double max_rap() const { return _max_rap; }
   double max_pt() const { return _max_pt; } 
   double fit_win(unsigned int i) const { return _fit_win[i]; }
-  double gen_win(unsigned int i) const { return _gen_win[i]; }
   double rec_sigma(unsigned int i) const { return _rec_sigma[i]; }
   double a_lim(unsigned int i) const { return _a_lim[i]; }
   double b_lim(unsigned int i) const { return _b_lim[i]; }
@@ -116,7 +69,11 @@ class AsymFitManager {
   double peak_mass() const { return _peak_mass; }
   double beam_energy() const { return _beam_energy; }
 
-  // accessors for specific rec sigmas
+  MistagCalc* mistag_calc() const;
+
+  enum RECSIGMA { SIGMA_COSCS, SIGMA_RAP, SIGMA_PT,
+		  SIGMA_PHI, SIGMA_MASS, SIGMA_PHICS };
+
   double recSigmaCosCS() const { return _rec_sigma[SIGMA_COSCS]; }
   double recSigmaRap() const { return _rec_sigma[SIGMA_RAP]; }
   double recSigmaPt() const { return _rec_sigma[SIGMA_PT]; }
@@ -124,47 +81,31 @@ class AsymFitManager {
   double recSigmaMass() const { return _rec_sigma[SIGMA_MASS]; }
   double recSigmaPhiCS() const { return _rec_sigma[SIGMA_PHICS]; }
 
-  // the currently available pdfs
+  // The currently available pdfs.
   enum PDFTYPE { ASYM, GRAV, GRAVTH };
 
-  // update the function pointer to the one specified by _type
-  // legitimate values are defined in an enum above
-  // throws if _type is unrecognized
-  void setPDF(PDFTYPE _type) {
-    //    extern double (*asym_3_PDF)(double *x, double *par);
-    pdfType = _type;
-    switch (pdfType) {
-    case ASYM: asym_3_PDF = asym_3_PDF_real; break;
-    case GRAV: asym_3_PDF = GravitonCos_3_PDF; break;
-    case GRAVTH: asym_3_PDF = GravitonCos_th_PDF; break;
-    default: 
-      throw cms::Exception("AsymFitManager") 
-	<< "unrecognized PDF type " << _type << "\n";
-    }
-  }
+  // Update the function pointer to the one specified by _type;
+  // legitimate values are defined in an enum above. throws if _type is
+  // unrecognized
+  void setPDF(PDFTYPE _type);
 
   // return the current pdf's name; useful in pretty printing
-  const char* getPDFName() const {
-    static const char* PDFNAMES[3] = {
-      "asym_3_PDF",
-      "GravitonCos_3_PDF",
-      "GravitonCos_th_PDF"
-    };
-    return PDFNAMES[pdfType];
-  }
+  const char* getPDFName() const;
 
-  enum RECSIGMA { SIGMA_COSCS, SIGMA_RAP, SIGMA_PT,
-		  SIGMA_PHI, SIGMA_MASS, SIGMA_PHICS };
+  bool correct_mistags()  const { return _correct_mistags;  }
+  bool calculate_mistag() const { return _calculate_mistag; }
+  bool use_mistag_hist()  const { return _use_mistag_hist;  }
 
-  MistagCalc* mistagCalc;
+  enum MASS_TYPE { MASS_EXP=1, MASS_LOR, MASS_LOREXP };
 
  private:
+  MistagCalc* _mistag_calc;
+
   // mass_type values: 1 = falling exponential, 2 = lorentzian peak, 3 = 1+2
   int _mass_type;
   double _max_rap;
   double _max_pt;
   std::vector<double> _fit_win;
-  std::vector<double> _gen_win;
   double _peak_mass;
   double _beam_energy;
   // These sigma are the reconstructed - generated for dilepton pt, rap, mass, 
@@ -180,8 +121,27 @@ class AsymFitManager {
   double _limit_upp[6];
 
   PDFTYPE pdfType;
+
+  bool _correct_mistags;
+  bool _calculate_mistag;
+  bool _use_mistag_hist;
+
+public:
+  double mistag_pars[6];
+  double mass_pars[7];
+  double rap_pars[5];
+  double pt_pars[5];
+  double phi_cs_pars[5];
+  
+  TH2F* h2_mistagProb;
+  TH1F* h_rap_mistag_prob;
+  TH1F* h_cos_true_mistag_prob;
+  TH1F* h_pL_mistag_prob;
+  TH2F* h2_pL_mistag_prob;
+  TH2F* h2_cos_cs_vs_true;
+  TH2F* h2_pTrap_mistag_prob;
 };
 
 std::ostream& operator<<(std::ostream& out, const AsymFitManager& afd);
 
-#endif // ASYMFITMANAGER_H
+#endif

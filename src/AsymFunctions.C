@@ -12,48 +12,24 @@
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
 
-// How come the compiler has . in the include path for .C files but
-// not for .cc files? I have to put the full path from CMSSW_BASE/src
-// for the includes in Zprime2muAsymmetry.cc, but not here...
-#include "AsymFitManager.h"
-#include "AsymFunctions.h"
-#include "Functions.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymFunctions.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Functions.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneralUtilities.h"
 
 using namespace std;
 
-// JMTBAD these flags are set from the config file; should really be
-// const access
-bool correctMistags;
 bool doingGravFit;
-bool calculateMistag;
-const bool useMistagHist = false;
 bool asymDebug;
 
-// JMTBAD these globals are calculated by getAsymParams and other
-// GenKineAna relic code; need better way to access them
-double mistag_pars[6];
-double mass_pars[7];
-double rap_pars[5];
-double pt_pars[5];
-double phi_cs_pars[5];
-int nMistagBins;
-TH2F* h2_mistagProb;
-TH1F* h_rap_mistag_prob;
-TH1F* h_cos_true_mistag_prob;
-TH1F* h_pL_mistag_prob;
-TH2F* h2_pL_mistag_prob;
-TH2F* h2_cos_cs_vs_true;
-TH2F* h2_pTrap_mistag_prob;
-
-// also see the corresponding comments in AsymFunctions.h
-// initialize the pdf function pointer to the default, for asym fits
+// Initialize the pdf function pointer to the default, for A_FB fits.
 double (*asym_3_PDF)(double *x, double *par) = asym_3_PDF_real;
 
-// the global constants/pdf manager for all our fitting routines
-// (needed since TF1 can't use member functions; see AsymFitManager.h)
+// AsymParamManager manages data from the parameterization, i.e. that
+// which is loaded from the root file, while AsymFitManager handles
+// constants read from the config file. JMTBAD should bring in the 5
+// bools above to one of these, probably FitManager.
 AsymFitManager asymFitManager;
 
-// JMTBAD these two should in their respective classes .cc files...
 std::ostream& operator<< (std::ostream& out, const AsymFitData& data) {
   out << "pT = " << data.pT << ", rap = " << data.rapidity;
   out << ", phi = " << data.phi << ", mass = " << data.mass;
@@ -61,17 +37,6 @@ std::ostream& operator<< (std::ostream& out, const AsymFitData& data) {
   out << ", phi_cs = " << data.phi_cs << std::endl;
   out << "mistag_true = " << data.mistag_true 
       << ", mistag_cs = " << data.mistag_cs;
-  return out;
-}
-
-std::ostream& operator<<(std::ostream& out, const AsymFitManager& afd) {
-  out << "Mass distribution type: " << afd.mass_type() << std::endl
-      << "Max rapidity: " << afd.max_rap()
-      << " Max pT: " << afd.max_pt() << std::endl
-      << "Fit window: " << afd.fit_win(0) << "-" << afd.fit_win(1) << std::endl
-      << "Gen window: " << afd.gen_win(0) << "-" << afd.gen_win(1) << std::endl
-      << "Rec sigma: ";
-  for (int i = 0; i < 6; i++) out << afd.rec_sigma(i) << " ";
   return out;
 }
 
@@ -132,7 +97,7 @@ double asym_mistag_PDF(double *x, double *pars) {
   double cos = x[0];
   double neg_cos = -cos;
   double w = 0.;
-  if (correctMistags) { w = mistagProb(rap, cos, asymFitManager.peak_mass()); }
+  if (asymFitManager.correct_mistags()) { w = mistagProb(rap, cos, asymFitManager.peak_mass()); }
   double func = (1. - w)*asym_3_PDF(&cos, pars) + 
     w*asym_3_PDF(&neg_cos, pars);
 
@@ -256,15 +221,15 @@ double asym2D(double *x, double *par) {
   double w = 0.;
   // A Few options for calculating mistag probability:
   // 1. Default version using rapidity and cos_cs
-  if (correctMistags) { w = mistagProb(rap, cos_cs, mass); }
+  if (asymFitManager.correct_mistags()) { w = mistagProb(rap, cos_cs, mass); }
   // 2. Most precise version using quark and dilepton pL
-  //if (correctMistags) { w = mistagProbVsPL(qpL, pL); }
+  //if (asymFitManager.correct_mistags()) { w = mistagProbVsPL(qpL, pL); }
   // 3. Version using dilepton pT and rap
-  //if (correctMistags) { w = mistagProbVsPtRap(pT, rap); }
+  //if (asymFitManager.correct_mistags()) { w = mistagProbVsPtRap(pT, rap); }
   // 4. Version using dilepton pL
-  //if (correctMistags) { w = mistagProbVsPL(pL); }
+  //if (asymFitManager.correct_mistags()) { w = mistagProbVsPL(pL); }
   // 5. Version using only dilepton rapidity
-  //if (correctMistags) { w = mistagProbVsRap(rap); }
+  //if (asymFitManager.correct_mistags()) { w = mistagProbVsRap(rap); }
  
 
   double func = (1.-w)*asym_3_PDF(&cos_cs, par) + 
@@ -812,8 +777,8 @@ double asym6D(double *x, double *par) {
   double cos_cs = data.cos_cs;
 
   double w = 0.;
-  if (correctMistags) { w = mistagProb(fabs(rap), cos_cs, mass); }
-  //if (correctMistags) { w = mistagProbVsRap(fabs(rap)); }
+  if (asymFitManager.correct_mistags()) { w = mistagProb(fabs(rap), cos_cs, mass); }
+  //if (asymFitManager.correct_mistags()) { w = mistagProbVsRap(fabs(rap)); }
 
   double neg_cos_cs = -data.cos_cs;
   double func = (1.-w)*asym_3_PDF(&cos_cs, par) + 
@@ -1760,21 +1725,31 @@ double calcEta(double pt, double rap, double mass, bool debug) {
 
 double mistagProb(double rap, double cos, double mass) {
   //Option to use either parameterizations or 2D histogram
-  const bool debug = false;
+  static const bool debug = false;
   double prob;
 
-  if (useMistagHist) {
+  if (asymFitManager.use_mistag_hist()) {
     if (fabs(rap) > 3.5) return 0.;
-    int cos_bin = int(cos*nMistagBins) + 1;
-    int rap_bin = int((fabs(rap)/3.5)*nMistagBins) + 1;
-    prob = h2_mistagProb->GetBinContent(cos_bin, rap_bin);
+    static int nCosBins = asymFitManager.h2_mistagProb->GetNbinsX();
+    static int nRapBins = asymFitManager.h2_mistagProb->GetNbinsY();
+    int cos_bin = int(cos*nCosBins) + 1;
+    int rap_bin = int(fabs(rap)/3.5*nRapBins) + 1;
+    prob = asymFitManager.h2_mistagProb->GetBinContent(cos_bin, rap_bin);
 
-    // Alternative way of calculating
-    //int cos_bin = int(-cos*nMistagBins) + 1;
-    //int rap_bin = int((fabs(rap)/7.)*nMistagBins) + 1;
-    //double cos_prob = h_cos_true_mistag_prob->GetBinContent(cos_bin);
-    //double rap_prob = h_rap_mistag_fraction->GetBinContent(rap_bin);
-    //prob = cos_prob + rap_prob - 2.*cos_prob*rap_prob;
+    // Alternative way of calculating using separate cos and rap 1-D
+    // histograms. JMTBAD should probably go back to using #ifdefs
+    // instead of that if (asymFitManager.use_mistag_hist()) above,
+    // and have one for MISTAG_HIST_2D vs _1D ...
+    /*
+    static int nCosBins = h_cos_true_mistag_prob->GetNbinsX();
+    static int nRapBins = h_rap_mistag_fraction->GetNbinsX();
+    int cos_bin = int(-cos*nCosBins) + 1;
+    int rap_bin = int(fabs(rap)/7.*nRapBins) + 1;
+    double cos_prob = h_cos_true_mistag_prob->GetBinContent(cos_bin);
+    double rap_prob = h_rap_mistag_fraction->GetBinContent(rap_bin);
+    prob = cos_prob + rap_prob - 2.*cos_prob*rap_prob;
+    */
+
     if (debug) {
       LogDebug("mistagProb") 
 	<< "cos rap " << cos << "(" << cos_bin << ") " << rap
@@ -1795,17 +1770,18 @@ double mistagProb(double rap, double cos, double mass) {
 }
 
 double mistagProbVsRap(double rap, double mass) {
-  if (calculateMistag && mass > 0) 
-    return asymFitManager.mistagCalc->omega(rap, mass);
+  if (asymFitManager.calculate_mistag() && mass > 0) 
+    return asymFitManager.mistag_calc()->omega(rap, mass);
 
   // Compute mistag probability as function of y
   double absy = fabs(rap);
   double prob;
   const bool debug = false;
 
-  if (useMistagHist) {
-    int rap_bin = int((fabs(rap)/3.5)*nMistagBins) + 1;
-    prob = h_rap_mistag_prob->GetBinContent(rap_bin);
+  if (asymFitManager.use_mistag_hist()) {
+    static int nRapBins = asymFitManager.h_rap_mistag_prob->GetNbinsX();
+    int rap_bin = int(fabs(rap)/3.5*nRapBins) + 1;
+    prob = asymFitManager.h_rap_mistag_prob->GetBinContent(rap_bin);
     if (debug)
       LogDebug("mistagProbVsRap") 
 	<< "rap rap_bin prob " << rap << " "<< rap_bin << " " << prob;
@@ -1813,16 +1789,16 @@ double mistagProbVsRap(double rap, double mass) {
   }
   
    //quadratic fit
-  prob = 0.5 + mistag_pars[0]*absy + mistag_pars[1]*absy*absy;
+  prob = 0.5 + asymFitManager.mistag_pars[0]*absy + asymFitManager.mistag_pars[1]*absy*absy;
   if (prob > .5) prob = .5;
-  if (absy > mistag_pars[2] || prob < 0.) prob = 0.;
+  if (absy > asymFitManager.mistag_pars[2] || prob < 0.) prob = 0.;
 
   return prob;
 }
 
 double mistagProbVsCos(double cos) {
   double abs_cos = fabs(cos);
-  double prob = mistag_pars[3] + mistag_pars[4]*exp(-mistag_pars[5]*abs_cos);
+  double prob = asymFitManager.mistag_pars[3] + asymFitManager.mistag_pars[4]*exp(-asymFitManager.mistag_pars[5]*abs_cos);
   return prob;
 }
 
@@ -1830,8 +1806,9 @@ double mistagProbVsPL(double pL) {
   //Calculate mistag probability as of function of longitudinal momentum
   const bool debug = false;
   if (fabs(pL) > 5000.) return 0.;
-  int pL_bin = int((pL/5000.)*nMistagBins) + 1;
-  double prob = h_pL_mistag_prob->GetBinContent(pL_bin);
+  static int nBins = asymFitManager.h_pL_mistag_prob->GetNbinsX();
+  int pL_bin = int(pL/5000.*nBins) + 1;
+  double prob = asymFitManager.h_pL_mistag_prob->GetBinContent(pL_bin);
   if (debug)
     LogDebug("mistagProbVsPL") << "pL " << pL << " pL_bin " << pL_bin
 			       << " prob " << prob;
@@ -1843,9 +1820,11 @@ double mistagProbVsPL(double qpL, double dilpL) {
   // This is the most correct version of mistag
   const bool debug = false;
   if (fabs(qpL) > 500. || fabs(dilpL) > 5000.) return 0.;
-  int qpL_bin = int(((fabs(qpL))/500.)*nMistagBins) + 1;
-  int dilpL_bin = int(((fabs(dilpL))/5000.)*nMistagBins) + 1;
-  double prob = h2_pL_mistag_prob->GetBinContent(qpL_bin, dilpL_bin);
+  static int qplBins   = asymFitManager.h2_pL_mistag_prob->GetNbinsX();
+  static int dilplBins = asymFitManager.h2_pL_mistag_prob->GetNbinsY();
+  int qpL_bin = int(fabs(qpL)/500.*qplBins) + 1;
+  int dilpL_bin = int(fabs(dilpL)/5000.*dilplBins) + 1;
+  double prob = asymFitManager.h2_pL_mistag_prob->GetBinContent(qpL_bin, dilpL_bin);
   if (debug)
     LogDebug("mistagProbVsPL") 
       << "qpL dilpL, qpL_bin dilpL_bin prob " << qpL << " " << dilpL << " "
@@ -1857,9 +1836,11 @@ double mistagProbVsPtRap(double pT, double rap) {
   // Calculate mistag probability as function of dilepton pT and rapidity
   const bool debug = false;
   if (fabs(pT*pT) > 700. || fabs(rap) > 3.5) return 0.;
-  int pT_bin = int(((fabs(pT*pT))/700.)*nMistagBins) + 1;
-  int rap_bin = int(((fabs(rap))/3.5)*nMistagBins) + 1;
-  double prob = h2_pTrap_mistag_prob->GetBinContent(pT_bin, rap_bin);
+  static int ptBins = asymFitManager.h2_pTrap_mistag_prob->GetNbinsX();
+  static int rapBins = asymFitManager.h2_pTrap_mistag_prob->GetNbinsY();
+  int pT_bin = int(fabs(pT*pT)/700.*ptBins) + 1;
+  int rap_bin = int(fabs(rap)/3.5*rapBins) + 1;
+  double prob = asymFitManager.h2_pTrap_mistag_prob->GetBinContent(pT_bin, rap_bin);
   if (debug)
     LogDebug("mistagProbVsPtRap")
       << "pT rap, pT_bin rap_bin prob " << pT << " " << rap << " "
@@ -1881,16 +1862,16 @@ double massDist(double *x, double *par) {
     throw cms::Exception("massDist") << "mass_type = " << mass_type
 				     << " is unknown\n";
   double f = -999.;
-  if (mass_type == MASS_EXP)
-    f = expBckg(&mass, mass_pars);
-  else if (mass_type == MASS_LOR)
-    f = Lorentzian(&mass, mass_pars);
-  else if (mass_type == MASS_LOREXP)
-    f = lorentzianPlusExpbckg(&mass, mass_pars);
+  if (mass_type == AsymFitManager::MASS_EXP)
+    f = expBckg(&mass, asymFitManager.mass_pars);
+  else if (mass_type == AsymFitManager::MASS_LOR)
+    f = Lorentzian(&mass, asymFitManager.mass_pars);
+  else if (mass_type == AsymFitManager::MASS_LOREXP)
+    f = lorentzianPlusExpbckg(&mass, asymFitManager.mass_pars);
 
   // Don't normalize, otherwise you suffer from roundoff problems in 6D fit
-  //f /= mass_pars[nPars];
-  //LogDebug("massDist") << "f/norm = " << f << "/" << mass_pars[nPars];
+  //f /= asymFitManager.mass_pars[nPars];
+  //LogDebug("massDist") << "f/norm = " << f << "/" << asymFitManager.mass_pars[nPars];
   return f;
 }
 
@@ -1902,9 +1883,9 @@ double ptSqrDist(double *x, double *par) {
     throw cms::Exception("ptSqrDist") << "pt_sq = " << pt_sq
 				      << " is negative\n";
 
-  double f = (pt_pars[0]*exp(-pt_pars[1]*sqrt(pt_sq))) +
-    (pt_pars[2]*exp(-pt_pars[3]*sqrt(pt_sq)));
-  f /= pt_pars[4];
+  double f = (asymFitManager.pt_pars[0]*exp(-asymFitManager.pt_pars[1]*sqrt(pt_sq))) +
+    (asymFitManager.pt_pars[2]*exp(-asymFitManager.pt_pars[3]*sqrt(pt_sq)));
+  f /= asymFitManager.pt_pars[4];
   return f;
 }
 
@@ -1920,8 +1901,8 @@ double phiCSDist(double *x, double *par) {
     // This has a non-flat distribution when internal-Brem is turned on.  
     // So switch off if parametrizations have not been set (or if fit did
     // not converge properly).
-    if (phi_cs_pars[0] > 0. && phi_cs_pars[1] > 0. && 
-	phi_cs_pars[2] > 0. && phi_cs_pars[3] > 0. && phi_cs_pars[4] > 0.)
+    if (asymFitManager.phi_cs_pars[0] > 0. && asymFitManager.phi_cs_pars[1] > 0. && 
+	asymFitManager.phi_cs_pars[2] > 0. && asymFitManager.phi_cs_pars[3] > 0. && asymFitManager.phi_cs_pars[4] > 0.)
       ibOn = true;
   }
 
@@ -1938,12 +1919,12 @@ double phiCSDist(double *x, double *par) {
 				      << "is negative\n";
 
   double f = 1.;
-  int y = (int) phi_cs_pars[3];
+  int y = (int) asymFitManager.phi_cs_pars[3];
   for (int i = 0; i < y; i++)
-    f *= (phi_cs - phi_cs_pars[2]);
-  f *= phi_cs_pars[1];
-  f += phi_cs_pars[0];
-  f /= phi_cs_pars[4];
+    f *= (phi_cs - asymFitManager.phi_cs_pars[2]);
+  f *= asymFitManager.phi_cs_pars[1];
+  f += asymFitManager.phi_cs_pars[0];
+  f /= asymFitManager.phi_cs_pars[4];
 
   return f;
 }
@@ -1953,11 +1934,11 @@ double phiCSDist(double *x, double *par) {
 double yDistRTC(double *x, double *par) {
   // Return y production distribution of Revised Thermalized cylinder model.
   double a = fabs(x[0]);
-  double f = rap_pars[0]*(tanh((rap_pars[1]*a)+rap_pars[2]+rap_pars[3])-
-			  tanh((rap_pars[1]*a)-rap_pars[2]+rap_pars[3])+
-			  tanh((rap_pars[1]*a)+rap_pars[2]-rap_pars[3])-
-			  tanh((rap_pars[1]*a)-rap_pars[2]-rap_pars[3]));
-  f /= rap_pars[4];
+  double f = asymFitManager.rap_pars[0]*(tanh((asymFitManager.rap_pars[1]*a)+asymFitManager.rap_pars[2]+asymFitManager.rap_pars[3])-
+			  tanh((asymFitManager.rap_pars[1]*a)-asymFitManager.rap_pars[2]+asymFitManager.rap_pars[3])+
+			  tanh((asymFitManager.rap_pars[1]*a)+asymFitManager.rap_pars[2]-asymFitManager.rap_pars[3])-
+			  tanh((asymFitManager.rap_pars[1]*a)-asymFitManager.rap_pars[2]-asymFitManager.rap_pars[3]));
+  f /= asymFitManager.rap_pars[4];
   return f;
 }
 
@@ -1969,8 +1950,8 @@ double cosTrueVsCS(double *x, double *par) {
   // and Collins-Soper cos-theta (Although this has been determined to be
   // unnecessary for the purpose of our fits.
   const bool debug = false;
-  static int nCSBins   = h2_cos_cs_vs_true->GetNbinsX();
-  static int nTrueBins = h2_cos_cs_vs_true->GetNbinsY();
+  static int nCSBins   = asymFitManager.h2_cos_cs_vs_true->GetNbinsX();
+  static int nTrueBins = asymFitManager.h2_cos_cs_vs_true->GetNbinsY();
   bool paramsChanged = false;
   static bool firstCall = true;
   static double parsave[3];
@@ -1986,11 +1967,11 @@ double cosTrueVsCS(double *x, double *par) {
 
   int csBin = int(((x[0]+1.)/2.)*nCSBins) + 1;
   double func = 0.;
-  double norm = h2_cos_cs_vs_true->Integral(csBin, csBin, 1, nTrueBins);
+  double norm = asymFitManager.h2_cos_cs_vs_true->Integral(csBin, csBin, 1, nTrueBins);
 
   for (int i = 1; i < nTrueBins+1; i++) {
-    double tempProb = h2_cos_cs_vs_true->GetBinContent(csBin, i);
-    double tempTrue = h2_cos_cs_vs_true->GetYaxis()->GetBinLowEdge(i);
+    double tempProb = asymFitManager.h2_cos_cs_vs_true->GetBinContent(csBin, i);
+    double tempTrue = asymFitManager.h2_cos_cs_vs_true->GetYaxis()->GetBinLowEdge(i);
     func += asym_3_PDF(&tempTrue, par)*tempProb;
     if (debug)
       LogTrace("AsymFunctions") << "tempProb " << tempProb

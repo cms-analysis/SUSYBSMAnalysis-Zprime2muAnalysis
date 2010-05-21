@@ -25,16 +25,13 @@
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/Candidate/interface/CompositeRefCandidate.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
-#include "DataFormats/FWLite/interface/Handle.h"
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymFitManager.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymFunctions.h"
-// JMTBAD perhaps a more descriptive name for this file
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymmetryHelpers.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Functions.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TFMultiD.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/UnbinnedFitter.h"
@@ -67,37 +64,21 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   // is an enum FITTYPE here in the code)
   fitType = FITTYPE(config.getParameter<int>("fitType"));
 
-  // convenient flag for checking to see if we're doing graviton studies
-  doingGravFit = fitType >= GRAV;
-
   // only do so many of the fits (up to 6; from gen+gen to rec+rec)
   numFits = config.getParameter<int>("numFits");
 
-  // limit on how many events to read from the parameterization sample
-  maxParamEvents = config.getParameter<int>("maxParamEvents");
-
-  // whether to use the cached parameters (depending on the existence
-  // of the cache root file)
-  useCachedParams = config.getParameter<bool>("useCachedParams");
-
   // the name of the root file containing the cached parameters
   paramCacheFile = config.getParameter<string>("paramCacheFile");
-
-  // whether only to calculate the parameterization and then quit
-  calcParamsOnly = config.getParameter<bool>("calcParamsOnly");
-
-  // whether to use the on-peak fit window or the off-peak one
-  onPeak = config.getParameter<bool>("onPeak");
 
   // whether bremsstrahlung was switched on in the generator for the
   // parameterization sample
   internalBremOn = config.getParameter<bool>("internalBremOn");
 
-  // Energy of each incoming proton (in GeV).
-  beamEnergy = 5000;
-
   // whether to fix b for the simple 1-D fits
   fixbIn1DFit = config.getParameter<bool>("fixbIn1DFit");
+
+  // convenient flag for checking to see if we're doing graviton studies
+  doingGravFit = fitType >= GRAV;
 
   // whether to use cos_true in the 2/6-D fits
   useCosTrueInFit = config.getParameter<bool>("useCosTrueInFit");
@@ -105,62 +86,31 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   // whether to correct the cos_cs values using MC truth
   artificialCosCS = config.getParameter<bool>("artificialCosCS");
 
+  // let the asymFitManager take care of setting mass_type, etc.
+  asymFitManager.setConstants(config);
+  asymFitManager.loadParametrization(paramCacheFile.c_str());
+
   // whether to use the probabilistic mistag correction; always turn
   // it off if doing graviton fit, if we are artificially
   // correcting with MC truth, or if we are fitting to cos_theta_true
-  correctMistags = doingGravFit || artificialCosCS || useCosTrueInFit ? false :
-    config.getParameter<bool>("correctMistags");
-
-  // whether to use the calculation of the mistag probability omega(y,M)
-  // instead of the parameterization obtained from the MC
-  calculateMistag = config.getParameter<bool>("calculateMistag");
-
-  // get the parameters specific to the data sample on which we are running
-  string dataSet = config.getParameter<string>("dataSet");
-  edm::ParameterSet dataSetConfig =
-    config.getParameter<edm::ParameterSet>(dataSet);
-
-  outputFileBase = 
-    dataSetConfig.getUntrackedParameter<string>("outputFileBase");
-  genSampleFiles = dataSetConfig.getParameter<vector<string> >("genSampleFiles");
-  peakMass = dataSetConfig.getParameter<double>("peakMass");
-  
-  // let the asymFitManager take care of setting mass_type, etc.
-  asymFitManager.setConstants(dataSetConfig, onPeak, peakMass, beamEnergy);
+  if (asymFitManager.correct_mistags() && (doingGravFit || artificialCosCS || useCosTrueInFit))
+    throw cms::Exception("Zprime2muAsymmetry") << "Shouldn't be applying mistag correction when one of doingGravFit || artificialCosCS || useCosTrueInFit is set.\n";
 
   // turn on/off the fit prints in AsymFunctions
   asymDebug = verbosity >= VERBOSITY_SIMPLE;
 
   ostringstream out;
   out << "------------------------------------------------------------\n"
-      << "Zprime2muAsymmetry parameter summary:\n"
-      << "Using data set " << dataSet << " and writing to files *." 
-      << outputFileBase << ".*" << endl;
+      << "Zprime2muAsymmetry parameter summary:\n";
   if (noFit)
     out << "Not performing any fit or evaluation of the likelihood ratio\n";
   else {
     if (onlyEvalLLR)
       out << "Only evaluating the likelihood ratios for each data point\n";
     out << "Using pdf " << asymFitManager.getPDFName() << " for fits\n";
-    out << "Using ";
-    if (maxParamEvents < 0) out << "all";
-    else out << maxParamEvents;
-    out << " events from " << genSampleFiles.size() << " files beginning with "
-	<< genSampleFiles[0] << " for parameterizations\n";
   }
   out << asymFitManager << endl;
-  out << "Peak mass: " << peakMass << "; accordingly, looking ";
-  if (onPeak) out << "on ";
-  else out << "off ";
-  out << "peak\n";
-  if (!correctMistags) out << "NOT ";
-  out << "Correcting for mistags in data using probabilistic method\n";
-  if (calculateMistag && correctMistags)
-    out << "Calculating mistag probability on event-by-event basis\n";
-  else
-    out << "Obtaining mistag probability from parameterization\n";
-  if (!internalBremOn) out << "NOT ";
-  out << "Correcting for bremsstrahlung in parameterization sample\n";
+
   if (fixbIn1DFit) out << "Fixing b = 1.0 in 1-D fits\n";
   if (useCosTrueInFit) out << "Using cos_theta_true in 2/6-D fits\n";
   if (artificialCosCS)
@@ -171,12 +121,6 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
 
   bookFrameHistos();
   bookFitHistos();
-
-  bookParamHistos();
-}
-
-Zprime2muAsymmetry::~Zprime2muAsymmetry() {
-  deleteHistos();
 }
 
 void Zprime2muAsymmetry::analyze(const edm::Event& event, 
@@ -187,16 +131,6 @@ void Zprime2muAsymmetry::analyze(const edm::Event& event,
   fillFitData(event);
 
   fillFrameHistos();
-}
-
-void Zprime2muAsymmetry::beginJob() {
-  Zprime2muAnalysis::beginJob();
-
-  getAsymParams();
-  if (calcParamsOnly)
-    // JMTBAD this is the wrong way to do this!
-    throw cms::Exception("Zprime2muAsymmetry") 
-      << "user requested to calculate parameters only; stopping\n";
 }
 
 void Zprime2muAsymmetry::endJob() {
@@ -226,6 +160,7 @@ void Zprime2muAsymmetry::bookFitHistos() {
   h_cos_theta_cs       = fs->make<TH1F>("h_cos_theta_cs",       "cos #theta^{*}_{CS}",                     50, -1., 1.);
   h_cos_theta_cs_acc   = fs->make<TH1F>("h_cos_theta_cs_acc",   "cos #theta^{*}_{CS} (in acceptance)",     50, -1., 1.);
   h_cos_theta_cs_fixed = fs->make<TH1F>("h_cos_theta_cs_fixed", "cos #theta^{*}_{CS} (mistags corrected)", 50, -1., 1.);
+  h_cos_theta_cs_acc_fixed   = fs->make<TH1F>("h_cos_theta_cs_acc_fixed",   "cos #theta^{*}_{CS} (mistags corrected, in acceptance)",     50, -1., 1.);
   h_cos_theta_cs_rec   = fs->make<TH1F>("h_cos_theta_cs_rec",   "cos #theta^{*}_{CS} (rec)",               50, -1., 1.);
 
   h_b_smass = fs->make<TH1F>("h_b_smass", "Smeared Mass of Backward Events", 50, amg.fit_win(0), amg.fit_win(1));
@@ -549,7 +484,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 
     AsymFitData data;
     // JMTBAD redundant with some calculations below
-    if (!computeFitQuantities(*genParticles, eventNum, data)) {
+    if (!computeFitQuantities(*genParticles, leptonFlavor, internalBremOn, data)) {
       // if finding the Z'/etc failed, skip this event
       edm::LogWarning("fillFitData") << "could not compute fit quantities!";
       return;
@@ -584,6 +519,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
       if (data.cut_status == NOTCUT) {
 	//1D histo for fit with data containing mistags and acceptance
 	h_cos_theta_cs_acc->Fill(data.cos_cs); 
+	h_cos_theta_cs_acc_fixed->Fill(data.cos_cs * (data.mistag_cs ? -1 : 1));
       
 	// Store data used for doing resolution-smeared type fits
 	// JMTBAD currently do not do the fits
@@ -816,6 +752,7 @@ void Zprime2muAsymmetry::fillFrameHistos() {
   double cos_cs[2][MAX_DILEPTONS];
   double cos_boost, cos_wulz;
 
+  const double beamEnergy = asymFitManager.beam_energy();
   TLorentzVector pp1(0., 0., beamEnergy, beamEnergy);
   TLorentzVector pp2(0., 0.,-beamEnergy, beamEnergy);
   TLorentzVector pb_star, pt_star, pmum_star, pmup_star;
@@ -1190,7 +1127,7 @@ void Zprime2muAsymmetry::calcAsymmetry(const TH1F* IdF, const TH1F* IdB,
 }
 
 void Zprime2muAsymmetry::calcFrameAsym() {
-  string dumpfile = "frameAsym." + outputFileBase + ".txt";
+  string dumpfile = "frameAsym.txt";
   fstream out(dumpfile.c_str(), ios::out);
   for (int j = 0; j < 2; j++) {
     out << "Rec level: " << j << endl;
@@ -1233,15 +1170,10 @@ void Zprime2muAsymmetry::calcFrameAsym() {
 }
 
 void Zprime2muAsymmetry::dumpFitData() {
-  string fn = "dumpFitData." + outputFileBase + ".root";
-  TFile dump(fn.c_str(), "RECREATE");
-
   AsymFitData x;
 
-  TTree* ts[2] = {0};
-
   for (int i = 0; i < 2; ++i) {
-    TTree* t = ts[i] = new TTree(i == 0 ? "gen" : "rec", "");
+    TTree* t = fs->make<TTree>(i == 0 ? "fitData_gen" : "fitData_rec", "");
     t->Branch("cos_cs", &x.cos_cs,   "cos_cs/D");
     t->Branch("rap",    &x.rapidity, "rap/D");
     t->Branch("mass",   &x.mass,     "mass/D");
@@ -1261,789 +1193,13 @@ void Zprime2muAsymmetry::dumpFitData() {
     }
   }
 
-  dump.Write();
-  dump.Close();
-
-  // don't delete trees! pointers are already invalid from being owned
-  // by the TFile.
-  ts[0] = ts[1] = 0;
-
-  // dump the generated pre-acceptance-cut cos_cs distribution
-  fn = "angDist." + outputFileBase + ".txt";
-  fstream f2(fn.c_str(), ios::out);
-  f2 << "# angular distribution\n"
-     << "# format: cos_theta_cs \t mistag?\n";
-  for (unsigned int i = 0; i < angDist.size(); i++)
-    f2 << angDist[i] << endl;
-  f2.close();
-}
-
-void Zprime2muAsymmetry::bookParamHistos() {
-  nMistagBins = 20;
-  TH1::AddDirectory(false);
-  const AsymFitManager& amg = asymFitManager;
-  // Histograms here are not managed by TFileService, but by ourselves
-  // (since we save some of them to the parameter cache file later).
-  h_pt_dil               = new TH1F("3", "pT^2 dilepton",     100, 0., 3.e6);
-  h_rap_dil[0]           = new TH1F("4", "abs(rap) dilepton", 50, 0., 3.5);
-  h_rap_dil[1]           = new TH1F("5", "rap dilepton",    50, -3.5, 3.5);
-  h_mass_dil[0] = new TH1F("6", "mass dil, full range",
-			   100, amg.gen_win(0) - 50., amg.gen_win(1) + 50);
-  h_mass_dil[1] = new TH1F("7", "mass dil, fit range",
-			   100, amg.fit_win(0), amg.fit_win(1));
-  h_phi_cs       = new TH1F("9", "Collins-Soper Phi", 100, 0., TMath::Pi());
-  h_rap_mistag   = new TH1F("10","rap dil, mistag=1", 50, 0., 3.5);
-  h_rap_nomistag = new TH1F("11","rap dil, mistag=0", 50, 0., 3.5);
-  h_cos_mistag   = new TH1F("10","cos#theta_{CS}, mistag^{1}#neq mistag^{2} ", 
-			    50, 0., 1.);
-  h_cos_cs       = new TH1F("11","cos#theta_{CS}", 50, 0., 1.);
-  h_cos_mistag_prob = new TH1F("10/4","cos#theta_{CS} mistag frac",
-			       50, 0., 1.);
-  h_cos_mistag_prob->Sumw2();
-  h2_rap_cos_mistag = new TH2F("12", "rap vs cos dil, mistag=1", 
-			       nMistagBins, 0., 1., nMistagBins, 0., 3.5);
-  h2_rap_cos_nomistag = new TH2F("13", "rap vs cos dil, mistag=0", 
-				 nMistagBins, 0., 1., nMistagBins, 0., 3.5);
-  h2_rap_cos_p = new TH2F("14", "rap vs cos dil", nMistagBins, 
-			  0., 1., nMistagBins, 0., 3.5);
-  h_mistag[0][0] = new TH1F("mist01", "rap all ", 50, 0., 3.5);
-  h_mistag[0][1] = new TH1F("mist02", "rap mist==1", 50, 0., 3.5);
-  h_mistag[0][2] = new TH1F("mist03", "rap frac mist", 50, 0., 3.5);
-  h_mistag[0][2]->Sumw2();
-  h_mistag[1][0] = new TH1F("mist11", "pT all ", 50, 0., 20000.);
-  h_mistag[1][1] = new TH1F("mist12", "pT mist==1", 50, 0., 20000.);
-  h_mistag[1][2] = new TH1F("mist13", "pT frac mist", 50, 0., 20000.);
-  h_mistag[1][2]->Sumw2();
-  h_mistag[2][0] = new TH1F("mist21", "mass all ",
-			    50, amg.fit_win(0), amg.fit_win(1));
-  h_mistag[2][1] = new TH1F("mist22", "mass mist==1", 
-			    50, amg.fit_win(0), amg.fit_win(1));
-  h_mistag[2][2] = new TH1F("mist23", "mass frac mist",
-			    50, amg.fit_win(0), amg.fit_win(1));
-  h_mistag[2][2]->Sumw2();
-  h_mistag[3][0] = new TH1F("mist31", "cos_true all ", 50, 0., 1.);
-  h_mistag[3][1] = new TH1F("mist32", "cos_true mist==1", 50, 0., 1.);
-  h_mistag[3][2] = new TH1F("mist33", "cos_true frac mist", 50, 0., 1.);
-  h_mistag[3][2]->Sumw2();
-  h_mistag[4][0] = new TH1F("mist41", "dil pL all ",      50, 0., 5000.);
-  h_mistag[4][1] = new TH1F("mist42", "dil pL mist==1",   50, 0., 5000.);
-  h_mistag[4][2] = new TH1F("mist43", "dil pL frac mist", 50, 0., 5000.);
-  h_mistag[4][2]->Sumw2();
-  h_mistag[5][0] = new TH1F("mist41", "q pL all ",      50, 0., 1000.);
-  h_mistag[5][1] = new TH1F("mist42", "q pL mist==1",   50, 0., 1000.);
-  h_mistag[5][2] = new TH1F("mist43", "q pL frac mist", 50, 0., 1000.);
-  h_mistag[5][2]->Sumw2();
-  h2_mistag[0] = new TH2F("mist41", "q dil pL all", 
-			50, 0., 5000., 50, 0., 5000.);
-  h2_mistag[1] = new TH2F("mist42", "q dil pL mist==1",   
-			50, 0., 5000., 50, 0., 5000.);
-  h2_mistag[2] = new TH2F("mist41", "q dil pL all (reduced range)", 
-			25, 0., 500., 25, 0., 5000.);
-  h2_mistag[3] = new TH2F("mist42", "q dil pL mist==1 (reduced range)",   
-			25, 0., 500., 25, 0., 5000.);
-  h2_mistagProb = new TH2F("h2_mistagProb",
-			   "Mistag prob cos rap", nMistagBins, 
-			   0., 1., nMistagBins, 0., 3.5);
-  h2_pTrap = new TH2F("h2_pTrap", "Rap vs pT", nMistagBins, 0., 700., 
-		      nMistagBins, 0., 3.5);
-  h2_pTrap_mistag = new TH2F("h2_pTrap", "Rap vs pT, mistag == 1", nMistagBins,
-			     0., 700., nMistagBins, 0., 3.5);
-  h_rap_mistag_prob = new TH1F("h_rap_mistag_prob",
-			       "Mistag prob rap", 50, 0., 3.5);
-  h_cos_true_mistag_prob = new TH1F("h_cos_true_mistag_prob",
-				    "Mistag prob cos", 50, 0., 1.);
-  h_pL_mistag_prob = new TH1F("h_pL_mistag_prob",
-			      "Mistag prob pL", 50, 0., 5000.);
-  h2_pL_mistag_prob = new TH2F("h2_pL_mistag_prob",
-			       "Mistag prob dil pL vs quark pL", 
-			       25, 0., 500., 25, 0., 5000.);
-  h2_cos_cs_vs_true = new TH2F("h2_cos_cs_vs_true",
-			       "cos #theta_{true} vs cos #theta_{CS}",
-			       50, -1., 1., 50, -1., 1.);
-  h2_pTrap_mistag_prob = new TH2F("h2_pTrap_mistag_prob",
-				  "Mistag prob rap vs pT",
-				  nMistagBins, 0., 700., nMistagBins, 0., 3.5);
-}
-
-void Zprime2muAsymmetry::fillParamHistos(bool fakeData) {
-  // JMTBAD will we want to change these ever?
-  const bool PARAM_MISTAG = true;
-  const bool PARAM_MASS = true;
-  const bool PARAM_PT = true;
-  const bool PARAM_RAP = true;
-  const bool PARAM_PHICS = true;
-  const bool IGNORE_MASS_RANGE = false;
-
-  // Open the root files containing the extra generated sample, from which
-  // we extract the mistag parameterization
-  fwlite::ChainEvent ev(genSampleFiles);
-
-  int nentries = maxParamEvents > 0 ? maxParamEvents : ev.size();
-
-  edm::LogInfo("Zprime2muAsymmetry")
-    << "Loading sample parameters for asym fit using " << nentries
-    << " events from " << genSampleFiles.size() << " files beginning with "
-    << genSampleFiles[0];
-
-  int jentry = 0;
-  for (ev.toBegin(); !ev.atEnd() && jentry < nentries; ++ev, ++jentry) {
-    fwlite::Handle<reco::GenParticleCollection> genParticles;
-    genParticles.getByLabel(ev, "genParticles");
-
-    if (verbosity >= VERBOSITY_SIMPLE && jentry % 1000 == 0)
-      edm::LogVerbatim("fillParamHistos") << "fillParamHistos: " << jentry
-				  << " events processed";
-
-    // Remove effect from internal brem
-    AsymFitData data;
-    if (!computeFitQuantities(genParticles.ref(), jentry, data))
-      continue; // if finding the Z'/etc failed, skip this event
-
-    /*
-    // For some studies, it is useful to replace real data with data
-    // artificially created with any parameterization desired
-    if (fakeData) {
-      data.rapidity    = fake_rap[jentry];
-      data.cos_true    = fake_cos_true[jentry];
-      data.cos_cs      = fake_cos_cs[jentry];
-      data.mistag_true = fake_mistag_true[jentry];
-      data.mistag_cs = fake_mistag_cs[jentry];
-    }
-    */
-
-    // Store full mass spectrum of sample
-    if (PARAM_MASS)
-      h_mass_dil[0]->Fill(data.mass); 
-
-    // Fill events over window where sample was generated
-    if ((data.mass > asymFitManager.fit_win(0) &&
-	 data.mass < asymFitManager.fit_win(1)) || 
-	IGNORE_MASS_RANGE) {
-
-      // Fill mistag histos
-      if (PARAM_MISTAG) {
-	if (data.mistag_true == 0)
-	  h_rap_nomistag->Fill(fabs(data.rapidity));
-	else {
-	  h_rap_mistag->Fill(fabs(data.rapidity));
-	  h_mistag[0][1]->Fill(fabs(data.rapidity));
-	  h_mistag[1][1]->Fill(data.pT*data.pT);
-	  h_mistag[2][1]->Fill(data.mass);
-	  h_mistag[3][1]->Fill(fabs(data.cos_true));
-	  h_mistag[4][1]->Fill(fabs(data.pL));
-	  h_mistag[5][1]->Fill(fabs(data.qpL));
-	  h2_mistag[1]->Fill(fabs(data.qpL), fabs(data.pL));
-	  h2_mistag[3]->Fill(fabs(data.qpL), fabs(data.pL));
-	  h2_pTrap_mistag->Fill(fabs(data.pT*data.pT), fabs(data.rapidity));
-	}
-	h_mistag[0][0]->Fill(fabs(data.rapidity)); 
-	h_mistag[1][0]->Fill(data.pT*data.pT);
-	h_mistag[2][0]->Fill(data.mass);
-	h_mistag[3][0]->Fill(fabs(data.cos_true));
-	h_mistag[4][0]->Fill(fabs(data.pL));
-	h_mistag[5][0]->Fill(fabs(data.qpL));
-	h2_mistag[0]->Fill(fabs(data.qpL), fabs(data.pL));
-	h2_mistag[2]->Fill(fabs(data.qpL), fabs(data.pL));
-	h2_pTrap->Fill(fabs(data.pT*data.pT), fabs(data.rapidity));
-
-	// 2D mistag probability histos for cos_cs and rapidity
-	if (data.mistag_cs == 0)
-	  h2_rap_cos_nomistag->Fill(fabs(data.cos_cs), fabs(data.rapidity)); 
-	else
-	  h2_rap_cos_mistag->Fill(fabs(data.cos_cs), fabs(data.rapidity)); 
-	h2_rap_cos_p->Fill(fabs(data.cos_cs), fabs(data.rapidity));
-	
-	// These histos give small correction from fact of using CS cos 
-	// instead of true
-	if (data.mistag_true != data.mistag_cs)
-	  h_cos_mistag->Fill(fabs(data.cos_cs)); 
-	h_cos_cs->Fill(fabs(data.cos_cs));
-
-	// If you want to do convolution between CS cos and true
-	if (data.mistag_cs == data.mistag_true) {
-	  if (data.mistag_true == 0)
-	    h2_cos_cs_vs_true->Fill(data.cos_true, data.cos_cs);
-	  else 
-	    h2_cos_cs_vs_true->Fill(data.cos_true, -data.cos_cs);
-	}
-      }
-
-      // Fill mass histos, one histo with all events in generated window,
-      // one histo for events in reconstructed mass window, and another 
-      // for events within pythia signal window.
-	  
-      if (PARAM_MASS)
-	h_mass_dil[1]->Fill(data.mass);
-
-      // Parametrization for pT is done with pT^2.
-      if (PARAM_PT)
-	h_pt_dil->Fill(data.pT*data.pT);
-
-      // Fill histo with rapidity
-      if (PARAM_RAP) {
-	h_rap_dil[0]->Fill(fabs(data.rapidity));
-	h_rap_dil[1]->Fill(data.rapidity);
-      }
-
-      // Phi Collins-Soper is filled from 0. to Pi. (since probability
-      // between Pi and 2Pi is same as from 0 to Pi). 
-      if (PARAM_PHICS) {
-	if (data.phi_cs > TMath::Pi()) 
-	  h_phi_cs->Fill(data.phi_cs-TMath::Pi());
-	else
-	  h_phi_cs->Fill(data.phi_cs);
-      }
-    }
+  TTree* t = fs->make<TTree>("angDist", "generated pre-acceptance-cut cos_cs distribution");
+  double a;
+  t->Branch("cos_cs", &a, "cos_cs/D");
+  for (size_t i = 0; i < angDist.size(); i++) {
+    a = angDist[i];
+    t->Fill();
   }
-  
-  if (maxParamEvents < 0) maxParamEvents = jentry;
-  edm::LogVerbatim("fillParamHistos") << "fillParamHistos: " << jentry
-			      << " events processed";
-}
-
-// This routine calculates the quantities to be used in the multiple
-// dimension fit. Variables used in the fit are stored in the
-// structure "data" returned by reference.  The flag "internalBremOn",
-// is for switching on and off the effect of internal bremsstrahlung.
-bool Zprime2muAsymmetry::computeFitQuantities(const reco::GenParticleCollection& genParticles, 
-					      int eventNum,
-					      AsymFitData& data) {
-  static const bool debug = verbosity >= VERBOSITY_TOOMUCH;
-
-  HardInteraction hi;
-  hi.init(leptonFlavor, true);
-  hi.Fill(genParticles);
-  if (!hi.IsValid())
-    return false;
-
-  // Copy the four-vectors into TLorentzVectors, since our code uses
-  // those already
-  TLorentzVector v_dil, v_mum, v_mup, v_muq;
-  TLorentzVector v_my_dil, v_my_mum, v_my_mup;
-
-  v_muq.SetPxPyPzE(hi.quark->p4().x(), hi.quark->p4().y(), hi.quark->p4().z(),
-		   hi.quark->p4().e());
-  if (internalBremOn) {
-    v_my_mum.SetPxPyPzE(hi.lepMinus->p4().x(), hi.lepMinus->p4().y(),
-			hi.lepMinus->p4().z(), hi.lepMinus->p4().e());
-    v_my_mup.SetPxPyPzE(hi.lepPlus->p4().x(), hi.lepPlus->p4().y(),
-			hi.lepPlus->p4().z(), hi.lepPlus->p4().e());
-  } 
-  else {
-    v_my_mum.SetPxPyPzE(hi.lepMinusNoIB->p4().x(), hi.lepMinusNoIB->p4().y(),
-			hi.lepMinusNoIB->p4().z(), hi.lepMinusNoIB->p4().e());
-    v_my_mup.SetPxPyPzE(hi.lepPlusNoIB->p4().x(), hi.lepPlusNoIB->p4().y(),
-			hi.lepPlusNoIB->p4().z(), hi.lepPlusNoIB->p4().e());
-  }
-
-  // The 4-vector for the dimuon
-  v_my_dil = v_my_mum + v_my_mup;
-
-  // Store pt, rap, phi, mass, phi_cs, and cos_cs in a structure
-  data.cos_true = calcCosThetaTrue(v_muq, v_my_mum, v_my_dil, debug);
-  data.pT = v_my_dil.Pt();
-  data.rapidity = v_my_dil.Rapidity();
-  data.phi = v_my_dil.Phi();
-  data.mass = v_my_dil.M(); 
-  data.qpL = v_muq.Pz();
-  data.pL = v_my_dil.Pz();
-
-  // Cosine theta^* between mu- and the quark in the Z' CMS frame ("true"
-  // cos theta^*).
-  // JMTBAD calculated by calcCosThetaTrue above already
-  //math::XYZTLorentzVector mum_star = LorentzBoost(hi.genMom.res, hi.genMom.mum);
-  //math::XYZTLorentzVector quark_star = LorentzBoost(hi.genMom.res, hi.genMom.quark);
-  //float gen_cos_true = cosTheta(mum_star, quark_star);
-  
-  data.cos_cs = calcCosThetaCSAnal(v_my_mum.Pz(), v_my_mum.E(),
-				   v_my_mup.Pz(), v_my_mup.E(),
-				   v_my_dil.Pt(), v_my_dil.Pz(), 
-				   data.mass, debug);
-  data.phi_cs = calcPhiCSAnal(v_my_mum.Px(), v_my_mum.Py(),
-			      v_my_mup.Px(), v_my_mup.Py(),
-			      v_my_dil.Pt(), v_my_dil.Eta(), v_my_dil.Phi(),
-			      data.mass, debug);
-
-  // we will later assume the p_z of the dilepton is the p_z of the
-  // quark we've mistagged this if the quark was actually going the
-  // other direction.  translating from kir_anal.F, we looked at the
-  // dilepton formed from adding the muon final-state four-vectors
-  // (i.e., we ignored small effect of any brem):
-  // data.mistag_true = (v_my_dil.Pz()*hi.quark->p4().z() < 0) ? 1 : 0;
-  // but, since we have the true resonance four-vector:
-  data.mistag_true = (hi.resonance->p4().z()*hi.quark->p4().z() < 0) ? 1 : 0;
-  // alternatively, we've mistagged if the signs of cos_cs and
-  // cos_true are different
-  data.mistag_cs = (data.cos_cs/data.cos_true > 0) ? 0 : 1;
-
-  // Do some extra calculations to determine if event passed acceptance.
-  calc4Vectors(data, v_dil, v_mum, v_mup, debug);
-  data.cut_status = diRapAccept(v_dil, v_mum, v_mup);
-
-  return true;
-}
-
-void Zprime2muAsymmetry::getAsymParams() {
-  TFile* paramFile = 0; 
-    
-  if (useCachedParams) {
-    // first try to get the already calculated params from the file
-    try {
-      paramFile = new TFile(paramCacheFile.c_str(), "read");
-    }
-    catch (const cms::Exception& e) {
-      // Now CMSSW throws exceptions on almost all ROOT erorrs,
-      // including the file not existing above. Grr.
-    }
-
-    if (paramFile && paramFile->IsOpen()) {
-      // JMTBAD from here, assume that all the reading of the file works
-      edm::LogInfo("getAsymParams") << "Using cached parameterizations from "
-				    << paramCacheFile;
-      TArrayD* arr;
-      paramFile->GetObject("mistag_pars", arr);
-      for (int i = 0; i < 6; i++) mistag_pars[i] = arr->At(i);
-      paramFile->GetObject("mass_pars", arr);
-      for (int i = 0; i < 7; i++) mass_pars[i] = arr->At(i);
-      paramFile->GetObject("rap_pars", arr);
-      for (int i = 0; i < 5; i++) rap_pars[i] = arr->At(i);
-      paramFile->GetObject("pt_pars", arr);
-      for (int i = 0; i < 5; i++) pt_pars[i] = arr->At(i);
-      paramFile->GetObject("phi_cs_pars", arr);
-      for (int i = 0; i < 5; i++) phi_cs_pars[i] = arr->At(i);
-      TArrayI* iarr;
-      paramFile->GetObject("nMistagBins", iarr);
-      nMistagBins = iarr->At(0);
-      // JMTBAD having to delete the booked histograms
-      delete h2_mistagProb;
-      h2_mistagProb = (TH2F*)paramFile->Get("h2_mistagProb");
-      h2_mistagProb->SetDirectory(0);
-      delete h_rap_mistag_prob;
-      h_rap_mistag_prob = (TH1F*)paramFile->Get("h_rap_mistag_prob");
-      h_rap_mistag_prob->SetDirectory(0);
-      delete h_cos_true_mistag_prob;
-      h_cos_true_mistag_prob = (TH1F*)paramFile->Get("h_cos_true_mistag_prob");
-      h_cos_true_mistag_prob->SetDirectory(0);
-      delete h_pL_mistag_prob;
-      h_pL_mistag_prob = (TH1F*)paramFile->Get("h_pL_mistag_prob");
-      h_pL_mistag_prob->SetDirectory(0);
-      delete h2_pL_mistag_prob;
-      h2_pL_mistag_prob = (TH2F*)paramFile->Get("h2_pL_mistag_prob");
-      h2_pL_mistag_prob->SetDirectory(0);
-      delete h2_cos_cs_vs_true;
-      h2_cos_cs_vs_true = (TH2F*)paramFile->Get("h2_cos_cs_vs_true");
-      h2_cos_cs_vs_true->SetDirectory(0);
-      delete h2_pTrap_mistag_prob;
-      h2_pTrap_mistag_prob = (TH2F*)paramFile->Get("h2_pTrap_mistag_prob");
-      h2_pTrap_mistag_prob->SetDirectory(0);
-      paramFile->Close();
-      delete paramFile;
-      return;
-    }
-  }
-  
-  fillParamHistos(false);
-
-  TCanvas *c1 = new TCanvas("c1", "", 0, 1, 500, 700);
-  c1->SetTicks();
-
-  string filename = "fitParams.";
-  if (internalBremOn) filename += "ib.";
-  if (onPeak)
-    filename += "on";
-  else
-    filename += "off";
-  filename += "_peak." + outputFileBase + ".ps";
-
-  TPostScript* ps = new TPostScript(filename.c_str(), 111);
-
-  const int NUM_PAGES = 15;
-  TPad *pad[NUM_PAGES];
-  for (int i_page=0; i_page<NUM_PAGES; i_page++)
-    pad[i_page] = new TPad("","", .05, .05, .95, .93);
-
-  ostringstream page_print;
-  int page = 0;
-
-  TLatex ttl;
-
-  ps->NewPage();
-  c1->Clear();
-  c1->cd(0);
-  gStyle->SetOptStat(111111);
-  gStyle->SetOptFit(1111);
-  ttl.DrawLatex(.4, .95, "y of #mu^{+}#mu^{-} (mistag^{1})");
-  page_print.str(""); page_print << page + 1;
-  ttl.DrawLatex(.9, .02, page_print.str().c_str());
-  pad[page]->Draw();
-  pad[page]->Divide(2, 2);
-  pad[page]->cd(1);
-  TH1F* h_temp_rap = (TH1F*) h_rap_mistag->Clone();
-  h_temp_rap->Add(h_rap_nomistag);
-  h_temp_rap->Draw();
-  pad[page]->cd(2); 
-  h_rap_mistag->Draw();
-  pad[page]->cd(3); 
-  h_rap_nomistag->Draw();
-  h_rap_mistag_prob->Sumw2();
-  h_rap_mistag_prob->Divide(h_rap_mistag, h_temp_rap, 1., 1.);
-  pad[page]->cd(4);  h_rap_mistag_prob->Draw();
-  
-  const double MISTAG_LIM = 3.0;
-
-  //Fit rapidity efficiency to 0.5 + ax + bx^2
-  TF1 *f_rapmis=new TF1("f_rapmis","0.5+[0]*x+[1]*x*x", 0. , MISTAG_LIM);
-  f_rapmis->SetParameters(0., -0.2);
-  f_rapmis->SetParNames("p1","p2");
-  // JMTBAD here we use cout explicitly so that it will go to the same
-  // place as MINUIT's output in order to annotate it
-  cout << "\n#### Fitting quadratic f(x=0)=0.5 to rapidity mistag prob" << endl;
-  h_rap_mistag_prob->Fit("f_rapmis","VIR");
-  double min_rap = f_rapmis->GetMinimumX(0., MISTAG_LIM);
-  cout << "\n#### Minimum of function " << f_rapmis->GetMinimum(0., MISTAG_LIM)
-       << " occurs at rap = " << min_rap << endl;
-  mistag_pars[0] = f_rapmis->GetParameter(0);
-  mistag_pars[1] = f_rapmis->GetParameter(1);
-  mistag_pars[2] = min_rap;
-  delete f_rapmis;
-  page++;
-  c1->Update();
-
-  ps->NewPage();
-  c1->Clear();
-  c1->cd(0);
-  gStyle->SetOptStat(111111);
-  gStyle->SetOptFit(1111);
-  ttl.DrawLatex(.4, .95, 
-	  "cos#theta^{*}_{CS} of #mu^{+}#mu^{-} (mistag^{1} #neq mistag^{2})");
-  page_print.str(""); page_print << page + 1;
-  ttl.DrawLatex(.9, .02, page_print.str().c_str());
-  pad[page]->Draw();
-  pad[page]->Divide(2, 2);
-  pad[page]->cd(1);
-  h_cos_mistag->Draw();
-  pad[page]->cd(2); 
-  h_cos_cs->Draw();
-  pad[page]->cd(3); 
-  h_cos_mistag_prob->Divide(h_cos_mistag, h_cos_cs, 1., 1.);
-  h_cos_mistag_prob->Draw();  
-  pad[page]->cd(4); 
-  gPad->SetLogy(1);
-  h_cos_mistag_prob->Draw();  
-  TF1 *f_cosmis=new TF1("f_cosmis","[0]+[1]*exp(-[2]*x)", 0. , 1.);
-  f_cosmis->SetParameters(.25, .25, 10.);
-  f_cosmis->SetParNames("p0","p1","p2");
-  f_cosmis->SetParLimits(0, 0., 1.);
-  f_cosmis->SetParLimits(1, 0., 1.);
-  f_cosmis->SetParLimits(2, 0., 50.);
-  cout << "\n#### Fitting falling exp. to cos mistag prob" << endl;
-  h_cos_mistag_prob->Fit("f_cosmis","VIR");
-  mistag_pars[3] = f_cosmis->GetParameter(0);
-  mistag_pars[4] = f_cosmis->GetParameter(1);
-  mistag_pars[5] = f_cosmis->GetParameter(2);
-  delete f_cosmis;
-  page++;
-  c1->Update();
-  
-  ps->NewPage();
-  c1->Clear();
-  c1->cd(0);
-  ttl.DrawLatex(.4, .95, "y vs cos#theta^{*}_{CS} (mistag^{2})");
-  page_print.str(""); page_print << page + 1;
-  ttl.DrawLatex(.9, .02, page_print.str().c_str());
-  pad[page]->Draw();
-  pad[page]->Divide(2, 2);
-  pad[page]->cd(1);
-  gPad->SetPhi(210); h2_rap_cos_mistag->Draw("lego2");
-  pad[page]->cd(2);
-  gPad->SetPhi(210); h2_rap_cos_nomistag->Draw("lego2");
-  pad[page]->cd(3);
-  gPad->SetPhi(210); h2_rap_cos_p->Draw("lego2");
-  h2_mistagProb->Divide(h2_rap_cos_mistag, h2_rap_cos_p, 1., 1.);
-  pad[page]->cd(4);  
-  gPad->SetPhi(210); h2_mistagProb->Draw("lego2");
-  page++;
-  c1->Update();  
-  
-  ps->NewPage();
-  c1->Clear();
-  c1->cd(0);
-  //gStyle->SetOptStat(0);
-  //gStyle->SetOptFit(0);
-  ttl.DrawLatex(.4, .95, "Mass of #mu^{+}#mu^{-}");
-  page_print.str(""); page_print << page + 1;
-  ttl.DrawLatex(.9, .02, page_print.str().c_str());
-  pad[page]->Draw();
-  pad[page]->Divide(1, 2);
-  pad[page]->cd(1); 
-  TF1* f_mass = 0;
-  int nPars = 3;
-
-  const AsymFitManager& amg = asymFitManager;
-  
-  double par_norm = h_mass_dil[1]->Integral(h_mass_dil[1]->FindBin(amg.fit_win(0)), h_mass_dil[1]->FindBin(amg.fit_win(1)));
-  double par_mean = peakMass;
-  double par_fwhm = 2.*sqrt(par_mean);
-
-  if (amg.mass_type() == MASS_EXP) {
-    cout << "\n#### fitting falling exp to dil mass\n";
-    f_mass = new TF1("f_mass", expBckg,
-		     amg.fit_win(0), amg.fit_win(1), nPars);
-    f_mass->SetParNames("Norm",  "Slope", "Integral");
-    f_mass->SetParameters(par_norm, -1, 1.);
-    //f_mass->SetParLimits(0, 100., 1.e9);
-    //f_mass->SetParLimits(1, 0., -10.);
-    f_mass->FixParameter(2, 1.);
-  }
-  else if (amg.mass_type() == MASS_LOR) {
-    cout << "\n#### fitting Lorentzian to dil mass\n";
-    f_mass = new TF1("f_mass", Lorentzian, 
-		     amg.fit_win(0), amg.fit_win(1), nPars);
-    f_mass->SetParNames("Norm", "FWHM", "Mean");
-    f_mass->SetParameters(par_norm, par_fwhm, par_mean);
-  }
-  else if (amg.mass_type() == MASS_LOREXP) {
-    nPars = 6;
-    cout << "\n#### fitting Lorentzian plus exp background to dil mass\n";
-    f_mass = new TF1("f_mass", lorentzianPlusExpbckg, 
-		     amg.fit_win(0), amg.fit_win(1), nPars);
-    f_mass->SetParNames("NormSign", "FWHM", "Mean", "NormBckg",
-			   "SlopeBckg", "IntBckg");
-    f_mass->SetParameters(par_norm, par_fwhm, par_mean, 1000., -0.01, 1.);
-    // set these limits
-    f_mass->SetParLimits(0, 0, 1e9);
-    f_mass->SetParLimits(1, 0., 1000.);
-    f_mass->FixParameter(2, par_mean);
-    f_mass->SetParLimits(3, 0., 1e9);
-    f_mass->FixParameter(5, 1.);
-  }
-  else
-    throw cms::Exception("Zprime2muAsymmetry")
-      << amg.mass_type() << " is not a known mass fit type!\n";
-
-  h_mass_dil[0]->Draw(); //
-  pad[page]->cd(2); h_mass_dil[1]->Fit("f_mass", "VIL", "", amg.fit_win(0), amg.fit_win(1));;
-  double mass_norm = f_mass->Integral(amg.fit_win(0), amg.fit_win(1));
-  for (int i = 0; i < nPars; i++) mass_pars[i] = f_mass->GetParameter(i);
-  mass_pars[nPars] = mass_norm;
-  delete f_mass;
-  page++;
-  c1->Update();
-  
-  ps->NewPage();
-  c1->Clear();
-  c1->cd(0);
-  ttl.DrawLatex(.4, .95, "Fits to y of #mu^{+}#mu^{-}");
-  page_print.str(""); page_print << page + 1;
-  ttl.DrawLatex(.9, .02, page_print.str().c_str());
-  pad[page]->Draw();
-  pad[page]->Divide(1, 2);
-  pad[page]->cd(1); 
-  cout << "\n#### Fitting revised thermalized cylinder model to rapidity h_rap_dil\n";
-  TF1* f_rap_rtc = new TF1("f_rap_rtc", "[0]*(tanh(([1]*x)+[2]+[3])-tanh(([1]*x)-[2]+[3])+tanh(([1]*x)+[2]-[3])-tanh(([1]*x)-[2]-[3]))", 0., 4.0);
-  f_rap_rtc->SetParameters(50., 1., 1., 1.);
-  f_rap_rtc->SetParNames("p0", "p1", "p2", "p3");
-  h_rap_dil[0]->Fit("f_rap_rtc", "VL", "", 0., 3.5);
-  for (int i = 0; i < 4; i++) rap_pars[i] = f_rap_rtc->GetParameter(i);
-  rap_pars[4] = 2.*f_rap_rtc->Integral(0., 3.5);
-  delete f_rap_rtc;
-  page++;
-  c1->Update();
-    
-  ps->NewPage();
-  c1->Clear();
-  c1->cd(0);
-  ttl.DrawLatex(.4, .95, "pT^{2} of #mu^{+}#mu^{-}");
-  page_print.str(""); page_print << page + 1;
-  ttl.DrawLatex(.9, .02, page_print.str().c_str());
-  pad[page]->Draw();
-  pad[page]->Divide(1, 2);
-  pad[page]->cd(1); 
-  gPad->SetLogy(1);
-  h_pt_dil->Draw();
-  h_pt_dil->SetName("2 term exponential fit"); h_pt_dil->Draw();
-  cout << "\n#### Fitting 2 term exponential to dilepton pT^2" << endl;
-  //TF1 *f_2exp = new TF1("f_2exp", 
-  //"[0]*exp(-[1]*sqrt(x))*(x<5.e4)+[2]*exp(-[3]*sqrt(x))*(x>5.e4)", 0., 3.e6);
-  TF1 *f_2exp = new TF1("f_2exp", 
-       		"[0]*exp(-[1]*sqrt(x))+[2]*exp(-[3]*sqrt(x))", 0., 3.e6);
-  f_2exp->SetParameters(1.3e6, 3.9e-2, 9.5e3, 1.2e-2);
-  f_2exp->SetParNames("p0","p1","p2","p3");
-  f_2exp->SetParLimits(0, 0., 1.e7);
-  f_2exp->SetParLimits(1, 0., 1.);
-  f_2exp->SetParLimits(2, 0., 1.e7);
-  f_2exp->SetParLimits(3, 0., 1.);
-  h_pt_dil->Fit("f_2exp", "VIL", "", 0., 3.e6);
-  for (int i = 0; i < 4; i++) pt_pars[i] = f_2exp->GetParameter(i);
-  pt_pars[4] = f_2exp->Integral(0., 3.e6);
-  delete f_2exp;
-  page++;
-  c1->Update();
-  
-  ps->NewPage();
-  c1->Clear();
-  c1->cd(0);
-  ttl.DrawLatex(.4, .95, "#phi^{*}_{CS} of #mu^{+}#mu^{-}");
-  page_print.str(""); page_print << page + 1;
-  ttl.DrawLatex(.9, .02, page_print.str().c_str());
-  pad[page]->Draw();
-  pad[page]->Divide(1, 2);
-  pad[page]->cd(1); 
-  gStyle->SetOptStat(0000);  h_phi_cs->Draw();
-  h_phi_cs->SetName("x^y fit"); h_phi_cs->Draw();
-  cout << "\n#### Fitting to Collins-Soper phi" << endl;
-  TF1 *f_phics = new TF1("f_phics", "[0]+[1]*((x-[2])^8)", 0., 3.14);
-  f_phics->SetParNames("p0","p1","p2");
-  f_phics->SetParameter(0, 500.);
-  f_phics->SetParameter(1, 1.);
-  // set these limits
-  f_phics->SetParLimits(0, 0, 1e6);
-  f_phics->SetParLimits(1, 0, 1e6);
-  f_phics->FixParameter(2, 1.57);
-  h_phi_cs->Fit("f_phics", "VIL", "", 0., 3.14);
-  if (internalBremOn) {
-    for (int i = 0; i < 3; i++) phi_cs_pars[i] = f_phics->GetParameter(i);
-    phi_cs_pars[3] = 8.;
-    phi_cs_pars[4] = f_phics->Integral(0., 3.14);
-  }
-  else
-    for (int i = 0; i < 5; i++) phi_cs_pars[i] = -999.;
-  delete f_phics;
-  page++;
-  c1->Update();
-
-  ps->NewPage();
-  c1->Clear();
-  c1->cd(0);
-  ttl.DrawLatex(.4, .95, "cos #theta_{true} vs cos #theta_{CS}");
-  page_print.str(""); page_print << page + 1;
-  ttl.DrawLatex(.9, .02, page_print.str().c_str());
-  pad[page]->Draw();
-  pad[page]->cd(0);
-  h2_cos_cs_vs_true->Draw("lego2");
-  page++;
-  c1->Update();
-
-  ps->NewPage();
-  c1->Clear();
-  c1->cd(0);
-  gStyle->SetOptStat(111111);
-  gStyle->SetOptFit(1111);
-  ttl.DrawLatex(.3, .95, "Mistag Probability for Various Quantities");
-  page_print.str(""); page_print << page + 1;
-  ttl.DrawLatex(.9, .02, page_print.str().c_str());
-  pad[page]->Draw();
-  pad[page]->Divide(3, 6);
-  for (int i = 0; i < 6; i++) {
-    h_mistag[i][2]->Divide(h_mistag[i][1], h_mistag[i][0], 1., 1., "B");
-    pad[page]->cd(3*i+1);
-    h_mistag[i][0]->Draw();
-    pad[page]->cd(3*i+2);
-    h_mistag[i][1]->Draw();
-    pad[page]->cd(3*i+3);
-    h_mistag[i][2]->Draw("hist E");
-  }
-
-  // Calculate histogram which can be used to obtain mistag probability
-  h_cos_true_mistag_prob->Divide(h_mistag[3][1], h_mistag[3][0], 1., 1., "B");
-  h_pL_mistag_prob->Divide(h_mistag[4][1], h_mistag[4][0], 1., 1., "B");
-  page++;
-  c1->Update();
-
-  ps->NewPage();
-  c1->Clear();
-  c1->cd(0);
-  gStyle->SetOptStat(111111);
-  ttl.DrawLatex(.3, .95, "2D Mistag Probability (quark and dil pL)");
-  page_print.str(""); page_print << page + 1;
-  ttl.DrawLatex(.9, .02, page_print.str().c_str());
-  pad[page]->Draw();
-  pad[page]->Divide(2, 3);
-  for (int i = 0; i < 4; i++) {
-    h2_mistag[i]->GetXaxis()->SetTitle("quark pL");
-    h2_mistag[i]->GetYaxis()->SetTitle("dilepton pL");
-    h2_mistag[i]->GetYaxis()->SetTitleOffset(1.6);
-    pad[page]->cd(i+1); h2_mistag[i]->Draw();
-  }
-  h2_pL_mistag_prob->Sumw2();
-  h2_pL_mistag_prob->Divide(h2_mistag[3], h2_mistag[2], 1., 1., "B");
-  pad[page]->cd(5); 
-  h2_pL_mistag_prob->GetXaxis()->SetTitle("quark pL");
-  h2_pL_mistag_prob->GetXaxis()->SetTitleOffset(1.4);
-  h2_pL_mistag_prob->GetYaxis()->SetTitle("dilepton pL");
-  h2_pL_mistag_prob->GetYaxis()->SetTitleOffset(2.0);
-  h2_pL_mistag_prob->GetZaxis()->SetTitle("mistag probability");
-  h2_pL_mistag_prob->GetZaxis()->SetTitleOffset(1.5);
-  gPad->SetPhi(210); h2_pL_mistag_prob->Draw("lego2");
-  page++;
-  c1->Update();
-
-  ps->NewPage();
-  c1->Clear();
-  c1->cd(0);
-  gStyle->SetOptStat(111111);
-  ttl.DrawLatex(.3, .95, "2D Mistag Probability dil pT and rap");
-  page_print.str(""); page_print << page + 1;
-  ttl.DrawLatex(.9, .02, page_print.str().c_str());
-  pad[page]->Draw();
-  pad[page]->Divide(2, 2);
-  pad[page]->cd(1); h2_pTrap_mistag->Draw();
-  pad[page]->cd(2); h2_pTrap->Draw();
-  pad[page]->cd(3);
-  h2_pTrap_mistag_prob->Sumw2();
-  h2_pTrap_mistag_prob->Divide(h2_pTrap_mistag, h2_pTrap, 1., 1., "B");
-  h2_pTrap_mistag_prob->GetXaxis()->SetTitle("pT*pT");
-  h2_pTrap_mistag_prob->GetXaxis()->SetTitleOffset(1.4);
-  h2_pTrap_mistag_prob->GetYaxis()->SetTitle("Y");
-  h2_pTrap_mistag_prob->GetYaxis()->SetTitleOffset(2.0);
-  h2_pTrap_mistag_prob->GetZaxis()->SetTitle("mistag probability");
-  h2_pTrap_mistag_prob->GetZaxis()->SetTitleOffset(1.5);
-  gPad->SetPhi(210); h2_pTrap_mistag_prob->Draw("lego2");
-  page++;
-  c1->Update();
-
-  // now write out all the calculated parameters and associated histos
-  // to the cache file
-  paramFile = new TFile(paramCacheFile.c_str(), "recreate");
-  if (paramFile->IsOpen()) {
-    TArrayD arr;
-    arr.Set(6, mistag_pars);
-    paramFile->WriteObject(&arr, "mistag_pars");
-    arr.Set(7, mass_pars);
-    paramFile->WriteObject(&arr, "mass_pars");
-    arr.Set(5, rap_pars);
-    paramFile->WriteObject(&arr, "rap_pars");
-    arr.Set(5, pt_pars);
-    paramFile->WriteObject(&arr, "pt_pars");
-    arr.Set(5, phi_cs_pars);
-    paramFile->WriteObject(&arr, "phi_cs_pars");
-    TArrayI iarr(1);
-    iarr.AddAt(nMistagBins, 0);
-    paramFile->WriteObject(&iarr, "nMistagBins");
-
-    h2_mistagProb->Write();
-    h2_mistagProb->SetDirectory(0);
-    h_rap_mistag_prob->Write();
-    h_rap_mistag_prob->SetDirectory(0);
-    h_cos_true_mistag_prob->Write(); 
-    h_cos_true_mistag_prob->SetDirectory(0);
-    h_pL_mistag_prob->Write();
-    h_pL_mistag_prob->SetDirectory(0);
-    h2_pL_mistag_prob->Write();
-    h2_pL_mistag_prob->SetDirectory(0);
-    h2_cos_cs_vs_true->Write();
-    h2_cos_cs_vs_true->SetDirectory(0);
-    h2_pTrap_mistag_prob->Write();
-    h2_pTrap_mistag_prob->SetDirectory(0);
-
-    paramFile->Close();
-  }
-  delete paramFile;
-
-  ps->Close(); 
-
-  delete ps;
-  delete c1;
 }
 
 // Initialize and return a new TFMultiD object which interfaces the 
@@ -2217,8 +1373,7 @@ void Zprime2muAsymmetry::evalLikelihoods() {
   };
 
   fstream LRfile;
-  string filename = "likelihoods." + outputFileBase + "." +
-    fit_type[fitTypeLR] + ".txt";
+  string filename = "likelihoods." + fit_type[fitTypeLR] + ".txt";
   LRfile.open(filename.c_str(), ios::out);
 
   LRfile << "#n2fit=" << n2fit << endl;
@@ -2255,8 +1410,7 @@ void Zprime2muAsymmetry::fitAsymmetry() {
   // Do the asymmetry fit using different combinations:
   // generated/reconstructed data, smearing on/off
 
-  string filename = "recAsymFit." + string(onPeak ? "on" : "off") +
-    "_peak." + outputFileBase + ".txt";
+  string filename = "recAsymFit.txt";
   fstream outfile;
   outfile.open(filename.c_str(), ios::out);
 
@@ -2269,36 +1423,9 @@ void Zprime2muAsymmetry::fitAsymmetry() {
   outfile << "Acceptance in diRapAccept: "
 	  << MUM_ETA_LIM[0] << " < eta mu- < " << MUM_ETA_LIM[1] << "; "
 	  << MUP_ETA_LIM[0] << " < eta mu+ < " << MUP_ETA_LIM[1] << endl;
-  outfile << "Mistag correction in asym2D/6D is " 
-	  << (correctMistags ? "on" : "off") << endl;
-  outfile << "Parameterization from " << maxParamEvents << " events from "
-	  << genSampleFiles.size() << " files beginning with "
-	  << genSampleFiles[0] << endl;
+  outfile << "Parameterization from " << paramCacheFile << endl;
 
-  if (useMistagHist)
-    outfile << "2D histogram used for mistag probability\n";
-  else {
-    outfile << endl;
-    outfile << setw(15) << "mistag_pars = ";
-    for (int i = 0; i < 6; i++)
-      outfile << setw(9) << setprecision(3) << mistag_pars[i] << " "; 
-  }
-  outfile << endl << setw(15) << "rap_pars = ";
-  for (int i = 0; i < 5; i++)
-    outfile << setw(9) << setprecision(3) << rap_pars[i] << " "; 
-  outfile << endl << setw(15) << "pt_pars = ";
-  for (int i = 0; i < 5; i++)
-    outfile << setw(9) << setprecision(3) << pt_pars[i] << " "; 
-  outfile << endl << setw(15) << "phi_cs_pars = ";
-  for (int i = 0; i < 5; i++)
-    outfile << setw(9) << setprecision(3) << phi_cs_pars[i] << " "; 
-  outfile << endl << setw(15) << "mass_pars = ";
-  for (int i = 0; i < 7; i++)
-    outfile << setw(9) << setprecision(3) << mass_pars[i] << " "; 
-  outfile << endl << setw(15) << "sigma = ";
-  for (int i = 0; i < 6; i++)
-    outfile << setw(9) << setprecision(3) 
-	    << asymFitManager.rec_sigma(i) << " ";
+  outfile << "AsymFitManager:\n" << asymFitManager << "\n";
 
   outfile << "\n\n" << nSmearPoints << " points used in smear\n";
   outfile << nSigma << " sigma used in smear\n";
@@ -2530,7 +1657,7 @@ void Zprime2muAsymmetry::fitAsymmetry() {
 
 void Zprime2muAsymmetry::drawFitHistos() {
   TCanvas *c1 = new TCanvas("c1", "", 0, 0, 500, 700);
-  string filename = "fitHistos." + outputFileBase + ".ps";
+  string filename = "fitHistos.ps";
   TPostScript *ps = new TPostScript(filename.c_str(), 111);
 
   const int NUM_PAGES = 20;
@@ -2995,6 +2122,29 @@ void Zprime2muAsymmetry::drawFitHistos() {
   ps->NewPage();
   c1->Clear();
   c1->cd(0);
+  title = new TPaveLabel(0.1,0.94,0.9,0.98, "acceptance vs cos_theta_cs");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+  pad[page]->Draw();
+  pad[page]->cd(0);
+  pad[page]->Divide(2, 2);
+  pad[page]->cd(1);
+  h_cos_theta_cs_acc_fixed->Fit(f_cos, "ILVER", "", -.8, .8);
+  pad[page]->cd(2);
+  TH1F* hacc = (TH1F*)h_cos_theta_cs_acc_fixed->Clone("hacc");
+  hacc->SetTitle("acceptance");
+  hacc->SetStats(0);
+  hacc->SetMinimum(0);
+  hacc->SetMaximum(1.05);
+  hacc->Divide(h_cos_theta_cs_fixed);
+  hacc->Draw("hist");
+  c1->Update();
+
+  ps->NewPage();
+  c1->Clear();
+  c1->cd(0);
   title = new TPaveLabel(0.1,0.94,0.9,0.98, "cos#theta_{CS} (rec)");
   title->SetFillColor(10);
   title->Draw();
@@ -3112,7 +2262,7 @@ void Zprime2muAsymmetry::fitCosCS(TH1F* cos_hist, int params) {
 
 void Zprime2muAsymmetry::drawFrameHistos() {
   TCanvas *c1 = new TCanvas("c1", "", 0, 0, 500, 700);
-  string fname = "diffFrameAsym." + outputFileBase + ".ps";
+  string fname = "diffFrameAsym.ps";
   TPostScript *ps = new TPostScript(fname.c_str(), 111);
 
   const int NUM_PAGES = 80;
@@ -3260,9 +2410,9 @@ void Zprime2muAsymmetry::drawFrameHistos() {
     t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
     pad[page]->Draw();
     pad[page]->Divide(2,3);
-    for (int j = 0; j < 3; j++) {
-      pad[page]->cd(2*j+1);  AsymMBoostCut[j][j]->Draw();
-      pad[page]->cd(2*j+2);  AsymMBoostCut[j][j+3]->Draw();
+    for (int k = 0; k < 3; k++) {
+      pad[page]->cd(2*k+1);  AsymMBoostCut[j][k]->Draw();
+      pad[page]->cd(2*k+2);  AsymMBoostCut[j][k+3]->Draw();
     }
     c1->Update();
   }
@@ -3293,40 +2443,6 @@ void Zprime2muAsymmetry::drawFrameHistos() {
 
   delete c1;
   delete ps;
-}
-
-void Zprime2muAsymmetry::deleteHistos() {
-  // These are histos from ParamHistos which we manage ourselves; the
-  // rest are managed by the TFileService and thus we do not need to
-  // delete them ourselves.
-  delete h_pt_dil;
-  for (int i = 0; i < 2; i++) {
-    delete h_rap_dil[i];
-    delete h_mass_dil[i];
-  }
-  delete h_phi_cs;
-  delete h_rap_mistag;
-  delete h_rap_nomistag;
-  delete h_cos_mistag;
-  delete h_cos_cs;
-  delete h_cos_mistag_prob;
-  delete h2_rap_cos_mistag;
-  delete h2_rap_cos_nomistag;
-  delete h2_rap_cos_p;
-  for (int i = 0; i < 6; i++)
-    for (int j = 0; j < 3; j++)
-      delete h_mistag[i][j];
-  for (int i = 0; i < 4; i++)
-    delete h2_mistag[i];
-  delete h2_mistagProb;
-  delete h2_pTrap;
-  delete h2_pTrap_mistag;
-  delete h_rap_mistag_prob;
-  delete h_cos_true_mistag_prob;
-  delete h_pL_mistag_prob; 
-  delete h2_pL_mistag_prob;
-  delete h2_cos_cs_vs_true;
-  delete h2_pTrap_mistag_prob;
 }
 
 DEFINE_FWK_MODULE(Zprime2muAsymmetry);

@@ -205,7 +205,7 @@ void Zprime2muTrigComparison::compareTrigDecision(const edm::Event& event) const
 	<< " homemade: " << homemade_trigbits << " +++";
       
       if (verbosity == VERBOSITY_NONE)
-	dumpEvent(true);
+	dumpEvent(event, true);
     }
   }
 

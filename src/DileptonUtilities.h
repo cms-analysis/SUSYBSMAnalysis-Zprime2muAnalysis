@@ -4,7 +4,6 @@
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/Candidate/interface/CompositeCandidate.h"
 #include "DataFormats/Candidate/interface/CompositeCandidateFwd.h"
-#include "FWCore/Framework/interface/Event.h"
 
 // Sorting functor for dileptons. Using std::sort results in dileptons
 // reverse-sorted by invariant mass.
@@ -21,25 +20,6 @@ struct reverse_mass_sort {
 // invariant mass.
 void removeDileptonOverlap(reco::CompositeCandidateCollection& dileptons,
 			   const bool debug=false);
-
-// Take the input dileptons in dils (e.g. the output of CandCombiner)
-// which have only the combinatorics done, and put only the dileptons
-// that correspond to generator-level resonances into newDils.
-void genDileptonsOnly(const reco::CompositeCandidateCollection& dils,
-		      reco::CompositeCandidateCollection& newDils,
-		      const bool debug=false);
-
-// Take the input dileptons in dils (e.g. the output of CandCombiner)
-// which have only the combinatorics done, and apply the
-// analysis-level cuts (specified by a bitmask) to them. If both PDG
-// ids are nonzero, cut out the dileptons that are not made up of the
-// requested leptons. (Useful for separating mu+mu+ from mu-mu- in the
-// output of CandCombiner.)
-void cutDileptons(const edm::Event& event,
-		  const reco::CompositeCandidateCollection& dils,
-		  reco::CompositeCandidateCollection& newDils,
-		  unsigned cuts, int pdgId1=0, int pdgId2=0,
-		  const bool debug=false);
 
 // Count the number of daughters the dilepton has in the specified
 // acceptance in eta.

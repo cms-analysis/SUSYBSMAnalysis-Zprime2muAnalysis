@@ -11,6 +11,7 @@
 #include "TF1.h"
 #include "TFile.h"
 #include "TLatex.h"
+#include "TLorentzVector.h"
 #include "TMath.h"
 #include "TPad.h"
 #include "TPaveLabel.h"
@@ -744,6 +745,9 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 }
 
 void Zprime2muAsymmetry::fillFrameHistos() {
+  if (!trigDecision.pass())
+    return;
+
   // Calculate cosine theta^* in various frames.
   bool debug = verbosity >= VERBOSITY_TOOMUCH;
 
@@ -759,10 +763,6 @@ void Zprime2muAsymmetry::fillFrameHistos() {
   TVector3 temp3;
 
   for (int i_rec = 0; i_rec < 2; i_rec++) {
-    // Trigger decision
-    if (i_rec <= lL3 && !trigDecision.pass(i_rec))
-      break;
-
     //Look for an opposite-sign dilepton at this level of reconstruction.
 
     const reco::CompositeCandidateCollection& dileptons = 

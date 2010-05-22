@@ -5,8 +5,6 @@
 #include <vector>
 #include <string>
 
-#include "TLorentzVector.h"
-
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 #include "FWCore/Framework/interface/EDAnalyzer.h"
@@ -43,7 +41,7 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
 
   // Dump the event, printing out the specified information at each
   // level of lepton reconstruction.
-  virtual void dumpEvent(const bool trigOnly=false) const;
+  virtual void dumpEvent(const edm::Event&, const bool trigOnly=false) const;
 
  protected:
   ////////////////////////////////////////////////////////////////////
@@ -90,12 +88,6 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   ////////////////////////////////////////////////////////////////////
   // Event data
   ////////////////////////////////////////////////////////////////////
-  
-  // Keep track of the event number for printing out.
-  int eventNum;
-
-  // Keep track of how many events total have been processed.
-  int eventsDone;
 
   // A handle to the TFileService for convenience.
   edm::Service<TFileService> fs;
@@ -123,10 +115,6 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   ////////////////////////////////////////////////////////////////////
   // General utility
   ////////////////////////////////////////////////////////////////////
-  
-  // Return whether the rec level might be empty, based on the
-  // useGen/Sim/Reco/etc. flags.
-  bool skipRecLevel(const int level) const;
 
   // Get the invariant mass of the two leptons plus their closest
   // photons (what we've in the past called the "resonance").

@@ -29,9 +29,7 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
     useReco(config.getParameter<bool>("useReco")),
     useOtherMuonRecos(config.getParameter<bool>("useOtherMuonRecos")),
     usingAODOnly(config.getParameter<bool>("usingAODOnly")),
-    lBest(config.getParameter<int>("bestRecLevel")),
-    eventNum(-1),
-    eventsDone(0)
+    lBest(config.getParameter<int>("bestRecLevel"))
 {
   InitROOT();
 
@@ -57,13 +55,6 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
 
 void Zprime2muAnalysis::analyze(const edm::Event& event,
 				const edm::EventSetup& eSetup) {
-  // We could store the whole event/eventsetup object if needed, but
-  // for now just store the event number.
-  eventNum = event.id().event();
- 
-  // Keep track of how many events we run over total.
-  eventsDone++;
-
   // Get the trigger decision from the event. For now, don't bother
   // looking at sub-levels since L2 decisions are no longer stored in
   // the event. JMTBAD For L2, we could take the result of
@@ -90,15 +81,7 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   
   // Dump the event if appropriate.
   if (verbosity >= VERBOSITY_SIMPLE)
-    dumpEvent();
-}
-
-bool Zprime2muAnalysis::skipRecLevel(const int level) const {
-  return
-    (level == lGN && !useGen && !useSim) ||
-    (!useTrigger && level >= lL1 && level <= lL3) ||
-    (!useReco && level >= lGR) ||
-    (!useOtherMuonRecos && level >= lFS && level <= lPR);
+    dumpEvent(event);
 }
 
 double Zprime2muAnalysis::resonanceMass(const reco::CompositeCandidate& dil) const {
@@ -128,13 +111,12 @@ double Zprime2muAnalysis::resonanceMass(const reco::CompositeCandidate& dil) con
   return p4.mass();
 }
 
-void Zprime2muAnalysis::dumpEvent(const bool trigOnly) const {
+void Zprime2muAnalysis::dumpEvent(const edm::Event& event, const bool trigOnly) const {
   unsigned imu, idil;
   int irec;
   ostringstream out;
 
-  out << "\n******************************** Event " << eventNum
-      << " (" << eventsDone << ")\n";
+  out << "\n******************************** Run " << event.id().run()  << " Lumi " << event.luminosityBlock() << " Event " << event.id().event() << "\n";
 
   int imax = trigOnly ? lL3+1 : MAX_LEVELS;
   for (irec = trigOnly ? lL1 : lGN; irec < imax; irec++) {

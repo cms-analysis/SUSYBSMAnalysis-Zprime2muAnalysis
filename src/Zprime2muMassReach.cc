@@ -33,9 +33,9 @@ int Zprime2muMassReach::nfit_recmass_used[NF] = {0};
 // Generated and reconstructed mass, gen. and rec. event number, and sample id.
 double Zprime2muMassReach::fit_genmass[NF][MASS_FIT_ARRAY_SIZE] = {{0.}};
 double Zprime2muMassReach::fit_recmass[NF][MASS_FIT_ARRAY_SIZE] = {{0.}};
-int    Zprime2muMassReach::fit_genevent[NF][MASS_FIT_ARRAY_SIZE] = {{0}};
-int    Zprime2muMassReach::fit_recevent[NF][MASS_FIT_ARRAY_SIZE] = {{0}};
-int    Zprime2muMassReach::fit_sid[NF] = {0};
+unsigned Zprime2muMassReach::fit_genevent[NF][MASS_FIT_ARRAY_SIZE] = {{0}};
+unsigned Zprime2muMassReach::fit_recevent[NF][MASS_FIT_ARRAY_SIZE] = {{0}};
+int Zprime2muMassReach::fit_sid[NF] = {0};
 
 const double Zprime2muMassReach::fwhm_over_sigma = 2.*sqrt(2.*log(2.));
 
@@ -85,6 +85,8 @@ void Zprime2muMassReach::analyze(const edm::Event& event,
 				 const edm::EventSetup& eSetup) {
   // delegate filling our muon vectors to the parent class
   Zprime2muAnalysis::analyze(event, eSetup);
+
+  eventNum = event.id().event(); // not unique in data but the code that uses this needs reworking anyway...
 
   // JMTBAD Previously, we loaded three separate files in each job:
   // signal, DY background, and DY auxillary background. We can still

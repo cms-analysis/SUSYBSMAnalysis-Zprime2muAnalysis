@@ -68,6 +68,7 @@ class Zprime2muMassReach : public Zprime2muAnalysis {
 
   int eventCount; // sequential event counter (not the official event number!)
   int fileNum;
+  unsigned eventNum;
 
   // Configuration parameters:
   std::string psFile;
@@ -108,8 +109,8 @@ class Zprime2muMassReach : public Zprime2muAnalysis {
   static double fit_genmass[NF][MASS_FIT_ARRAY_SIZE];
   static double fit_recmass[NF][MASS_FIT_ARRAY_SIZE];
   // generated and reconstructed event number
-  static int fit_genevent[NF][MASS_FIT_ARRAY_SIZE];
-  static int fit_recevent[NF][MASS_FIT_ARRAY_SIZE];
+  static unsigned fit_genevent[NF][MASS_FIT_ARRAY_SIZE];
+  static unsigned fit_recevent[NF][MASS_FIT_ARRAY_SIZE];
   // sample ids
   static int fit_sid[NF];
 

@@ -1,6 +1,7 @@
 #include <ostream>
 
 #include "DataFormats/Candidate/interface/Candidate.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/EgammaCandidates/interface/GsfElectron.h"
 #include "DataFormats/JetReco/interface/CaloJet.h"
 #include "DataFormats/Math/interface/deltaR.h"
@@ -9,9 +10,9 @@
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
+
+#include "FWCore/Common/interface/TriggerNames.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "DataFormats/Common/interface/TriggerResults.h"
-#include "FWCore/Framework/interface/TriggerNames.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/CutHelper.h"
@@ -80,8 +81,7 @@ void CutHelper::_cacheTrigger() {
 
   edm::Handle<edm::TriggerResults> hltRes;
   event->getByLabel(InputTag("TriggerResults::HLT"), hltRes);
-  edm::TriggerNames hltTrigNames;
-  hltTrigNames.init(*hltRes);
+  const edm::TriggerNames& hltTrigNames = event->triggerNames(*hltRes);
 
   vector<string> hltPaths;
   // JMTBAD fix paths

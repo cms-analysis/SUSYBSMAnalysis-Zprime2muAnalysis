@@ -15,9 +15,9 @@
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 
+#include "FWCore/Common/interface/TriggerNames.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/Framework/interface/TriggerNames.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 
@@ -156,8 +156,7 @@ void jmt_event_add_etc(jmt_event_t& ev, const edm::Event& event) {
 
   edm::Handle<edm::TriggerResults> hltRes;
   if (getByLabel(event, hltRes, edm::InputTag("TriggerResults::HLT"))) {
-    edm::TriggerNames hltTrigNames;
-    hltTrigNames.init(*hltRes);
+    const edm::TriggerNames& hltTrigNames = event.triggerNames(*hltRes);
     
     for (unsigned i = 0; i < nPaths; ++i) {
       int ndx = hltTrigNames.triggerIndex(hltPaths[i]);

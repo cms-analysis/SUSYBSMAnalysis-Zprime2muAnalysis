@@ -5,7 +5,7 @@
 #include "DataFormats/HLTReco/interface/TriggerObject.h"
 #include "DataFormats/HLTReco/interface/TriggerTypeDefs.h"
 
-#include "FWCore/Framework/interface/TriggerNames.h"
+#include "FWCore/Common/interface/TriggerNames.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TriggerDecision.h"
@@ -80,7 +80,7 @@ void TriggerDecision::storeHLTDecision(const edm::Event& event) {
   event.getByLabel(hltResults, hltRes);
 
   // Get the map between path names and indices.
-  edm::TriggerNames hltTrigNames(*hltRes);
+  const edm::TriggerNames& hltTrigNames = event.triggerNames(*hltRes);
 
   ostringstream out;
   if (debug) out << "storeHLTDecision:\n";

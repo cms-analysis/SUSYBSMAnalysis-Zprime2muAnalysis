@@ -29,3 +29,21 @@
   <use name=DataFormats/HLTReco>
   <use name=DataFormats/RecoCandidate>
 </library>
+
+<library file=Zprime2muLeptonProducer.cc,../src/PATUtilities.cc,../src/MuonCocktails.cc name=Zprime2muLeptonProducer>
+  <use name=CommonTools/Utils>
+  <use name=DataFormats/PatCandidates>
+</library>
+
+<library file=PATCandViewShallowCloneCombiner.cc name=PATCandViewShallowCloneCombiner>
+  <use name=DataFormats/PatCandidates>
+  <use name=CommonTools/CandAlgos>
+  <use name=CommonTools/CandUtils>
+  <use name=CommonTools/UtilAlgos>
+  <use name=PhysicsTools/PatUtils>
+</library>
+
+<library file=Zprime2muCompositeCandidatePicker.cc name=Zprime2muCompositeCandidatePicker>
+  <use name=CommonTools/Utils>
+  <use name=DataFormats/PatCandidates>
+</library>

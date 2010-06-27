@@ -10,16 +10,16 @@ namespace edm {
   class EventSetup;
 }
 
+namespace pat {
+  class CompositeCandidate;
+}
+
 class Zprime2muHelper {
  public:
   Zprime2muHelper(const edm::ParameterSet&);
 
   void initEvent(const edm::Event&, const edm::EventSetup&);
   reco::Particle::LorentzVector resonanceP4(const pat::CompositeCandidate&) const;
-
-  // verbosity controls the amount of debugging information printed
-  enum Verbosity { V_NONE, V_SIMPLE, V_LOTS, V_TOOMUCH };
-  const Verbosity verbosity;
 
   // Keep this many highest-invariant-mass dileptons.
   const unsigned maxDileptons;

@@ -28,7 +28,7 @@ TLorentzVector makeTLV(const reco::Candidate::LorentzVector& lv);
 // loops when booking histos.
 TString nameHist(const char* name, Long_t i, Long_t j=-1, Long_t k=-1, Long_t l=-1, Long_t m=-1);
 
-void InitROOT();
+void InitROOT(bool date_histograms=true);
 
 ////////////////////////////////////////////////////////////////////
 // Lepton/dilepton acceptance

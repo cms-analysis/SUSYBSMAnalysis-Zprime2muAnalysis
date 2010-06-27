@@ -59,11 +59,13 @@ TString nameHist(const char* name, Long_t i, Long_t j, Long_t k, Long_t l, Long_
   return s;
 }
 
-void InitROOT() {
+void InitROOT(bool date_histograms) {
 #ifdef PTDRSTYLE
   TH1::AddDirectory(false);
   setTDRStyle();
 #else
+  if (!date_histograms)
+    gStyle->SetOptDate(0);
   gROOT->SetStyle("Plain");
   gStyle->SetFillColor(0);
   gStyle->SetOptDate();

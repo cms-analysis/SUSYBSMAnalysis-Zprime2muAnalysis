@@ -114,7 +114,8 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                                  tevMuons='tevMuons',
                                  hltProcessName='HLT',
                                  processName='Zprime2muAnalysis',
-                                 fromNtuple=False):
+                                 fromNtuple=False,
+                                 processObj=None):
     '''Return a CMSSW process for running Zprime2muAnalysis-derived
     code. See e.g. testZprime2muResolution_cfg.py for example use.
 
@@ -305,53 +306,84 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         need_global_tag = True
         need_l1extra = True
 
-    ####################################################################
-    ## Set up the CMSSW process and useful services.
-    ####################################################################
+    if processObj is None:
+        ####################################################################
+        ## Set up the CMSSW process and useful services.
+        ####################################################################
 
-    if fromNtuple and processName == 'Zprime2muAnalysis':
-        processName += '2'
+        if fromNtuple and processName == 'Zprime2muAnalysis':
+            processName += '2'
 
-    process = cms.Process(processName)
+        process = cms.Process(processName)
 
-    if fileNames:
-        process.source = cms.Source(
-            'PoolSource',
-            fileNames = cms.untracked.vstring(*fileNames)
+        if fileNames:
+            process.source = cms.Source(
+                'PoolSource',
+                fileNames = cms.untracked.vstring(*fileNames)
+                )
+            print 'Setting noDuplicateCheck mode...'
+            process.source.duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
+
+        process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(maxEvents))
+
+        process.options = cms.untracked.PSet(
+            #IgnoreCompletely = cms.untracked.vstring('ProductNotFound')
             )
-        print 'Setting noDuplicateCheck mode...'
-        process.source.duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
 
-    process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(maxEvents))
+        process.load('FWCore.MessageLogger.MessageLogger_cfi')
+        process.MessageLogger.cerr.FwkReport.reportEvery = 200
 
-    process.options = cms.untracked.PSet(
-        #IgnoreCompletely = cms.untracked.vstring('ProductNotFound')
-        )
+        if __debug:
+            process.options.wantSummary = cms.untracked.bool(True)
+            process.Tracer = cms.Service('Tracer')
+            process.SimpleMemoryCheck = cms.Service('SimpleMemoryCheck')
 
-    process.load('FWCore.MessageLogger.MessageLogger_cfi')
-    process.MessageLogger.cerr.FwkReport.reportEvery = 200
+        process.TFileService = cms.Service('TFileService', fileName = cms.string('zp2mu_histos.root'))
 
-    if __debug:
-        process.options.wantSummary = cms.untracked.bool(True)
-        process.Tracer = cms.Service('Tracer')
-        process.SimpleMemoryCheck = cms.Service('SimpleMemoryCheck')
-    
-    process.TFileService = cms.Service('TFileService', fileName = cms.string('zp2mu_histos.root'))
+        # If doing reconstruction or the PAT, need some common things
+        # like geometry, magnetic field, and conditions.
+        if not skipPAT:
+            process.load("Configuration.StandardSequences.Geometry_cff")
+            process.load("Configuration.StandardSequences.MagneticField_cff")
+            need_global_tag = True
 
-    # If doing reconstruction or the PAT, need some common things
-    # like geometry, magnetic field, and conditions.
-    if not skipPAT:
-        process.load("Configuration.StandardSequences.Geometry_cff")
-        process.load("Configuration.StandardSequences.MagneticField_cff")
-        need_global_tag = True
+        if need_global_tag:
+            process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+            process.GlobalTag.globaltag = cms.string(conditionsGlobalTag)
 
-    if need_global_tag:
-        process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-        process.GlobalTag.globaltag = cms.string(conditionsGlobalTag)
+        if useGen and dumpHardInteraction:
+            process.include("SimGeneral/HepPDTESSource/data/pythiapdt.cfi")
+            process.printTree = cms.EDAnalyzer(
+                'ParticleListDrawer',
+                maxEventsToPrint = cms.untracked.int32(-1),
+                src = cms.InputTag('genParticles'),
+                printOnlyHardInteraction = cms.untracked.bool(True),
+                useMessageLogger = cms.untracked.bool(True)
+                )
+            process.ptree = cms.Path(process.printTree)
+
+        if useTrigger and dumpTriggerSummary:
+            process.load('L1Trigger.L1ExtraFromDigis.l1extratest_cfi')
+            process.trigAnalyzer = cms.EDAnalyzer(
+                'TriggerSummaryAnalyzerAOD',
+                inputTag = cms.InputTag('hltTriggerSummaryAOD', '', hltProcessName)
+                )
+            process.ptrigAnalyzer = cms.Path(process.l1extratest*process.trigAnalyzer)
+
+        ####################################################################
+        ## Run PAT layers 0 and 1 (unless instructed to skip them).
+        ####################################################################
+
+        if not skipPAT:
+            process.load("PhysicsTools.PatAlgos.patLayer0_cff")
+            process.load("PhysicsTools.PatAlgos.patLayer1_cff")
+            process.pPAT = cms.Path(process.patLayer0 + process.patLayer1)
+    else:
+        process = processObj
 
     # Since some version of CMSSW 3, l1extraParticles are either not
     # made or are transient. Make them.
-    if useRaw and need_l1extra:
+    if False and useRaw and need_l1extra:
         # For the samples on CASTOR in directory ~tucker/CMSSW_3_1_2,
         # the digitization step in the RECO sequence (the digis that
         # are extant in these files) was done using the 8E29 menu. If
@@ -380,37 +412,10 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             process.muonRPCDigis.InputLabel = digitag
             process.gtEvmDigis.EvmGtInputTag = digitag
             process.praw2digi = cms.Path(process.RawToDigi)
-        
+
         process.load('L1Trigger.Configuration.L1Extra_cff')
         process.pl1extra = cms.Path(process.L1Extra)
 
-    if useGen and dumpHardInteraction:
-        process.include("SimGeneral/HepPDTESSource/data/pythiapdt.cfi")
-        process.printTree = cms.EDAnalyzer(
-            'ParticleListDrawer',
-            maxEventsToPrint = cms.untracked.int32(-1),
-            src = cms.InputTag('genParticles'),
-            printOnlyHardInteraction = cms.untracked.bool(True),
-            useMessageLogger = cms.untracked.bool(True)
-            )
-        process.ptree = cms.Path(process.printTree)
-
-    if useTrigger and dumpTriggerSummary:
-        process.load('L1Trigger.L1ExtraFromDigis.l1extratest_cfi')
-        process.trigAnalyzer = cms.EDAnalyzer(
-            'TriggerSummaryAnalyzerAOD',
-            inputTag = cms.InputTag('hltTriggerSummaryAOD', '', hltProcessName)
-            )
-        process.ptrigAnalyzer = cms.Path(process.l1extratest*process.trigAnalyzer)
-
-    ####################################################################
-    ## Run PAT layers 0 and 1 (unless instructed to skip them).
-    ####################################################################
-
-    if not skipPAT:
-        process.load("PhysicsTools.PatAlgos.patLayer0_cff")
-        process.load("PhysicsTools.PatAlgos.patLayer1_cff")
-        process.pPAT = cms.Path(process.patLayer0 + process.patLayer1)
 
     ####################################################################
     ## Make a CandidateCollection out of the GEANT tracks.
@@ -860,14 +865,11 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     if fromNtuple:
         # Should probably just never make the modules and paths in the
         # above, but this works for now.
-        del process.praw2digi
-        del process.pl1extra
-        del process.psimParticleCandidates
-        del process.pMuons
-        del process.genMatchPath
-        del process.photonMatchPath
-        del process.dileptonPath
-        
+        paths_to_del = ['praw2digi','pl1extra','psimParticleCandidates','pMuons','genMatchPath','photonMatchPath','dileptonPath']
+        for x in paths_to_del:
+            if hasattr(process, x):
+                delattr(process, x)
+
     print 'Zprime2muAnalysis base process built!'
     return process
 

@@ -217,6 +217,19 @@ int RecLevelHelper::originalRecLevel(const reco::CandidateBaseRef& cand) const {
   return level;
 }
 
+bool
+RecLevelHelper::hasClosestPhoton(const reco::CandidateBaseRef& cand) const {
+  int level = recLevel(cand);
+  checkRecLevel(level, "hasClosestPhoton");
+
+  // No closest photon for non-offline fits.
+  if (level < lGR)
+    return false;
+
+  const reco::CandViewMatchMap& mm = photonMatchMap[level];
+  return mm.find(cand) != mm.end();
+}
+
 reco::Particle::LorentzVector
 RecLevelHelper::closestPhoton(const reco::CandidateBaseRef& cand) const {
   int level = recLevel(cand);

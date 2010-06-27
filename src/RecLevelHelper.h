@@ -80,6 +80,8 @@ class RecLevelHelper {
   // find which of lTK, lFS, lPR the cocktail chose.
   int originalRecLevel(const reco::CandidateBaseRef& cand) const;
 
+  bool hasClosestPhoton(const reco::CandidateBaseRef& cand) const;
+
   // Get the four-vector of the closest photon found for cand.
   reco::Particle::LorentzVector
     closestPhoton(const reco::CandidateBaseRef& cand) const;

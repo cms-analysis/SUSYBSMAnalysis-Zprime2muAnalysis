@@ -16,8 +16,8 @@ private:
 
   pat::Muon* cloneAndSwitchMuonTrack(const pat::Muon&) const;
 
-  std::pair<pat::Electron*, int> doLepton(const pat::Electron&) const;
-  std::pair<pat::Muon*,     int> doLepton(const pat::Muon&)     const;
+  std::pair<pat::Electron*, int> doLepton(const pat::Electron&, const reco::CandidateBaseRef&) const;
+  std::pair<pat::Muon*,     int> doLepton(const pat::Muon&,     const reco::CandidateBaseRef&) const;
 
   template <typename T> void doLeptons(edm::Event&, const edm::InputTag&, const std::string&) const;
 
@@ -55,38 +55,39 @@ pat::Muon* Zprime2muLeptonProducer::cloneAndSwitchMuonTrack(const pat::Muon& muo
   const double p = newTrack->p();
   p4.SetXYZT(newTrack->px(), newTrack->py(), newTrack->pz(), sqrt(p*p + mass*mass));
 
-  //printf(" in clone switch track q %i -> %i   pt %f -> %f,   eta %f -> %f,   phi %f -> %f\n", muon.charge(), newTrack->charge(), muon.pt(), newTrack->pt(), muon.eta(), newTrack->eta(), muon.phi(), newTrack->phi());
-
   pat::Muon* mu = muon.clone();
   mu->setCharge(newTrack->charge());
   mu->setP4(p4);
   mu->setVertex(vtx);
 
+  // Store the type code for the track used in the p4/charge/vtx of
+  // the pat::Muon so that it can be easily recovered later.
   mu->addUserInt("trackUsedForMomentum", type);
-
-  //  mu->setGlobalTrack(newTrack);
-  //  mu->setInnerTrack(muon.innerTrack());
-  //  mu->setOuterTrack(muon.outerTrack());
 
   return mu;
 }
 
-std::pair<pat::Electron*,int> Zprime2muLeptonProducer::doLepton(const pat::Electron& el) const {
+std::pair<pat::Electron*,int> Zprime2muLeptonProducer::doLepton(const pat::Electron& el, const reco::CandidateBaseRef&) const {
   pat::Electron* new_el = el.clone();
   int cutFor = electron_selector(*new_el) ? 0 : 1; // JMTBAD todo heep flags also in this bitword
   return std::make_pair(new_el, cutFor);
 }
 
-std::pair<pat::Muon*,int> Zprime2muLeptonProducer::doLepton(const pat::Muon& mu) const {
-  pat::Muon* new_mu = cloneAndSwitchMuonTrack(mu); 
+std::pair<pat::Muon*,int> Zprime2muLeptonProducer::doLepton(const pat::Muon& mu, const reco::CandidateBaseRef& cand) const {
+  // Copy the input muon, and switch its p4/charge/vtx out for that of
+  // the selected refit track.
+  pat::Muon* new_mu = cloneAndSwitchMuonTrack(mu);
 
   // Simply store the photon four-vector for now in the muon as a
   // userData.
-  // JMTBAD todo
+  const reco::CandViewMatchMap& mm = *muon_photon_match_map;
+  if (mm.find(cand) != mm.end()) {
+    new_mu->addUserData<reco::Particle::LorentzVector>("photon_p4", mm[cand]->p4());
+    new_mu->addUserInt("photon_index", mm[cand].key());
+  }
 
-  // cuts here with string object selector, and any code that cannot
-  // be done in the string object selector
-
+  // Evaluate cuts here with string object selector, and any code that
+  // cannot be done in the string object selector (none so far).
   int cutFor = muon_selector(*new_mu) ? 0 : 1;
 
   return std::make_pair(new_mu, cutFor);
@@ -97,11 +98,13 @@ void Zprime2muLeptonProducer::doLeptons(edm::Event& event, const edm::InputTag& 
   typedef std::vector<T> TCollection;
   edm::Handle<TCollection> leptons; 
   event.getByLabel(src, leptons); 
+  edm::Handle<reco::CandidateView> lepton_view;
+  event.getByLabel(src, lepton_view);
+
   std::auto_ptr<TCollection> new_leptons(new TCollection);
 
-  typename TCollection::const_iterator l = leptons->begin(), le = leptons->end();
-  for ( ; l != le; ++l) {
-    std::pair<T*,int> res = doLepton(*l);
+  for (size_t i = 0; i < leptons->size(); ++i) {
+    std::pair<T*,int> res = doLepton(leptons->at(i), lepton_view->refAt(i));
     res.first->addUserInt("cutFor", res.second);
     new_leptons->push_back(*res.first);
   }
@@ -112,7 +115,7 @@ void Zprime2muLeptonProducer::doLeptons(edm::Event& event, const edm::InputTag& 
 void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& setup) {
   event.getByLabel(muon_photon_match_src, muon_photon_match_map);
 
-  doLeptons<pat::Muon>(event, muon_src, "muons");
+  doLeptons<pat::Muon>    (event, muon_src,     "muons");
   doLeptons<pat::Electron>(event, electron_src, "electrons");
 }
 

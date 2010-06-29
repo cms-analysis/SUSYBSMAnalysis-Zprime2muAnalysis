@@ -39,7 +39,7 @@ process.load('HLTrigger.HLTcore.triggerSummaryAnalyzerAOD_cfi')
 process.ptrigAnalyzer = cms.Path(process.l1extratest*process.trigAnalyzer)
 
 
-process.include("SimGeneral/HepPDTESSource/data/pythiapdt.cfi")
+process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.printTree = cms.EDAnalyzer(
     'ParticleListDrawer',
     maxEventsToPrint = cms.untracked.int32(-1),
@@ -47,6 +47,7 @@ process.printTree = cms.EDAnalyzer(
     printOnlyHardInteraction = cms.untracked.bool(True),
     useMessageLogger = cms.untracked.bool(True)
     )
+process.MessageLogger.categories.append('ParticleListDrawer')
 process.ptree = cms.Path(process.printTree)
 
 

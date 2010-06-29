@@ -26,6 +26,7 @@ private:
   StringCutObjectSelector<pat::Muon> muon_selector;
   StringCutObjectSelector<pat::Electron> electron_selector;
   std::string muon_track_for_momentum;
+  std::vector<std::string> muon_tracks_for_momentum;
   edm::InputTag muon_photon_match_src;
   edm::Handle<reco::CandViewMatchMap> muon_photon_match_map;
 };
@@ -38,7 +39,15 @@ Zprime2muLeptonProducer::Zprime2muLeptonProducer(const edm::ParameterSet& cfg)
     muon_track_for_momentum(cfg.getParameter<std::string>("muon_track_for_momentum")),
     muon_photon_match_src(cfg.getParameter<edm::InputTag>("muon_photon_match_src"))
 {
-  produces<pat::MuonCollection>("muons");
+  if (cfg.existsAs<std::vector<std::string> >("muon_tracks_for_momentum"))
+    muon_tracks_for_momentum = cfg.getParameter<std::vector<std::string> >("muon_tracks_for_momentum");
+
+  if (muon_tracks_for_momentum.size())
+    for (size_t i = 0; i < muon_tracks_for_momentum.size(); ++i)
+      produces<pat::MuonCollection>(muon_tracks_for_momentum[i]);
+  else
+    produces<pat::MuonCollection>("muons");
+
   produces<pat::ElectronCollection>("electrons");
 }
 
@@ -114,8 +123,16 @@ void Zprime2muLeptonProducer::doLeptons(edm::Event& event, const edm::InputTag& 
 
 void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& setup) {
   event.getByLabel(muon_photon_match_src, muon_photon_match_map);
+  
+  if (muon_tracks_for_momentum.size()) {
+    for (size_t i = 0; i < muon_tracks_for_momentum.size(); ++i) {
+      muon_track_for_momentum = muon_tracks_for_momentum[i];
+      doLeptons<pat::Muon>(event, muon_src, muon_track_for_momentum);
+    }
+  }
+  else
+    doLeptons<pat::Muon>(event, muon_src, "muons");
 
-  doLeptons<pat::Muon>    (event, muon_src,     "muons");
   doLeptons<pat::Electron>(event, electron_src, "electrons");
 }
 

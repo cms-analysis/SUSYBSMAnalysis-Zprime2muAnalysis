@@ -28,8 +28,6 @@ Zprime2muAnalysisCommon = cms.PSet(
     hltPaths = cms.vstring('HLT_Mu9', 'HLT_DoubleMu3'),
 )
 
-muon_track_types = ['global', 'inner', 'outer', 'tpfms', 'picky', 'pmc', 'tmr', 'sigmaswitch']
-
 leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          muon_src = cms.InputTag('cleanPatMuons'),
                          electron_src = cms.InputTag('cleanPatElectrons'),
@@ -65,3 +63,20 @@ dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
 #cut = cms.string('daughter(0).pdgId() + daughter(1).pdgId() == -2'), # e.g. to select only mu+e- when the CandCombiner above made both mu+e- and mu-e+
 
 Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)
+
+def rec_levels(process, new_track_types):
+    process.leptons.muon_tracks_for_momentum = cms.vstring(*new_track_types)
+    process.Zprime2muAnalysisSequence = cms.Sequence(process.muonPhotonMatch * process.leptons)
+
+    for t in new_track_types:
+        ad = process.allDimuons.clone()
+        label = 'leptons:%s' % t
+        ad.decay = '%s@+ %s@-' % (label, label)
+        setattr(process, 'allDimuons' + t, ad)
+
+        d = process.dimuons.clone()
+        d.src = 'allDimuons' + t
+        setattr(process, 'dimuons' + t, d)
+
+        process.Zprime2muAnalysisSequence *= ad
+        process.Zprime2muAnalysisSequence *= d

@@ -265,7 +265,8 @@ void Zprime2muHistosFromPAT::fillLeptonHistosFromDileptons(const pat::CompositeC
   pat::CompositeCandidateCollection::const_iterator dil = dileptons.begin(), dile = dileptons.end();
   for ( ; dil != dile; ++dil)
     for (size_t i = 0; i < dil->numberOfDaughters(); ++i)
-      // JMTBAD if photons are daughters of the CompositeCandidate, need to protect against this here 
+      // JMTBAD if photons ever become daughters of the
+      // CompositeCandidate, need to protect against this here
       fillLeptonHistos(dileptonDaughter(*dil, i));
 }
 
@@ -328,7 +329,7 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
   event.getByLabel(dilepton_src, dileptons);
   
   if (!dileptons.isValid())
-    edm::LogWarning("DileptonHandleInvalid") << "tried to get " << dilepton_src << " with edm::Handle<::View<reco::Candidate> > and failed!";
+    edm::LogWarning("DileptonHandleInvalid") << "tried to get " << dilepton_src << " and failed!";
   else {
     if (leptonsFromDileptons)
       fillLeptonHistosFromDileptons(*dileptons);

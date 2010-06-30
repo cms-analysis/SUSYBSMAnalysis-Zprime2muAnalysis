@@ -238,7 +238,6 @@ void Zprime2muHistosFromPAT::fillLeptonHistos(const reco::CandidateBaseRef& lep)
   if (!useAllLeptons) // && !userFloat("zp2muPassCuts") JMTBAD
     return;
 
-  printf("histosfrompat lepton pt %f eta %f phi %f\n", lep->pt(), lep->eta(), lep->phi());
   fillBasicLeptonHistos(lep);
   
   const pat::Muon* muon = toConcretePtr<pat::Muon>(lep);

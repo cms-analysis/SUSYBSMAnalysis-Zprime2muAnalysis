@@ -47,3 +47,8 @@
   <use name=CommonTools/Utils>
   <use name=DataFormats/PatCandidates>
 </library>
+
+<library file=GenParticleMerger.cc name=GenParticleMerger>
+  <use name=CommonTools/UtilAlgos>
+  <use name=DataFormats/HepMCCandidate>
+</library>

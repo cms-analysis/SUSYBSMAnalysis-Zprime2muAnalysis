@@ -10,7 +10,12 @@ def configure(process, useAODOnly=False, muonsOnly=False, useMonteCarlo=False):
         x = 'All'
         if muonsOnly:
             x = 'Muons'
+        # Take the simParticles and genSimParticles modules out of the
+        # sequence that we added.
+        if hasattr(process, 'patDefaultSequenceBeforeZp2mu'):
+            process.patDefaultSequence = process.patDefaultSequenceBeforeZp2mu
         removeMCMatching(process, [x])
+        
 
 __all__ = [
     'configure'

@@ -43,6 +43,13 @@ namespace patmuon {
     return trackByType(mu, trackNameToType(name));
   }
 
+  reco::TrackRef userDataTrack(const pat::Muon& mu, const std::string& name) {
+    if (mu.hasUserData(name))
+      return reco::TrackRef(mu.userData<reco::TrackCollection>(name), 0);
+    else
+      return reco::TrackRef();
+  }
+
   reco::TrackRef getPickedTrack(const pat::Muon& mu) {
     return trackByType(mu, TrackType(mu.userInt("trackUsedForMomentum")));
   }

@@ -13,6 +13,7 @@ namespace patmuon {
   TrackType trackNameToType(std::string name);
   reco::TrackRef trackByType(const pat::Muon& mu, TrackType t);
   reco::TrackRef trackByName(const pat::Muon& mu, const std::string& name);
+  reco::TrackRef userDataTrack(const pat::Muon& mu, const std::string& name);
   reco::TrackRef getPickedTrack(const pat::Muon& mu);
 }
 

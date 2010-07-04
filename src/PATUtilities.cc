@@ -18,11 +18,13 @@ namespace patmuon {
 
   TrackType trackNameToType(std::string name) {
     std::transform(name.begin(), name.end(), name.begin(), tolower);
+    if (name == std::string("tkonly"))
+      return TkInner;
     static const std::string names[nTrackTypes] = { "global", "inner", "outer", "tpfms", "picky", "pmc", "tmr", "sigmaswitch" };
     for (size_t i = 0; i < nTrackTypes; ++i)
       if (names[i] == name)
 	return TrackType(i);
-    throw cms::Exception("BadNameForTrackType") << "invalid name: " << name << "\n";
+    return nTrackTypes;
   }
 
   reco::TrackRef trackByType(const pat::Muon& mu, TrackType t) {
@@ -35,7 +37,7 @@ namespace patmuon {
     case TkPMC: return pmcTrack(mu);
     case TkTMR: return tmrTrack(mu);
     case TkSigmaSwitch: return sigmaSwitchTrack(mu);
-    case nTrackTypes: default: throw cms::Exception("nTrackTypesNotATrackType");
+    case nTrackTypes: default: return reco::TrackRef();
     }
   }
 

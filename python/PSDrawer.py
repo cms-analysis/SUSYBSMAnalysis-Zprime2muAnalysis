@@ -79,7 +79,7 @@ class PSDrawer:
             raise RuntimeError, 'not enough divisions (%i) for number of levels (%i)' % (div[0]*div[1], len(levels))
         return div, levels
 
-    def rec_level_page(self, histos, page_type, histo_base_name, page_title, draw_opt='', log_scale=False, fit_gaus=False, hist_cmds=None, prof2rms=False):
+    def rec_level_page(self, histos, page_type, histo_base_name, page_title, draw_opt='', log_scale=False, fit_gaus=False, hist_cmds=None, prof2rms=False, fit_other=None):
         div, levels = self.div_levels(page_type)
         pad = self.new_page(page_title, div)
         subpads = []
@@ -93,8 +93,10 @@ class PSDrawer:
                 if log_scale and h.GetEntries() > 0: subpad.SetLogy(1)
                 apply_hist_commands(h, hist_cmds)
                 h.Draw(draw_opt)
-                if fit_gaus:
+                if fit_gaus and fit_other is None:
                     h.Fit('gaus', 'Q')
+                if fit_other is not None:
+                    h.Fit(*fit_other)
         return subpads
 
     def close(self):

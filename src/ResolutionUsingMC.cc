@@ -241,6 +241,9 @@ void ResolutionUsingMC::fillChargeResolution(const reco::GenParticle* gen_lep, c
 }
 
 void ResolutionUsingMC::fillDileptonMassResolution(const reco::CompositeCandidate& dil) {
+  if (helper.hardInteraction.lepPlus == 0 || helper.hardInteraction.lepMinus == 0 || helper.hardInteraction.resonance == 0)
+    return;
+
   const double mass         = dil.mass();
   const double gen_mass     = (helper.hardInteraction.lepPlus->p4() + helper.hardInteraction.lepMinus->p4()).mass();
 

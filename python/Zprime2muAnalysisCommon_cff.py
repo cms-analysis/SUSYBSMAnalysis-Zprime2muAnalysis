@@ -460,7 +460,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     ####################################################################
 
     if 'muCandGN' in muons:
-        process.genMuons = cms.EDProducer(
+        process.genMuons = cms.EDFilter(
             'CandViewSelector',
             src = cms.InputTag('genParticles'),
             cut = cms.string('abs(pdgId) = 13 & status = 1 & pt > %f' % minGenPt)
@@ -469,7 +469,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         GNtags = cms.VInputTag(cms.InputTag('genMuons'))
         
         if useSim:
-            process.simMuons = cms.EDProducer(
+            process.simMuons = cms.EDFilter(
                 'CandViewSelector',
                 src = cms.InputTag('simParticleCandidates'),
                 cut = cms.string('abs(pdgId) = 13 & status = 1 & pt > %f' % minGenPt)
@@ -582,7 +582,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     ####################################################################
 
     if 'elCandGN' in electrons:
-        process.genElectrons = cms.EDProducer(
+        process.genElectrons = cms.EDFilter(
             'CandViewSelector',
             src = cms.InputTag('genParticles'),
             cut = cms.string('abs(pdgId) = 11 & status = 1 & pt > %f' % minGenPt)
@@ -591,7 +591,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         GNtags = cms.VInputTag(cms.InputTag('genElectrons'))
         
         if useSim:
-            process.simElectrons = cms.EDProducer(
+            process.simElectrons = cms.EDFilter(
                 'CandViewSelector',
                 src = cms.InputTag('simParticleCandidates'),
                 cut = cms.string('abs(pdgId) = 11 & status = 1 & pt > %f' % minGenPt)

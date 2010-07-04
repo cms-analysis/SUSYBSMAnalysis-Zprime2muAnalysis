@@ -48,12 +48,12 @@ enum WhereDilepton { W_BARRELBARREL=0, W_BARRELOVERLAP,  W_BARRELENDCAP,
 // in the overlap region, in the endcap, or outside acceptance
 // (nominally 2.4).
 WhereLepton whereIsLepton(const reco::CandidateBaseRef& lepton,
-			  const bool isElectron);
+			  const bool isElectron=false);
 
 // Helper method to return a code based on where the leptons of a
 // dilepton are in the lepton system (using the above whereIsLepton method
 // definitions of location).
 WhereDilepton whereIsDilepton(const reco::CompositeCandidate& dil,
-			      const bool areElectrons);
+			      const bool areElectrons=false);
 
 #endif

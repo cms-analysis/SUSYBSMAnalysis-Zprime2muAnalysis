@@ -37,10 +37,6 @@ process.genSimParticles = cms.EDProducer('GenParticleMerger',
                                          src = cms.VInputTag(cms.InputTag('genParticles'), cms.InputTag('simParticles'))
                                          )
 
-# Before we prepend the above two modules to the patDefaultSequence,
-# save a copy of the old one to go back to later if the user calls
-# configure() to remove MC use.
-process.patDefaultSequenceBeforeZp2mu = process.patDefaultSequence
 process.patDefaultSequence = cms.Sequence(process.simParticles * process.genSimParticles * process.patDefaultSequence._seq)
 
 for x in (process.muonMatch, process.electronMatch):

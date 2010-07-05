@@ -72,7 +72,9 @@ process.out.outputCommands += [
 # Embed the tracker tracks (by default, every other track is embedded).
 process.patMuons.embedTrack = True
 
-# Filter out events with no muons.
+# Filter out events with no muons. If wanting to run on just
+# electrons, need to change appropriately (perhaps using
+# countPatLeptons instead).
 process.countPatMuons.minNumber = 1
 
 # Define simple quality cuts (analysis cuts to be done at the analysis level).

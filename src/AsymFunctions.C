@@ -18,9 +18,6 @@
 
 using namespace std;
 
-bool doingGravFit;
-bool asymDebug;
-
 // Initialize the pdf function pointer to the default, for A_FB fits.
 double (*asym_3_PDF)(double *x, double *par) = asym_3_PDF_real;
 
@@ -86,7 +83,7 @@ double asym_3_PDF_real(double *x, double *par) {
       << "  x: " << x[0] << "  A_fb: " << par[1]
       << "  f: " << func;
 
-  if(func<EPSILON) func=EPSILON;
+  if(func<asymFitManager.epsilon()) func=asymFitManager.epsilon();
   return func;
 }
 
@@ -123,7 +120,7 @@ double GravitonCos_2_PDF(double *x, double *par) {
       << "  x: " << x[0] 
       << "  f: " << func;
 
-  if(func<EPSILON) func=EPSILON;
+  if(func<asymFitManager.epsilon()) func=asymFitManager.epsilon();
   return func;
 }
 
@@ -149,7 +146,7 @@ double GravitonCos_th_PDF(double *x, double *par) {
       << "Parameters N: " << par[0] << "  s: " << par[1]
       << "  x: " << x[0] << "  f: " << func << endl;
 
-  if(func<EPSILON) func=EPSILON;
+  if(func<asymFitManager.epsilon()) func=asymFitManager.epsilon();
   return func;
 }
 
@@ -178,7 +175,7 @@ double GravitonCos_3_PDF(double *x, double *par) {
       << "  b " << par[2] << "  x: " << x[0] 
       << "  f: " << func;
 
-  if(func<EPSILON) func=EPSILON;
+  if(func<asymFitManager.epsilon()) func=asymFitManager.epsilon();
   return func;
 }
 
@@ -198,7 +195,7 @@ double asym2D(double *x, double *par) {
   if ( par[0]!=parsave[0] || par[1]!=parsave[1] || par[2]!=parsave[2] ) {
     paramsChanged = true;
     for (int i = 0; i < 3; i++) parsave[i] = par[i];
-    if (asymDebug)
+    if (asymFitManager.debug())
       edm::LogVerbatim("asym2D") 
 	<< "Norm = " << par[0] << ", A_FB = " << par[1] << ", b = " << par[2];
   }
@@ -213,10 +210,10 @@ double asym2D(double *x, double *par) {
   //double qpL    = x[3];
   //double pT     = x[4];
 
-  double etalim = ETALIM;
+  static double etalim = asymFitManager.eta_lim();
 
   // See if dimuon is within detector acceptance.
-  if (fabs(rap) > fabs(rapMaxAccept(&cos_cs, &etalim))) return EPSILON;
+  if (fabs(rap) > fabs(rapMaxAccept(&cos_cs, &etalim))) return asymFitManager.epsilon();
 
   double w = 0.;
   // A Few options for calculating mistag probability:
@@ -284,7 +281,7 @@ double execAsym2D(double *x, double *par) {
       parsave[i] = 0;
     nNormPoints = (unsigned int) par[3];
 
-    if (asymDebug) {
+    if (asymFitManager.debug()) {
       ostringstream out;
       out << "initial parameters: ";
       for (int i = 0; i < 4; i++)
@@ -329,7 +326,7 @@ double execAsym2D(double *x, double *par) {
 
     // Shows relative error of integration, and status indicated if this
     // error is smaller than what was set for epsilon.
-    if (asymDebug) 
+    if (asymFitManager.debug()) 
       edm::LogVerbatim("execAsym2D")
 	<< "anorm = " << anorm << ", relerr =  " << relerr 
 	<< ", status = " << status << endl;
@@ -338,18 +335,18 @@ double execAsym2D(double *x, double *par) {
   }
 
   // Dump values every time parameters change.
-  if (paramsChanged && asymDebug)
+  if (paramsChanged && asymFitManager.debug())
     edm::LogVerbatim("execAsym2D")
       << "nchange " << nchange++ << ": func/anorm = "  << func
       << "/" << anorm << " = " << func/anorm << ", N = " << par[0] 
       << ", b = " << par[2] << ", A_fb = " << par[1]; 
 
   // Prevent division by zero
-  if (anorm < EPSILON) anorm = EPSILON;
+  if (anorm < asymFitManager.epsilon()) anorm = asymFitManager.epsilon();
   func /= anorm;
   
-  // Return EPSILON if function is too small (not necessary?)
-  //if (func < EPSILON) return EPSILON;
+  // Return epsilon if function is too small (not necessary?)
+  //if (func < asymFitManager.epsilon()) return asymFitManager.epsilon();
   return func;
 }
 
@@ -489,7 +486,7 @@ double slowAsymResSmearNorm2D(double *x, double *par) {
     nSmearPoints = (unsigned int) par[4];
     nSigma = (unsigned int) par[5];
 
-    if (asymDebug) {
+    if (asymFitManager.debug()) {
       ostringstream out;
       out << "initial parameters: ";
       for (int i = 0; i < 5; i++) out << par[i] << " ";
@@ -588,7 +585,7 @@ double recAsym2D(double *x, double *par) {
     nSigma = (unsigned int)par[5];
     for (int i = 0; i < 3; i++) parsave[i] = 0;
 
-    if (asymDebug) {
+    if (asymFitManager.debug()) {
       ostringstream out;
       out << "initial parameters: ";
       for (int i = 0; i < 6; i++) out << par[i] << " ";
@@ -623,7 +620,7 @@ double recAsym2D(double *x, double *par) {
   }
 
   if (first_event) {
-    if (asymDebug) {
+    if (asymFitManager.debug()) {
       ostringstream out;
       out << "Doing recAsym2D fit over Mass range "
 	  << asymFitManager.fit_win(0) << "-"
@@ -708,7 +705,7 @@ double recAsym2D(double *x, double *par) {
     anorm = f_aRSN->crudeMCIntegral(2, lo_limits, hi_limits, epsilonNorm, 
 				    relerr, status, debug_int, nNormPoints);
 
-    if (asymDebug)
+    if (asymFitManager.debug())
       edm::LogVerbatim("recAsym2D") << "anorm = " << anorm
 				    << ", relerr =  " << relerr 
 				    << ", status = " << status;
@@ -723,7 +720,7 @@ double recAsym2D(double *x, double *par) {
     delete f_aRSN;
   }
 
-  if ((paramsChanged && asymDebug) || debug)
+  if ((paramsChanged && asymFitManager.debug()) || debug)
     edm::LogVerbatim("recAsym2D")
      << "icount " << icount++
      << "\n  res_smear = " << res_smear << "+/-" << res_err
@@ -732,8 +729,8 @@ double recAsym2D(double *x, double *par) {
      << "\n  Norm = " << par[0] << ", b = " << par[2] << ", A_fb = " << par[1];
 
   // Prevent division by zero
-  if (anorm < EPSILON) anorm = EPSILON;
-  //if (res_smear/anorm < EPSILON) return EPSILON;
+  if (anorm < asymFitManager.epsilon()) anorm = asymFitManager.epsilon();
+  //if (res_smear/anorm < asymFitManager.epsilon()) return asymFitManager.epsilon();
 
   // divide by anorm to get final answer
   res_smear /= anorm;
@@ -766,7 +763,7 @@ double asym6D(double *x, double *par) {
     LogDebug("asym6D") << data;
 
   // See if dimuon is within detector acceptance.
-  if (data.cut_status != NOTCUT) return EPSILON;
+  if (data.cut_status != NOTCUT) return asymFitManager.epsilon();
 
   // Multiply function by PDF's of the following variables.  This is only
   // necessary for multid mode.
@@ -784,20 +781,17 @@ double asym6D(double *x, double *par) {
   double func = (1.-w)*asym_3_PDF(&cos_cs, par) + 
     w*asym_3_PDF(&neg_cos_cs, par);
 
-  // disable these parts of the likelihood function for our grav fit studies
-  if (!doingGravFit) {
-    // Use PDF of pT^2, but then convert to PDF for pT. 
-    func *= 2.*data.pT*ptSqrDist(&pt_sqr, par);
-    func *= massDist(&mass, par);
-    //LogDebug("asym6D") << "mass " << mass 
-    //                   << " massDist " << massDist(&mass, par);
+  // Use PDF of pT^2, but then convert to PDF for pT. 
+  func *= 2.*data.pT*ptSqrDist(&pt_sqr, par);
+  func *= massDist(&mass, par);
+  //LogDebug("asym6D") << "mass " << mass 
+  //                   << " massDist " << massDist(&mass, par);
     
-    // Revised-Thermalized model for now.
-    func *= yDistRTC(&rap, par); 
+  // Revised-Thermalized model for now.
+  func *= yDistRTC(&rap, par); 
   
-    // PDF of Phi Collins-Soper
-    func *= phiCSDist(&phi_cs, par);
-  }
+  // PDF of Phi Collins-Soper
+  func *= phiCSDist(&phi_cs, par);
 
   // Some debug statements
   if (debug) {
@@ -850,7 +844,7 @@ double execAsym6D(double *x, double *par) {
     nNormPoints = (unsigned int) par[3];
     for (int i = 0; i < 3; i++) parsave[i] = 0;
 
-    if (asymDebug) {
+    if (asymFitManager.debug()) {
       ostringstream out;
       out << "initial parameters" << endl;
       for (int i = 0; i < 4; i++) out << par[i] << " ";
@@ -908,7 +902,7 @@ double execAsym6D(double *x, double *par) {
 
     // Shows relative error of integration, and status indicated it this
     // error is smaller than what was set for epsilon.
-    if (asymDebug) 
+    if (asymFitManager.debug()) 
       edm::LogVerbatim("execAsym6D") 
 	<< "anorm = " << anorm << ", relerr =  " << relerr 
 	<< ", status = " << status;
@@ -918,18 +912,18 @@ double execAsym6D(double *x, double *par) {
 
 
   // Dump values every time parameters change.
-  if ((paramsChanged && asymDebug) || debug)
+  if ((paramsChanged && asymFitManager.debug()) || debug)
     edm::LogVerbatim("execAsym6D")
       << "nchange " << nchange++ << ": func/anorm = " << func 
       << "/" << anorm << " = " << func/anorm << ", N = " << par[0] 
       << ", b = " << par[2] << ", A_fb = " << par[1];
 
   // Prevent division by zero
-  if (anorm < EPSILON) anorm = EPSILON;
+  if (anorm < asymFitManager.epsilon()) anorm = asymFitManager.epsilon();
   func /= anorm;
   
-  // Return EPSILON if function is too small (not necessary?)
-  //if (func < EPSILON) return EPSILON;
+  // Return epsilon if function is too small (not necessary?)
+  //if (func < asymFitManager.epsilon()) return asymFitManager.epsilon();
   return func;
 }
 
@@ -1151,7 +1145,7 @@ double recAsym6D(double *x, double *par) {
   }
 
   if (first_event) {
-    if (asymDebug) {
+    if (asymFitManager.debug()) {
       ostringstream out;
       out << "Doing recAsym6D fit over Mass range "
 	  << asymFitManager.fit_win(0) << "-"
@@ -1238,7 +1232,7 @@ double recAsym6D(double *x, double *par) {
 				    asymFitManager.b_lim_arr(), epsilonNorm, 
 				    relerr, status, debug_int, nSmearPoints);
 
-    if (asymDebug)
+    if (asymFitManager.debug())
       edm::LogVerbatim("recAsym6D") << "anorm = " << anorm
 				    << ", relerr =  " << relerr 
 				    << ", status = " << status;
@@ -1253,7 +1247,7 @@ double recAsym6D(double *x, double *par) {
     delete f_aRSN;
   }
 
-  if ((paramsChanged && asymDebug) || debug)
+  if ((paramsChanged && asymFitManager.debug()) || debug)
     edm::LogVerbatim("recAsym6D") 
       << "icount " << icount++
       << "\n  res_smear = " << res_smear << "+/-" << res_err
@@ -1264,8 +1258,8 @@ double recAsym6D(double *x, double *par) {
       << ", nNormPoints = " << nNormPoints;
 
   // Prevent division by zero
-  if (anorm < EPSILON) anorm = EPSILON;
-  //if (res_smear/anorm < EPSILON) return EPSILON;
+  if (anorm < asymFitManager.epsilon()) anorm = asymFitManager.epsilon();
+  //if (res_smear/anorm < asymFitManager.epsilon()) return asymFitManager.epsilon();
 
   // divide by anorm to get final answer
   res_smear /= anorm;
@@ -1341,34 +1335,23 @@ CUTSTATUS diRapAccept(TLorentzVector v_dil, TLorentzVector v_mum,
   // check if muons are within eta acceptance
   double eta_mum = v_mum.Eta();
   double eta_mup = v_mup.Eta();
-  if (eta_mum < MUM_ETA_LIM[0] || eta_mum > MUM_ETA_LIM[1] ||
-      eta_mup < MUP_ETA_LIM[0] || eta_mup > MUP_ETA_LIM[1])
+  if (eta_mum < asymFitManager.mum_eta_lim_lo() || eta_mum > asymFitManager.mum_eta_lim_hi() ||
+      eta_mup < asymFitManager.mup_eta_lim_lo() || eta_mup > asymFitManager.mup_eta_lim_hi())
     returnval = ETACUT;
 
-  if (doingGravFit) {
-    // include a simple pT cut (PTMIN defined in AsymFunctions.h, currently
-    // 20 GeV)
-    double pt_mum = v_mum.Pt();
-    double pt_mup = v_mup.Pt();
-    if (!(pt_mum > MUM_PT_MIN && pt_mup > MUP_PT_MIN))
-      returnval = CUTSTATUS(returnval | PTCUT);
-  }
+  // Simple pT cut (currently disabled by setting to 0).
+  if (v_mum.Pt() < asymFitManager.mum_pt_min() || v_mup.Pt() < asymFitManager.mup_pt_min())
+    returnval = CUTSTATUS(returnval | PTCUT);
 
   if (debug) {
     ostringstream out;
     out << "(pT, eta, phi, mass) in Lab Frame:" << endl;
-    out << "    mu- = (" << v_mum.Pt() << ", " << v_mum.Eta() << ", " 
-	<< v_mum.Phi() << ", " << v_mum.M() << ")" << endl;
-    out << "    mu+ = (" << v_mup.Pt() << ", " << v_mup.Eta() << ", " 
-	<< v_mup.Phi() << ", " << v_mup.M() << ")" << endl;
-    out << "  MUM_ETA_LIM = (" << MUM_ETA_LIM[0] << ", " << MUM_ETA_LIM[1]
-	<< ")" << endl;
-    out << "  MUP_ETA_LIM = (" << MUP_ETA_LIM[0] << ", " << MUP_ETA_LIM[1]
-	<< ")" << endl;
-    if (doingGravFit) {
-      out << "  MUP_PT_LIM = " << MUP_PT_MIN << endl;
-      out << "  MUM_PT_LIM = " << MUM_PT_MIN << endl;
-    }
+    out << "    mu- = (" << v_mum.Pt() << ", " << v_mum.Eta() << ", " << v_mum.Phi() << ", " << v_mum.M() << ")" << endl;
+    out << "    mu+ = (" << v_mup.Pt() << ", " << v_mup.Eta() << ", " << v_mup.Phi() << ", " << v_mup.M() << ")" << endl;
+    out << "  MUM_ETA_LIM = (" << asymFitManager.mum_eta_lim_lo() << ", " << asymFitManager.mum_eta_lim_hi() << ")" << endl;
+    out << "  MUP_ETA_LIM = (" << asymFitManager.mup_eta_lim_lo() << ", " << asymFitManager.mup_eta_lim_hi() << ")" << endl;
+    out << "  MUP_PT_LIM = " << asymFitManager.mup_pt_min() << endl;
+    out << "  MUM_PT_LIM = " << asymFitManager.mum_pt_min() << endl;
     out << "  returnval = " << returnval;
     LogDebug("diRapAccept") << out.str();
   }
@@ -1445,8 +1428,8 @@ void calc4Vectors(AsymFitData& x,  TLorentzVector& v_dil,
 
   // Set 4-vectors of mu+, mu- (which are opposite to each other) in dilepton
   // CM frame.
-  v_mum_prime.SetVectM(v3_mum_prime, MUMASS);
-  v_mup_prime.SetVectM(-v3_mum_prime, MUMASS);
+  v_mum_prime.SetVectM(v3_mum_prime, asymFitManager.lepton_mass());
+  v_mup_prime.SetVectM(-v3_mum_prime, asymFitManager.lepton_mass());
 
   if (debug) {
     ostringstream out;
@@ -1545,8 +1528,9 @@ double calcCosThetaCSAnal(double pz_mum, double e_mum, double pz_mup,
   double mu_term   = (mum_plus*mup_minus) - (mum_minus*mup_plus);
   double cos_cs    = dil_term*mu_term;
 
-  // disable mistag correction based on pL if we're doing graviton studies
-  if (!doingGravFit && pl_dil < 0.)
+  // The above calculation assumed dilepton pL > 0. Flip the sign of
+  // cos_cs if this isn't true.
+  if (pl_dil < 0.)
     cos_cs *= -1.;
 
   if (debug) {
@@ -1984,7 +1968,7 @@ double cosTrueVsCS(double *x, double *par) {
 			      << " " << csBin << " "  << func 
 			      << "/" << norm << " = " << (func/norm);
 
-  //if (norm < EPSILON) return EPSILON;
+  //if (norm < asymFitManager.epsilon()) return asymFitManager.epsilon();
   return func/norm;
 }
 

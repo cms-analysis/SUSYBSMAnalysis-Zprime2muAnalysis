@@ -8,27 +8,8 @@
 #include "AsymFitData.h"
 #include "AsymFitManager.h"
 
-extern bool doingGravFit;
-extern bool asymDebug;
-
+// One evil, evil global.
 extern AsymFitManager asymFitManager;
-
-// small number to return instead of zero
-const double EPSILON = 1.e-6;
-
-// roughly model the acceptance with a cut in eta at 2.4
-const double ETALIM  = 2.4;
-//const double ETALIM  = 9999.;
-// able to separately cut on negative and positive muons
-const double MUP_ETA_LIM[2] = {-ETALIM, ETALIM};
-const double MUM_ETA_LIM[2] = {-ETALIM, ETALIM};
-
-// parameters for a simple pT cut for graviton studies
-const double PTMIN = 20; // GeV/c 
-const double MUP_PT_MIN = PTMIN;
-const double MUM_PT_MIN = PTMIN;
-
-const double MUMASS = 0.10566; // GeV/c^2
 
 double asym_2_PDF(double *x, double *par);
 // asym_3_PDF is now a function pointer, initialized in AsymFunctions.C

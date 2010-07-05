@@ -55,6 +55,21 @@ class AsymFitManager {
   void setConstants(const edm::ParameterSet& pset);
   void loadParametrization(const char* cache_fn);
 
+  // A small number to return instead of zero in pdf calculation.
+  double epsilon() const { return 1.e-6; }
+  // Roughly model the acceptance with a cut in eta at 2.4.
+  double eta_lim() const { return 2.4; }
+  // Can cut separately on negative and positive muons.
+  double mup_eta_lim_lo() const { return -2.4; }
+  double mup_eta_lim_hi() const { return  2.4; }
+  double mum_eta_lim_lo() const { return -2.4; }
+  double mum_eta_lim_hi() const { return  2.4; }
+  double pt_min() const { return 0.; } // used 20 for gravitons
+  double mup_pt_min() const { return 0.; }
+  double mum_pt_min() const { return 0.; }
+  bool debug() const { return false; }
+
+  double lepton_mass() const { return _lepton_mass; }
   int mass_type() const { return _mass_type; } 
   double max_rap() const { return _max_rap; }
   double max_pt() const { return _max_pt; } 
@@ -100,6 +115,8 @@ class AsymFitManager {
 
  private:
   MistagCalc* _mistag_calc;
+
+  double _lepton_mass;
 
   // mass_type values: 1 = falling exponential, 2 = lorentzian peak, 3 = 1+2
   int _mass_type;

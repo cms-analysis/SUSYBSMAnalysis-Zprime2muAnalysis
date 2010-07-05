@@ -78,9 +78,6 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   // whether to fix b for the simple 1-D fits
   fixbIn1DFit = config.getParameter<bool>("fixbIn1DFit");
 
-  // convenient flag for checking to see if we're doing graviton studies
-  doingGravFit = fitType >= GRAV;
-
   // whether to use cos_true in the 2/6-D fits
   useCosTrueInFit = config.getParameter<bool>("useCosTrueInFit");
 
@@ -94,11 +91,8 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   // whether to use the probabilistic mistag correction; always turn
   // it off if doing graviton fit, if we are artificially
   // correcting with MC truth, or if we are fitting to cos_theta_true
-  if (asymFitManager.correct_mistags() && (doingGravFit || artificialCosCS || useCosTrueInFit))
-    throw cms::Exception("Zprime2muAsymmetry") << "Shouldn't be applying mistag correction when one of doingGravFit || artificialCosCS || useCosTrueInFit is set.\n";
-
-  // turn on/off the fit prints in AsymFunctions
-  asymDebug = verbosity >= VERBOSITY_SIMPLE;
+  if (asymFitManager.correct_mistags() && (artificialCosCS || useCosTrueInFit))
+    throw cms::Exception("Zprime2muAsymmetry") << "Shouldn't be applying mistag correction when one of artificialCosCS || useCosTrueInFit is set.\n";
 
   ostringstream out;
   out << "------------------------------------------------------------\n"
@@ -491,12 +485,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
       return;
     }
 
-    // remove mistag correction for gravitons (where there are only
-    // terms even in cos_cs anyway)
-    if (doingGravFit && data.pL < 0)
-      angDist.push_back(-data.cos_cs);
-    else
-      angDist.push_back(data.cos_cs);
+    angDist.push_back(data.cos_cs);
 
     // mass distributions for forward and backward events separately for
     // the entire spectrum, not just in the reconstructed window
@@ -582,8 +571,8 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 
       // Check to see if generated dimuons lie within acceptance cut and
       // generated window
-      if (gen_mum->eta() > MUM_ETA_LIM[0] && gen_mum->eta() < MUM_ETA_LIM[1] &&
-	  gen_mup->eta() > MUP_ETA_LIM[0] && gen_mup->eta() < MUP_ETA_LIM[1]) {
+      if (gen_mum->eta() > asymFitManager.mum_eta_lim_lo() && gen_mum->eta() < asymFitManager.mum_eta_lim_hi() &&
+	  gen_mup->eta() > asymFitManager.mup_eta_lim_lo() && gen_mup->eta() < asymFitManager.mup_eta_lim_hi()) {
 	if (gen_dil.mass() > asymFitManager.fit_win(0) && 
 	    gen_dil.mass() < asymFitManager.fit_win(1)) {
 	  if (nfit_used[0] == FIT_ARRAY_SIZE - 1)
@@ -1527,8 +1516,8 @@ void Zprime2muAsymmetry::fitAsymmetry() {
   outfile << "Signal window is (" << asymFitManager.fit_win(0) << ", "
 	  << asymFitManager.fit_win(1) << ")\n";
   outfile << "Acceptance in diRapAccept: "
-	  << MUM_ETA_LIM[0] << " < eta mu- < " << MUM_ETA_LIM[1] << "; "
-	  << MUP_ETA_LIM[0] << " < eta mu+ < " << MUP_ETA_LIM[1] << endl;
+	  << asymFitManager.mum_eta_lim_lo() << " < eta mu- < " << asymFitManager.mum_eta_lim_hi() << "; "
+	  << asymFitManager.mup_eta_lim_lo() << " < eta mu+ < " << asymFitManager.mup_eta_lim_hi() << endl;
   outfile << "Parameterization from " << paramCacheFile << endl;
 
   outfile << "AsymFitManager:\n" << asymFitManager << "\n";
@@ -1795,7 +1784,7 @@ void Zprime2muAsymmetry::drawFitHistos() {
   string filename = "fitHistos.ps";
   TPostScript *ps = new TPostScript(filename.c_str(), 111);
 
-  const int NUM_PAGES = 20;
+  const int NUM_PAGES = 23;
   TPad *pad[NUM_PAGES];
   for (int i_page = 0; i_page <= NUM_PAGES; i_page++)
     pad[i_page] = new TPad("","", .05, .05, .95, .93);
@@ -1887,126 +1876,124 @@ void Zprime2muAsymmetry::drawFitHistos() {
 
   // draw the by type pages, but only bother to do so if we're doing
   // gravitons (Z' all come from qqbar, of course)
-  if (doingGravFit) {
-    ps->NewPage();
-    c1->Clear(); 
-    c1->cd(0); 
-    title = new TPaveLabel(0.1,0.94,0.9,0.98,"Generated PDFs of quantities (qqbar)");
-    title->SetFillColor(10);
-    title->Draw();
-    strpage << "- " << (++page) << " -";
-    t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-    pad[page]->Draw();
-    pad[page]->Divide(2,3);
-    for (int i = 0; i < 6; i++) {
-      pad[page]->cd(i+1);  
-      if (i == 0) gPad->SetLogy(1);
-      AsymFitHistoGenByType[0][i]->Draw(); 
-    }
-    c1->Update();
-  
-    ps->NewPage();
-    c1->Clear(); 
-    c1->cd(0); 
-    title = new TPaveLabel(0.1,0.94,0.9,0.98,"Reconstructed PDFs of quantities (qqbar)");
-    title->SetFillColor(10);
-    title->Draw();
-    strpage << "- " << (++page) << " -";
-    pad[page]->Draw();
-    pad[page]->Divide(2,3);
-    for (int i = 0; i < 6; i++) {
-      pad[page]->cd(i+1);  
-      if (i == 0) gPad->SetLogy(1);
-      AsymFitHistoRecByType[0][i]->Draw(); 
-    }
-    c1->Update();
-
-    ps->NewPage();
-    c1->Clear(); 
-    c1->cd(0); 
-    title = new TPaveLabel(0.1,0.94,0.9,0.98,"Generated PDFs of quantities (gg)");
-    title->SetFillColor(10);
-    title->Draw();
-    strpage << "- " << (++page) << " -";
-    t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-    pad[page]->Draw();
-    pad[page]->Divide(2,3);
-    for (int i = 0; i < 6; i++) {
-      pad[page]->cd(i+1);  
-      if (i == 0) gPad->SetLogy(1);
-      AsymFitHistoGenByType[1][i]->Draw(); 
-    }
-    c1->Update();
-  
-    ps->NewPage();
-    c1->Clear(); 
-    c1->cd(0); 
-    title = new TPaveLabel(0.1,0.94,0.9,0.98,"Reconstructed PDFs of quantities (gg)");
-    title->SetFillColor(10);
-    title->Draw();
-    strpage << "- " << (++page) << " -";
-    pad[page]->Draw();
-    pad[page]->Divide(2,3);
-    for (int i = 0; i < 6; i++) {
-      pad[page]->cd(i+1);  
-      if (i == 0) gPad->SetLogy(1);
-      AsymFitHistoRecByType[1][i]->Draw(); 
-    }
-    c1->Update();
-
-    ps->NewPage();
-    c1->Clear(); 
-    c1->cd(0); 
-    title = new TPaveLabel(0.1,0.94,0.9,0.98,"Generated PDFs of quantities by type");
-    title->SetFillColor(10);
-    title->Draw();
-    strpage << "- " << (++page) << " -";
-    t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-    pad[page]->Draw();
-    pad[page]->Divide(1,2);
-    pad[page]->cd(1);
-    AsymFitHistoGenByType[0][4]->Draw(); 
-    pad[page]->cd(2);
-    AsymFitHistoGenByType[1][4]->Draw(); 
-    c1->Update();
-
-    ps->NewPage();
-    c1->Clear(); 
-    c1->cd(0); 
-    title = new TPaveLabel(0.1,0.94,0.9,0.98,"Reconstructed PDFs of quantities by type");
-    title->SetFillColor(10);
-    title->Draw();
-    strpage << "- " << (++page) << " -";
-    t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-    pad[page]->Draw();
-    pad[page]->Divide(1,2);
-    pad[page]->cd(1);
-    AsymFitHistoRecByType[0][4]->Draw(); 
-    pad[page]->cd(2);
-    AsymFitHistoRecByType[1][4]->Draw(); 
-    c1->Update();
-
-    ps->NewPage();
-    c1->Clear(); 
-    c1->cd(0); 
-    title = new TPaveLabel(0.1,0.94,0.9,0.98,"Generated rapidity (by type)");
-    title->SetFillColor(10);
-    title->Draw();
-    strpage << "- " << (++page) << " -";
-    t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-    pad[page]->Draw();
-    pad[page]->Divide(1,3);
-    pad[page]->cd(1);
-    AsymFitHistoGenByType[0][1]->Draw();
-    pad[page]->cd(2);
-    AsymFitHistoGenByType[1][1]->Draw();
-    pad[page]->cd(3);
-    TH1F *hist = (TH1F*)AsymFitHistoGenByType[0][1]->Clone("hist");
-    hist->SetTitle("y_qqbar/y_gg");
-    hist->Divide(AsymFitHistoGenByType[1][1]);
-    hist->Draw();
-    c1->Update();
+  ps->NewPage();
+  c1->Clear(); 
+  c1->cd(0); 
+  title = new TPaveLabel(0.1,0.94,0.9,0.98,"Generated PDFs of quantities (qqbar)");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+  pad[page]->Draw();
+  pad[page]->Divide(2,3);
+  for (int i = 0; i < 6; i++) {
+    pad[page]->cd(i+1);  
+    if (i == 0) gPad->SetLogy(1);
+    AsymFitHistoGenByType[0][i]->Draw(); 
   }
+  c1->Update();
+  
+  ps->NewPage();
+  c1->Clear(); 
+  c1->cd(0); 
+  title = new TPaveLabel(0.1,0.94,0.9,0.98,"Reconstructed PDFs of quantities (qqbar)");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  pad[page]->Draw();
+  pad[page]->Divide(2,3);
+  for (int i = 0; i < 6; i++) {
+    pad[page]->cd(i+1);  
+    if (i == 0) gPad->SetLogy(1);
+    AsymFitHistoRecByType[0][i]->Draw(); 
+  }
+  c1->Update();
+
+  ps->NewPage();
+  c1->Clear(); 
+  c1->cd(0); 
+  title = new TPaveLabel(0.1,0.94,0.9,0.98,"Generated PDFs of quantities (gg)");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+  pad[page]->Draw();
+  pad[page]->Divide(2,3);
+  for (int i = 0; i < 6; i++) {
+    pad[page]->cd(i+1);  
+    if (i == 0) gPad->SetLogy(1);
+    AsymFitHistoGenByType[1][i]->Draw(); 
+  }
+  c1->Update();
+  
+  ps->NewPage();
+  c1->Clear(); 
+  c1->cd(0); 
+  title = new TPaveLabel(0.1,0.94,0.9,0.98,"Reconstructed PDFs of quantities (gg)");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  pad[page]->Draw();
+  pad[page]->Divide(2,3);
+  for (int i = 0; i < 6; i++) {
+    pad[page]->cd(i+1);  
+    if (i == 0) gPad->SetLogy(1);
+    AsymFitHistoRecByType[1][i]->Draw(); 
+  }
+  c1->Update();
+
+  ps->NewPage();
+  c1->Clear(); 
+  c1->cd(0); 
+  title = new TPaveLabel(0.1,0.94,0.9,0.98,"Generated PDFs of quantities by type");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+  pad[page]->Draw();
+  pad[page]->Divide(1,2);
+  pad[page]->cd(1);
+  AsymFitHistoGenByType[0][4]->Draw(); 
+  pad[page]->cd(2);
+  AsymFitHistoGenByType[1][4]->Draw(); 
+  c1->Update();
+
+  ps->NewPage();
+  c1->Clear(); 
+  c1->cd(0); 
+  title = new TPaveLabel(0.1,0.94,0.9,0.98,"Reconstructed PDFs of quantities by type");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+  pad[page]->Draw();
+  pad[page]->Divide(1,2);
+  pad[page]->cd(1);
+  AsymFitHistoRecByType[0][4]->Draw(); 
+  pad[page]->cd(2);
+  AsymFitHistoRecByType[1][4]->Draw(); 
+  c1->Update();
+
+  ps->NewPage();
+  c1->Clear(); 
+  c1->cd(0); 
+  title = new TPaveLabel(0.1,0.94,0.9,0.98,"Generated rapidity (by type)");
+  title->SetFillColor(10);
+  title->Draw();
+  strpage << "- " << (++page) << " -";
+  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
+  pad[page]->Draw();
+  pad[page]->Divide(1,3);
+  pad[page]->cd(1);
+  AsymFitHistoGenByType[0][1]->Draw();
+  pad[page]->cd(2);
+  AsymFitHistoGenByType[1][1]->Draw();
+  pad[page]->cd(3);
+  TH1F *hist = (TH1F*)AsymFitHistoGenByType[0][1]->Clone("hist");
+  hist->SetTitle("y_qqbar/y_gg");
+  hist->Divide(AsymFitHistoGenByType[1][1]);
+  hist->Draw();
+  c1->Update();
 
   ps->NewPage();
   c1->Clear(); 
@@ -2200,14 +2187,8 @@ void Zprime2muAsymmetry::drawFitHistos() {
   f_cos->SetParameters(1., .5, .9);
   f_cos->SetLineWidth(2);
   //f_cos->FixParameter(0,  1.);
-  if (doingGravFit) {
-    f_cos->SetParLimits(1, -5., 5.);
-    f_cos->SetParLimits(2, -5., 5.);
-  }
-  else {
-    f_cos->SetParLimits(1, -2., 2.);
-    f_cos->SetParLimits(2,  0., 5.);
-  }
+  f_cos->SetParLimits(1, -2., 2.);
+  f_cos->SetParLimits(2,  0., 5.);
   if (fixbIn1DFit)
     f_cos->FixParameter(2, 1);
   f_cos->SetParNames("Norm","AFB","b");

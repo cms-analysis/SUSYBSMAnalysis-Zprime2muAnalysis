@@ -12,11 +12,7 @@
 extern AsymFitManager asymFitManager;
 
 double asym_2_PDF(double *x, double *par);
-// asym_3_PDF is now a function pointer, initialized in AsymFunctions.C
-// we should give it a more generic name but that could introduce bugs
-extern double (*asym_3_PDF)(double *x, double *par);
-// renamed asym_3_PDF to asym_3_PDF_real
-double asym_3_PDF_real(double *x, double *par);
+double asym_3_PDF(double *x, double *par);
 double asym_mistag_PDF(double *x, double *pars);
 double GravitonCos_2_PDF(double *x, double *par);
 double GravitonCos_th_PDF(double *x, double *par);

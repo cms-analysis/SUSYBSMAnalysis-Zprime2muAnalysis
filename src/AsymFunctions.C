@@ -18,13 +18,6 @@
 
 using namespace std;
 
-// Initialize the pdf function pointer to the default, for A_FB fits.
-double (*asym_3_PDF)(double *x, double *par) = asym_3_PDF_real;
-
-// AsymParamManager manages data from the parameterization, i.e. that
-// which is loaded from the root file, while AsymFitManager handles
-// constants read from the config file. JMTBAD should bring in the 5
-// bools above to one of these, probably FitManager.
 AsymFitManager asymFitManager;
 
 std::ostream& operator<< (std::ostream& out, const AsymFitData& data) {
@@ -59,7 +52,7 @@ double asym_2_PDF(double *x, double *par) {
 
 // renamed from asym_3_PDF for flexibility in choosing the angular 
 // fit function
-double asym_3_PDF_real(double *x, double *par) {
+double asym_3_PDF(double *x, double *par) {
   // Returns P(x) proportional to 1 + ax + bx^2, for use in fitting
   //   angular distributions where x = cos(theta), -1 <= x <= 1.
   // In this case, it is useful to rewrite P as

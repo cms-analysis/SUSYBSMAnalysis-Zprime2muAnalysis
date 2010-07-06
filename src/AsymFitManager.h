@@ -96,17 +96,6 @@ class AsymFitManager {
   double recSigmaMass() const { return _rec_sigma[SIGMA_MASS]; }
   double recSigmaPhiCS() const { return _rec_sigma[SIGMA_PHICS]; }
 
-  // The currently available pdfs.
-  enum PDFTYPE { ASYM, GRAV, GRAVTH };
-
-  // Update the function pointer to the one specified by _type;
-  // legitimate values are defined in an enum above. throws if _type is
-  // unrecognized
-  void setPDF(PDFTYPE _type);
-
-  // return the current pdf's name; useful in pretty printing
-  const char* getPDFName() const;
-
   bool correct_mistags()  const { return _correct_mistags;  }
   bool calculate_mistag() const { return _calculate_mistag; }
   bool use_mistag_hist()  const { return _use_mistag_hist;  }
@@ -136,8 +125,6 @@ class AsymFitManager {
   double _b_lim[6];
   double _limit_low[6];
   double _limit_upp[6];
-
-  PDFTYPE pdfType;
 
   bool _correct_mistags;
   bool _calculate_mistag;

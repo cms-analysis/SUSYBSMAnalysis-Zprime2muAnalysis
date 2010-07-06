@@ -12,15 +12,6 @@ def attachAsymmetry(process, **kwargs):
         # getting the recSigma information for above
         noFit = cms.bool(False),
         
-        # if onlyEvalLLR is true, only evaluate the log-likelihood
-        # ratio useful in spin discrimination studies
-        onlyEvalLLR = cms.bool(False),
-
-        # fitType determines the form of the cos_cs pdf used in the
-        # fits it is a magic number here, but is defined in the
-        # FITTYPE enum in Zprime2muAsymmetry.h
-        fitType = cms.int32(0),
-        
         # only do so many of the fits (up to 6; from gen+gen to
         # rec+rec)
         numFits = cms.int32(6),

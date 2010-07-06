@@ -57,14 +57,6 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   // recSigma information from the asymHistos.ps
   noFit = config.getParameter<bool>("noFit");
 
-  // if requested, only evaluate the log-likelihood ratio for each
-  // data point
-  onlyEvalLLR = config.getParameter<bool>("onlyEvalLLR");
-
-  // choose the type of fit (magic number in the cfg, but
-  // is an enum FITTYPE here in the code)
-  fitType = FITTYPE(config.getParameter<int>("fitType"));
-
   // only do so many of the fits (up to 6; from gen+gen to rec+rec)
   numFits = config.getParameter<int>("numFits");
 
@@ -98,12 +90,7 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   out << "------------------------------------------------------------\n"
       << "Zprime2muAsymmetry parameter summary:\n";
   if (noFit)
-    out << "Not performing any fit or evaluation of the likelihood ratio\n";
-  else {
-    if (onlyEvalLLR)
-      out << "Only evaluating the likelihood ratios for each data point\n";
-    out << "Using pdf " << asymFitManager.getPDFName() << " for fits\n";
-  }
+    out << "Not performing any fit\n";
   out << asymFitManager << endl;
 
   if (fixbIn1DFit) out << "Fixing b = 1.0 in 1-D fits\n";
@@ -122,9 +109,7 @@ void Zprime2muAsymmetry::analyze(const edm::Event& event,
 				 const edm::EventSetup& eSetup) {
   Zprime2muAnalysis::analyze(event, eSetup);
 
-  // JMTBAD break out generator-level stuffs from fillFitData
   fillFitData(event);
-
   fillFrameHistos();
 }
 
@@ -132,18 +117,10 @@ void Zprime2muAsymmetry::endJob() {
   Zprime2muAnalysis::endJob();
 
   calcFrameAsym();
-
   drawFrameHistos();
   drawFitHistos();
-
   dumpFitData();
-  
-  if (noFit)
-    return;
-
-  if (onlyEvalLLR)
-    evalLikelihoods();
-  else
+  if (!noFit)
     fitAsymmetry();
 }
 
@@ -484,8 +461,6 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
       edm::LogWarning("fillFitData") << "could not compute fit quantities!";
       return;
     }
-
-    angDist.push_back(data.cos_cs);
 
     // mass distributions for forward and backward events separately for
     // the entire spectrum, not just in the reconstructed window
@@ -1181,218 +1156,6 @@ void Zprime2muAsymmetry::dumpFitData() {
       t->Fill();
     }
   }
-
-  TTree* t = fs->make<TTree>("angDist", "generated pre-acceptance-cut cos_cs distribution");
-  double a;
-  t->Branch("cos_cs", &a, "cos_cs/D");
-  for (size_t i = 0; i < angDist.size(); i++) {
-    a = angDist[i];
-    t->Fill();
-  }
-}
-
-// Initialize and return a new TFMultiD object which interfaces the 
-// executive asymmetry fit functions
-// caller takes ownership of the pointer (i.e. caller must delete)
-TFMultiD* Zprime2muAsymmetry::getNewFitFcn(int fitType) {
-  TFMultiD* f_recmd = 0;
-
-  if (fitType == 0) {
-    f_recmd = new TFMultiD("f_recmd", execAsym2D, 4, 4);
-    f_recmd->SetParameters(1., .5, .9, nNormPoints);
-    f_recmd->FixParameter(3, nNormPoints);
-    f_recmd->SetParNames("Norm", "A_fb", "b", "nNormPoints");
-  }
-  else if (fitType == 1) {
-    f_recmd = new TFMultiD("f_recmd", execAsym6D, 6, 4);
-    f_recmd->SetParameters(1., .5, .9, nNormPoints);
-    f_recmd->FixParameter(3, nNormPoints);
-    f_recmd->SetParNames("Norm", "A_fb", "b", "nNormPoints");
-  }
-  else if (fitType == 2) {
-    f_recmd = new TFMultiD("f_recmd", execAsym2D, 4, 4);
-    f_recmd->SetParameters(1., .5, .9, nNormPoints);
-    f_recmd->FixParameter(3, nNormPoints);
-    f_recmd->SetParNames("Norm", "A_fb", "b", "nNormPoints");
-  }
-  else if (fitType == 3) {
-    f_recmd = new TFMultiD("f_recmd", execAsym6D, 6, 4);
-    f_recmd->SetParameters(1., .5, .9, nNormPoints);
-    f_recmd->FixParameter(3, nNormPoints);
-    f_recmd->SetParNames("Norm", "A_fb", "b", "nNormPoints");
-  }
-  else if (fitType == 4) {
-    f_recmd = new TFMultiD("f_recmd", recAsym2D, 4, 6);
-    f_recmd->SetParameters(1., .5, .9, nNormPoints, nSmearPoints, nSigma);
-    f_recmd->FixParameter(3, nNormPoints);
-    f_recmd->FixParameter(4, nSmearPoints);
-    f_recmd->FixParameter(5, nSigma);
-    f_recmd->SetParNames("Norm", "A_fb", "b", "nNormPoints", 
-			 "nSmearPoints", "nSigma");
-  }
-  else if (fitType == 5) {
-    f_recmd = new TFMultiD("f_recmd", recAsym6D, 6, 6);
-    f_recmd->SetParameters(1., .5, .9, nNormPoints, nSmearPoints, nSigma);
-    f_recmd->FixParameter(3, nNormPoints);
-    f_recmd->FixParameter(4, nSmearPoints);
-    f_recmd->FixParameter(5, nSigma);
-    f_recmd->SetParNames("Norm", "A_fb", "b", "nNormPoints", 
-			 "nSmearPoints", "nSigma");
-  }
-  else
-    throw cms::Exception("getNewFitFcn")
-      << "Invalid fit type number: " << fitType << endl;
-
-  return f_recmd;
-}
-
-void Zprime2muAsymmetry::evalLikelihoods() {
-#if 0
-  // include DY bkgnd in calculating fractions
-  const bool includeBgnd = true;
-  // which fit function to use to get the likelihood;
-  //   default is recAsym2D
-  const int fitTypeLR = 5; 
-
-  // JMTBAD pass down from GenKineAna-equiv
-  const double numEvents = 1;
-  const double sigmas[3][2] = {{0,0},{0,0},{0,0}};
-  const double ggqqcounts[3][2] = {{0,0},{0,0},{0,0}};
-  double coeffs[3][2] = {
-    {0., 1.},
-    {0., 0.},
-    {0., 0.}
-  };
-  // 1.5TeV :
-  //    double f_qq = 0.221, f_gg = 0.779;
-  //    double sigma_grav = 1.0289E-03;
-  //    double sigma_dy = 1.7382E-04;
-  int MASS = 0; //(MASS_INDEX-11)%3; // 0 = 1 TeV, 1 = 3 TeV, 2 = 5 TeV
-  double f_gg = ggqqcounts[MASS][0]/numEvents;
-  double f_qq = ggqqcounts[MASS][1]/numEvents;
-  double sigma_grav = sigmas[MASS][0];
-  double sigma_dy = sigmas[MASS][1];
-  double frac_grav = sigma_grav/(sigma_grav+sigma_dy);
-
-  double x_qq, x_gg, x_b;
-  if (includeBgnd) {
-    x_qq = f_qq*frac_grav;
-    x_gg = f_gg*frac_grav;
-    x_b = 1-frac_grav;
-  }
-  else {
-    x_qq = f_qq;
-    x_gg = f_gg;
-    x_b = 0.0;
-  }
-  //    coeffs[1][0] = -3*x_qq+x_b; // coeff of cos^2
-  //    coeffs[1][1] = 4*x_qq-x_gg; // coeff of cos^4  
-  double C = 8.0/(3+2*(x_qq+x_gg));
-  coeffs[1][0] = 3.0*C/8.0*(x_b - 5.0*x_qq);
-  coeffs[1][1] = 5.0*C/8.0*(4.0*x_qq - x_gg);
-  coeffs[2][0] = 3.0/(1+frac_grav)*x_b;
-  coeffs[2][1] = 0.0;
-
-  int i_rec = fitTypeLR > 1 ? 1 : 0;
-  int n2fit = nfit_used[i_rec];
-
-  double *L[3];
-  for (int lx = 0; lx < 3; lx++)
-    L[lx] = new double[n2fit];
-    
-  TFMultiD* f_recmd = getNewFitFcn(fitTypeLR);
-  UnbinnedFitter *unbfitter = new UnbinnedFitter();
-
-  // outer loop is pdf: faster since it only has to renormalize with
-  // each new pdf
-  for (int pdf = 0; pdf < 3; pdf++) {
-    if (pdf < 2)
-      asymFitManager.setPDF(AsymFitManager::PDFTYPE(pdf));
-    f_recmd->FixParameter(1, coeffs[pdf][0]);
-    f_recmd->FixParameter(2, coeffs[pdf][1]);
-	
-    for (int cnt = 0; cnt < n2fit; cnt++) {
-      // make new arrays, each for just the current point so we can
-      // reuse the unbinned fit code (which expects its data to be in
-      // a vector of arrays)
-      double cos_theta_cs[1], rap_dil[1], pt_dil[1], phi_dil[1], 
-	mass_dil[1], phi_cs[1];
-      cos_theta_cs[0] = fabs(cos_theta_cs_data[i_rec][cnt]);
-      rap_dil[0] = rap_dil_data[i_rec][cnt];
-      pt_dil[0] = pt_dil_data[i_rec][cnt];
-      phi_dil[0] = phi_dil_data[i_rec][cnt];
-      mass_dil[0] = mass_dil_data[i_rec][cnt];
-      phi_cs[0] = phi_cs_data[i_rec][cnt];
-      
-      vector<double *> fit_data;
-      fit_data.push_back(cos_theta_cs);
-      fit_data.push_back(rap_dil);
-      // if we're doing a 6D fit, append the other 4 variables
-      if (fitTypeLR == 1 || fitTypeLR == 3 || fitTypeLR == 5) {
-	fit_data.push_back(pt_dil);
-	fit_data.push_back(phi_dil);
-	fit_data.push_back(mass_dil);
-	fit_data.push_back(phi_cs);
-      }
-      
-      double log_ML;
-      int cov_status = unbfitter->unbinnedFitExec("f_recmd", "c",
-						  1, fit_data, 
-						  0, log_ML);
-      double neg2logML = -2.0*log_ML;
-      L[pdf][cnt] = neg2logML;
-
-      if (verbosity >= VERBOSITY_TOOMUCH)
-	edm::LogVerbatim("evalLikelihoods")
-	  << "pdftype=" << pdf << " -2.0*log_ML=" << neg2logML
-	  << ", cov_status = " <<  cov_status << endl;
-      if (L[pdf][cnt] > 60)
-	edm::LogWarning("Zprime2muAsymmetry")
-	  << "Warning in unbinned fit: L=" << L[pdf][cnt]
-	  << " cos_theta_cs=" << cos_theta_cs[0]
-	  << " rap_dil=" << rap_dil[0] << " pt_dil=" << pt_dil[0]
-	  << " phi_dil=" << phi_dil[0] << " mass_dil=" << mass_dil[0]
-	  << " phi_cs=" << phi_cs[0] << endl;
-    }
-  }
-
-  const string fit_type[6] = {
-    "gen+exec2D", "gen+exec6D", "rec+exec2D",
-    "rec+exec6D", "rec+rec2D", "rec+rec6D"
-  };
-
-  fstream LRfile;
-  string filename = "likelihoods." + fit_type[fitTypeLR] + ".txt";
-  LRfile.open(filename.c_str(), ios::out);
-
-  LRfile << "#n2fit=" << n2fit << endl;
-  if (includeBgnd)
-    LRfile << "#DY background included\n";
-  LRfile << "#x_qq=" << x_qq << " x_gg=" << x_gg << " x_b=" << x_b << endl;
-  LRfile << "#spin2: a=" << coeffs[1][0] << " b=" << coeffs[1][1] << endl;
-  LRfile << "#spin0: a=" << coeffs[2][0] << " b=" << coeffs[2][1] << endl;
-  LRfile << "#format:\n";
-  LRfile << "#spin1\tspin2\tspin0\n";
-  int skipcnt = 0;
-  for (int cnt = 0; cnt < n2fit; cnt++) {
-    if (L[0][cnt] > 60. && L[1][cnt] > 60.) {
-      skipcnt++;
-      continue;
-    }
-    for (int lx = 0; lx < 3; lx++)
-      LRfile << setprecision(10) << L[lx][cnt] << '\t';
-    LRfile << setprecision(10) << mass_dil_data[i_rec][cnt] << '\t';
-    LRfile << setprecision(10) << cos_theta_cs_data[i_rec][cnt] << '\t';
-    LRfile << endl;
-  }
-  LRfile << "#skipcnt=" << skipcnt << endl;
-  LRfile.close();
-
-  for (int lx = 0; lx < 3; lx++)
-    delete L[lx];
-  delete f_recmd;
-  delete unbfitter;
-#endif
 }
 
 void Zprime2muAsymmetry::countAsymmetry(const int which, double& Afb, double& eAfb) {
@@ -1499,6 +1262,61 @@ void Zprime2muAsymmetry::asymmetryByEventWeightingWithAngularInfo(const int whic
 
   Afb = 0.375*(B1-B2)/(A1+A2);
   eAfb = 0.375*sqrt(E12+E22)*cross/A/A;
+}
+
+// Initialize and return a new TFMultiD object which interfaces the 
+// executive asymmetry fit functions
+// caller takes ownership of the pointer (i.e. caller must delete)
+TFMultiD* Zprime2muAsymmetry::getNewFitFcn(int which) {
+  TFMultiD* f_recmd = 0;
+
+  if (which == 0) {
+    f_recmd = new TFMultiD("f_recmd", execAsym2D, 4, 4);
+    f_recmd->SetParameters(1., .5, .9, nNormPoints);
+    f_recmd->FixParameter(3, nNormPoints);
+    f_recmd->SetParNames("Norm", "A_fb", "b", "nNormPoints");
+  }
+  else if (which == 1) {
+    f_recmd = new TFMultiD("f_recmd", execAsym6D, 6, 4);
+    f_recmd->SetParameters(1., .5, .9, nNormPoints);
+    f_recmd->FixParameter(3, nNormPoints);
+    f_recmd->SetParNames("Norm", "A_fb", "b", "nNormPoints");
+  }
+  else if (which == 2) {
+    f_recmd = new TFMultiD("f_recmd", execAsym2D, 4, 4);
+    f_recmd->SetParameters(1., .5, .9, nNormPoints);
+    f_recmd->FixParameter(3, nNormPoints);
+    f_recmd->SetParNames("Norm", "A_fb", "b", "nNormPoints");
+  }
+  else if (which == 3) {
+    f_recmd = new TFMultiD("f_recmd", execAsym6D, 6, 4);
+    f_recmd->SetParameters(1., .5, .9, nNormPoints);
+    f_recmd->FixParameter(3, nNormPoints);
+    f_recmd->SetParNames("Norm", "A_fb", "b", "nNormPoints");
+  }
+  else if (which == 4) {
+    f_recmd = new TFMultiD("f_recmd", recAsym2D, 4, 6);
+    f_recmd->SetParameters(1., .5, .9, nNormPoints, nSmearPoints, nSigma);
+    f_recmd->FixParameter(3, nNormPoints);
+    f_recmd->FixParameter(4, nSmearPoints);
+    f_recmd->FixParameter(5, nSigma);
+    f_recmd->SetParNames("Norm", "A_fb", "b", "nNormPoints", 
+			 "nSmearPoints", "nSigma");
+  }
+  else if (which == 5) {
+    f_recmd = new TFMultiD("f_recmd", recAsym6D, 6, 6);
+    f_recmd->SetParameters(1., .5, .9, nNormPoints, nSmearPoints, nSigma);
+    f_recmd->FixParameter(3, nNormPoints);
+    f_recmd->FixParameter(4, nSmearPoints);
+    f_recmd->FixParameter(5, nSigma);
+    f_recmd->SetParNames("Norm", "A_fb", "b", "nNormPoints", 
+			 "nSmearPoints", "nSigma");
+  }
+  else
+    throw cms::Exception("getNewFitFcn")
+      << "Invalid fit type number: " << which << endl;
+
+  return f_recmd;
 }
 
 void Zprime2muAsymmetry::fitAsymmetry() {
@@ -1648,30 +1466,12 @@ void Zprime2muAsymmetry::fitAsymmetry() {
   for (int i = 0; i < numFits; i++) {
     TFMultiD* f_recmd = getNewFitFcn(i);
 
-    ostringstream fit_announce;
-    fit_announce << fit_type[i];
-    if (fitType == GRAV_QQBAR)
-      fit_announce << " (qqbar)";
-    else if (fitType == GRAV_GG)
-      fit_announce << " (gg)";
-    fit_announce << " using " << asymFitManager.getPDFName();
-    if (verbosity >= VERBOSITY_SIMPLE)
-      edm::LogVerbatim("fitAsymmetry") << endl << fit_announce.str() << endl;
-
     fit_data.clear();
     int i_select = 0;
     int i_rec = 0;
     if (i == 1 || i == 3 || i == 5) { i_select = 1; }
     if (i > 1) { i_rec = 1; }
     int n2fit = nfit_used[i_rec];
-
-    // turn off some of the events depending on whether they came
-    // from q/qbar or gg collisions to fit the pdfs seperately
-    double* weights = 0;
-    if (fitType == GRAV_QQBAR)
-      weights = qqbar_weights[i_rec];
-    else if (fitType == GRAV_GG)
-      weights = gg_weights[i_rec];
 
     if (i_select == 0) {
       fit_data.push_back(cos_theta_cs_data[i_rec]);
@@ -1689,34 +1489,12 @@ void Zprime2muAsymmetry::fitAsymmetry() {
     // Do the fit
     UnbinnedFitter *unbfitter = new UnbinnedFitter();
 
-    // fix the "additional normalization" constant
-    f_recmd->FixParameter(0,  1.);
-
-    // either the x (A_fb) term for the asymmetry fits
-    // or the x^2 term for the graviton fits
-    // can be negative, so set the appropriate limit
-    f_recmd->SetParLimits(1, -5., 5.);
-
-    // the x^4 term for gravitons can be negative (gg)
-    // or positive (qqbar) depending on the relative
-    // fraction of each, so don't clamp that term
-    // positive when doing gravitons
-    if (fitType < GRAV) {
-      asymFitManager.setPDF(AsymFitManager::ASYM);
-      f_recmd->SetParLimits(2,  0., 5.);
-    }
-    else if (fitType == GRAV_THEORY) {
-      asymFitManager.setPDF(AsymFitManager::GRAVTH);
-      // now parameter 2 is unused; the only free parameter
-      // in the fit is "s", the relative ratio of the qqbar
-      // contribution to the gg one
-      f_recmd->FixParameter(2, 1.); 
-    }
-    else
-      asymFitManager.setPDF(AsymFitManager::GRAV);
+    f_recmd->FixParameter(0,  1.); // fix the "additional normalization" constant
+    f_recmd->SetParLimits(1, -5., 5.); // A_FB
+    f_recmd->SetParLimits(2,  0., 5.); // b
       
     double logML;
-    int cov_status = unbfitter->unbinnedFitExec("f_recmd", "", n2fit, fit_data, weights, logML);
+    int cov_status = unbfitter->unbinnedFitExec("f_recmd", "", n2fit, fit_data, 0, logML);
       
     TBackCompFitter* jmt_tbcf = dynamic_cast<TBackCompFitter*>(unbfitter->getFitter());
     
@@ -1746,13 +1524,8 @@ void Zprime2muAsymmetry::fitAsymmetry() {
     double rho = cov[1]/sqrt(cov[0]*cov[2]);
     
     // Save results to external file
-    outfile << fit_announce.str() << endl
+    outfile << fit_type[i] << endl
 	    << n2fit << " events in fit" << endl;
-    if (weights) {
-      double wsum = 0;
-      for (int wndx = 0; wndx < n2fit; wndx++) wsum += weights[wndx];
-      outfile << "Using weights, sum of which is " << wsum << endl;
-    }
     fitter = TVirtualFitter::GetFitter();
     par = fitter->GetParameter(1);
     fitter->GetErrors(1, eplus, eminus, eparab, globcc);

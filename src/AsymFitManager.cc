@@ -63,10 +63,6 @@ void AsymFitManager::setConstants(const edm::ParameterSet& pset) {
   _limit_upp[3] = twopi;
   _limit_upp[4] = 1e20;
   _limit_upp[5] = twopi;
-
-  // the default is already initialized in AsymFunctions.C,
-  // but do it here to get everything synchronized
-  setPDF(ASYM);
 }
 
 MistagCalc* AsymFitManager::mistag_calc() const { 
@@ -74,28 +70,6 @@ MistagCalc* AsymFitManager::mistag_calc() const {
     return _mistag_calc;
   else
     throw cms::Exception("MistagCalcNotInitialized");
-}
-
-void AsymFitManager::setPDF(PDFTYPE _type) {
-  pdfType = _type;
-  switch (pdfType) {
-  case ASYM: asym_3_PDF = asym_3_PDF_real; break;
-  case GRAV: asym_3_PDF = GravitonCos_3_PDF; break;
-  case GRAVTH: asym_3_PDF = GravitonCos_th_PDF; break;
-  default: 
-    throw cms::Exception("AsymFitManager") 
-      << "unrecognized PDF type " << _type << "\n";
-  }
-}
-
-const char* AsymFitManager::getPDFName() const {
-  static const char* PDFNAMES[3] = {
-    "asym_3_PDF",
-    "GravitonCos_3_PDF",
-    "GravitonCos_th_PDF"
-  };
-
-  return PDFNAMES[pdfType];
 }
 
 void AsymFitManager::loadParametrization(const char* cache_fn) {

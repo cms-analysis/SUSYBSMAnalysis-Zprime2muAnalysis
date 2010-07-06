@@ -28,8 +28,6 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   static const unsigned int nNormPoints;
   static const unsigned int nSmearPoints;
 
-  enum FITTYPE { ASYM, GRAV, GRAV_QQBAR, GRAV_GG, GRAV_THEORY };
-
   void bookFrameHistos();
   void bookFitHistos();
 
@@ -39,8 +37,7 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   double calcAFBError(double f, double b);
   void calcAsymmetry(double f, double b, double& A_FB, double& e_A_FB);
   void calcAsymmetry(const TH1F* h_cos, double& A_FB, double& e_A_FB);
-  void calcAsymmetry(const TH1F* IdF, const TH1F* IdB, TH1F* IdA,
-		     fstream& out);
+  void calcAsymmetry(const TH1F* IdF, const TH1F* IdB, TH1F* IdA, fstream& out);
 
   void calcFrameAsym();
   void fillFrameHistos();
@@ -48,13 +45,11 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   void fillFitData(const edm::Event& event);
   void dumpFitData();
 
-  TFMultiD* getNewFitFcn(int fitType);
-  void evalLikelihoods();
-
   void countAsymmetry(const int which, double& Afb, double& eAfb);
   void asymmetryByEventWeighting(const int which, double& Afb, double& eAfb);
   void asymmetryByEventWeightingWithAngularInfo(const int which, double& Afb, double& eAfb, bool use_h=true, bool bin_x=true);
 
+  TFMultiD* getNewFitFcn(int which);
   void fitAsymmetry();
 
   void fitCosCS(TH1F* cos_hist, int params);
@@ -151,12 +146,8 @@ class Zprime2muAsymmetry : public Zprime2muAnalysis {
   int fake_mistag_true[FIT_ARRAY_SIZE];
   int fake_mistag_cs[FIT_ARRAY_SIZE];
 
-  std::vector<double> angDist;
-
   // config file parameters
   bool noFit;
-  bool onlyEvalLLR;
-  FITTYPE fitType;
   int numFits;
   std::string paramCacheFile;
   bool internalBremOn;

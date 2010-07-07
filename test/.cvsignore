@@ -1,4 +1,4 @@
-out.out
-Zprime.out
+out.*
 zp2mu_histos.root
 *.ps
+*.pdf

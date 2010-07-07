@@ -29,25 +29,15 @@ double execAsym6D(double *x, double *par);
 double asymResSmear6D(double *x, double *par);
 double asymResSmearNorm6D(double *x, double *par);
 double recAsym6D(double *x, double *par);
-CUTSTATUS diRapAccept(TLorentzVector v_dil, TLorentzVector v_mum, 
-		      TLorentzVector v_mup);
+CUTSTATUS diRapAccept(TLorentzVector v_dil, TLorentzVector v_mum, TLorentzVector v_mup);
 double rapMaxAccept(double *x, double *par);
-void calc4Vectors(AsymFitData& x,  TLorentzVector& v_dil, 
-		  TLorentzVector& v_mum_prime, 
-		  TLorentzVector& v_mup_prime, bool debug);
+void calc4Vectors(AsymFitData& x,  TLorentzVector& v_dil, TLorentzVector& v_mum_prime, TLorentzVector& v_mup_prime, bool debug);
 double calcEta(double pt, double rap, double mass, bool debug);
-double calcCosThetaTrue(TLorentzVector v_quark, TLorentzVector v_mum, 
-			  TLorentzVector v_dil, bool debug);
-double calcCosThetaCSAnal(TLorentzVector v_dil, TLorentzVector v_mum, 
-			    TLorentzVector v_mup, bool debug);
-double calcCosThetaCSAnal(double pz_mum, double e_mum, double pz_mup, 
-			    double e_mup, double pt_dil, double pl_dil,
-			    double mass_dil, bool debug);
-double calcPhiCSAnal(double px_mum, double py_mum, double px_mup, 
-		       double py_mup, double pt_dil, double eta_dil,
-		       double phi_dil, double mass_dil, bool debug);
-void calcCSQuantities(TLorentzVector v_dil, TLorentzVector v_mum, 
-		      double &cos_theta_cs, double &phi_cs, bool debug);
+double calcCosThetaTrue(TLorentzVector v_quark, TLorentzVector v_mum, TLorentzVector v_dil, bool debug);
+double calcCosThetaCSAnal(TLorentzVector v_dil, TLorentzVector v_mum, TLorentzVector v_mup, bool debug=false);
+double calcCosThetaCSAnal(double pz_mum, double e_mum, double pz_mup, double e_mup, double pt_dil, double pl_dil, double mass_dil, bool debug=false);
+double calcPhiCSAnal(double px_mum, double py_mum, double px_mup, double py_mup, double pt_dil, double eta_dil, double phi_dil, double mass_dil, bool debug);
+void calcCSQuantities(TLorentzVector v_dil, TLorentzVector v_mum, double &cos_theta_cs, double &phi_cs, bool debug);
 double mistagProb(double rap, double cos, double mass);
 double mistagProbVsRap(double rap, double mass);
 double mistagProbVsPtRap(double pT, double rap);

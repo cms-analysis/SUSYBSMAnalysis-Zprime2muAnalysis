@@ -105,11 +105,13 @@ void calcAsymmetry(const TH1F* F, const TH1F* B, TH1F* A, double& A_FB, double& 
     throw cms::Exception("HistogramNBinsMismatch") << "nBinsF " << nBinsF << " != nBinsB " << nBinsB << "\n";
 
   // A_FB = (F-B)/(F+B)
-  TH1F* temp1 = (TH1F*)F->Clone(); temp1->SetNameTitle("temp1", "F-B");
-  TH1F* temp2 = (TH1F*)F->Clone(); temp2->SetNameTitle("temp2", "F+B");
-  temp1->Add(F, B, 1., -1.);
-  temp2->Add(F, B, 1.,  1.);
-  A->Divide(temp1, temp2, 1., 1.);
+  TH1F* temp1 = (TH1F*)F->Clone("temp1");
+  TH1F* temp2 = (TH1F*)F->Clone("temp2");
+  temp1->Add(F, B, 1, -1);
+  temp2->Add(F, B, 1,  1);
+  A->Divide(temp1, temp2, 1, 1);
+  delete temp1;
+  delete temp2;
 
   for (int ibin = 1; ibin <= nBinsF; ibin++)
     A->SetBinError(ibin, calcAFBError(F->GetBinContent(ibin), B->GetBinContent(ibin)));

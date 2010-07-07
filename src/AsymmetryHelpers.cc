@@ -3,8 +3,8 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 
 bool computeFitQuantities(const reco::GenParticleCollection& genParticles,
-			  int leptonFlavor, bool internalBremOn,
-			  AsymFitData& data) {
+					    int leptonFlavor, bool internalBremOn,
+					    AsymFitData& data) {
   static const bool debug = false;
 
   HardInteraction hi;
@@ -67,4 +67,52 @@ bool computeFitQuantities(const reco::GenParticleCollection& genParticles,
   data.cut_status = diRapAccept(v_dil, v_mum, v_mup);
 
   return true;
+}
+
+double calcAFBError(double f, double b) {
+  return (f > 0 && b > 0) ? 2*f*b/(f+b)/(f+b)*sqrt(1/f+1/b) : 1;
+}
+
+void calcAsymmetry(double f, double b, double& A_FB, double& e_A_FB) {
+  // Calculate A_FB and its error from f(orward) and b(ackward) counts
+  // and return by reference.
+  A_FB = f+b > 0 ? (f-b)/(f+b) : 0;
+  e_A_FB = calcAFBError(f,b);
+}
+
+void calcAsymmetry(const TH1F* h_cos, double& A_FB, double& e_A_FB) {
+  // With h_cos a histogram of cos_theta from -1 to 1, calculate the
+  // asymmetry using the integral from -1 to 0 and and the integral
+  // from 0 to 1.
+  const int nbins = h_cos->GetNbinsX();
+  double b = int(h_cos->Integral(1, int(nbins/2.)));
+  double f = int(h_cos->Integral(int(nbins/2.) + 1, nbins));
+  calcAsymmetry(f, b, A_FB, e_A_FB);
+}
+
+void calcAsymmetry(const TH1F* F, const TH1F* B, double& A_FB, double& e_A_FB) {
+  calcAsymmetry(F->GetEntries(), B->GetEntries(), A_FB, e_A_FB); 
+}
+
+void calcAsymmetry(const TH1F* F, const TH1F* B, TH1F* A, double& A_FB, double& e_A_FB) {
+  // With F a histogram of forward events and B a histogram of backward events, and creates an asymmetry 
+  // histogram (A) with (F-B)/(F+B).
+
+  // Get the number of bins in each histogram and check they are the same.
+  int nBinsF = F->GetNbinsX();
+  int nBinsB = B->GetNbinsX();
+  if (nBinsF != nBinsB)
+    throw cms::Exception("HistogramNBinsMismatch") << "nBinsF " << nBinsF << " != nBinsB " << nBinsB << "\n";
+
+  // A_FB = (F-B)/(F+B)
+  TH1F* temp1 = (TH1F*)F->Clone(); temp1->SetNameTitle("temp1", "F-B");
+  TH1F* temp2 = (TH1F*)F->Clone(); temp2->SetNameTitle("temp2", "F+B");
+  temp1->Add(F, B, 1., -1.);
+  temp2->Add(F, B, 1.,  1.);
+  A->Divide(temp1, temp2, 1., 1.);
+
+  for (int ibin = 1; ibin <= nBinsF; ibin++)
+    A->SetBinError(ibin, calcAFBError(F->GetBinContent(ibin), B->GetBinContent(ibin)));
+
+  calcAsymmetry(F, B, A_FB, e_A_FB);
 }

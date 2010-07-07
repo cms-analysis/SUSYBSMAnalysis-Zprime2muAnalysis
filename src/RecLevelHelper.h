@@ -16,15 +16,15 @@
 
 // details about the number of rec levels stored, their names, etc.
 const int TRIG_LEVELS = 4; // Includes lGN == 0 as a placeholder.
-enum RecLevel { lGN, lL1, lL2, lL3, lGR, lTK, lFS, lPR, lOP, lTR, lLAST };
+enum RecLevel { lGN, lL1, lL2, lL3, lGR, lTK, lFS, lPR, lOP, lTR, lSW, lLAST };
 const int MAX_LEVELS = lLAST;
 
 // The names of the defined rec levels, as well as shortened versions.
 const std::string levelNames[MAX_LEVELS] = {
-  "Gen", " L1", " L2", " L3", "GMR", "Tracker-only", "TPFMS", "picky", "tevOptimized", "TMR"
+  "Gen", " L1", " L2", " L3", "GMR", "Tracker-only", "TPFMS", "picky", "tevOptimized", "TMR", "SigmaSwitch"
 };
 const std::string levelNamesShort[MAX_LEVELS] = {
-  "GN", "L1", "L2", "L3", "GR", "TK", "FS", "PR", "OP", "TR"
+  "GN", "L1", "L2", "L3", "GR", "TK", "FS", "PR", "OP", "TR", "SW"
 };
 
 // Perform a sanity check on the rec level passed, throwing an

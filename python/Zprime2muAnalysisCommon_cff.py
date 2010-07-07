@@ -103,7 +103,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                                  skipPAT=True,
                                  runOnPATTuple=False,
                                  useHLTDEBUG=False,
-                                 minGenPt=3.0,
+                                 minGenPt=2.0,
                                  cutMask=cuts['TeVmu'],
                                  bestRecLevel=lOP,
                                  inputIsFastSim=False,
@@ -523,14 +523,17 @@ def makeZprime2muAnalysisProcess(fileNames=[],
 
     # Copy only the GlobalMuons from the default muon collection,
     # ignoring the TrackerMuons and CaloMuons for now. Since 3_1_0,
-    # this is now what was called the sigma switch, which uses the
-    # tracker-only track if both the tracker-only and global pT were
-    # below 200 GeV, or if the q/p of the two tracks differ by more
-    # than twice the tracker-only error on q/p.
+    # the default p4 is from what was called the sigma-switch, which
+    # uses the tracker-only track if both the tracker-only and global
+    # pT were below 200 GeV, or if the q/p of the two tracks differ by
+    # more than twice the tracker-only error on q/p. For our GR level,
+    # switch to just using the global track, and include below
+    # separately a level for sigma-switch.
     appendIfUsing('muCandGR', refitMuons.clone(
         src           = defaultMuons,
         fromCocktail  = False,
-        tevMuonTracks = 'none'
+        tevMuonTracks = 'none',
+        fromGlobalTrack = cms.bool(True)
         ))
 
     # Make tracker-only reco::Muons out of the tracker tracks in
@@ -573,6 +576,13 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         fromCocktail  = False,
         fromTMR       = True,
         tevMuonTracks = tevMuons,
+        ))
+
+    appendIfUsing('muCandSW', refitMuons.clone(
+        src           = defaultMuons,
+        fromCocktail  = False,
+        fromSigmaSwitch = True,
+        tevMuonTracks = 'none'
         ))
 
     finalizePath(process, 'pMuons')

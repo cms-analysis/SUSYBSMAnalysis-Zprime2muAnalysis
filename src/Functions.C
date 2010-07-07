@@ -648,21 +648,26 @@ double expgaufun(double *x, double *par) {
 
 //=============================================================================
 
-TLorentzVector LorentzBoost(TLorentzVector boost_frame,
-			    TLorentzVector rest_frame){
+TLorentzVector LorentzBoost(const TLorentzVector& boost_frame, const TLorentzVector& to_be_boosted) {
+#if 0
+  TLorentzVector v = to_be_boosted;
+  v.Boost(-boost_frame.BoostVector());
+  return v;
+#endif
+
   // Input:
   // boost_frame  = 4 vector of a particle whose frame you want to boost into
-  // rest_frame   = 4 vector of the unboosted particle.
+  // to_be_boosted   = 4 vector of the unboosted particle.
   // 
   // Output:
   // Returns the 4 vector of a particle boosted into the frame of another
   // particle.
 
-  const bool debug = false;
+  static const bool debug = false;
   // Assign values for rest and boosted 4 vectors;
-  TVector3 p_rest(rest_frame.Px(), rest_frame.Py(), rest_frame.Pz());
+  TVector3 p_rest(to_be_boosted.Px(), to_be_boosted.Py(), to_be_boosted.Pz());
   TVector3 p_boost(boost_frame.Px(), boost_frame.Py(), boost_frame.Pz());
-  double e_rest = rest_frame.E();
+  double e_rest = to_be_boosted.E();
   double e_boost = boost_frame.E();
   double m_boost = boost_frame.M();
 
@@ -707,31 +712,12 @@ TLorentzVector LorentzBoost(TLorentzVector boost_frame,
   return boost_lorentz_vector;
 }
 
-//
-// dummy implementation for math::XYZTLorentzVector
-//
-math::XYZTLorentzVector LorentzBoost(math::XYZTLorentzVector boost_frame,
-                                     math::XYZTLorentzVector rest_frame) {
-  TLorentzVector b_t(boost_frame.x(), boost_frame.y(), boost_frame.z(), boost_frame.t());
-  TLorentzVector r_t(rest_frame.x(), rest_frame.y(), rest_frame.z(), rest_frame.t());
-  TLorentzVector result_t = LorentzBoost(b_t, r_t);
-  math::XYZTLorentzVector result(result_t.Px(), result_t.Py(),result_t.Pz(),result_t.E());
-  return result;
+double cos_angle(const TVector3& v1, const TVector3& v2) {
+  return v1 * v2 / v1.Mag() / v2.Mag();
 }
 
-
-//
-// cosTheta of 2 vectors
-//
-double cosTheta(math::XYZTLorentzVector lhs, math::XYZTLorentzVector rhs) {
-
-   math::XYZTLorentzVector delta = lhs - rhs;
-   Double_t ll = lhs.Vect().R();
-   Double_t rr = rhs.Vect().R();
-   Double_t dd = delta.Vect().R();
-
-   float costheta = (ll*ll + rr*rr - dd*dd)/(2*ll*rr);
-   return costheta;
+double cos_angle(const TLorentzVector& v1, const TLorentzVector& v2) {
+  return cos_angle(v1.Vect(), v2.Vect());
 }
 
 //=============================================================================

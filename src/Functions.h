@@ -21,15 +21,11 @@ double lorengauPlusExpbckgNorm(double *x, double *par);
 double lorengauPlusExpbckgN(double *x, double *par);
 double mass_resolution(double *x, double *par);
 
-TLorentzVector LorentzBoost(TLorentzVector boost_frame,
-			    TLorentzVector rest_frame);
+TLorentzVector LorentzBoost(const TLorentzVector& boost_frame, const TLorentzVector& to_be_boosted);
 
-math::XYZTLorentzVector LorentzBoost(math::XYZTLorentzVector boost_frame,
-                        math::XYZTLorentzVector rest_frame);
+double cos_angle(const TVector3& v1, const TVector3& v2);
+double cos_angle(const TLorentzVector& v1, const TLorentzVector& v2);
 
-double cosTheta(math::XYZTLorentzVector, math::XYZTLorentzVector);
-
-double Momentum(double pT, double eta);
 double probks(const double alam);
 
 #endif

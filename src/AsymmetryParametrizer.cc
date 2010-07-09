@@ -34,7 +34,6 @@ private:
   void assemble();
 
   const edm::InputTag gen_particle_src;
-  const int lepton_flavor;
   const bool internal_brem_on;
 
   const bool assemble_only;
@@ -61,7 +60,6 @@ private:
 
 AsymmetryParametrizer::AsymmetryParametrizer(const edm::ParameterSet& cfg)
   : gen_particle_src(cfg.getParameter<edm::InputTag>("gen_particle_src")),
-    lepton_flavor(cfg.getParameter<int>("lepton_flavor")),
     internal_brem_on(cfg.getParameter<bool>("internal_brem_on")),
     assemble_only(cfg.getParameter<bool>("assemble_only")),
     histos_fn(cfg.getParameter<std::string>("histos_fn")),
@@ -134,7 +132,7 @@ bool AsymmetryParametrizer::filter(edm::Event& event, const edm::EventSetup& set
   event.getByLabel(gen_particle_src, gen_particles);
 
   AsymFitData data;
-  if (!computeFitQuantities(*gen_particles, lepton_flavor, internal_brem_on, data))
+  if (!computeFitQuantities(*gen_particles, asymFitManager.doing_electrons(), internal_brem_on, data))
     return false; // if finding the Z'/etc failed, skip this event
 
   /*

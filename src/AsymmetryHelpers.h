@@ -10,7 +10,7 @@
 // structure "data" returned by reference.  The flag "internalBremOn",
 // is for switching on and off the effect of internal bremsstrahlung.
 bool computeFitQuantities(const reco::GenParticleCollection& genParticles,
-			  int leptonFlavor, bool internalBremOn,
+			  const bool doingElectrons, const bool internalBremOn,
 			  AsymFitData& data);
 
 void calcAsymmetry(double f, double b, double& A_FB, double& e_A_FB);

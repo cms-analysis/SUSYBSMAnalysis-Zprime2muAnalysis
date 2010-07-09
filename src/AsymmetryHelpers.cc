@@ -3,12 +3,11 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 
 bool computeFitQuantities(const reco::GenParticleCollection& genParticles,
-					    int leptonFlavor, bool internalBremOn,
-					    AsymFitData& data) {
+			  const bool doingElectrons, const bool internalBremOn,
+			  AsymFitData& data) {
   static const bool debug = false;
 
-  HardInteraction hi;
-  hi.init(leptonFlavor, true);
+  HardInteraction hi(doingElectrons, true);
   hi.Fill(genParticles);
   if (!hi.IsValid())
     return false;

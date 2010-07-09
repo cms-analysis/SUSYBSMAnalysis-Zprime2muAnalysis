@@ -29,7 +29,8 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
     useReco(config.getParameter<bool>("useReco")),
     useOtherMuonRecos(config.getParameter<bool>("useOtherMuonRecos")),
     usingAODOnly(config.getParameter<bool>("usingAODOnly")),
-    lBest(config.getParameter<int>("bestRecLevel"))
+    lBest(config.getParameter<int>("bestRecLevel")),
+    hardInteraction(doingElectrons, true)
 {
   InitROOT();
 
@@ -49,7 +50,6 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
 
   trigDecision.init(config, verbosity >= VERBOSITY_SIMPLE);
   cutHelper.setCutMask(config.getParameter<unsigned>("cutMask"));
-  hardInteraction.init(leptonFlavor, true);
   recLevelHelper.init(config);
 }
 

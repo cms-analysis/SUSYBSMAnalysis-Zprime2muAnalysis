@@ -1,13 +1,25 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 
-using namespace std;
-using namespace reco;
+HardInteraction::HardInteraction(const edm::ParameterSet cfg)
+  : src(cfg.getParameter<edm::InputTag>("src")),
+    doingElectrons(cfg.getParameter<bool>("doingElectrons")),
+    leptonFlavor(doingElectrons ? 11 : 13),
+    leptonMass(doingElectrons ? 0.000511 : 0.10566),
+    allowFakeResonance(cfg.getParameter<bool>("allowFakeResonance")),
+    resonanceIds(cfg.getParameter<std::vector<int> >("resonanceIds"))
+{
+  Clear();
+}
 
-HardInteraction::HardInteraction() {
-  init(13, true);
+HardInteraction::HardInteraction(bool doingElec, bool allowFakeRes)
+  : src(edm::InputTag("genParticles")),
+    doingElectrons(doingElec),
+    leptonFlavor(doingElectrons ? 11 : 13),
+    leptonMass(doingElectrons ? 0.000511 : 0.10566),
+    allowFakeResonance(allowFakeRes)
+{
   Clear();
 }
 
@@ -20,22 +32,16 @@ HardInteraction::~HardInteraction() {
     delete resonance;
 }
 
-void HardInteraction::init(int lepFlavor, bool allowFakeRes){
-  leptonFlavor = lepFlavor;
-  allowFakeResonance = allowFakeRes;
-}
-
-bool HardInteraction::IsResonance(int pdgId) {
-  /*
-  vector<int>::const_iterator p = resonanceIds.begin();
-  for (; p != resonanceIds.end(); p++)
-    if (*p == pdgId)
-      return true;
-  return false;
-  */
-
-  // Z', Z0/gamma*, G, or G*
-  return pdgId == 32 || pdgId == 23 || pdgId == 39 || pdgId == 5000039;
+bool HardInteraction::IsResonance(int id) const {
+  if (resonanceIds.size() > 0) {
+    for (std::vector<int>::const_iterator p = resonanceIds.begin(), pe = resonanceIds.end(); p != resonanceIds.end(); p++)
+      if (*p == id)
+	return true;
+    return false;
+  }
+  else 
+    // Default: Z', Z0/gamma*, G, or G*.
+    return id == 32 || id == 23 || id == 39 || id == 5000039;
 }
 
 void HardInteraction::Clear() {
@@ -49,18 +55,18 @@ bool HardInteraction::IsValid() const {
 }
 
 void HardInteraction::Fill(const edm::Event& event) {
-  edm::Handle<GenParticleCollection> genParticles;
-  event.getByLabel("genParticles", genParticles);
+  edm::Handle<reco::GenParticleCollection> genParticles;
+  event.getByLabel(src, genParticles);
   Fill(*genParticles);
 }
 
-void HardInteraction::Fill(const GenParticleCollection& genParticles) {
+void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
   // Reset everything before filling.
   Clear();
 
   // Look in the doc lines for the hard-interaction resonance and
   // leptons.
-  GenParticleCollection::const_iterator genp = genParticles.begin();
+  reco::GenParticleCollection::const_iterator genp = genParticles.begin();
   for (; genp != genParticles.end(); genp++) {
     if (genp->status() == 3) {
       int pdgId = genp->pdgId();
@@ -101,7 +107,7 @@ void HardInteraction::Fill(const GenParticleCollection& genParticles) {
   // from one of the leptons (see below). Start by assuming it is from
   // the resonance (we'll check for the null pointer later if this is
   // not true).
-  const Candidate* mothersAreQuarks = resonance;
+  const reco::Candidate* mothersAreQuarks = resonance;
 
   // Some COMPHEP samples do not put the resonance back into the HepMC
   // record. So, if we didn't find a resonance, and are allowed to,
@@ -109,11 +115,11 @@ void HardInteraction::Fill(const GenParticleCollection& genParticles) {
   // at this point). Use the doc-line l+l- we found to do so.
   if (resonance == 0) {
     if (allowFakeResonance && lepPlusNoIB && lepMinusNoIB) {
-      Particle::Charge q = lepPlusNoIB->charge() + lepMinusNoIB->charge();
-      Particle::LorentzVector p4 = lepPlusNoIB->p4() + lepMinusNoIB->p4();
+      reco::Particle::Charge q = lepPlusNoIB->charge() + lepMinusNoIB->charge();
+      reco::Particle::LorentzVector p4 = lepPlusNoIB->p4() + lepMinusNoIB->p4();
       // Don't know the creation vertex of the resonance. Set to (0,0,0)
       // by default.
-      Particle::Point vtx;
+      reco::Particle::Point vtx;
       // We also don't know what the pdgId of the resonance was. Pass
       // one in?
       int pdgId = 99;      
@@ -121,7 +127,7 @@ void HardInteraction::Fill(const GenParticleCollection& genParticles) {
     
       // We have ownership of this pointer, and we will delete it in our
       // destructor.
-      resonance = new GenParticle(q, p4, vtx, pdgId, status, true);
+      resonance = new reco::GenParticle(q, p4, vtx, pdgId, status, true);
       resonanceIsFake = true;
 
       // In these resonanceless COMPHEP samples, the quark/antiquark are
@@ -139,7 +145,7 @@ void HardInteraction::Fill(const GenParticleCollection& genParticles) {
   // quark/antiquark as its mothers? Try to get them.
   if (mothersAreQuarks != 0 && mothersAreQuarks->numberOfMothers() == 2) {
     for (unsigned m = 0; m < 2; m++) {
-      const Candidate* mom = mothersAreQuarks->mother(m);
+      const reco::Candidate* mom = mothersAreQuarks->mother(m);
       int momId = mom->pdgId();
 
       // For now, don't count gluons (id = 21), but we should
@@ -165,7 +171,7 @@ void HardInteraction::Fill(const GenParticleCollection& genParticles) {
   // the doc-line leptons and have status = 1, i.e. they are
   // final-state. Also grab the brem photons.
   if (lepMinusNoIB) {
-    for (Candidate::const_iterator dau = lepMinusNoIB->begin();
+    for (reco::Candidate::const_iterator dau = lepMinusNoIB->begin();
 	 dau != lepMinusNoIB->end(); dau++) {
       if (dau->status() == 1) {
 	int pdgId = dau->pdgId();
@@ -178,7 +184,7 @@ void HardInteraction::Fill(const GenParticleCollection& genParticles) {
   }
 
   if (lepPlusNoIB) {
-    for (Candidate::const_iterator dau = lepPlusNoIB->begin();
+    for (reco::Candidate::const_iterator dau = lepPlusNoIB->begin();
 	 dau != lepPlusNoIB->end(); dau++) {
       if (dau->status() == 1) {
 	int pdgId = dau->pdgId();

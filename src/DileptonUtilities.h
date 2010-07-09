@@ -4,6 +4,8 @@
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/Candidate/interface/CompositeCandidate.h"
 #include "DataFormats/Candidate/interface/CompositeCandidateFwd.h"
+#include "DataFormats/Candidate/interface/Particle.h"
+#include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
 
 // Sorting functor for dileptons. Using std::sort results in dileptons
 // reverse-sorted by invariant mass.
@@ -41,5 +43,10 @@ dileptonDaughter(const reco::CompositeCandidate& dil,
 const reco::CandidateBaseRef
 dileptonDaughterByCharge(const reco::CompositeCandidate& dil,
 			 const int charge);
+
+// Get the momentum four-vector of the composite candidate plus the
+// leptons' closest photons (what we've in the past called the
+// "resonance").
+reco::Particle::LorentzVector resonanceP4(const pat::CompositeCandidate& cand);
 
 #endif

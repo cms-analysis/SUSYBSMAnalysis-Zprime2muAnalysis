@@ -1,11 +1,10 @@
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/Candidate/interface/CompositeCandidate.h"
 #include "DataFormats/Candidate/interface/CompositeCandidateFwd.h"
-
+#include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
+#include "DataFormats/PatCandidates/interface/Muon.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneratorUtilities.h"
 
 using namespace std;
 
@@ -76,4 +75,38 @@ dileptonDaughterByCharge(const reco::CompositeCandidate& dil,
     if (dil.daughter(ilep)->charge() == charge)
       return dil.daughter(ilep)->masterClone();
   return reco::CandidateBaseRef();
+}
+
+reco::Particle::LorentzVector resonanceP4(const pat::CompositeCandidate& cand) {
+  // Start with the p4 of the candidate, which is the sum of the
+  // daughter p4s by construction.
+  reco::Particle::LorentzVector p4 = cand.p4();
+
+  std::vector<int> used_already;
+
+  for (pat::CompositeCandidate::const_iterator dau = cand.begin(), daue = cand.end(); dau != daue; ++dau) {
+    // Only muons can have photons matched to them. Also, remember
+    // that the CompositeCandidates were formed using shallow clones,
+    // so need to get the daughters' masterClones to be able to get
+    // the original pat::Muon*.
+    const pat::Muon* mu = dynamic_cast<const pat::Muon*>(&*dau->masterClone());
+    if (mu == 0)
+      continue;
+
+    if (mu->hasUserInt("photon_index")) {
+      int ndx = mu->userInt("photon_index");
+
+      // Don't double count, in the case where two daughter muons
+      // ended up matching to the same photon.
+      if (std::find(used_already.begin(), used_already.end(), ndx) == used_already.end()) {
+	used_already.push_back(ndx);
+	const reco::Particle::LorentzVector* pho_p4 = mu->userData<reco::Particle::LorentzVector>("photon_p4");
+	if (pho_p4 == 0)
+	  throw cms::Exception("BadlyFormedPhotonUserData") << "candidate daughter had userInt for photon_index but no p4!\n";
+	p4 += *pho_p4;
+      }
+    }
+  }
+
+  return p4;
 }

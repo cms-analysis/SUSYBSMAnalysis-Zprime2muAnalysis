@@ -24,7 +24,9 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////
 
 ostream& operator<<(ostream& out, const TLorentzVector& vect) {
-  out << "(" << vect.X() << "," << vect.Y() << "," << vect.Z() << "," << vect.E() << ")";
+  // ROOT makes error, CMSSW makes exception... grr...
+  float eta = vect.Pt() > 0 ? vect.Eta() : 10e10;
+  out << "cartesian: (" << vect.X() << "," << vect.Y() << "," << vect.Z() << "," << vect.E() << ") pt,eta,phi,m: (" << vect.Pt() << ", " << eta << ", " << vect.Phi() << ", " << vect.M() << ")";
   return out;
 }
 
@@ -64,7 +66,7 @@ void InitROOT(bool date_histograms) {
   TH1::AddDirectory(false);
   setTDRStyle();
 #else
-  if (!date_histograms)
+  if (getenv("ZP2MU_NO_DATE_HISTOGRAMS")) // magic for JMT
     gStyle->SetOptDate(0);
   gROOT->SetStyle("Plain");
   gStyle->SetFillColor(0);

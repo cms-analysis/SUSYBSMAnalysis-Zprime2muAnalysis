@@ -1,10 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
 Zprime2muAnalysisCommon = cms.PSet(
-    ################################################################
-    # Analysis configuration:
-    ################################################################
-    verbosity         = cms.untracked.int32(0),
     maxDileptons      = cms.uint32(1),
     doingElectrons    = cms.bool(False),
     useGen            = cms.bool(False),
@@ -13,20 +9,17 @@ Zprime2muAnalysisCommon = cms.PSet(
     useRaw            = cms.bool(False),
     useReco           = cms.bool(True),
     dateHistograms    = cms.untracked.bool(True),
-    cutMask           = cms.uint32(0),
-    
-    ################################################################
-    # Trigger info: InputTags and path names.
-    ################################################################
-    l1GtObjectMap = cms.InputTag('hltL1GtObjectMap'),
-    hltResults = cms.InputTag('TriggerResults', '', 'HLT'),
-
-    # Trigger paths we use: the result is the OR of these. These
-    # are the highest pT muon triggers in the 8E29 menu. The 1E31
-    # menu has in addition L1_SingleMu10 which seeds HLT_Mu15.
-    l1Paths = cms.vstring('L1_SingleMu7', 'L1_DoubleMu3'),
-    hltPaths = cms.vstring('HLT_Mu9', 'HLT_DoubleMu3'),
 )
+
+# By putting it in the analysis path, this module can be used to
+# filter out events that do not pass our trigger selection, which are
+# currently the OR of the highest-pT single muon trigger and double
+# muon triggers. It does not go in Zprime2muAnalysisSequence by
+# default; users must specifically include it.
+import HLTrigger.HLTfilters.hltHighLevel_cfi
+hltFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
+hltFilter.HLTPaths = ['HLT_Mu9', 'HLT_DoubleMu3']
+hltFilter.andOr = True # == OR
 
 leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          muon_src = cms.InputTag('cleanPatMuons'),

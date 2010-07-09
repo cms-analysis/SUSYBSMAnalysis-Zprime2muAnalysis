@@ -39,7 +39,6 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   edm::InputTag lepton_src;
   edm::InputTag dilepton_src;
 
-  const bool triggeredEventsOnly;
   const bool useAllLeptons;
   const bool leptonsFromDileptons;
   const double lowerMassWin;
@@ -92,7 +91,6 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   : helper(cfg),
     lepton_src(cfg.getParameter<edm::InputTag>("lepton_src")),
     dilepton_src(cfg.getParameter<edm::InputTag>("dilepton_src")),
-    triggeredEventsOnly(cfg.getParameter<bool>("triggeredEventsOnly")),
     useAllLeptons(cfg.getParameter<bool>("useAllLeptons")),
     leptonsFromDileptons(cfg.getParameter<bool>("leptonsFromDileptons")),
     lowerMassWin(cfg.getParameter<double>("lowerMassWin")),
@@ -310,9 +308,6 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidateCol
 
 void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   helper.initEvent(event, setup);
-
-  if (triggeredEventsOnly && !helper.trigDecision.pass())
-    return;
 
   edm::Handle<edm::View<reco::Candidate> > leptons;
   event.getByLabel(lepton_src, leptons);

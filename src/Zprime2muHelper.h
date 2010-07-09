@@ -2,7 +2,6 @@
 #define Zprime2muHelper_h
 
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TriggerDecision.h"
 
 namespace edm {
   class ParameterSet;
@@ -53,10 +52,6 @@ class Zprime2muHelper {
   // Helper object to extract the important generator-level objects:
   // the resonance and its decay products (including brem. photons).
   HardInteraction hardInteraction;
-
-  // Helper object for extracting the trigger decision from the paths
-  // we care about.
-  TriggerDecision trigDecision;
 };
 
 #endif

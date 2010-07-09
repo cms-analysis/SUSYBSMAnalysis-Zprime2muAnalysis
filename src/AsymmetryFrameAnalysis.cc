@@ -398,9 +398,6 @@ void AsymmetryFrameAnalysis::fillFrameHistos(const pat::CompositeCandidate& dil,
 }
 
 void AsymmetryFrameAnalysis::analyze(const edm::Event& event, const edm::EventSetup&) {
-  if (!helper.trigDecision.pass())
-    return;
-
   edm::Handle<pat::CompositeCandidateCollection> dileptons;
   event.getByLabel(dilepton_src, dileptons);
 

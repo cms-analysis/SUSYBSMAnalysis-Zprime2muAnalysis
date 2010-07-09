@@ -21,18 +21,11 @@ Zprime2muHelper::Zprime2muHelper(const edm::ParameterSet& config)
   InitROOT(config.getUntrackedParameter<bool>("dateHistograms", true));
 
   if (useGen) hardInteraction.init(leptonFlavor, true);
-  if (useTrigger) trigDecision.init(config);
 }
 
 void Zprime2muHelper::initEvent(const edm::Event& event, const edm::EventSetup& eSetup) {
   // Get the hard interaction from the MC record.
   if (useGen) hardInteraction.Fill(event);
-
-  // Get the trigger decision from the event. For now, don't bother
-  // looking at sub-levels since L2 decisions are no longer stored in
-  // the event. JMTBAD For L2, we could take the result of
-  // TriggerTranslator()...
-  if (useTrigger) trigDecision.initEvent(event);
 }
 
 reco::Particle::LorentzVector Zprime2muHelper::resonanceP4(const pat::CompositeCandidate& cand) const {

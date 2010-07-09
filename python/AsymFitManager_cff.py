@@ -2,6 +2,9 @@ import FWCore.ParameterSet.Config as cms
 
 # Below are defaults for DY->mumu with 200 < M_mumu < 400.
 AsymFitManager = cms.PSet(
+    # which type of leptons (and thus which mass to use)
+    doingElectrons = cms.bool(False),
+
     # whether to use the mistag correction (i.e. to include
     # omega(y) in the pdf)
     correctMistags = cms.bool(True),

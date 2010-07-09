@@ -69,6 +69,7 @@ class AsymFitManager {
   double mum_pt_min() const { return 0.; }
   bool debug() const { return false; }
 
+  bool doing_electrons() const { return _doing_electrons; }
   double lepton_mass() const { return _lepton_mass; }
   int mass_type() const { return _mass_type; } 
   double max_rap() const { return _max_rap; }
@@ -105,8 +106,8 @@ class AsymFitManager {
  private:
   MistagCalc* _mistag_calc;
 
+  bool _doing_electrons;
   double _lepton_mass;
-
   // mass_type values: 1 = falling exponential, 2 = lorentzian peak, 3 = 1+2
   int _mass_type;
   double _max_rap;

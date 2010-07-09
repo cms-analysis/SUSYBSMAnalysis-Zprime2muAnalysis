@@ -5,7 +5,6 @@ from AsymFitManager_cff import AsymFitManager
 AsymmetryParametrizer = cms.EDFilter('AsymmetryParametrizer',
                                      AsymFitManager,
                                      gen_particle_src = cms.InputTag('genParticles'),
-                                     lepton_flavor = cms.int32(13),
                                      internal_brem_on = cms.bool(True),
                                      assemble_only = cms.bool(False),
                                      histos_fn = cms.string('AsymmetryParametrizer.root'),

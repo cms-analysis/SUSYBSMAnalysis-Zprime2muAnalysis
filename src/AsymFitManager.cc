@@ -14,7 +14,8 @@ void AsymFitManager::setConstants(const edm::ParameterSet& pset) {
     _mistag_calc = 0;
   }
 
-  _lepton_mass = pset.getParameter<bool>("doingElectrons") ? 0.000511 : 0.10566;
+  _doing_electrons = pset.getParameter<bool>("doingElectrons");
+  _lepton_mass = _doing_electrons ? 0.000511 : 0.10566;
 
   _mass_type = pset.getParameter<int>("massDistType");
   if (_mass_type != MASS_EXP && _mass_type != MASS_LOR && _mass_type != MASS_LOREXP)

@@ -17,7 +17,6 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TrackUtilities.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muHelper.h"
 
 class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
  public:
@@ -33,8 +32,6 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   void fillLeptonHistosFromDileptons(const pat::CompositeCandidateCollection&);
   void fillDileptonHistos(const pat::CompositeCandidate&);
   void fillDileptonHistos(const pat::CompositeCandidateCollection&);
-
-  Zprime2muHelper helper;
 
   edm::InputTag lepton_src;
   edm::InputTag dilepton_src;
@@ -88,8 +85,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
 };
 
 Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
-  : helper(cfg),
-    lepton_src(cfg.getParameter<edm::InputTag>("lepton_src")),
+  : lepton_src(cfg.getParameter<edm::InputTag>("lepton_src")),
     dilepton_src(cfg.getParameter<edm::InputTag>("dilepton_src")),
     useAllLeptons(cfg.getParameter<bool>("useAllLeptons")),
     leptonsFromDileptons(cfg.getParameter<bool>("leptonsFromDileptons")),
@@ -159,8 +155,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   // Dilepton quantities.
 
   // Dilepton multiplicity.
-  const int md = helper.maxDileptons + 1;
-  NDileptons = fs->make<TH1F>("NDileptons",  "# dileptons/event, " + titlePrefix, md, 0, md);
+  NDileptons = fs->make<TH1F>("NDileptons",  "# dileptons/event, " + titlePrefix, 10, 0, 10);
   
   // Dilepton eta, y, phi.
   DileptonEta = fs->make<TH1F>("DileptonEta", titlePrefix + "dil. #eta", 100, -5,  5);
@@ -280,7 +275,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
   DileptonPVsEta ->Fill(dil.eta(), dil.p());
 
   DileptonMass->Fill(dil.mass());
-  DileptonWithPhotonsMass->Fill(helper.resonanceP4(dil).mass());
+  DileptonWithPhotonsMass->Fill(resonanceP4(dil).mass());
 
   const reco::CandidateBaseRef& lep_minus = dileptonDaughterByCharge(dil, -1);
   const reco::CandidateBaseRef& lep_plus  = dileptonDaughterByCharge(dil, +1);
@@ -307,8 +302,6 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidateCol
 }
 
 void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSetup& setup) {
-  helper.initEvent(event, setup);
-
   edm::Handle<edm::View<reco::Candidate> > leptons;
   event.getByLabel(lepton_src, leptons);
 

@@ -27,7 +27,6 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Functions.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneralUtilities.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muHelper.h"
 
 class AsymmetryFrameAnalysis : public edm::EDAnalyzer {
 public:
@@ -41,7 +40,6 @@ private:
   void fitCosCS(TH1F*, int);
   void drawFrameHistos();
 
-  Zprime2muHelper helper;
   const edm::InputTag dilepton_src;
   const bool debug;
 
@@ -102,8 +100,7 @@ private:
 };
 
 AsymmetryFrameAnalysis::AsymmetryFrameAnalysis(const edm::ParameterSet& cfg)
-  : helper(cfg),
-    dilepton_src(cfg.getParameter<edm::InputTag>("dilepton_src")),
+  : dilepton_src(cfg.getParameter<edm::InputTag>("dilepton_src")),
     debug(cfg.getUntrackedParameter<bool>("debug"))
 {
   asymFitManager.setConstants(cfg);
@@ -206,8 +203,8 @@ void AsymmetryFrameAnalysis::fillFrameHistos(const pat::CompositeCandidate& dil,
   if (debug) std::cout << "pp1: " << pp1 << " pp2: " << pp2 << "\n";
 
   TLorentzVector vmum, vmup, vdil;
-  vmum.SetPtEtaPhiM(mum->pt(), mum->eta(), mum->phi(), helper.leptonMass);
-  vmup.SetPtEtaPhiM(mup->pt(), mup->eta(), mup->phi(), helper.leptonMass);
+  vmum.SetPtEtaPhiM(mum->pt(), mum->eta(), mum->phi(), mum->mass());
+  vmup.SetPtEtaPhiM(mup->pt(), mup->eta(), mup->phi(), mup->mass());
   vdil.SetPtEtaPhiM(dil.pt(),  dil.eta(),  dil.phi(),  dil.mass());
 
   if (debug) std::cout << "Dilepton:" << "\n"

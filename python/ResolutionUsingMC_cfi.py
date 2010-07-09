@@ -1,9 +1,9 @@
 import FWCore.ParameterSet.Config as cms
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import Zprime2muAnalysisCommon
+from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction
 
 ResolutionUsingMC = cms.EDAnalyzer('ResolutionUsingMC',
-                                   Zprime2muAnalysisCommon.clone(useGen = True),
+                                   hardInteraction = hardInteraction,
                                    lepton_src = cms.InputTag('leptons', 'muons'),
                                    dilepton_src = cms.InputTag('dimuons'),
                                    useAllLeptons = cms.bool(True),

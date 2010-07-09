@@ -9,10 +9,11 @@
 #include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TrackUtilities.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muHelper.h"
 
 class ResolutionUsingMC : public edm::EDAnalyzer {
  public:
@@ -29,8 +30,7 @@ class ResolutionUsingMC : public edm::EDAnalyzer {
   void fillLeptonHistosFromDileptons(const pat::CompositeCandidateCollection&);
   void fillDileptonHistos(const pat::CompositeCandidateCollection&);
 
-  Zprime2muHelper helper;
-
+  HardInteraction hardInteraction;
   edm::InputTag lepton_src;
   edm::InputTag dilepton_src;
 
@@ -71,7 +71,7 @@ class ResolutionUsingMC : public edm::EDAnalyzer {
 };
 
 ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
-  : helper(cfg),
+  : hardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction")),
     lepton_src(cfg.getParameter<edm::InputTag>("lepton_src")),
     dilepton_src(cfg.getParameter<edm::InputTag>("dilepton_src")),
     useAllLeptons(cfg.getParameter<bool>("useAllLeptons")),
@@ -239,14 +239,14 @@ void ResolutionUsingMC::fillChargeResolution(const reco::GenParticle* gen_lep, c
 }
 
 void ResolutionUsingMC::fillDileptonMassResolution(const reco::CompositeCandidate& dil) {
-  if (helper.hardInteraction.lepPlus == 0 || helper.hardInteraction.lepMinus == 0 || helper.hardInteraction.resonance == 0)
+  if (!hardInteraction.IsValid())
     return;
 
   const double mass         = dil.mass();
-  const double gen_mass     = (helper.hardInteraction.lepPlus->p4() + helper.hardInteraction.lepMinus->p4()).mass();
+  const double gen_mass     = (hardInteraction.lepPlus->p4() + hardInteraction.lepMinus->p4()).mass();
 
-  const double res_mass     = helper.resonanceP4(dil).mass();
-  const double gen_res_mass = helper.hardInteraction.resonance->mass();
+  const double res_mass     = resonanceP4(dil).mass();
+  const double gen_res_mass = hardInteraction.resonance->mass();
 
   const double rdil    = mass    /gen_mass     - 1;
   const double rdilres = mass    /gen_res_mass - 1;
@@ -298,7 +298,7 @@ void ResolutionUsingMC::fillDileptonHistos(const pat::CompositeCandidateCollecti
 }
 
 void ResolutionUsingMC::analyze(const edm::Event& event, const edm::EventSetup& setup) {
-  helper.initEvent(event, setup);
+  hardInteraction.Fill(event);
 
   edm::Handle<edm::View<reco::Candidate> > leptons;
   event.getByLabel(lepton_src, leptons);

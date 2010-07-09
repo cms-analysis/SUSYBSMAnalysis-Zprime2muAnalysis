@@ -1,16 +1,5 @@
 import FWCore.ParameterSet.Config as cms
 
-Zprime2muAnalysisCommon = cms.PSet(
-    maxDileptons      = cms.uint32(1),
-    doingElectrons    = cms.bool(False),
-    useGen            = cms.bool(False),
-    useSim            = cms.bool(False),
-    useTrigger        = cms.bool(True),
-    useRaw            = cms.bool(False),
-    useReco           = cms.bool(True),
-    dateHistograms    = cms.untracked.bool(True),
-)
-
 # By putting it in the analysis path, this module can be used to
 # filter out events that do not pass our trigger selection, which are
 # currently the OR of the highest-pT single muon trigger and double

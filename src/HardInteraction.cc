@@ -169,10 +169,16 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
 
   // Now, pick up the leptons after brem. They are daughter leptons of
   // the doc-line leptons and have status = 1, i.e. they are
-  // final-state. Also grab the brem photons.
+  // final-state. Also grab the brem photons. Some generators, when
+  // doing FSR, make a status=2 copy of the muon as the status=3
+  // muon's daughter, then the status=2 muon has status=1 daughters
+  // the muon and the photon(s).
   if (lepMinusNoIB) {
-    for (reco::Candidate::const_iterator dau = lepMinusNoIB->begin();
-	 dau != lepMinusNoIB->end(); dau++) {
+    const reco::Candidate* c = lepMinusNoIB;
+    if (lepMinusNoIB->numberOfDaughters() == 1 && lepMinusNoIB->daughter(0)->status() == 2)
+      c = lepMinusNoIB->daughter(0);
+
+    for (reco::Candidate::const_iterator dau = c->begin(), daue = c->end(); dau != daue; ++dau) {
       if (dau->status() == 1) {
 	int pdgId = dau->pdgId();
 	if (pdgId == leptonFlavor)
@@ -184,8 +190,11 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
   }
 
   if (lepPlusNoIB) {
-    for (reco::Candidate::const_iterator dau = lepPlusNoIB->begin();
-	 dau != lepPlusNoIB->end(); dau++) {
+    const reco::Candidate* c = lepPlusNoIB;
+    if (lepPlusNoIB->numberOfDaughters() == 1 && lepPlusNoIB->daughter(0)->status() == 2)
+      c = lepPlusNoIB->daughter(0);
+
+    for (reco::Candidate::const_iterator dau = c->begin(), daue = c->end(); dau != daue; ++dau) {
       if (dau->status() == 1) {
 	int pdgId = dau->pdgId();
 	if (pdgId == -leptonFlavor)

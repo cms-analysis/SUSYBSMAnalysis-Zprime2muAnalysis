@@ -1,3 +1,6 @@
+#include "TF1.h"
+#include "TVirtualFitter.h"
+
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymFunctions.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymmetryHelpers.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
@@ -116,4 +119,58 @@ void calcAsymmetry(const TH1F* F, const TH1F* B, TH1F* A, double& A_FB, double& 
     A->SetBinError(ibin, calcAFBError(F->GetBinContent(ibin), B->GetBinContent(ibin)));
 
   calcAsymmetry(F, B, A_FB, e_A_FB);
+}
+
+void fitCosTheta(std::ostream& out, TH1F* h_cos, int num_params, bool fix_norm, bool draw) {
+  // Fit histogram of x = cos(theta) to quadratic in x. Two-parameter
+  // fit fixes x^0 and x^2 terms to have same coefficient (as in SM);
+  // Three-parameter fits adds tunable factor "b" to x^2 term.
+
+  const std::string title = h_cos->GetTitle();
+  const double hist_integral = h_cos->Integral();
+  const double bin_width = h_cos->GetBinWidth(1);
+
+  if (hist_integral == 0. || bin_width == 0.) {
+    out << "Histogram " << title << " has a problem: integral: " << hist_integral << " bin width: " << bin_width << "\n";
+    return;
+  }
+
+  // Estimate normalization of fitted function.  The fitted function
+  // is dN/d(bin) = dN/dx * dx/d(bin) = dN/dx * (bin width) If
+  // function given to fitter is normalized to unity, with N entries
+  // in histo norm of fitted function should be N * (bin width). Add 1
+  // just to keep the fit from cheating.
+  const double norm = hist_integral*bin_width + 1;
+
+  TF1* f1 = 0;
+  if (num_params == 3) {
+    f1 = new TF1("fcos", asym_3_PDF, -1, 1, 3);
+    f1->SetParameters(norm, 0.3, 1.2);
+    f1->SetParNames("Norm", "A_FB", "b");
+  }
+  else { //default to 2
+    f1 = new TF1("fcos", asym_2_PDF, -1, 1, 2);
+    f1->SetParameters(norm, .3);
+    f1->SetParNames("Norm", "A_FB");
+  }
+  if (fix_norm)
+    f1->FixParameter(0, norm - 1);
+
+  h_cos->Fit(f1, draw ? "ILVER" : "ILNVER");
+
+  // Check for consistency: compare integral of fitted function to sum
+  // of contents of hist.
+  double function_integral = f1->Integral(-1.,1.);
+  out << "fitCosCS: " << title << ", histogram integral = " << hist_integral << ", bin width = " << bin_width << ", norm = " << norm
+      << "\nIntegral of function -1 to 1: " << function_integral << ", integral of function / bin width: " << function_integral/bin_width << "\n";
+  
+  double eplus, eminus, eparab, globcc;
+  TVirtualFitter* fitter = TVirtualFitter::GetFitter();
+  out << "Result of fit:\n";
+  fitter->GetErrors(1, eplus, eminus, eparab, globcc);
+  out << "A_FB = " << fitter->GetParameter(1) << " +/- " << eparab << " (minos: +" << eplus << " -" << eminus << ")\n";
+  fitter->GetErrors(2, eplus, eminus, eparab, globcc);
+  out << "b = " << fitter->GetParameter(2) << " +/- " << eparab << " (minos: +" << eplus << " -" << eminus << ")\n";
+
+  delete f1;
 }

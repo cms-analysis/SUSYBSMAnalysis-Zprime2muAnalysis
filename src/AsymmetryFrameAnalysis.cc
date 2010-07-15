@@ -37,7 +37,6 @@ public:
   
 private:
   void fillFrameHistos(const pat::CompositeCandidate&, const reco::CandidateBaseRef&, const reco::CandidateBaseRef&);
-  void fitCosCS(TH1F*, int);
   void drawFrameHistos();
 
   const edm::InputTag dilepton_src;
@@ -436,50 +435,6 @@ void AsymmetryFrameAnalysis::endJob() {
   drawFrameHistos();
 }
 
-void AsymmetryFrameAnalysis::fitCosCS(TH1F* h_cos, int params) {
-  // Fit histogram of x = cos(theta) to quadratic in x. Two-parameter
-  // fit fixes x^0 and x^2 terms to have same coefficient (as in SM);
-  // Three-parameter fits adds tunable factor "b" to x^2 term.
-
-  const std::string title = h_cos->GetTitle();
-  const double hist_integral = h_cos->Integral();
-  const double bin_width = h_cos->GetBinWidth(1);
-
-  if (hist_integral == 0. || bin_width == 0.) {
-    std::cout << "Histogram " << title << " has a problem: integral: " << hist_integral << " bin width: " << bin_width << "\n";
-    return;
-  }
-
-  // Estimate normalization of fitted function.  The fitted function
-  // is dN/d(bin) = dN/dx * dx/d(bin) = dN/dx * (bin width) If
-  // function given to fitter is normalized to unity, with N entries
-  // in histo norm of fitted function should be N * (bin width).  Add
-  // 1 to norm just to keep fitter from completely cheating.
-  const double norm = hist_integral*bin_width + 1;
-
-  TF1* f1 = 0;
-  if (params == 3) {
-    f1 = new TF1("fcos", asym_3_PDF, -1, 1, 3);
-    f1->SetParameters(norm, .3, 1.);
-    f1->SetParNames("Norm","AFB","b");
-  }
-  else { //default to 2
-    f1 = new TF1("fcos", asym_2_PDF, -1, 1, 2);
-    f1->SetParameters(norm, .3);
-    f1->SetParNames("Norm","AFB");
-  }
-
-  h_cos->Fit(f1, "ILER");
-
-  // Check for consistency: compare integral of fitted function to sum
-  // of contents of hist.
-  double function_integral = f1->Integral(-1.,1.);
-  std::cout << "fitCosCS: " << title << " histogram integral = " << hist_integral << " bin width = " << bin_width << " norm = " << norm << "\n"
-	    << "Integral of function -1 to 1: " << function_integral << " integral of function / bin width: " << function_integral/bin_width << "\n";
-
-  delete f1;
-}
-
 void AsymmetryFrameAnalysis::drawFrameHistos() {
   TCanvas *c1 = new TCanvas("c1", "", 0, 0, 500, 700);
   TPostScript *ps = new TPostScript("diffFrameAsym.ps", 111);
@@ -504,8 +459,8 @@ void AsymmetryFrameAnalysis::drawFrameHistos() {
   t.DrawText(.9, .02, TString::Format("- %i -", ++page));
   pad[page]->Draw();
   pad[page]->Divide(2,2);
-  pad[page]->cd(1); cosGJ->Draw(); fitCosCS(cosGJ,3);
-  pad[page]->cd(2); cosGJTag->Draw(); fitCosCS(cosGJTag,3);
+  pad[page]->cd(1); cosGJ->Draw(); fitCosTheta(std::cout, cosGJ);
+  pad[page]->cd(2); cosGJTag->Draw(); fitCosTheta(std::cout, cosGJTag);
   pad[page]->cd(3); AMassGJ->Draw();
   pad[page]->cd(4); AMassGJTag->Draw();
   c1->Update();
@@ -533,7 +488,7 @@ void AsymmetryFrameAnalysis::drawFrameHistos() {
   t.DrawText(.9, .02, TString::Format("- %i -", ++page));
   pad[page]->Draw();
   pad[page]->Divide(2,3);
-  pad[page]->cd(1); cosCS->Draw(); fitCosCS(cosCS,3);
+  pad[page]->cd(1); cosCS->Draw(); fitCosTheta(std::cout, cosCS);
   pad[page]->cd(3); AMassCS->Draw();
   pad[page]->cd(4); ARapCS->Draw();
   pad[page]->cd(5); FPseudCS->Draw();
@@ -564,7 +519,7 @@ void AsymmetryFrameAnalysis::drawFrameHistos() {
   t.DrawText(.9, .02, TString::Format("- %i -", ++page));
   pad[page]->Draw();
   pad[page]->Divide(2,3);
-  pad[page]->cd(1); cosBoost->Draw(); fitCosCS(cosBoost,3);
+  pad[page]->cd(1); cosBoost->Draw(); fitCosTheta(std::cout, cosBoost);
   pad[page]->cd(3); AMassBoost->Draw();
   pad[page]->cd(4); ARapBoost->Draw();
   pad[page]->cd(5); FPseudBoost->Draw();
@@ -595,7 +550,7 @@ void AsymmetryFrameAnalysis::drawFrameHistos() {
   t.DrawText(.9, .02, TString::Format("- %i -", ++page));
   pad[page]->Draw();
   pad[page]->Divide(2,3);
-  pad[page]->cd(1);  cosW->Draw();  fitCosCS(cosW,3);
+  pad[page]->cd(1);  cosW->Draw();  fitCosTheta(std::cout, cosW);
   pad[page]->cd(3);  AMassW->Draw();
   pad[page]->cd(4);  ARapW->Draw();
   pad[page]->cd(5);  FPseudW->Draw();

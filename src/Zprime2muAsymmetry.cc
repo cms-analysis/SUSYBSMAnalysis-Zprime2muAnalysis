@@ -345,7 +345,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 
     AsymFitData data;
     // JMTBAD redundant with some calculations below
-    if (!computeFitQuantities(*genParticles, leptonFlavor, internalBremOn, data)) {
+    if (!computeFitQuantities(*genParticles, doingElectrons, internalBremOn, data)) {
       // if finding the Z'/etc failed, skip this event
       edm::LogWarning("fillFitData") << "could not compute fit quantities!";
       return;

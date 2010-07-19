@@ -397,6 +397,8 @@ void AsymmetryFrameAnalysis::analyze(const edm::Event& event, const edm::EventSe
   edm::Handle<pat::CompositeCandidateCollection> dileptons;
   event.getByLabel(dilepton_src, dileptons);
 
+  if (debug) std::cout << "\nRun: " << event.eventAuxiliary().run() << " Event: " << event.eventAuxiliary().event() << "; " << dileptons->size() << " dilepton(s)\n";
+
   for (size_t i = 0; i < dileptons->size(); ++i) {
     const pat::CompositeCandidate& dil = dileptons->at(i);
     const reco::CandidateBaseRef& mum = dileptonDaughterByCharge(dil, -1);

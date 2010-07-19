@@ -82,14 +82,14 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
       }
       else if (pdgId == leptonFlavor) {
 	// We found the l-. Make sure we didn't find a second one.
-	if (lepMinus != 0)
+	if (lepMinusNoIB != 0)
 	  edm::LogWarning("HardInteraction") << "Found second l- in event!";
 	else
 	  lepMinusNoIB = &*genp;
       }
       else if (pdgId == -leptonFlavor) {
 	// We found the l+. Make sure we didn't find a second one.
-	if (lepPlus != 0)
+	if (lepPlusNoIB != 0)
 	  edm::LogWarning("HardInteraction") << "Found second l+ in event!";
 	else
 	  lepPlusNoIB = &*genp;

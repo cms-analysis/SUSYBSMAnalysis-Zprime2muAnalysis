@@ -111,6 +111,8 @@ void AsymFitManager::loadParametrization(const char* cache_fn) {
 
   paramFile->Close();
   delete paramFile;
+
+  _param_cache_file = cache_fn;
 }
 
 std::ostream& operator<<(std::ostream& out, const AsymFitManager& afd) {
@@ -132,7 +134,9 @@ std::ostream& operator<<(std::ostream& out, const AsymFitManager& afd) {
     else
       out << "Using parameterization of omega(y, cos_cs) for mistag correction.\n";
   }
-    
+
+  out << "Parameterizations from file " << afd.param_cache_file() << "\n";
+
   out << std::setw(15) << "mistag_pars = ";
   for (int i = 0; i < 6; i++)
     out << std::setw(9) << std::setprecision(3) << afd.mistag_pars[i] << " "; 

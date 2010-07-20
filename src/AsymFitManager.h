@@ -32,6 +32,7 @@ class AsymFitManager {
  public:
   AsymFitManager() 
     : _mistag_calc(0),
+      _param_cache_file("none yet!"),
       h2_mistagProb(0),
       h_rap_mistag_prob(0),
       h_cos_true_mistag_prob(0),
@@ -101,6 +102,8 @@ class AsymFitManager {
   bool calculate_mistag() const { return _calculate_mistag; }
   bool use_mistag_hist()  const { return _use_mistag_hist;  }
 
+  const std::string& param_cache_file() const { return _param_cache_file; }
+
   enum MASS_TYPE { MASS_EXP=1, MASS_LOR, MASS_LOREXP };
 
  private:
@@ -130,6 +133,8 @@ class AsymFitManager {
   bool _correct_mistags;
   bool _calculate_mistag;
   bool _use_mistag_hist;
+
+  std::string _param_cache_file;
 
 public:
   double mistag_pars[6];

@@ -49,7 +49,6 @@ Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config)
   }
 
   trigDecision.init(config, verbosity >= VERBOSITY_SIMPLE);
-  cutHelper.setCutMask(config.getParameter<unsigned>("cutMask"));
   recLevelHelper.init(config);
 }
 
@@ -60,9 +59,6 @@ void Zprime2muAnalysis::analyze(const edm::Event& event,
   // the event. JMTBAD For L2, we could take the result of
   // TriggerTranslator()...
   trigDecision.initEvent(event);
-
-  // Store the pointer to the current event in the helper object.
-  cutHelper.initEvent(event);
 
   // Get the hard interaction from the MC record.
   if (useGen) hardInteraction.Fill(event);
@@ -234,10 +230,7 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
     bool is_tracker_muon = false;
 
     const reco::RecoCandidate& lep = toConcrete<reco::RecoCandidate>(cand);
-    if (doingElectrons) {
-      globalTrack = lep.gsfTrack().get();
-    }
-    else {
+    if (!doingElectrons) {
       globalTrack = lep.combinedMuon().get();
       trackerTrack = lep.track().get();
       standAloneTrack = lep.standAloneMuon().get();
@@ -321,7 +314,7 @@ void Zprime2muAnalysis::dumpLepton(ostream& output,
 
     output << "   Closest photon: " << recLevelHelper.closestPhoton(cand)
 	   << "   Sum pT (dR<0.3): " << sumptr03
-	   << "   Cut code  " << cutHelper.leptonIsCut(*cand) << endl;
+	   << "   Cut?  " << leptonIsCut(*cand) << endl;
 
     output << "   Loc. code: " << whereIsLepton(cand, doingElectrons)
 	   << "   p4 (p, E): " << cand->p4() << endl;
@@ -364,6 +357,4 @@ void Zprime2muAnalysis::dumpDilepton(ostream& output,
 	   << " charge: " << cand2->charge() << " pt: " << cand2->pt()
 	   << " eta: " << cand2->eta() << " phi: " << cand2->phi() << endl;
 }
-
-DEFINE_FWK_MODULE(Zprime2muAnalysis);
 

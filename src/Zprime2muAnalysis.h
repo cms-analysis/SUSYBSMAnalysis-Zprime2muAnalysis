@@ -103,9 +103,6 @@ class Zprime2muAnalysis : public edm::EDAnalyzer {
   // Object to help with per-rec-level information.
   RecLevelHelper recLevelHelper;
 
-  // Helper object for lepton/dilepton cuts.
-  CutHelper cutHelper;
-
   // The lepton collections.
   reco::CandidateBaseRefVector allLeptons[MAX_LEVELS];
 

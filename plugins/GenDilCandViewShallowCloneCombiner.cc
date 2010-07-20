@@ -10,6 +10,10 @@
 struct GenDilPairSelector {
   template<typename T1, typename T2>
   bool operator()(const T1 &t1, const T2 &t2) const {
+    // Only look at final-state leptons.
+    if (t1.status() != 1 || t2.status() != 1)
+      return false;
+
     // Make sure the leptons come from the same resonance.
     const reco::Candidate* mom1 = t1.mother();
     const reco::Candidate* mom2 = t2.mother();

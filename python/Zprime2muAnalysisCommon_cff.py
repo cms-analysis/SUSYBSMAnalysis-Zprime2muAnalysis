@@ -352,7 +352,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             process.GlobalTag.globaltag = cms.string(conditionsGlobalTag)
 
         if useGen and dumpHardInteraction:
-            process.include("SimGeneral/HepPDTESSource/data/pythiapdt.cfi")
+            process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
             process.printTree = cms.EDAnalyzer(
                 'ParticleListDrawer',
                 maxEventsToPrint = cms.untracked.int32(-1),
@@ -360,6 +360,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                 printOnlyHardInteraction = cms.untracked.bool(True),
                 useMessageLogger = cms.untracked.bool(True)
                 )
+            process.MessageLogger.categories.append('ParticleListDrawer')
             process.ptree = cms.Path(process.printTree)
 
         if useTrigger and dumpTriggerSummary:

@@ -1,88 +1,169 @@
 //
-// Authors: Jason Mumford, Jordan Tucker, Slava Valuev, UCLA
+// Authors: Bob Cousins, Jason Mumford, Jordan Tucker, Slava Valuev, UCLA
 //
 
 #include <fstream>
-#include <string>
-#include <vector>
 
 #include "TBackCompFitter.h"
 #include "TCanvas.h"
 #include "TF1.h"
 #include "TFile.h"
+#include "TH1F.h"
+#include "TH2F.h"
 #include "TLatex.h"
 #include "TLorentzVector.h"
 #include "TMath.h"
 #include "TPad.h"
 #include "TPaveLabel.h"
 #include "TPostScript.h"
+#include "TProfile.h"
 #include "TRandom3.h"
 #include "TROOT.h"
 #include "TStyle.h"
 #include "TText.h"
 #include "TTree.h"
 
-#include "DataFormats/Candidate/interface/Candidate.h"
-#include "DataFormats/Candidate/interface/CandidateFwd.h"
-#include "DataFormats/Candidate/interface/CompositeRefCandidate.h"
-#include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
-
-#include "FWCore/Framework/interface/Event.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+#include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymFitData.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymFunctions.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymmetryHelpers.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneralUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Functions.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TFMultiD.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/UnbinnedFitter.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muAsymmetry.h"
+
+const int FIT_ARRAY_SIZE = 50000; // max size of arrays for unbinned fits. 
+
+class Zprime2muAsymmetry : public edm::EDAnalyzer {
+public:
+  explicit Zprime2muAsymmetry(const edm::ParameterSet&);
+
+  void analyze(const edm::Event&, const edm::EventSetup&);
+  void endJob();
+
+private:
+  void bookFitHistos();
+
+  void makeFakeData(int nEvents, double A_FB, double b);
+  void smearGenData(const AsymFitData& data);
+
+  void fillFitData(const edm::Event& event);
+  void dumpFitData();
+
+  void countAsymmetry(const int which, double& Afb, double& eAfb);
+  void asymmetryByEventWeighting(const int which, double& Afb, double& eAfb);
+  void asymmetryByEventWeightingWithAngularInfo(const int which, double& Afb, double& eAfb, bool use_h=true, bool bin_x=true);
+
+  TFMultiD* getNewFitFcn(int which);
+  void fitAsymmetry();
+
+  void drawFitHistos();
+
+  const edm::InputTag gen_particle_src;
+  const edm::InputTag gen_dilepton_src;
+  const edm::InputTag dilepton_src;
+
+  // Whether we have MC truth available.
+  const bool useGen;
+  // Whether to turn off the fit and only make the histograms; useful
+  // to get the recSigma information from fitHistos.ps.
+  const bool noFit;
+  // How many of the fits to do (up to 6; from gen+gen to rec+rec).
+  const int numFits;
+  // Whether bremsstrahlung was switched on in the generator for the
+  // parameterization sample.
+  const bool internalBremOn;
+  // Whether to fix b for the simple 1D fits.
+  const bool fixbIn1DFit;
+  // Whether to use cos_true in the 2/6D fits instead of cos_cs, when
+  // MC truth is available.
+  const bool useCosTrueInFit;
+  // Whether to correct the cos_cs values for mistag using MC truth.
+  const bool artificialCosCS;
+  // Fixed parameters concerning how to do the 2D/6D fit -- how many
+  // sigma to use in the convolution, and how many points to use in
+  // the integrals.
+  const double nSigma;
+  const unsigned nNormPoints;
+  const unsigned nSmearPoints;
+
+  TH1F* h_genCosNoCut;
+  TH2F* AsymFitSmearHisto[6];
+  TH1F* AsymFitHistoGen[6];
+  TH1F* AsymFitHistoRec[6];
+  TH1F* AsymFitSmearHistoDif[6];
+  TH1F* AsymFitHistoGenSmeared[6];
+
+  TH1F* h_cos_theta_true;
+  TH1F* h_cos_theta_cs_acc;
+  TH1F* h_cos_theta_cs_acc_fixed;
+  TH1F* h_cos_theta_cs;
+  TH1F* h_cos_theta_cs_fixed;
+  TH1F* h_cos_theta_cs_rec;
+  TH1F* h_b_mass;
+  TH1F* h_f_mass;
+  TH1F* h_b_smass;
+  TH1F* h_f_smass;
+  TH1F* h_gen_sig[2];
+  TH2F* h2_rap_cos_d[2];
+  TH2F* h2_rap_cos_d_uncut[2];
+  TH2F* h2_rap_cos_d_rec;
+  TH1F* mistagProbEvents[3];
+
+  // Data arrays for unbinned fits.  Fixed size arrays for now.
+  // Order of the arrays: generated events, reconstructed events,
+  //                      smeared generated events
+  int nfit_used[3];   // number of events
+  double pt_dil_data[3][FIT_ARRAY_SIZE];
+  double phi_dil_data[3][FIT_ARRAY_SIZE];
+  double mass_dil_data[3][FIT_ARRAY_SIZE];
+  double rap_dil_data[3][FIT_ARRAY_SIZE];
+  double cos_theta_cs_data[3][FIT_ARRAY_SIZE];
+  double phi_cs_data[3][FIT_ARRAY_SIZE];
+
+  // arrays for generating fake data from distributions
+  double fake_cos_true[FIT_ARRAY_SIZE];
+  double fake_cos_cs[FIT_ARRAY_SIZE];
+  double fake_rap[FIT_ARRAY_SIZE];
+  int fake_mistag_true[FIT_ARRAY_SIZE];
+  int fake_mistag_cs[FIT_ARRAY_SIZE];
+};
 
 using namespace std;
 
-// fixed parameters concerning how to do the 2D/6D fit
-const double       Zprime2muAsymmetry::nSigma = 5.;
-const unsigned int Zprime2muAsymmetry::nSmearPoints = 100000;
-const unsigned int Zprime2muAsymmetry::nNormPoints = 100000;
-
-Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
-  : Zprime2muAnalysis(config) {
-
-  // initialize array counters since we don't use automatically-sized
-  // arrays yet
+Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& cfg)
+  : gen_particle_src(cfg.getParameter<edm::InputTag>("gen_particle_src")),
+    gen_dilepton_src(cfg.getParameter<edm::InputTag>("gen_dilepton_src")),
+    dilepton_src(cfg.getParameter<edm::InputTag>("dilepton_src")),
+    useGen(cfg.getParameter<bool>("useGen")),
+    noFit(cfg.getParameter<bool>("noFit")),
+    numFits(cfg.getParameter<int>("numFits")),
+    internalBremOn(cfg.getParameter<bool>("internalBremOn")),
+    fixbIn1DFit(cfg.getParameter<bool>("fixbIn1DFit")),
+    useCosTrueInFit(cfg.getParameter<bool>("useCosTrueInFit")),
+    artificialCosCS(cfg.getParameter<bool>("artificialCosCS")),
+    nSigma(5.),
+    nNormPoints(100000),
+    nSmearPoints(100000)
+{
+  // Initialize array counters since we don't use automatically-sized
+  // arrays yet.
   for (int i = 0; i < 3; i++)
     nfit_used[i] = 0;
 
-  // turn off the fit and only make the histograms -- useful to get the
-  // recSigma information from the asymHistos.ps
-  noFit = config.getParameter<bool>("noFit");
+  // Let the asymFitManager take care of setting mass_type, etc.
+  asymFitManager.setConstants(cfg);
+  asymFitManager.loadParametrization(cfg.getParameter<std::string>("paramCacheFile").c_str());
 
-  // only do so many of the fits (up to 6; from gen+gen to rec+rec)
-  numFits = config.getParameter<int>("numFits");
-
-  // the name of the root file containing the cached parameters
-  paramCacheFile = config.getParameter<string>("paramCacheFile");
-
-  // whether bremsstrahlung was switched on in the generator for the
-  // parameterization sample
-  internalBremOn = config.getParameter<bool>("internalBremOn");
-
-  // whether to fix b for the simple 1-D fits
-  fixbIn1DFit = config.getParameter<bool>("fixbIn1DFit");
-
-  // whether to use cos_true in the 2/6-D fits
-  useCosTrueInFit = config.getParameter<bool>("useCosTrueInFit");
-
-  // whether to correct the cos_cs values using MC truth
-  artificialCosCS = config.getParameter<bool>("artificialCosCS");
-
-  // let the asymFitManager take care of setting mass_type, etc.
-  asymFitManager.setConstants(config);
-  asymFitManager.loadParametrization(paramCacheFile.c_str());
-
-  // whether to use the probabilistic mistag correction; always turn
-  // it off if doing graviton fit, if we are artificially
-  // correcting with MC truth, or if we are fitting to cos_theta_true
+  // Whether to use the probabilistic mistag correction; always turn
+  // it off if doing graviton fit, if we are artificially correcting
+  // with MC truth, or if we are fitting to cos_true.
   if (asymFitManager.correct_mistags() && (artificialCosCS || useCosTrueInFit))
     throw cms::Exception("Zprime2muAsymmetry") << "Shouldn't be applying mistag correction when one of artificialCosCS || useCosTrueInFit is set.\n";
 
@@ -101,19 +182,15 @@ Zprime2muAsymmetry::Zprime2muAsymmetry(const edm::ParameterSet& config)
   out << "------------------------------------------------------------";
   edm::LogInfo("Zprime2muAsymmetry") << out.str();
 
+  InitROOT();
   bookFitHistos();
 }
 
-void Zprime2muAsymmetry::analyze(const edm::Event& event, 
-				 const edm::EventSetup& eSetup) {
-  Zprime2muAnalysis::analyze(event, eSetup);
-
+void Zprime2muAsymmetry::analyze(const edm::Event& event, const edm::EventSetup&) {
   fillFitData(event);
 }
 
 void Zprime2muAsymmetry::endJob() {
-  Zprime2muAnalysis::endJob();
-
   drawFitHistos();
   dumpFitData();
   if (!noFit)
@@ -123,6 +200,7 @@ void Zprime2muAsymmetry::endJob() {
 void Zprime2muAsymmetry::bookFitHistos() {
   const double pi = TMath::Pi(), twoPi = 2*pi;
   const AsymFitManager& amg = asymFitManager;
+  edm::Service<TFileService> fs;
 
   h_cos_theta_true     = fs->make<TH1F>("h_cos_theta_true",     "cos #theta^{*}_{true}",                   50, -1., 1.);
   h_cos_theta_cs       = fs->make<TH1F>("h_cos_theta_cs",       "cos #theta^{*}_{CS}",                     50, -1., 1.);
@@ -178,23 +256,6 @@ void Zprime2muAsymmetry::bookFitHistos() {
   AsymFitSmearHistoDif[3] = fs->make<TH1F>("AsymFitSmearHistoDif4", "Dil Rec Mass - Gen Mass", 50, -100.,100.);
   AsymFitSmearHistoDif[4] = fs->make<TH1F>("AsymFitSmearHistoDif5", "Rec cos_cs - Gen cos_cs", 50, -1.e-3, 1.e-3);
   AsymFitSmearHistoDif[5] = fs->make<TH1F>("AsymFitSmearHistoDif6", "Rec phi_cs - Gen phi_cs", 50, -1., 1.);
-
-  // keep separate histos by type (gg/qqbar) for gravitons
-  for (int type = 0; type < 2; type++) {
-    AsymFitHistoGenByType[type][0] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 0), "Dil Gen Pt",   50, 0., amg.max_pt());
-    AsymFitHistoGenByType[type][1] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 1), "Dil Gen Rap",  50, -amg.max_rap(), amg.max_rap());
-    AsymFitHistoGenByType[type][2] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 2), "Dil Gen Phi",  50, 0., twoPi);
-    AsymFitHistoGenByType[type][3] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 3), "Dil Gen Mass", 50, amg.fit_win(0), amg.fit_win(1));
-    AsymFitHistoGenByType[type][4] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 4), "Gen cos_cs",   50,-1., 1.);
-    AsymFitHistoGenByType[type][5] = fs->make<TH1F>(nameHist("AsymFitHistoGenByType", type, 5), "Gen phi_cs",   50, 0., twoPi);
-
-    AsymFitHistoRecByType[type][0] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 0), "Dil Rec Pt",   50, 0., amg.max_pt());
-    AsymFitHistoRecByType[type][1] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 1), "Dil Rec Rap",  50, -amg.max_rap(), amg.max_rap());
-    AsymFitHistoRecByType[type][2] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 2), "Dil Rec Phi",  50, 0., twoPi);
-    AsymFitHistoRecByType[type][3] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 3), "Dil Rec Mass", 50, amg.fit_win(0), amg.fit_win(1));
-    AsymFitHistoRecByType[type][4] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 4), "Rec cos_cs",   50,-1., 1.);
-    AsymFitHistoRecByType[type][5] = fs->make<TH1F>(nameHist("AsymFitHistoRecByType", type, 5), "Rec phi_cs",   50, 0., twoPi);
-  }
 
   AsymFitHistoGenSmeared[0] = fs->make<TH1F>("AsymFitHistoGenSmeared0", "Dil Smeared Gen Pt",   50,  0., amg.max_pt());
   AsymFitHistoGenSmeared[1] = fs->make<TH1F>("AsymFitHistoGenSmeared1", "Dil Smeared Gen Rap",  50, -amg.max_rap(), amg.max_rap());
@@ -328,24 +389,23 @@ void Zprime2muAsymmetry::smearGenData(const AsymFitData& data) {
 }
 
 void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
-  // the debug dumps are the outputs of the calcCosTheta*/etc. functions
-  bool debug = verbosity >= VERBOSITY_TOOMUCH; 
-
   double gen_cos_cs = 0., rec_cos_cs = 0., gen_phi_cs = 0., rec_phi_cs = 0.;
   
-  unsigned int n_gen = allDileptons[lGN].size();
-  unsigned int n_dil = allDileptons[lBest].size();
-
-  int* type = new int[n_gen];
-  for (unsigned i = 0; i < n_gen; i++) type[i] = -1;
+  edm::Handle<pat::CompositeCandidateCollection> dileptons;
+  event.getByLabel(dilepton_src, dileptons);
+  const unsigned int n_dil = dileptons->size();
 
   if (useGen) {
     edm::Handle<reco::GenParticleCollection> genParticles;
-    event.getByLabel("genParticles", genParticles);
+    event.getByLabel(gen_particle_src, genParticles);
+
+    edm::Handle<reco::CompositeCandidateCollection> genDileptons;
+    event.getByLabel(gen_dilepton_src, genDileptons);
+    const unsigned int n_gen = genDileptons->size();
 
     AsymFitData data;
     // JMTBAD redundant with some calculations below
-    if (!computeFitQuantities(*genParticles, doingElectrons, internalBremOn, data)) {
+    if (!computeFitQuantities(*genParticles, asymFitManager.doing_electrons(), internalBremOn, data)) {
       // if finding the Z'/etc failed, skip this event
       edm::LogWarning("fillFitData") << "could not compute fit quantities!";
       return;
@@ -355,8 +415,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
     // the entire spectrum, not just in the reconstructed window
     h_gen_sig[data.cos_true >= 0 ? 0 : 1]->Fill(data.mass);
 
-    if (data.mass > asymFitManager.fit_win(0) &&
-	data.mass < asymFitManager.fit_win(1)) {
+    if (data.mass > asymFitManager.fit_win(0) && data.mass < asymFitManager.fit_win(1)) {
       // 1D histograms with cos_true and cos_cs to be fit with binned fit.
       h_cos_theta_true->Fill(data.cos_true);
       h_cos_theta_cs->Fill(data.cos_cs); 
@@ -402,36 +461,22 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 
     // Loop over all generated dimuons
     for (unsigned int i_dil = 0; i_dil < n_gen; i_dil++) {
-      const reco::CompositeCandidate& gen_dil = allDileptons[lGN].at(i_dil);
-      const reco::CandidateBaseRef& gen_mum = 
-	dileptonDaughterByCharge(gen_dil, -1);
-      const reco::CandidateBaseRef& gen_mup = 
-	dileptonDaughterByCharge(gen_dil, +1);
+      const reco::CompositeCandidate& gen_dil = genDileptons->at(i_dil);
+      printf("run %u event %u gen dimuon pt %f eta %f phi %f mass %f\n", event.id().run(), event.id().event(), gen_dil.pt(), gen_dil.eta(), gen_dil.phi(), gen_dil.mass());
+      const reco::Candidate* gen_mum = gen_dil.daughter(0)->charge() == -1 ? gen_dil.daughter(0) : gen_dil.daughter(1);
+      const reco::Candidate* gen_mup = gen_dil.daughter(0)->charge() ==  1 ? gen_dil.daughter(0) : gen_dil.daughter(1);
+      printf("  mu- status %i + %i\n", gen_mum->status(), gen_mup->status());
 
       gen_cos_cs = calcCosThetaCSAnal(gen_mum->pz(), gen_mum->energy(), 
 				      gen_mup->pz(), gen_mup->energy(), 
-				      gen_dil.pt(), gen_dil.pz(),
-				      gen_dil.mass(), debug);
-      gen_phi_cs = calcPhiCSAnal(gen_mum->px(), gen_mum->py(), gen_mup->px(),
-				 gen_mup->py(), gen_dil.pt(), gen_dil.eta(), 
-				 gen_dil.phi(), gen_dil.mass(), debug);
-
-      int grannyID = abs(grandmotherId(gen_mum));
-      if (grannyID > 0 && grannyID <= 6) type[i_dil] = 0;
-      else if (grannyID == 21) type[i_dil] = 1;
+				      gen_dil.pt(), gen_dil.pz(), gen_dil.mass());
+      gen_phi_cs = calcPhiCSAnal(gen_mum->px(), gen_mum->py(),
+				 gen_mup->px(), gen_mup->py(),
+				 gen_dil.pt(), gen_dil.eta(), gen_dil.phi(), gen_dil.mass());
 
       double phi = gen_dil.phi();
       if (phi < 0.)
 	phi += 2*TMath::Pi();
-
-      if (type[i_dil] >= 0) {
-	AsymFitHistoGenByType[type[i_dil]][0]->Fill(gen_dil.pt());
-	AsymFitHistoGenByType[type[i_dil]][1]->Fill(gen_dil.rapidity());
-	AsymFitHistoGenByType[type[i_dil]][2]->Fill(phi);
-	AsymFitHistoGenByType[type[i_dil]][3]->Fill(gen_dil.mass());
-	AsymFitHistoGenByType[type[i_dil]][4]->Fill(gen_cos_cs);
-	AsymFitHistoGenByType[type[i_dil]][5]->Fill(gen_phi_cs); 
-      }
 
       // Check to see if generated dimuons lie within acceptance cut and
       // generated window
@@ -463,15 +508,6 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 	  AsymFitHistoGen[3]->Fill(mass_dil_data[0][nfit_used[0]]);
 	  AsymFitHistoGen[4]->Fill(cos_theta_cs_data[0][nfit_used[0]]);
 	  AsymFitHistoGen[5]->Fill(phi_cs_data[0][nfit_used[0]]);
-	  // keep track of which data point is from qqbar or gg
-	  if (type[i_dil] == 0) {
-	    qqbar_weights[0][nfit_used[0]] = 1.0;
-	    gg_weights[0][nfit_used[0]] = 0.0;
-	  }
-	  else if (type[i_dil] == 1) {
-	    qqbar_weights[0][nfit_used[0]] = 0.0;
-	    gg_weights[0][nfit_used[0]] = 1.0;
-	  }
 	  nfit_used[0]++;
 	}
 
@@ -480,19 +516,15 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 	// dimuon information.  This will be used for obtaining sigmas used
 	// in convolutions for asymmetry fits.
 	if (n_dil == n_gen) {      
-	  const reco::CompositeCandidate& rec_dil = allDileptons[lBest].at(i_dil);
-	  const reco::CandidateBaseRef& rec_mum = 
-	    dileptonDaughterByCharge(rec_dil, -1);
-	  const reco::CandidateBaseRef& rec_mup = 
-	    dileptonDaughterByCharge(rec_dil, +1);
+	  const pat::CompositeCandidate& rec_dil = dileptons->at(i_dil);
+	  const reco::CandidateBaseRef& rec_mum = dileptonDaughterByCharge(rec_dil, -1);
+	  const reco::CandidateBaseRef& rec_mup = dileptonDaughterByCharge(rec_dil, +1);
 	  rec_cos_cs = calcCosThetaCSAnal(rec_mum->pz(), rec_mum->energy(), 
 					  rec_mup->pz(), rec_mup->energy(), 
-					  rec_dil.pt(), rec_dil.pz(),
-					  rec_dil.mass(), debug);
+					  rec_dil.pt(), rec_dil.pz(), rec_dil.mass());
 	  rec_phi_cs = calcPhiCSAnal(rec_mum->px(), rec_mum->py(),
 				     rec_mup->px(), rec_mup->py(),
-				     rec_dil.pt(), rec_dil.eta(),
-				     rec_dil.phi(), rec_dil.mass(), debug);
+				     rec_dil.pt(), rec_dil.eta(), rec_dil.phi(), rec_dil.mass());
 	  AsymFitSmearHisto[0]->Fill(gen_dil.pt(), rec_dil.pt());
 	  AsymFitSmearHistoDif[0]->Fill(rec_dil.pt() - gen_dil.pt());
 	  AsymFitSmearHisto[1]->Fill(gen_dil.rapidity(), rec_dil.rapidity());
@@ -511,8 +543,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
 	  gen_dil.mass() < asymFitManager.fit_win(1)) {
 	gen_cos_cs = calcCosThetaCSAnal(gen_mum->pz(), gen_mum->energy(), 
 					gen_mup->pz(), gen_mup->energy(), 
-					gen_dil.pt(), gen_dil.pz(),
-					gen_dil.mass(), debug);
+					gen_dil.pt(), gen_dil.pz(), gen_dil.mass());
       
 	// Use this histogram for value of cos_true to be compared with 
 	// with reconstructed.
@@ -524,26 +555,20 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
   // Now loop over all reconstructed dimuons and store those to be fitted
   // (which lie inside desired reconstructed window).
   for (unsigned int i_dil = 0; i_dil < n_dil; i_dil++) {
-    const reco::CompositeCandidate& rec_dil = allDileptons[lBest].at(i_dil);
-    if (rec_dil.mass() > asymFitManager.fit_win(0) &&
-	rec_dil.mass() < asymFitManager.fit_win(1)) {
+    const pat::CompositeCandidate& rec_dil = dileptons->at(i_dil);
+    if (rec_dil.mass() > asymFitManager.fit_win(0) && rec_dil.mass() < asymFitManager.fit_win(1)) {
       if (nfit_used[0] == FIT_ARRAY_SIZE - 1)
-	throw cms::Exception("Zprime2muAsymmetry")
-	  << "data arrays not large enough! nfit_used[1]="
-	  << nfit_used[1] << " FIT_ARRAY_SIZE=" << FIT_ARRAY_SIZE << endl;
+	throw cms::Exception("Zprime2muAsymmetry") << "data arrays not large enough! nfit_used[1]=" << nfit_used[1] << " FIT_ARRAY_SIZE=" << FIT_ARRAY_SIZE << endl;
       
-      const reco::CandidateBaseRef& rec_mum = 
-	dileptonDaughterByCharge(rec_dil, -1);
-      const reco::CandidateBaseRef& rec_mup = 
-	dileptonDaughterByCharge(rec_dil, +1);
+      const reco::CandidateBaseRef& rec_mum = dileptonDaughterByCharge(rec_dil, -1);
+      const reco::CandidateBaseRef& rec_mup = dileptonDaughterByCharge(rec_dil, +1);
       
       rec_cos_cs = calcCosThetaCSAnal(rec_mum->pz(), rec_mum->energy(), 
 				      rec_mup->pz(), rec_mup->energy(), 
-				      rec_dil.pt(), rec_dil.pz(),
-				      rec_dil.mass(), debug);
-      rec_phi_cs = calcPhiCSAnal(rec_mum->px(), rec_mum->py(), rec_mup->px(),
-				 rec_mup->py(), rec_dil.pt(), rec_dil.eta(), 
-				 rec_dil.phi(), rec_dil.mass(), debug);
+				      rec_dil.pt(), rec_dil.pz(), rec_dil.mass());
+      rec_phi_cs = calcPhiCSAnal(rec_mum->px(), rec_mum->py(),
+				 rec_mup->px(), rec_mup->py(),
+				 rec_dil.pt(), rec_dil.eta(), rec_dil.phi(), rec_dil.mass());
       pt_dil_data[1][nfit_used[1]] = rec_dil.pt();
       phi_dil_data[1][nfit_used[1]] = rec_dil.phi();
       if (phi_dil_data[1][nfit_used[1]] < 0.) 
@@ -565,57 +590,31 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
       double w = mistagProb(rec_rap, rec_cos_cs, rec_dil.mass());
       mistagProbEvents[1]->Fill(w);
 
-      // if we get exactly one generated dimuon and one reconstructed
-      // dimuon, we can assume that the grandma of the reconstructed
-      // one is the same as the generated one
-      if (n_gen >= 1 && (n_gen != n_dil))
-	edm::LogWarning("Zprime2muAsymmetry")
-	  << "don't know how to get grandmaType for sure";
-
-      if (type >= 0 && i_dil < n_gen) {
-	AsymFitHistoRecByType[type[i_dil]][0]->Fill(pt_dil_data[1][nfit_used[1]]);
-	AsymFitHistoRecByType[type[i_dil]][1]->Fill(rap_dil_data[1][nfit_used[1]]);
-	AsymFitHistoRecByType[type[i_dil]][2]->Fill(phi_dil_data[1][nfit_used[1]]);
-	AsymFitHistoRecByType[type[i_dil]][3]->Fill(mass_dil_data[1][nfit_used[1]]);
-	AsymFitHistoRecByType[type[i_dil]][4]->Fill(cos_theta_cs_data[1][nfit_used[1]]);
-	AsymFitHistoRecByType[type[i_dil]][5]->Fill(phi_cs_data[1][nfit_used[1]]); 
-      }
-      // keep track of which data point is from qqbar or gg
-      if (type[i_dil] == 0) {
-	qqbar_weights[1][nfit_used[1]] = 1.0;
-	gg_weights[1][nfit_used[1]] = 0.0;
-      }
-      else if (type[i_dil] == 1) {
-	qqbar_weights[1][nfit_used[1]] = 0.0;
-	gg_weights[1][nfit_used[1]] = 1.0;
-      }
-
       nfit_used[1]++;
     }
   }
-
-  delete[] type;
 }
 
 void Zprime2muAsymmetry::dumpFitData() {
-  AsymFitData x;
+  double cos_cs, rapidity, mass, pT, phi, phi_cs;
+  edm::Service<TFileService> fs;
 
   for (int i = 0; i < 2; ++i) {
     TTree* t = fs->make<TTree>(i == 0 ? "fitData_gen" : "fitData_rec", "");
-    t->Branch("cos_cs", &x.cos_cs,   "cos_cs/D");
-    t->Branch("rap",    &x.rapidity, "rap/D");
-    t->Branch("mass",   &x.mass,     "mass/D");
-    t->Branch("pt",     &x.pT,       "pt/D");
-    t->Branch("phi",    &x.phi,      "phi/D");
-    t->Branch("phi_cs", &x.phi_cs,   "phi_cs/D");
+    t->Branch("cos_cs", &cos_cs,   "cos_cs/D");
+    t->Branch("rap",    &rapidity, "rap/D");
+    t->Branch("mass",   &mass,     "mass/D");
+    t->Branch("pt",     &pT,       "pt/D");
+    t->Branch("phi",    &phi,      "phi/D");
+    t->Branch("phi_cs", &phi_cs,   "phi_cs/D");
 
     for (int j = 0; j < nfit_used[i]; ++j) {
-      x.cos_cs   = cos_theta_cs_data[i][j];
-      x.rapidity = rap_dil_data     [i][j];
-      x.mass     = mass_dil_data    [i][j];
-      x.pT       = pt_dil_data      [i][j];
-      x.phi      = phi_dil_data     [i][j];
-      x.phi_cs   = phi_cs_data      [i][j];
+      cos_cs   = cos_theta_cs_data[i][j];
+      rapidity = rap_dil_data     [i][j];
+      mass     = mass_dil_data    [i][j];
+      pT       = pt_dil_data      [i][j];
+      phi      = phi_dil_data     [i][j];
+      phi_cs   = phi_cs_data      [i][j];
       
       t->Fill();
     }
@@ -787,9 +786,7 @@ void Zprime2muAsymmetry::fitAsymmetry() {
   // Do the asymmetry fit using different combinations:
   // generated/reconstructed data, smearing on/off
 
-  string filename = "recAsymFit.txt";
-  fstream outfile;
-  outfile.open(filename.c_str(), ios::out);
+  std::ofstream outfile("recAsymFit.txt", std::ios::trunc);
 
   outfile << " Asym Fit Results" << endl;
   outfile << "---------------------------------------------\n";
@@ -800,7 +797,6 @@ void Zprime2muAsymmetry::fitAsymmetry() {
   outfile << "Acceptance in diRapAccept: "
 	  << asymFitManager.mum_eta_lim_lo() << " < eta mu- < " << asymFitManager.mum_eta_lim_hi() << "; "
 	  << asymFitManager.mup_eta_lim_lo() << " < eta mu+ < " << asymFitManager.mup_eta_lim_hi() << endl;
-  outfile << "Parameterization from " << paramCacheFile << endl;
 
   outfile << "AsymFitManager:\n" << asymFitManager << "\n";
 
@@ -1109,127 +1105,6 @@ void Zprime2muAsymmetry::drawFitHistos() {
     if (i == 0) gPad->SetLogy(1);
     AsymFitHistoRec[i]->Draw(); 
   }
-  c1->Update();
-
-  // draw the by type pages, but only bother to do so if we're doing
-  // gravitons (Z' all come from qqbar, of course)
-  ps->NewPage();
-  c1->Clear(); 
-  c1->cd(0); 
-  title = new TPaveLabel(0.1,0.94,0.9,0.98,"Generated PDFs of quantities (qqbar)");
-  title->SetFillColor(10);
-  title->Draw();
-  strpage << "- " << (++page) << " -";
-  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-  pad[page]->Draw();
-  pad[page]->Divide(2,3);
-  for (int i = 0; i < 6; i++) {
-    pad[page]->cd(i+1);  
-    if (i == 0) gPad->SetLogy(1);
-    AsymFitHistoGenByType[0][i]->Draw(); 
-  }
-  c1->Update();
-  
-  ps->NewPage();
-  c1->Clear(); 
-  c1->cd(0); 
-  title = new TPaveLabel(0.1,0.94,0.9,0.98,"Reconstructed PDFs of quantities (qqbar)");
-  title->SetFillColor(10);
-  title->Draw();
-  strpage << "- " << (++page) << " -";
-  pad[page]->Draw();
-  pad[page]->Divide(2,3);
-  for (int i = 0; i < 6; i++) {
-    pad[page]->cd(i+1);  
-    if (i == 0) gPad->SetLogy(1);
-    AsymFitHistoRecByType[0][i]->Draw(); 
-  }
-  c1->Update();
-
-  ps->NewPage();
-  c1->Clear(); 
-  c1->cd(0); 
-  title = new TPaveLabel(0.1,0.94,0.9,0.98,"Generated PDFs of quantities (gg)");
-  title->SetFillColor(10);
-  title->Draw();
-  strpage << "- " << (++page) << " -";
-  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-  pad[page]->Draw();
-  pad[page]->Divide(2,3);
-  for (int i = 0; i < 6; i++) {
-    pad[page]->cd(i+1);  
-    if (i == 0) gPad->SetLogy(1);
-    AsymFitHistoGenByType[1][i]->Draw(); 
-  }
-  c1->Update();
-  
-  ps->NewPage();
-  c1->Clear(); 
-  c1->cd(0); 
-  title = new TPaveLabel(0.1,0.94,0.9,0.98,"Reconstructed PDFs of quantities (gg)");
-  title->SetFillColor(10);
-  title->Draw();
-  strpage << "- " << (++page) << " -";
-  pad[page]->Draw();
-  pad[page]->Divide(2,3);
-  for (int i = 0; i < 6; i++) {
-    pad[page]->cd(i+1);  
-    if (i == 0) gPad->SetLogy(1);
-    AsymFitHistoRecByType[1][i]->Draw(); 
-  }
-  c1->Update();
-
-  ps->NewPage();
-  c1->Clear(); 
-  c1->cd(0); 
-  title = new TPaveLabel(0.1,0.94,0.9,0.98,"Generated PDFs of quantities by type");
-  title->SetFillColor(10);
-  title->Draw();
-  strpage << "- " << (++page) << " -";
-  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-  pad[page]->Draw();
-  pad[page]->Divide(1,2);
-  pad[page]->cd(1);
-  AsymFitHistoGenByType[0][4]->Draw(); 
-  pad[page]->cd(2);
-  AsymFitHistoGenByType[1][4]->Draw(); 
-  c1->Update();
-
-  ps->NewPage();
-  c1->Clear(); 
-  c1->cd(0); 
-  title = new TPaveLabel(0.1,0.94,0.9,0.98,"Reconstructed PDFs of quantities by type");
-  title->SetFillColor(10);
-  title->Draw();
-  strpage << "- " << (++page) << " -";
-  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-  pad[page]->Draw();
-  pad[page]->Divide(1,2);
-  pad[page]->cd(1);
-  AsymFitHistoRecByType[0][4]->Draw(); 
-  pad[page]->cd(2);
-  AsymFitHistoRecByType[1][4]->Draw(); 
-  c1->Update();
-
-  ps->NewPage();
-  c1->Clear(); 
-  c1->cd(0); 
-  title = new TPaveLabel(0.1,0.94,0.9,0.98,"Generated rapidity (by type)");
-  title->SetFillColor(10);
-  title->Draw();
-  strpage << "- " << (++page) << " -";
-  t.DrawText(.9, .02, strpage.str().c_str());  strpage.str("");
-  pad[page]->Draw();
-  pad[page]->Divide(1,3);
-  pad[page]->cd(1);
-  AsymFitHistoGenByType[0][1]->Draw();
-  pad[page]->cd(2);
-  AsymFitHistoGenByType[1][1]->Draw();
-  pad[page]->cd(3);
-  TH1F *hist = (TH1F*)AsymFitHistoGenByType[0][1]->Clone("hist");
-  hist->SetTitle("y_qqbar/y_gg");
-  hist->Divide(AsymFitHistoGenByType[1][1]);
-  hist->Draw();
   c1->Update();
 
   ps->NewPage();

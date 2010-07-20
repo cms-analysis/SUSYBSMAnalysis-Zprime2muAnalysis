@@ -40,25 +40,6 @@ diElectrons = ('electrons', 'electrons')
 muonElectron = ('muons', 'electrons')
 electronMuon = ('electrons', 'muons')
 
-# Lepton/dilepton cut specifiers, for inclusion in a bitmask.  Magic
-# happens here to get the cut bit values directly from CutHelper.h so
-# we don't have to worry about keeping them consistent between the two
-# files.
-cuts = parse_enum('src/SUSYBSMAnalysis/Zprime2muAnalysis/src/CutHelper.h', 'CutResult')
-
-# Now use the cuts so defined and make some sets of them:
-# AN 2007/038 cuts (pT > 20 and isolation dR sumPt < 10)
-cuts['TeVmu'] = cuts['PT'] | cuts['ISO'];
-# AN 2008/044 e mu bkg study cuts (pT > 80).
-cuts['HEEP']  = cuts['PTOTHER'];
-# Various combinations of AN 2008/015 cuts ("top group").
-cuts['TopSkim']      = cuts['PT'] # | cuts['TOPTRIGGER']
-cuts['TopEl']        = cuts['ELTIGHT'] | cuts['D0EL'] | cuts['COLLEMU']
-cuts['TopMu']        = cuts['D0'] | cuts['NSIHITS'] | cuts['CHI2DOF']
-cuts['TopLeptonId']  = cuts['TopEl'] | cuts['TopMu']
-cuts['TopIsolation'] = cuts['ISOS']
-cuts['Top']          = cuts['TopSkim'] | cuts['TopLeptonId'] | cuts['TopIsolation']
-
 # We want to be able to add modules to the path in loops, with their
 # names depending on the loop variables.  Keep track of the modules we
 # make so we can set them all into a real CMSSW path in the process
@@ -104,7 +85,6 @@ def makeZprime2muAnalysisProcess(fileNames=[],
                                  runOnPATTuple=False,
                                  useHLTDEBUG=False,
                                  minGenPt=2.0,
-                                 cutMask=cuts['TeVmu'],
                                  bestRecLevel=lOP,
                                  inputIsFastSim=False,
                                  muons=muonCollections,
@@ -217,13 +197,6 @@ def makeZprime2muAnalysisProcess(fileNames=[],
     want to keep high-pT leptons from in-flight decays, so we add in
     the GEANT leptons, but without a pT cut lots of junk leptons would
     be added.
-
-    cutMask: an unsigned value representing the chosen cuts on
-    leptons/dileptons. The values must correspond to those set in
-    src/CutHelper.h. The "cuts" dictionary defined at the top of this
-    file gives some examples of common ones. The default is the
-    "TeVmu" selection: lepton pT > 20 GeV, and tracker isolation sumPt
-    < 10 GeV.
 
     inputIsFastSim: whether the input file has been produced by
     FastSim or not. If so, then some collection names need to be
@@ -710,7 +683,6 @@ def makeZprime2muAnalysisProcess(fileNames=[],
         usingAODOnly      = cms.bool(usingAODOnly),
         useTrigger        = cms.bool(useTrigger),
         useOtherMuonRecos = cms.bool(useOtherMuonRecos),
-        cutMask           = cms.uint32(cutMask),
         bestRecLevel      = cms.int32(bestRecLevel),
         dateHistograms    = cms.untracked.bool(True),
 
@@ -849,8 +821,7 @@ def makeZprime2muAnalysisProcess(fileNames=[],
             prod = cms.EDProducer('DileptonPicker',
                                   src          = cms.InputTag(name),
                                   doingGen     = cms.bool(rec == 0 and strictGenDilepton),
-                                  maxDileptons = cms.uint32(maxDileptons),
-                                  cutMask      = cms.uint32(cutMask)
+                                  maxDileptons = cms.uint32(maxDileptons)
                                   )
             addToPath(process, 'dileptons' + recLevels[rec], prod)
 
@@ -1038,7 +1009,7 @@ def setMuonAlignment(process, connectString, tagDTAlignmentRcd, tagDTAlignmentEr
 __all__ = [
     'muonCollections', 'electronCollections',
     'oppSign', 'oppSignMP', 'likeSignPos', 'likeSignNeg', 'diMuons',
-    'diElectrons', 'muonElectron', 'electronMuon', 'cuts',
+    'diElectrons', 'muonElectron', 'electronMuon',
     'makeZprime2muAnalysisProcess', 'attachAnalysis',
     'attachOutputModule', 'dumpNtuple', 'poolAllFiles',
     'setAlignment', 'setTrackerAlignment', 'setMuonAlignment',

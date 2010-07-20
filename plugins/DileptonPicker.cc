@@ -20,13 +20,11 @@ private:
   
   InputTag src;
   unsigned maxDileptons;
-  unsigned cutMask;
 };
 
 DileptonPicker::DileptonPicker(const ParameterSet& cfg)
   : src(cfg.getParameter<InputTag>("src")),
-    maxDileptons(cfg.getParameter<unsigned>("maxDileptons")),
-    cutMask(cfg.getParameter<unsigned>("cutMask"))
+    maxDileptons(cfg.getParameter<unsigned>("maxDileptons"))
 {
   produces<CompositeCandidateCollection>();
 }
@@ -46,10 +44,8 @@ void DileptonPicker::produce(Event& event, const EventSetup& eSetup) {
     if (hdileptons->size() > 0) {
       if (debug) out << hdileptons->size() << " dileptons before selection and overlap removal; ";
 
-      CutHelper cuts;
-      cuts.setCutMask(cutMask);
       for (CompositeCandidateCollection::const_iterator dil = hdileptons->begin(); dil != hdileptons->end(); ++dil)
-	if (!cuts.dileptonIsCut(*dil))
+	if (!leptonIsCut(*dil->daughter(0)->masterClone()) && !leptonIsCut(*dil->daughter(1)->masterClone()))
 	  dileptons->push_back(*dil);
 
       if (debug) out << dileptons->size() << " dileptons before overlap removal; ";

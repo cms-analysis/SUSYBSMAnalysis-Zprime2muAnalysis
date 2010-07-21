@@ -3,11 +3,13 @@
   \brief    Calculates and histograms lepton/dilepton resolutions and efficiencies.
 
   \author   Jordan Tucker, Slava Valuev
-  \version  $Id: Zprime2muResolution.cc,v 1.42 2010/02/17 14:08:15 tucker Exp $
+  \version  $Id: Zprime2muResolution.cc,v 1.43 2010/03/02 16:14:32 tucker Exp $
 */
 
 #include "TString.h"
 
+#include "DataFormats/MuonReco/interface/Muon.h"
+#include "DataFormats/RecoCandidate/interface/RecoCandidate.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -299,7 +301,7 @@ void Zprime2muResolution::fillTriggerEfficiencyHistos() {
       
       unsigned passCut = 0;
       for (reco::CandidateBaseRefVector::const_iterator lep = allLeptons[rec].begin(); lep != allLeptons[rec].end(); lep++) {
-	if (!cutHelper.leptonIsCut(**lep)) passCut++;
+	if (!leptonIsCut(**lep)) passCut++;
 	if (passCut > 1) break;
       }
 

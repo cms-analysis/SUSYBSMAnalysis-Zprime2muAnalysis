@@ -1,11 +1,25 @@
+// This module is deprecated.
+
+#include "DataFormats/Candidate/interface/Candidate.h"
+#include "DataFormats/MuonReco/interface/Muon.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/CutHelper.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
+
+bool leptonIsCut(const reco::Candidate& lepton) {
+  if (lepton.pt() < 20)
+    return true;
+
+  const reco::Muon* muon = toConcretePtr<reco::Muon>(lepton);
+  if (muon && muon->isolationR03().sumPt > 10)
+    return true;
+
+  return false;
+}
 
 using namespace std;
 using namespace edm;

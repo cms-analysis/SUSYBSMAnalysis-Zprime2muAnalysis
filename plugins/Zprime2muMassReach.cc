@@ -2,12 +2,10 @@
 // Author: Slava Valuev, UCLA
 //
 
-#include <string>
-#include <vector>
-
 #include "TCanvas.h"
 #include "TFile.h"
 #include "TF1.h"
+#include "TH1F.h"
 #include "TPad.h"
 #include "TPostScript.h"
 #include "TRandom.h"
@@ -15,16 +13,236 @@
 #include "TPaveLabel.h"
 #include "TText.h"
 
-#include "FWCore/Framework/interface/Event.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-
+#include "FWCore/ServiceRegistry/interface/Service.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Functions.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/UnbinnedFitter.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Zprime2muMassReach.h"
 
-using namespace std;
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneralUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/RecLevelHelper.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TriggerDecision.h"
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+// Instead of bringing Zprime2muMassReach into the new framework, it
+// is easier to keep it around in this way by having the (needed bits
+// of the) Zprime2muAnalysis class defined here. The Zprime2muAnalysis
+// class is not left in its own file so that no one thinks it is
+// available to be or should be used.
+
+class Zprime2muAnalysis : public edm::EDAnalyzer {
+ public:
+  explicit Zprime2muAnalysis(const edm::ParameterSet&);
+  virtual ~Zprime2muAnalysis() {}
+
+  virtual void beginJob() {}
+  virtual void analyze(const edm::Event&, const edm::EventSetup&);
+  virtual void endJob() {}
+
+ protected:
+  bool doingElectrons;
+  bool useGen;
+  int lBest;
+
+  edm::Service<TFileService> fs;
+  HardInteraction hardInteraction;
+  TriggerDecision trigDecision;
+  RecLevelHelper recLevelHelper;
+
+  reco::CandidateBaseRefVector allLeptons[MAX_LEVELS];
+  reco::CompositeCandidateCollection allDileptons[MAX_LEVELS];
+
+  double resonanceMass(const reco::CompositeCandidate& dil) const;
+};
+
+Zprime2muAnalysis::Zprime2muAnalysis(const edm::ParameterSet& config) 
+  : doingElectrons(config.getParameter<bool>("doingElectrons")),
+    useGen(config.getParameter<bool>("useGen")),
+    lBest(config.getParameter<int>("bestRecLevel")),
+    hardInteraction(doingElectrons, true)
+{
+  InitROOT();
+  trigDecision.init(config, false);
+  recLevelHelper.init(config);
+}
+
+void Zprime2muAnalysis::analyze(const edm::Event& event, const edm::EventSetup&) {
+  trigDecision.initEvent(event);
+  if (useGen) hardInteraction.Fill(event);
+
+  recLevelHelper.initEvent(event);
+  for (int irec = 0; irec < MAX_LEVELS; irec++) {
+    recLevelHelper.getLeptons(event, irec, allLeptons[irec]);
+    recLevelHelper.getDileptons(event, irec, allDileptons[irec]);
+  }
+}
+
+double Zprime2muAnalysis::resonanceMass(const reco::CompositeCandidate& dil) const {
+  // Gen level muons don't have photons matched to them; we can take
+  // the mass of the resonance directly from the MC record.
+  if (recLevelHelper.recLevel(dil) == lGN) {
+    if (hardInteraction.resonance)
+      return hardInteraction.resonance->mass();
+    else
+      return dil.mass();
+  }
+
+  const reco::CandidateBaseRef& lep0 = dileptonDaughter(dil, 0);
+  const reco::CandidateBaseRef& lep1 = dileptonDaughter(dil, 1);
+
+  reco::Particle::LorentzVector p4 = dil.p4(); // == lep0->p4() + lep1->p4() by construction.
+
+  // If the leptons are electrons, or there were no photons in the
+  // cone dR < 0.1, these four-vectors will be 0.
+  reco::Particle::LorentzVector ph0 = recLevelHelper.closestPhoton(lep0);
+  reco::Particle::LorentzVector ph1 = recLevelHelper.closestPhoton(lep1);
+
+  p4 += ph0;
+  // Don't double-count.
+  if (ph1 != ph0) p4 += ph1;
+
+  return p4.mass();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+// max number of files for mass fits
+const int NF = 2;
+// max size of arrays for unbinned fits
+const int MASS_FIT_ARRAY_SIZE = 20000;
+
+// Auxilliary structure containing event information: invariant mass and weight
+struct evt {
+  double mass, weight;
+
+  evt& operator = (const evt& rhs) {
+    if (this != &rhs) {
+      mass    = rhs.mass;
+      weight  = rhs.weight;
+    }
+    return *this;
+  }
+
+  bool operator > (const evt& rhs) const {return (mass > rhs.mass);}
+  bool operator < (const evt& rhs) const {return (mass < rhs.mass);}
+  friend ostream& operator << (ostream& output, const evt& rhs) {
+    output << " mass = "   << std::setw(7) << rhs.mass
+	   << " weight = " << std::setw(7) << rhs.weight;
+    return output;
+  }
+};
+
+class Zprime2muMassReach : public Zprime2muAnalysis {
+ public:
+  explicit Zprime2muMassReach(const edm::ParameterSet&);
+  void analyze(const edm::Event&, const edm::EventSetup&);
+  void endJob();
+
+ private:
+  void bookMassHistos();
+  void dilMassPlots(bool debug=false);
+  void fillMassArrays();
+  void scaleMassHistos();
+  void drawMassHistos();
+  void bookMassFitHistos();
+  void fitMass();
+  double unbinnedMassFit(int nentries, double *mass_data,
+			 double *weight, const std::string fittype,
+			 const bool bckgonly=false);
+  int unbinnedFitExec(const Char_t *funcname, const Option_t *option,
+		      const std::vector<evt>& events, double& log_ML);
+  void analyzeUnbinnedMassFits(const double sumw,
+			       const std::vector<evt>& events,
+			       const int npars, const double *pars,
+			       const std::string fittype, const bool bckgonly,
+			       const double mass_min, const double mass_max);
+  void ks(std::vector<evt> data, TF1 *func, const double& mass_min,
+	  const double& mass_max, double& d, double& prob);
+  void drawUnbinnedMassFitsHistos();
+
+  enum FILETYPE { SIGNAL, BKG1, BKG2 };
+
+  int eventCount; // sequential event counter (not the official event number!)
+  int fileNum;
+  unsigned eventNum;
+
+  // Configuration parameters:
+  std::string psFile;
+
+  bool kDYEvents;
+  bool kBackgroundFit;
+  bool kGenuineEvents;
+  bool kGMR;
+  bool useL3Muons;
+  bool kFixedMass;
+  bool kFixedFWHM;
+  bool kSmoothedSample;
+  bool kRandomSeed;
+  bool kExpPlots;
+  bool kBinnedFit;
+  unsigned int kNexp;
+  double intLumi;
+
+  bool fitGenMass;
+  bool fitRecMass;
+
+  std::string resModel;
+  unsigned int resMassId;
+  unsigned int nBins;
+  std::vector<double> massWin;
+  std::vector<double> lowerGenMass;
+  std::vector<double> upperGenMass;
+  std::vector<double> XSec;
+  std::vector<double> KFactor;
+  std::vector<double> effFilter;
+  std::vector<unsigned int> nGenEvents;
+ 
+  // Fixed size arrays for now.
+  // number of events
+  static int nfit_genmass_used[NF];
+  static int nfit_recmass_used[NF];
+  // mass
+  static double fit_genmass[NF][MASS_FIT_ARRAY_SIZE];
+  static double fit_recmass[NF][MASS_FIT_ARRAY_SIZE];
+  // generated and reconstructed event number
+  static unsigned fit_genevent[NF][MASS_FIT_ARRAY_SIZE];
+  static unsigned fit_recevent[NF][MASS_FIT_ARRAY_SIZE];
+  // sample ids
+  static int fit_sid[NF];
+
+  static const double fwhm_over_sigma;
+
+  // Histograms filled by dilMassPlots
+  // three of each (signal, main bkgnd, aux bkgnd)
+  TH1F *GenDilMass[3], *HltDilMass[3], *OffDilMass[3];
+
+  // Histograms for the mass fit
+  TH1F *GenMassFitData, *RecMassFitData, *RecMassFitDataSmoothed;
+  TH1F *GenMassFitSigFr, *GenMassFitMean, *GenMassFitFwhm;
+  TH1F *RecMassFitSigFr, *RecMassFitMean, *RecMassFitFwhm;
+  TH1F *GenMassFitNevtTot, *GenMassFitNsigTot, *GenMassFitNbkgTot;
+  TH1F *RecMassFitNevtTot, *RecMassFitNsigTot, *RecMassFitNbkgTot;
+  TH1F *GenMassFitNobs, *GenMassFitNfit, *GenMassFitNsig, *GenMassFitNbkg;
+  TH1F *RecMassFitNobs, *RecMassFitNfit, *RecMassFitNsig, *RecMassFitNbkg;
+  TH1F *GenMassFitKSDistSig, *GenMassFitKSDistBkg;
+  TH1F *GenMassFitKSProbSig, *GenMassFitKSProbBkg;
+  TH1F *RecMassFitKSDistSig, *RecMassFitKSDistBkg;
+  TH1F *RecMassFitKSProbSig, *RecMassFitKSProbBkg;
+  TH1F *GenMassFitSc1, *GenMassFitScl, *GenMassFitSc12, *GenMassFitSc2;
+  TH1F *GenMassFitSl2;
+  TH1F *RecMassFitSc1, *RecMassFitScl, *RecMassFitSc12, *RecMassFitSc2;
+  TH1F *RecMassFitSl2;
+
+  // Significances
+  double sc1_gen, sc2_gen, sc12_gen, scl_gen, sl2_gen;
+  double sc1_rec, sc2_rec, sc12_rec, scl_rec, sl2_rec;
+};
 
 // Number of events in unbinned fits of mass.
 int Zprime2muMassReach::nfit_genmass_used[NF] = {0};
@@ -43,7 +261,7 @@ Zprime2muMassReach::Zprime2muMassReach(const edm::ParameterSet& config)
   : Zprime2muAnalysis(config), eventCount(0), fileNum(-1)
 {
   // Postscript file with mass reach plots.
-  psFile    = config.getUntrackedParameter<string>("psFile", "mass_fits.ps");
+  psFile    = config.getUntrackedParameter<std::string>("psFile", "mass_fits.ps");
 
   kDYEvents       = config.getParameter<bool>("DYEvents");
   kBackgroundFit  = config.getParameter<bool>("BackgroundFit");
@@ -62,20 +280,20 @@ Zprime2muMassReach::Zprime2muMassReach(const edm::ParameterSet& config)
   fitRecMass = config.getParameter<bool>("fitRecMass");
 
   // get the parameters specific to the data sample on which we are running
-  string dataSet = config.getParameter<string>("dataSet");
+  std::string dataSet = config.getParameter<std::string>("dataSet");
   edm::ParameterSet dataSetConfig =
     config.getParameter<edm::ParameterSet>(dataSet);
 
-  resModel     = dataSetConfig.getParameter<string>("resModel");
+  resModel     = dataSetConfig.getParameter<std::string>("resModel");
   resMassId    = dataSetConfig.getParameter<unsigned int>("resMassId");
   nBins        = dataSetConfig.getParameter<unsigned int>("nBins");
-  massWin      = dataSetConfig.getParameter<vector<double> >("massWin");
-  lowerGenMass = dataSetConfig.getParameter<vector<double> >("lowerGenMass");
-  upperGenMass = dataSetConfig.getParameter<vector<double> >("upperGenMass");
-  XSec         = dataSetConfig.getParameter<vector<double> >("XSec");
-  KFactor      = dataSetConfig.getParameter<vector<double> >("KFactor");
-  effFilter    = dataSetConfig.getParameter<vector<double> >("effFilter");
-  nGenEvents   = dataSetConfig.getParameter<vector<unsigned int> >("nGenEvents");
+  massWin      = dataSetConfig.getParameter<std::vector<double> >("massWin");
+  lowerGenMass = dataSetConfig.getParameter<std::vector<double> >("lowerGenMass");
+  upperGenMass = dataSetConfig.getParameter<std::vector<double> >("upperGenMass");
+  XSec         = dataSetConfig.getParameter<std::vector<double> >("XSec");
+  KFactor      = dataSetConfig.getParameter<std::vector<double> >("KFactor");
+  effFilter    = dataSetConfig.getParameter<std::vector<double> >("effFilter");
+  nGenEvents   = dataSetConfig.getParameter<std::vector<unsigned int> >("nGenEvents");
 
   bookMassHistos();
   bookMassFitHistos();
@@ -345,17 +563,17 @@ void Zprime2muMassReach::drawMassHistos() {
   }
   int page = 0;
 
-  ostringstream strtitl;
+  std::ostringstream strtitl;
   strtitl << resModel << " (" << resMassId/1000.
 	  << " TeV) vs Drell-Yan background";
   TPaveLabel *title;
 
-  ostringstream strlumi, strbinw, strmass;
+  std::ostringstream strlumi, strbinw, strmass;
   strlumi << intLumi;
   strbinw << (massWin[1]-massWin[0])/nBins;
   strmass << resMassId;
-  string ytit = "Events/" + strbinw.str() + " GeV/" + strlumi.str() + " fb-1";
-  string psfile = resModel + strmass.str() + "_sig_bckg.ps";
+  std::string ytit = "Events/" + strbinw.str() + " GeV/" + strlumi.str() + " fb-1";
+  std::string psfile = resModel + strmass.str() + "_sig_bckg.ps";
   double mass_min = massWin[0], mass_max = massWin[1]; // for prints only.
   TPostScript *ps  = new TPostScript(psfile.c_str(), 111);
 
@@ -370,7 +588,7 @@ void Zprime2muMassReach::drawMassHistos() {
   gStyle->SetOptLogy(0);
   pad[page]->Draw();
   pad[page]->Divide(1,1);
-  ostringstream out;
+  std::ostringstream out;
   out
     << "-------------------------------------------------------------\n"
     << " Signal-vs-background plots: "
@@ -742,18 +960,18 @@ void Zprime2muMassReach::fitMass() {
 
   // Print all events in input arrays
   if (debug) {
-    ostringstream out;
+    std::ostringstream out;
     for (int idx = 0; idx < NF; idx++) {
-      out << endl << " List of events for file # " << idx << ":"  << endl;
-      out << " gen. # | gen. mass | rec. # | rec. mass |" << endl;
+      out << "\n" << " List of events for file # " << idx << ":"  << "\n";
+      out << " gen. # | gen. mass | rec. # | rec. mass |" << "\n";
       int ifirst = 0;
       for (igen = 0; igen < nfit_genmass_used[idx]; igen++) {
-	out << setw(7) << igen << " | "
-	    << setw(9) << fit_genmass[idx][igen] << " |";
+	out << std::setw(7) << igen << " | "
+	    << std::setw(9) << fit_genmass[idx][igen] << " |";
 	for (irec = ifirst; irec < nfit_recmass_used[idx]; irec++) {
 	  if (fit_recevent[idx][irec] == fit_genevent[idx][igen]) {
-	    out << setw(7) << irec << " | "
-		<< setw(9) << fit_recmass[idx][irec] << " |";
+	    out << std::setw(7) << irec << " | "
+		<< std::setw(9) << fit_recmass[idx][irec] << " |";
 	    ifirst = irec+1;
 	    break;
 	  }
@@ -829,12 +1047,12 @@ void Zprime2muMassReach::fitMass() {
   // a given XSEC.
   //double eff = RecMassFitData->GetSumOfWeights()/nfit_genmass_used[0];
   double eff = nfit_recmass_used[0]/float(nfit_genmass_used[0]);
-  ostringstream out;
+  std::ostringstream out;
   out
-    << " Input to the mass fits: " << endl
+    << " Input to the mass fits: " << "\n"
     << "  generated events in main sample = "     << nfit_genmass_used[0]
     << "; reconstructed events in main sample = " << nfit_recmass_used[0]
-    << "; efficiency = " << eff << endl
+    << "; efficiency = " << eff << "\n"
     << "  events generated in mass interval = "
     << GenMassFitData->GetSumOfWeights()
     << "; events reconstructed in mass interval = "
@@ -880,9 +1098,9 @@ void Zprime2muMassReach::fitMass() {
 	// Check whether we have sufficient events to perform the experiment
 	if (ngen_tot[idx] + ngen[idx] > nfit_genmass_used[idx]) {
 	  bool quit = false;
-	  ostringstream out;
+	  std::ostringstream out;
 	  out << "+++ Not enough generated events for experiment # " << iexp
-	      << " sample # " << idx << "! +++" << endl
+	      << " sample # " << idx << "! +++" << "\n"
 	      << "Need " << ngen[idx] << " events, but only "
 	      << nfit_genmass_used[idx]-ngen_tot[idx] << " are available.";
 	  if (idx == 0) { // signal; exit
@@ -970,26 +1188,26 @@ void Zprime2muMassReach::fitMass() {
 	recweight = recwght;
 
 	if (debug) {
-	  ostringstream out;
+	  std::ostringstream out;
 	  out << "idx = " << idx << "; events: gen = " << ngen[idx]
 	      << " [" << igen_first << "-" << igen_last << "]"
 	      << " used = " << ngen_used << " used total = " << ngen_sum
-	      << " read = " << ngen_tot[idx] + ngen[idx] << endl;
+	      << " read = " << ngen_tot[idx] + ngen[idx] << "\n";
 	  int ievt = 0;
 	  for (igen = ngen_sum - ngen_used; igen < ngen_sum; igen++) {
-	    out << " " << setw(7) << genmass[igen];
-	    if ((++ievt)%9 == 0 && igen < ngen_sum-1) out << endl;
+	    out << " " << std::setw(7) << genmass[igen];
+	    if ((++ievt)%9 == 0 && igen < ngen_sum-1) out << "\n";
 	  }
-	  out << endl;
+	  out << "\n";
 	  out << "idx = " << idx << "; events: rec = " << nrec[idx]
 	      << " [" << nrec_tot[idx] << "-" << nrec_tot[idx] + nrec[idx] - 1
 	      << "]"
 	      << " used = " << nrec_used << " used total = " << nrec_sum
-	      << " read = " << nrec_tot[idx] + nrec[idx] << endl;
+	      << " read = " << nrec_tot[idx] + nrec[idx] << "\n";
 	  ievt = 0;
 	  for (irec = nrec_sum - nrec_used; irec < nrec_sum; irec++) {
-	    out << " " << setw(7) << recmass[irec];
-	    if ((++ievt)%9 == 0 && irec < nrec_sum-1) out << endl;
+	    out << " " << std::setw(7) << recmass[irec];
+	    if ((++ievt)%9 == 0 && irec < nrec_sum-1) out << "\n";
 	  }
 	  LogTrace("fitMass") << out.str();
 	}
@@ -1088,12 +1306,12 @@ void Zprime2muMassReach::fitMass() {
     }
 
     if (debug) {
-      ostringstream out;
+      std::ostringstream out;
       if (fitGenMass) {
 	out
 	  << " logML_gen_sb = " << logML_gen_sb
 	  << " logML_gen_b  = " << logML_gen_b
-	  << " sl2_gen = "  << sl2_gen  << endl
+	  << " sl2_gen = "  << sl2_gen  << "\n"
 	  << " sc1_gen = "  << sc1_gen  << " sc2_gen = " << sc2_gen
 	  << " sc12_gen = " << sc12_gen << " scl_gen = " << scl_gen;
       }
@@ -1101,7 +1319,7 @@ void Zprime2muMassReach::fitMass() {
 	out
 	  << " logML_rec_sb = " << logML_rec_sb
 	  << " logML_rec_b  = " << logML_rec_b
-	  << " sl2_rec = "  << sl2_rec  << endl
+	  << " sl2_rec = "  << sl2_rec  << "\n"
 	  << " sc1_rec = "  << sc1_rec  << " sc2_rec = " << sc2_rec
 	  << " sc12_rec = " << sc12_rec << " scl_rec = " << scl_rec;
       }
@@ -1130,7 +1348,7 @@ void Zprime2muMassReach::fitMass() {
 
 double Zprime2muMassReach::unbinnedMassFit(int nentries,
 					   double *mass_data, double *weight,
-					   const string fittype,
+					   const std::string fittype,
 					   const bool bckgonly) {
   // Interface to unbinned mass fitter.
 
@@ -1296,10 +1514,10 @@ double Zprime2muMassReach::unbinnedMassFit(int nentries,
   }
 
   if (debug) {
-    ostringstream out;
+    std::ostringstream out;
     out
-      << "Fit option: " << fittype << ", " << (bckgonly ? "B" : "S+B") << endl
-      << "Fit region: " << mass_min << " to " << mass_max << " GeV" << endl;
+      << "Fit option: " << fittype << ", " << (bckgonly ? "B" : "S+B") << "\n"
+      << "Fit region: " << mass_min << " to " << mass_max << " GeV" << "\n";
     LogTrace("unbinnedMassFit") << out.str();
   }
 
@@ -1307,7 +1525,7 @@ double Zprime2muMassReach::unbinnedMassFit(int nentries,
   // interval of interest.  Evt structure contains invariant mass and weight.
   double sumw = 0.;
   int nevents = 0;
-  vector<evt> events(nentries);
+  std::vector<evt> events(nentries);
   for (int ievt = 0; ievt < nentries; ievt++) {
     if (mass_data[ievt] >= mass_min && mass_data[ievt] <= mass_max) {
       // event[nevents].mass = fsum->GetRandom(); // to test K-S stat.
@@ -1321,13 +1539,13 @@ double Zprime2muMassReach::unbinnedMassFit(int nentries,
   if (nevents != nentries) events.resize(nevents);
 
   if (debug) {
-    ostringstream out;
-    out << "Total events in the fit region: " << nevents << endl;
+    std::ostringstream out;
+    out << "Total events in the fit region: " << nevents << "\n";
     for (int ievt = 0; ievt < nevents; ievt++) {
-      out << " " << setw(7) << events[ievt].mass
-	   << "(" << setw(4) << setprecision(4) << events[ievt].weight
-	   << setprecision(6) << ")";
-      if ((ievt+1)%5 == 0 && ievt < nevents-1) out << endl;
+      out << " " << std::setw(7) << events[ievt].mass
+	  << "(" << std::setw(4) << std::setprecision(4) << events[ievt].weight
+	  << std::setprecision(6) << ")";
+      if ((ievt+1)%5 == 0 && ievt < nevents-1) out << "\n";
     }
     LogTrace("unbinnedMassFit") << out.str();
   }
@@ -1374,7 +1592,7 @@ double Zprime2muMassReach::unbinnedMassFit(int nentries,
     double *fpars = fmass_unb->GetParameters();
 
     if (debug) {
-      ostringstream out;
+      std::ostringstream out;
       out << " Fitted values of parameters:";
       for (int ifpars = 0; ifpars < nfpars; ifpars++)
 	out << "  " << fpars[ifpars];
@@ -1427,7 +1645,7 @@ double Zprime2muMassReach::unbinnedMassFit(int nentries,
 
 int Zprime2muMassReach::unbinnedFitExec(const Char_t *funcname,
 					const Option_t *option,
-					const vector<evt>& events,
+					const std::vector<evt>& events,
 					double& log_ML) {
   // Small interface
   bool useW = false;
@@ -1456,9 +1674,9 @@ int Zprime2muMassReach::unbinnedFitExec(const Char_t *funcname,
 }
 
 void Zprime2muMassReach::analyzeUnbinnedMassFits(
-           const double sumw,     const vector<evt>& events,
+           const double sumw,     const std::vector<evt>& events,
            const int npars,       const double *pars,
-           const string fittype,  const bool bckgonly,
+           const std::string fittype,  const bool bckgonly,
            const double mass_min, const double mass_max) {
   
   static bool debug = true;
@@ -1576,22 +1794,22 @@ void Zprime2muMassReach::analyzeUnbinnedMassFits(
       nsig = ntot - nbkg;
 
       // Number of events *observed* between mass_low and mass_high
-      vector<evt>::const_iterator p;
+      std::vector<evt>::const_iterator p;
       for (p = events.begin(); p != events.end(); p++) {
 	if (p->mass > mass_low && p->mass < mass_high) nobs += p->weight;
       }
 
       if (debug) {
-	ostringstream out;
+	std::ostringstream out;
 	out << " Width:  FWHM = " << fwhm << " (sigma = " << int_sigma;
 	if (fittype == "lor_expbg")
 	  out << ")";
 	else
 	  out << "); sigma_Gauss = " << res_sigma;
-	out << "; total = " << width << endl;
+	out << "; total = " << width << "\n";
 	out << " Mass:   mean = " << mass_mean
-	    << "; low = " << mass_low << "; high = " << mass_high << endl;
-	out << " Events within +/- " << width_sigmas << " sigma: " << endl;
+	    << "; low = " << mass_low << "; high = " << mass_high << "\n";
+	out << " Events within +/- " << width_sigmas << " sigma: " << "\n";
 	out << "         obs = " << nobs << " total = " << ntot
 	    << "; signal = " << nsig << "; background = " << nbkg;
 	LogTrace("analyzeUMF") << out.str();
@@ -1639,7 +1857,7 @@ void Zprime2muMassReach::analyzeUnbinnedMassFits(
 
   if (kExpPlots) {
     int   iexp = 0;
-    string filename, htitle;
+    std::string filename, htitle;
     if (fittype == "lor_expbg") {
       if (bckgonly) {filename = "genmass_b";  iexp = ++nexp_gen_b;}
       else          {filename = "genmass_sb"; iexp = ++nexp_gen_sb;}
@@ -1666,7 +1884,7 @@ void Zprime2muMassReach::analyzeUnbinnedMassFits(
 
     // if (kExpPlots) {
     TH1F *massHisto = fs->make<TH1F>("massHisto", htitle.c_str(), nbins, mass_min, mass_max);
-    vector<evt>::const_iterator p;
+    std::vector<evt>::const_iterator p;
     for (p = events.begin(); p != events.end(); p++) {
       massHisto->Fill(p->mass, p->weight);
     }
@@ -1678,13 +1896,13 @@ void Zprime2muMassReach::analyzeUnbinnedMassFits(
     TCanvas *c1 = new TCanvas("c4", "", 0, 0, 500, 700); // for .ps
     // TCanvas *c1 = new TCanvas("c4", "", 0, 0, 500, 500); // for .eps
 
-    ostringstream s_iexp;
+    std::ostringstream s_iexp;
     s_iexp << "_exp" << iexp;
     system("mkdir -p mass_plots");
-    string psname = "./mass_plots/" + filename + s_iexp.str() + ".ps";
+    std::string psname = "./mass_plots/" + filename + s_iexp.str() + ".ps";
     TPostScript *ps = new TPostScript(psname.c_str(), 111);
 
-    ostringstream strlumi, strbinw;
+    std::ostringstream strlumi, strbinw;
     strlumi << intLumi;
     strbinw << bin_width;
 
@@ -1694,7 +1912,7 @@ void Zprime2muMassReach::analyzeUnbinnedMassFits(
     c1->cd(0);
     massHisto->SetTitle("");
     massHisto->GetXaxis()->SetTitle("#mu^{+}#mu^{-} mass (GeV)");
-    string ytit = "Events/" + strbinw.str() + " GeV/"
+    std::string ytit = "Events/" + strbinw.str() + " GeV/"
       + strlumi.str() + " fb^{-1}";
     massHisto->GetYaxis()->SetTitle(ytit.c_str());
     massHisto->GetYaxis()->SetTitleOffset(1.15);
@@ -1771,7 +1989,7 @@ void Zprime2muMassReach::analyzeUnbinnedMassFits(
   //delete fbkg; //??
 }
   
-void Zprime2muMassReach::ks(vector<evt> data, TF1 *func,
+void Zprime2muMassReach::ks(std::vector<evt> data, TF1 *func,
 			    const double& mass_min, const double& mass_max,
 			    double& d, double& prob) {
   // Given a vector data, and given a user-supplied function of a
@@ -1783,9 +2001,9 @@ void Zprime2muMassReach::ks(vector<evt> data, TF1 *func,
   // The array data is modified by being sorted into ascending order.
 
   double d1, d2, dt, ff, fn, fo = 0.0;
-  vector<evt>::const_iterator p;
+  std::vector<evt>::const_iterator p;
 
-  sort(data.begin(), data.end(), less<evt>());
+  sort(data.begin(), data.end(), std::less<evt>());
 
   double en = 0.0, sumw = 0.0;
   for (p = data.begin(); p != data.end(); p++) {
@@ -1813,7 +2031,7 @@ void Zprime2muMassReach::drawUnbinnedMassFitsHistos() {
   TCanvas *c1 = new TCanvas("c5", "", 0, 0, 500, 700);
 
   int page = 0;
-  ostringstream strpage;
+  std::ostringstream strpage;
   TPaveLabel *title;
   TPad *pad;
 
@@ -1829,9 +2047,9 @@ void Zprime2muMassReach::drawUnbinnedMassFitsHistos() {
   //gStyle->SetOptFit(0);
   //gStyle->SetOptStat(0);
 
-  ostringstream strmass;
+  std::ostringstream strmass;
   strmass << resMassId;
-  string psfile = resModel + strmass.str() + "_" + psFile;
+  std::string psfile = resModel + strmass.str() + "_" + psFile;
   TPostScript *ps = new TPostScript(psfile.c_str(), 111);
   ps->NewPage();
   c1->Clear();

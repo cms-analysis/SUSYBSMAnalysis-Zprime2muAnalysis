@@ -14,7 +14,8 @@ public:
 private:
   virtual void produce(edm::Event&, const edm::EventSetup&);
 
-  pat::Muon* cloneAndSwitchMuonTrack(const pat::Muon&) const;
+  pat::Electron* cloneAndSwitchElectronEnergy(const pat::Electron&) const;
+  pat::Muon*     cloneAndSwitchMuonTrack(const pat::Muon&)          const;
 
   std::pair<pat::Electron*, int> doLepton(const pat::Electron&, const reco::CandidateBaseRef&) const;
   std::pair<pat::Muon*,     int> doLepton(const pat::Muon&,     const reco::CandidateBaseRef&) const;
@@ -49,6 +50,17 @@ Zprime2muLeptonProducer::Zprime2muLeptonProducer(const edm::ParameterSet& cfg)
     produces<pat::MuonCollection>("muons");
 
   produces<pat::ElectronCollection>("electrons");
+}
+
+pat::Electron* Zprime2muLeptonProducer::cloneAndSwitchElectronEnergy(const pat::Electron& electron) const {
+  // HEEP recommendation is to use always the calorimeter energy
+  // instead of the GsfElectron/pat::Electron default, which uses a
+  // weighted combination of the calorimeter and track-fit energy. See
+  // the section "General Comments" at
+  // https://twiki.cern.ch/twiki/bin/view/CMS/HEEPElectronID.
+  pat::Electron* el = electron.clone();
+  el->setP4(electron.p4() * (electron.caloEnergy() / electron.energy()));
+  return el;
 }
 
 pat::Muon* Zprime2muLeptonProducer::cloneAndSwitchMuonTrack(const pat::Muon& muon) const {
@@ -96,8 +108,8 @@ pat::Muon* Zprime2muLeptonProducer::cloneAndSwitchMuonTrack(const pat::Muon& muo
 
 std::pair<pat::Electron*,int> Zprime2muLeptonProducer::doLepton(const pat::Electron& el, const reco::CandidateBaseRef&) const {
   // Caller will own this pointer.
-  pat::Electron* new_el = el.clone();
-  int cutFor = new_el == 0 ? -1 : electron_selector(*new_el) ? 0 : 1; // JMTBAD todo heep flags also in this bitword
+  pat::Electron* new_el = cloneAndSwitchElectronEnergy(el);
+  int cutFor = new_el == 0 ? -1 : electron_selector(*new_el) ? 0 : 1;
   return std::make_pair(new_el, cutFor);
 }
 

@@ -10,6 +10,7 @@ from PhysicsTools.PatAlgos.patTemplate_cfg import *
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
 ## Modify L1 trigger bits if MC (bit 0 not defined for MC)
 process.L1T1.L1SeedsLogicalExpression = cms.string('(40 OR 41) AND NOT (36 OR 37 OR 38 OR 39)')
+process.goodData.remove(process.hltPhysicsDeclared)
 
 ## ------------------------------------------------------
 #  NOTE: you can use a bunch of core tools of PAT
@@ -53,9 +54,15 @@ process.out.outputCommands += zPrimeEventContent
 ## uncomment this line to run on an 35X input sample
 #run36xOn35xInput(process)
 
+process.filter = cms.EDFilter("CandViewCountFilter",
+    src = cms.InputTag("muons"),
+    minNumber = cms.uint32(1),
+)
+
 ## let it run
 process.p = cms.Path(
-    process.goodData *
+    process.goodData +
+    process.filter +
     process.patDefaultSequence
     )
 
@@ -67,16 +74,20 @@ process.p = cms.Path(
 process.source.fileNames = [
     '/store/mc/Summer10/Zmumu/GEN-SIM-RECO/START36_V9_S09-v1/0045/FC750941-147B-DF11-BA8C-00261834B569.root',
     ]
+process.source.noEventSort = cms.untracked.bool(True)
+process.source.duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
+
 #
 #process.GlobalTag.globaltag = 'START36_V10::All'
 process.GlobalTag.globaltag = 'MC_37Y_V5::All'
 #
-process.maxEvents.input = 1000        ##  (e.g. -1 to run on all events)
+#process.maxEvents.input = 1000        ##  (e.g. -1 to run on all events)
 #
 #   process.out.outputCommands = [ ... ]  ##  (e.g. taken from PhysicsTools/PatAlgos/python/patEventContent_cff.py)
 #                                         ##
 #   process.out.fileName = ...            ##  (e.g. 'myTuple.root')
 #                                         ##
+process.out.SelectEvents.SelectEvents = cms.vstring('p')
 #   process.options.wantSummary = True    ##  (to suppress the long output at the end of the job)    
 #
 ## switch on PAT trigger

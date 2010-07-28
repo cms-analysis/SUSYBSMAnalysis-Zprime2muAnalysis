@@ -1,0 +1,133 @@
+[kin: Kinematical variables]
+p: p (GeV/c): Momentum
+pt: p_{T} (GeV/c): Transverse momentum
+eta: #eta: Pseudorapidity
+phi: #phi: Azimuthal angle
+charge: charge: Charge
+
+[kinSta: Kinematical variables (Standalone fit)]
+pSta: standalone p (GeV/c): Momentum (Standalone fit)
+ptSta: standalone p_{T} (GeV/c): Transverse momentum  (Standalone fit)
+etaSta: standalone #eta: Pseudorapidity  (Standalone fit)
+phiSta: standalone #phi: Azimuthal angle  (Standalone fit)
+
+[trk: Inner track variables]
+dxyCoarse: d_{xy} to primary vertex (cm): Transverse impact parameter
+dxyFine: d_{xy} to primary vertex (cm): Transverse impact parameter
+dzCoarse: d_{z} to primary vertex (cm): Longitudinal impact parameter
+dzFine: d_{z} to primary vertex (cm): Longitudinal impact parameter
+pixelHits: pixel hits: Pixel hits
+pixelLayers: pixel layers: Pixel layers
+trackerHits: silicon track hits: Silicon track hits
+trackerLostHitsInner:  missing inner tracker hits: Missing inner silicon hits
+trackerLostHitsMiddle: silicon track lost hits: Silicon track lost hits
+trackerLostHitsOuter:  missing outer tracker hits: Missing outer silicon hits
+trackerChi2n: silicon track #chi^{2}/ndf: Silicon track #chi^{2}/ndf
+
+[sta: Outer track variables]
+muonHits: standalone track good hits: Standalone track good hits
+muonBadHits: standalone track bad hits: Standalone track bad hits
+muonStationsValid: muon stations (valid hits): Muon stations with valid hits
+muonStationsAny: muon stations (all hits): Muon stations with any hits
+muonStationsDTValid: DT stations (valid hits, |#eta| < 1.2): Muon DT stations with valid hits (|#eta| < 1.2)
+muonStationsDTAny: DT stations (all hits, |#eta| < 1.2): Muon DT stations with any hits (|#eta| < 1.2)
+muonStationsRPCValid: RPC stations (valid hits, |#eta| < 1.6): Muon RPC stations with valid hits (|#eta| < 1.6)
+muonStationsRPCAny: RPC stations (all hits, |#eta| < 1.6): Muon RPC stations with any hits (|#eta| < 1.6)
+muonStationsCSCValid: CSC stations (valid hits, |#eta| > 0.8): Muon CSC stations with valid hits (|#eta| > 0.8)
+muonStationsCSCAny: CSC stations (all hits, |#eta| > 0.8): Muon CSC stations with any hits (|#eta| > 0.8)
+muonChi2n: outer track #chi^{2}/ndf: Outer track #chi^{2}/ndf
+
+[glb: Global track variables]
+globalHits: global track hits: Global track hits
+globalMuonHits: global track good muon hits: Global track good muon hits
+globalChi2n: global track #chi^{2}/ndf: Global track #chi^{2}/ndf
+
+[iso: Isolation variables]
+trackIso03: #Sigma track p_{T}, #DeltaR < 0.3 (GeV/c): Isolation #Sigma track p_{T} (#DeltaR < 0.3)
+trackIso05: #Sigma track p_{T}, #DeltaR < 0.5 (GeV/c): Isolation #Sigma track p_{T} (#DeltaR < 0.5)
+ecalIso03: #Sigma ECal E_{T}, #DeltaR < 0.3 (GeV): Isolation #Sigma ECal E_{T} (#DeltaR < 0.3)
+ecalIso05: #Sigma ECal E_{T}, #DeltaR < 0.5 (GeV): Isolation #Sigma ECal E_{T} (#DeltaR < 0.5)
+hcalIso03: #Sigma HCal E_{T}, #DeltaR < 0.3 (GeV): Isolation #Sigma HCal E_{T} (#DeltaR < 0.3)
+hcalIso05: #Sigma HCal E_{T}, #DeltaR < 0.5 (GeV): Isolation #Sigma HCal E_{T} (#DeltaR < 0.5)
+combRelIso03: rel. isolation #Sigma E_{T} all/p_{T}(#mu), #DeltaR < 0.3: Rel isolation #Sigma E_{T} all/p_{T}(#mu) (#DeltaR < 0.3)
+combRelIso05: rel. isolation #Sigma E_{T} all/p_{T}(#mu), #DeltaR < 0.5: Rel isolation #Sigma E_{T} all/p_{T}(#mu) (#DeltaR < 0.5)
+
+[muid: Muon ID variables]
+segmentMatchesArb: matched segments (arb.): Matched segments (arbitrated)
+segmentMatchesNoArb: matched segments (no arb.): Matched segments (no arbitration)
+segmentMatchesFailArb: matched segments (fail arb.): Matched segments failing arbitration
+segmentCompatArb: segment compatibility (arb.): Segment compatibility (arbitrated)
+segmentCompatNoArb: segment compatibility (no arb.): Segment compatibility (no arbitration)
+caloCompat: calo compatibility: Calorimetric compatibility
+
+[trkPhi: Phi at ME/MB 1 surface]
+trkPhi_at_pME1_1: #phi (radians): TRK Phi (ME +1/1) at Det. Surface
+trkPhi_at_mME1_1: #phi (radians): TRK Phi (ME -1/1) at Det. Surface
+trkPhi_at_pME1_23: #phi (radians): TRK Phi (ME +1/2, +1/3) at Det. Surface
+trkPhi_at_mME1_23: #phi (radians): TRK Phi (ME -1/2, -1/3) at Det. Surface
+trkPhi_at_MB1: #phi (radians): TRK Phi (MB 1) at Det. Surface
+
+[skip: Skip These For Now]
+muonHitCounts::
+muonHitCountsany::
+muonHitCounts1any::
+muonHitCountsv1::
+muonHitCountsdt1any::
+muonHitCountscsc1any::
+muonHitCountsrpc1any::
+muonHitCountsdt1::
+muonHitCountscsc1::
+muonHitCountsrpc1::
+muonHitCounts2any::
+muonHitCountsv2::
+muonHitCountsdt2any::
+muonHitCountscsc2any::
+muonHitCountsrpc2any::
+muonHitCountsdt2::
+muonHitCountscsc2::
+muonHitCountsrpc2::
+muonHitCounts3any::
+muonHitCountsv3::
+muonHitCountsdt3any::
+muonHitCountscsc3any::
+muonHitCountsrpc3any::
+muonHitCountsdt3::
+muonHitCountscsc3::
+muonHitCountsrpc3::
+muonHitCounts4any::
+muonHitCountsv4::
+muonHitCountsdt4any::
+muonHitCountscsc4any::
+muonHitCountsrpc4any::
+muonHitCountsdt4::
+muonHitCountscsc4::
+muonHitCountsrpc4::
+muonStationsValid::
+muonStationsAny::
+muonStationsDTValid::
+muonStationsDTAny::
+muonStationsCSCValid::
+muonStationsCSCAny::
+muonStationsRPCValid::
+muonStationsRPCAny::
+numberOfChambers::
+segmentMatchesArb_MaxDepth::
+segmentMatchesArb::
+segmentMatchesArb_1::
+segmentMatchesArb_2::
+segmentMatchesArb_3::
+segmentMatchesArb_4::
+segmentMatchesNoArb::
+segmentMatchesNoArb_1::
+segmentMatchesNoArb_2::
+segmentMatchesNoArb_3::
+segmentMatchesNoArb_4::
+segmentMatchesFailArb::
+segmentCompatArb::
+segmentCompatNoArb::
+caloCompat::
+
+[prodvtx: Production Vertex]
+prodr: vtx_{rho} (cm): Transverse Decay Length
+prodd: vtx_{d (cm)}: Decay Length
+prodz: vtx_{z} (cm): Z Position of the Production Vertex

@@ -93,6 +93,11 @@ def addMuonStations(process):
     addStations(process.patMuons) 
     return(process)
 
+def addMuonHitCount(process):
+    process.load("UserCode.Examples.muonHitCount_cfi")
+    from UserCode.Examples.muonHitCount_cfi import addUserData as addHitCount
+    addHitCount(process.patMuons)
+    
 def runMC(process,useMonteCarlo=False):
     if useMonteCarlo:
         addGenSimParticles(process)
@@ -109,7 +114,8 @@ def extendMuon(process):
     process.selectedPatMuons.cut = 'isGlobalMuon || isTrackerMuon'
     process.countPatMuons.minNumber = 1
     addMuonStations(process)
-    process.patDefaultSequence.replace(process.patCandidates,getattr(process,'muonStations') + process.patCandidates)
+    addMuonHitCount(process)
+    process.patDefaultSequence.replace(process.patCandidates,getattr(process,'muonStations') + getattr(process,'muonHitCounts')  + process.patCandidates)
     return(process)
 
 def changeMuonHLTMatch(process):

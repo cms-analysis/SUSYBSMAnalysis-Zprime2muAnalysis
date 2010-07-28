@@ -11,12 +11,13 @@ genSimLeptons = cms.EDProducer(
 
 prunedGenSimLeptons = cms.EDProducer(
     "GenParticlePruner",
-    src = cms.InputTag("genParticlesSimLep"),
+    src = cms.InputTag("genParticles"),
     select = cms.vstring(
     "drop * ",
     "keep status <= 3",
-    "++keep++ pdgId = {mu-} && pt > 2",
-    "++keep++ pdgId = {e-} && pt > 2",
+    "++keep pdgId = {mu-} && pt > 2",
+    "++keep pdgId = {e-} && pt > 2",
+    "drop pdgId == 21 && status = 2"
     #"+drop pdgId = {mu-}",
     #"+drop pdgId = {e-}"
     )

@@ -1,0 +1,11 @@
+<use name="root"/>
+<use name="lhapdf"/>
+<use name="DataFormats/HepMCCandidate"/>
+<use name="DataFormats/L1GlobalTrigger"/>
+<use name="DataFormats/MuonReco"/>
+<use name="DataFormats/PatCandidates"/>
+<use name="FWCore/Framework"/>
+<use name="FWCore/ParameterSet"/>
+<export>
+  <lib name="1"/>
+</export>

@@ -1,0 +1,70 @@
+<use name="FWCore/Framework"/>
+<use name="FWCore/ParameterSet"/>
+
+<library file="DileptonPicker.cc" name="DileptonPicker">
+  <use name="DataFormats/Candidate"/>
+  <use name="DataFormats/MuonReco"/>
+  <use name="DataFormats/PatCandidates"/>
+  <use name="DataFormats/TrackReco"/>
+  <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
+</library>
+
+<library file="GenDilCandViewShallowCloneCombiner.cc" name="GenDilCandViewShallowCloneCombiner">
+  <use name="DataFormats/Candidate"/>
+  <use name="CommonTools/CandAlgos"/>
+  <use name="CommonTools/CandUtils"/>
+  <use name="CommonTools/UtilAlgos"/>
+</library>
+
+<library file="HLTLeptonSanitizer.cc,L1MuonSanitizer.cc,L3MuonSanitizer.cc" name="TriggerLeptonSanitizers">
+  <use name="DataFormats/Candidate"/>
+  <use name="DataFormats/EgammaCandidates"/>
+  <use name="DataFormats/L1Trigger"/>
+  <use name="DataFormats/MuonReco"/>
+  <use name="DataFormats/RecoCandidate"/>
+  <use name="DataFormats/TrackReco"/>
+</library>
+
+<library file="HLTLeptonsFromTriggerEvent.cc" name="HLTLeptonsFromTriggerEvent">
+  <use name="DataFormats/Candidate"/>
+  <use name="DataFormats/HLTReco"/>
+  <use name="DataFormats/RecoCandidate"/>
+</library>
+
+<library file="Zprime2muLeptonProducer.cc" name="Zprime2muLeptonProducer">
+  <use name="CommonTools/Utils"/>
+  <use name="DataFormats/PatCandidates"/>
+  <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
+</library>
+
+<library file="PATCandViewShallowCloneCombiner.cc" name="PATCandViewShallowCloneCombiner">
+  <use name="DataFormats/PatCandidates"/>
+  <use name="CommonTools/CandAlgos"/>
+  <use name="CommonTools/CandUtils"/>
+  <use name="CommonTools/UtilAlgos"/>
+  <use name="PhysicsTools/PatUtils"/>
+</library>
+
+<library file="Zprime2muCompositeCandidatePicker.cc" name="Zprime2muCompositeCandidatePicker">
+  <use name="CommonTools/Utils"/>
+  <use name="DataFormats/PatCandidates"/>
+</library>
+
+<library file="GenParticleMerger.cc" name="GenParticleMerger">
+  <use name="CommonTools/UtilAlgos"/>
+  <use name="DataFormats/HepMCCandidate"/>
+</library>
+
+<library file="Zprime2muAnalysisPlots.cc" name="Zprime2muAnalysisPlots">
+  <use name="CommonTools/Utils"/>
+  <use name="DataFormats/PatCandidates"/>
+  <use name="MuonAnalysis/Examples"/>
+  <use name="PhysicsTools/UtilAlgos"/>
+</library>
+
+<library file="AsymmetryFrameAnalysis.cc,AsymmetryParametrizer.cc,CocktailAnalyzer.cc,HistosFromPAT.cc,ResolutionUsingMC.cc,Zprime2muAsymmetry.cc,Zprime2muMassReach.cc" name="Zprime2muAnalyzers">
+  <use name="rootgraphics"/>
+  <use name="CommonTools/UtilAlgos"/>
+  <use name="DataFormats/PatCandidates"/>
+  <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
+</library>

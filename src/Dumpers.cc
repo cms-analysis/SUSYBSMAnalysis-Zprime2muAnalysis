@@ -7,7 +7,7 @@
 #include "DataFormats/TrackReco/interface/HitPattern.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Dumps.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Dumpers.h"
 
 std::ostream& operator<<(std::ostream& out, const reco::GenParticle& gen) {
   out << "pdgId: " << gen.pdgId() << " status: " << gen.status() << " q: " << gen.charge() << " pt: " << gen.pt()

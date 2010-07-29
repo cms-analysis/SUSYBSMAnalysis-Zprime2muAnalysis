@@ -1,28 +1,87 @@
 #!/usr/bin/env python
 
-def configure(process, useAODOnly=False, muonsOnly=False, useMonteCarlo=False):
-    from PhysicsTools.PatAlgos.tools.coreTools import restrictInputToAOD, removeAllPATObjectsBut, removeMCMatching
-    if useAODOnly:
-        restrictInputToAOD(process)
-    if muonsOnly:
-        removeAllPATObjectsBut(process, ['Muons'])
-    if not useMonteCarlo:
-        x = 'All'
-        if muonsOnly:
-            x = 'Muons'
-        # Take the simParticles and genSimParticles modules out of the
-        # sequence that we added.
-        process.patDefaultSequence.remove(process.simParticles)
-        process.patDefaultSequence.remove(process.genSimParticles)
-        removeMCMatching(process, [x])
-        
+import FWCore.ParameterSet.Config as cms
 
-__all__ = [
-    'configure'
-    ]
+def addGenSimLeptons(process):
+    # For muon and electron MC matching, want to be able to match to
+    # decays-in-flight produced by GEANT, so make some GenParticles out of
+    # the simTracks.
+    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.GenPlusSim_cfi')
+    
+    for x in (process.muonMatch, process.electronMatch):
+        # Use the new gen + sim MC particles created above.
+        x.matched = cms.InputTag('prunedGenSimLeptons')
+        
+        # PAT muon/electron-MC matching requires, in addition to deltaR < 0.5,
+        # the MC and reconstructed leptons to have the same charge, and (reco
+        # pt - gen pt)/gen pt < 0.5. Disable these two cuts. If using the other 
+        x.checkCharge = False
+        x.maxDPtRel = 1e6
+
+    process.patDefaultSequence = cms.Sequence(process.genSimLeptons * process.prunedGenSimLeptons * process.patDefaultSequence._seq)
+
+def addMuonMCClassification(process):
+    # Run and embed in the patMuons the classification of muons by
+    # their GEANT hits.
+    process.load('MuonAnalysis.MuonAssociators.muonClassificationByHits_cfi')
+    from MuonAnalysis.MuonAssociators.muonClassificationByHits_cfi import addUserData as addClassByHits
+    addClassByHits(process.patMuons, extraInfo=True)
+    process.patDefaultSequence = cms.Sequence(process.muonClassificationByHits * process.patDefaultSequence._seq)
+
+def addMuonStations(process):
+    # Embed the muon station counts. This should be obsolete in 37X
+    # with the addition to reco::HitPattern -- needs checking.
+    process.load('MuonAnalysis.Examples.muonStations_cfi')
+    from MuonAnalysis.Examples.muonStations_cfi import addUserData as addStations
+    addStations(process.patMuons)
+    process.patDefaultSequence.replace(process.patCandidates, process.muonStations * process.patCandidates)
+
+def addMuonHitCount(process):
+    # Embed the muon hit counts. Redundant with reco::HitPattern?
+    process.load('UserCode.Examples.muonHitCount_cfi')
+    from UserCode.Examples.muonHitCount_cfi import addUserData as addHitCount
+    addHitCount(process.patMuons)
+    process.patDefaultSequence.replace(process.patCandidates, process.muonHitCounts * process.patCandidates)
+    
+def removeMCUse(process):
+    # Remove anything that requires MC truth.
+    process.patDefaultSequence.remove(process.genSimLeptons)
+    process.patDefaultSequence.remove(process.prunedGenSimLeptons)
+    process.patDefaultSequence.remove(process.muonClassificationByHits)
+    from PhysicsTools.PatAlgos.tools.coreTools import removeMCMatching
+    removeMCMatching(process, ['All'])
+
+def changeMuonHLTMatch(process):
+    # Configure the PAT trigger matcher as we want it.
+    process.load('PhysicsTools.PatAlgos.triggerLayer1.triggerProducer_cff')
+    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi')
+    process.patTriggerMatcher += process.muonTriggerMatchHLTMuons
+    process.patTriggerMatcher.remove(process.patTriggerMatcherElectron)
+    process.patTriggerMatcher.remove(process.patTriggerMatcherMuon)
+    process.patTriggerMatcher.remove(process.patTriggerMatcherTau)
+    process.patTriggerEvent.patTriggerMatches = ['muonTriggerMatchHLTMuons']
+
+def addHEEPId(process):
+    # Run the HEEP electron id. This must be done at PAT tuple making time
+    # and cannot be done later unless some modifications are done the
+    # GsfElectron/GsfElectronCore classes.
+    from SHarper.HEEPAnalyzer.HEEPSelectionCuts_cfi import heepBarrelCuts, heepEndcapCuts
+    heepEndcapCuts.cuts = heepEndcapCuts.cuts.value().replace(':dEtaIn','') # official prescription on HEEPElectronId twiki is to remove the dEtaIn cut in the endcaps for now
+    process.HEEPId = cms.EDProducer('HEEPIdValueMapProducer',
+                                    eleLabel = cms.InputTag('gsfElectrons'),
+                                    barrelCuts = heepBarrelCuts,
+                                    endcapCuts = heepEndcapCuts
+                                    )
+
+    # Embed the HEEP cut bitwords into the userData of the patElectrons.
+    process.patElectrons.userData.userInts.src.append('HEEPId')
+    
+    process.patDefaultSequence.replace(process.patCandidates, process.HEEPId * process.patCandidates)
+
+
 
 # Some scraps to aid in debugging that can be put in your top-level
-# config:
+# config (could be turned into functions a la the above):
 '''
 process.patDefaultSequence.remove(process.selectedPatCandidateSummary)
 process.selectedPatCandidateSummary.perEvent = cms.untracked.bool(True)

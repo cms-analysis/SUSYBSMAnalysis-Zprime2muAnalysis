@@ -11,5 +11,8 @@ cvs co -r V00-01-03-01 SimTracker/TrackAssociatorESProducer
 cvs co -r V00-04-00 -d SHarper/HEEPAnalyzer UserCode/SHarper/HEEPAnalyzer
 cvs co -r V00-00-02 -d UserCode/Examples UserCode/AEverett/Examples
 
+# fix InputTag.h location
+find . -type f | xargs grep -l "interface/InputTag.h" | xargs -I {} sed -i {} -e "s#FWCore/Utilities/interface/InputTag.h#FWCore/Utilities/interface/InputTag.h#g"
+
 scramv1 b -j 4
 popd

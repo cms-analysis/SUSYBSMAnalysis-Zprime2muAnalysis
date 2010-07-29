@@ -48,8 +48,26 @@ def removeMCUse(process):
     process.patDefaultSequence.remove(process.genSimLeptons)
     process.patDefaultSequence.remove(process.prunedGenSimLeptons)
     process.patDefaultSequence.remove(process.muonClassificationByHits)
+
     from PhysicsTools.PatAlgos.tools.coreTools import removeMCMatching
     removeMCMatching(process, ['All'])
+
+    # Remove the InputTags that were added to the userData of the
+    # patMuons for the muonClassification.
+    def filter(v, s):
+        v2 = []
+        for x in v:
+            if type(x) == cms.InputTag and x.moduleLabel != s:
+                v2.append(x)
+        return v2
+    
+    i = process.patMuons.userData.userInts.src.value()
+    f = process.patMuons.userData.userFloats.src.value()
+    for s in ['classByHitsGlb', 'classByHitsTM', 'classByHitsTMLSAT', 'classByHitsSta']:
+        i = filter(i, s)
+        f = filter(f, s)
+    process.patMuons.userData.userInts.src = i
+    process.patMuons.userData.userFloats.src = f
 
 def changeMuonHLTMatch(process):
     # Configure the PAT trigger matcher as we want it.

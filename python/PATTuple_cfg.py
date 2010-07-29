@@ -2,82 +2,65 @@
 
 import FWCore.ParameterSet.Config as cms
 
+# Standard CMSSW configuration, loading services and modules needed to
+# run the PAT.
 process = cms.Process('PAT')
-
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True))
-
-process.source = cms.Source('PoolSource',
-                            fileNames = cms.untracked.vstring('file:PlaceHolder.root')
-                            )
-
-process.load('FWCore.MessageLogger.MessageLogger_cfi')
-process.MessageLogger.cerr.FwkReport.reportEvery = 1000
-process.MessageLogger.cerr.threshold = 'INFO'
-process.MessageLogger.categories.append('PATSummaryTables')
-process.MessageLogger.cerr.PATSummaryTables = cms.untracked.PSet(limit = cms.untracked.int32(-1))
-
+process.source = cms.Source('PoolSource', fileNames = cms.untracked.vstring('file:PlaceHolder.root'))
 process.load('Configuration.StandardSequences.Geometry_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.GlobalTag.globaltag = cms.string('PlaceHolder::All')
 
-process.load('PhysicsTools.PatAlgos.patSequences_cff')
+# Configure the MessageLogger ~sanely. Also direct it to let the PAT
+# summary tables be reported.
+process.load('FWCore.MessageLogger.MessageLogger_cfi')
+process.MessageLogger.cerr.FwkReport.reportEvery = 5000
+process.MessageLogger.cerr.threshold = 'INFO'
+process.MessageLogger.categories.append('PATSummaryTables')
+process.MessageLogger.cerr.PATSummaryTables = cms.untracked.PSet(limit = cms.untracked.int32(-1))
 
-# For muon and electron MC matching, want to be able to match to
-# decays-in-flight produced by GEANT, so make some GenParticles out of
-# the simTracks.
-process.simParticles = cms.EDProducer('PATGenCandsFromSimTracksProducer',
-                                      src = cms.InputTag('g4SimHits'),
-                                      setStatus = cms.int32(1),
-                                      filter = cms.string('(abs(pdgId) == 13 || abs(pdgId) == 11) && pt > 2')
-                                      )
-
-process.genSimParticles = cms.EDProducer('GenParticleMerger',
-                                         src = cms.VInputTag(cms.InputTag('genParticles'), cms.InputTag('simParticles'))
-                                         )
-
-process.patDefaultSequence = cms.Sequence(process.simParticles * process.genSimParticles * process.patDefaultSequence._seq)
-
-for x in (process.muonMatch, process.electronMatch):
-    # Use the new gen + sim MC particles created above.
-    x.matched = cms.InputTag('genSimParticles')
-
-    # PAT muon/electron-MC matching requires, in addition to deltaR < 0.5,
-    # the MC and reconstructed leptons to have the same charge, and (reco
-    # pt - gen pt)/gen pt < 0.5. Disable these two cuts.
-    x.checkCharge = False
-    x.maxDPtRel = 1e6
-
-from PhysicsTools.PatAlgos.patEventContent_cff import patEventContent
+# Define the output file with the output commands defining the
+# branches we want to have in our PAT tuple.
+from PhysicsTools.PatAlgos.patEventContent_cff import patEventContent, patTriggerEventContent
+from SUSYBSMAnalysis.Zprime2muAnalysis.EventContent_cff import Zprime2muEventContent
+ourEventContent = patEventContent + patTriggerEventContent + Zprime2muEventContent
 process.out = cms.OutputModule('PoolOutputModule',
                                fileName = cms.untracked.string('pat.root'),
+                               # If your path in your top-level config is not called 'p', you'll need
+                               # to change the next line. In test/PATTuple.py, 'p' is used.
                                SelectEvents   = cms.untracked.PSet(SelectEvents = cms.vstring('p')),
-                               outputCommands = cms.untracked.vstring('drop *', *patEventContent ) 
+                               outputCommands = cms.untracked.vstring('drop *', *ourEventContent)
                                )
 process.outpath = cms.EndPath(process.out)
 
-# Keep some extra stuff not defined in the patEventContent.
-process.out.outputCommands += [
-    'keep recoGenParticles_genParticles_*_*',
-    'keep GenEventInfoProduct_*_*_*',
-    'keep GenRunInfoProduct_*_*_*',
-    'keep *_offlineBeamSpot_*_*',
-    'keep *_offlinePrimaryVertices_*_*',
-    'keep edmTriggerResults_TriggerResults__HLT*',
-    'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__HLT*',
-    'keep *_hltTriggerSummaryAOD__HLT*',
-    ]
+# Load the PAT modules and sequences, and configure them as we
+# need. See the individual functions for their documentation. MC use
+# is assumed by default, and should be removed in the top-level config
+# using removeMCUse() from PATTools if running on data.
+process.load('PhysicsTools.PatAlgos.patSequences_cff')
 
-# Embed the tracker tracks (by default, every other track is embedded).
+from PhysicsTools.PatAlgos.tools.trigTools import switchOnTrigger
+from PATTools import addGenSimLeptons, addMuonMCClassification, addMuonStations, addMuonHitCount, addHEEPId, changeMuonHLTMatch
+addGenSimLeptons(process)
+addMuonMCClassification(process)
+addMuonStations(process)
+addMuonHitCount(process)
+addHEEPId(process)
+switchOnTrigger(process)
+changeMuonHLTMatch(process)
+
+# Embed the tracker tracks (by default, every other track is already
+# embedded).
 process.patMuons.embedTrack = True
 
-# Filter out events with no muons. If wanting to run on just
-# electrons, need to change appropriately (perhaps using
-# countPatLeptons instead).
-process.countPatMuons.minNumber = 1
+# Define simple quality cuts for muons (analysis cuts to be done at the analysis level).
+process.selectedPatMuons.cut = 'isGlobalMuon || isTrackerMuon'
 
-# Define simple quality cuts (analysis cuts to be done at the analysis level).
-process.selectedPatMuons.cut = 'isGlobalMuon'
-#process.selectedPatMuons.cut = 'isTrackerMuon && pt > 1 && p > 2.5 && innerTrack.hitPattern.numberOfValidTrackerHits > 12 && innerTrack.normalizedChi2 < 5 && abs(dB) < 0.5 && abs(dZ) < 5 && muonID("TMLastStationAngTight")'
-#process.selectedPatMuons.cut = 'muonID("GlobalMuonPromptTight") && muonID("TMOneStationLoose") && (globalTrack.hitPattern.numberOfValidMuonCSCHits + globalTrack.hitPattern.numberOfValidMuonDTHits) >= 1 && innerTrack.hitPattern.trackerLayersWithMeasurement >= 6'
+# Filter out events with no selected muons. (countPatMuons counts
+# those muons in the cleanPatMuons collection, which by default is
+# just a copy of the selectedPatMuons collection.) If wanting to run
+# on just electrons, need to change appropriately in your top-level
+# config (perhaps using countPatLeptons instead).
+process.countPatMuons.minNumber = 1

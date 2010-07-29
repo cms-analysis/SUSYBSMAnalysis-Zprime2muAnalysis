@@ -19,17 +19,7 @@ leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          muon_photon_match_src = cms.InputTag('muonPhotonMatch')
                          )
 
-# JMTBAD muon-photon matching is done here using the default muon
-# momentum and not whichever refit momentum will be eventually used in
-# the analysis. For most muons this shouldn't make much difference as
-# the matching is in eta-phi, but if the default is really bad and the
-# selected refit manages to recover, the photon match may be
-# wrong. The photon brem recovery needs to be studied more anyway.
-muonPhotonMatch = cms.EDProducer('TrivialDeltaRViewMatcher',
-                                 src     = cms.InputTag('cleanPatMuons'),
-                                 matched = cms.InputTag('cleanPatPhotons'),
-                                 distMin = cms.double(0.1)
-                                 )
+from MuonPhotonMatch_cff import muonPhotonMatch
 
 allDimuons = cms.EDProducer('PATCandViewShallowCloneCombiner',
                             decay = cms.string('leptons:muons@+ leptons:muons@-'),
@@ -41,8 +31,6 @@ dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          cut = cms.string(''),
                          max_candidates = cms.uint32(1)
                          )
-
-#cut = cms.string('daughter(0).pdgId() + daughter(1).pdgId() == -2'), # e.g. to select only mu+e- when the CandCombiner above made both mu+e- and mu-e+
 
 Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)
 

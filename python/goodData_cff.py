@@ -4,6 +4,10 @@ import FWCore.ParameterSet.Config as cms
 # https://twiki.cern.ch/twiki/bin/view/CMS/Collisions2010Recipes ; the
 # user is responsible for checking that what's used is up-to-date and
 # appropriate to their analysis.
+#
+# Special reminder about MC: bit 0 in L1T1 is not emulated as it would
+# just fire all the time, so for running on MC the
+# L1T1.L1SeedsLogicalExpression must be changed.
 
 hltPhysicsDeclared = cms.EDFilter('HLTPhysicsDeclared',
                                   invert = cms.bool(False),

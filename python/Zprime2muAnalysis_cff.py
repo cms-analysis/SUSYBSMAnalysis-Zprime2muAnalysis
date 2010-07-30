@@ -14,7 +14,7 @@ leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          muon_src = cms.InputTag('cleanPatMuons'),
                          electron_src = cms.InputTag('cleanPatElectrons'),
                          muon_cuts = cms.string('pt > 20. && isolationR03.sumPt < 10'),
-                         electron_cuts = cms.string(''),
+                         electron_cuts = cms.string('userInt("HEEPId") == 0'),
                          muon_track_for_momentum = cms.string('pmc'),
                          muon_photon_match_src = cms.InputTag('muonPhotonMatch')
                          )

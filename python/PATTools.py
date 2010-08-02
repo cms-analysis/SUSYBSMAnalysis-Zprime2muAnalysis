@@ -79,6 +79,10 @@ def changeMuonHLTMatch(process):
     process.patTriggerMatcher.remove(process.patTriggerMatcherTau)
     process.patTriggerEvent.patTriggerMatches = ['muonTriggerMatchHLTMuons']
 
+def switchHLTProcessName(process, name):
+    process.patTrigger.processName = name
+    process.patTriggerEvent.processName = name
+
 def addHEEPId(process):
     # Run the HEEP electron id. This must be done at PAT tuple making time
     # and cannot be done later unless some modifications are done the

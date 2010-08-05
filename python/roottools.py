@@ -166,6 +166,27 @@ def make_rms_hist(prof, name='', bins=None, cache={}):
     cache[name] = new_hist
     return new_hist
 
+def real_hist_max(h, return_bin=False, user_range=None):
+    """Find the real maximum value of the histogram, taking into
+    account the error bars."""
+    m_ibin = None
+    m = 0
+
+    if user_range is None:
+        b1, b2 = 1, h.GetNbinsX() + 1
+    else:
+        b1, b2 = h.FindBin(user_range[0]), h.FindBin(user_range[1])+1
+        
+    for ibin in xrange(b1, b2):
+        v = h.GetBinContent(ibin) + h.GetBinError(ibin)
+        if v > m:
+            m = v
+            m_ibin = ibin
+    if return_bin:
+        return m_ibin, m
+    else:
+        return m
+
 def set_zp2mu_style(date_pages=False):
     ROOT.gROOT.SetStyle('Plain')
     ROOT.gStyle.SetFillColor(0)
@@ -181,11 +202,19 @@ def set_zp2mu_style(date_pages=False):
     ROOT.gStyle.SetPaperSize(ROOT.TStyle.kA4)
     ROOT.gStyle.SetStatW(0.25)
     ROOT.gStyle.SetStatFormat('6.4g')
-    ROOT.gStyle.SetTitleFont(52, 'XY')
-    ROOT.gStyle.SetLabelFont(52, 'XY')
-    ROOT.gStyle.SetStatFont(52)
+    #ROOT.gStyle.SetTitleFont(52, 'XY')
+    #ROOT.gStyle.SetLabelFont(52, 'XY')
+    #ROOT.gStyle.SetStatFont(52)
     ROOT.gErrorIgnoreLevel = 1001 # Suppress TCanvas::SaveAs messages.
 
-__all__ = ['apply_hist_commands', 'core_gaussian', 'fit_gaussian',
-           'get_bin_content_error', 'get_integral',
-           'get_hist_stats', 'make_rms_hist', 'set_zp2mu_style']
+__all__ = [
+    'apply_hist_commands',
+    'core_gaussian',
+    'fit_gaussian',
+    'get_bin_content_error',
+    'get_integral',
+    'get_hist_stats',
+    'make_rms_hist',
+    'real_hist_max',
+    'set_zp2mu_style'
+    ]

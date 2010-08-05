@@ -3,15 +3,17 @@
 #include "TProfile.h"
 
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
-#include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/ServiceRegistry/interface/Service.h"
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
+#include "DataFormats/Math/interface/deltaPhi.h"
+#include "DataFormats/Math/interface/deltaR.h"
 #include "DataFormats/MuonReco/interface/MuonIsolation.h"
 #include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/TrackReco/interface/HitPattern.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/ServiceRegistry/interface/Service.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneralUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
@@ -82,6 +84,9 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TH1F* DileptonDeltaPt;
   TH1F* DileptonDeltaP;
   TH2F* DileptonPtErrors;
+  TH2F* DileptonDaughterIds;
+  TH1F* DileptonDaughterDeltaR;
+  TH1F* DileptonDaughterDeltaPhi;
 };
 
 Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
@@ -179,6 +184,11 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   DileptonDeltaPt  = fs->make<TH1F>("DileptonDeltaPt",  titlePrefix + "dil. |pT^{1}| - |pT^{2}|",                100, -100, 100);
   DileptonDeltaP   = fs->make<TH1F>("DileptonDeltaP",   titlePrefix + "dil. |p^{1}| - |p^{2}|",                  100, -500, 500);
   DileptonPtErrors = fs->make<TH2F>("DileptonPtErrors", titlePrefix + "dil. #sigma_{pT}^{1} v. #sigma_{pT}^{2}", 100, 0, 100, 100, 0, 100);
+
+  // More daughter-related info.
+  DileptonDaughterIds = fs->make<TH2F>("DileptonDaughterIds", "", 27, -13, 14, 27, -13, 14);
+  DileptonDaughterDeltaR = fs->make<TH1F>("DileptonDaughterDeltaR", "", 100, 0, 5);
+  DileptonDaughterDeltaPhi = fs->make<TH1F>("DileptonDaughterDeltaPhi", "", 100, 0, 3.15);
 }
 
 void Zprime2muHistosFromPAT::fillBasicLeptonHistos(const reco::CandidateBaseRef& lep) {
@@ -280,17 +290,24 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
   const reco::CandidateBaseRef& lep_minus = dileptonDaughterByCharge(dil, -1);
   const reco::CandidateBaseRef& lep_plus  = dileptonDaughterByCharge(dil, +1);
 
-  DileptonDeltaPt->Fill(fabs(lep_minus->pt()) - fabs(lep_plus->pt()));
-  DileptonDeltaP ->Fill(fabs(lep_minus->p())  - fabs(lep_plus->p()));
+  if (lep_plus.isNonnull() && lep_minus.isNonnull()) {
+    DileptonDeltaPt->Fill(fabs(lep_minus->pt()) - fabs(lep_plus->pt()));
+    DileptonDeltaP ->Fill(fabs(lep_minus->p())  - fabs(lep_plus->p()));
 
-  const pat::Muon* mu_minus = toConcretePtr<pat::Muon>(lep_minus);
-  const pat::Muon* mu_plus  = toConcretePtr<pat::Muon>(lep_plus);
-  if (mu_minus && mu_plus) {
-    const reco::Track* tk_minus = patmuon::getPickedTrack(*mu_minus).get();
-    const reco::Track* tk_plus  = patmuon::getPickedTrack(*mu_plus).get();
-    if (tk_minus && tk_plus)
-      DileptonPtErrors->Fill(ptError(tk_minus), ptError(tk_plus));
+    const pat::Muon* mu_minus = toConcretePtr<pat::Muon>(lep_minus);
+    const pat::Muon* mu_plus  = toConcretePtr<pat::Muon>(lep_plus);
+    if (mu_minus && mu_plus) {
+      const reco::Track* tk_minus = patmuon::getPickedTrack(*mu_minus).get();
+      const reco::Track* tk_plus  = patmuon::getPickedTrack(*mu_plus).get();
+      if (tk_minus && tk_plus)
+	DileptonPtErrors->Fill(ptError(tk_minus), ptError(tk_plus));
+    }
   }
+
+  DileptonDaughterIds->Fill(dil.daughter(0)->pdgId(), dil.daughter(1)->pdgId());
+
+  DileptonDaughterDeltaR->Fill(reco::deltaR(*dil.daughter(0), *dil.daughter(1)));
+  DileptonDaughterDeltaPhi->Fill(reco::deltaPhi(dil.daughter(0)->phi(), dil.daughter(1)->phi())); 
 }
 
 void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidateCollection& dileptons) {

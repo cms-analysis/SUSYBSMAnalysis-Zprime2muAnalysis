@@ -55,6 +55,10 @@ changeMuonHLTMatch(process)
 # embedded).
 process.patMuons.embedTrack = True
 
+# Follow VBTF for now in using the beamspot for "correcting" dxy,
+# instead of the primary vertex.
+process.patMuons.usePV = False
+
 # Define simple quality cuts for muons (analysis cuts to be done at the analysis level).
 process.selectedPatMuons.cut = 'isGlobalMuon || isTrackerMuon'
 

@@ -29,6 +29,17 @@ struct LeptonPairSelector {
   }
 };
 
+struct LooseTightPairSelector {
+  StringCutObjectSelector<reco::Candidate, true> loose;
+  StringCutObjectSelector<reco::Candidate, true> tight;
+  
+  LooseTightPairSelector(const std::string& loose_cut, const std::string& tight_cut) : loose(loose_cut), tight(tight_cut) {}
+
+  bool operator()(const reco::Candidate& c1, const reco::Candidate& c2) const {
+    return loose(c1) && loose(c2) && (tight(c1) || tight(c2));
+  }
+};
+
 namespace reco {
   namespace modules {
     template<>
@@ -45,17 +56,29 @@ namespace reco {
       }
     };
 
+    template<>
+    struct ParameterAdapter<LooseTightPairSelector> {
+      static LooseTightPairSelector make(const edm::ParameterSet& cfg) {
+	return LooseTightPairSelector(cfg.getParameter<std::string>("loose_cut"), cfg.getParameter<std::string>("tight_cut"));
+      }
+    };
+
     typedef CandCombiner<
-      //StringCutObjectSelector<pat::CompositeCandidate>,
       PATStringCutObjectSelector,
-
-      //AnyPairSelector,
       LeptonPairSelector,
-
       combiner::helpers::ShallowClone,
       pat::CompositeCandidateCollection
       > PATCandViewShallowCloneCombiner;
   
     DEFINE_FWK_MODULE(PATCandViewShallowCloneCombiner);
+
+    typedef CandCombiner<
+      PATStringCutObjectSelector,
+      LooseTightPairSelector,
+      combiner::helpers::ShallowClone,
+      pat::CompositeCandidateCollection
+      > LooseTightCandViewShallowCloneCombiner;
+
+    DEFINE_FWK_MODULE(LooseTightCandViewShallowCloneCombiner);
   } 
 }

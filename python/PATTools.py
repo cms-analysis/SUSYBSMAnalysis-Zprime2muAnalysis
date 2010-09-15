@@ -74,10 +74,19 @@ def changeMuonHLTMatch(process):
     process.load('PhysicsTools.PatAlgos.triggerLayer1.triggerProducer_cff')
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi')
     process.patTriggerMatcher += process.muonTriggerMatchHLTMuons
+    # Removing these three really isn't necessary as the trigger match
+    # embedding is by name anyway...
     process.patTriggerMatcher.remove(process.patTriggerMatcherElectron)
     process.patTriggerMatcher.remove(process.patTriggerMatcherMuon)
     process.patTriggerMatcher.remove(process.patTriggerMatcherTau)
     process.patTriggerEvent.patTriggerMatches = ['muonTriggerMatchHLTMuons']
+    process.cleanPatMuonsTriggerMatch.matches = [cms.InputTag('muonTriggerMatchHLTMuons')]
+    for x in [process.cleanPatPhotonsTriggerMatch,
+              process.cleanPatElectronsTriggerMatch,
+              process.cleanPatTausTriggerMatch,
+              process.cleanPatJetsTriggerMatch,
+              process.patMETsTriggerMatch]:
+        process.patTriggerMatchEmbedder.remove(x)
 
 def switchHLTProcessName(process, name):
     process.patTrigger.processName = name

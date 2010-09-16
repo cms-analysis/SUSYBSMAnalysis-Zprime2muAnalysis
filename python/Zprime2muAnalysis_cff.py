@@ -11,7 +11,7 @@ hltFilter.HLTPaths = ['HLT_Mu9', 'HLT_DoubleMu3']
 hltFilter.andOr = True # == OR
 
 leptons = cms.EDProducer('Zprime2muLeptonProducer',
-                         muon_src = cms.InputTag('cleanPatMuons'),
+                         muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'),
                          electron_src = cms.InputTag('cleanPatElectrons'),
                          muon_cuts = cms.string('pt > 20. && isolationR03.sumPt < 10'),
                          electron_cuts = cms.string('userInt("HEEPId") == 0'),

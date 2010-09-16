@@ -7,7 +7,7 @@ import FWCore.ParameterSet.Config as cms
 # selected refit manages to recover, the photon match may be
 # wrong. The photon brem recovery needs to be studied more anyway.
 muonPhotonMatch = cms.EDProducer('TrivialDeltaRViewMatcher',
-                                 src     = cms.InputTag('cleanPatMuons'),
+                                 src     = cms.InputTag('cleanPatMuonsTriggerMatch'),
                                  matched = cms.InputTag('cleanPatPhotons'),
                                  distMin = cms.double(0.1)
                                  )

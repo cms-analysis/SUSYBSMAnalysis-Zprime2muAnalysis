@@ -53,7 +53,7 @@ process.ttPlots = process.ggPlots.clone(dilepton_src = "zToMuMuTT")
 
 from UserCode.Examples.inclusiveMuonPlotsMRTU_cfi import makeInclusiveMuonPlots;
 commonInputsLepton = cms.PSet(
-    muons     = cms.InputTag('cleanPatMuons'),
+    muons     = cms.InputTag('cleanPatMuonsTriggerMatch'),
     primaryVertices = cms.InputTag("offlinePrimaryVertices"),
 )
 process.trackerMuons = cms.EDAnalyzer("InclusiveMuonPlotsMRTU",

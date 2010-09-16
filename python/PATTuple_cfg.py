@@ -25,7 +25,7 @@ process.MessageLogger.cerr.PATSummaryTables = cms.untracked.PSet(limit = cms.unt
 # branches we want to have in our PAT tuple.
 from PhysicsTools.PatAlgos.patEventContent_cff import patEventContent, patTriggerEventContent
 from SUSYBSMAnalysis.Zprime2muAnalysis.EventContent_cff import Zprime2muEventContent
-ourEventContent = patEventContent + patTriggerEventContent + Zprime2muEventContent
+ourEventContent = patEventContent + patTriggerEventContent + Zprime2muEventContent 
 process.out = cms.OutputModule('PoolOutputModule',
                                fileName = cms.untracked.string('pat.root'),
                                # If your path in your top-level config is not called 'p', you'll need
@@ -41,7 +41,7 @@ process.outpath = cms.EndPath(process.out)
 # using removeMCUse() from PATTools if running on data.
 process.load('PhysicsTools.PatAlgos.patSequences_cff')
 
-from PhysicsTools.PatAlgos.tools.trigTools import switchOnTrigger
+from PhysicsTools.PatAlgos.tools.trigTools import switchOnTrigger, switchOnTriggerMatchEmbedding
 from PATTools import addGenSimLeptons, addMuonMCClassification, addMuonStations, addMuonHitCount, addHEEPId, changeMuonHLTMatch
 addGenSimLeptons(process)
 addMuonMCClassification(process)
@@ -49,7 +49,9 @@ addMuonStations(process)
 addMuonHitCount(process)
 addHEEPId(process)
 switchOnTrigger(process)
+switchOnTriggerMatchEmbedding(process)
 changeMuonHLTMatch(process)
+process.out.outputCommands += ['keep *_cleanPatMuonsTriggerMatch_*_*', 'drop *_cleanPatMuons_*_*']
 
 # Embed the tracker tracks (by default, every other track is already
 # embedded).
@@ -64,7 +66,8 @@ process.selectedPatMuons.cut = 'isGlobalMuon || isTrackerMuon'
 
 # Filter out events with no selected muons. (countPatMuons counts
 # those muons in the cleanPatMuons collection, which by default is
-# just a copy of the selectedPatMuons collection.) If wanting to run
-# on just electrons, need to change appropriately in your top-level
-# config (perhaps using countPatLeptons instead).
+# just a copy of the selectedPatMuons collection.) If, e.g., wanting
+# to use the PAT tuple for efficiency studies, or running on just
+# electrons, need to change appropriately in your top-level config
+# (perhaps using countPatLeptons instead).
 process.countPatMuons.minNumber = 1

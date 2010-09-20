@@ -11,4 +11,5 @@ Zprime2muEventContent = [
     'keep edmTriggerResults_TriggerResults__REDIGI*',
     'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__REDIGI*',
     'keep *_hltTriggerSummaryAOD__REDIGI*',
+    'keep edmTriggerResults_TriggerResults__PAT', # for post-tuple filtering on the goodData paths
     ]

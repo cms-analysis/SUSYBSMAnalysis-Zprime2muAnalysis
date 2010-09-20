@@ -69,7 +69,7 @@ def warn(s):
     print x
     print x
 
-warn('modifying qcd100,250 and wjets nevents (by just a small amount, though))
+warn('modifying qcd100,250 and wjets nevents (by just a small amount, though)')
 wjets.nevents = 10067072
 qcd100.nevents = 10862502
 qcd250.nevents -= 25000

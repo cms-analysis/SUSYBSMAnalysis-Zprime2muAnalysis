@@ -131,7 +131,7 @@ process.peca = cms.Path(process.eca)
 process.load('L1Trigger.L1ExtraFromDigis.l1extratest_cfi')
 process.load('HLTrigger.HLTcore.triggerSummaryAnalyzerAOD_cfi')
 #process.triggerSummaryAnalyzerAOD.inputTag = cms.InputTag('hltTriggerSummaryAOD', '', hltProcessName)
-process.ptrigAnalyzer = cms.Path(process.l1extratest*process.trigAnalyzer)
+process.ptrigAnalyzer = cms.Path(process.l1extratest*process.triggerSummaryAnalyzerAOD)
 
 
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')

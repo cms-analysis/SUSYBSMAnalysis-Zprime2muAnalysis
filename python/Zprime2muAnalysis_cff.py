@@ -10,6 +10,14 @@ hltFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
 hltFilter.HLTPaths = ['HLT_Mu9', 'HLT_DoubleMu3']
 hltFilter.andOr = True # == OR
 
+# A filter for post-tuple filtering on the goodData results as stored
+# in a TriggerResults object instead of filtering at tuple-making
+# time.
+goodDataFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
+goodDataFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', 'PAT')
+goodDataFilter.HLTPaths = ['goodDataAll'] # can set to just 'goodDataPrimaryVertexFilter', for example
+goodDataFilter.andOr = False
+
 leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'),
                          electron_src = cms.InputTag('cleanPatElectrons'),

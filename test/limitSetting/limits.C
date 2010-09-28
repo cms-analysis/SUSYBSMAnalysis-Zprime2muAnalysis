@@ -12,14 +12,19 @@
 #include "TTree.h"
 #include "TBranch.h"
 #include "TLeaf.h"
+#include "TStopwatch.h"
 
 #include "TGraphErrors.h"
-
+TF1* tempfit;
 //bool const _useData = false;
 
-double const _lowerBound = 50;
+double const _lowerBound = 100;
 double const _upperBound = 3000;
-int const _numPseudo = 1000;
+int const _numPseudo = 400;
+
+double const _startingExpectedSignal = 1.1;
+double const _maxExpectedSignal = 10.0;
+double const _scanningStep = 0.1;
 
 
 int _theZPrimeMass = 1750;
@@ -29,14 +34,12 @@ static double const drellYan(double* x, double* par);
 static double const voigt(double* x, double* par);
 
 TF1* fdrellYan, *fSignal, *fmix, *fBackground;
-TF1* fTtbar;
 //double const avgBackground = 23.67;	//60 pb-1
 //double avgBackground = 19.5241; //50 pb-1
 
 TH1F* hbkg, *hsig, *hsnb;
 
 double const GetMass(TF1* func, TH1F* reverseTable);
-TH1F* GenerateIntegralTableNew (TF1* func, TString const sname, double const res);
 
 TH1F* h;
 //TH1F* hBackgroundTable, *hSignalTable;
@@ -79,13 +82,28 @@ double MixFunc(double* x, double* par);
 std::vector<double> const PutDataIntoVec(TTree* tree);
 
 double Signal500(double* x, double* par); // this was named when I was adding templates...  
-double Signal1000(double* x, double* par); // there used to be a different template
 
 double ExpoConvGaus(double* x, double* par);
 
 double BckgFunc(double* x, double* par);
 
+TF1* fTtbar;
 
+void const SetSignalParameters(int const mass);
+
+double const GetLimitFromExpoFit(TGraphErrors* gre);
+double const CalcLimitFomExpFitVal(TF1* thefit);
+
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
 
 void limits(int inZpmass = 1750) {
 	_theZPrimeMass = inZpmass;
@@ -106,6 +124,13 @@ void limits(int inZpmass = 1750) {
 */
 
 	
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+//
+// DY parts
+//
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 	fmix = new TF1("fmix",MixFunc, _lowerBound, _upperBound, 11);
 	fmix->SetRange(_lowerBound,_upperBound);
 	fmix->FixParameter(0 	,	2.44298e+01	);
@@ -123,18 +148,25 @@ void limits(int inZpmass = 1750) {
 	fmix->SetNpx(10000);
 
 	fmix->SetParameter(10, 1./fmix->Integral(_lowerBound, _upperBound));
-	fmix->Draw();
+//	fmix->Draw();
 //
 //	hBackgroundTable->Draw();
 
+///////////////////////////////////////////////////////////////////////////////
+//
+// ttbar 
+//
+///////////////////////////////////////////////////////////////////////////////
 	fTtbar = new TF1("ttbar", ExpoConvGaus, _lowerBound, _upperBound, 4);  
 	fTtbar->SetRange(_lowerBound,_upperBound);
 	fTtbar->SetNpx(10000);
 	fTtbar->SetParameters(1, 2.50938e+01, 1.73358e-02, 	4.80605e+01);
 
-
 	fTtbar->SetParameter(0, 1./fTtbar->Integral(_lowerBound, _upperBound));
-	fTtbar->Draw();
+
+
+
+//	fTtbar->Draw();
 //	return;
 
 
@@ -152,89 +184,26 @@ void limits(int inZpmass = 1750) {
 //	double BckgFunc(double* x, double* par){
 
 	fBackground = new TF1("fBackground",BckgFunc, _lowerBound, _upperBound,1); 
-	fBackground->FixParameter(0,0.94);
+	fBackground->FixParameter(0,1.0);
 
-	fBackground->Draw();
-	
-//	return;
+//	fBackground->Draw();
+
+///////////////////////////////////////////////////////////////////////////////
 //
-// get the signal tables
+// get the signal 
 //
+///////////////////////////////////////////////////////////////////////////////
 	fSignal = new TF1("fSignal", Signal500, _lowerBound, _upperBound,8);
 		fSignal->SetRange(_lowerBound,_upperBound);
 		fSignal->SetParNames("A", "mean", "sigma", "lg", "alpha", "B", "sigma2", "Norm");
-//
-// this is the default setting-- i.e. for a mass of 500 GeV
-//
-		fSignal->SetParameters(
-		1.05021e+05,
-		4.93904e+02,
-		7.90580e+01,
-		4.48431e+01,
-		3.91833e-03,
-		6.42994e+02,
-		3.03020e+01,
-		1.);
 
-//
-// lots of cases
-//
-	if (_theZPrimeMass == 750) {	fSignal->SetParameters(
-		9.45534e+04,
-		7.39962e+02,
-		1.31342e+02,
-		9.05346e+01,
-		2.72171e-03,
-		3.08867e+02,
-		5.75050e+01,
-		1.);}
-	if (_theZPrimeMass == 1000) {	fSignal->SetParameters(
-
-			8.00731e+04,			
-			9.81335e+02	,		
-			1.89187e-01	,		
-			9.99006e-02	,		
-			1.03518e-01	,		
-			2.46877e+02	,		
-			1.00291e+02 ,
-			1);	}
-
-	if (_theZPrimeMass == 1250) {	fSignal->SetParameters(
-			 2.00000e+02,			
-			 1.20649e+03,			
-			 2.00000e-01,			
-			 1.00000e-01,			
-			 2.04984e+00,			
-			 1.60941e+02,			
-			 1.47620e+02,			
-			1);	}
-	if (_theZPrimeMass == 1500) {	fSignal->SetParameters(
-			2.00000e+02,				
-			1.42002e+03	,			
-			2.00000e-01	,			
-			1.00000e-01	,			
-			8.53613e+00	,			
-			1.28112e+02	,			
-			2.04584e+02	,			
-			1);	}
-	if (_theZPrimeMass == 1750) {	fSignal->SetParameters(
-			 2.00000e+02,			
-			 1.65944e+03,			
-			 2.00000e-01,			
-			 1.00000e-01,			
-			 1.45729e+00,			
-			 9.12729e+01,			
-			 2.56125e+02,			
-			1);	}
-
+	SetSignalParameters(inZpmass);
 
 	fSignal->SetParameter("Norm",1./fSignal->Integral(_lowerBound,_upperBound));
 	fSignal->SetNpx(10000);
-	fSignal->Draw();
+//	fSignal->Draw();
 
-//	return;
-//	hSignalTable		= GenerateIntegralTableNew(fSignal, "hSignalTable", 2.);
-//	hSignalTable->Draw();
+///////////////////////////////////////////////////////////////////////////////
 //
 //	
 	hbkg = new TH1F("hbkg", "DY background generation", 1000,_lowerBound,_upperBound );
@@ -278,6 +247,7 @@ void limits(int inZpmass = 1750) {
 		sDataName ="/Users/kypreos/physics/templates/limitSetting/merged.root"; 
 		sDataName ="/Users/kypreos/physics/templates/limitSetting/mergedNewShit.root"; 
 		sDataName = "dimuons_255nb.root";
+		sDataName = "data/dimuons_merged_2900InvNb_nocosmics_new.root";
 //		sDataName = "dimuons_20100825.root";
 
 		TFile inData(sDataName, "open");
@@ -304,7 +274,10 @@ void limits(int inZpmass = 1750) {
 			std::pair<int,double> answerPair = GetMinuitAnswer(toymc, lambdaS, lambdaB,false);
 			if (answerPair.first ==0) llfit = answerPair.second;
 		
-			for (lambdaS = 2.3; lambdaS < 5.5; lambdaS += 0.1){
+//double const _startingExpectedSingal = 1.0;
+//double const _scanning step = 0.1;
+//			for (lambdaS = 0.3; lambdaS < 5.5; lambdaS += 0.1){
+			for (lambdaS = _startingExpectedSignal; lambdaS < _maxExpectedSignal; lambdaS += _scanningStep){
 	
 				std::pair<int,double> answerPairfix = GetMinuitAnswer(toymc, lambdaS, lambdaB,true);
 				if (answerPairfix.first ==0) llfix = answerPairfix.second;
@@ -342,11 +315,15 @@ void limits(int inZpmass = 1750) {
 // I could have calculated a reference for each point, 
 // but that would have put more shit in shit and I wasn't in the mood to debug that.
 //
+
+
+	TStopwatch timer;
+	timer.Start();
 	for (std::map<double,std::vector<double> >::const_iterator tableit = refTable.begin(), 
 		tableitend = refTable.end(); tableit!=tableitend; ++tableit) {
 	
 
-	
+		rand3->SetSeed(0);	
 		lambdaS = tableit->first;
 		std::vector<double> vec = tableit->second;		
 
@@ -374,20 +351,23 @@ void limits(int inZpmass = 1750) {
 		sort(llrVals.begin(),llrVals.end());
 	
 
-//		double meanLlr 		= CalculateMean(llrVals); 
-//		double medianLlr 	= CalculateMedian(llrVals); 
-//		double rmsLlr		= CalculateRMS(llrVals,meanLlr);		
+		double meanLlr 		= CalculateMean(llrVals); 
+		double medianLlr 	= CalculateMedian(llrVals); 
+		double rmsLlr		= CalculateRMS(llrVals,meanLlr);		
 
-//		std::cout
-//			<<"\t median = "<<medianLlr
-//			<<"\t mean = "<<meanLlr
-//			<<"\t rms = "<<rmsLlr;		
+		std::cout
+			<<"\t median = "<<medianLlr
+			<<"\t mean = "<<meanLlr
+			<<"\t rms = "<<rmsLlr;		
 
 		double pval= 0;
 
+		double delta = 1.2;
+		delta = rmsLlr;
 		for (std::vector<double>::const_iterator it = llrVals.begin(); it != llrVals.end(); ++it){
 
-			if (*it< refVal) pval+=1;
+//			if (*it< refVal) pval+=1;
+			if (*it< refVal+delta) pval+=1;
 
 		}
 
@@ -396,24 +376,39 @@ void limits(int inZpmass = 1750) {
 		std::cout<<"\tp-value = "<<pval;
 		std::cout<<std::endl;
 	
-		double pvalerr = sqrt(pval*(1.-pval)/numPseudo);
-		grePvalueVsLambdaS->SetPoint(grePvalueVsLambdaS->GetN(), lambdaS, pval);
-		grePvalueVsLambdaS->SetPointError(grePvalueVsLambdaS->GetN()-1, 0.1, pvalerr);
+		double pvalerr = sqrt(pval*(1.-pval)/_numPseudo);
 
+		if (pval > 0.9) continue;
+		grePvalueVsLambdaS->SetPoint(grePvalueVsLambdaS->GetN(), lambdaS, pval);
+		grePvalueVsLambdaS->SetPointError(grePvalueVsLambdaS->GetN()-1, 0.5*_scanningStep, pvalerr);
+
+		if (pval < 0.01) break;
+			
 //		break;
 	}
 
+	timer.Stop();
+	timer.Print();
 
-	_outFile = new TFile(TString::Format("out_%d_1p1.root",_theZPrimeMass), "recreate");
+	TString sOutname = TString::Format("out%d/minuit_%d_v1.root",_numPseudo,inZpmass);
+	_outFile = new TFile(sOutname,"recreate");
+//	_outFile = new TFile(TString::Format("out_%d_1p1.root",inZpmass), "recreate");
 	_outFile->cd();
 	grePvalueVsLambdaS->Write("pvalueVsLambdaS");
 	hbkg->Write();
 	hsig->Write();
 
 
+	grePvalueVsLambdaS->Draw("ape");	
+
+	GetLimitFromExpoFit(grePvalueVsLambdaS);
+
 	return;
 }
 
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////
 double const drellYan(double* x, double* par){
 
 	double norm = par[0];
@@ -453,36 +448,6 @@ double const GetMass(TF1* func, TH1F* reverseTable){
 	double mod = 2.*rand3->Rndm()*delta;
 	double mass = valnew+mod;
 	return mass;
-}
-TH1F* GenerateIntegralTableNew (TF1* func, TString const sname, double const res){
-
-	double min, max;
-	func->GetRange(min,max);
-
-	typedef std::pair<double,double> valInt;
-
-	std::vector<valInt> vecd;			
-	vecd.push_back(valInt(0,min));
-
-	double intval = 0;
-
-	double val= min;
-	while (intval<0.9999 && val< max){
-		intval = func->Integral(min, val);
-//		intval = std::max(intval,vecd.back().second);
-		vecd.push_back(valInt(intval,val));
-		val += res;	
-	}
-	
-	vecd.push_back(valInt(1,max));
-	double bkgbins[vecd.size()];
-
-	for (unsigned int i = 0; i < vecd.size(); ++i) bkgbins[i] = vecd[i].first;
-
-	TH1F* massTable= new TH1F(sname, "masstable", vecd.size()-1, bkgbins);
-
-	for (unsigned int i = 0; i < vecd.size(); ++i) massTable->SetBinContent(i, vecd[i].second);
-	return massTable;
 }
 //
 // gives you a vector of toy MC
@@ -700,41 +665,23 @@ double MixFunc(double* x, double* par) {
 
 }
 //
-//
+// put the tree into a vector. I like vectors. It comes back sorted in terms of mas
 //
 std::vector<double> const PutDataIntoVec(TTree* tree){
-	bool const _checkCharge = true;
-//
-// fast way to read in...
-// 
-	typedef struct {
-		int charge;
-		float pt;
-		float eta;
-		float phi;
-	} _TrackInfo;
-
 	float mass;
-	_TrackInfo mu1, mu2;
-
 	std::vector<double> retVec; retVec.clear();
-
-
 
 //
 // oh wow. with this setup, you can easily just use the 2 4-vectors to read mass... just a thought
 //
 	tree->SetBranchAddress("recoCandMass", &mass);	
-	tree->SetBranchAddress("reco1", &mu1);	
-	tree->SetBranchAddress("reco2", &mu2);	
 	int numEntries = tree->GetEntries();
 	
 	for (int jEntry = 0; jEntry < numEntries; ++jEntry){
 		tree->GetEntry(jEntry);
-		if (_checkCharge && mu1.charge == mu2.charge) continue;
-
 		// cut on the masses we don't want
-		if (mass < _lowerBound || mass > _upperBound) continue;
+//		if (mass < 100) continue;
+		if (mass < 1*_lowerBound || mass > _upperBound) continue;
 		retVec.push_back(mass);
 	}
 
@@ -762,43 +709,6 @@ double Signal500(double* x, double* par) {
 	double retVal = A*TMath::Voigt(mass-mean,sigma,lg)*TMath::Exp(-1.*alpha*mass)+B*TMath::Gaus(mass,mean,sigma2);
 
 	return norm*retVal;
-}
-
-double Signal1000(double* x, double* par) {
-
-	double mass = x[0];
-		
-	double norm = par[0];
-	double turnonMass = par[1];
-	double turnonWidth = par[2];
-
-	double erfval = 0.5+0.5*TMath::Erf(turnonWidth*(mass-turnonMass));//   120+0.3*x[0]);
-
-
-//	fit = new TF1("fit", "[0]*TMath::Voigt(x-[1],[2],[3])*TMath::Exp(-[4]*x)+[5]*TMath::Gaus(x,[1],[6])");
-
-	double A 	= par[3];
-	double mean 	= par[4];
-	double sigma1 	= par[5];
-	double lz	 	= par[6];
-	double alpha	= par[7];
-	double B		= par[8];
-	double sigma2	= par[9];
-
-
-	double sideRight = A*TMath::Voigt(mass-mean,sigma1,lz)*TMath::Exp(-1.*alpha*mass)+B*TMath::Gaus(mass,mean,sigma2);
-	double right1 = (erfval)*sideRight;
-
-	double C = par[10];
-	double d1 = par[11];
-	double e1 = par[12];
-	
-	double sideLeft	= TMath::Exp(C+d1*mass+e1*mass*mass); 
-	double left1 = (1.-erfval)*sideLeft;
-//	fit2 = new TF1("fit2", "TMath::Exp([0]+[1]*x+[2]*x*x)");
-
-	return norm*(right1+left1);
-
 }
 
 //
@@ -865,4 +775,126 @@ double BckgFunc(double* x, double* par){
 
 	return val1*f1+fn*val2;
 }
+//
+// set the signal parameters for different z-prime models 
+//
+void const SetSignalParameters(int const mass_) {
+
+//	double A		= par[0];
+//	double mean		= par[1];
+//	double sigma	= par[2];
+//	double lg		= par[3];
+//	double alpha	= par[4];
+//	double B		= par[5];
+//	double sigma2	= par[6];
+//	double norm		= par[7];	
+
+//
+// for default parameters, use the info from the z
+//
+		fSignal->SetParameters(
+		9.45741e+06,
+		(1.*mass_),
+		2.63045,
+		2.4952,		// use the z width
+		3.91833e-03,
+		6.42994e+02,
+		3.03020e+01,
+		1.);
+	if (mass_ == 500) {
+		fSignal->SetParameters(
+		1.05021e+05,
+		4.93904e+02,
+		7.90580e+01,
+		4.48431e+01,
+		3.91833e-03,
+		6.42994e+02,
+		3.03020e+01,
+		1.);
+	}
+	if (mass_ == 750) {	fSignal->SetParameters(
+		9.45534e+04,
+		7.39962e+02,
+		1.31342e+02,
+		9.05346e+01,
+		2.72171e-03,
+		3.08867e+02,
+		5.75050e+01,
+		1.);}
+	if (mass_ == 1000) {	fSignal->SetParameters(
+
+			8.00731e+04,			
+			9.81335e+02	,		
+			1.89187e-01	,		
+			9.99006e-02	,		
+			1.03518e-01	,		
+			2.46877e+02	,		
+			1.00291e+02 ,
+			1);	}
+
+	if (mass_ == 1250) {	fSignal->SetParameters(
+			 2.00000e+02,			
+			 1.20649e+03,			
+			 2.00000e-01,			
+			 1.00000e-01,			
+			 2.04984e+00,			
+			 1.60941e+02,			
+			 1.47620e+02,			
+			1);	}
+	if (mass_ == 1500) {	fSignal->SetParameters(
+			2.00000e+02,				
+			1.42002e+03	,			
+			2.00000e-01	,			
+			1.00000e-01	,			
+			8.53613e+00	,			
+			1.28112e+02	,			
+			2.04584e+02	,			
+			1);	}
+	if (mass_ == 1750) {	fSignal->SetParameters(
+			 2.00000e+02,			
+			 1.65944e+03,			
+			 2.00000e-01,			
+			 1.00000e-01,			
+			 1.45729e+00,			
+			 9.12729e+01,			
+			 2.56125e+02,			
+			1);	}
+
+
+
+}
+
+//
+// get the limit estimate
+// 
+
+double const GetLimitFromExpoFit(TGraphErrors* gre){
+
+	tempfit = new TF1("tempfit", "expo");
+//	tempfit->SetRange(_startingExpectedSignal, 6.);
+	tempfit->SetLineColor(kRed);
+	tempfit->SetParameters(-1,-1);
+	tempfit->SetParLimits(0,0,-1000);
+	tempfit->SetParLimits(1,0,-1000);
+//	gre->Fit("tempfit","rb");
+	gre->Fit("tempfit","b");
+
+	gre->Draw("ape");
+
+	double limitval = CalcLimitFomExpFitVal(tempfit);
+//	double limitval = (log(0.05)-tempfit->GetParameter(0))/tempfit->GetParameter(1);
+
+//	std::cout<<"95\% limit from expo fit: "<<limitval<<std::endl;
+	return limitval;
+}
+// 
+// 
+// 
+double const CalcLimitFomExpFitVal(TF1* thefit){
+	double limitval = (log(0.05)-thefit->GetParameter(0))/thefit->GetParameter(1);
+	std::cout<<"95\% limit from expo fit: "<<limitval<<std::endl;
+	return limitval;	
+
+}
+
 

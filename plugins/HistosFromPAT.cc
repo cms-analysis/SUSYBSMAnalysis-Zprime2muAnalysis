@@ -37,11 +37,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
 
   edm::InputTag lepton_src;
   edm::InputTag dilepton_src;
-
-  const bool useAllLeptons;
   const bool leptonsFromDileptons;
-  const double lowerMassWin;
-  const double upperMassWin;
 
   TH1F* NLeptons;
   TH2F* LeptonSigns;
@@ -92,10 +88,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
 Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   : lepton_src(cfg.getParameter<edm::InputTag>("lepton_src")),
     dilepton_src(cfg.getParameter<edm::InputTag>("dilepton_src")),
-    useAllLeptons(cfg.getParameter<bool>("useAllLeptons")),
-    leptonsFromDileptons(cfg.getParameter<bool>("leptonsFromDileptons")),
-    lowerMassWin(cfg.getParameter<double>("lowerMassWin")),
-    upperMassWin(cfg.getParameter<double>("upperMassWin"))
+    leptonsFromDileptons(cfg.getParameter<bool>("leptonsFromDileptons"))
 {
   std::string title_prefix = cfg.getUntrackedParameter<std::string>("titlePrefix", "");
   if (title_prefix.size() && title_prefix[title_prefix.size()-1] != ' ')
@@ -120,9 +113,9 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   LeptonPhi = fs->make<TH1F>("LeptonPhi", titlePrefix + "#phi", 100, -TMath::Pi(), TMath::Pi());
     
   // Lepton momenta: p, p_T, p_z.
-  LeptonPt = fs->make<TH1F>("LeptonPt", titlePrefix + "pT", 100,  0, upperMassWin);
-  LeptonPz = fs->make<TH1F>("LeptonPz", titlePrefix + "pz", 100,  0, upperMassWin);
-  LeptonP  = fs->make<TH1F>("LeptonP",  titlePrefix + "p",  100,  0, upperMassWin);
+  LeptonPt = fs->make<TH1F>("LeptonPt", titlePrefix + "pT", 2000, 0, 2000);
+  LeptonPz = fs->make<TH1F>("LeptonPz", titlePrefix + "pz", 2000, 0, 2000);
+  LeptonP  = fs->make<TH1F>("LeptonP",  titlePrefix + "p",  2000, 0, 2000);
 
   // Lepton momenta versus pseudorapidity.
   LeptonPVsEta  = fs->make<TProfile>("LeptonPVsEta",   titlePrefix + "p vs. #eta",  100, -6, 6);
@@ -168,17 +161,17 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   DileptonPhi = fs->make<TH1F>("DileptonPhi", titlePrefix + "dil. #phi", 100, -TMath::Pi(), TMath::Pi());
   
   // Dilepton momenta: p, p_T, p_z.
-  DileptonPt = fs->make<TH1F>("DileptonPt", titlePrefix + "dil. pT", 100,  0, upperMassWin);
-  DileptonPz = fs->make<TH1F>("DileptonPz", titlePrefix + "dil. pz", 100,  0, upperMassWin);
-  DileptonP  = fs->make<TH1F>("DileptonP",  titlePrefix + "dil. p",  100,  0, upperMassWin);
+  DileptonPt = fs->make<TH1F>("DileptonPt", titlePrefix + "dil. pT", 2000, 0, 2000);
+  DileptonPz = fs->make<TH1F>("DileptonPz", titlePrefix + "dil. pz", 2000, 0, 2000);
+  DileptonP  = fs->make<TH1F>("DileptonP",  titlePrefix + "dil. p",  2000, 0, 2000);
   
   // Dilepton momenta versus pseudorapidity.
   DileptonPVsEta  = fs->make<TProfile>("DileptonPVsEta",  titlePrefix + "dil. p vs. #eta",  100, -6, 6);
   DileptonPtVsEta = fs->make<TProfile>("DileptonPtVsEta", titlePrefix + "dil. pT vs. #eta", 100, -6, 6);
   
   // Dilepton invariant mass.
-  DileptonMass            = fs->make<TH1F>("DileptonMass",            titlePrefix + "dil. mass", 50, lowerMassWin, upperMassWin);
-  DileptonWithPhotonsMass = fs->make<TH1F>("DileptonWithPhotonsMass", titlePrefix + "res. mass", 50, lowerMassWin, upperMassWin);
+  DileptonMass            = fs->make<TH1F>("DileptonMass",            titlePrefix + "dil. mass", 2000, 0, 2000);
+  DileptonWithPhotonsMass = fs->make<TH1F>("DileptonWithPhotonsMass", titlePrefix + "res. mass", 2000, 0, 2000);
   
   // Plots comparing the daughter lepton momenta.
   DileptonDeltaPt  = fs->make<TH1F>("DileptonDeltaPt",  titlePrefix + "dil. |pT^{1}| - |pT^{2}|",                100, -100, 100);
@@ -238,9 +231,6 @@ void Zprime2muHistosFromPAT::fillOfflineElectronHistos(const pat::Electron* lep)
 }
 
 void Zprime2muHistosFromPAT::fillLeptonHistos(const reco::CandidateBaseRef& lep) {
-  if (!useAllLeptons) // && !userFloat("zp2muPassCuts") JMTBAD
-    return;
-
   fillBasicLeptonHistos(lep);
   
   const pat::Muon* muon = toConcretePtr<pat::Muon>(lep);

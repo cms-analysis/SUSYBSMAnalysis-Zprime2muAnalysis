@@ -33,12 +33,8 @@ class ResolutionUsingMC : public edm::EDAnalyzer {
   HardInteraction hardInteraction;
   edm::InputTag lepton_src;
   edm::InputTag dilepton_src;
-
-  const bool useAllLeptons;
   const bool leptonsFromDileptons;
   const bool doQoverP;
-  const double lowerMassWin;
-  const double upperMassWin;
 
   TH1F* LeptonEtaDiff;
   TH1F* LeptonPhiDiff;
@@ -74,11 +70,8 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
   : hardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction")),
     lepton_src(cfg.getParameter<edm::InputTag>("lepton_src")),
     dilepton_src(cfg.getParameter<edm::InputTag>("dilepton_src")),
-    useAllLeptons(cfg.getParameter<bool>("useAllLeptons")),
     leptonsFromDileptons(cfg.getParameter<bool>("leptonsFromDileptons")),
-    doQoverP(cfg.getParameter<bool>("doQoverP")),
-    lowerMassWin(cfg.getParameter<double>("lowerMassWin")),
-    upperMassWin(cfg.getParameter<double>("upperMassWin"))
+    doQoverP(cfg.getParameter<bool>("doQoverP"))
 {
   std::string title_prefix = cfg.getUntrackedParameter<std::string>("titlePrefix", "");
   if (title_prefix.size() && title_prefix[title_prefix.size()-1] != ' ')
@@ -86,31 +79,31 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
   const TString titlePrefix(title_prefix.c_str());
 
   edm::Service<TFileService> fs;
-
+  
   LeptonEtaDiff = fs->make<TH1F>("LeptonEtaDiff", titlePrefix + "#eta - gen #eta", 100, -0.002, 0.002);
   LeptonPhiDiff = fs->make<TH1F>("LeptonPhiDiff", titlePrefix + "#phi - gen #phi", 100, -0.002, 0.002);
-  LeptonPtDiff  = fs->make<TH1F>("LeptonPtDiff",  titlePrefix + "pT - gen pT", 100, -0.1*upperMassWin, 0.1*upperMassWin);
+  LeptonPtDiff  = fs->make<TH1F>("LeptonPtDiff",  titlePrefix + "pT - gen pT", 100, -20, 20);
 
-  LeptonPtRes = fs->make<TH1F>("LeptonPtRes", titlePrefix + "(pT - gen pT)/(gen pT)", 100, -0.3, 0.3);
-  LeptonPRes  = fs->make<TH1F>("LeptonPRes",  titlePrefix + "(p - gen p)/(gen p)",    100, -0.3, 0.3);
+  LeptonPtRes = fs->make<TH1F>("LeptonPtRes", titlePrefix + "(pT - gen pT)/(gen pT)", 100, -0.5, 0.5);
+  LeptonPRes  = fs->make<TH1F>("LeptonPRes",  titlePrefix + "(p - gen p)/(gen p)",    100, -0.5, 0.5);
 
-  LeptonInvPtRes = fs->make<TH1F>("LeptonInvPtRes", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT)", 100, -0.3, 0.3);
-  LeptonInvPRes  = fs->make<TH1F>("LeptonInvPRes",  titlePrefix + "(1/p - 1/gen p)/(1/gen p)",    100, -0.3, 0.3);
+  LeptonInvPtRes = fs->make<TH1F>("LeptonInvPtRes", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT)", 100, -0.5, 0.5);
+  LeptonInvPRes  = fs->make<TH1F>("LeptonInvPRes",  titlePrefix + "(1/p - 1/gen p)/(1/gen p)",    100, -0.5, 0.5);
 
-  LeptonInvPtResVPtGen = fs->make<TProfile>("LeptonInvPtResVPtGen", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT", 50, 0, upperMassWin, -0.3, 0.3);
-  LeptonInvPResVPGen   = fs->make<TProfile>("LeptonInvPResVPGen",   titlePrefix + "(1/p - 1/gen p)/(1/gen p) vs. gen p",     50, 0, upperMassWin, -0.3, 0.3);
+  LeptonInvPtResVPtGen = fs->make<TProfile>("LeptonInvPtResVPtGen", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT", 50, 0, 1000, -0.5, 0.5);
+  LeptonInvPResVPGen   = fs->make<TProfile>("LeptonInvPResVPGen",   titlePrefix + "(1/p - 1/gen p)/(1/gen p) vs. gen p",     50, 0, 1000, -0.5, 0.5);
   
   LeptonInvPtPull = fs->make<TH1F>("LeptonInvPtPull", titlePrefix + "(1/pT - 1/gen pT)/#sigma_{1/pT}", 100, -10, 10);
   LeptonInvPPull  = fs->make<TH1F>("LeptonInvPPull",  titlePrefix + "(1/p - 1/gen p)/#sigma_{1/p}",    100, -10, 10);
   
-  LeptonInvPtResBarrel = fs->make<TH1F>("LeptonInvPtResBarrel", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT), barrel", 100, -0.3, 0.3);
-  LeptonInvPResBarrel  = fs->make<TH1F>("LeptonInvPResBarrel",  titlePrefix + "(1/p - 1/gen p)/(1/gen p), barrel",    100, -0.3, 0.3);
+  LeptonInvPtResBarrel = fs->make<TH1F>("LeptonInvPtResBarrel", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT), barrel", 100, -0.5, 0.5);
+  LeptonInvPResBarrel  = fs->make<TH1F>("LeptonInvPResBarrel",  titlePrefix + "(1/p - 1/gen p)/(1/gen p), barrel",    100, -0.5, 0.5);
     
   LeptonInvPtPullBarrel = fs->make<TH1F>("LeptonInvPtPullBarrel", titlePrefix + "(1/pT - 1/gen pT)/#sigma_{1/pT}, barrel", 100, -10, 10);
   LeptonInvPPullBarrel  = fs->make<TH1F>("LeptonInvPPullBarrel",  titlePrefix + "(1/p - 1/gen p)/#sigma_{1/p}, barrel",    100, -10, 10);
 
-  LeptonInvPtResEndcap = fs->make<TH1F>("LeptonInvPtResEndcap", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT), endcap", 100, -0.3, 0.3);
-  LeptonInvPResEndcap  = fs->make<TH1F>("LeptonInvPResEndcap",  titlePrefix + "(1/p - 1/gen p)/(1/gen p), endcap",    100, -0.3, 0.3);
+  LeptonInvPtResEndcap = fs->make<TH1F>("LeptonInvPtResEndcap", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT), endcap", 100, -0.5, 0.5);
+  LeptonInvPResEndcap  = fs->make<TH1F>("LeptonInvPResEndcap",  titlePrefix + "(1/p - 1/gen p)/(1/gen p), endcap",    100, -0.5, 0.5);
     
   LeptonInvPtPullEndcap = fs->make<TH1F>("LeptonInvPtPullEndcap", titlePrefix + "(1/pT - 1/gen pT)/#sigma_{1/pT}, endcap", 100, -10, 10);
   LeptonInvPPullEndcap  = fs->make<TH1F>("LeptonInvPPullEndcap",  titlePrefix + "(1/p - 1/gen p)/#sigma_{1/p}, endcap",    100, -10, 10);
@@ -123,13 +116,13 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
   ChargeRightVInvPt->Sumw2();
   ChargeWrongVInvPt->Sumw2();
 
-  DileptonMassRes    = fs->make<TH1F>("DileptonMassRes",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 100, -0.3, 0.3);
-  DileptonResMassRes = fs->make<TH1F>("DileptonResMassRes", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", 100, -0.3, 0.3);
-  ResonanceMassRes   = fs->make<TH1F>("ResonanceMassRes",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", 100, -0.3, 0.3);
+  DileptonMassRes    = fs->make<TH1F>("DileptonMassRes",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 100, -0.5, 0.5);
+  DileptonResMassRes = fs->make<TH1F>("DileptonResMassRes", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", 100, -0.5, 0.5);
+  ResonanceMassRes   = fs->make<TH1F>("ResonanceMassRes",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", 100, -0.5, 0.5);
   
-  DileptonMassResVMass    = fs->make<TProfile>("DileptonMassResVMass",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 50, lowerMassWin, upperMassWin, -0.3, 0.3);
-  DileptonResMassResVMass = fs->make<TProfile>("DileptonResMassResVMass", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", 50, lowerMassWin, upperMassWin, -0.3, 0.3);
-  ResonanceMassResVMass   = fs->make<TProfile>("ResonanceMassResVMass",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", 50, lowerMassWin, upperMassWin, -0.3, 0.3);
+  DileptonMassResVMass    = fs->make<TProfile>("DileptonMassResVMass",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 100, 0, 2000, -0.5, 0.5);
+  DileptonResMassResVMass = fs->make<TProfile>("DileptonResMassResVMass", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", 100, 0, 2000, -0.5, 0.5);
+  ResonanceMassResVMass   = fs->make<TProfile>("ResonanceMassResVMass",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", 100, 0, 2000, -0.5, 0.5);
 }
 
 void ResolutionUsingMC::fillLeptonResolution(const reco::GenParticle* gen_lep, const reco::CandidateBaseRef& lep) {
@@ -299,7 +292,7 @@ void ResolutionUsingMC::fillDileptonHistos(const pat::CompositeCandidateCollecti
 
 void ResolutionUsingMC::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   hardInteraction.Fill(event);
-
+  
   edm::Handle<edm::View<reco::Candidate> > leptons;
   event.getByLabel(lepton_src, leptons);
 
@@ -312,7 +305,7 @@ void ResolutionUsingMC::analyze(const edm::Event& event, const edm::EventSetup& 
 
   edm::Handle<pat::CompositeCandidateCollection> dileptons;
   event.getByLabel(dilepton_src, dileptons);
-  
+
   if (!dileptons.isValid())
     edm::LogWarning("DileptonHandleInvalid") << "tried to get " << dilepton_src << " and failed!";
   else {

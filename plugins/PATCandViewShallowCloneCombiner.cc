@@ -35,7 +35,25 @@ struct LooseTightPairSelector {
   
   LooseTightPairSelector(const std::string& loose_cut, const std::string& tight_cut) : loose(loose_cut), tight(tight_cut) {}
 
+  bool electron_ok(const reco::Candidate& cel) const {
+    const pat::Electron& el = static_cast<const pat::Electron&>(cel);
+    if (!el.hasUserInt("cutFor"))
+      throw cms::Exception("BadCandidateForLeptonSelector") << "electron does not have cutFor userInt!\n";
+    return el.userInt("cutFor") == 0;
+  }
+
   bool operator()(const reco::Candidate& c1, const reco::Candidate& c2) const {
+    // If one is an electron, fall back to requiring the muon pass
+    // both the loose and tight cuts.
+    const bool e1 = typeid(c1) == typeid(pat::Electron);
+    const bool e2 = typeid(c2) == typeid(pat::Electron);
+    if (e1 && e2)
+      return electron_ok(c1) && electron_ok(c2);
+    else if (e1)
+      return electron_ok(c1) && loose(c2) && tight(c2);
+    else if (e2)
+      return electron_ok(c2) && loose(c1) && tight(c1);
+
     return loose(c1) && loose(c2) && (tight(c1) || tight(c2));
   }
 };
@@ -71,6 +89,15 @@ namespace reco {
       > PATCandViewShallowCloneCombiner;
   
     DEFINE_FWK_MODULE(PATCandViewShallowCloneCombiner);
+
+    typedef CandCombiner<
+      PATStringCutObjectSelector,
+      AnyPairSelector,
+      combiner::helpers::ShallowClone,
+      pat::CompositeCandidateCollection
+      > PATRawCandViewShallowCloneCombiner;
+  
+    DEFINE_FWK_MODULE(PATRawCandViewShallowCloneCombiner);
 
     typedef CandCombiner<
       PATStringCutObjectSelector,

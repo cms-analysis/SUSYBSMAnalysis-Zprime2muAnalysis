@@ -27,21 +27,13 @@ import FWCore.ParameterSet.Config as cms
 # So we have a LooseTightCandViewShallowCloneCombiner that requires
 # both muons to pass the loose cut, and at least one must pass the
 # tight cut.
-#
-# To use this instead of the default allDimuons, in your top level
-# analysis cfg you can include this cff, e.g.:
-#
-# process.load('SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff')
-# process.load('SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff')
-# process.allDimuons = process.allDimuonsVBTF
 
 vbtf_loose = 'isGlobalMuon && pt > 20. && abs(eta) < 2.4 && isolationR03.sumPt < 3 && innerTrack.hitPattern.numberOfValidTrackerHits >= 10'
 vbtf_tight = 'dB < 0.2 && globalTrack.normalizedChi2 < 10 && innerTrack.hitPattern.numberOfValidPixelHits >= 1 && globalTrack.hitPattern.muonStationsWithValidHits >= 2 && isTrackerMuon && abs(eta) < 2.1 && !triggerObjectMatchesByPath("HLT_Mu9").empty() && abs(triggerObjectMatchesByPath("HLT_Mu9").at(0).eta()) < 2.1'
 
-allDimuonsVBTF = cms.EDProducer('LooseTightCandViewShallowCloneCombiner',
-                                decay = cms.string('leptons:muons@+ leptons:muons@-'),
-                                cut = cms.string(''),
-                                loose_cut = cms.string(vbtf_loose),
-                                tight_cut = cms.string(vbtf_tight)
-                                )
-
+allDimuons = cms.EDProducer('LooseTightCandViewShallowCloneCombiner',
+                            decay = cms.string('leptons:muons@+ leptons:muons@-'),
+                            cut = cms.string(''),
+                            loose_cut = cms.string(vbtf_loose),
+                            tight_cut = cms.string(vbtf_tight)
+                            )

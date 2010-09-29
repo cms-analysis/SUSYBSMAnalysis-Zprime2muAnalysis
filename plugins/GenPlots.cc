@@ -1,4 +1,5 @@
-#include <boost/foreach.hpp>
+#include "TH1F.h"
+#include "TMath.h"
 
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
@@ -12,7 +13,7 @@ class GenPlots : public edm::EDAnalyzer {
   void analyze(const edm::Event&, const edm::EventSetup&);
 
  private:
-  HardInteraction hard;
+  HardInteraction hardInteraction;
   const bool both_in_acc;
 
   TH1F* res_mass;
@@ -28,9 +29,10 @@ class GenPlots : public edm::EDAnalyzer {
 };
 
 GenPlots::GenPlots(const edm::ParameterSet& cfg)
-  : hard(cfg.getParameter<edm::ParameterSet>("hardInteraction")),
+  : hardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction")),
     both_in_acc(cfg.getParameter<bool>("both_in_acc"))
 {
+  edm::Service<TFileService> fs;
   res_mass = fs->make<TH1F>("res_mass", "", 2000, 0, 2000);
   dil_mass = fs->make<TH1F>("dil_mass", "", 2000, 0, 2000);
   res_pt = fs->make<TH1F>("res_pt", "", 2000, 0, 2000);
@@ -44,23 +46,23 @@ GenPlots::GenPlots(const edm::ParameterSet& cfg)
 }
 
 void GenPlots::analyze(const edm::Event& event, const edm::EventSetup& setup) {
-  hard.Fill(event);
+  hardInteraction.Fill(event);
 
   if (both_in_acc && !(fabs(hardInteraction.lepMinus->eta()) < 2.4 && fabs(hardInteraction.lepPlus->eta()) < 2.4))
     return;
   
-  res_mass->Fill(hard.resonance->mass());
-  res_pt->Fill(hard.resonance->pt());
-  res_eta->Fill(hard.resonance->eta());
-  res_phi->Fill(hard.resonance->phi());
-  res_rap->Fill(hard.resonance->rap());
+  res_mass->Fill(hardInteraction.resonance->mass());
+  res_pt->Fill(hardInteraction.resonance->pt());
+  res_eta->Fill(hardInteraction.resonance->eta());
+  res_phi->Fill(hardInteraction.resonance->phi());
+  res_rap->Fill(hardInteraction.resonance->rapidity());
 
-  reco::Particle::LorentzVector dil = hardInteraction.lepMinus->p4() + hardInteraction.lepPlus->p4();
+  reco::Particle::LorentzVector dil = hardInteraction.dilepton();
   dil_mass->Fill(dil.mass());
   dil_pt->Fill(dil.pt());
   dil_eta->Fill(dil.eta());
   dil_phi->Fill(dil.phi());
-  dil_rap->Fill(dil.rap());
+  dil_rap->Fill(dil.Rapidity());
 }
 
 DEFINE_FWK_MODULE(GenPlots);

@@ -71,3 +71,21 @@ process.selectedPatMuons.cut = 'isGlobalMuon || isTrackerMuon'
 # electrons, need to change appropriately in your top-level config
 # (perhaps using countPatLeptons instead).
 process.countPatMuons.minNumber = 1
+
+# Instead of filtering out events at PAT-tupling time based on things
+# like GoodVertex and NoScraping, schedule separate paths for all the
+# "good data" filters so that the results of them get stored in a
+# small TriggerResults::PAT object that can be read and used to filter
+# events in the analyzer process using e.g. the filter in
+# Zprime2muAnalysis_cff.py. (Useful so we don't have to keep around
+# the entire generalTracks collection for noscraping, for example.)
+#
+# Make one for each so they can be accessed separately in the
+# TriggerResults object; the "All" path isn't necessary because it
+# could be emulated using the AND of all of the separate ones, but
+# it's nice for convenience.
+process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
+goodDataHLTPhysicsDeclared = cms.Path(hltPhysicsDeclared)
+goodDataPrimaryVertexFilter = cms.Path(primaryVertexFilter)
+goodDataNoScraping = cms.Path(noscraping)
+goodDataAll = cms.Path(hltPhysicsDeclared * primaryVertexFilter * noscraping)

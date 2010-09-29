@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys
+import sys, os
 from array import array
 
 sys.argv.append('-b')     # Start ROOT in batch mode;
@@ -28,12 +28,71 @@ def apply_hist_commands(hist, hist_cmds=None):
             args = (args,)
         getattr(hist, fn)(*args)
 
-def core_gaussian(hist, factor):
+def clopper_pearson(n_on, n_tot, alpha=1-0.6827, equal_tailed=True):
+    if equal_tailed:
+        alpha_min = alpha/2
+    else:
+        alpha_min = alpha
+
+    lower = 0
+    upper = 1
+
+    if n_on > 0:
+        lower = ROOT.Math.beta_quantile(alpha_min, n_on, n_tot - n_on + 1)
+    if n_tot - n_on > 0:
+        upper = ROOT.Math.beta_quantile_c(alpha_min, n_on + 1, n_tot - n_on)
+
+    if n_on == 0 and n_tot == 0:
+        return 0, lower, upper
+    else:
+        return float(n_on)/n_tot, lower, upper
+
+def binomial_divide(h1, h2, confint=clopper_pearson):
+    nbins = h1.GetNbinsX()
+    xax = h1.GetXaxis()
+    if h2.GetNbinsX() != nbins: # or xax2.GetBinLowEdge(1) != xax.GetBinLowEdge(1) or xax2.GetBinLowEdge(nbins) != xax.GetBinLowEdge(nbins):
+        raise ValueError, 'incompatible histograms to divide'
+    x = []
+    y = []
+    exl = []
+    exh = []
+    eyl = []
+    eyh = []
+    xax = h1.GetXaxis()
+    for ibin in xrange(1, nbins+1):
+        s,t = h1.GetBinContent(ibin), h2.GetBinContent(ibin)
+        if t == 0:
+            assert(s == 0)
+            continue
+
+        p_hat = float(s)/t
+        if s > t:
+            print 'warning: bin %i has p_hat > 1, in interval forcing p_hat = 1' % ibin
+            s = t
+        rat, a,b = confint(s,t)
+        #print ibin, s, t, a, b
+
+        _x  = xax.GetBinCenter(ibin)
+        _xw = xax.GetBinWidth(ibin)/2
+        
+        x.append(_x)
+        exl.append(_xw)
+        exh.append(_xw)
+
+        y.append(p_hat)
+        eyl.append(p_hat - a)
+        eyh.append(b - p_hat)
+    eff = ROOT.TGraphAsymmErrors(len(x), *[array('d', obj) for obj in (x,y,exl,exh,eyl,eyh)])
+    return eff
+
+def core_gaussian(hist, factor, i=[0]):
     core_mean  = hist.GetMean()
     core_width = factor*hist.GetRMS()
-    return ROOT.TF1('core', 'gaus', core_mean - core_width, core_mean + core_width)
+    f = ROOT.TF1('core%i' % i[0], 'gaus', core_mean - core_width, core_mean + core_width)
+    i[0] += 1
+    return f
 
-def fit_gaussian(hist, factor=None, draw=False):
+def fit_gaussian(hist, factor=None, draw=False, cache=[]):
     """Fit a Gaussian to the histogram, and return a dict with fitted
     parameters and errors. If factor is supplied, fit only to range in
     hist.mean +/- factor * hist.rms.
@@ -46,6 +105,7 @@ def fit_gaussian(hist, factor=None, draw=False):
 
     if factor is not None:
         fcn = core_gaussian(hist, factor)
+        cache.append(fcn)
         hist.Fit(fcn, opt)
     else:
         hist.Fit('gaus', opt)
@@ -166,9 +226,35 @@ def make_rms_hist(prof, name='', bins=None, cache={}):
     cache[name] = new_hist
     return new_hist
 
-def real_hist_max(h, return_bin=False, user_range=None):
+class plot_saver:
+    i = 0
+    
+    def __init__(self, plot_dir=None):
+        self.c = ROOT.TCanvas('c%i' % plot_saver.i, '', 820, 630)
+        plot_saver.i += 1
+        self.set_plot_dir(plot_dir)
+
+    def set_plot_dir(self, plot_dir):
+        self.plot_dir = plot_dir
+        if plot_dir is not None:
+            os.system('mkdir -p %s/_log' % self.plot_dir)
+            os.system('mkdir -p %s/_root' % self.plot_dir)
+
+    def save(self, n, log=True, root=True):
+        if self.plot_dir is None:
+            raise ValueError('save called before plot_dir set!')
+        self.c.SetLogy(0)
+        self.c.SaveAs(os.path.join(self.plot_dir, n + '.png'))
+        if root:
+            self.c.SaveAs(os.path.join(self.plot_dir, '_root', n + '.root'))
+        if log:
+            self.c.SetLogy(1)
+            self.c.SaveAs(os.path.join(self.plot_dir, '_log', n + '.log.png'))
+            self.c.SetLogy(0)
+
+def real_hist_max(h, return_bin=False, user_range=None, use_error_bars=True):
     """Find the real maximum value of the histogram, taking into
-    account the error bars."""
+    account the error bars and/or the specified range."""
     m_ibin = None
     m = 0
 
@@ -176,10 +262,34 @@ def real_hist_max(h, return_bin=False, user_range=None):
         b1, b2 = 1, h.GetNbinsX() + 1
     else:
         b1, b2 = h.FindBin(user_range[0]), h.FindBin(user_range[1])+1
-        
+    
     for ibin in xrange(b1, b2):
-        v = h.GetBinContent(ibin) + h.GetBinError(ibin)
+        if use_error_bars:
+            v = h.GetBinContent(ibin) + h.GetBinError(ibin)
+        else:
+            v = h.GetBinContent(ibin)
         if v > m:
+            m = v
+            m_ibin = ibin
+    if return_bin:
+        return m_ibin, m
+    else:
+        return m
+
+def real_hist_min(h, return_bin=False, user_range=None):
+    """Find the real minimum value of the histogram, ignoring empty
+    bins, and taking into account the specified range."""
+    m_ibin = None
+    m = 99e99
+
+    if user_range is None:
+        b1, b2 = 1, h.GetNbinsX() + 1
+    else:
+        b1, b2 = h.FindBin(user_range[0]), h.FindBin(user_range[1])+1
+    
+    for ibin in xrange(b1, b2):
+        v = h.GetBinContent(ibin)
+        if v > 0 and v < m:
             m = v
             m_ibin = ibin
     if return_bin:
@@ -207,14 +317,29 @@ def set_zp2mu_style(date_pages=False):
     #ROOT.gStyle.SetStatFont(52)
     ROOT.gErrorIgnoreLevel = 1001 # Suppress TCanvas::SaveAs messages.
 
+def ttree_iterator(tree, return_tree=True):
+    for jentry in xrange(tree.GetEntriesFast()):
+        if tree.LoadTree(jentry) < 0: break
+        if tree.GetEntry(jentry) <= 0: continue
+        if return_tree:
+            yield jentry, tree
+        else:
+            yield jentry
+
 __all__ = [
     'apply_hist_commands',
+    'binomial_divide',
+    'clopper_pearson',
     'core_gaussian',
     'fit_gaussian',
     'get_bin_content_error',
     'get_integral',
     'get_hist_stats',
     'make_rms_hist',
+    'plot_saver',
     'real_hist_max',
-    'set_zp2mu_style'
+    'real_hist_min',
+    'set_zp2mu_style',
+    'ttree_iterator',
+    'ROOT',
     ]

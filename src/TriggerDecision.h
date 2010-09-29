@@ -43,6 +43,12 @@ class TriggerDecision {
   // offline level is passed in, return the overall trigger result.
   bool pass_all(const int irec) const;
 
+  const std::vector<std::string>& l1_paths() const { return l1Paths; }
+  const std::vector<std::string>& hlt_paths() const { return hltPaths; }
+
+  bool l1_path_pass(size_t ipath)  const { assert(ipath < l1Paths.size());  return bool(trigWord[1] & (1 << ipath)); }
+  bool hlt_path_pass(size_t ipath) const { assert(ipath < hltPaths.size()); return bool(trigWord[3] & (1 << ipath)); }
+
  private:
   bool debug;
 
@@ -59,7 +65,6 @@ class TriggerDecision {
 
   // Which trigger paths to use.
   std::vector<std::string> l1Paths;
-  std::vector<std::string> hltModules[2]; // in order: L2, L3
   std::vector<std::string> hltPaths;
 
   // The decision we calculated at each level for the current event.

@@ -39,6 +39,14 @@ struct HardInteraction {
   // The same, but get the genParticles from the event.
   void Fill(const edm::Event& event);
 
+  reco::Particle::LorentzVector dileptonNoIB() const {
+    return lepPlusNoIB->p4() + lepMinusNoIB->p4();
+  }
+
+  reco::Particle::LorentzVector dilepton() const {
+    return lepPlus->p4() + lepMinus->p4();
+  }
+
   // The tag for the GenParticleCollection.
   const edm::InputTag src;
 

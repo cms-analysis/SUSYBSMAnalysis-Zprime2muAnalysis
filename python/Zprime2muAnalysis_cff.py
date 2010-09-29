@@ -18,21 +18,19 @@ goodDataFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', 'PAT')
 goodDataFilter.HLTPaths = ['goodDataAll'] # can set to just 'goodDataPrimaryVertexFilter', for example
 goodDataFilter.andOr = False
 
+from MuonPhotonMatch_cff import muonPhotonMatch
+#from PATCandViewShallowCloneCombiner_cfi import allDimuons
+from VBTFSelection_cff import vbtf_loose, allDimuons
+
 leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'),
                          electron_src = cms.InputTag('cleanPatElectrons'),
-                         muon_cuts = cms.string('pt > 20. && isolationR03.sumPt < 10'),
+                         muon_cuts = cms.string(vbtf_loose),
                          electron_cuts = cms.string('userInt("HEEPId") == 0'),
                          muon_track_for_momentum = cms.string('pmc'),
                          muon_photon_match_src = cms.InputTag('muonPhotonMatch')
                          )
 
-from MuonPhotonMatch_cff import muonPhotonMatch
-
-allDimuons = cms.EDProducer('PATCandViewShallowCloneCombiner',
-                            decay = cms.string('leptons:muons@+ leptons:muons@-'),
-                            cut = cms.string('')
-                            )
 
 dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          src = cms.InputTag('allDimuons'),
@@ -45,6 +43,7 @@ Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons 
 def rec_levels(process, new_track_types):
     process.leptons.muon_tracks_for_momentum = cms.vstring(*new_track_types)
     process.Zprime2muAnalysisSequence = cms.Sequence(process.muonPhotonMatch * process.leptons)
+    process.Zprime2muAnalysisSequencePlain = cms.Sequence(process.muonPhotonMatch * process.leptons * process.allDimuons * process.dimuons)
 
     for t in new_track_types:
         ad = process.allDimuons.clone()
@@ -58,3 +57,15 @@ def rec_levels(process, new_track_types):
 
         process.Zprime2muAnalysisSequence *= ad
         process.Zprime2muAnalysisSequence *= d
+
+def rec_level_module(process, module, name, tracks):
+    p = []
+    for t in tracks:
+        h = module.clone()
+        if hasattr(h, 'lepton_src'):
+            h.lepton_src = cms.InputTag('leptons', t)
+        if hasattr(h, 'dilepton_src'):
+            h.dilepton_src = cms.InputTag('dimuons' + t)
+        setattr(process, name + t, h)
+        p.append(h)
+    return reduce(lambda x,y: x*y, p)

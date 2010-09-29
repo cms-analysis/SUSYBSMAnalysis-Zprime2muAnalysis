@@ -1,4 +1,5 @@
 #include <ostream>
+#include <boost/foreach.hpp>
 
 #include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
@@ -22,7 +23,8 @@ std::ostream& operator<<(std::ostream& out, const reco::HitPattern& hp) {
       << "\n  # bad: tot: " << hp.numberOfBadHits() << " mu: " << hp.numberOfBadMuonHits()  << " csc: " << hp.numberOfBadMuonCSCHits()  << " dt: " << hp.numberOfBadMuonDTHits()  << " rpc: " << hp.numberOfBadMuonRPCHits()
       << "\n  # tk layers: with meas: " << hp.trackerLayersWithMeasurement() << " without: " << hp.trackerLayersWithoutMeasurement() << " totallyofforbad: " << hp.trackerLayersTotallyOffOrBad() << " null: " << hp.trackerLayersNull()
       << "\n  # px layers: with meas: " << hp.pixelLayersWithMeasurement() << " without: " << hp.pixelLayersWithoutMeasurement() << " totallyofforbad: " << hp.pixelLayersTotallyOffOrBad() << " null: " << hp.pixelLayersNull()
-      << "\n  # si layers: with meas: " << hp.stripLayersWithMeasurement() << " without: " << hp.stripLayersWithoutMeasurement() << " totallyofforbad: " << hp.stripLayersTotallyOffOrBad() << " null: " << hp.stripLayersNull();
+      << "\n  # si layers: with meas: " << hp.stripLayersWithMeasurement() << " without: " << hp.stripLayersWithoutMeasurement() << " totallyofforbad: " << hp.stripLayersTotallyOffOrBad() << " null: " << hp.stripLayersNull()
+      << "\n  # dt with both views: " << hp.numberOfDTStationsWithBothViews() << " with rphi: " << hp.numberOfDTStationsWithRPhiView() << " with rz: " << hp.numberOfDTStationsWithRZView();
   return out;
 }
 
@@ -49,6 +51,9 @@ std::ostream& operator<<(std::ostream& out, const pat::Muon& mu) {
   if (mu.hasUserInt("trackUsedForMomentum")) 
     out << "\nTrack used for momentum: " << mu.userInt("trackUsedForMomentum");
 
+  if (mu.isTrackerMuon())
+    out << "\nTM number of matches (type=SegmentAndTrackArbitration): " << mu.numberOfMatches();
+
   if (mu.innerTrack().isNull())
     out << "\nTracker track ref is null!\n";
   else
@@ -63,6 +68,17 @@ std::ostream& operator<<(std::ostream& out, const pat::Muon& mu) {
     out << "\nGlobal track ref is null!\n";
   else
     out << "\nGlobal track:\n" << *mu.outerTrack();
+  
+  out << "\nTrigger match info: # trig obj matches: " << mu.triggerObjectMatches().size();
+  int itosa = 0;
+  BOOST_FOREACH(const pat::TriggerObjectStandAlone& tosa, mu.triggerObjectMatches()) {
+    out << "\nTriggerObjectStandAlone #" << itosa++ << "\npaths:";
+    BOOST_FOREACH(const std::string& s, tosa.pathNames())
+      out << "\n" << s;
+    out << "\nfilters:";
+    BOOST_FOREACH(const std::string& s, tosa.filterLabels())
+      out << "\n" << s;
+  }
 
   static const char* id_algos[] = {
     "TrackerMuonArbitrated",

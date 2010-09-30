@@ -44,15 +44,15 @@ samples = [
     sample('singletop_tW', 'Single t (tW)',                        '/SingleTop_tWChannel-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',     466437,   1, 10.6),
 #   sample('singletop_s',  'Single t (s-channel)',                 '/SingleTop_sChannel-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',      412055,  30, 4.6*0.32442),
 #   sample('singletop_t',  'Single t (t-channel)',                 '/SingleTop_tChannel-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',      528593,  40, 63*0.32442),
-    sample('wjets',        'W+jets',                               '/WJets-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',                 10068895,   3, 2.8e4), # is this xsec right?
     sample('ww',           'WW',                                   '/WW/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',                               122980,   4, 43),
     sample('wz',           'WZ',                                   '/WZ/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',                               118120,   5, 18),
     sample('zz',           'ZZ',                                   '/ZZ/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',                               145368,   6, 5.9),
+    sample('wjets',        'W+jets',                               '/WJets-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',                 10068895,   3, 2.8e4), # is this xsec right?
     sample('ztautau',      'Z #rightarrow #tau^{+}#tau^{-}',       '/Ztautau_M20_CTEQ66-powheg/Summer10-START36_V9_S09-v1/GEN-SIM-RECO',        1269404,  46, 1686, is_35x=False, hlt_process_name='REDIGI36X'),
-    sample('qcd100',       'QCD (100 < #hat{p}_{T} < 250 GeV/c)',  '/QCD_Pt100to250-madgraph/Spring10-START3X_V26_S09-v2/GEN-SIM-RECO',        10875132, 801, 7e6),    # LO xsec!
-    sample('qcd250',       'QCD (250 < #hat{p}_{T} < 500 GeV/c)',  '/QCD_Pt250to500-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',         4913036, 802, 1.71e5), # LO xsec!
-    sample('qcd500',       'QCD (500 < #hat{p}_{T} < 1000 GeV/c)', '/QCD_Pt500to1000-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',        4234762, 803, 5e3),    # LO xsec!
-    sample('qcd1000',      'QCD (#hat{p}_{T} > 1000 GeV/c)',       '/QCD_Pt1000toInf-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',        1661261, 804, 80),     # LO xsec!
+    sample('qcd100',       'QCD (100 < #hat{p}_{T} < 250 GeV)',    '/QCD_Pt100to250-madgraph/Spring10-START3X_V26_S09-v2/GEN-SIM-RECO',        10875132, 801, 7e6),    # LO xsec!
+    sample('qcd250',       'QCD (250 < #hat{p}_{T} < 500 GeV)',    '/QCD_Pt250to500-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',         4913036, 802, 1.71e5), # LO xsec!
+    sample('qcd500',       'QCD (500 < #hat{p}_{T} < 1000 GeV)',   '/QCD_Pt500to1000-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',        4234762, 803, 5e3),    # LO xsec!
+    sample('qcd1000',      'QCD (#hat{p}_{T} > 1000 GeV)',         '/QCD_Pt1000toInf-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',        1661261, 804, 80),     # LO xsec!
 ]
 samples.reverse()
 

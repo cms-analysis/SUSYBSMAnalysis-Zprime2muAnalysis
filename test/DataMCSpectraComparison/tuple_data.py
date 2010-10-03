@@ -20,8 +20,10 @@ lumis_per_job = 100
 '''
     
     x = [
-        ('jul15',         '/Mu/Run2010A-Jul15thReReco-v1/RECO', 'jsons/jul15.json',                   'GR_R_37X_V6D'),
-        ('prompt_144114', '/Mu/Run2010A-PromptReco-v4/RECO',    'jsons/prompt.140160-144114.v2.json', 'GR10_P_V7'),
+        ('jul15',          '/Mu/Run2010A-Jul15thReReco-v1/RECO', 'jsons/jul15.json',          'GR_R_37X_V6D'),
+        ('prompt',         '/Mu/Run2010A-PromptReco-v4/RECO',    'jsons/prompt.json',         'GR10_P_V7'),
+#        ('promptB',        '/Mu/Run2010B-PromptReco-v2/RECO',    'jsons/prompt.json',         'GR10_P_V10'),
+#        ('prompt_dcsonly', '/Mu/Run2010B-PromptReco-v2/RECO',    'jsons/prompt_dcsonly.json', 'GR10_P_V10'),
         ]
 
     for name, dataset, json, tag in x:

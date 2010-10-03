@@ -1,5 +1,15 @@
 #!/usr/bin/env python
 
+def big_warn(s):
+    x = '#' * len(s)
+    print x
+    print x
+    print x
+    print s
+    print x
+    print x
+    print x
+
 def parse_enum(cpp_file, enum_name, as_list=False, drop_last=False, remove_substr=None):
     """Poor man's C++ enum parsing."""
     import os
@@ -69,59 +79,7 @@ def strip_comments(cpp_src):
     cpp_src = replace_all(cpp_src, '/*', '*/')
     return cpp_src
 
-# Useful backports from python version > 2.4.
-try:
-    from collections import defaultdict
-except:
-    # http://code.activestate.com/recipes/523034/
-    class defaultdict(dict):
-        def __init__(self, default_factory=None, *a, **kw):
-            if (default_factory is not None and
-                not hasattr(default_factory, '__call__')):
-                raise TypeError('first argument must be callable')
-            dict.__init__(self, *a, **kw)
-            self.default_factory = default_factory
-        def __getitem__(self, key):
-            try:
-                return dict.__getitem__(self, key)
-            except KeyError:
-                return self.__missing__(key)
-        def __missing__(self, key):
-            if self.default_factory is None:
-                raise KeyError(key)
-            self[key] = value = self.default_factory()
-            return value
-        def __reduce__(self):
-            if self.default_factory is None:
-                args = tuple()
-            else:
-                args = self.default_factory,
-            return type(self), args, None, None, self.items()
-        def copy(self):
-            return self.__copy__()
-        def __copy__(self):
-            return type(self)(self.default_factory, self)
-        def __deepcopy__(self, memo):
-            import copy
-            return type(self)(self.default_factory,
-                              copy.deepcopy(self.items()))
-        def __repr__(self):
-            return 'defaultdict(%s, %s)' % (self.default_factory,
-                                            dict.__repr__(self))
-
-try:
-    from itertools import product
-except ImportError:
-    # http://docs.python.org/library/itertools.html#itertools.product
-    def product(*args, **kwds):
-        pools = map(tuple, args) * kwds.get('repeat', 1)
-        result = [[]]
-        for pool in pools:
-            result = [x+[y] for x in result for y in pool]
-        for prod in result:
-            yield tuple(prod)
-    
-__all__ = ['defaultdict', 'parse_enum', 'product', 'rec_level_code', 'rec_levels', 'replace_all', 'strip_comments']
+__all__ = ['big_warn', 'parse_enum', 'rec_level_code', 'rec_levels', 'replace_all', 'strip_comments']
 
 if __name__ == '__main__':
     print 'test replace_all:'

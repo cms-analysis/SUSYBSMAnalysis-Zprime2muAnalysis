@@ -3,14 +3,6 @@
 import os
 
 class sample:
-    @classmethod
-    def psethash(cls, dataset):
-        # These need to be specified with whatever crab made for the
-        # published dataset name.
-        if 'Zmumu' in dataset or 'Ztautau' in dataset:
-            return 'ea1b4401edd0c9e8af9e80917519ee4e'
-        return 'f1606b2f2aa07e70082d78e786896133'
-
     def __init__(self, name, nice_name, dataset, nevents, color, cross_section, k_factor=1, filenames=None, scheduler='condor', is_35x=True, hlt_process_name='REDIGI', ana_dataset=None):
         self.name = name
         self.nice_name = nice_name
@@ -24,7 +16,17 @@ class sample:
         self.is_35x = is_35x
         self.hlt_process_name = hlt_process_name
         self.partial_weight = cross_section / float(nevents) * k_factor # the total weight is partial_weight * integrated_luminosity
-        self.ana_dataset = '/%s/%s-datamc_%s-%s/USER' % (dataset.split('/')[1], os.environ['USER'], name, self.psethash(dataset)) if ana_dataset is None else ana_dataset
+        self.ana_dataset_ = ana_dataset
+
+    @property
+    def ana_dataset(self):
+        if self.ana_dataset_ is not None:
+            return self.ana_dataset_
+        publish_log_fn = 'crab/publish_logs/publish.crab_datamc_%s' % self.name
+        ad = [x.strip().replace('=== dataset ', '') for x in open(publish_log_fn).readlines() if x.startswith('=== dataset')]
+        assert(len(ad) == 1)
+        self.ana_dataset_ = ad[0]
+        return ad[0]
 
     @property
     def filenames(self):
@@ -59,21 +61,11 @@ samples.reverse()
 for sample in samples:
     exec '%s = sample' % sample.name
 
-def warn(s):
-    x = '#' * len(s)
-    print x
-    print x
-    print x
-    print s
-    print x
-    print x
-    print x
-
-warn('modifying qcd100,250 and wjets nevents (by just a small amount, though)')
+from SUSYBSMAnalysis.Zprime2muAnalysis.tools import big_warn
+big_warn('modifying qcd100,250 and wjets nevents (by just a small amount, though)')
 wjets.nevents = 10067072
 qcd100.nevents = 10862502
 qcd250.nevents -= 25000
 
 print 'samples are:'
-for i,s in enumerate(samples):
-    print '%2i:%20s' % (i, s.name)
+print ' '.join(s.name for s in samples)

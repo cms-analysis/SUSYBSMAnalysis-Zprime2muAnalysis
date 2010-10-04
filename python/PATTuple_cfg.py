@@ -85,7 +85,7 @@ process.countPatMuons.minNumber = 1
 # could be emulated using the AND of all of the separate ones, but
 # it's nice for convenience.
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
-goodDataHLTPhysicsDeclared = cms.Path(process.hltPhysicsDeclared)
-goodDataPrimaryVertexFilter = cms.Path(process.primaryVertexFilter)
-goodDataNoScraping = cms.Path(process.noscraping)
-goodDataAll = cms.Path(process.hltPhysicsDeclared * process.primaryVertexFilter * process.noscraping)
+process.goodDataHLTPhysicsDeclared = cms.Path(process.hltPhysicsDeclared)
+process.goodDataPrimaryVertexFilter = cms.Path(process.primaryVertexFilter)
+process.goodDataNoScraping = cms.Path(process.noscraping)
+process.goodDataAll = cms.Path(process.hltPhysicsDeclared * process.primaryVertexFilter * process.noscraping)

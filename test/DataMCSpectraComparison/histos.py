@@ -9,6 +9,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.PATCandViewShallowCloneCombiner_cfi impor
 # CandCombiner includes charge-conjugate decays with no way to turn it
 # off. To get e.g. mu+mu+ separate from mu-mu-, cut on the sum of the
 # pdgIds (= -26 for mu+mu+).
+common_dil_cut = '' #daughter(0).momentum.Dot(daughter(1).momentum())/daughter(0).momentum().Mag()/daughter(1).momentum().Mag() > 0.02'
 dils = [
     ('MuonsPlusMuonsMinus',          '%(leptons_name)s:muons@+ %(leptons_name)s:muons@-',         'daughter(0).pdgId() + daughter(1).pdgId() == 0'),
     ('MuonsPlusMuonsPlus',           '%(leptons_name)s:muons@+ %(leptons_name)s:muons@+',         'daughter(0).pdgId() + daughter(1).pdgId() == -26'),
@@ -33,7 +34,11 @@ cuts = [
     ('VBTF', vbtf_loose),
     ]
 
+simple_ntuple = False
+
 for cut_name, muon_cuts in cuts:
+    #if cut_name != 'VBTF': continue
+    
     # Keep track of modules to put in the path for this set of cuts.
     path_list = []
 
@@ -46,8 +51,13 @@ for cut_name, muon_cuts in cuts:
 
     # Make all the combinations of dileptons we defined above.
     for dil_name, dil_decay, dil_cut in dils:
+        #if dil_name != 'MuonsPlusMuonsMinus': continue
+
         name = cut_name + dil_name
         allname = 'all' + name
+
+        if common_dil_cut and dil_cut:
+            dil_cut = common_dil_cut + ' && (%s)' % dil_cut
 
         alldil = process.allDimuons if cut_name == 'VBTF' else plainDimuons
         alldil = alldil.clone(decay = dil_decay % locals(), cut = dil_cut)
@@ -59,10 +69,16 @@ for cut_name, muon_cuts in cuts:
         setattr(process, name + 'Histos', histos)
         path_list.append(alldil * dil * histos)
 
+        if simple_ntuple:
+            SimpleNtupler = cms.EDAnalyzer('SimpleNtupler', hlt_src = cms.InputTag('TriggerResults', '', 'HLT'), dimu_src = cms.InputTag(name))
+            setattr(process, name + 'SimpleNtupler', SimpleNtupler)
+            path_list[-1] *= SimpleNtupler
+
     # Finally, make the path for this set of cuts.
     pathname = 'path' + cut_name
     path = cms.Path(process.goodDataFilter * process.hltFilter * process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list))
     setattr(process, pathname, path)
+
 
 if 'data' in sys.argv:
     # "daata" since otherwise crab tries to pack up that dir and send

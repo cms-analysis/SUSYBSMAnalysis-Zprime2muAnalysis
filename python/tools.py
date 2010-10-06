@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import os
+
 def big_warn(s):
     x = '#' * len(s)
     print x
@@ -9,6 +11,12 @@ def big_warn(s):
     print x
     print x
     print x
+
+def files_from_dbs(dataset, ana02=True):
+    # could use DBSAPI but this is easier
+    url = '--url https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet' if ana02 else ''
+    cmd = 'dbs search %(url)s --query "find file where dataset=%(dataset)s"' % locals()
+    return [y.strip('\n') for y in os.popen(cmd).readlines() if '.root' in y]
 
 def parse_enum(cpp_file, enum_name, as_list=False, drop_last=False, remove_substr=None):
     """Poor man's C++ enum parsing."""
@@ -79,7 +87,7 @@ def strip_comments(cpp_src):
     cpp_src = replace_all(cpp_src, '/*', '*/')
     return cpp_src
 
-__all__ = ['big_warn', 'parse_enum', 'rec_level_code', 'rec_levels', 'replace_all', 'strip_comments']
+__all__ = ['big_warn', 'files_from_dbs', 'parse_enum', 'rec_level_code', 'rec_levels', 'replace_all', 'strip_comments']
 
 if __name__ == '__main__':
     print 'test replace_all:'

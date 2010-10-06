@@ -24,12 +24,14 @@ private:
   edm::InputTag src;
   StringCutObjectSelector<pat::CompositeCandidate> selector;
   unsigned max_candidates;
+  double back_to_back_cos_angle_min;
 };
 
 Zprime2muCompositeCandidatePicker::Zprime2muCompositeCandidatePicker(const edm::ParameterSet& cfg)
   : src(cfg.getParameter<edm::InputTag>("src")),
     selector(cfg.getParameter<std::string>("cut")),
-    max_candidates(cfg.getParameter<unsigned>("max_candidates"))
+    max_candidates(cfg.getParameter<unsigned>("max_candidates")),
+    back_to_back_cos_angle_min(cfg.getParameter<double>("back_to_back_cos_angle_min"))
 {
   produces<pat::CompositeCandidateCollection>();
 }
@@ -78,6 +80,10 @@ void Zprime2muCompositeCandidatePicker::remove_overlap(pat::CompositeCandidateCo
   }
 }
 
+double back_to_back_cos_angle(const pat::CompositeCandidate& dil) {
+  return dil.daughter(0)->momentum().Dot(dil.daughter(1)->momentum()) / dil.daughter(0)->p() / dil.daughter(1)->p();
+}
+
 void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::EventSetup& setup) {
   edm::Handle<pat::CompositeCandidateCollection> cands;
   event.getByLabel(src, cands);
@@ -86,9 +92,20 @@ void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::Ev
 
   // Copy all the candidates that pass the specified cuts into the new
   // output vector.
-  for (pat::CompositeCandidateCollection::const_iterator c = cands->begin(), ce = cands->end(); c != ce; ++c)
-    if (selector(*c))
-      new_cands->push_back(*c);
+  for (pat::CompositeCandidateCollection::const_iterator c = cands->begin(), ce = cands->end(); c != ce; ++c) {
+    // Some cuts can be simply specified through the
+    // StringCutSelector.
+    if (!selector(*c))
+      continue;
+   
+    // Now apply cuts that can't.
+
+    // Back-to-back cut to kill cosmics.
+    if (fabs(back_to_back_cos_angle(*c)) < back_to_back_cos_angle_min)
+      continue;
+
+    new_cands->push_back(*c);
+  }
   
   // Remove cands of lower invariant mass that are comprised of a
   // lepton that has been used by a higher invariant mass one.

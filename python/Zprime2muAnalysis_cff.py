@@ -31,11 +31,11 @@ leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          muon_photon_match_src = cms.InputTag('muonPhotonMatch')
                          )
 
-
 dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          src = cms.InputTag('allDimuons'),
                          cut = cms.string(''),
-                         max_candidates = cms.uint32(1)
+                         max_candidates = cms.uint32(1),
+                         back_to_back_cos_angle_min = cms.double(0),
                          )
 
 Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)

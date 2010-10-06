@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+from SUSYBSMAnalysis.Zprime2muAnalysis.tools import files_from_dbs
 
 class sample:
     def __init__(self, name, nice_name, dataset, nevents, color, cross_section, k_factor=1, filenames=None, scheduler='condor', is_35x=True, hlt_process_name='REDIGI', ana_dataset=None):
@@ -34,9 +35,7 @@ class sample:
         # using crab.
         if self.filenames_ is not None:
             return self.filenames_
-        # could use DBSAPI but this is easier
-        cmd = 'dbs search --url https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet --query "find file where dataset=%s"' % self.ana_dataset
-        return [y.strip('\n') for y in os.popen(cmd).readlines() if '.root' in y]
+        return files_from_dbs(self.ana_dataset, ana02=True)
 
 # https://twiki.cern.ch/twiki/bin/view/CMS/CrossSections_3XSeries for
 # xsecs (all below in pb)

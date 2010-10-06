@@ -21,7 +21,7 @@ for x in sys.argv:
     if 'compare' in x:
         to_compare = x.split('=')[1]
 
-histo_dir = 'histos'
+histo_dir = 'ana_datamc'
 def dir_name(c, d):
     return c + d + 'Histos'
 
@@ -69,7 +69,7 @@ for cuts in cutss:
     plot_dir = 'plots/datamc/%s/%i_%i/%s' % (to_compare, x_axis_limits[0], x_axis_limits[1], cuts)
     ps.set_plot_dir(plot_dir)
 
-    fdata = ROOT.TFile(os.path.join(histo_dir, 'emu_data.root'))
+    fdata = ROOT.TFile(os.path.join(histo_dir, 'ana_datamc_data.root'))
     data = dict((d, getattr(fdata, dir_name(cuts, d)).Get(to_compare).Clone()) for d in dileptons)
 
     for dilepton in dileptons:
@@ -77,7 +77,7 @@ for cuts in cutss:
             # It would be more efficient to have the sample loop be
             # the outer one thanks to the file opening/closing, but
             # the code is cleaner this way.
-            f = ROOT.TFile(os.path.join(histo_dir, 'emu_%s.root' % sample.name))
+            f = ROOT.TFile(os.path.join(histo_dir, 'ana_datamc_%s.root' % sample.name))
             sample.mass = getattr(f, dir_name(cuts, dilepton)).Get(to_compare).Clone()
             sample.mass.Rebin(rebin_factor)
             sample.mass.Scale(sample.partial_weight * int_lumi)

@@ -113,10 +113,10 @@ return_data = 1
         print sample.name
 
         new_py = open('histos.py').read()
-        new_py += "\nprocess.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', '%(hlt_process_name)s')\n" % sample.__dict__
+        new_py += "\nprocess.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', '%(hlt_process_name)s')\n" % sample
         open('histos_crab.py', 'wt').write(new_py)
 
-        open('crab.cfg', 'wt').write(crab_cfg % sample.__dict__)
+        open('crab.cfg', 'wt').write(crab_cfg % sample)
         os.system('crab -create -submit all')
 
     os.system('rm crab.cfg histos_crab.py')

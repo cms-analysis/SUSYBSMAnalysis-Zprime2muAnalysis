@@ -37,10 +37,15 @@ class sample:
             return self.filenames_
         return files_from_dbs(self.ana_dataset, ana02=True)
 
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+
 # https://twiki.cern.ch/twiki/bin/view/CMS/CrossSections_3XSeries for
 # xsecs (all below in pb)
 samples = [
-    sample('zmumu',        'Z #rightarrow #mu^{+}#mu^{-}',         '/Zmumu_M20_CTEQ66-powheg/Summer10-START36_V9_S09-v2/GEN-SIM-RECO',          1768457,   7, 1686, is_35x=False, hlt_process_name='REDIGI36X'),
+    sample('zmumu',        'Z #rightarrow #mu^{+}#mu^{-}',         '/Zmumu_M20_CTEQ66-powheg/Summer10-START36_V9_S09-v2/GEN-SIM-RECO',          2.2e6,   7, 1686, is_35x=False, hlt_process_name='REDIGI36X'), # 1768457
+#    sample('zmumupythia',  'Z #rightarrow #mu^{+}#mu^{-}',         '/Zmumu/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',                           2111268,   7, 1300),
     sample('ttbar',        't#bar{t}',                             '/TTbarJets-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',              1483404,   2, 152),
     sample('singletop_tW', 'Single t (tW)',                        '/SingleTop_tWChannel-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',     466437,   1, 10.6),
 #   sample('singletop_s',  'Single t (s-channel)',                 '/SingleTop_sChannel-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',      412055,  30, 4.6*0.32442),

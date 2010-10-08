@@ -1,7 +1,6 @@
 import os, FWCore.ParameterSet.Config as cms
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTuple_cfg import process
-process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
 process.p = cms.Path(process.patDefaultSequence)
 
 # Loose cut on muons; stronger cuts to be applied for different

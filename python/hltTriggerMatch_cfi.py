@@ -7,7 +7,7 @@ muonTriggerMatchHLTMuons = cms.EDProducer('PATTriggerMatcherDRDPtLessByR',
     filterIdsEnum         = cms.vstring('TriggerMuon'),
     filterIds             = cms.vint32(0),
     filterLabels          = cms.vstring('*'),
-    pathNames             = cms.vstring('HLT_Mu9'),
+    pathNames             = cms.vstring('HLT_Mu9', 'HLT_Mu11', 'HLT_DoubleMu3', 'HLT_DoubleMu3_v2', 'HLT_Mu13_v1', 'HLT_Mu15_v1'),
     collectionTags        = cms.vstring('*'),
     # Follow VBTF's matching criteria.
     maxDPtRel             = cms.double(1),

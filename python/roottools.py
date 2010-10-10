@@ -233,25 +233,45 @@ class plot_saver:
         self.c = ROOT.TCanvas('c%i' % plot_saver.i, '', 820, 630)
         plot_saver.i += 1
         self.set_plot_dir(plot_dir)
+        self.saved = []
 
+    def __del__(self):
+        if not self.saved:
+            return
+        html = open(os.path.join(self.plot_dir, 'index.html'), 'wt')
+        html.write('<html><body><pre>\n')
+        for i, (fn, log, root) in enumerate(self.saved):
+            bn = os.path.basename(fn)
+            html.write('%10i ' % i)
+            if log:
+                html.write(' <a href="%s">log</a>' % os.path.basename(log))
+            if root:
+                html.write(' <a href="%s">root</a>' % os.path.basename(root))
+            html.write('  <a href="%s">%s</a>' % (bn, bn))
+            html.write('\n')
+        html.write('</pre></body></html>\n')
+        
     def set_plot_dir(self, plot_dir):
         self.plot_dir = plot_dir
         if plot_dir is not None:
-            os.system('mkdir -p %s/_log' % self.plot_dir)
-            os.system('mkdir -p %s/_root' % self.plot_dir)
+            os.system('mkdir -p %s' % self.plot_dir)
 
     def save(self, n, log=True, root=True):
         if self.plot_dir is None:
             raise ValueError('save called before plot_dir set!')
         self.c.SetLogy(0)
-        self.c.SaveAs(os.path.join(self.plot_dir, n + '.png'))
+        fn = os.path.join(self.plot_dir, n + '.png')
+        self.c.SaveAs(fn)
         if root:
-            self.c.SaveAs(os.path.join(self.plot_dir, '_root', n + '.root'))
+            root = os.path.join(self.plot_dir, n + '.root')
+            self.c.SaveAs(root)
         if log:
             self.c.SetLogy(1)
-            self.c.SaveAs(os.path.join(self.plot_dir, '_log', n + '.log.png'))
+            log = os.path.join(self.plot_dir, n + '.log.png')
+            self.c.SaveAs(log)
             self.c.SetLogy(0)
-
+        self.saved.append((fn, log, root))
+    
 def real_hist_max(h, return_bin=False, user_range=None, use_error_bars=True):
     """Find the real maximum value of the histogram, taking into
     account the error bars and/or the specified range."""

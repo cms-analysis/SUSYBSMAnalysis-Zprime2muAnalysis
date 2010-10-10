@@ -18,8 +18,8 @@ import FWCore.ParameterSet.Config as cms
 # - at least two muon stations in the fit (globalTrack.hitPattern.muonStationsWithValidHits >= 2)
 # - must be a tracker muon
 # - |eta| < 2.1
-# - trigger matching to HLT_Mu9 (!triggerObjectMatchesByPath("HLT_Mu9").empty())
-# - the L3 muon so matched has |eta| < 2.1 (abs(triggerObjectMatchesByPath("HLT_Mu9").at(0).eta()) < 2.1)
+# - trigger matching to the single muon HLT path (e.g. !triggerObjectMatchesByPath("HLT_Mu9").empty())
+# - the L3 muon so matched has |eta| < 2.1 (e.g. abs(triggerObjectMatchesByPath("HLT_Mu9").at(0).eta()) < 2.1)
 #
 # (The single muon HLT path used will change as the trigger menu
 # evolves with luminosity.)
@@ -28,8 +28,20 @@ import FWCore.ParameterSet.Config as cms
 # both muons to pass the loose cut, and at least one must pass the
 # tight cut.
 
-vbtf_loose = 'isGlobalMuon && pt > 20. && abs(eta) < 2.4 && isolationR03.sumPt < 3 && innerTrack.hitPattern.numberOfValidTrackerHits >= 10'
-vbtf_tight = 'dB < 0.2 && globalTrack.normalizedChi2 < 10 && innerTrack.hitPattern.numberOfValidPixelHits >= 1 && globalTrack.hitPattern.muonStationsWithValidHits >= 2 && isTrackerMuon && abs(eta) < 2.1 && !triggerObjectMatchesByPath("HLT_Mu9").empty() && abs(triggerObjectMatchesByPath("HLT_Mu9").at(0).eta()) < 2.1'
+vbtf_loose = 'isGlobalMuon && ' \
+             'pt > 20. && ' \
+             'abs(eta) < 2.4 && ' \
+             'isolationR03.sumPt < 3 && ' \
+             'innerTrack.hitPattern.numberOfValidTrackerHits >= 10'
+
+vbtf_tight = 'dB < 0.2 && ' \
+             'globalTrack.normalizedChi2 < 10 && ' \
+             'innerTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \
+             'globalTrack.hitPattern.muonStationsWithValidHits >= 2 && ' \
+             'isTrackerMuon && ' \
+             'abs(eta) < 2.1 && ' \
+             '((!triggerObjectMatchesByPath("HLT_Mu9").empty() && abs(triggerObjectMatchesByPath("HLT_Mu9").at(0).eta()) < 2.1 && triggerObjectMatchesByPath("HLT_Mu9").at(0).pt() > 11) || ' \
+             '(!triggerObjectMatchesByPath("HLT_Mu11").empty() && abs(triggerObjectMatchesByPath("HLT_Mu11").at(0).eta()) < 2.1))'
 
 allDimuons = cms.EDProducer('LooseTightCandViewShallowCloneCombiner',
                             decay = cms.string('leptons:muons@+ leptons:muons@-'),

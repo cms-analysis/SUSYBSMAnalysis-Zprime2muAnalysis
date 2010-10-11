@@ -4,15 +4,16 @@ import sys, os
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import real_hist_max, real_hist_min, set_zp2mu_style, plot_saver, ROOT
 set_zp2mu_style()
 
-# 166.9 nb in jul15.root, 2880.2 in prompt.root
-int_lumi = (166.9 + 2880.2)/1000 # /pb
+# 166.9 nb in jul15.root, 2880.2 in prompt.root, 5490.4 in promptB (prompt json + allgood dcsonly json)
+int_lumi = (166.9 + 2880.2 + 5490.4)/1000
 #int_lumi = 100
 
 from samples import *
 
-rebin_factor = 10
-x_axis_limits = 110, 400
+rebin_factor = 5
+x_axis_limits = 40, 400
 to_compare = 'DileptonMass'
+global_rescale = 3273/3404.6 if False else None
 
 for x in sys.argv:
     if 'xax' in x:
@@ -53,20 +54,37 @@ unitize = {
 #dileptons = ['MuonsPlusMuonsMinus', 'MuonsPlusMuonsPlus', 'MuonsMinusMuonsMinus', 'MuonsSameSign', 'ElectronsPlusElectronsMinus', 'ElectronsPlusElectronsPlus', 'ElectronsMinusElectronsMinus', 'ElectronsSameSign', 'MuonsPlusElectronsMinus', 'MuonsMinusElectronsPlus', 'MuonsPlusElectronsPlus', 'MuonsMinusElectronsMinus', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign']
 #cutss = ['Std','VBTF','Pt20']
 
-dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'ElectronsPlusElectronsMinus', 'ElectronsSameSign', 'MuonsElectronsOppSign']
+dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsElectronsOppSign']
 cutss = ['VBTF']
 
 ROOT.TH1.AddDirectory(False)
 
-ps = plot_saver('plots/datamc')
+sumMCfile = ROOT.TFile('sumMC.root', 'recreate')
+
+pdir = 'plots/datamc'
+if global_rescale is not None:
+    pdir += '_normToZ'
+ps = plot_saver(pdir)
 
 def integ(h,a,b=1e9):
     return h.Integral(h.FindBin(a), h.FindBin(b))
 
+def cumulative(h):
+    nb = h.GetNbinsX()
+    hc = ROOT.TH1F(h.GetName() + '_cumulative', '', nb, h.GetXaxis().GetXmin(), h.GetXaxis().GetXmax())
+    for i in xrange(nb+1, 0, -1):
+        prev = 0 if i == nb+1 else hc.GetBinContent(i+1)
+        hc.SetBinContent(i, h.GetBinContent(i) + prev)
+    return hc
+
+if global_rescale is not None:
+    for s in samples:
+        s.partial_weight *= global_rescale
+
 #samples = [s for s in samples if not s.name in ['ww', 'zz', 'wz', 'qcd500']]
 
 for cuts in cutss:
-    plot_dir = 'plots/datamc/%s/%i_%i/%s' % (to_compare, x_axis_limits[0], x_axis_limits[1], cuts)
+    plot_dir = pdir + '/%s/%i_%i/%s' % (to_compare, x_axis_limits[0], x_axis_limits[1], cuts)
     ps.set_plot_dir(plot_dir)
 
     fdata = ROOT.TFile(os.path.join(histo_dir, 'ana_datamc_data.root'))
@@ -82,13 +100,17 @@ for cuts in cutss:
             sample.mass.Rebin(rebin_factor)
             sample.mass.Scale(sample.partial_weight * int_lumi)
 
+        h = samples[0].mass
+        summc = ROOT.TH1F(cuts + dilepton + '_sumMC', '', h.GetNbinsX(), h.GetXaxis().GetXmin(), h.GetXaxis().GetXmax())
+        summc.SetDirectory(sumMCfile)
+        
         ## Sort by increasing integral.
         #samples.sort(key=lambda x: x.mass.Integral(x.mass.FindBin(150), x.mass.FindBin(1e9)))
         #print dilepton, [x.name for x in samples]
 
         hdata = data[dilepton]
 
-        for mass_range in [(60,120), (120,)]:
+        for mass_range in [(60,120), (70,110), (120,)]:
             print 'cuts: %s  dilepton: %s  mass range: %s' % (cuts, dilepton, mass_range)
             for sample in samples:
                 sample.integral = integ(sample.mass, *mass_range)
@@ -122,6 +144,7 @@ for cuts in cutss:
             h.SetLineColor(sample.color)
             h.SetMarkerStyle(0)
             s.Add(h)
+            summc.Add(h)
             last_mc = h
 
         l = ROOT.TLegend(0.69, 0.56, 0.87, 0.87)
@@ -160,7 +183,7 @@ for cuts in cutss:
         hdata.SetTitle('')
         hdata.GetXaxis().SetRangeUser(*x_axis_limits)
         hdata.GetXaxis().SetTitle(titleize[to_compare] % (subtitleize[dilepton], unitize[to_compare]))
-        hdata.GetYaxis().SetTitle('Events/10 %s' % unitize[to_compare])
+        hdata.GetYaxis().SetTitle('Events/%i %s' % (rebin_factor, unitize[to_compare]))
         hdata.SetMinimum(mymin)
         hdata.SetMaximum(mymax)
         hdata.SetMarkerStyle(20)
@@ -180,6 +203,40 @@ for cuts in cutss:
 
         l.Draw('same')
 
+        data_for_file = hdata.Clone(cuts + dilepton + '_data')
+        data_for_file.SetDirectory(sumMCfile)
+        
         ps.save(dilepton)
 
+        data_c = cumulative(hdata)
+        summc_c = cumulative(summc)
+        summc_c.SetLineColor(ROOT.kBlue)
+
+        for h in (data_c, summc_c):
+            h.GetXaxis().SetRangeUser(*x_axis_limits)
+            h.SetStats(0)
+            h.SetTitle('')
+            h.GetYaxis().SetRangeUser(0.1, 6.5e3)
+            h.GetXaxis().SetTitle(titleize[to_compare] % (subtitleize[dilepton], unitize[to_compare]))
+            h.GetYaxis().SetTitle('Events < X')
+            h.SetMarkerStyle(20)
+            h.SetMarkerSize(0.5)
+
+        h1,h2 = (data_c, summc_c) if data_c.GetMaximum() > summc_c.GetMaximum() else (summc_c, data_c)
+        h1.Draw()
+        h2.Draw('same')
+
+        t1.Draw()
+        t2.Draw()
+
+        l = ROOT.TLegend(0.62, 0.71, 0.87, 0.87)
+        l.SetFillColor(0)
+        l.AddEntry(data_c, 'Data', 'L')
+        l.AddEntry(summc_c, 'Simulation', 'L')
+        l.Draw('same')
+
+        ps.save(dilepton + '_cumulative')
 #        raise 1
+
+        sumMCfile.Write()
+

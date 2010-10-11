@@ -29,8 +29,9 @@ dils = [
 
 # Define groups of cuts to make the plots for.
 cuts = [
-    ('Pt20', 'isGlobalMuon && pt > 20'),
-    ('Std',  'isGlobalMuon && pt > 20 && isolationR03.sumPt < 10'),
+# If adding these other cuts back in, hltFilter needs to be added in the below.
+#    ('Pt20', 'isGlobalMuon && pt > 20'), 
+#    ('Std',  'isGlobalMuon && pt > 20 && isolationR03.sumPt < 10'),
     ('VBTF', vbtf_loose),
     ]
 
@@ -74,20 +75,22 @@ for cut_name, muon_cuts in cuts:
             setattr(process, name + 'SimpleNtupler', SimpleNtupler)
             path_list[-1] *= SimpleNtupler
 
-    # Finally, make the path for this set of cuts.
+    # Finally, make the path for this set of cuts. Don't use hltFilter
+    # here, but rely on the VBTF selection to take care of it -- easy
+    # way to handle the changing trigger names.
     pathname = 'path' + cut_name
-    path = cms.Path(process.goodDataFilter * process.hltFilter * process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list))
+    path = cms.Path(process.goodDataFilter * process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list))
     setattr(process, pathname, path)
-
 
 if 'data' in sys.argv:
     # "daata" since otherwise crab tries to pack up that dir and send
     # it off to the worker nodes...
     process.source.fileNames = ['file:work/daata/jul15.root', 'file:work/daata/prompt.root']
     process.TFileService.fileName = 'ana_datamc_data.root'
-#    process.pp = process.pathVBTF.copy()
-#    process.ppp = cms.EDAnalyzer('PrintAbove110', src = cms.InputTag('VBTFMuonsPlusMuonsMinus'), above = cms.double(50))
-#    process.pp *= process.ppp
+
+    #process.ppp = cms.EDAnalyzer('PrintAbove110', src = cms.InputTag('VBTFMuonsPlusMuonsMinus'), above = cms.double(50))
+    #process.pathVBTF *= process.ppp
+
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''

@@ -3,7 +3,7 @@
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
-from SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff import vbtf_loose, vbtf_tight, allDimuons
+from SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff import vbtf_loose, vbtf_trigger_match, vbtf_tight, allDimuons
 
 # Define the numerators and denominators, removing cuts from the VBTF
 # allDimuons maker. "NoX" means remove cut X (i.e. the denominators),
@@ -20,7 +20,7 @@ process.allDimuonsVBTFNoPxHits  = allDimuons.clone(tight_cut = vbtf_tight.replac
 process.allDimuonsVBTFNoMuStns  = allDimuons.clone(tight_cut = vbtf_tight.replace(' && globalTrack.hitPattern.muonStationsWithValidHits >= 2', ''))
 process.allDimuonsVBTFNoTkMuon  = allDimuons.clone(tight_cut = vbtf_tight.replace(' && isTrackerMuon', ''))
 process.allDimuonsVBTFNoEta21   = allDimuons.clone(tight_cut = vbtf_tight.replace(' && abs(eta) < 2.1', ''))
-process.allDimuonsVBTFNoTrgMtch = allDimuons.clone(tight_cut = vbtf_tight.replace(' && !triggerObjectMatchesByPath("HLT_Mu9").empty() && abs(triggerObjectMatchesByPath("HLT_Mu9").at(0).eta()) < 2.1', ''))
+process.allDimuonsVBTFNoTrgMtch = allDimuons.clone(tight_cut = vbtf_tight.replace(' && ' + vbtf_trigger_match, ''))
 process.allDimuonsVBTFNoIso10   = process.allDimuonsVBTFNoIso3.clone()
 process.allDimuonsVBTFNoNo      = allDimuons.clone()
 process.allDimuonsVBTFNoNoIso10 = allDimuons.clone(loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 3', ' && isolationR03.sumPt < 10'))

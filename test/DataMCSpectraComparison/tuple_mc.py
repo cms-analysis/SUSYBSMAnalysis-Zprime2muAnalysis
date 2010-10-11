@@ -33,8 +33,6 @@ events_per_job = 25000
 
         sample.job_control = job_control % sample.__dict__
         open('crab.cfg', 'wt').write(crab_cfg % sample.__dict__)
-#        os.system('cat crab.cfg')
-#        raw_input('ok?')
         os.system('crab -create -submit all')
 
-#    os.system('rm crab.cfg')
+    os.system('rm crab.cfg')

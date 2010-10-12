@@ -1,7 +1,20 @@
 #!/usr/bin/env python
 
-import FWCore.ParameterSet.Config as cms
+import sys, FWCore.ParameterSet.Config as cms
 
+def files_from_argv(process):
+    files = [x for x in sys.argv if '.root' in x]
+    for f in sys.argv:
+        if '.root' not in x:
+            continue
+        
+        if '/store' in f:
+            files[i] = f[f.index('/store'):]
+        else:
+            files[i] = 'file:' + f
+        
+    process.source.fileNames = files
+    
 def set_events_to_process(process, run_events, run=None):
     '''Set the PoolSource parameter eventsToProcess appropriately,
     given the desired runs/event numbers passed in. If run is None,

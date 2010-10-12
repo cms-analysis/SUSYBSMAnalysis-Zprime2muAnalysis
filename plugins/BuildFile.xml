@@ -48,6 +48,10 @@
 <library file="Zprime2muCompositeCandidatePicker.cc" name="Zprime2muCompositeCandidatePicker">
   <use name="CommonTools/Utils"/>
   <use name="DataFormats/PatCandidates"/>
+  <use name="RecoVertex/KalmanVertexFit"/>
+  <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
+  <use name="TrackingTools/Records"/>
+  <use name="TrackingTools/TransientTrack"/>
 </library>
 
 <library file="GenParticleMerger.cc" name="GenParticleMerger">

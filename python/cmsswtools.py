@@ -3,15 +3,15 @@
 import sys, FWCore.ParameterSet.Config as cms
 
 def files_from_argv(process):
-    files = [x for x in sys.argv if '.root' in x]
+    files = []
     for f in sys.argv:
-        if '.root' not in x:
+        if '.root' not in f:
             continue
-        
         if '/store' in f:
-            files[i] = f[f.index('/store'):]
+            f = f[f.index('/store'):]
         else:
-            files[i] = 'file:' + f
+            f = 'file:' + f
+        files.append(f)
         
     process.source.fileNames = files
     

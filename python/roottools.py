@@ -232,10 +232,13 @@ class plot_saver:
     def __init__(self, plot_dir=None):
         self.c = ROOT.TCanvas('c%i' % plot_saver.i, '', 820, 630)
         plot_saver.i += 1
-        self.set_plot_dir(plot_dir)
         self.saved = []
+        self.set_plot_dir(plot_dir)
 
     def __del__(self):
+        self.write_index()
+        
+    def write_index(self):
         if not self.saved:
             return
         html = open(os.path.join(self.plot_dir, 'index.html'), 'wt')
@@ -249,9 +252,16 @@ class plot_saver:
                 html.write(' <a href="%s">root</a>' % os.path.basename(root))
             html.write('  <a href="%s">%s</a>' % (bn, bn))
             html.write('\n')
+        html.write('<br><br>')
+        for i, (fn, log, root) in enumerate(self.saved):
+            bn = os.path.basename(fn)
+            html.write('%s<br>\n' % bn.replace('.png', ''))
+            html.write('<img src="%s"><br><br>\n' % bn)
         html.write('</pre></body></html>\n')
         
     def set_plot_dir(self, plot_dir):
+        self.write_index()
+        self.saved = []
         self.plot_dir = plot_dir
         if plot_dir is not None:
             os.system('mkdir -p %s' % self.plot_dir)

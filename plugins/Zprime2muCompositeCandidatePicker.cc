@@ -1,10 +1,18 @@
 #include "CommonTools/Utils/interface/StringCutObjectSelector.h"
 #include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
-
+#include "DataFormats/PatCandidates/interface/Muon.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDProducer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
+#include "RecoVertex/KalmanVertexFit/interface/KalmanVertexFitter.h"
+#include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
+#include "TrackingTools/Records/interface/TransientTrackRecord.h"
+#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
+#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 
 class Zprime2muCompositeCandidatePicker : public edm::EDProducer {
 public:
@@ -20,18 +28,24 @@ private:
   };
 
   void remove_overlap(pat::CompositeCandidateCollection&) const;
+  bool pass_back_to_back_cos_angle(const pat::CompositeCandidate&) const;
+  bool pass_vertex_chi2(const pat::CompositeCandidate&) const;
 
   edm::InputTag src;
   StringCutObjectSelector<pat::CompositeCandidate> selector;
   unsigned max_candidates;
   double back_to_back_cos_angle_min;
+  double vertex_chi2_max;
+
+  edm::ESHandle<TransientTrackBuilder> ttkb;
 };
 
 Zprime2muCompositeCandidatePicker::Zprime2muCompositeCandidatePicker(const edm::ParameterSet& cfg)
   : src(cfg.getParameter<edm::InputTag>("src")),
     selector(cfg.getParameter<std::string>("cut")),
     max_candidates(cfg.getParameter<unsigned>("max_candidates")),
-    back_to_back_cos_angle_min(cfg.getParameter<double>("back_to_back_cos_angle_min"))
+    back_to_back_cos_angle_min(cfg.getParameter<double>("back_to_back_cos_angle_min")),
+    vertex_chi2_max(cfg.getParameter<double>("vertex_chi2_max"))
 {
   produces<pat::CompositeCandidateCollection>();
 }
@@ -80,13 +94,41 @@ void Zprime2muCompositeCandidatePicker::remove_overlap(pat::CompositeCandidateCo
   }
 }
 
-double back_to_back_cos_angle(const pat::CompositeCandidate& dil) {
-  return dil.daughter(0)->momentum().Dot(dil.daughter(1)->momentum()) / dil.daughter(0)->p() / dil.daughter(1)->p();
+bool Zprime2muCompositeCandidatePicker::pass_back_to_back_cos_angle(const pat::CompositeCandidate& dil) const {
+  if (back_to_back_cos_angle_min < 0 || dil.numberOfDaughters() != 2)
+    return true; // pass objects we don't know how to cut on
+  const double cos_angle = dil.daughter(0)->momentum().Dot(dil.daughter(1)->momentum()) / dil.daughter(0)->p() / dil.daughter(1)->p();
+  return fabs(cos_angle) > back_to_back_cos_angle_min;
+}
+
+bool Zprime2muCompositeCandidatePicker::pass_vertex_chi2(const pat::CompositeCandidate& dil) const {
+  if (vertex_chi2_max < 0)
+    return true;
+
+  const pat::Muon* mu0 = toConcretePtr<pat::Muon>(dileptonDaughter(dil, 0));
+  const pat::Muon* mu1 = toConcretePtr<pat::Muon>(dileptonDaughter(dil, 1));
+  if (mu0 == 0 || mu1 == 0)
+    return true; // pass objects we don't know how to cut on
+
+  const reco::TrackRef& tk0 = patmuon::getPickedTrack(*mu0);
+  const reco::TrackRef& tk1 = patmuon::getPickedTrack(*mu1);
+  
+  std::vector<reco::TransientTrack> ttv;
+  ttv.push_back(ttkb->build(tk0));
+  ttv.push_back(ttkb->build(tk1));
+
+  KalmanVertexFitter kvf(true);
+  TransientVertex tv = kvf.vertex(ttv);
+  
+  return tv.isValid() && tv.normalisedChiSquared() < vertex_chi2_max;
 }
 
 void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::EventSetup& setup) {
   edm::Handle<pat::CompositeCandidateCollection> cands;
   event.getByLabel(src, cands);
+  
+  // does this get cached correctly? do we care?
+  setup.get<TransientTrackRecord>().get("TransientTrackBuilder", ttkb);
 
   std::auto_ptr<pat::CompositeCandidateCollection> new_cands(new pat::CompositeCandidateCollection);
 
@@ -101,7 +143,11 @@ void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::Ev
     // Now apply cuts that can't.
 
     // Back-to-back cut to kill cosmics.
-    if (fabs(back_to_back_cos_angle(*c)) < back_to_back_cos_angle_min)
+    if (!pass_back_to_back_cos_angle(*c))
+      continue;
+
+    // Loose common vertex chi2 cut.
+    if (!pass_vertex_chi2(*c))
       continue;
 
     new_cands->push_back(*c);

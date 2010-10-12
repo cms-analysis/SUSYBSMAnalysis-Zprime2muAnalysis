@@ -2,5 +2,5 @@
 out.*
 jsons
 psets
-ana_datamc
+ana_datamc*
 plots

@@ -3,7 +3,7 @@
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
-from SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff import vbtf_loose
+from SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff import vbtf_loose, vbtf_tight
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATCandViewShallowCloneCombiner_cfi import allDimuons as plainDimuons
 
 # CandCombiner includes charge-conjugate decays with no way to turn it
@@ -32,7 +32,11 @@ cuts = [
 # If adding these other cuts back in, hltFilter needs to be added in the below.
 #    ('Pt20', 'isGlobalMuon && pt > 20'), 
 #    ('Std',  'isGlobalMuon && pt > 20 && isolationR03.sumPt < 10'),
-    ('VBTF', vbtf_loose),
+    ('VBTF', 'isGlobalMuon && pt > 20'),
+    ('VBTFwoEta', 'isGlobalMuon && pt > 20'),
+    ('VBTFwoIso', 'isGlobalMuon && pt > 20'),
+    ('VBTFwB2B', 'isGlobalMuon && pt > 20'),
+    ('VBTFwVtxProb', 'isGlobalMuon && pt > 20'),
     ]
 
 simple_ntuple = False
@@ -60,9 +64,22 @@ for cut_name, muon_cuts in cuts:
         if common_dil_cut and dil_cut:
             dil_cut = common_dil_cut + ' && (%s)' % dil_cut
 
-        alldil = process.allDimuons if cut_name == 'VBTF' else plainDimuons
+        alldil = process.allDimuons if 'VBTF' in cut_name else plainDimuons
         alldil = alldil.clone(decay = dil_decay % locals(), cut = dil_cut)
         dil = process.dimuons.clone(src = cms.InputTag(allname))
+
+        if 'woEta' in cut_name:
+            alldil.loose_cut = vbtf_loose.replace('abs(eta) < 2.4 && ', '')
+            alldil.tight_cut = vbtf_tight.replace('abs(eta) < 2.1 && ', '')
+            alldil.tight_cut = vbtf_tight.replace('abs(triggerObjectMatchesByPath("HLT_Mu9").at(0).eta()) < 2.1 && ', '')
+            alldil.tight_cut = vbtf_tight.replace('abs(triggerObjectMatchesByPath("HLT_Mu11").at(0).eta()) < 2.1 && ', '')
+        elif 'woIso' in cut_name:
+            alldil.loose_cut = vbtf_loose.replace('isolationR03.sumPt < 3 && ', '')
+        elif 'wB2B' in cut_name:
+            dil.back_to_back_cos_angle_min = 0.02
+        elif 'wVtxProb' in cut_name:
+            dil.vertex_chi2_max = 10
+
         histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 
         setattr(process, allname, alldil)
@@ -86,11 +103,11 @@ if 'data' in sys.argv:
     # "daata" since otherwise crab tries to pack up that dir and send
     # it off to the worker nodes...
     process.source.fileNames = ['file:work/daata/jul15.root', 'file:work/daata/prompt.root']
+    process.GlobalTag.globaltag = 'GR10_P_V7::All'
     process.TFileService.fileName = 'ana_datamc_data.root'
 
     #process.ppp = cms.EDAnalyzer('PrintAbove110', src = cms.InputTag('VBTFMuonsPlusMuonsMinus'), above = cms.double(50))
     #process.pathVBTF *= process.ppp
-
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''

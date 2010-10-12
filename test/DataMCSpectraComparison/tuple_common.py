@@ -51,3 +51,4 @@ ce_black_list = T2_IN_TIFR, T2_ES_IFCA
 '''
 
 os.system('mkdir -p psets')
+os.system('mkdir -p crab')

@@ -12,3 +12,6 @@ process.p = cms.Path(process.Zprime2muAnalysisSequence * process.SimpleNtupler)
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import files_from_argv
 files_from_argv(process)
+
+lumis_to_process = open('/afs/cern.ch/user/t/tucker/runreg/output/full.cmssw').read().split(',')
+process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*lumis_to_process)

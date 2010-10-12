@@ -4,10 +4,6 @@ import sys, os
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import real_hist_max, real_hist_min, set_zp2mu_style, plot_saver, ROOT
 set_zp2mu_style()
 
-# 166.9 nb in jul15.root, 2880.2 in prompt.root, 5490.4 in promptB (prompt json + allgood dcsonly json)
-int_lumi = (166.9 + 2880.2 + 5490.4)/1000
-#int_lumi = 100
-
 from samples import *
 
 rebin_factor = 5
@@ -15,16 +11,28 @@ x_axis_limits = 40, 400
 to_compare = 'DileptonMass'
 global_rescale = 3273/3404.6 if False else None
 
+histo_dir = None
 for x in sys.argv:
     if 'xax' in x:
         xax0, xax1 = x.split('=')[1].split(',')
         x_axis_limits = int(xax0), int(xax1)
-    if 'compare' in x:
+    elif 'compare' in x:
         to_compare = x.split('=')[1]
+    elif os.path.isdir(x):
+        histo_dir = x
+assert(histo_dir is not None)
 
-histo_dir = 'ana_datamc'
-def dir_name(c, d):
-    return c + d + 'Histos'
+data_fns = [os.path.join(histo_dir, 'ana_datamc_%s.root' % x) for x in 'jul15_prompt', 'promptB']
+
+#data_fs = [ROOT.TFile(x) for x in data_fns]
+# just hadd to tmp file for now, easier
+data_fn = 'anadatamcdatahaddtmp.root'
+hadd_tmp = True
+os.system('hadd -f %s %s' % (data_fn, ' '.join(data_fns)))
+fdata = ROOT.TFile(data_fn)
+
+int_lumi = sum(float(open(x.replace('.root', '.lumi')).readlines()[0]) for x in data_fns) / 1000000
+print 'total lumi from data: %.1f/pb' % int_lumi
 
 subtitleize= {
     'MuonsPlusMuonsMinus': '#mu^{+}#mu^{-}',
@@ -50,18 +58,29 @@ unitize = {
     'DileptonMass': 'GeV',
     'DileptonPt': 'GeV'
     }
+yaxis = {
+    'MuonsPlusMuonsMinus': (3e-3, 1750),
+    'MuonsSameSign': (5e-5, 2.5),
+    'MuonsElectronsOppSign': (5e-4, 6),
+    }
+use_yaxis = True
 
 #dileptons = ['MuonsPlusMuonsMinus', 'MuonsPlusMuonsPlus', 'MuonsMinusMuonsMinus', 'MuonsSameSign', 'ElectronsPlusElectronsMinus', 'ElectronsPlusElectronsPlus', 'ElectronsMinusElectronsMinus', 'ElectronsSameSign', 'MuonsPlusElectronsMinus', 'MuonsMinusElectronsPlus', 'MuonsPlusElectronsPlus', 'MuonsMinusElectronsMinus', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign']
 #cutss = ['Std','VBTF','Pt20']
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsElectronsOppSign']
-cutss = ['VBTF']
+cutss = ['VBTF', 'VBTFwoIso', 'VBTFwoEta', 'VBTFwB2B', 'VBTFwVtxProb']
 
 ROOT.TH1.AddDirectory(False)
+
+def dir_name(c, d):
+    return c + d + 'Histos'
 
 sumMCfile = ROOT.TFile('sumMC.root', 'recreate')
 
 pdir = 'plots/datamc'
+if histo_dir != 'ana_datamc':
+    pdir += '_' + histo_dir.replace('ana_datamc_', '')
 if global_rescale is not None:
     pdir += '_normToZ'
 ps = plot_saver(pdir)
@@ -87,7 +106,6 @@ for cuts in cutss:
     plot_dir = pdir + '/%s/%i_%i/%s' % (to_compare, x_axis_limits[0], x_axis_limits[1], cuts)
     ps.set_plot_dir(plot_dir)
 
-    fdata = ROOT.TFile(os.path.join(histo_dir, 'ana_datamc_data.root'))
     data = dict((d, getattr(fdata, dir_name(cuts, d)).Get(to_compare).Clone()) for d in dileptons)
 
     for dilepton in dileptons:
@@ -168,18 +186,21 @@ for cuts in cutss:
         hdata = data[dilepton]
         hdata.Rebin(rebin_factor)
 
-        mymin = real_hist_min(s.GetStack().Last(), user_range=x_axis_limits) * 0.7
-        #mymin = real_hist_min(last_mc, user_range=x_axis_limits) * 0.7
-        mymax = real_hist_max(s.GetStack().Last(), user_range=x_axis_limits, use_error_bars=False) * 1.05
-        if hdata.GetEntries() > 0:
-            rhm = real_hist_max(hdata, user_range=x_axis_limits)
-            mymax = max(mymax, rhm)
+        if use_yaxis:
+            mymin, mymax = yaxis[dilepton]
+        else:
+            mymin = real_hist_min(s.GetStack().Last(), user_range=x_axis_limits) * 0.7
+            #mymin = real_hist_min(last_mc, user_range=x_axis_limits) * 0.7
+            mymax = real_hist_max(s.GetStack().Last(), user_range=x_axis_limits, use_error_bars=False) * 1.05
+            if hdata.GetEntries() > 0:
+                rhm = real_hist_max(hdata, user_range=x_axis_limits)
+                mymax = max(mymax, rhm)
 
         #sys.stderr.write('%s %s (real s min %s) %s %s\n' % ( cuts, dilepton, s.GetMinimum(), mymin, mymax))
         
         s.SetMinimum(mymin)
         s.SetMaximum(mymax)
-        
+
         hdata.SetTitle('')
         hdata.GetXaxis().SetRangeUser(*x_axis_limits)
         hdata.GetXaxis().SetTitle(titleize[to_compare] % (subtitleize[dilepton], unitize[to_compare]))
@@ -216,7 +237,7 @@ for cuts in cutss:
             h.GetXaxis().SetRangeUser(*x_axis_limits)
             h.SetStats(0)
             h.SetTitle('')
-            h.GetYaxis().SetRangeUser(0.1, 6.5e3)
+            #h.GetYaxis().SetRangeUser(0.1, 6.5e3)
             h.GetXaxis().SetTitle(titleize[to_compare] % (subtitleize[dilepton], unitize[to_compare]))
             h.GetYaxis().SetTitle('Events < X')
             h.SetMarkerStyle(20)
@@ -240,3 +261,5 @@ for cuts in cutss:
 
         sumMCfile.Write()
 
+if hadd_tmp:
+    os.system('rm %s' % data_fn)

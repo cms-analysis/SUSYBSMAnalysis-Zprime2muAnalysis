@@ -10,4 +10,11 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 process.TFileService = cms.Service('TFileService', fileName=cms.string('zp2mu_histos.root'))
 
+process.load('Configuration.StandardSequences.Geometry_cff')
+process.load('Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cff')
+process.load('TrackingTools.TransientTrack.TransientTrackBuilder_cfi')
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+process.GlobalTag.globaltag = 'START37_V6::All'
+
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff')
+

@@ -10,3 +10,5 @@ process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler',
 
 process.p = cms.Path(process.Zprime2muAnalysisSequence * process.SimpleNtupler)
 
+from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import files_from_argv
+files_from_argv(process)

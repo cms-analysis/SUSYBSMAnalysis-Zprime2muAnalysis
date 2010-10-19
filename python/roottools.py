@@ -281,10 +281,23 @@ class plot_saver:
             self.c.SaveAs(log)
             self.c.SetLogy(0)
         self.saved.append((fn, log, root))
+
+def rainbow_palette(num_colors=500):
+    """Make a rainbow palette with the specified number of
+    colors. Also call SetNumberContours so it actually gets used when
+    drawing COLZ."""
     
+    r = array('d', [0, 0, 0, 1, 1])
+    g = array('d', [0, 1, 1, 1, 0])
+    b = array('d', [1, 1, 0, 0, 0])
+    stops = array('d', [float(i)/4 for i in xrange(5)])
+    ROOT.TColor.CreateGradientColorTable(5, stops, r, g, b, num_colors)
+    ROOT.gStyle.SetNumberContours(num_colors)
+
 def real_hist_max(h, return_bin=False, user_range=None, use_error_bars=True):
     """Find the real maximum value of the histogram, taking into
     account the error bars and/or the specified range."""
+
     m_ibin = None
     m = 0
 
@@ -309,6 +322,7 @@ def real_hist_max(h, return_bin=False, user_range=None, use_error_bars=True):
 def real_hist_min(h, return_bin=False, user_range=None):
     """Find the real minimum value of the histogram, ignoring empty
     bins, and taking into account the specified range."""
+
     m_ibin = None
     m = 99e99
 
@@ -367,6 +381,7 @@ __all__ = [
     'get_hist_stats',
     'make_rms_hist',
     'plot_saver',
+    'rainbow_palette',
     'real_hist_max',
     'real_hist_min',
     'set_zp2mu_style',

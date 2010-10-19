@@ -29,6 +29,7 @@ class CocktailAnalyzer : public edm::EDAnalyzer {
 
  private:
   edm::InputTag muon_src;
+  double eta_min, eta_max;
 
   enum { global, tkonly, tpfms, picky, num_ingredients };
   enum { global_tkonly, global_tpfms, global_picky, tkonly_tpfms, tkonly_picky, tpfms_picky, num_pairs };
@@ -63,7 +64,9 @@ class CocktailAnalyzer : public edm::EDAnalyzer {
 };
 
 CocktailAnalyzer::CocktailAnalyzer(const edm::ParameterSet& cfg)
-  : muon_src(cfg.getParameter<edm::InputTag>("muon_src"))
+  : muon_src(cfg.getParameter<edm::InputTag>("muon_src")),
+    eta_min(cfg.getParameter<double>("eta_min")),
+    eta_max(cfg.getParameter<double>("eta_max"))
 {
   edm::Service<TFileService> fs;
 
@@ -72,12 +75,12 @@ CocktailAnalyzer::CocktailAnalyzer(const edm::ParameterSet& cfg)
   PMCCocktailChoice         = choice_labels(fs->make<TH1F>("PMCCocktailChoice",         "PMC cocktail choice",          ni, 0, ni));
   SigmaSwitchCocktailChoice = choice_labels(fs->make<TH1F>("SigmaSwitchCocktailChoice", "Sigma-switch cocktail choice", ni, 0, ni));
 
-  TrackLnChi2TailProb[global_tkonly] = fs->make<TH2F>("TrackLnChi2TailProbGlobalVsTkOnly", "-ln(P), global vs. tracker-only", 200, 0, 100, 200, 0, 100);
-  TrackLnChi2TailProb[global_tpfms]  = fs->make<TH2F>("TrackLnChi2TailProbGlobalVsTPFMS",  "-ln(P), global vs. TPFMS",        200, 0, 100, 200, 0, 100);
-  TrackLnChi2TailProb[global_picky]  = fs->make<TH2F>("TrackLnChi2TailProbGlobalVsPicky",  "-ln(P), global vs. picky",        200, 0, 100, 200, 0, 100);
-  TrackLnChi2TailProb[tkonly_tpfms]  = fs->make<TH2F>("TrackLnChi2TailProbTkOnlyVsTPFMS",  "-ln(P), tracker-only vs. TPFMS",  200, 0, 100, 200, 0, 100);
-  TrackLnChi2TailProb[tkonly_picky]  = fs->make<TH2F>("TrackLnChi2TailProbTkOnlyVsPicky",  "-ln(P), tracker-only vs. picky",  200, 0, 100, 200, 0, 100);
-  TrackLnChi2TailProb[tpfms_picky]   = fs->make<TH2F>("TrackLnChi2TailProbTPFMSVsPicky",   "-ln(P), TPFMS vs. picky",         200, 0, 100, 200, 0, 100);
+  TrackLnChi2TailProb[global_tkonly] = fs->make<TH2F>("TrackLnChi2TailProbGlobalVsTkOnly", "-ln(P), tracker-only vs. global", 500, 0, 100, 500, 0, 100);
+  TrackLnChi2TailProb[global_tpfms]  = fs->make<TH2F>("TrackLnChi2TailProbGlobalVsTPFMS",  "-ln(P), TPFMS vs. global",        500, 0, 100, 500, 0, 100);
+  TrackLnChi2TailProb[global_picky]  = fs->make<TH2F>("TrackLnChi2TailProbGlobalVsPicky",  "-ln(P), picky vs. global",        500, 0, 100, 500, 0, 100);
+  TrackLnChi2TailProb[tkonly_tpfms]  = fs->make<TH2F>("TrackLnChi2TailProbTkOnlyVsTPFMS",  "-ln(P), TPFMS vs. tracker-only",  500, 0, 100, 500, 0, 100);
+  TrackLnChi2TailProb[tkonly_picky]  = fs->make<TH2F>("TrackLnChi2TailProbTkOnlyVsPicky",  "-ln(P), picky vs. tracker-only",  500, 0, 100, 500, 0, 100);
+  TrackLnChi2TailProb[tpfms_picky]   = fs->make<TH2F>("TrackLnChi2TailProbTPFMSVsPicky",   "-ln(P), picky vs. TPFMS",         500, 0, 100, 500, 0, 100);
 
   TMRSelectedTPFMSResolution  = fs->make<TH1F>("TMRSelectedTPFMSResolution",  "TPFMS inv pT res when selected by TMR",  100, -0.3, 0.3);
   TMRSelectedTkOnlyResolution = fs->make<TH1F>("TMRSelectedTkOnlyResolution", "TkOnly inv pT res when selected by TMR", 100, -0.3, 0.3);
@@ -90,6 +93,10 @@ void CocktailAnalyzer::analyze(const edm::Event& event, const edm::EventSetup&) 
   event.getByLabel(muon_src, muons);
 
   for (pat::MuonCollection::const_iterator mu = muons->begin(), mue = muons->end(); mu != mue; ++mu) {
+    double aeta = fabs(mu->eta());
+    if (aeta < eta_min || aeta > eta_max)
+      continue;
+
     reco::TrackRef tks[num_ingredients] = {
       mu->globalTrack(),
       mu->innerTrack(),
@@ -109,12 +116,13 @@ void CocktailAnalyzer::analyze(const edm::Event& event, const edm::EventSetup&) 
     // -log(chi2 tail probability) of each (the figure of merit for
     // the TMR and PMC cocktails).
     double probs[num_ingredients] = {0.};
-    size_t k = 0;
-    for (size_t i = 0; i < num_ingredients; ++i) {
+    for (size_t i = 0; i < num_ingredients; ++i)
       probs[i] = muon::trackProbability(tks[i]);
+
+    size_t k = 0;
+    for (size_t i = 0; i < num_ingredients; ++i)
       for (size_t j = i+1; j < num_ingredients; ++j, ++k)
 	TrackLnChi2TailProb[k]->Fill(probs[i], probs[j]);
-    }
 
     // For each TMR choice, if we have MC truth, plot separately the
     // q/pt resolutions for the selected tracks and the rejected

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os
+import sys, os, glob
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import real_hist_max, real_hist_min, set_zp2mu_style, plot_saver, ROOT
 set_zp2mu_style()
 
@@ -22,7 +22,7 @@ for x in sys.argv:
         histo_dir = x
 assert(histo_dir is not None)
 
-data_fns = [os.path.join(histo_dir, 'ana_datamc_%s.root' % x) for x in 'jul15_prompt', 'promptB']
+data_fns = glob.glob(os.path.join(histo_dir, 'ana_datamc_data_*.root'))
 
 #data_fs = [ROOT.TFile(x) for x in data_fns]
 # just hadd to tmp file for now, easier
@@ -31,7 +31,18 @@ hadd_tmp = True
 os.system('hadd -f %s %s' % (data_fn, ' '.join(data_fns)))
 fdata = ROOT.TFile(data_fn)
 
-int_lumi = sum(float(open(x.replace('.root', '.lumi')).readlines()[0]) for x in data_fns) / 1000000
+def parse_lumi_from_log(fn):
+    # Yay for fragile parsing!
+    this = False
+    for line in open(fn):
+        if this:
+            x = float(line.split()[-2])/1e6
+            print fn, x
+            return x
+        if line == '-------------------------------------------------------------------\n':
+            this = True
+
+int_lumi = sum(parse_lumi_from_log(x.replace('.root', '.lumi')) for x in data_fns)
 print 'total lumi from data: %.1f/pb' % int_lumi
 
 subtitleize= {
@@ -63,7 +74,7 @@ yaxis = {
     'MuonsSameSign': (5e-5, 2.5),
     'MuonsElectronsOppSign': (5e-4, 6),
     }
-use_yaxis = True
+use_yaxis = False
 
 #dileptons = ['MuonsPlusMuonsMinus', 'MuonsPlusMuonsPlus', 'MuonsMinusMuonsMinus', 'MuonsSameSign', 'ElectronsPlusElectronsMinus', 'ElectronsPlusElectronsPlus', 'ElectronsMinusElectronsMinus', 'ElectronsSameSign', 'MuonsPlusElectronsMinus', 'MuonsMinusElectronsPlus', 'MuonsPlusElectronsPlus', 'MuonsMinusElectronsMinus', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign']
 #cutss = ['Std','VBTF','Pt20']

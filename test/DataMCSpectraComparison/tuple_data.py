@@ -5,7 +5,7 @@ from tuple_common import process, crab_cfg
 
 just_testing = 'testing' in sys.argv
 
-process.source.fileNames = ['/store/data/Run2010B/Mu/RECO/PromptReco-v2/000/147/043/B0286A14-17CE-DF11-A65D-001D09F292D1.root']
+process.source.fileNames = ['/store/data/Run2010B/Mu/RECO/PromptReco-v2/000/147/682/422A876B-71D5-DF11-A083-001D09F28E80.root']
 process.maxEvents.input = 100
 tag = process.GlobalTag.globaltag = 'GR10_P_V10::All'
 
@@ -54,6 +54,7 @@ lumis_per_job = 50
         name = 'promptB_' + datetime.datetime.today().strftime('%Y%m%d_%H%M%S')
         print name
         dataset = '/Mu/Run2010B-PromptReco-v2/RECO'
+        tag = 'GR10_P_V10'
         submit(locals())
     else:
         x = [
@@ -62,6 +63,3 @@ lumis_per_job = 50
             ]
         for name, dataset, tag in x:
             submit(locals())
-
-        
-

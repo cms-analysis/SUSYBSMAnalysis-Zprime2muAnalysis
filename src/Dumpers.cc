@@ -1,3 +1,4 @@
+#include <cstdarg>
 #include <ostream>
 #include <boost/foreach.hpp>
 
@@ -9,6 +10,17 @@
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Dumpers.h"
+
+int mlprintf(const char* category, const char* fmt, ...) {
+  static const size_t bufsize = 10240; // big enough?
+  static char buf[bufsize];
+  va_list args;
+  va_start(args, fmt);
+  int ret = vsnprintf(buf, bufsize, fmt, args);
+  va_end(args);
+  edm::LogInfo(category) << buf;
+  return ret;
+}
 
 std::ostream& operator<<(std::ostream& out, const reco::GenParticle& gen) {
   out << "pdgId: " << gen.pdgId() << " status: " << gen.status() << " q: " << gen.charge() << " pt: " << gen.pt()

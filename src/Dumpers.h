@@ -15,6 +15,8 @@ namespace pat {
   class Muon;
 }
 
+int mlprintf(const char* category, const char* fmt, ...);
+
 std::ostream& operator<<(std::ostream& out, const reco::GenParticle& gen);
 std::ostream& operator<<(std::ostream& out, const reco::HitPattern& hp);
 std::ostream& operator<<(std::ostream& out, const reco::Track& tk);

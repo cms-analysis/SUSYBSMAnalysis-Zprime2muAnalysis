@@ -1,4 +1,4 @@
-import glob, os
+import glob, os, re
 from collections import defaultdict
 
 def crab_status(working_dir, debug=False):
@@ -62,8 +62,8 @@ def files_from_crab_dir(crab_dir):
 
     return files
     
-def last_crab_dir(d):
-    return sorted(glob.glob(crab_dir_base + '*'), key = lambda x: os.stat(x).st_ctime)[-1]
+def last_crab_dir(crab_dir_base='crab'):
+    return sorted([x for x in glob.glob(os.path.join(crab_dir_base, '*')) if os.path.isdir(x) and os.path.isdir(os.path.join(x, 'res'))], key = lambda x: os.stat(x).st_ctime)[-1]
 
 __all__ = [
     'crab_status',

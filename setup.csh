@@ -6,7 +6,7 @@ cvs co -r V00-03-04 MuonAnalysis/Examples
 cvs co -r V01-09-01 MuonAnalysis/MuonAssociators
 cvs co -r V00-05-00 -d SHarper/HEEPAnalyzer UserCode/SHarper/HEEPAnalyzer
 cvs co -r V00-00-02 -d UserCode/Examples UserCode/AEverett/Examples
-cvs co -r lumi2010-Oct11b RecoLuminosity/LumiDB
+cvs co -r lumi2010-Oct12 RecoLuminosity/LumiDB
 cvs co -r V01-04-00 FWCore/PythonUtilities
 
 echo $CMSSW_VERSION | grep -v CMSSW_3_8_ > /dev/null

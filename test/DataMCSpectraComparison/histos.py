@@ -35,6 +35,7 @@ cuts = [
     ('VBTF', 'isGlobalMuon && pt > 20'),
     ('VBTFwoEta', 'isGlobalMuon && pt > 20'),
     ('VBTFwoIso', 'isGlobalMuon && pt > 20'),
+    ('VBTFwIso10', 'isGlobalMuon && pt > 20'),
     ('VBTFwB2B', 'isGlobalMuon && pt > 20'),
     ('VBTFwVtxProb', 'isGlobalMuon && pt > 20'),
     ]
@@ -75,6 +76,8 @@ for cut_name, muon_cuts in cuts:
             alldil.tight_cut = vbtf_tight.replace('abs(triggerObjectMatchesByPath("HLT_Mu11").at(0).eta()) < 2.1 && ', '')
         elif 'woIso' in cut_name:
             alldil.loose_cut = vbtf_loose.replace('isolationR03.sumPt < 3 && ', '')
+        elif 'wIso10' in cut_name:
+            alldil.loose_cut = vbtf_loose.replace('isolationR03.sumPt < 3 && ', 'isolationR03.sumPt < 10 && ')
         elif 'wB2B' in cut_name:
             dil.back_to_back_cos_angle_min = 0.02
         elif 'wVtxProb' in cut_name:

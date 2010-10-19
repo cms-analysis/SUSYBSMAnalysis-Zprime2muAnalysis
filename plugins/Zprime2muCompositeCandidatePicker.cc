@@ -128,7 +128,8 @@ void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::Ev
   event.getByLabel(src, cands);
   
   // does this get cached correctly? do we care?
-  setup.get<TransientTrackRecord>().get("TransientTrackBuilder", ttkb);
+  if (vertex_chi2_max >= 0)
+    setup.get<TransientTrackRecord>().get("TransientTrackBuilder", ttkb);
 
   std::auto_ptr<pat::CompositeCandidateCollection> new_cands(new pat::CompositeCandidateCollection);
 

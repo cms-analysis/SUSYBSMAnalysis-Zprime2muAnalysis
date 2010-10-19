@@ -16,9 +16,25 @@ except IndexError:
 def do(cmd):
     print cmd
     if not just_testing:
-        os.system(cmd)
+        cmds = cmd.split('\n') if '\n' in cmd else [cmd]
+        for c in cmds:
+            os.system(c)
 
-if cmd == 'hadd':
+if cmd == 'setdirs':
+    do('''ln -s /uscms/home/tucker/nobackup/crab_dirs crab
+mkdir -p psets
+ln -s `pwd`/psets crab/psets''')
+
+elif cmd == 'checkevents':
+    for sample in samples:
+        print sample.name
+        do('grep TrigReport crab/crab_datamc_%s/res/*stdout | grep \' p$\' | sed -e "s/ +/ /g" | awk \'{ s += $4; t += $5; u += $6; } END { print "summary: total: ", s, "passed: ", t, "failed: ", u }\'' % sample.name)
+
+elif cmd == 'publishmc':
+    from sample in samples:
+        do('crab -c crab/crab_datamc_${x} -publish >&! crab/publish_logs/publish.${x} &')
+
+elif cmd == 'hadd':
     if extra:
         extra = '_' + extra[0]
     for sample in samples:

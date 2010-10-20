@@ -106,16 +106,19 @@ if 'data' in sys.argv:
     process.GlobalTag.globaltag = 'GR10_P_V10::All'
     out_fn = [x for x in sys.argv if x.endswith('.rout')]
     process.TFileService.fileName = 'ana_datamc_data.root' if len(out_fn) == 0 else out_fn[0].replace('rout', 'root')
+    
     try:
         files = ['file:%s' % x for x in sys.argv if '.root' in x]
         assert(files)
         lumis_fn = [x for x in sys.argv if x.endswith('.cmssw')][0]
     except (AssertionError, IndexError):
         raise RuntimeError('something wrong: files=%s, lumis_fn=%s' % (repr(files), lumis_fn))
+
     process.source.fileNames = files
     process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*open(lumis_fn).read().split(','))
 
     process.PrintEvent = cms.EDAnalyzer('PrintEvent', dimuon_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
+    process.MessageLogger.categories.append('PrintEvent')
     process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler', hlt_src = cms.InputTag('TriggerResults', '', 'HLT'), dimu_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
     process.pathVBTF *= process.PrintEvent * process.SimpleNtupler
 

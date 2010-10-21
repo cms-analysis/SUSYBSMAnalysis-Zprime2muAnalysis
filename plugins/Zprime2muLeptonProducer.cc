@@ -180,6 +180,11 @@ void Zprime2muLeptonProducer::doLeptons(edm::Event& event, const edm::InputTag& 
 
 void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& setup) {
   event.getByLabel(muon_photon_match_src, muon_photon_match_map);
+  static bool warned = false;
+  if (!warned && !muon_photon_match_map.isValid()) {
+    edm::LogWarning("PhotonsNotFound") << muon_photon_match_src << " for photons not found, not trying to embed their matches to muons -- not warning any more either.";
+    warned = true;
+  }
 
   muon_track_for_momentum = muon_track_for_momentum_primary;
   doLeptons<pat::Muon>(event, muon_src, "muons");

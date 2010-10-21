@@ -8,7 +8,8 @@ HardInteraction::HardInteraction(const edm::ParameterSet cfg)
     leptonFlavor(doingElectrons ? 11 : 13),
     leptonMass(doingElectrons ? 0.000511 : 0.10566),
     allowFakeResonance(cfg.getParameter<bool>("allowFakeResonance")),
-    resonanceIds(cfg.getParameter<std::vector<int> >("resonanceIds"))
+    resonanceIds(cfg.getParameter<std::vector<int> >("resonanceIds")),
+    shutUp(cfg.getParameter<bool>("shutUp"))
 {
   Clear();
 }
@@ -18,7 +19,8 @@ HardInteraction::HardInteraction(bool doingElec, bool allowFakeRes)
     doingElectrons(doingElec),
     leptonFlavor(doingElectrons ? 11 : 13),
     leptonMass(doingElectrons ? 0.000511 : 0.10566),
-    allowFakeResonance(allowFakeRes)
+    allowFakeResonance(allowFakeRes),
+    shutUp(false)
 {
   Clear();
 }
@@ -75,7 +77,7 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
 	// We found the resonance (Z0/Z'/etc.). Make sure we didn't
 	// find a second one.
 	if (resonance != 0)
-	  edm::LogWarning("HardInteraction")
+	  if (!shutUp) edm::LogWarning("HardInteraction")
 	    << "Found second resonance (pdgId: " << pdgId << ") in event!";
 	else
 	  resonance = &*genp;
@@ -83,14 +85,14 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
       else if (pdgId == leptonFlavor) {
 	// We found the l-. Make sure we didn't find a second one.
 	if (lepMinusNoIB != 0)
-	  edm::LogWarning("HardInteraction") << "Found second l- in event!";
+	  if (!shutUp) edm::LogWarning("HardInteraction") << "Found second l- in event!";
 	else
 	  lepMinusNoIB = &*genp;
       }
       else if (pdgId == -leptonFlavor) {
 	// We found the l+. Make sure we didn't find a second one.
 	if (lepPlusNoIB != 0)
-	  edm::LogWarning("HardInteraction") << "Found second l+ in event!";
+	  if (!shutUp) edm::LogWarning("HardInteraction") << "Found second l+ in event!";
 	else
 	  lepPlusNoIB = &*genp;
       }
@@ -99,7 +101,7 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
 
   // We should always find the l+ and l-.
   if (lepMinusNoIB == 0 || lepPlusNoIB == 0)
-    edm::LogWarning("HardInteraction")
+    if (!shutUp) edm::LogWarning("HardInteraction")
       << "Couldn't find at least one of the pre-brem l-l+! l- = "
       << lepMinusNoIB << " l+ = " << lepPlusNoIB;
 
@@ -136,7 +138,7 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
       mothersAreQuarks = lepMinusNoIB;
     }
     else
-      edm::LogWarning("HardInteraction")
+      if (!shutUp) edm::LogWarning("HardInteraction")
 	<< "Did not find the resonance in the event, and forbidden"
 	<< " from faking it!";
   }
@@ -151,7 +153,7 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
       // For now, don't count gluons (id = 21), but we should
       // implement them later here and in all the above (for gg->G*).
       if (abs(momId) > 6 || momId == 0)
-	edm::LogWarning("HardInteraction")
+	if (!shutUp) edm::LogWarning("HardInteraction")
 	  << "Mother " << m << " is not a quark! its pdgId = " << momId;
       
       if (momId > 0)
@@ -163,7 +165,7 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
   
   // If we didn't find the quark or antiquark, bomb.
   if (quark == 0 || antiquark == 0)
-    edm::LogWarning("HardInteraction")
+    if (!shutUp) edm::LogWarning("HardInteraction")
       << "Couldn't find at least one of the quark/antiquark! quark = "
       << quark << " antiquark = " << antiquark;
 
@@ -207,7 +209,7 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
 
   // If we didn't find the final-state l- or l+, bomb.
   if (lepMinus == 0 || lepPlus == 0)
-    edm::LogWarning("HardInteraction")
+    if (!shutUp) edm::LogWarning("HardInteraction")
       << "Couldn't find at least one of the final-state l-l+! l- = "
       << lepMinus << " l+ = " << lepPlus;
 }

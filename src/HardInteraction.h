@@ -82,6 +82,11 @@ struct HardInteraction {
   // The PDG ids of particles considered to be resonances we want. If
   // empty, a set of defaults will be used.
   std::vector<int> resonanceIds;
+
+  // Whether to issue LogWarnings when we don't find what we
+  // expect. Useful to turn them off if running on e.g. single-muon
+  // relval samples.
+  const bool shutUp;
 };
 
 #endif

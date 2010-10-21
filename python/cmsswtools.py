@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, FWCore.ParameterSet.Config as cms
+import glob, os, sys, FWCore.ParameterSet.Config as cms
 
 def files_from_argv(process):
     files = []
@@ -12,9 +12,16 @@ def files_from_argv(process):
         else:
             f = 'file:' + f
         files.append(f)
-        
+    if not files:
+        raise RuntimeError('no .root files found in argv: %s' % repr(sys.argv))
     process.source.fileNames = files
-    
+
+def files_from_path(process, path):
+    files = ['file:%s' % x for x in glob.glob(os.path.join(path, '*.root'))]
+    if not files:
+        raise RuntimeError('no .root files found in %s' % path)
+    process.source.fileNames = files
+
 def set_events_to_process(process, run_events, run=None):
     '''Set the PoolSource parameter eventsToProcess appropriately,
     given the desired runs/event numbers passed in. If run is None,
@@ -30,3 +37,33 @@ def set_events_to_process(process, run_events, run=None):
     #er = cms.untracked.VEventID(*[cms.untracked.EventID(*x) for x in run_events])
     er = cms.untracked.VEventRange(*[cms.untracked.EventRange(x[0],x[-1],x[0],x[-1]) for x in run_events])
     process.source.eventsToProcess = er        
+
+def set_preferred_alignment(process, name, connect, **kwargs):
+    '''Function to select a set of alignment constants. Useful when doing
+    track re-reconstruction.
+
+    Example use:
+
+    extra_alignment = [('frontier://FrontierProd/CMS_COND_31X_FROM21X', {'CSCAlignmentRcd': 'CSCAlignmentRcd_CRAFT_PG-hardware-globalMuons_v3_offline'})]
+    for i, (connect, rcds) in enumerate(extra_alignment):
+        set_preferred_alignment(process, 'extraAlignment%i' % i, connect, **rcds)
+    '''
+
+    if len(kwargs) == 0:
+        raise ValueError, 'must specify at least one record parameter'
+    
+    from CondCore.DBCommon.CondDBSetup_cfi import CondDBSetup
+    alignment_source = cms.ESSource('PoolDBESSource',
+        CondDBSetup,
+        connect = cms.string(connect),
+        toGet = cms.VPSet()
+    )
+
+    for record, tag in kwargs.iteritems():
+        alignment_source.toGet.append(cms.PSet(record = cms.string(record), tag = cms.string(tag)))
+
+    setattr(process, name, alignment_source)
+    process.prefer(name)
+
+    #code = "cms.ESPrefer('PoolDBESSource', name, %s)" % ', '.join(['%s=cms.vstring("%s")' % x for x in kwargs.iteritems()])
+    #setattr(process, name + '_es_prefer', eval(code))

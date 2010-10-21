@@ -11,19 +11,14 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff import vbtf_loose, vbtf
 #
 # This will break if vbtf_loose, vbtf_tight cut strings are changed...
 #
-process.allDimuonsVBTFNoEta24   = allDimuons.clone(loose_cut = vbtf_loose.replace(' && abs(eta) < 2.4', ''))
-process.allDimuonsVBTFNoIso3    = allDimuons.clone(loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 3', ''))
 process.allDimuonsVBTFNoTkHits  = allDimuons.clone(loose_cut = vbtf_loose.replace(' && innerTrack.hitPattern.numberOfValidTrackerHits >= 10', ''))
 process.allDimuonsVBTFNoDB      = allDimuons.clone(tight_cut = vbtf_tight.replace('dB < 0.2 && ', ''))
 process.allDimuonsVBTFNoGlbChi2 = allDimuons.clone(tight_cut = vbtf_tight.replace(' && globalTrack.normalizedChi2 < 10', ''))
 process.allDimuonsVBTFNoPxHits  = allDimuons.clone(tight_cut = vbtf_tight.replace(' && innerTrack.hitPattern.numberOfValidPixelHits >= 1', ''))
 process.allDimuonsVBTFNoMuStns  = allDimuons.clone(tight_cut = vbtf_tight.replace(' && globalTrack.hitPattern.muonStationsWithValidHits >= 2', ''))
 process.allDimuonsVBTFNoTkMuon  = allDimuons.clone(tight_cut = vbtf_tight.replace(' && isTrackerMuon', ''))
-process.allDimuonsVBTFNoEta21   = allDimuons.clone(tight_cut = vbtf_tight.replace(' && abs(eta) < 2.1', ''))
 process.allDimuonsVBTFNoTrgMtch = allDimuons.clone(tight_cut = vbtf_tight.replace(' && ' + vbtf_trigger_match, ''))
-process.allDimuonsVBTFNoIso10   = process.allDimuonsVBTFNoIso3.clone()
 process.allDimuonsVBTFNoNo      = allDimuons.clone()
-process.allDimuonsVBTFNoNoIso10 = allDimuons.clone(loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 3', ' && isolationR03.sumPt < 10'))
 
 alldimus = [x for x in dir(process) if 'allDimuonsVBTFNo' in x]
 process.p = cms.Path(process.goodDataFilter * process.hltFilter * process.muonPhotonMatch * process.leptons * reduce(lambda x,y: x*y, [getattr(process, x) for x in alldimus]))
@@ -38,6 +33,16 @@ for alld in alldimus:
     setattr(process, name.replace('dimuons', ''), hists)
     process.p *= dimu * hists
 
+# Handle the cuts that have to be applied at the
+# Zprime2muCompositeCandidatePicker level.
+process.dimuonsVBTFNoB2B     = process.dimuons.clone(back_to_back_cos_angle_min = -1)
+process.dimuonsVBTFNoVtxProb = process.dimuons.clone(vertex_chi2_max = -1)
+
+for dimu in ['dimuonsVBTFNoB2B', 'dimuonsVBTFNoVtxProb']:
+    hists = HistosFromPAT.clone(dilepton_src = dimu, leptonsFromDileptons = True)
+    setattr(process, dimu.replace('dimuons', ''), hists)
+    process.p *= getattr(process, dimu) * hists
+    
 ################################################################################
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import files_from_dbs

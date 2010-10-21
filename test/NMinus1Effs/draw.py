@@ -16,21 +16,15 @@ nminus1s = [
     'VBTFNoGlbChi2',
     'VBTFNoTkMuon',
     'VBTFNoDB',
-    'VBTFNoEta24',
-    'VBTFNoEta21',
     'VBTFNoTkHits',
     'VBTFNoPxHits',
     'VBTFNoMuStns',
     'VBTFNoTrgMtch',
-    'VBTFNoIso3',
-    'VBTFNoIso10',
+    'VBTFNoB2B',
+    'VBTFNoVtxProb',
 ]
 
 pretty = {
-    'VBTFNoEta24': '|#eta| < 2.4',
-    'VBTFNoEta21': '|#eta| < 2.1',
-    'VBTFNoIso3': 'iso #Sigmap_{T} < 3',
-    'VBTFNoIso10': 'iso #Sigmap_{T} < 10',
     'VBTFNoTkHits': '# tk hits #geq 10',
     'VBTFNoPxHits': '# px hits #geq 1',
     'VBTFNoMuStns': '# muon st #geq 2',
@@ -38,6 +32,8 @@ pretty = {
     'VBTFNoGlbChi2': 'glb #chi^{2}/ndf < 10',
     'VBTFNoTkMuon': 'isTrackerMuon',
     'VBTFNoTrgMtch': 'HLT_Mu9 match',
+    'VBTFNoB2B': 'cos(angle) > 0.02,
+    'VBTFNoVtxProb': '#chi^{2} #mu#mu vtx < 10'
     'ana_nminus1_data.root': 'Data, 3.0 pb ^{-1}',
     'ana_nminus1_zmumu.root': 'Z#rightarrow#mu#mu',
     'ana_nminus1_dy120.root': 'Z#rightarrow#mu#mu',

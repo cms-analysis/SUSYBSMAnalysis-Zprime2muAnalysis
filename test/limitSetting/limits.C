@@ -18,22 +18,30 @@
 TF1* tempfit;
 //bool const _useData = false;
 
-double const _lowerBound = 100;
+bool const _useCaching = true;
+bool const _isTest = true;
+double const _lowerBound = 120;
 double const _upperBound = 3000;
 int const _numPseudo = 400;
 
-double const _startingExpectedSignal = 1.1;
-double const _maxExpectedSignal = 10.0;
+double const _startingExpectedSignal = 0;
+double const _maxExpectedSignal = 14.0;
 double const _scanningStep = 0.1;
 
 
 int _theZPrimeMass = 1750;
+double _jitterLambdaB = 1.0;
+double _jitterZPrimeWidth= 1.0;
+
+
 TRandom3* rand3;
 
 static double const drellYan(double* x, double* par);
 static double const voigt(double* x, double* par);
 
 TF1* fdrellYan, *fSignal, *fmix, *fBackground;
+TF1* fGenSignal, *fGenBackground;
+//TF1* fdrellYan, *fSignal, *fmix, *fBackground;
 //double const avgBackground = 23.67;	//60 pb-1
 //double avgBackground = 19.5241; //50 pb-1
 
@@ -44,12 +52,12 @@ double const GetMass(TF1* func, TH1F* reverseTable);
 TH1F* h;
 //TH1F* hBackgroundTable, *hSignalTable;
 
-//std::vector<double> GetToyMC(double const lambdaS, double const lambdaB, TH1F* hBkgTable, TH1F* hSigTable);// old version 
-std::vector<double> GetToyMC(double const lambdaS, double const lambdaB); 
-//int DoFit(bool const fixLambdaS, double const lambdaB, double const lambdaS);
+std::vector<double> GetToyMC(double const lambdaS, double lambdaB); 
 
 
 TGraphErrors* grePvalueVsLambdaS;
+TGraphErrors* grePvalueVsLambdaSprot;
+TGraphErrors* grePvalueVsLambdaSPL;
 
 TFile* _outFile;
 
@@ -63,6 +71,7 @@ double const EvalPdf(double const lambdaS, double const lambdaB);
 double const CalculateMedian(std::vector<double> vec);
 double const CalculateMean(std::vector<double> vec);
 double const CalculateRMS(std::vector<double> vec, double const mean);
+double const CalculatePValue(std::vector<double> const& vec, double const t0);
 
 std::pair<int,double> GetMinuitAnswer(std::vector<double> const toymc, double const lambdaS, double const lambdaB, bool const fixLambdaS);
 
@@ -94,6 +103,17 @@ void const SetSignalParameters(int const mass);
 double const GetLimitFromExpoFit(TGraphErrors* gre);
 double const CalcLimitFomExpFitVal(TF1* thefit);
 
+void const SetSignalParametersFixed(int const mass_);
+double GetZssmGamma(int const _mass);
+double GetResolution(int const _mass);
+std::pair<double,double> GetBand(TGraphErrors* gre, double const pval);
+
+std::vector<std::pair<double,double> > FitCacheVec;
+double const EvalPdfCached(double const lambdaS, double const lambdaB); 
+double const GetPValError(double const pval, int const num);
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
@@ -105,9 +125,14 @@ double const CalcLimitFomExpFitVal(TF1* thefit);
 ////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-void limits(int inZpmass = 1750) {
+void limits(int inZpmass = 1750, double jitterLambdaB = 0, double jitterZPrimeWidth = 0) {
 	_theZPrimeMass = inZpmass;
 	rand3 = new TRandom3(0);
+	_jitterLambdaB 		+= jitterLambdaB;
+	_jitterZPrimeWidth 	+= jitterZPrimeWidth;
+
+	TGraphErrors* greLLRVsLambdaS= new TGraphErrors();
+
 /*
 //TF1* fmix;
    1  tail A       2.44298e+01   7.15120e-03  -4.75412e-07   1.70094e-04
@@ -121,6 +146,19 @@ void limits(int inZpmass = 1750) {
    9  pole #kappa   0.00000e+00     fixed    
   10  turnon width   2.19753e-02   5.53804e-04  -2.34669e-10   7.58831e-05
   11  Norm         1.00000e+00     fixed    
+
+   1  tail A       2.39254e+01   8.60747e-02   1.17352e-04   2.07462e-04
+   2  tail #alpha   6.68434e+00   5.22540e-02   1.29660e-06   4.61947e-02
+   3  tail #kappa   2.07129e-01   7.02808e-04   7.35396e-07   1.68286e-01
+   4  pole A       9.13142e+06   2.02697e+05   1.52567e-06   1.33285e-01
+   5  pole #sigma   2.37072e+00   6.97259e-03   2.09848e-04   6.17631e-04
+   6  pole #theta   1.77966e-02   2.11498e-04   1.27014e-06  -2.07846e-02
+   7  pole B       5.58682e+01   1.00144e+00   1.86666e-02  -1.47247e-05
+   8  pole C       0.00000e+00     fixed    
+   9  pole #kappa   0.00000e+00     fixed    
+  10  turnon width   2.24108e-02   5.47565e-04   2.41905e-05   2.06586e-02
+  11  Norm         1.00000e+00     fixed    
+
 */
 
 	
@@ -133,16 +171,16 @@ void limits(int inZpmass = 1750) {
 ///////////////////////////////////////////////////////////////////////////////
 	fmix = new TF1("fmix",MixFunc, _lowerBound, _upperBound, 11);
 	fmix->SetRange(_lowerBound,_upperBound);
-	fmix->FixParameter(0 	,	2.44298e+01	);
-	fmix->FixParameter(1 	, 	6.99626e+00	); 
-	fmix->FixParameter(2 	, 	2.03121e-01	); 
-	fmix->FixParameter(3 	,	9.45741e+06	);  
-	fmix->FixParameter(4 	, 	2.63045e+00	); 
-	fmix->FixParameter(5 	, 	1.80690e-02	); 
-	fmix->FixParameter(6 	,	5.12014e+01	);  
+	fmix->FixParameter(0 	,	2.39254e+01	);
+	fmix->FixParameter(1 	, 	6.68434e+00	); 
+	fmix->FixParameter(2 	, 	2.07129e-01	); 
+	fmix->FixParameter(3 	,	9.13142e+06	);  
+	fmix->FixParameter(4 	, 	2.37072e+00	); 
+	fmix->FixParameter(5 	, 	1.77966e-02	); 
+	fmix->FixParameter(6 	,	5.58682e+01	);  
 	fmix->FixParameter(7 	,	0.00000e+00	);  
 	fmix->FixParameter(8 	, 	0.00000e+00	); 
-	fmix->FixParameter(9	,  	2.19753e-02	);
+	fmix->FixParameter(9	,  	2.24108e-02	);
 	fmix->SetParameter(10,1);
 
 	fmix->SetNpx(10000);
@@ -193,21 +231,36 @@ void limits(int inZpmass = 1750) {
 // get the signal 
 //
 ///////////////////////////////////////////////////////////////////////////////
+
+/*
 	fSignal = new TF1("fSignal", Signal500, _lowerBound, _upperBound,8);
 		fSignal->SetRange(_lowerBound,_upperBound);
 		fSignal->SetParNames("A", "mean", "sigma", "lg", "alpha", "B", "sigma2", "Norm");
 
 	SetSignalParameters(inZpmass);
+*/
+	fSignal = new TF1("fSignal",voigt,_lowerBound,_upperBound,4);
+		fSignal->SetRange(_lowerBound,_upperBound);
+		fSignal->SetParNames("A", "mean", "sigma", "lg");
+		SetSignalParametersFixed(inZpmass);
+
 
 	fSignal->SetParameter("Norm",1./fSignal->Integral(_lowerBound,_upperBound));
 	fSignal->SetNpx(10000);
 //	fSignal->Draw();
 
+//
+// clone the templates for generators
+//
+	fGenSignal = (TF1*)fSignal->Clone("fGenSignal");
+	fGenBackground = (TF1*)fBackground->Clone("fGenBackground");
+	fGenSignal->SetParameter("Norm",1);	
+	fGenSignal->SetParameter("lg",fGenSignal->GetParameter("lg")*_jitterZPrimeWidth); 
+	fGenSignal->SetParameter("Norm",1./fSignal->Integral(_lowerBound,_upperBound));
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 //	
-	hbkg = new TH1F("hbkg", "DY background generation", 1000,_lowerBound,_upperBound );
-	hsig = new TH1F("hsig", "Zprime signal generation", 1000,_lowerBound,_upperBound );
 
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -248,6 +301,7 @@ void limits(int inZpmass = 1750) {
 		sDataName ="/Users/kypreos/physics/templates/limitSetting/mergedNewShit.root"; 
 		sDataName = "dimuons_255nb.root";
 		sDataName = "data/dimuons_merged_2900InvNb_nocosmics_new.root";
+		sDataName = "data/muons1090.root";
 //		sDataName = "dimuons_20100825.root";
 
 		TFile inData(sDataName, "open");
@@ -258,15 +312,16 @@ void limits(int inZpmass = 1750) {
 // 
 //
 	
-		TTree* inTree = (TTree*)inData.Get("tree");
+//		TTree* inTree = (TTree*)inData.Get("tree");
+		TTree* inTree = (TTree*)inData.Get("muons");
 		std::vector<double> dataMasses; dataMasses.clear();
-// vectors are better... and the tree needs to be pruned. 
-// the ntupler should be fixed to not keep like-sign stuff  
-// we don't need to worry about the stats now
 		dataMasses =  PutDataIntoVec(inTree); 
 		lambdaB = dataMasses.size(); 
 		numPseudo = 1;
 		std::vector<double> const& toymc= dataMasses;//GetToyMC(0, lambdaB, hBackgroundTable, hSignalTable);
+
+
+
 		for (int jexp = 0; jexp < numPseudo; ++jexp) {
 //			std::vector<double> toymc=GetToyMC(0, lambdaB, hBackgroundTable, hSignalTable);
 			lambdaS = 0;	
@@ -287,8 +342,9 @@ void limits(int inZpmass = 1750) {
 					lambdaS, llfit,llfix,llr);
 					std::vector<double> tmp; tmp.clear(); tmp.push_back(llr);
 					refTable.insert(std::pair<double,std::vector<double> > (lambdaS, tmp));	
+					greLLRVsLambdaS->SetPoint(greLLRVsLambdaS->GetN(),lambdaS,llr);
 					
-
+//				if (lambdaS < 2) lambdaS+=1;
 			}
 	
 		}	
@@ -309,23 +365,55 @@ void limits(int inZpmass = 1750) {
 
 
 	grePvalueVsLambdaS = new TGraphErrors();
+	grePvalueVsLambdaSprot = new TGraphErrors();
 
+	grePvalueVsLambdaSPL = new TGraphErrors();
 //
 // I decided to do it where I calculate the reference values and then iterate on the values that were calculated. 
 // I could have calculated a reference for each point, 
 // but that would have put more shit in shit and I wasn't in the mood to debug that.
 //
 
+	TString sOutname = TString::Format("out%d/fne_%04d_v1.root",_numPseudo,inZpmass);
+	if (_isTest) sOutname = "test.root";
+	_outFile = new TFile(sOutname,"recreate");
+	_outFile->cd();
+	fSignal->Write();
+	fBackground->Write();
+	_outFile->mkdir("pseudoExp");
+	_outFile->GetDirectory("pseudoExp")->cd();
 
 	TStopwatch timer;
 	timer.Start();
+
+
+	double refValPL	= refTable.begin()->second.front();
+	refValPL = greLLRVsLambdaS->GetY()[0];
+	std::cout<<"ref val for PL: "<<refValPL<<std::endl;
 	for (std::map<double,std::vector<double> >::const_iterator tableit = refTable.begin(), 
 		tableitend = refTable.end(); tableit!=tableitend; ++tableit) {
+
 	
 
 		rand3->SetSeed(0);	
 		lambdaS = tableit->first;
 		std::vector<double> vec = tableit->second;		
+		TString dirname = TString::Format("lambdaS_%02d_%02d",(int)lambdaS, int(lambdaS*100)-100*int(lambdaS)  ); 
+//(lambdaS-((int)lambdaS))*1000);
+//		int assmunch = int(lambdaS*100);
+//		std::cout<<assmunch<<std::endl;;	
+		_outFile->cd();
+		_outFile->GetDirectory("pseudoExp")->mkdir(dirname);
+		_outFile->GetDirectory("pseudoExp")->GetDirectory(dirname)->cd();
+		TTree* _llrTree = new TTree("llrTree","llrTree");
+		float _storeLlr = 0;
+		float _storeLlrPL = 0;
+		_llrTree->Branch("llr", &_storeLlr,"llr/F"); 
+		_llrTree->Branch("llrPL", &_storeLlrPL,"llr/F"); 
+
+		hbkg = new TH1F("hbkg", "DY background generation", 1000,_lowerBound,_upperBound );
+		hsig = new TH1F("hsig", "Zprime signal generation", 1000,_lowerBound,_upperBound );
+		
 
 		double refVal(0);
 
@@ -336,6 +424,7 @@ void limits(int inZpmass = 1750) {
 		refVal = vec.front();
 
 		std::vector<double> llrVals; llrVals.clear();
+		std::vector<double> llrValsPL; llrValsPL.clear();
 
 		for (int jexp = 0; jexp < _numPseudo; ++jexp) {
 			std::vector<double> toymc=GetToyMC(lambdaS, lambdaB);//, hBackgroundTable, hSignalTable);
@@ -343,12 +432,22 @@ void limits(int inZpmass = 1750) {
 			if (answerFit.first != 0) continue;
 			std::pair<int,double> answerFix = GetMinuitAnswer(toymc, lambdaS, lambdaB,true);
 			if (answerFix.first != 0) continue;
+			std::pair<int,double> answerFix0 = GetMinuitAnswer(toymc, 0, lambdaB,true);
+			if (answerFix0.first != 0) continue;
 				
 			double llr = answerFit.second - answerFix.second;
 			llrVals.push_back(llr);
+			double llr0 = answerFit.second - answerFix0.second;
+			llrValsPL.push_back(llr0);
+
+
+			_storeLlr = llr;
+			_storeLlrPL = llr0;
+			_llrTree->Fill();
 		}
 	
 		sort(llrVals.begin(),llrVals.end());
+		sort(llrValsPL.begin(),llrValsPL.end());
 	
 
 		double meanLlr 		= CalculateMean(llrVals); 
@@ -360,48 +459,104 @@ void limits(int inZpmass = 1750) {
 			<<"\t mean = "<<meanLlr
 			<<"\t rms = "<<rmsLlr;		
 
-		double pval= 0;
 
 		double delta = 1.2;
 		delta = rmsLlr;
-		for (std::vector<double>::const_iterator it = llrVals.begin(); it != llrVals.end(); ++it){
 
-//			if (*it< refVal) pval+=1;
-			if (*it< refVal+delta) pval+=1;
+		double pval		= CalculatePValue(llrVals,refVal);  //FC
+		double pvalProt	= CalculatePValue(llrVals,refVal+rmsLlr); //protected FC (often suggested)
+//		std::cout<<std::endl<<refValPL<<std::endl;
 
-		}
+		double pvalPL	= 1.-CalculatePValue(llrValsPL,greLLRVsLambdaS->GetY()[0]); //profile likelihood
 
-//		std::cout<<"\tp-value = "<<pval;
-		pval /= 1.*_numPseudo;
-		std::cout<<"\tp-value = "<<pval;
-		std::cout<<std::endl;
-	
-		double pvalerr = sqrt(pval*(1.-pval)/_numPseudo);
 
-		if (pval > 0.9) continue;
+		TH1F* ht0 = new TH1F("ht0", "FC test statistic", 1, 0, 1);
+		TH1F* ht0_prot = new TH1F("ht0_prot", "test statistic protected", 1, 0, 1);
+		TH1F* ht1 = new TH1F("ht1", "Profile likelihood test statistic", 1, 0, 1);
+		ht0->SetBinContent(1,refVal);
+		ht0_prot->SetBinContent(1,refVal+rmsLlr);
+		ht1->SetBinContent(1,refValPL);
+
 		grePvalueVsLambdaS->SetPoint(grePvalueVsLambdaS->GetN(), lambdaS, pval);
-		grePvalueVsLambdaS->SetPointError(grePvalueVsLambdaS->GetN()-1, 0.5*_scanningStep, pvalerr);
+		grePvalueVsLambdaS->SetPointError(grePvalueVsLambdaS->GetN()-1, 0.5*_scanningStep, GetPValError(pval,_numPseudo));
+		
+		grePvalueVsLambdaSprot->SetPoint(grePvalueVsLambdaSprot->GetN()			, lambdaS			, pvalProt);
+		grePvalueVsLambdaSprot->SetPointError(grePvalueVsLambdaSprot->GetN()-1	, 0.5*_scanningStep	, GetPValError(pvalProt,_numPseudo));
 
-		if (pval < 0.01) break;
-			
-//		break;
-	}
+		grePvalueVsLambdaSPL->SetPoint(grePvalueVsLambdaSPL->GetN(), lambdaS, pvalPL);
+		grePvalueVsLambdaSPL->SetPointError(grePvalueVsLambdaSPL->GetN()-1, 0.5*_scanningStep, GetPValError(pvalPL,_numPseudo));
 
+
+		std::cout<<"\tp-value (FC) = "<<pval;
+		std::cout<<"\tp-value (PL) = "<<pvalPL;
+		std::cout<<std::endl;
+		_llrTree->Write();
+		hsig->Write();
+		hbkg->Write();
+		ht0->Write();	
+		ht0_prot->Write();	
+		ht1->Write();	
+		_outFile->cd();
+//		fSignal->Write("fSignal");
+//		fBackground->Write("fBackground");
+	
+		_llrTree->Delete();	
+		hsig->Delete();
+		hbkg->Delete();
+		ht0->Delete();	
+		ht0_prot->Delete();	
+		ht1->Delete();	
+	
+		if (pval < 0.001 && pvalProt < 0.001 && lambdaS > 5) break;
+	
+	} // end of the loop on test-statistics
+
+//
+// clean up and go home to a nice glass of Glenfiddich -- at least the 15-year. That's tasty. 
+//
 	timer.Stop();
 	timer.Print();
-
-	TString sOutname = TString::Format("out%d/minuit_%d_v1.root",_numPseudo,inZpmass);
-	_outFile = new TFile(sOutname,"recreate");
-//	_outFile = new TFile(TString::Format("out_%d_1p1.root",inZpmass), "recreate");
 	_outFile->cd();
+
+	std::pair<double,double> band1 = GetBand(grePvalueVsLambdaS		,0.05);
+	std::pair<double,double> band2 = GetBand(grePvalueVsLambdaSprot	,0.05);
+	std::pair<double,double> band3 = GetBand(grePvalueVsLambdaSPL	,0.05);
+
+	printf("%10s: [%5.2f, %5.2f]\n","FC", band1.first,band1.second) ;
+	printf("%10s: [%5.2f, %5.2f]\n","profile L", band3.first,band3.second); 
+	printf("%10s: [%5.2f, %5.2f]\n","protected", band2.first,band2.second); 
+
+	TH1F* ht0 		= new TH1F("band0", "FC conf band", 2, 0, 2);
+	TH1F* ht0_prot 	= new TH1F("band0_prot", "conf band", 2, 0, 2);
+	TH1F* ht1 		= new TH1F("band1", "profile likelihood conf band", 2, 0, 2);
+	ht0->SetBinContent(1,band1.first);
+	ht0->SetBinContent(2,band1.second);
+	ht0_prot->SetBinContent(1,band2.first);
+	ht0_prot->SetBinContent(2,band2.second);
+	ht1->SetBinContent(1,band3.first);
+	ht1->SetBinContent(2,band3.second);
+	
+
 	grePvalueVsLambdaS->Write("pvalueVsLambdaS");
-	hbkg->Write();
-	hsig->Write();
+	grePvalueVsLambdaSprot->Write("pvalueVsLambdaSprot");
+	grePvalueVsLambdaSPL->Write("pvalueVsLambdaSPL");
+	greLLRVsLambdaS->Write("LLRVsPvalue");
+	
 
+	ht0->Write();
+	ht0_prot->Write();
 
+	TH1F* hinfo = new TH1F("hinfo", "running info", 5,0,5);
+		hinfo->GetXaxis()->SetBinLabel(1,"running time");
+		hinfo->SetBinContent(1,timer.RealTime());
+
+		hinfo->GetXaxis()->SetBinLabel(2,"z-prime mass");
+		hinfo->SetBinContent(2,inZpmass);
+	hinfo->Write();
 	grePvalueVsLambdaS->Draw("ape");	
 
-	GetLimitFromExpoFit(grePvalueVsLambdaS);
+//	GetLimitFromExpoFit(grePvalueVsLambdaS);
+
 
 	return;
 }
@@ -451,16 +606,19 @@ double const GetMass(TF1* func, TH1F* reverseTable){
 }
 //
 // gives you a vector of toy MC
-// deprecated
 //
-/*
-std::vector<double> GetToyMC(double const lambdaS, double const lambdaB, TH1F* hBkgTable, TH1F* hSigTable){
+std::vector<double> GetToyMC(double const lambdaS, double lambdaB){
 	std::vector<double> retvec; retvec.clear(); 
+
+
+	lambdaB *= _jitterLambdaB;
 	
-	int numSig = (int)rand3->PoissonD(lambdaS);
-	int numBkg = (int)rand3->PoissonD(lambdaB);
+	int numSig = (int)rand3->Poisson(lambdaS);
+	int numBkg = (int)rand3->Poisson(lambdaB);
 	if (lambdaS ==0) numSig =0;
 
+	FitCacheVec.clear();
+	
 //
 // this was set up to use look-up tables and stuff
 // I got lazy. this works fine
@@ -468,47 +626,28 @@ std::vector<double> GetToyMC(double const lambdaS, double const lambdaB, TH1F* h
 // i think it was running into a float-precesion issue in filling the table so the binning got mad
 // totally stupid, right?
 //
-
+//fGenSignal, *fGenBackground;
 	for (int i = 0; i < numSig; ++i) {
-		double val = fSignal->GetRandom();
+//		double val = fSignal->GetRandom();
+		double val = fGenSignal->GetRandom();
 		retvec.push_back(val);
+		hsig->Fill(retvec.back());
 	}
 	for (int i = 0; i < numBkg; ++i) {
-		double val = fBackground->GetRandom();
+//		double val = fBackground->GetRandom();
+		double val = fGenBackground->GetRandom();
 		retvec.push_back(val);
-	}
-	sort(retvec.begin(), retvec.end());
-	return retvec;
-} 
-*/
-//
-// gives you a vector of toy MC
-//
-std::vector<double> GetToyMC(double const lambdaS, double const lambdaB){
-	std::vector<double> retvec; retvec.clear(); 
-	
-	int numSig = (int)rand3->PoissonD(lambdaS);
-	int numBkg = (int)rand3->PoissonD(lambdaB);
-	if (lambdaS ==0) numSig =0;
-
-//
-// this was set up to use look-up tables and stuff
-// I got lazy. this works fine
-// the tables were yelling at me because of precesion. it still worked fine but I hate warnings
-// i think it was running into a float-precesion issue in filling the table so the binning got mad
-// totally stupid, right?
-//
-	for (int i = 0; i < numSig; ++i) {
-		double val = fSignal->GetRandom();
-		retvec.push_back(val);
-//		hsig->Fill(retvec.back());
-	}
-	for (int i = 0; i < numBkg; ++i) {
-		double val = fBackground->GetRandom();
-		retvec.push_back(val);
-//		hbkg->Fill(val);
+		hbkg->Fill(val);
 	}
 	sort(retvec.begin(), retvec.end()); // sort the masses.  this is generally good to do for precesion calculations
+//	std::vector<std::pair<double,double> > FitCacheVec;
+
+	for (std::vector<double>::const_iterator it = retvec.begin(); it !=retvec.end(); ++it) {
+		double a = fSignal->Eval(*it);
+		double b = fBackground->Eval(*it);
+		FitCacheVec.push_back(std::pair<double,double>(a,b) );
+	}
+
 	return retvec;
 } 
 //
@@ -591,7 +730,7 @@ double const PDG_WIDTH_Z	= 2.4952;	//GeV
 //
 // first part
 // 
-	double poleval = A*TMath::Voigt(mass-mu,gamma,sigma);
+	double poleval = A*TMath::Voigt(mass-mu,sigma,gamma);//gamma,sigma);
 	double pdfTerm = TMath::Exp(-1.*theta*mass);
 
 //
@@ -665,22 +804,24 @@ double MixFunc(double* x, double* par) {
 
 }
 //
-// put the tree into a vector. I like vectors. It comes back sorted in terms of mas
+// put the tree into a vector. I like vectors. It comes back sorted in terms of mass
 //
 std::vector<double> const PutDataIntoVec(TTree* tree){
 	float mass;
 	std::vector<double> retVec; retVec.clear();
 
 //
-// oh wow. with this setup, you can easily just use the 2 4-vectors to read mass... just a thought
+// oh wow. with this setup, you can easily just use the 2 4-vectors to read mass... just a thought...
+// i strongly suggest that you put in a pruned tree before this 
+// step else you'll be hacking this until the end of time. 
 //
-	tree->SetBranchAddress("recoCandMass", &mass);	
+//
+
+	tree->SetBranchAddress("mass", &mass);	
 	int numEntries = tree->GetEntries();
 	
 	for (int jEntry = 0; jEntry < numEntries; ++jEntry){
 		tree->GetEntry(jEntry);
-		// cut on the masses we don't want
-//		if (mass < 100) continue;
 		if (mass < 1*_lowerBound || mass > _upperBound) continue;
 		retVec.push_back(mass);
 	}
@@ -720,7 +861,7 @@ void minuitPdf(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t ifl
 //
 	double lambdaB = par[0];
 	double lambdaS = par[1];
-	f = EvalPdf(lambdaS,lambdaB);
+	f = EvalPdfCached(lambdaS,lambdaB);
 }
 //
 // pdf evaluation with lambdaS and lambdaB
@@ -864,6 +1005,14 @@ void const SetSignalParameters(int const mass_) {
 
 }
 
+void const SetSignalParametersFixed(int const mass_){
+
+		double width = GetZssmGamma(mass_);
+		double sigma = GetResolution(mass_);
+
+		fSignal->SetParameters(1, 1.*mass_,width,sigma); 
+}
+
 //
 // get the limit estimate
 // 
@@ -897,4 +1046,69 @@ double const CalcLimitFomExpFitVal(TF1* thefit){
 
 }
 
+double GetZssmGamma(int const _mass){
+
+	double p0 =	-3.98166    ; 
+	double p1 =	0.0417735    ;
+	double p2 =	0.000148462  ;
+	double val = p0+_mass*p1+_mass*_mass*p2;
+	return val;
+
+}
+double GetResolution(int const _mass){
+	double p0 = 0.009031;
+	double p1 = 9.89e-05;
+	double p2 = -2.579e-08;
+	double sigma = p0+_mass*p1+_mass*_mass*p2;
+	return sigma;
+}
+//
+// calculate the p-value of a test-statistic
+//
+double const CalculatePValue(std::vector<double> const& vec, double const t0){
+	double retVal = 0;
+	for (std::vector<double>::const_iterator it = vec.begin(); it != vec.end(); ++it){
+		if (*it < t0) retVal+=1;
+	}
+	return (retVal/(1.*vec.size()));
+}
+
+std::pair<double,double> GetBand(TGraphErrors* gre, double const pval){
+
+	int numPoints = gre->GetN();
+//#	std::pair<double,double> retPair(0,999);
+
+	std::vector<double> vals; vals.clear();
+	
+	double* yvals = gre->GetY();
+	double* xvals = gre->GetX();
+	
+	for (int i = 0; i < numPoints; ++i){	
+		if (yvals[i] > pval) vals.push_back(xvals[i]); 
+	}
+	return std::pair<double,double>(vals.front(),vals.back());
+
+}
+
+double const EvalPdfCached(double const lambdaS, double const lambdaB){ 
+
+	if (FitCacheVec.empty() || !_useCaching) return EvalPdf(lambdaS,lambdaB);	
+
+
+	double likelihood = 0;
+	double sum = lambdaB+lambdaS;
+	if (_MASSES.empty()) return -1.*sum;
+	for (std::vector<std::pair<double,double> >::const_iterator mass = FitCacheVec.begin(); mass != FitCacheVec.end(); ++mass){
+
+		double a = lambdaS*(mass->first);
+		double b = lambdaB*(mass->second);
+		double val = a+b;
+		likelihood += log(val);
+	}
+	likelihood -= sum;
+	return -2.*likelihood;	
+}
+double const GetPValError(double const pval, int const num){
+	return sqrt(pval*(1.-pval)/double(num));
+}
 

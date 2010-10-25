@@ -33,6 +33,8 @@ cuts = [
 #    ('Pt20', 'isGlobalMuon && pt > 20'), 
 #    ('Std',  'isGlobalMuon && pt > 20 && isolationR03.sumPt < 10'),
     ('VBTF', 'isGlobalMuon && pt > 20'),
+    ('VBTFIso10', 'isGlobalMuon && pt > 20'),
+    ('VBTFRelIso015', 'isGlobalMuon && pt > 20'),
     ]
 
 simple_ntuple = False
@@ -64,6 +66,11 @@ for cut_name, muon_cuts in cuts:
         alldil = alldil.clone(decay = dil_decay % locals(), cut = dil_cut)
         dil = process.dimuons.clone(src = cms.InputTag(allname))
 
+        if 'Iso10' in cut_name:
+            alldil.loose_cut = vbtf_loose + ' && isolationR03.sumPt < 10'
+        elif 'RelIso015' in cut_name:
+            alldil.loose_cut = vbtf_loose + ' && isolationR03.sumPt / innerTrack.pt < 0.15'
+                    
         histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 
         setattr(process, allname, alldil)

@@ -95,10 +95,10 @@ void Zprime2muCompositeCandidatePicker::remove_overlap(pat::CompositeCandidateCo
 }
 
 bool Zprime2muCompositeCandidatePicker::pass_back_to_back_cos_angle(const pat::CompositeCandidate& dil) const {
-  if (back_to_back_cos_angle_min < 0 || dil.numberOfDaughters() != 2)
+  if (back_to_back_cos_angle_min < -1 || dil.numberOfDaughters() != 2)
     return true; // pass objects we don't know how to cut on
   const double cos_angle = dil.daughter(0)->momentum().Dot(dil.daughter(1)->momentum()) / dil.daughter(0)->p() / dil.daughter(1)->p();
-  return fabs(cos_angle) > back_to_back_cos_angle_min;
+  return cos_angle > back_to_back_cos_angle_min;
 }
 
 bool Zprime2muCompositeCandidatePicker::pass_vertex_chi2(const pat::CompositeCandidate& dil) const {

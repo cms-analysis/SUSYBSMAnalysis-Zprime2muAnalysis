@@ -35,7 +35,7 @@ dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          src = cms.InputTag('allDimuons'),
                          cut = cms.string(''),
                          max_candidates = cms.uint32(1),
-                         back_to_back_cos_angle_min = cms.double(0.02),
+                         back_to_back_cos_angle_min = cms.double(-0.9998), # this corresponds to the angle (pi - 0.02) rad = 178.9 deg
                          vertex_chi2_max = cms.double(10),
                          )
 

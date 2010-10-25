@@ -14,20 +14,17 @@ def do(cmd):
 # Figure out what run to start with, based on the crab dirs that
 # already exist.
 print '*** finding new runs to use'
-last_dir = last_crab_dir()
-if 'promptB' in last_dir:
-    print 'trying to parse arguments.xml in', last_dir
-    runs_done = set()
-    for line in open(os.path.join(last_dir, 'share/arguments.xml')):
-        # Time for some really crappy, fragile parsing!
-        if 'Lumis=' not in line: continue
-        line = line.split('Lumis="')[1].split('"')[0]
-        for x in line.split(','):
-            runs_done.add(int(x.split(':')[0]))
-    last_run_done = max(runs_done)
-    print 'runs already done in last crab batch: min: %i max: %i' % (min(runs_done), last_run_done)
-else:
-    last_run_done = 144114 #int(open('last_run_done', 'rt').read())
+last_dir = last_crab_dir(filter='promptB')
+print 'trying to parse arguments.xml in', last_dir
+runs_done = set()
+for line in open(os.path.join(last_dir, 'share/arguments.xml')):
+    # Time for some really crappy, fragile parsing!
+    if 'Lumis=' not in line: continue
+    line = line.split('Lumis="')[1].split('"')[0]
+    for x in line.split(','):
+        runs_done.add(int(x.split(':')[0]))
+last_run_done = max(runs_done)
+print 'runs already done in last crab batch: min: %i max: %i' % (min(runs_done), last_run_done)
 
 # Find latest run in dataset.
 dataset = '/Mu/Run2010B-PromptReco-v2/RECO'

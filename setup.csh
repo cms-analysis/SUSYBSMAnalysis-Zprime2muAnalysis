@@ -7,10 +7,10 @@ cvs co -r V01-09-01 MuonAnalysis/MuonAssociators
 cvs co -r V00-05-00 -d SHarper/HEEPAnalyzer UserCode/SHarper/HEEPAnalyzer
 cvs co -r V00-00-02 -d UserCode/Examples UserCode/AEverett/Examples
 cvs co -r lumi2010-Oct12 RecoLuminosity/LumiDB
-cvs co -r V01-04-00 FWCore/PythonUtilities
+cvs co -r V01-06-09 FWCore/PythonUtilities
 
 echo $CMSSW_VERSION | grep -v CMSSW_3_8_ > /dev/null
-if ($?) then
+if (! $?) then
   cvs co -r V02-06-01 SimMuon/MCTruth
   cvs co -r V01-08-17 SimTracker/TrackAssociation
   cvs co -r V00-01-03-01 SimTracker/TrackAssociatorESProducer

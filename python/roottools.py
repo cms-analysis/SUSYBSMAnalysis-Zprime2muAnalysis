@@ -226,6 +226,16 @@ def make_rms_hist(prof, name='', bins=None, cache={}):
     cache[name] = new_hist
     return new_hist
 
+def move_overflow_into_last_bin(h):
+    """Given the TH1 h, Add the contents of the overflow bin into the
+    last bin, and zero the overflow bin."""
+    assert(h.Class().GetName().startswith('TH1')) # i bet there's a better way to do this...
+    nb = h.GetNbinsX()
+    h.SetBinContent(nb, h.GetBinContent(nb) + h.GetBinContent(nb+1))
+    h.SetBinError(nb, (h.GetBinError(nb)**2 + h.GetBinError(nb+1)**2)**0.5)
+    h.SetBinContent(nb+1, 0)
+    h.SetBinError(nb+1, 0)
+
 class plot_saver:
     i = 0
     
@@ -256,7 +266,7 @@ class plot_saver:
         for i, (fn, log, root) in enumerate(self.saved):
             bn = os.path.basename(fn)
             html.write('%s<br>\n' % bn.replace('.png', ''))
-            html.write('<img src="%s"><br><br>\n' % bn)
+            html.write('<img src="%s"><img src="%s"><br><br>\n' % (bn, os.path.basename(log)))
         html.write('</pre></body></html>\n')
         
     def set_plot_dir(self, plot_dir):
@@ -380,6 +390,7 @@ __all__ = [
     'get_integral',
     'get_hist_stats',
     'make_rms_hist',
+    'move_overflow_into_last_bin',
     'plot_saver',
     'rainbow_palette',
     'real_hist_max',

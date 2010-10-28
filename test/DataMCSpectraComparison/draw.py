@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys, os, glob
-from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import real_hist_max, real_hist_min, set_zp2mu_style, plot_saver, ROOT
+from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import move_overflow_into_last_bin, plot_saver, real_hist_max, real_hist_min, set_zp2mu_style, ROOT
 set_zp2mu_style()
 
 from samples import *
@@ -10,6 +10,7 @@ rebin_factor = 5
 x_axis_limits = 40, 400
 to_compare = 'DileptonMass'
 global_rescale = 3273/3404.6 if False else None
+draw_qcd = True
 
 histo_dir = None
 for x in sys.argv:
@@ -80,7 +81,7 @@ use_yaxis = False
 #cutss = ['Std','VBTF','Pt20']
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsElectronsOppSign']
-cutss = ['VBTF', 'VBTFwoIso', 'VBTFwoEta', 'VBTFwB2B', 'VBTFwVtxProb']
+cutss = ['VBTF', 'VBTFIso10', 'VBTFRelIso015']
 
 ROOT.TH1.AddDirectory(False)
 
@@ -128,6 +129,7 @@ for cuts in cutss:
             sample.mass = getattr(f, dir_name(cuts, dilepton)).Get(to_compare).Clone()
             sample.mass.Rebin(rebin_factor)
             sample.mass.Scale(sample.partial_weight * int_lumi)
+            move_overflow_into_last_bin(sample.mass)
 
         h = samples[0].mass
         summc = ROOT.TH1F(cuts + dilepton + '_sumMC', '', h.GetNbinsX(), h.GetXaxis().GetXmin(), h.GetXaxis().GetXmax())
@@ -151,12 +153,13 @@ for cuts in cutss:
             for sample in sorted(samples, key=lambda x: x.integral, reverse=True):
                 w = sample.partial_weight*int_lumi
                 sum_mc += sample.integral
-                var_sum_mc += w**2 * sample.integral
+                var = w * sample.integral # not w**2 * sample.integral because sample.integral is already I*w
+                var_sum_mc += var
                 if sample.integral == 0:
                     limit = '%.6f' % (3*w)
                 else:
                     limit = '-'
-                print '%100s%20.6f%20.6f +/- %20.6f%20s' % (sample.nice_name, w, sample.integral, w*sample.integral**0.5, limit)
+                print '%100s%20.6f%20.6f +/- %20.6f%20s' % (sample.nice_name, w, sample.integral, var**0.5, limit)
             print '%100s%20s%20.6f +/- %20.6f%20s' % ('sum MC', '-', sum_mc, var_sum_mc**0.5, '-')
             print
         print
@@ -166,7 +169,7 @@ for cuts in cutss:
 
         last_mc = None
         for sample in samples:
-            if 'qcd' in sample.name:
+            if 'qcd' in sample.name and not draw_qcd:
                 continue
             h = sample.mass
             h.SetFillColor(sample.color)
@@ -186,7 +189,7 @@ for cuts in cutss:
         l.AddEntry(m, 'Data')
 
         for sample in reversed(samples):
-            if 'qcd' in sample.name:
+            if 'qcd' in sample.name and not draw_qcd:
                 continue
             l.AddEntry(sample.mass, sample.nice_name, 'F')
 
@@ -196,6 +199,7 @@ for cuts in cutss:
 
         hdata = data[dilepton]
         hdata.Rebin(rebin_factor)
+        move_overflow_into_last_bin(hdata)
 
         if use_yaxis:
             mymin, mymax = yaxis[dilepton]

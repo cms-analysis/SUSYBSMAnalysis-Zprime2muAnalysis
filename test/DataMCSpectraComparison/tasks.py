@@ -31,7 +31,7 @@ elif cmd == 'checkevents':
         do('grep TrigReport crab/crab_datamc_%s/res/*stdout | grep \' p$\' | sed -e "s/ +/ /g" | awk \'{ s += $4; t += $5; u += $6; } END { print "summary: total: ", s, "passed: ", t, "failed: ", u }\'' % sample.name)
 
 elif cmd == 'publishmc':
-    from sample in samples:
+    for sample in samples:
         do('crab -c crab/crab_datamc_${x} -publish >&! crab/publish_logs/publish.${x} &')
 
 elif cmd == 'hadd':

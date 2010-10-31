@@ -32,9 +32,11 @@ cuts = [
 # If adding these other cuts back in, hltFilter needs to be added in the below.
 #    ('Pt20', 'isGlobalMuon && pt > 20'), 
 #    ('Std',  'isGlobalMuon && pt > 20 && isolationR03.sumPt < 10'),
-    ('VBTF', 'isGlobalMuon && pt > 20'),
-    ('VBTFIso10', 'isGlobalMuon && pt > 20'),
-    ('VBTFRelIso015', 'isGlobalMuon && pt > 20'),
+    ('VBTF', vbtf_loose),
+    ('VBTFIso10', vbtf_loose),
+    ('VBTFRelIso015', vbtf_loose),
+    ('VBTFNoPx', vbtf_loose),
+    ('VBTFPt30', vbtf_loose),
     ]
 
 simple_ntuple = False
@@ -70,6 +72,10 @@ for cut_name, muon_cuts in cuts:
             alldil.loose_cut = vbtf_loose + ' && isolationR03.sumPt < 10'
         elif 'RelIso015' in cut_name:
             alldil.loose_cut = vbtf_loose + ' && isolationR03.sumPt / innerTrack.pt < 0.15'
+        elif 'NoPx' in cut_name:
+            alldil.tight_cut = vbtf_tight.replace(' && innerTrack.hitPattern.numberOfValidPixelHits >= 1', '')
+        elif 'Pt30' in cut_name:
+            alldil.loose_cut = vbtf_loose.replace('pt > 20', 'pt > 30')
                     
         histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 
@@ -90,7 +96,11 @@ for cut_name, muon_cuts in cuts:
     path = cms.Path(process.goodDataFilter * process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list))
     setattr(process, pathname, path)
 
-if 'data' in sys.argv:
+if 'olddata' in sys.argv:
+    process.source.fileNames = ['file:work/daata/jul15.root', 'file:work/daata/prompt.root']
+    process.TFileService.fileName = 'ana_datamc_data.root'
+    process.GlobalTag.globaltag = 'GR10_P_V7::All'
+elif 'data' in sys.argv:
     process.GlobalTag.globaltag = 'GR10_P_V10::All'
     out_fn = [x for x in sys.argv if x.endswith('.rout')]
     process.TFileService.fileName = 'ana_datamc_data.root' if len(out_fn) == 0 else out_fn[0].replace('rout', 'root')
@@ -104,11 +114,12 @@ if 'data' in sys.argv:
 
     process.source.fileNames = files
     process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*open(lumis_fn).read().split(','))
-
+if 'data' in sys.argv or 'olddata' in sys.argv:
     process.PrintEvent = cms.EDAnalyzer('PrintEvent', dimuon_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
     process.MessageLogger.categories.append('PrintEvent')
     process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler', hlt_src = cms.InputTag('TriggerResults', '', 'HLT'), dimu_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
     process.pathVBTF *= process.PrintEvent * process.SimpleNtupler
+
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
@@ -140,4 +151,4 @@ return_data = 1
         open('crab.cfg', 'wt').write(crab_cfg % sample)
         os.system('crab -create -submit all')
 
-    os.system('rm crab.cfg histos_crab.py')
+    os.system('rm crab.cfg histos_crab.py histos_crab.pyc')

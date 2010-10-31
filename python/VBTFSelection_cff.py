@@ -36,13 +36,13 @@ vbtf_loose = 'isGlobalMuon && ' \
              'pt > 20. && ' \
              'innerTrack.hitPattern.numberOfValidTrackerHits >= 10'
 
-# For the trigger match, currently HLT_Mu11 is the lowest-pT
-# unprescaled single muon path. In runs <= 147119, HLT_Mu11 did not
+# For the trigger match, currently HLT_Mu15_v1 is the lowest-pT
+# unprescaled single muon path. In runs <= 147119, HLT_Mu15_v1 did not
 # exist. Emulate it by using HLT_Mu9 (unprescaled in those runs) and a
 # pT cut.
 vbtf_trigger_match = '(' \
-                     '(!triggerObjectMatchesByPath("HLT_Mu9").empty() && triggerObjectMatchesByPath("HLT_Mu9").at(0).pt() > 11) || ' \
-                     '!triggerObjectMatchesByPath("HLT_Mu11").empty()' \
+                     '(!triggerObjectMatchesByPath("HLT_Mu9").empty() && triggerObjectMatchesByPath("HLT_Mu9").at(0).pt() > 15) || ' \
+                     '!triggerObjectMatchesByPath("HLT_Mu15_v1").empty()' \
                      ')'
 
 vbtf_tight = 'dB < 0.2 && ' \

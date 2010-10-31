@@ -75,11 +75,11 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 
   const unsigned r = event.id().run();
   if (r <= 147119) {
-    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu9")); // changing this to pt > 11 is taken care of by the VBTF selection
+    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu9")); // changing this to pt > 15 is taken care of by the VBTF selection
     t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu3"));
   }
   else {
-    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu11"));
+    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu15_v1"));
     t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu3_v2"));
   }
 

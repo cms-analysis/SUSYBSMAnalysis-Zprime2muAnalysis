@@ -24,29 +24,29 @@ PrintEvent::PrintEvent(const edm::ParameterSet& cfg)
 void PrintEvent::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   std::ostringstream out;
 
-  edm::Handle<edm::TriggerResults> res;
-  event.getByLabel(edm::InputTag("TriggerResults", "", "PAT"), res);
-  const edm::TriggerNames& names = event.triggerNames(*res);
-  for (size_t i = 0; i < res->size(); ++i)
-    out << "TriggerResults::PAT path #" << i << " name " << names.triggerName(i) << " fired? " << res->accept(i) << "\n";
-
-  edm::Handle<std::vector<reco::Vertex> > vtxs;
-  event.getByLabel("offlinePrimaryVertices", vtxs);
-  BOOST_FOREACH(const reco::Vertex& vtx, *vtxs)
-    out << "vtx with z " << vtx.z() << "\n";
-
   edm::Handle<pat::CompositeCandidateCollection> dils;
   event.getByLabel(dimuon_src, dils);
 
   if (!dils.isValid())
-    out << "WARNING! tried to get dils and failed!\n";
-  else {
+    edm::LogInfo("PrintEvent") << "WARNING! tried to get dils and failed!";
+  else if (dils->size()) {
+    edm::Handle<edm::TriggerResults> res;
+    event.getByLabel(edm::InputTag("TriggerResults", "", "PAT"), res);
+    const edm::TriggerNames& names = event.triggerNames(*res);
+    for (size_t i = 0; i < res->size(); ++i)
+      out << "TriggerResults::PAT path #" << i << " name " << names.triggerName(i) << " fired? " << res->accept(i) << "\n";
+    
+    edm::Handle<std::vector<reco::Vertex> > vtxs;
+    event.getByLabel("offlinePrimaryVertices", vtxs);
+    BOOST_FOREACH(const reco::Vertex& vtx, *vtxs)
+      out << "vtx with z " << vtx.z() << "\n";
+    
     out << "dileptons:\n";
     BOOST_FOREACH(const pat::CompositeCandidate& dil, *dils)
       out << dil << "\n";
+    
+    edm::LogInfo("PrintEvent") << out.str();
   }
-
-  edm::LogInfo("PrintEvent") << out.str();
 }
 
 DEFINE_FWK_MODULE(PrintEvent);

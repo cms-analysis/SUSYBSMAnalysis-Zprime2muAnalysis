@@ -7,7 +7,7 @@ set_zp2mu_style()
 from samples import *
 
 rebin_factor = 5
-x_axis_limits = 40, 400
+x_axis_limits = 40, 500
 to_compare = 'DileptonMass'
 global_rescale = 3273/3404.6 if False else None
 draw_qcd = True

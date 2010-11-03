@@ -226,6 +226,21 @@ def make_rms_hist(prof, name='', bins=None, cache={}):
     cache[name] = new_hist
     return new_hist
 
+def move_above_into_bin(h,a):
+    """Given the TH1 h, add the contents of the bins above the one
+    corresponding to a into that bin, and zero the bins above."""
+    assert(h.Class().GetName().startswith('TH1')) # i bet there's a better way to do this...
+    b = h.FindBin(a)
+    bc = h.GetBinContent(b)
+    bcv = h.GetBinError(b)**2
+    for nb in xrange(b+1, h.GetNbinsX()+2):
+        bc += h.GetBinContent(nb)
+        bcv += h.GetBinError(nb)**2
+        h.SetBinContent(nb, 0)
+        h.SetBinError(nb, 0)
+    h.SetBinContent(b, bc)
+    h.SetBinError(b, bcv**0.5)
+
 def move_overflow_into_last_bin(h):
     """Given the TH1 h, Add the contents of the overflow bin into the
     last bin, and zero the overflow bin."""
@@ -390,6 +405,7 @@ __all__ = [
     'get_integral',
     'get_hist_stats',
     'make_rms_hist',
+    'move_above_into_bin',
     'move_overflow_into_last_bin',
     'plot_saver',
     'rainbow_palette',

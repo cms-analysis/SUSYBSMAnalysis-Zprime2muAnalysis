@@ -33,10 +33,9 @@ cuts = [
 #    ('Pt20', 'isGlobalMuon && pt > 20'), 
 #    ('Std',  'isGlobalMuon && pt > 20 && isolationR03.sumPt < 10'),
     ('VBTF', vbtf_loose),
-    ('VBTFIso10', vbtf_loose),
+    ('VBTFNoIso', vbtf_loose),
     ('VBTFRelIso015', vbtf_loose),
     ('VBTFNoPx', vbtf_loose),
-    ('VBTFPt30', vbtf_loose),
     ]
 
 simple_ntuple = False
@@ -68,14 +67,12 @@ for cut_name, muon_cuts in cuts:
         alldil = alldil.clone(decay = dil_decay % locals(), cut = dil_cut)
         dil = process.dimuons.clone(src = cms.InputTag(allname))
 
-        if 'Iso10' in cut_name:
-            alldil.loose_cut = vbtf_loose + ' && isolationR03.sumPt < 10'
+        if 'NoIso' in cut_name:
+            alldil.loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 10', '')
         elif 'RelIso015' in cut_name:
-            alldil.loose_cut = vbtf_loose + ' && isolationR03.sumPt / innerTrack.pt < 0.15'
+            alldil.loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt / innerTrack.pt < 0.15')
         elif 'NoPx' in cut_name:
             alldil.tight_cut = vbtf_tight.replace(' && innerTrack.hitPattern.numberOfValidPixelHits >= 1', '')
-        elif 'Pt30' in cut_name:
-            alldil.loose_cut = vbtf_loose.replace('pt > 20', 'pt > 30')
                     
         histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 
@@ -115,11 +112,16 @@ elif 'data' in sys.argv:
     process.source.fileNames = files
     process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*open(lumis_fn).read().split(','))
 if 'data' in sys.argv or 'olddata' in sys.argv:
-    process.PrintEvent = cms.EDAnalyzer('PrintEvent', dimuon_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
     process.MessageLogger.categories.append('PrintEvent')
+    process.PrintEvent = cms.EDAnalyzer('PrintEvent', dimuon_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
+    process.PrintEventSS = process.PrintEvent.clone(dimuon_src = cms.InputTag('VBTFMuonsSameSign'))
+    process.PrintEventEmu = process.PrintEvent.clone(dimuon_src = cms.InputTag('VBTFMuonsElectronsOppSign'))
+    
     process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler', hlt_src = cms.InputTag('TriggerResults', '', 'HLT'), dimu_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
-    process.pathVBTF *= process.PrintEvent * process.SimpleNtupler
+    process.SimpleNtuplerSS = process.SimpleNtupler.clone(dimu_src = cms.InputTag('VBTFMuonsSameSign'))
+    process.SimpleNtuplerEmu = process.SimpleNtupler.clone(dimu_src = cms.InputTag('VBTFMuonsElectronsOppSign'))
 
+    process.pathVBTF *= process.PrintEvent * process.PrintEventSS * process.PrintEventEmu * process.SimpleNtupler * process.SimpleNtuplerSS * process.SimpleNtuplerEmu
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''

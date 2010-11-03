@@ -4,9 +4,9 @@ import FWCore.ParameterSet.Config as cms
 #
 # https://twiki.cern.ch/twiki/bin/view/CMS/VbtfZMuMuBaselineSelection
 #
-# We remove the cuts on isolation and on muon pseudo-rapidity, and add
-# cuts on the 3D angle between muons and the common vertex chi2
-# probability (the latter two being implemented in
+# We remove the cuts on muon pseudo-rapidity, change the isolation cut
+# to 10 GeV, and add cuts on the 3D angle between muons and the common
+# vertex chi2 probability (the latter two being implemented in
 # Zprime2muCompositeCandidatePicker, since they can't be done by the
 # StringCutParser).
 #
@@ -34,6 +34,7 @@ import FWCore.ParameterSet.Config as cms
 
 vbtf_loose = 'isGlobalMuon && ' \
              'pt > 20. && ' \
+             'isolationR03.sumPt < 10 &&' \
              'innerTrack.hitPattern.numberOfValidTrackerHits >= 10'
 
 # For the trigger match, currently HLT_Mu15_v1 is the lowest-pT

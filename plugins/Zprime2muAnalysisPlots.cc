@@ -241,10 +241,13 @@ void Zprime2muAnalysisPlots::analyze(const edm::Event & event, const edm::EventS
 	plots["diLepton"]["charge"]->Fill(patCompCand.charge());
 	plots["diLepton"]["mass"]->Fill(patCompCand.mass());
       }
-      
+
       // now fill the daughter histograms
       // here we can use the CompositeCandidate role() method.  WHy not the name() method above?
       std::vector<std::string> role_collection = patCompCand.roles();
+      //LogDebug("ZP2M")<<role_collection.size();
+      //foreach(const std::string & str, role_collection) LogDebug("ZP2M")<<str;
+      //LogDebug("ZP2M")<<"nDaughter "<<patCompCand.numberOfDaughters();
       for (size_t i = 0; i < patCompCand.numberOfDaughters(); ++i) {
 	const reco::CandidateBaseRef dau = patCompCand.daughter(i)->masterClone();
 	const pat::Muon* mu = toConcretePtr<pat::Muon>(dau);
@@ -259,7 +262,7 @@ void Zprime2muAnalysisPlots::analyze(const edm::Event & event, const edm::EventS
         plots[role]["eta"]->Fill(mu->eta());
         plots[role]["phi"]->Fill(mu->phi());
         plots[role]["charge"]->Fill(mu->charge());
-	
+
         if (mu->innerTrack().isNonnull()) {
             plots[role]["pixelHits"  ]->Fill(mu->innerTrack()->hitPattern().numberOfValidPixelHits());
             plots[role]["pixelLayers"]->Fill(mu->innerTrack()->hitPattern().pixelLayersWithMeasurement());
@@ -278,19 +281,18 @@ void Zprime2muAnalysisPlots::analyze(const edm::Event & event, const edm::EventS
             }
         }
         if (mu->outerTrack().isNonnull()) {
-            plots[role]["pSta"  ]->Fill(mu->outerTrack()->p());
-            plots[role]["ptSta" ]->Fill(mu->outerTrack()->pt());
-            plots[role]["etaSta"]->Fill(mu->outerTrack()->eta());
-            plots[role]["phiSta"]->Fill(mu->outerTrack()->phi());
-
+	    plots[role]["pSta"  ]->Fill(mu->outerTrack()->p());
+	    plots[role]["ptSta" ]->Fill(mu->outerTrack()->pt());
+	    plots[role]["etaSta"]->Fill(mu->outerTrack()->eta());
+	    plots[role]["phiSta"]->Fill(mu->outerTrack()->phi());
+	  
             plots[role]["muonHits"]->Fill(mu->outerTrack()->numberOfValidHits());
-            plots[role]["muonBadHits"]->Fill(mu->outerTrack()->recHitsSize() - mu->outerTrack()->numberOfValidHits());
             plots[role]["muonChi2n"]->Fill(mu->outerTrack()->normalizedChi2());
-
             if ( ( mu->outerTrack()->extra().isAvailable()   ) && 
                  ( mu->outerTrack()->recHitsSize() > 0       ) &&
                  ( mu->outerTrack()->recHit(0).isAvailable() )     ) {
-                plots[role]["muonStationsValid"]->Fill(muon::muonStations(mu->outerTrack(), 0, true));
+	        plots[role]["muonBadHits"]->Fill(mu->outerTrack()->recHitsSize() - mu->outerTrack()->numberOfValidHits());
+	        plots[role]["muonStationsValid"]->Fill(muon::muonStations(mu->outerTrack(), 0, true));
                 plots[role]["muonStationsAny"  ]->Fill(muon::muonStations(mu->outerTrack(), 0, false));
                 float abseta = std::abs(mu->outerTrack()->eta());
                 if (abseta <= 1.2) {

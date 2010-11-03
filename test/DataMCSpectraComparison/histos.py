@@ -111,17 +111,23 @@ elif 'data' in sys.argv:
 
     process.source.fileNames = files
     process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*open(lumis_fn).read().split(','))
-if 'data' in sys.argv or 'olddata' in sys.argv:
+
+def ntuplify(process, hlt_process_name='HLT'):
+    process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler', hlt_src = cms.InputTag('TriggerResults', '', hlt_process_name), dimu_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
+    process.SimpleNtuplerSS = process.SimpleNtupler.clone(dimu_src = cms.InputTag('VBTFMuonsSameSign'))
+    process.SimpleNtuplerEmu = process.SimpleNtupler.clone(dimu_src = cms.InputTag('VBTFMuonsElectronsOppSign'))
+    process.pathVBTF *= process.SimpleNtupler * process.SimpleNtuplerSS * process.SimpleNtuplerEmu
+
+def printify(process):
     process.MessageLogger.categories.append('PrintEvent')
     process.PrintEvent = cms.EDAnalyzer('PrintEvent', dimuon_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
     process.PrintEventSS = process.PrintEvent.clone(dimuon_src = cms.InputTag('VBTFMuonsSameSign'))
     process.PrintEventEmu = process.PrintEvent.clone(dimuon_src = cms.InputTag('VBTFMuonsElectronsOppSign'))
+    process.pathVBTF *= process.PrintEvent * process.PrintEventSS * process.PrintEventEmu
     
-    process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler', hlt_src = cms.InputTag('TriggerResults', '', 'HLT'), dimu_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
-    process.SimpleNtuplerSS = process.SimpleNtupler.clone(dimu_src = cms.InputTag('VBTFMuonsSameSign'))
-    process.SimpleNtuplerEmu = process.SimpleNtupler.clone(dimu_src = cms.InputTag('VBTFMuonsElectronsOppSign'))
-
-    process.pathVBTF *= process.PrintEvent * process.PrintEventSS * process.PrintEventEmu * process.SimpleNtupler * process.SimpleNtuplerSS * process.SimpleNtuplerEmu
+if 'data' in sys.argv or 'olddata' in sys.argv:
+    printify(process)
+    ntuplify(process)
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
@@ -142,15 +148,26 @@ ui_working_dir = crab/crab_ana_datamc_%(name)s
 return_data = 1
 '''
 
+    just_testing = 'testing' in sys.argv
+    
     from samples import samples
     for sample in samples:
         print sample.name
 
         new_py = open('histos.py').read()
         new_py += "\nprocess.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', '%(hlt_process_name)s')\n" % sample
+
+        if sample.name == 'ttbar':
+            new_py += "\nntuplify(process, hlt_process_name='%(hlt_process_name)s')\n" % sample
+            
         open('histos_crab.py', 'wt').write(new_py)
 
         open('crab.cfg', 'wt').write(crab_cfg % sample)
-        os.system('crab -create -submit all')
+        if not just_testing:
+            os.system('crab -create -submit all')
+        else:
+            if sample.name == 'ttbar':
+                break
 
-    os.system('rm crab.cfg histos_crab.py histos_crab.pyc')
+    if not just_testing:
+        os.system('rm crab.cfg histos_crab.py histos_crab.pyc')

@@ -35,8 +35,7 @@ elif cmd == 'publishmc':
         do('crab -c crab/crab_datamc_${x} -publish >&! crab/publish_logs/publish.${x} &')
 
 elif cmd == 'hadd':
-    if extra:
-        extra = '_' + extra[0]
+    extra = '_' + extra[0] if extra else ''
     for sample in samples:
         name = sample.name
         do('hadd ana_datamc_%(name)s.root crab/crab_ana%(extra)s_datamc_%(name)s/res/zp2mu_histos*root' % locals())

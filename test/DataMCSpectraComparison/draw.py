@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import sys, os, glob
-from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import move_overflow_into_last_bin, plot_saver, real_hist_max, real_hist_min, set_zp2mu_style, ROOT
+from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import move_above_into_bin, plot_saver, real_hist_max, real_hist_min, set_zp2mu_style, ROOT
 set_zp2mu_style()
 
 from samples import *
@@ -81,7 +81,7 @@ use_yaxis = False
 #cutss = ['Std','VBTF','Pt20']
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsElectronsOppSign']
-cutss = ['VBTF', 'VBTFIso10', 'VBTFRelIso015']
+cutss = ['VBTF', 'VBTFNoIso', 'VBTFRelIso015', 'VBTFNoPx']
 
 ROOT.TH1.AddDirectory(False)
 
@@ -113,7 +113,9 @@ if global_rescale is not None:
         s.partial_weight *= global_rescale
 
 #samples = [s for s in samples if not s.name in ['ww', 'zz', 'wz', 'qcd500']]
-
+for s in samples:
+    s.histos = {}
+    
 for cuts in cutss:
     plot_dir = pdir + '/%s/%i_%i/%s' % (to_compare, x_axis_limits[0], x_axis_limits[1], cuts)
     ps.set_plot_dir(plot_dir)
@@ -129,8 +131,9 @@ for cuts in cutss:
             sample.mass = getattr(f, dir_name(cuts, dilepton)).Get(to_compare).Clone()
             sample.mass.Rebin(rebin_factor)
             sample.mass.Scale(sample.partial_weight * int_lumi)
-            move_overflow_into_last_bin(sample.mass)
-
+            move_above_into_bin(sample.mass, x_axis_limits[1])
+            sample.histos[cuts + dilepton] = sample.mass.Clone()
+            
         h = samples[0].mass
         summc = ROOT.TH1F(cuts + dilepton + '_sumMC', '', h.GetNbinsX(), h.GetXaxis().GetXmin(), h.GetXaxis().GetXmax())
         summc.SetDirectory(sumMCfile)
@@ -141,7 +144,7 @@ for cuts in cutss:
 
         hdata = data[dilepton]
 
-        for mass_range in [(60,120), (70,110), (120,)]:
+        for mass_range in [(60,120), (120,), (200,)]:
             print 'cuts: %s  dilepton: %s  mass range: %s' % (cuts, dilepton, mass_range)
             for sample in samples:
                 sample.integral = integ(sample.mass, *mass_range)
@@ -179,7 +182,7 @@ for cuts in cutss:
             summc.Add(h)
             last_mc = h
 
-        l = ROOT.TLegend(0.69, 0.56, 0.87, 0.87)
+        l = ROOT.TLegend(0.60, 0.51, 0.87, 0.87)
         l.SetFillColor(0)
 
         m = ROOT.TMarker()
@@ -199,7 +202,7 @@ for cuts in cutss:
 
         hdata = data[dilepton]
         hdata.Rebin(rebin_factor)
-        move_overflow_into_last_bin(hdata)
+        move_above_into_bin(hdata, x_axis_limits[1])
 
         if use_yaxis:
             mymin, mymax = yaxis[dilepton]
@@ -254,7 +257,7 @@ for cuts in cutss:
             h.SetTitle('')
             #h.GetYaxis().SetRangeUser(0.1, 6.5e3)
             h.GetXaxis().SetTitle(titleize[to_compare] % (subtitleize[dilepton], unitize[to_compare]))
-            h.GetYaxis().SetTitle('Events < X')
+            h.GetYaxis().SetTitle('Events > X')
             h.SetMarkerStyle(20)
             h.SetMarkerSize(0.5)
 
@@ -275,6 +278,16 @@ for cuts in cutss:
 #        raise 1
 
         sumMCfile.Write()
+
+    if False:
+        for sample in samples:
+            h = sample.histos[cuts + 'MuonsPlusMuonsMinus'].Clone()
+            h.Scale(1/sample.partial_weight/int_lumi)
+            h2 = sample.histos[cuts + 'MuonsElectronsOppSign'].Clone()
+            h2.Scale(1/sample.partial_weight/int_lumi)
+            h.Divide(h2)
+            h.Draw('hist')
+            ps.save('mumuemuratio_%s' % sample.name)
 
 if hadd_tmp:
     os.system('rm %s' % data_fn)

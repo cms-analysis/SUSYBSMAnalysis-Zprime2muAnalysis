@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys, os
+import sys, os, glob
 from samples import samples
 
 just_testing = 'testing' in sys.argv
@@ -38,5 +38,13 @@ elif cmd == 'hadd':
     extra = '_' + extra[0] if extra else ''
     for sample in samples:
         name = sample.name
-        do('hadd ana_datamc_%(name)s.root crab/crab_ana%(extra)s_datamc_%(name)s/res/zp2mu_histos*root' % locals())
+        pattern = 'crab/crab_ana%(extra)s_datamc_%(name)s/res/zp2mu_histos*root' % locals()
+        fn = 'ana_datamc_%(name)s.root' % locals()
+        n = len(glob.glob(pattern))
+        if n == 0:
+            raise RuntimeError('no files matching %s' % pattern)
+        elif n == 1:
+            do('cp %s %s' % (pattern, fn))
+        else:
+            do('hadd ana_datamc_%(name)s.root crab/crab_ana%(extra)s_datamc_%(name)s/res/zp2mu_histos*root' % locals())
 

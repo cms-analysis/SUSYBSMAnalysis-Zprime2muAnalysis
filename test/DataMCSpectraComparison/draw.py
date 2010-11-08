@@ -12,6 +12,10 @@ to_compare = 'DileptonMass'
 global_rescale = 3273/3404.6 if False else None
 draw_qcd = True
 
+joins = [
+    ('qcd', 'QCD'),
+    ]
+
 histo_dir = None
 for x in sys.argv:
     if 'xax' in x:
@@ -191,9 +195,19 @@ for cuts in cutss:
         m.SetMarkerColor(ROOT.kBlack)
         l.AddEntry(m, 'Data')
 
+        legend_already = set()
         for sample in reversed(samples):
-            if 'qcd' in sample.name and not draw_qcd:
+            skip = False
+            for join_substr, join_nice_name in joins:
+                if join_substr in sample.name:
+                    if join_substr in legend_already:
+                        skip = True
+                    legend_already.add(join_substr)
+                    sample.nice_name = join_nice_name
+                    break
+            if skip or ('qcd' in sample.name and not draw_qcd):
                 continue
+            legend_already.add(sample.name)
             l.AddEntry(sample.mass, sample.nice_name, 'F')
 
         s.Draw('hist')

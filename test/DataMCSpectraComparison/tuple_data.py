@@ -16,7 +16,7 @@ if __name__ == '__main__' and 'submit' in sys.argv:
     scheduler = 'condor'
     job_control_ex = '''
 total_number_of_lumis = -1
-lumis_per_job = 50
+lumis_per_job = 300
 %(lumi_mask)s
 '''
 
@@ -53,6 +53,11 @@ lumis_per_job = 50
         # Runs supplied in argv -- running on new data.
         name = 'promptB_' + datetime.datetime.today().strftime('%Y%m%d_%H%M%S')
         print name
+        dataset = '/Mu/Run2010B-PromptReco-v2/RECO'
+        tag = 'GR10_P_V10'
+        submit(locals())
+    elif 'promptB' in sys.argv:
+        name = 'promptB_all'
         dataset = '/Mu/Run2010B-PromptReco-v2/RECO'
         tag = 'GR10_P_V10'
         submit(locals())

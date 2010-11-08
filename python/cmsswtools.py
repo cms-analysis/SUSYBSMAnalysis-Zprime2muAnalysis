@@ -2,6 +2,16 @@
 
 import glob, os, sys, FWCore.ParameterSet.Config as cms
 
+def cmssw_version(as_tuple=True):
+    if not os.environ.has_key('CMSSW_VERSION'):
+        raise RuntimeError('CMSSW_VERSION environment variable not set!')
+    x = os.environ['CMSSW_VERSION'].replace('CMSSW_', '')
+    if as_tuple:
+        x = x.split('_')
+        return tuple(int(y) for y in x[:3]) + tuple(x[3:])
+    else:
+        return x
+                                
 def files_from_argv(process):
     files = []
     for f in sys.argv:

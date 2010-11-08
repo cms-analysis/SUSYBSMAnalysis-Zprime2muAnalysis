@@ -7,7 +7,8 @@ def do(cmd):
     if not just_testing:
         os.system(cmd)
 
-in_fns = glob.glob('crab/crab_datamc_promptB*/res/merged.root')
+#in_fns = glob.glob('crab/crab_datamc_promptB*/res/merged.root')
+in_fns = ['crab/crab_datamc_promptB_all/res/merged.root']
 out_fn_base = 'ana_datamc/ana_datamc_data_promptB_%s.rout'
 open(out_fn_base.replace('_%s.rout', '.whichcrabs'), 'wt').write(' '.join(in_fns))
 

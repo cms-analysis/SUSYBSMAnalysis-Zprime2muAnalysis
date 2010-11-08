@@ -156,9 +156,7 @@ return_data = 1
 
         new_py = open('histos.py').read()
         new_py += "\nprocess.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', '%(hlt_process_name)s')\n" % sample
-
-        if sample.name == 'ttbar':
-            new_py += "\nntuplify(process, hlt_process_name='%(hlt_process_name)s')\n" % sample
+        new_py += "\nntuplify(process, hlt_process_name='%(hlt_process_name)s')\n" % sample
             
         open('histos_crab.py', 'wt').write(new_py)
 

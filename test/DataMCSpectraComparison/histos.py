@@ -34,6 +34,7 @@ cuts = [
 #    ('Std',  'isGlobalMuon && pt > 20 && isolationR03.sumPt < 10'),
     ('VBTF', vbtf_loose),
     ('VBTFNoIso', vbtf_loose),
+    ('VBTFIso3', vbtf_loose),
     ('VBTFRelIso015', vbtf_loose),
     ('VBTFNoPx', vbtf_loose),
     ]
@@ -69,6 +70,8 @@ for cut_name, muon_cuts in cuts:
 
         if 'NoIso' in cut_name:
             alldil.loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 10', '')
+        elif 'Iso3' in cut_name:
+            alldil.loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt < 3')
         elif 'RelIso015' in cut_name:
             alldil.loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt / innerTrack.pt < 0.15')
         elif 'NoPx' in cut_name:

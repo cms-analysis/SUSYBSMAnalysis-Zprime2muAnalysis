@@ -152,11 +152,20 @@ return_data = 1
 '''
 
     just_testing = 'testing' in sys.argv
+
+    from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import cmssw_version
+    is_38x = cmssw_version()[1] >= 8
     
     from samples import samples
     for sample in samples:
-        print sample.name
+        if is_38x:
+            if sample.name not in ['zmumu'] or 'qcd' not in sample.name:
+                continue
+        else:
+            if 'qcd' in sample.name:
+                continue
 
+        print sample.name
         new_py = open('histos.py').read()
         new_py += "\nprocess.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', '%(hlt_process_name)s')\n" % sample
         new_py += "\nntuplify(process, hlt_process_name='%(hlt_process_name)s')\n" % sample
@@ -166,9 +175,6 @@ return_data = 1
         open('crab.cfg', 'wt').write(crab_cfg % sample)
         if not just_testing:
             os.system('crab -create -submit all')
-        else:
-            if sample.name == 'ttbar':
-                break
 
     if not just_testing:
         os.system('rm crab.cfg histos_crab.py histos_crab.pyc')

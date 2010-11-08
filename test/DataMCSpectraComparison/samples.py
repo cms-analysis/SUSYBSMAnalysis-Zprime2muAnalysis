@@ -47,17 +47,20 @@ samples = [
     sample('zmumu',        'Z #rightarrow #mu^{+}#mu^{-}',         '/Zmumu_M20_CTEQ66-powheg/Summer10-START36_V9_S09-v2/GEN-SIM-RECO',          1768457,   7, 1686, is_35x=False, hlt_process_name='REDIGI36X'),
     sample('ttbar',        't#bar{t}',                             '/TTbarJets-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',              1483404,   2, 152),
     sample('singletop_tW', 'Single t (tW)',                        '/SingleTop_tWChannel-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',     466437,   1, 10.6),
-#   sample('singletop_s',  'Single t (s-channel)',                 '/SingleTop_sChannel-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',      412055,  30, 4.6*0.32442),
-#   sample('singletop_t',  'Single t (t-channel)',                 '/SingleTop_tChannel-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',      528593,  40, 63*0.32442),
     sample('ww',           'WW',                                   '/WW/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',                               122980,   4, 43),
     sample('wz',           'WZ',                                   '/WZ/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',                               118120,   5, 18),
     sample('zz',           'ZZ',                                   '/ZZ/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',                               145368,   6, 5.9),
     sample('wjets',        'W+jets',                               '/WJets-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',                 10068895,   3, 2.8e4), # is this xsec right?
     sample('ztautau',      'Z #rightarrow #tau^{+}#tau^{-}',       '/Ztautau_M20_CTEQ66-powheg/Summer10-START36_V9_S09-v1/GEN-SIM-RECO',        1269404,  46, 1686, is_35x=False, hlt_process_name='REDIGI36X'),
-    sample('qcd100',       'QCD (100 < #hat{p}_{T} < 250 GeV)',    '/QCD_Pt100to250-madgraph/Spring10-START3X_V26_S09-v2/GEN-SIM-RECO',        10875132, 801, 7e6),    # LO xsec!
-    sample('qcd250',       'QCD (250 < #hat{p}_{T} < 500 GeV)',    '/QCD_Pt250to500-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',         4913036, 802, 1.71e5), # LO xsec!
-    sample('qcd500',       'QCD (500 < #hat{p}_{T} < 1000 GeV)',   '/QCD_Pt500to1000-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',        4234762, 803, 5e3),    # LO xsec!
-    sample('qcd1000',      'QCD (#hat{p}_{T} > 1000 GeV)',         '/QCD_Pt1000toInf-madgraph/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO',        1661261, 804, 80),     # LO xsec!
+    sample('inclmu15',     'QCD',                                          '/InclusiveMu15/Summer10-START37_V5_S09-v1/GEN-SIM-RECO',                    5369781, 801, 2.969e8*0.00037, is_35x=False, hlt_process_name='REDIGI37X'),
+    sample('zssm750',      "Z_{SSM} (750) #rightarrow #mu^{+}#mu^{-}",     '/ZprimeSSMToMuMu_M-750_7TeV-pythia6/Spring10-START3X_V26-v1/GEN-SIM-RECO',    18932,  40, 0.355, hlt_process_name='HLT'),
+    sample('qcd15',        'QCD (15 < #hat{p_{T}} < 20 GeV)',    '/QCD_Pt-15to20_MuPt5Enriched_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',    2884915, 801, 0.00254 * 579200000, hlt_process_name='REDIGI38X', is_35x=False),
+    sample('qcd20',        'QCD (20 < #hat{p_{T}} < 30 GeV)',    '/QCD_Pt-20to30_MuPt5Enriched_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',   11461085, 801, 0.00518 * 236300000, hlt_process_name='REDIGI38X', is_35x=False),
+    sample('qcd30',        'QCD (30 < #hat{p_{T}} < 50 GeV)',    '/QCD_Pt-30to50_MuPt5Enriched_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',   11431864, 801, 0.0109  *  53070000, hlt_process_name='REDIGI38X', is_35x=False),
+    sample('qcd50',        'QCD (50 < #hat{p_{T}} < 80 GeV)',    '/QCD_Pt-50to80_MuPt5Enriched_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',   10748755, 801, 0.02274 *   6351000, hlt_process_name='REDIGI38X', is_35x=False),
+    sample('qcd80',        'QCD (80 < #hat{p_{T}} < 120 GeV)',   '/QCD_Pt-80to120_MuPt5Enriched_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',   3191979, 801, 0.037   *    785100, hlt_process_name='REDIGI38X', is_35x=False),
+    sample('qcd120',       'QCD (120 < #hat{p_{T}} < 150 GeV)',  '/QCD_Pt-120to150_MuPt5Enriched_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',   998503, 801, 0.04777 *     92950, hlt_process_name='REDIGI38X', is_35x=False),
+    sample('qcd150',       'QCD (#hat{p_{T}} > 150 GeV)',        '/QCD_Pt-150_MuPt5Enriched_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',       1022541, 801, 0.05964 *     47580, hlt_process_name='REDIGI38X', is_35x=False),
 ]
 samples.reverse()
 
@@ -65,10 +68,8 @@ for sample in samples:
     exec '%s = sample' % sample.name
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import big_warn
-big_warn('modifying qcd100,250 and wjets nevents (by just a small amount, though)')
+big_warn('modifying wjets nevents (by just a small amount, though)')
 wjets.nevents = 10067072
-qcd100.nevents = 10862502
-qcd250.nevents -= 25000
 
 print 'samples are:'
 print ' '.join(s.name for s in samples)

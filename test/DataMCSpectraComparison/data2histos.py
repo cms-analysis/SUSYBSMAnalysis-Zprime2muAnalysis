@@ -12,7 +12,8 @@ in_fns = ['crab/crab_datamc_promptB_all/res/merged.root']
 out_fn_base = 'ana_datamc/ana_datamc_data_promptB_%s.rout'
 open(out_fn_base.replace('_%s.rout', '.whichcrabs'), 'wt').write(' '.join(in_fns))
 
-for x in ['allgood', 'zp2mu']:
+#for x in ['allgood', 'zp2mu']:
+for x in ['allgood']:
     lumis_fn = '/afs/cern.ch/user/t/tucker/runreg/output/full_%s.cmssw' % x
     json_fn = lumis_fn.replace('.cmssw', '.json')
     out_fn = out_fn_base % x

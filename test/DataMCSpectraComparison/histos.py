@@ -36,10 +36,9 @@ cuts = [
     ('VBTFNoIso', vbtf_loose),
     ('VBTFIso3', vbtf_loose),
     ('VBTFRelIso015', vbtf_loose),
+    ('VBTFRelIso006', vbtf_loose),
     ('VBTFNoPx', vbtf_loose),
     ]
-
-simple_ntuple = False
 
 for cut_name, muon_cuts in cuts:
     #if cut_name != 'VBTF': continue
@@ -74,6 +73,8 @@ for cut_name, muon_cuts in cuts:
             alldil.loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt < 3')
         elif 'RelIso015' in cut_name:
             alldil.loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt / innerTrack.pt < 0.15')
+        elif 'RelIso006' in cut_name:
+            alldil.loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt / innerTrack.pt < 0.06')
         elif 'NoPx' in cut_name:
             alldil.tight_cut = vbtf_tight.replace(' && innerTrack.hitPattern.numberOfValidPixelHits >= 1', '')
                     
@@ -83,11 +84,6 @@ for cut_name, muon_cuts in cuts:
         setattr(process, name, dil)
         setattr(process, name + 'Histos', histos)
         path_list.append(alldil * dil * histos)
-
-        if simple_ntuple:
-            SimpleNtupler = cms.EDAnalyzer('SimpleNtupler', hlt_src = cms.InputTag('TriggerResults', '', 'HLT'), dimu_src = cms.InputTag(name))
-            setattr(process, name + 'SimpleNtupler', SimpleNtupler)
-            path_list[-1] *= SimpleNtupler
 
     # Finally, make the path for this set of cuts. Don't use hltFilter
     # here, but rely on the VBTF selection to take care of it -- easy
@@ -153,18 +149,8 @@ return_data = 1
 
     just_testing = 'testing' in sys.argv
 
-    from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import cmssw_version
-    is_38x = cmssw_version()[1] >= 8
-    
     from samples import samples
     for sample in samples:
-        if is_38x:
-            if sample.name not in ['zmumu'] or 'qcd' not in sample.name:
-                continue
-        else:
-            if 'qcd' in sample.name:
-                continue
-
         print sample.name
         new_py = open('histos.py').read()
         new_py += "\nprocess.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', '%(hlt_process_name)s')\n" % sample
@@ -175,6 +161,6 @@ return_data = 1
         open('crab.cfg', 'wt').write(crab_cfg % sample)
         if not just_testing:
             os.system('crab -create -submit all')
-
+        
     if not just_testing:
         os.system('rm crab.cfg histos_crab.py histos_crab.pyc')

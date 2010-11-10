@@ -11,6 +11,7 @@ x_axis_limits = 40, 500
 to_compare = 'DileptonMass'
 global_rescale = 3273/3404.6 if False else None
 draw_qcd = True
+draw_zssm = False
 
 joins = [
     ('qcd', 'QCD'),
@@ -85,7 +86,7 @@ use_yaxis = False
 #cutss = ['Std','VBTF','Pt20']
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsElectronsOppSign']
-cutss = ['VBTF', 'VBTFNoIso', 'VBTFRelIso015', 'VBTFNoPx']
+cutss = ['VBTF', 'VBTFNoIso', 'VBTFIso3', 'VBTFRelIso015', 'VBTFNoPx']
 
 ROOT.TH1.AddDirectory(False)
 
@@ -159,15 +160,16 @@ for cuts in cutss:
             var_sum_mc = 0.
             for sample in sorted(samples, key=lambda x: x.integral, reverse=True):
                 w = sample.partial_weight*int_lumi
-                sum_mc += sample.integral
                 var = w * sample.integral # not w**2 * sample.integral because sample.integral is already I*w
-                var_sum_mc += var
+                if 'zssm' not in sample.name:
+                    sum_mc += sample.integral
+                    var_sum_mc += var
                 if sample.integral == 0:
                     limit = '%.6f' % (3*w)
                 else:
                     limit = '-'
                 print '%100s%20.6f%20.6f +/- %20.6f%20s' % (sample.nice_name, w, sample.integral, var**0.5, limit)
-            print '%100s%20s%20.6f +/- %20.6f%20s' % ('sum MC', '-', sum_mc, var_sum_mc**0.5, '-')
+            print '%100s%20s%20.6f +/- %20.6f%20s' % ('sum MC (not including Z\')', '-', sum_mc, var_sum_mc**0.5, '-')
             print
         print
         
@@ -179,14 +181,15 @@ for cuts in cutss:
             if 'qcd' in sample.name and not draw_qcd:
                 continue
             h = sample.mass
-            h.SetFillColor(sample.color)
             h.SetLineColor(sample.color)
             h.SetMarkerStyle(0)
-            s.Add(h)
-            summc.Add(h)
+            if draw_zssm or 'zssm' not in sample.name:
+                h.SetFillColor(sample.color)
+                s.Add(h)
+                summc.Add(h)
             last_mc = h
 
-        l = ROOT.TLegend(0.60, 0.51, 0.87, 0.87)
+        l = ROOT.TLegend(0.60, 0.53, 0.87, 0.87)
         l.SetFillColor(0)
 
         m = ROOT.TMarker()
@@ -244,6 +247,17 @@ for cuts in cutss:
         hdata.SetStats(0)
         hdata.Draw('same e1')
 
+        if draw_zssm:
+            from samples import zssm750
+            zp = zssm750.mass
+            zp.SetTitle('')
+            zp.SetLineWidth(2)
+            zp.GetXaxis().SetRangeUser(*x_axis_limits)
+            zp.SetMinimum(mymin)
+            zp.SetMaximum(mymax)
+            zp.SetStats(0)
+            zp.Draw('hist same')
+        
         t1 = ROOT.TLatex(0.4, 0.93, '#sqrt{s} = 7 TeV,  #int L dt = %.1f pb^{-1}' % int_lumi)
         t2 = ROOT.TLatex(0.1, 0.93, 'CMS preliminary')
 

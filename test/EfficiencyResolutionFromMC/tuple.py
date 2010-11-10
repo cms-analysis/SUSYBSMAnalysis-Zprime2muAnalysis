@@ -43,9 +43,6 @@ check_user_remote_dir = 0
 publish_data = 1
 publish_data_name = effres_%(name)s
 dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
-
-[GRID]
-#ce_black_list = ufl
 '''
 
     just_testing = 'testing' in sys.argv
@@ -69,6 +66,5 @@ dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02
 
         open('crab.cfg', 'wt').write(crab_cfg % locals())
         if not just_testing:
-            os.system('crab -cfg %s -create -submit all' % crab_fn)
-    if not just_testing:
-        os.system('rm -v crab.cfg')
+            os.system('crab -create -submit all')
+            os.system('rm -v crab.cfg')

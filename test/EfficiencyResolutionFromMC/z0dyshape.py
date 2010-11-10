@@ -1,4 +1,4 @@
-import sys
+import sys, os
 sys.argv.append('-b')
 import ROOT
 
@@ -104,13 +104,13 @@ if __name__ == '__main__':
     fMixFuncZOnlyNoErf.Draw('same')
     fMixFuncDYOnlyNoErf.Draw('same')
 
+    os.system('mkdir -p plots/z0dyshape')
     leg.Draw()
     ROOT.c1.SetLogy(1)
-    ROOT.c1.SaveAs('asdf/zlineshape.png')
-    ROOT.c1.SaveAs('asdf/zlineshape.root')
+    ROOT.c1.SaveAs('plots/z0dyshape/zlineshape.png')
+    ROOT.c1.SaveAs('plots/z0dyshape/zlineshape.root')
 
     fFracZOnly.Draw()
     fFracDYOnly.Draw('same')
-    ROOT.c1.SaveAs('asdf/zlineshapefrac.png')
-    ROOT.c1.SaveAs('asdf/zlineshapefrac.root')
-            
+    ROOT.c1.SaveAs('plots/z0dyshape/zlineshapefrac.png')
+    ROOT.c1.SaveAs('plots/z0dyshape/zlineshapefrac.root')

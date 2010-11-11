@@ -11,6 +11,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff import vbtf_loose, vbtf
 #
 # This will break if vbtf_loose, vbtf_tight cut strings are changed...
 #
+process.allDimuonsVBTFNoIso     = allDimuons.clone(loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 10', ''))
 process.allDimuonsVBTFNoTkHits  = allDimuons.clone(loose_cut = vbtf_loose.replace(' && innerTrack.hitPattern.numberOfValidTrackerHits >= 10', ''))
 process.allDimuonsVBTFNoDB      = allDimuons.clone(tight_cut = vbtf_tight.replace('dB < 0.2 && ', ''))
 process.allDimuonsVBTFNoGlbChi2 = allDimuons.clone(tight_cut = vbtf_tight.replace(' && globalTrack.normalizedChi2 < 10', ''))
@@ -21,7 +22,7 @@ process.allDimuonsVBTFNoTrgMtch = allDimuons.clone(tight_cut = vbtf_tight.replac
 process.allDimuonsVBTFNoNo      = allDimuons.clone()
 
 alldimus = [x for x in dir(process) if 'allDimuonsVBTFNo' in x]
-process.p = cms.Path(process.goodDataFilter * process.hltFilter * process.muonPhotonMatch * process.leptons * reduce(lambda x,y: x*y, [getattr(process, x) for x in alldimus]))
+process.p = cms.Path(process.goodDataFilter * process.muonPhotonMatch * process.leptons * reduce(lambda x,y: x*y, [getattr(process, x) for x in alldimus]))
 
 # For all the allDimuons producers, make dimuons producers, and
 # analyzers to make the histograms.
@@ -35,6 +36,7 @@ for alld in alldimus:
 
 # Handle the cuts that have to be applied at the
 # Zprime2muCompositeCandidatePicker level.
+process.p *= process.allDimuons
 process.dimuonsVBTFNoB2B     = process.dimuons.clone(back_to_back_cos_angle_min = -1)
 process.dimuonsVBTFNoVtxProb = process.dimuons.clone(vertex_chi2_max = -1)
 
@@ -45,23 +47,10 @@ for dimu in ['dimuonsVBTFNoB2B', 'dimuonsVBTFNoVtxProb']:
     
 ################################################################################
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.tools import files_from_dbs
-if 'data' in sys.argv:
+if 'olddata' in sys.argv:
     process.source.fileNames = ['file:work/daata/jul15.root', 'file:work/daata/prompt.root']
+    process.TFileService.fileName = 'ana_nminus1_olddata.root'
+elif 'data' in sys.argv:
+    process.source.fileNames = ['file:../DataMCSpectraComparison/crab/crab_datamc_promptB_all/res/merged.root']
+    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*open('../DataMCSpectraComparison/ana_datamc/ana_datamc_data_promptB_allgood.cmssw').read().split(','))
     process.TFileService.fileName = 'ana_nminus1_data.root'
-elif 'zp1000' in sys.argv:
-    process.source.fileNames = files_from_dbs('/ZprimeSSMToMuMu_M-1000_7TeV-pythia6/tucker-dyzpforeff_zp1000-9caa3d7638ff33984d7b458a78e3e8dd/USER')
-    process.p.remove(process.goodDataFilter)
-    process.TFileService.fileName = 'ana_nminus1_zp1000.root'
-elif 'dy120' in sys.argv:
-    process.source.fileNames = files_from_dbs('/DYToMuMu_M-120_7TeV-pythia6/tucker-dyzpforeff_dy120-9caa3d7638ff33984d7b458a78e3e8dd/USER')
-    process.p.remove(process.goodDataFilter)
-    process.TFileService.fileName = 'ana_nminus1_dy120.root'
-elif 'zmumu' in sys.argv:
-    process.source.fileNames = files_from_dbs('/Zmumu_M20_CTEQ66-powheg/tucker-datamc_zmumu-ea1b4401edd0c9e8af9e80917519ee4e/USER')
-    process.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', 'REDIGI36X')
-    process.TFileService.fileName = 'ana_nminus1_zmumu.root'
-elif 'ttbar' in sys.argv:
-    process.source.fileNames = files_from_dbs('/TTbarJets-madgraph/tucker-datamc_ttbar-f1606b2f2aa07e70082d78e786896133/USER')
-    process.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', 'REDIGI')
-    process.TFileService.fileName = 'ana_nminus1_ttbar.root'

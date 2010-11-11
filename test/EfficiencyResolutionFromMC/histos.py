@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
-import sys, os, FWCore.ParameterSet.Config as cms
-
-from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
-process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-120_7TeV-pythia6/dyzpforeff_dy120/9caa3d7638ff33984d7b458a78e3e8dd/pat_9_1_KwL.root']
-process.source.duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
+import sys, os
+from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import cms, process
+process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/effres_dy20/8ca75260210b8943d361f4da5b0c0bcc/pat_1_1_Zi3.root']
 process.options.wantSummary = True
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import rec_levels, rec_level_module
@@ -13,15 +11,21 @@ rec_levels(process, tracks)
 
 dy_gen_mass_cut = 'status == 3 && (pdgId == 23 || pdgId == 32 || pdgId == 39 || pdgId == 5000039) && mass > %(lo)i && mass < %(hi)i'
 process.DYGenMassFilter = cms.EDFilter('CandViewSelector',
-                                       src = cms.InputTag('genParticles'),
-                                       cut = cms.string(dy_gen_mass_cut % {'lo': 120, 'hi': 200}),
+                                       src = cms.InputTag('prunedGenSimLeptons'),
+                                       cut = cms.string(dy_gen_mass_cut % {'lo': 0, 'hi': 10000}),
                                        filter = cms.bool(True),
                                        )
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.EfficiencyFromMC_cfi')
-process.EfficiencyFromMC.hardInteraction.src = cms.InputTag('genParticles')
 
-process.p2 = cms.Path(process.Zprime2muAnalysisSequencePlain * process.EfficiencyFromMC)
+process.HLTSingleObjects = cms.EDProducer('HLTLeptonsFromTriggerEvent',
+                                          summary = cms.InputTag('hltTriggerSummaryAOD', '', 'HLT'),
+                                          leptons = cms.VInputTag(cms.InputTag('hltL3MuonCandidates', '', 'HLT'))
+                                          )
+process.EfficiencyFromMC.hlt_obj_src = 'HLTSingleObjects'
+process.EfficiencyFromMC.hlt_single_min_pt = 15
+
+process.p2 = cms.Path(process.Zprime2muAnalysisSequencePlain * process.HLTSingleObjects * process.EfficiencyFromMC)
 process.p = cms.Path(process.DYGenMassFilter * process.Zprime2muAnalysisSequence)
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi')
@@ -29,11 +33,17 @@ process.load('SUSYBSMAnalysis.Zprime2muAnalysis.ResolutionUsingMC_cfi')
 
 process.HistosFromPAT.leptonsFromDileptons = True
 process.ResolutionUsingMC.leptonsFromDileptons = True
-process.ResolutionUsingMC.hardInteraction.src = cms.InputTag('genParticles')
 process.ResolutionUsingMC.doQoverP = True
 
 process.p *= rec_level_module(process, process.HistosFromPAT,     'Histos', tracks)
 process.p *= rec_level_module(process, process.ResolutionUsingMC, 'Resolution', tracks)
+
+def switch_hlt_name(n):
+    process.EfficiencyFromMC.triggerDecision.hltResults = cms.InputTag('TriggerResults', '', n)
+    process.HLTSingleObjects.summary = cms.InputTag('hltTriggerSummaryAOD', '', n)
+    process.HLTSingleObjects.leptons = [cms.InputTag('hltL3MuonCandidates', '', n)]
+
+#switch_hlt_name('REDIGI38X')
 
 ###############################################################################
     
@@ -56,15 +66,15 @@ ui_working_dir = crab/crab_ana_effres_%(name)s
 return_data = 1
 '''
     samples = [
-        ('zmumu',  '/Zmumu/tucker-dyzpforeff_zmumu-9caa3d7638ff33984d7b458a78e3e8dd/USER', 20, 120),
-        ('dy120',  '/DYToMuMu_M-120_7TeV-pythia6/tucker-dyzpforeff_dy120-9caa3d7638ff33984d7b458a78e3e8dd/USER',          120, 200),
-        ('dy200',  '/DYToMuMu_M-200_7TeV-pythia6/tucker-dyzpforeff_dy200-9caa3d7638ff33984d7b458a78e3e8dd/USER',          200, 500),
-        ('dy500',  '/DYToMuMu_M-500_7TeV-pythia6/tucker-dyzpforeff_dy500-9caa3d7638ff33984d7b458a78e3e8dd/USER',          500, 800),
-        ('dy800',  '/DYToMuMu_M-800_7TeV-pythia6/tucker-dyzpforeff_dy800-9caa3d7638ff33984d7b458a78e3e8dd/USER',          800, 20000),
-        ('zp1000', '/ZprimeSSMToMuMu_M-1000_7TeV-pythia6/tucker-dyzpforeff_zp1000-9caa3d7638ff33984d7b458a78e3e8dd/USER', -20000, 20000),
-        ('zp1250', '/ZprimeSSMToMuMu_M-1250_7TeV-pythia6/tucker-dyzpforeff_zp1250-9caa3d7638ff33984d7b458a78e3e8dd/USER', -20000, 20000),
-        ('zp1500', '/ZprimeSSMToMuMu_M-1500_7TeV-pythia6/tucker-dyzpforeff_zp1500-9caa3d7638ff33984d7b458a78e3e8dd/USER', -20000, 20000),
-        ('zp1750', '/ZprimeSSMToMuMu_M-1750_7TeV-pythia6/tucker-dyzpforeff_zp1750-9caa3d7638ff33984d7b458a78e3e8dd/USER', -20000, 20000),
+        ('dy20',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-8ca75260210b8943d361f4da5b0c0bcc/USER', 20, 120),
+        ('dy120',  '/dy120-HLT-384p3-START38_V12/tucker-effres_mydy120-b62a83c345cd135ef96a2f3fe22d5e32/USER', 120, 200),
+        ('dy200',  '/dy200-HLT-384p3-START38_V12/tucker-effres_mydy200-b62a83c345cd135ef96a2f3fe22d5e32/USER', 200, 500),
+        ('dy500',  '/dy500-HLT-384p3-START38_V12/tucker-effres_mydy500-b62a83c345cd135ef96a2f3fe22d5e32/USER', 500, 800),
+        ('dy800',  '/dy800-HLT-384p3-START38_V12/tucker-effres_mydy800-b62a83c345cd135ef96a2f3fe22d5e32/USER', 800, 20000),
+        ('zp1000', '', -20000, 20000),
+        ('zp1250', '', -20000, 20000),
+        ('zp1500', '', -20000, 20000),
+        ('zp1750', '', -20000, 20000),
         ]
 
     just_testing = 'testing' in sys.argv
@@ -76,13 +86,18 @@ return_data = 1
         sys.exit(0)
 
     for name, dataset, lo, hi in samples:
+        if 'zp' in name or name in ['dy20']:
+            continue
+        
         open('crab.cfg', 'wt').write(crab_cfg % locals())
 
         new_py = open('histos.py').read()
         new_cut = dy_gen_mass_cut % locals()
-        new_py += '\nprocess.DYGenMassFilter.cut = %(new_cut)s\n' % locals()
+        new_py += '\nprocess.DYGenMassFilter.cut = "%(new_cut)s"\n' % locals()
+        if name == 'dy20':
+            new_py += '\nswitch_hlt_name("REDIGI38X")\n'
         open('histos_crab.py', 'wt').write(new_py)
 
         if not just_testing:
             os.system('crab -create -submit all')
-            os.system('rm -v crab.cfg histos_crab.py')
+            os.system('rm crab.cfg histos_crab.py')

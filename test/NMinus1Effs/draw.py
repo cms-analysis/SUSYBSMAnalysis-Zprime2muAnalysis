@@ -13,27 +13,27 @@ def integ(h,a,b=1e9):
     return h.Integral(h.FindBin(a), h.FindBin(b))
 
 nminus1s = [
-    'VBTFNoGlbChi2',
-    'VBTFNoTkMuon',
-    'VBTFNoDB',
-    'VBTFNoTkHits',
-    'VBTFNoPxHits',
-    'VBTFNoMuStns',
-    'VBTFNoTrgMtch',
-    'VBTFNoB2B',
-    'VBTFNoVtxProb',
+    'NoGlbChi2',
+    'NoTkMuon',
+    'NoDB',
+    'NoTkHits',
+    'NoPxHits',
+    'NoMuStns',
+    'NoTrgMtch',
+    'NoB2B',
+    'NoVtxProb',
 ]
 
 pretty = {
-    'VBTFNoTkHits': '# tk hits #geq 10',
-    'VBTFNoPxHits': '# px hits #geq 1',
-    'VBTFNoMuStns': '# muon st #geq 2',
-    'VBTFNoDB': '|d_{xy}| < 0.2',
-    'VBTFNoGlbChi2': 'glb #chi^{2}/ndf < 10',
-    'VBTFNoTkMuon': 'isTrackerMuon',
-    'VBTFNoTrgMtch': 'HLT_Mu9 match',
-    'VBTFNoB2B': 'cos(angle) > 0.02,
-    'VBTFNoVtxProb': '#chi^{2} #mu#mu vtx < 10'
+    'NoTkHits': '# tk hits #geq 10',
+    'NoPxHits': '# px hits #geq 1',
+    'NoMuStns': '# muon st #geq 2',
+    'NoDB': '|d_{xy}| < 0.2',
+    'NoGlbChi2': 'glb #chi^{2}/ndf < 10',
+    'NoTkMuon': 'isTrackerMuon',
+    'NoTrgMtch': 'HLT_Mu9 match',
+    'NoB2B': 'cos(angle) > 0.02,
+    'NoVtxProb': '#chi^{2} #mu#mu vtx < 10'
     'ana_nminus1_data.root': 'Data, 3.0 pb ^{-1}',
     'ana_nminus1_zmumu.root': 'Z#rightarrow#mu#mu',
     'ana_nminus1_dy120.root': 'Z#rightarrow#mu#mu',
@@ -43,7 +43,7 @@ pretty = {
 
 def table(fn):
     f = ROOT.TFile(fn)
-    hnum = f.Get('VBTFNoNo').Get('DileptonMass')
+    hnum = f.Get('NoNo').Get('DileptonMass')
     num60120 = integ(hnum, 60, 120)
     num120 = integ(hnum, 120)
     print 'numerator: 60-120:', num60120, ' 120-:', num120
@@ -54,13 +54,13 @@ def table(fn):
         den120 = integ(hden, 120)
         print '%20s%20f%20f%20f%20f' % (nminus1, den60120, num60120/den60120, den120, num120/den120)
 
-    hnum = f.Get('VBTFNoNoIso10').Get('DileptonMass')
+    hnum = f.Get('NoNoIso10').Get('DileptonMass')
     num60120 = integ(hnum, 60, 120)
     num120 = integ(hnum, 120)
-    hden = f.Get('VBTFNoIso10').Get('DileptonMass')
+    hden = f.Get('NoIso10').Get('DileptonMass')
     den60120 = integ(hden, 60, 120)
     den120 = integ(hden, 120)
-    print '%20s%20f%20f%20f%20f%20f%20f' % ('VBTFNoIso10/VBTFNoNoIso10', num60120, den60120, num60120/den60120, num120, den120, num120/den120)
+    print '%20s%20f%20f%20f%20f%20f%20f' % ('NoIso10/NoNoIso10', num60120, den60120, num60120/den60120, num120, den120, num120/den120)
 
 if '120' in sys.argv:
     items = [
@@ -89,14 +89,14 @@ for fn, mass_range, color in items:
     nminus1_num = ROOT.TH1F('num', '', l, 0, l)
     nminus1_den = ROOT.TH1F('den', '', l, 0, l)
 
-    hnum10 = f.Get('VBTFNoNoIso10').Get('DileptonMass')
+    hnum10 = f.Get('NoNoIso10').Get('DileptonMass')
     num10 = integ(hnum10, *mass_range)
-    hnum = f.Get('VBTFNoNo').Get('DileptonMass')
+    hnum = f.Get('NoNo').Get('DileptonMass')
     num = integ(hnum, *mass_range)
     for i,nminus1 in enumerate(nminus1s):
         hden = f.Get(nminus1).Get('DileptonMass')
         den = integ(hden, *mass_range)
-        n = num if nminus1 != 'VBTFNoIso10' else num10
+        n = num if nminus1 != 'NoIso10' else num10
         nminus1_num.SetBinContent(i+1, n)
         nminus1_den.SetBinContent(i+1, den)
 

@@ -1,6 +1,7 @@
 #include "TH1F.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/Math/interface/deltaR.h"
+#include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
@@ -18,6 +19,8 @@ class EfficiencyFromMC : public edm::EDAnalyzer {
   const double max_mass;
   const bool use_resonance_mass;
   edm::InputTag dimuon_src;
+  edm::InputTag hlt_obj_src;
+  double hlt_single_min_pt;  
   TriggerDecision triggerDecision;
   HardInteraction hardInteraction;
 
@@ -57,7 +60,9 @@ EfficiencyFromMC::EfficiencyFromMC(const edm::ParameterSet& cfg)
     max_mass(cfg.getParameter<double>("max_mass")),
     use_resonance_mass(cfg.getParameter<bool>("use_resonance_mass")),
     dimuon_src(cfg.getParameter<edm::InputTag>("dimuon_src")),
-    hardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction"))
+    hlt_obj_src(cfg.getParameter<edm::InputTag>("hlt_obj_src")),
+    hlt_single_min_pt(cfg.getParameter<double>("hlt_single_min_pt")),
+    hardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction"))    
 {
   triggerDecision.init(cfg.getParameter<edm::ParameterSet>("triggerDecision"));
 
@@ -119,9 +124,25 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
       l1_or = true;
     }
   }
-  
+
+  bool hlt_pass_overridden_pt = true;
+  if (hlt_single_min_pt > 0) {
+    edm::Handle<std::vector<reco::RecoChargedCandidate> > hlt_objs;
+    event.getByLabel(hlt_obj_src, hlt_objs);
+    bool pass = false;
+    for (std::vector<reco::RecoChargedCandidate>::const_iterator hlt_obj = hlt_objs->begin(), hoe = hlt_objs->end(); hlt_obj != hoe; ++hlt_obj) {
+      if (hlt_obj->pt() > hlt_single_min_pt) {
+	pass = true;
+	break;
+      }
+    }
+    if (!pass) hlt_pass_overridden_pt = false;
+  }
+
   for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i) {
     if (triggerDecision.hlt_path_pass(i)) {
+      if (i == 0 && !hlt_pass_overridden_pt)
+	continue;
       hlt_path_effs[i].first->Fill(m);
       hlt_or = true;
     }

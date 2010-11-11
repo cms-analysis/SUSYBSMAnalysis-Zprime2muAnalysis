@@ -10,5 +10,7 @@ EfficiencyFromMC = cms.EDAnalyzer('EfficiencyFromMC',
                                   min_mass = cms.double(0),
                                   max_mass = cms.double(2000),
                                   use_resonance_mass = cms.bool(False),
-                                  dimuon_src = cms.InputTag('dimuons')
+                                  dimuon_src = cms.InputTag('dimuons'),
+                                  hlt_obj_src = cms.InputTag(''),
+                                  hlt_single_min_pt = cms.double(-1),
                                   )

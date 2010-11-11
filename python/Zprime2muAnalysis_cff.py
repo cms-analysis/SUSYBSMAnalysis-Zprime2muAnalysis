@@ -1,14 +1,17 @@
 import FWCore.ParameterSet.Config as cms
 
 # By putting it in the analysis path, this module can be used to
-# filter out events that do not pass our trigger selection, which are
-# currently the OR of the highest-pT single muon trigger and double
-# muon triggers. It does not go in Zprime2muAnalysisSequence by
-# default; users must specifically include it.
+# filter out whole events that do not pass our trigger selection,
+# which is currently the highest-pT unprescaled single muon trigger in
+# the 2E32 menu, HLT_Mu15_v1. When using one of the two selections
+# VBTFSelection and OurSelection, one muon is required to match to a
+# trigger object passing the single muon trigger anyway, so using this
+# is redundant in some cases. It does not go in
+# Zprime2muAnalysisSequence by default; users must specifically
+# include it.
 import HLTrigger.HLTfilters.hltHighLevel_cfi
 hltFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
-hltFilter.HLTPaths = ['HLT_Mu9', 'HLT_DoubleMu3']
-hltFilter.andOr = True # == OR
+hltFilter.HLTPaths = ['HLT_Mu15_v1']
 
 # A filter for post-tuple filtering on the goodData results as stored
 # in a TriggerResults object instead of filtering at tuple-making
@@ -16,27 +19,20 @@ hltFilter.andOr = True # == OR
 goodDataFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
 goodDataFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', 'PAT')
 goodDataFilter.HLTPaths = ['goodDataAll'] # can set to just 'goodDataPrimaryVertexFilter', for example
-goodDataFilter.andOr = False
+goodDataFilter.andOr = False # = AND
 
 from MuonPhotonMatch_cff import muonPhotonMatch
 #from PATCandViewShallowCloneCombiner_cfi import allDimuons
-from VBTFSelection_cff import vbtf_loose, allDimuons
+#from VBTFSelection_cff import allDimuons, dimuons, loose_cut
+from OurSelection_cff import allDimuons, dimuons, loose_cut
 
 leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'),
                          electron_src = cms.InputTag('cleanPatElectrons'),
-                         muon_cuts = cms.string(vbtf_loose),
+                         muon_cuts = cms.string(loose_cut),
                          electron_cuts = cms.string('userInt("HEEPId") == 0'),
                          muon_track_for_momentum = cms.string('pmc'),
                          muon_photon_match_src = cms.InputTag('muonPhotonMatch')
-                         )
-
-dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
-                         src = cms.InputTag('allDimuons'),
-                         cut = cms.string(''),
-                         max_candidates = cms.uint32(1),
-                         back_to_back_cos_angle_min = cms.double(-0.9998), # this corresponds to the angle (pi - 0.02) rad = 178.9 deg
-                         vertex_chi2_max = cms.double(10),
                          )
 
 Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)

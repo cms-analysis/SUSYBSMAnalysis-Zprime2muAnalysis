@@ -2,9 +2,9 @@
 
 import sys, os
 
-samples = ['zmumu', 'dy120', 'dy200', 'dy500', 'dy800', 'zp1000', 'zp1250', 'zp1500', 'zp1750']
-dy = [('zmumu', 40)] + [(x, int(x.replace('dy',''))) for x in samples if 'dy' in x] # and 'dy120' not in x]
-zp = [(x, int(x.replace('zp',''))) for x in samples if 'zp' in x]
+samples = ['dy20', 'dy120', 'dy200', 'dy500', 'dy800'] #, 'zp1000', 'zp1250', 'zp1500', 'zp1750']
+dy = [(x, int(x.replace('dy',''))) for x in samples if 'dy' in x] # and 'dy120' not in x]
+zp = [] #(x, int(x.replace('zp',''))) for x in samples if 'zp' in x]
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import *
 set_zp2mu_style()
@@ -13,7 +13,7 @@ ROOT.gStyle.SetPadRightMargin(0.04)
 ROOT.TH1.AddDirectory(0)
 
 #types = ['Acceptance', 'L1OrEff', 'L1AndEff', 'HLTOrEff', 'HLTAndEff', 'TotalTrigEff']
-types = ['Acceptance', 'RecoWrtAcc', 'RecoWrtAccTrig', 'TotalReco', 'L1Path_0_L1_SingleMu7', 'L1Path_1_L1_DoubleMu3', 'L1OrEff', 'HLTPath_0_HLT_Mu9', 'HLTPath_1_HLT_DoubleMu3', 'HLTOrEff', 'TotalTrigEff']
+types = ['Acceptance', 'RecoWrtAcc', 'RecoWrtAccTrig', 'TotalReco', 'L1Path_0_L1_SingleMu7', 'L1OrEff', 'HLTPath_0_HLT_Mu11', 'HLTOrEff', 'TotalTrigEff']
 rebin_factor = 100
 make_individual_effs = False
 
@@ -69,6 +69,8 @@ for sample in samples:
 ps = plot_saver('plots/trigeffvsmassmctruth')
 
 def do_overlay(name, samples, which):
+    if not samples:
+        return
     x = 'AP'
     colors = [ROOT.kBlack, ROOT.kRed, ROOT.kBlue, 8, 40]
     for i, ((sample, mass), color) in enumerate(zip(samples, colors)):
@@ -90,6 +92,8 @@ if make_individual_effs:
     do_overlay('zp',zp,'TotalTrigEff')
 
 def do_replace_or_add(name, samples, which, add=False):
+    if not samples:
+        return
     num = plots[(samples[0][0], which)][0].Clone('%s_numtot' % name)
     den = plots[(samples[0][0], which)][1].Clone('%s_dentot' % name)
     assert(num.GetNbinsX() == den.GetNbinsX())
@@ -144,59 +148,59 @@ for x,y in final_plots.iteritems():
     exec '%s = y' % x
    
 L1Single = final_plots['L1Path_0_L1_SingleMu7']
-L1Double = final_plots['L1Path_1_L1_DoubleMu3']
 L1Or = final_plots['L1OrEff']
-HLTSingle = final_plots['HLTPath_0_HLT_Mu9']
-HLTDouble = final_plots['HLTPath_1_HLT_DoubleMu3']
+HLTSingle = final_plots['HLTPath_0_HLT_Mu11']
 HLTOr = final_plots['HLTOrEff']
 Total = final_plots['TotalTrigEff']
    
 L1Single.SetLineColor(ROOT.kRed)
-L1Double.SetLineColor(ROOT.kGreen+2)
 L1Or.SetLineColor(ROOT.kBlue)
 lg = ROOT.TLegend(0.13, 0.13, 0.44, 0.30)
 lg.AddEntry(L1Single, 'L1 single', 'LE')
-lg.AddEntry(L1Double, 'L1 double', 'LE')
 lg.AddEntry(L1Or, 'L1 single OR double', 'LE')
 L1Single.Draw('AP')
-L1Double.Draw('P same')
 L1Or.Draw('P same')
 lg.Draw()
 ps.save('summary_l1', log=False)
 
 HLTSingle.SetLineColor(ROOT.kRed)
-HLTDouble.SetLineColor(ROOT.kGreen+2)
 HLTOr.SetLineColor(ROOT.kBlue)
 HLTSingle.Draw('AP')
-HLTDouble.Draw('P same')
 HLTOr.Draw('P same')
 lg = ROOT.TLegend(0.13, 0.13, 0.44, 0.30)
 lg.AddEntry(HLTSingle, 'HLT single', 'LE')
-lg.AddEntry(HLTDouble, 'HLT double', 'LE')
 lg.AddEntry(HLTOr, 'HLT single OR double', 'LE')
 lg.Draw()
 ps.save('summary_hlt', log=False)
 
-L1Or.SetLineColor(ROOT.kRed)
-HLTOr.SetLineColor(ROOT.kGreen+2)
-Total.SetLineColor(ROOT.kBlue)
+for h,c,m in [(L1Or, ROOT.kRed, 20), (HLTOr, ROOT.kGreen+2, 21), (Total, ROOT.kBlue, 22)]:
+    h.SetMarkerStyle(m)
+    h.SetMarkerColor(c)
+    h.SetMarkerSize(1.2)
+    h.SetLineColor(c)
 lg = ROOT.TLegend(0.13, 0.13, 0.44, 0.30)
-lg.AddEntry(L1Or, 'L1', 'LE')
-lg.AddEntry(HLTOr, 'HLT', 'LE')
-lg.AddEntry(Total, 'L1+HLT', 'LE')
+lg.AddEntry(L1Or, 'L1', 'LPE')
+lg.AddEntry(HLTOr, 'HLT', 'LPE')
+lg.AddEntry(Total, 'L1+HLT', 'LPE')
+L1Or.GetXaxis().SetRangeUser(100, 2000)
+L1Or.GetYaxis().SetRangeUser(0.93, 1.005)
 L1Or.Draw('AP')
 HLTOr.Draw('P same')
 Total.Draw('P same')
 lg.Draw()
 ps.save('summary_total', log=False)
 
-RecoWrtAccTrig.SetLineColor(ROOT.kRed)
-RecoWrtAcc.SetLineColor(ROOT.kGreen+2)
-Total.SetLineColor(ROOT.kBlue)
+for h,c,m in [(RecoWrtAccTrig, ROOT.kRed, 20), (RecoWrtAcc, ROOT.kGreen+2, 21), (TotalReco, ROOT.kBlue, 22)]:
+    h.SetMarkerStyle(m)
+    h.SetMarkerColor(c)
+    h.SetMarkerSize(1.2)
+    h.SetLineColor(c)
 lg = ROOT.TLegend(0.42, 0.13, 0.92, 0.33)
-lg.AddEntry(RecoWrtAccTrig, 'wrt triggered events in acceptance', 'LE')
-lg.AddEntry(RecoWrtAcc, 'wrt events in acceptance', 'LE')
-lg.AddEntry(TotalReco, 'total', 'LE')
+lg.AddEntry(RecoWrtAccTrig, 'wrt triggered events in acceptance', 'LPE')
+lg.AddEntry(RecoWrtAcc, 'wrt events in acceptance', 'LPE')
+lg.AddEntry(TotalReco, 'total', 'LPE')
+RecoWrtAccTrig.GetXaxis().SetRangeUser(100, 2000)
+RecoWrtAccTrig.GetYaxis().SetRangeUser(0.5, 1.01)
 RecoWrtAccTrig.Draw('AP')
 RecoWrtAcc.Draw('P same')
 TotalReco.Draw('P same')

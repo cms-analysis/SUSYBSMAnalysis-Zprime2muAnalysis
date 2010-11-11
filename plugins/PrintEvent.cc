@@ -14,15 +14,24 @@ class PrintEvent : public edm::EDAnalyzer {
 
  private:
   edm::InputTag dimuon_src;
+  edm::InputTag hlt_src;
 };
 
 PrintEvent::PrintEvent(const edm::ParameterSet& cfg)
-  : dimuon_src(cfg.getParameter<edm::InputTag>("dimuon_src"))
+  : dimuon_src(cfg.getParameter<edm::InputTag>("dimuon_src")),
+    hlt_src(cfg.getParameter<edm::InputTag>("hlt_src"))
 {
 }
 
 void PrintEvent::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   std::ostringstream out;
+
+  edm::Handle<edm::TriggerResults> res;
+  event.getByLabel(hlt_src, res);
+  out << "HLT paths in event:\n" << event.triggerNames(*res) << "\n";
+
+  edm::LogInfo("PrintEvent") << out.str();
+  out.str("");
 
   edm::Handle<pat::CompositeCandidateCollection> dils;
   event.getByLabel(dimuon_src, dils);

@@ -3,8 +3,9 @@
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
-from SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff import vbtf_loose, vbtf_tight
-from SUSYBSMAnalysis.Zprime2muAnalysis.PATCandViewShallowCloneCombiner_cfi import allDimuons as plainDimuons
+
+import SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff as VBTFSelection
+import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection_cff as OurSelection
 
 # CandCombiner includes charge-conjugate decays with no way to turn it
 # off. To get e.g. mu+mu+ separate from mu-mu-, cut on the sum of the
@@ -27,56 +28,49 @@ dils = [
     ('MuonsElectronsSameSign',       '%(leptons_name)s:muons@+ %(leptons_name)s:electrons@+',     ''),
     ]
 
-# Define groups of cuts to make the plots for.
-cuts = [
-# If adding these other cuts back in, hltFilter needs to be added in the below.
-#    ('Pt20', 'isGlobalMuon && pt > 20'), 
-#    ('Std',  'isGlobalMuon && pt > 20 && isolationR03.sumPt < 10'),
-    ('VBTF', vbtf_loose),
-    ('VBTFNoIso', vbtf_loose),
-    ('VBTFIso3', vbtf_loose),
-    ('VBTFRelIso015', vbtf_loose),
-    ('VBTFRelIso006', vbtf_loose),
-    ('VBTFNoPx', vbtf_loose),
-    ]
+# Define groups of cuts for which to make plots. If using a selection
+# that doesn't have a trigger match, need to re-add hltFilter
+# somewhere below.
+cuts = ['VBTF', 'Our', 'OurNoIso', 'OurIso3', 'OurRelIso015', 'OurRelIso006', 'OurNoPx']
 
-for cut_name, muon_cuts in cuts:
-    #if cut_name != 'VBTF': continue
-    
+for cut_name in cuts:
     # Keep track of modules to put in the path for this set of cuts.
     path_list = []
 
     # Clone the LeptonProducer to make leptons with the set of cuts
     # we're doing here flagged.
     leptons_name = cut_name + 'Leptons'
+    muon_cuts = VBTFSelection.loose_cut if 'VBTF' in cut_name else OurSelection.loose_cut
     leptons = process.leptons.clone(muon_cuts = muon_cuts)
     setattr(process, leptons_name, leptons)
     path_list.append(leptons)
 
     # Make all the combinations of dileptons we defined above.
     for dil_name, dil_decay, dil_cut in dils:
-        #if dil_name != 'MuonsPlusMuonsMinus': continue
-
         name = cut_name + dil_name
         allname = 'all' + name
 
         if common_dil_cut and dil_cut:
             dil_cut = common_dil_cut + ' && (%s)' % dil_cut
 
-        alldil = process.allDimuons if 'VBTF' in cut_name else plainDimuons
+        if 'VBTF' in cut_name:
+            alldil, dil = VBTFSelection.allDimuons, VBTFSelection.dimuons
+        else:
+            alldil, dil = OurSelection.allDimuons, OurSelection.dimuons
+            
         alldil = alldil.clone(decay = dil_decay % locals(), cut = dil_cut)
-        dil = process.dimuons.clone(src = cms.InputTag(allname))
+        dil = dil.clone(src = cms.InputTag(allname))
 
         if 'NoIso' in cut_name:
-            alldil.loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 10', '')
+            alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt < 10', '')
         elif 'Iso3' in cut_name:
-            alldil.loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt < 3')
+            alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt < 3')
         elif 'RelIso015' in cut_name:
-            alldil.loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt / innerTrack.pt < 0.15')
+            alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt / innerTrack.pt < 0.15')
         elif 'RelIso006' in cut_name:
-            alldil.loose_cut = vbtf_loose.replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt / innerTrack.pt < 0.06')
+            alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt / innerTrack.pt < 0.06')
         elif 'NoPx' in cut_name:
-            alldil.tight_cut = vbtf_tight.replace(' && innerTrack.hitPattern.numberOfValidPixelHits >= 1', '')
+            alldil.tight_cut = alldil.tight_cut.value().replace(' && innerTrack.hitPattern.numberOfValidPixelHits >= 1', '')
                     
         histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 
@@ -86,8 +80,8 @@ for cut_name, muon_cuts in cuts:
         path_list.append(alldil * dil * histos)
 
     # Finally, make the path for this set of cuts. Don't use hltFilter
-    # here, but rely on the VBTF selection to take care of it -- easy
-    # way to handle the changing trigger names.
+    # here, but rely on the selection to take care of it -- easy way
+    # to handle the changing trigger names.
     pathname = 'path' + cut_name
     path = cms.Path(process.goodDataFilter * process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list))
     setattr(process, pathname, path)
@@ -112,17 +106,23 @@ elif 'data' in sys.argv:
     process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*open(lumis_fn).read().split(','))
 
 def ntuplify(process, hlt_process_name='HLT'):
-    process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler', hlt_src = cms.InputTag('TriggerResults', '', hlt_process_name), dimu_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
-    process.SimpleNtuplerSS = process.SimpleNtupler.clone(dimu_src = cms.InputTag('VBTFMuonsSameSign'))
-    process.SimpleNtuplerEmu = process.SimpleNtupler.clone(dimu_src = cms.InputTag('VBTFMuonsElectronsOppSign'))
-    process.pathVBTF *= process.SimpleNtupler * process.SimpleNtuplerSS * process.SimpleNtuplerEmu
+    process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler', hlt_src = cms.InputTag('TriggerResults', '', hlt_process_name), dimu_src = cms.InputTag('OurMuonsPlusMuonsMinus'))
+    process.SimpleNtuplerSS = process.SimpleNtupler.clone(dimu_src = cms.InputTag('OurMuonsSameSign'))
+    process.SimpleNtuplerEmu = process.SimpleNtupler.clone(dimu_src = cms.InputTag('OurMuonsElectronsOppSign'))
+    process.pathOur *= process.SimpleNtupler * process.SimpleNtuplerSS * process.SimpleNtuplerEmu
+
+    process.SimpleNtuplerVBTF = process.SimpleNtupler.clone(dimu_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
+    process.pathVBTF *= process.SimpleNtuplerVBTF
 
 def printify(process):
     process.MessageLogger.categories.append('PrintEvent')
-    process.PrintEvent = cms.EDAnalyzer('PrintEvent', dimuon_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
-    process.PrintEventSS = process.PrintEvent.clone(dimuon_src = cms.InputTag('VBTFMuonsSameSign'))
-    process.PrintEventEmu = process.PrintEvent.clone(dimuon_src = cms.InputTag('VBTFMuonsElectronsOppSign'))
-    process.pathVBTF *= process.PrintEvent * process.PrintEventSS * process.PrintEventEmu
+    process.PrintEvent = cms.EDAnalyzer('PrintEvent', dimuon_src = cms.InputTag('OurMuonsPlusMuonsMinus'))
+    process.PrintEventSS = process.PrintEvent.clone(dimuon_src = cms.InputTag('OurMuonsSameSign'))
+    process.PrintEventEmu = process.PrintEvent.clone(dimuon_src = cms.InputTag('OurMuonsElectronsOppSign'))
+    process.pathOur *= process.PrintEvent * process.PrintEventSS * process.PrintEventEmu
+
+    process.PrintEventVBTF = process.PrintEvent.clone(dimuon_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
+    process.pathVBTF *= process.PrintEventVBTF
     
 if 'data' in sys.argv or 'olddata' in sys.argv:
     printify(process)

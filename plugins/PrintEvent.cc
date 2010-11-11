@@ -13,48 +13,57 @@ class PrintEvent : public edm::EDAnalyzer {
   void analyze(const edm::Event&, const edm::EventSetup&);
 
  private:
-  edm::InputTag dimuon_src;
-  edm::InputTag hlt_src;
+  bool dump_trigger_names;
+  edm::InputTag trigger_results_src;
+  bool dump_dileptons;
+  edm::InputTag dilepton_src;
 };
 
-PrintEvent::PrintEvent(const edm::ParameterSet& cfg)
-  : dimuon_src(cfg.getParameter<edm::InputTag>("dimuon_src")),
-    hlt_src(cfg.getParameter<edm::InputTag>("hlt_src"))
-{
+PrintEvent::PrintEvent(const edm::ParameterSet& cfg) {
+  dump_trigger_names = cfg.existsAs<edm::InputTag>("trigger_results_src");
+  if (dump_trigger_names)
+    trigger_results_src = cfg.getParameter<edm::InputTag>("trigger_results_src");
+
+  dump_dileptons = cfg.existsAs<edm::InputTag>("dilepton_src");
+  if (dump_dileptons)
+    dilepton_src = cfg.getParameter<edm::InputTag>("dilepton_src");
 }
 
 void PrintEvent::analyze(const edm::Event& event, const edm::EventSetup& setup) {
-  std::ostringstream out;
-
-  edm::Handle<edm::TriggerResults> res;
-  event.getByLabel(hlt_src, res);
-  out << "HLT paths in event:\n" << event.triggerNames(*res) << "\n";
-
-  edm::LogInfo("PrintEvent") << out.str();
-  out.str("");
-
-  edm::Handle<pat::CompositeCandidateCollection> dils;
-  event.getByLabel(dimuon_src, dils);
-
-  if (!dils.isValid())
-    edm::LogInfo("PrintEvent") << "WARNING! tried to get dils and failed!";
-  else if (dils->size()) {
+  if (dump_trigger_names) {
+    std::ostringstream out;
     edm::Handle<edm::TriggerResults> res;
-    event.getByLabel(edm::InputTag("TriggerResults", "", "PAT"), res);
-    const edm::TriggerNames& names = event.triggerNames(*res);
-    for (size_t i = 0; i < res->size(); ++i)
-      out << "TriggerResults::PAT path #" << i << " name " << names.triggerName(i) << " fired? " << res->accept(i) << "\n";
-    
-    edm::Handle<std::vector<reco::Vertex> > vtxs;
-    event.getByLabel("offlinePrimaryVertices", vtxs);
-    BOOST_FOREACH(const reco::Vertex& vtx, *vtxs)
-      out << "vtx with z " << vtx.z() << "\n";
-    
-    out << "dileptons:\n";
-    BOOST_FOREACH(const pat::CompositeCandidate& dil, *dils)
-      out << dil << "\n";
-    
+    event.getByLabel(trigger_results_src, res);
+    out << "HLT paths in event:\n" << event.triggerNames(*res) << "\n";
     edm::LogInfo("PrintEvent") << out.str();
+  }
+
+  if (dump_dileptons) {
+    std::ostringstream out;
+
+    edm::Handle<pat::CompositeCandidateCollection> dils;
+    event.getByLabel(dilepton_src, dils);
+
+    if (!dils.isValid())
+      edm::LogInfo("PrintEvent") << "WARNING! tried to get dileptons using " << dilepton_src << " and failed!";
+    else if (dils->size()) {
+      edm::Handle<edm::TriggerResults> res;
+      event.getByLabel(edm::InputTag("TriggerResults", "", "PAT"), res);
+      const edm::TriggerNames& names = event.triggerNames(*res);
+      for (size_t i = 0; i < res->size(); ++i)
+	out << "TriggerResults::PAT path #" << i << " name " << names.triggerName(i) << " fired? " << res->accept(i) << "\n";
+    
+      edm::Handle<std::vector<reco::Vertex> > vtxs;
+      event.getByLabel("offlinePrimaryVertices", vtxs);
+      BOOST_FOREACH(const reco::Vertex& vtx, *vtxs)
+	out << "vtx with z " << vtx.z() << "\n";
+    
+      out << "dileptons:\n";
+      BOOST_FOREACH(const pat::CompositeCandidate& dil, *dils)
+	out << dil << "\n";
+    
+      edm::LogInfo("PrintEvent") << out.str();
+    }
   }
 }
 

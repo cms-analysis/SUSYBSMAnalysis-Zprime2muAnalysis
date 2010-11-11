@@ -1,24 +1,29 @@
 #!/usr/bin/env python
 
-import FWCore.ParameterSet.Config as cms
+from SUSYBSMAnalysis.Zprime2muAnalysis.PATTuple_cfg import cms, process
+from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.PATTuple_cfg import process
-process.maxEvents.input = 100
-process.GlobalTag.globaltag = 'START37_V6::All'
-process.source.fileNames = ['/store/mc/Spring10/DYToMuMu_M-120_7TeV-pythia6/GEN-SIM-RECO/START3X_V26-v2/0026/F44E2CAC-A35A-DF11-B61B-002481CFE804.root']
+process.maxEvents.input = 50
+process.GlobalTag.globaltag = 'START38_V12::All'
+process.source.fileNames = ['/store/mc/Fall10/ZprimeSSMToMuMu_M-750_7TeV-pythia6/GEN-SIM-RECO/START38_V12-v1/0001/F034C4E4-4BCD-DF11-B652-00E0812EEEC3.root']
 process.p = cms.Path(process.patDefaultSequence)
-
-from PhysicsTools.PatAlgos.tools.cmsswVersionTools import run36xOn35xInput
-run36xOn35xInput(process, 'ak5GenJets')
 
 process.countPatMuons.minNumber = 0
 
-process.out.outputCommands += [
-    'drop *_patTrigger_*_*',
-    'drop *_patTriggerEvent_*_*',
-    'drop *_prunedGenSimLeptons_*_*',
-    'keep *_genParticles_*_*',
-    'drop *_cleanPatTaus_*_*'
+process.out.outputCommands = [
+    'drop *',
+    'keep *_prunedGenSimLeptons_*_*',
+    'keep patMuons_cleanPatMuonsTriggerMatch__PAT',
+    'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__HLT*',
+    'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__REDIGI*',
+    'keep triggerTriggerEvent_hltTriggerSummaryAOD__HLT*',
+    'keep triggerTriggerEvent_hltTriggerSummaryAOD__REDIGI*',
+    'keep patElectrons_cleanPatElectrons__PAT',
+    'keep patPhotons_cleanPatPhotons__PAT',
+    'keep edmTriggerResults_TriggerResults__HLT*',
+    'keep edmTriggerResults_TriggerResults__REDIGI*',
+    'keep GenEventInfoProduct_generator__HLT',
+    'keep edmTriggerResults_TriggerResults__PAT',
     ]
 
 import sys, os
@@ -30,7 +35,8 @@ scheduler = %(scheduler)s
 
 [CMSSW]
 datasetpath = %(dataset)s
-pset = tuple.py
+%(dbs_url)s
+pset = %(pset_fn)s
 total_number_of_events = -1
 events_per_job = %(events)s
 get_edm_output = 1
@@ -45,25 +51,42 @@ publish_data_name = effres_%(name)s
 dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
 '''
 
+    os.system('mkdir -p psets crab')
+    
     just_testing = 'testing' in sys.argv
     
     samples = [
-        ('zmumu', '/Zmumu/Spring10-START3X_V26_S09-v1/GEN-SIM-RECO'),
-        ('dy120', '/DYToMuMu_M-120_7TeV-pythia6/Spring10-START3X_V26-v2/GEN-SIM-RECO'),
-        ('dy200', '/DYToMuMu_M-200_7TeV-pythia6/Spring10-START3X_V26-v2/GEN-SIM-RECO'),
-        ('dy500', '/DYToMuMu_M-500_7TeV-pythia6/Spring10-START3X_V26-v2/GEN-SIM-RECO'),
-        ('dy800', '/DYToMuMu_M-800_7TeV-pythia6/Spring10-START3X_V26-v2/GEN-SIM-RECO'),
-        ('zp1000', '/ZprimeSSMToMuMu_M-1000_7TeV-pythia6/Spring10-START3X_V26-v1/GEN-SIM-RECO'),
-        ('zp1250', '/ZprimeSSMToMuMu_M-1250_7TeV-pythia6/Spring10-START3X_V26-v1/GEN-SIM-RECO'),
-        ('zp1500', '/ZprimeSSMToMuMu_M-1500_7TeV-pythia6/Spring10-START3X_V26-v1/GEN-SIM-RECO'),
-        ('zp1750', '/ZprimeSSMToMuMu_M-1750_7TeV-pythia6/Spring10-START3X_V26-v1/GEN-SIM-RECO'),
-        ]
+        ('dy20',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('dy120',  '/DYToMuMu_M-120_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('dy200',  '/DYToMuMu_M-200_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('dy500',  '/DYToMuMu_M-500_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('dy800',  '/DYToMuMu_M-800_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('zp500',  '/ZprimeSSMToMuMu_M-500_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('zp750',  '/ZprimeSSMToMuMu_M-750_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('zp1000', '/ZprimeSSMToMuMu_M-1000_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('zp1250', '/ZprimeSSMToMuMu_M-1250_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('zp1500', '/ZprimeSSMToMuMu_M-1500_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('zp1750', '/ZprimeSSMToMuMu_M-1750_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('mydy120', '/dy120-HLT-384p3-START38_V12/tucker-dy120-RECO-384p3-START38_V12-9ff36250bd8f90b0a768bc7051eaced7/USER'),
+        ('mydy200', '/dy200-HLT-384p3-START38_V12/tucker-dy200-RECO-384p3-START38_V12-9ff36250bd8f90b0a768bc7051eaced7/USER'),
+        ('mydy500', '/dy500-HLT-384p3-START38_V12/tucker-dy500-RECO-384p3-START38_V12-9ff36250bd8f90b0a768bc7051eaced7/USER'),
+        ('mydy800', '/dy800-HLT-384p3-START38_V12/tucker-dy800-RECO-384p3-START38_V12-9ff36250bd8f90b0a768bc7051eaced7/USER'),
+    ]
 
-    scheduler = 'condor'
     for name, dataset in samples:
-        events = 5000 if name != 'zmumu' else 20000
-        #scheduler = 'condor' if name == 'zmumu' else 'glite'
+        if 'my' not in name:
+            continue
+        
+        events = 11000 if name != 'dy20' else 40000
+        scheduler = 'condor' if name == 'dy20' or 'my' in name else 'glite'
+        dbs_url = 'dbs_url = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet' if 'my' in name else ''
 
+        pset = open('tuple.py').read()
+        if name == 'dy20':
+            pset += '\nswitchHLTProcessName(process, "REDIGI38X")\n'
+        pset_fn = 'psets/tuple_effres_crab_%s.py' % name
+        open(pset_fn, 'wt').write(pset)
+        
         open('crab.cfg', 'wt').write(crab_cfg % locals())
         if not just_testing:
             os.system('crab -create -submit all')

@@ -48,7 +48,6 @@ bool HardInteraction::IsResonance(int id) const {
 
 void HardInteraction::Clear() {
   quark = resonance = lepPlus = lepMinus = lepPlusNoIB = lepMinusNoIB = 0;
-  bremPhotons.clear();
   resonanceIsFake = false;
 }
 
@@ -70,9 +69,8 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
   // leptons.
   reco::GenParticleCollection::const_iterator genp = genParticles.begin();
   for (; genp != genParticles.end(); genp++) {
+    const int pdgId = genp->pdgId();
     if (genp->status() == 3) {
-      int pdgId = genp->pdgId();
-
       if (IsResonance(pdgId)) {
 	// We found the resonance (Z0/Z'/etc.). Make sure we didn't
 	// find a second one.
@@ -95,6 +93,29 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
 	  lepPlusNoIB = &*genp;
       }
     }
+    else if (genp->status() == 1) {
+      if (abs(pdgId) == leptonFlavor) {
+	// See if it has as an ancestor the resonance. Do this by just
+	// checking the pdgId -- don't try to see if it's the same
+	// resonance as the one we found above, for now.
+	const reco::Candidate* m = genp->mother();
+	bool ok = false;
+	while (m) {
+	  if (IsResonance(m->pdgId())) {
+	    ok = true;
+	    break;
+	  }
+	  m = m->mother();
+	}
+
+	if (ok) {
+	  if (pdgId == leptonFlavor)
+	    lepMinus = &*genp;
+	  else
+	    lepPlus = &*genp;
+	}
+      }
+    }
   }
 
   // We should always find the l+ and l-.
@@ -102,6 +123,12 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
     if (!shutUp) edm::LogWarning("HardInteraction")
       << "Couldn't find at least one of the pre-brem l-l+! l- = "
       << lepMinusNoIB << " l+ = " << lepPlusNoIB;
+
+  // If we didn't find the final-state l- or l+, complain.
+  if (lepMinus == 0 || lepPlus == 0)
+    if (!shutUp) edm::LogWarning("HardInteraction")
+      << "Couldn't find at least one of the final-state l-l+! l- = "
+      << lepMinus << " l+ = " << lepPlus;
 
   // We get the quark/antiquark from either the resonance or directly
   // from one of the leptons (see below). Start by assuming it is from
@@ -167,47 +194,5 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
       << "Couldn't find at least one of the quark/antiquark! quark = "
       << quark << " antiquark = " << antiquark;
 
-  // Now, pick up the leptons after brem. They are daughter leptons of
-  // the doc-line leptons and have status = 1, i.e. they are
-  // final-state. Also grab the brem photons. Some generators, when
-  // doing FSR, make a status=2 copy of the muon as the status=3
-  // muon's daughter, then the status=2 muon has status=1 daughters
-  // the muon and the photon(s).
-  if (lepMinusNoIB) {
-    const reco::Candidate* c = lepMinusNoIB;
-    if (lepMinusNoIB->numberOfDaughters() == 1 && lepMinusNoIB->daughter(0)->status() == 2)
-      c = lepMinusNoIB->daughter(0);
-
-    for (reco::Candidate::const_iterator dau = c->begin(), daue = c->end(); dau != daue; ++dau) {
-      if (dau->status() == 1) {
-	int pdgId = dau->pdgId();
-	if (pdgId == leptonFlavor)
-	  lepMinus = &*dau;
-	else if (pdgId == 22)
-	  bremPhotons.push_back(&*dau);
-      }
-    }
-  }
-
-  if (lepPlusNoIB) {
-    const reco::Candidate* c = lepPlusNoIB;
-    if (lepPlusNoIB->numberOfDaughters() == 1 && lepPlusNoIB->daughter(0)->status() == 2)
-      c = lepPlusNoIB->daughter(0);
-
-    for (reco::Candidate::const_iterator dau = c->begin(), daue = c->end(); dau != daue; ++dau) {
-      if (dau->status() == 1) {
-	int pdgId = dau->pdgId();
-	if (pdgId == -leptonFlavor)
-	  lepPlus = &*dau;
-	else if (pdgId == 22)
-	  bremPhotons.push_back(&*dau);
-      }
-    }
-  }
-
-  // If we didn't find the final-state l- or l+, bomb.
-  if (lepMinus == 0 || lepPlus == 0)
-    if (!shutUp) edm::LogWarning("HardInteraction")
-      << "Couldn't find at least one of the final-state l-l+! l- = "
-      << lepMinus << " l+ = " << lepPlus;
+  //edm::LogWarning("HardInteraction") << "test pts: quark: " << quark->pt() << " qbar: " << antiquark->pt() << " resonance: " << resonance->pt() << " l- before brem " << lepMinusNoIB->pt() << " l+ " << lepPlusNoIB->pt() << " final l- " << lepMinus->pt() << " l+ " << lepPlus->pt();
 }

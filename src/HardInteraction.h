@@ -26,8 +26,7 @@ struct HardInteraction {
   // interest (currently one of Z0 (inc. DY), Z', or G*).
   bool IsResonance(int pdgId) const;
 
-  // Clear out the structure: reset pointers to null, empty
-  // bremPhotons, reset flags.
+  // Clear out the structure: reset pointers to null, reset flags.
   void Clear();
 
   // Return whether all the pointers are valid.
@@ -73,7 +72,6 @@ struct HardInteraction {
   const reco::Candidate* lepMinus;
   const reco::Candidate* lepPlusNoIB;
   const reco::Candidate* lepMinusNoIB;
-  std::vector<const reco::Candidate*> bremPhotons;
 
   // Flag declaring whether we built the resonance ourselves, and
   // therefore own and should delete its pointer at destruction.

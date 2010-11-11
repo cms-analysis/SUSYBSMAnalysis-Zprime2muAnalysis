@@ -9,6 +9,7 @@
 #include "DataFormats/TrackReco/interface/HitPattern.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
+#include "FWCore/Common/interface/TriggerNames.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Dumpers.h"
 
 int mlprintf(const char* category, const char* fmt, ...) {
@@ -165,5 +166,15 @@ std::ostream& operator<<(std::ostream& out, const pat::CompositeCandidate& dil) 
     out << "\ndaughter " << i << ": pdgId: " << dil.daughter(i)->pdgId()
 	<< "\n" << dil.daughter(i)->masterClone();
   
+  return out;
+}
+
+std::ostream& operator<<(std::ostream& out, const edm::TriggerNames& t) {
+  const size_t n = t.size();
+  for (size_t i = 0; i < n; ++i) {
+    out << i << "\t" << t.triggerName(i);
+    if (i < n-1)
+      out << "\n";
+  }
   return out;
 }

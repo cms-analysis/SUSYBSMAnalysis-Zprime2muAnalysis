@@ -3,6 +3,10 @@
 
 #include <iosfwd>
 
+namespace edm {
+  class TriggerNames;
+}
+
 namespace reco {
   class GenParticle;
   class HitPattern;
@@ -24,5 +28,6 @@ std::ostream& operator<<(std::ostream& out, const pat::Muon& mu);
 std::ostream& operator<<(std::ostream& out, const pat::Electron& el);
 std::ostream& operator<<(std::ostream& out, const reco::CandidateBaseRef& cbr);
 std::ostream& operator<<(std::ostream& out, const pat::CompositeCandidate& dil);
+std::ostream& operator<<(std::ostream& out, const edm::TriggerNames& t);
 
 #endif

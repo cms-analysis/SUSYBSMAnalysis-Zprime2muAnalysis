@@ -38,7 +38,7 @@ loose_cut = 'isGlobalMuon && ' \
             '(isolationR03.sumPt + isolationR03.emEt + isolationR03.hadEt) / innerTrack.pt < 0.15 && ' \
             'innerTrack.hitPattern.numberOfValidTrackerHits > 10 && ' \
             'innerTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \
-            'globalTrack.hitPattern.numberOFValidMuonHits > 0 && ' \
+            'globalTrack.hitPattern.numberOfValidMuonHits > 0 && ' \
             'globalTrack.hitPattern.muonStationsWithValidHits >= 2'
 
 # For the trigger match, currently HLT_Mu15_v1 is the lowest-pT

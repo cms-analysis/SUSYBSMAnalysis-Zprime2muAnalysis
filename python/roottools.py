@@ -254,17 +254,18 @@ def move_overflow_into_last_bin(h):
 class plot_saver:
     i = 0
     
-    def __init__(self, plot_dir=None):
+    def __init__(self, plot_dir=None, html=True):
         self.c = ROOT.TCanvas('c%i' % plot_saver.i, '', 820, 630)
         plot_saver.i += 1
         self.saved = []
+        self.html = html
         self.set_plot_dir(plot_dir)
 
     def __del__(self):
         self.write_index()
         
     def write_index(self):
-        if not self.saved:
+        if not self.saved or not self.html:
             return
         html = open(os.path.join(self.plot_dir, 'index.html'), 'wt')
         html.write('<html><body><pre>\n')
@@ -281,7 +282,10 @@ class plot_saver:
         for i, (fn, log, root) in enumerate(self.saved):
             bn = os.path.basename(fn)
             html.write('%s<br>\n' % bn.replace('.png', ''))
-            html.write('<img src="%s"><img src="%s"><br><br>\n' % (bn, os.path.basename(log)))
+            if log:
+                html.write('<img src="%s"><img src="%s"><br><br>\n' % (bn, os.path.basename(log)))
+            else:
+                html.write('<img src="%s"><br><br>\n' % bn)
         html.write('</pre></body></html>\n')
         
     def set_plot_dir(self, plot_dir):

@@ -7,11 +7,11 @@ set_zp2mu_style()
 from samples import *
 
 rebin_factor = 5
-x_axis_limits = 40, 500
+x_axis_limits = 40, 1000
 to_compare = 'DileptonMass'
 global_rescale = 3273/3404.6 if False else None
 draw_qcd = True
-draw_zssm = False
+draw_zssm = True
 
 joins = [
     ('qcd', 'QCD'),
@@ -119,12 +119,14 @@ for s in samples:
     s.histos = {}
     
 for cuts in cutss:
-    plot_dir = pdir + '/%s/%i_%i/%s' % (to_compare, x_axis_limits[0], x_axis_limits[1], cuts)
+    plot_dir = pdir + '/%s/%s' % (to_compare, cuts)
     ps.set_plot_dir(plot_dir)
 
     data = dict((d, getattr(fdata, dir_name(cuts, d)).Get(to_compare).Clone()) for d in dileptons)
 
     for dilepton in dileptons:
+        x_axis_limits = (40,1000) if dilepton == 'MuonsPlusMuonsMinus' else (40,500)
+        
         for sample in samples:
             # It would be more efficient to have the sample loop be
             # the outer one thanks to the file opening/closing, but
@@ -181,7 +183,7 @@ for cuts in cutss:
             h = sample.mass
             h.SetLineColor(sample.color)
             h.SetMarkerStyle(0)
-            if draw_zssm or 'zssm' not in sample.name:
+            if 'zssm' not in sample.name:
                 h.SetFillColor(sample.color)
                 s.Add(h)
                 summc.Add(h)
@@ -209,6 +211,8 @@ for cuts in cutss:
             if skip or ('qcd' in sample.name and not draw_qcd):
                 continue
             legend_already.add(sample.name)
+            if 'zssm' in sample.name and (not draw_zssm or dilepton != 'MuonsPlusMuonsMinus'):
+                continue
             l.AddEntry(sample.mass, sample.nice_name, 'F')
 
         s.Draw('hist')
@@ -238,6 +242,7 @@ for cuts in cutss:
         hdata.GetXaxis().SetRangeUser(*x_axis_limits)
         hdata.GetXaxis().SetTitle(titleize[to_compare] % (subtitleize[dilepton], unitize[to_compare]))
         hdata.GetYaxis().SetTitle('Events/%i %s' % (rebin_factor, unitize[to_compare]))
+        hdata.GetYaxis().SetTitleOffset(1.2)
         hdata.SetMinimum(mymin)
         hdata.SetMaximum(mymax)
         hdata.SetMarkerStyle(20)
@@ -245,7 +250,7 @@ for cuts in cutss:
         hdata.SetStats(0)
         hdata.Draw('same e1')
 
-        if draw_zssm:
+        if draw_zssm and dilepton == 'MuonsPlusMuonsMinus':
             from samples import zssm750
             zp = zssm750.mass
             zp.SetTitle('')
@@ -274,6 +279,11 @@ for cuts in cutss:
         
         ps.save(dilepton)
 
+        if dilepton == 'MuonsPlusMuonsMinus':
+            ps.c.SetLogx(1)
+            ps.save(dilepton + '_logx')
+            ps.c.SetLogx(0)
+
         data_c = cumulative(hdata)
         summc_c = cumulative(summc)
         summc_c.SetLineColor(ROOT.kBlue)
@@ -285,6 +295,8 @@ for cuts in cutss:
             #h.GetYaxis().SetRangeUser(0.1, 6.5e3)
             h.GetXaxis().SetTitle(titleize[to_compare] % (subtitleize[dilepton], unitize[to_compare]))
             h.GetYaxis().SetTitle('Events > X')
+            h.GetYaxis().SetTitleOffset(1.2)
+            h.GetYaxis().SetLabelSize(0.028)
             h.SetMarkerStyle(20)
             h.SetMarkerSize(0.5)
 

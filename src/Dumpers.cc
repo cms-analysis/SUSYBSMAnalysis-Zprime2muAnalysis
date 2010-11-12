@@ -11,6 +11,7 @@
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "FWCore/Common/interface/TriggerNames.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Dumpers.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
 
 int mlprintf(const char* category, const char* fmt, ...) {
   static const size_t bufsize = 10240; // big enough?
@@ -20,6 +21,17 @@ int mlprintf(const char* category, const char* fmt, ...) {
   int ret = vsnprintf(buf, bufsize, fmt, args);
   va_end(args);
   edm::LogInfo(category) << buf;
+  return ret;
+}
+
+int osprintf(std::ostream& out, const char* fmt, ...) {
+  static const size_t bufsize = 10240; // big enough?
+  static char buf[bufsize];
+  va_list args;
+  va_start(args, fmt);
+  int ret = vsnprintf(buf, bufsize, fmt, args);
+  va_end(args);
+  out << buf;
   return ret;
 }
 
@@ -63,7 +75,14 @@ std::ostream& operator<<(std::ostream& out, const pat::Muon& mu) {
 
   if (mu.hasUserInt("trackUsedForMomentum")) 
     out << "\nTrack used for momentum: " << mu.userInt("trackUsedForMomentum");
-
+  
+  out << "\nTeV refit values:";
+  osprintf(out, "\n%20s%20s%20s%20s%20s", "refit", "pt", "eta", "phi", "chi2/dof");
+  for (size_t i = 0; i < patmuon::nTrackTypes; ++i) {
+    reco::TrackRef tk = patmuon::trackByType(mu, patmuon::TrackType(i));
+    osprintf(out, "\n%20s%20.1f%20.1f%20.1f%20.1f", patmuon::track_names[i].c_str(), tk->pt(), tk->eta(), tk->phi(), tk->normalizedChi2());
+  }
+    
   if (mu.isTrackerMuon())
     out << "\nTM number of matches (type=SegmentAndTrackArbitration): " << mu.numberOfMatches();
 

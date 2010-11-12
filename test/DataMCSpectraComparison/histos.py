@@ -116,12 +116,12 @@ def ntuplify(process, hlt_process_name='HLT'):
 
 def printify(process):
     process.MessageLogger.categories.append('PrintEvent')
-    process.PrintEvent = cms.EDAnalyzer('PrintEvent', dimuon_src = cms.InputTag('OurMuonsPlusMuonsMinus'))
-    process.PrintEventSS = process.PrintEvent.clone(dimuon_src = cms.InputTag('OurMuonsSameSign'))
-    process.PrintEventEmu = process.PrintEvent.clone(dimuon_src = cms.InputTag('OurMuonsElectronsOppSign'))
+    process.PrintEvent = cms.EDAnalyzer('PrintEvent', dilepton_src = cms.InputTag('OurMuonsPlusMuonsMinus'))
+    process.PrintEventSS = process.PrintEvent.clone(dilepton_src = cms.InputTag('OurMuonsSameSign'))
+    process.PrintEventEmu = process.PrintEvent.clone(dilepton_src = cms.InputTag('OurMuonsElectronsOppSign'))
     process.pathOur *= process.PrintEvent * process.PrintEventSS * process.PrintEventEmu
 
-    process.PrintEventVBTF = process.PrintEvent.clone(dimuon_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
+    process.PrintEventVBTF = process.PrintEvent.clone(dilepton_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
     process.pathVBTF *= process.PrintEventVBTF
     
 if 'data' in sys.argv or 'olddata' in sys.argv:
@@ -152,6 +152,7 @@ return_data = 1
     from samples import samples
     for sample in samples:
         print sample.name
+        
         new_py = open('histos.py').read()
         new_py += "\nprocess.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', '%(hlt_process_name)s')\n" % sample
         new_py += "\nntuplify(process, hlt_process_name='%(hlt_process_name)s')\n" % sample

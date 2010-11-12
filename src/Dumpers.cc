@@ -99,7 +99,7 @@ std::ostream& operator<<(std::ostream& out, const pat::Muon& mu) {
   if (mu.globalTrack().isNull())
     out << "\nGlobal track ref is null!\n";
   else
-    out << "\nGlobal track:\n" << *mu.outerTrack();
+    out << "\nGlobal track:\n" << *mu.globalTrack();
   
   out << "\nTrigger match info: # trig obj matches: " << mu.triggerObjectMatches().size();
   int itosa = 0;

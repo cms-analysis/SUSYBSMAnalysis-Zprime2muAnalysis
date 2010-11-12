@@ -6,6 +6,7 @@
 
 namespace patmuon {
   enum TrackType { TkGlobal, TkInner, TkOuter, TkTPFMS, TkPicky, TkPMC, TkTMR, TkSigmaSwitch, nTrackTypes };
+  const std::string track_names[nTrackTypes] = { "global", "inner", "outer", "tpfms", "picky", "pmc", "tmr", "sigmaswitch" };
 
   reco::TrackRef pmcTrack(const pat::Muon& mu);
   reco::TrackRef tmrTrack(const pat::Muon& mu);

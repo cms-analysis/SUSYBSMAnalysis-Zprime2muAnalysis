@@ -20,9 +20,8 @@ namespace patmuon {
     std::transform(name.begin(), name.end(), name.begin(), tolower);
     if (name == std::string("tkonly"))
       return TkInner;
-    static const std::string names[nTrackTypes] = { "global", "inner", "outer", "tpfms", "picky", "pmc", "tmr", "sigmaswitch" };
     for (size_t i = 0; i < nTrackTypes; ++i)
-      if (names[i] == name)
+      if (track_names[i] == name)
 	return TrackType(i);
     return nTrackTypes;
   }

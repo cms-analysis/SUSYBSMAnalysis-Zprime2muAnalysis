@@ -68,7 +68,7 @@ subtitleize= {
     'MuonsElectronsSameSign': '#mu^{#pm}e^{#pm}',
     }
 titleize = {
-    'DileptonMass': 'M_{%s} (%s)',
+    'DileptonMass': 'm_{%s} (%s)',
     'DileptonPt': '%s p_{T} (%s)'
     }
 unitize = {
@@ -82,18 +82,15 @@ yaxis = {
     }
 use_yaxis = False
 
-#dileptons = ['MuonsPlusMuonsMinus', 'MuonsPlusMuonsPlus', 'MuonsMinusMuonsMinus', 'MuonsSameSign', 'ElectronsPlusElectronsMinus', 'ElectronsPlusElectronsPlus', 'ElectronsMinusElectronsMinus', 'ElectronsSameSign', 'MuonsPlusElectronsMinus', 'MuonsMinusElectronsPlus', 'MuonsPlusElectronsPlus', 'MuonsMinusElectronsMinus', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign']
-#cutss = ['Std','VBTF','Pt20']
-
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsElectronsOppSign']
-cutss = ['VBTF', 'VBTFNoIso', 'VBTFIso3', 'VBTFRelIso015', 'VBTFNoPx']
+cutss = ['VBTF', 'Our', 'OurNoIso', 'OurIso3', 'OurRelIso015', 'OurRelIso006', 'OurNoPx']
 
 ROOT.TH1.AddDirectory(False)
 
 def dir_name(c, d):
     return c + d + 'Histos'
 
-sumMCfile = ROOT.TFile('sumMC.root', 'recreate')
+sumMCfile = None # ROOT.TFile('sumMC.root', 'recreate')
 
 pdir = 'plots/datamc'
 if histo_dir != 'ana_datamc':
@@ -141,7 +138,8 @@ for cuts in cutss:
             
         h = samples[0].mass
         summc = ROOT.TH1F(cuts + dilepton + '_sumMC', '', h.GetNbinsX(), h.GetXaxis().GetXmin(), h.GetXaxis().GetXmax())
-        summc.SetDirectory(sumMCfile)
+        if sumMCfile is not None:
+            summc.SetDirectory(sumMCfile)
         
         ## Sort by increasing integral.
         #samples.sort(key=lambda x: x.mass.Integral(x.mass.FindBin(150), x.mass.FindBin(1e9)))
@@ -271,7 +269,8 @@ for cuts in cutss:
         l.Draw('same')
 
         data_for_file = hdata.Clone(cuts + dilepton + '_data')
-        data_for_file.SetDirectory(sumMCfile)
+        if sumMCfile is not None:
+            data_for_file.SetDirectory(sumMCfile)
         
         ps.save(dilepton)
 
@@ -303,9 +302,9 @@ for cuts in cutss:
         l.Draw('same')
 
         ps.save(dilepton + '_cumulative')
-#        raise 1
 
-        sumMCfile.Write()
+        if sumMCfile is not None:
+            sumMCfile.Write()
 
     if False:
         for sample in samples:

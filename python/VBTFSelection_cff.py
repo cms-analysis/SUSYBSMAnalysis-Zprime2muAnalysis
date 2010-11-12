@@ -14,7 +14,7 @@ import FWCore.ParameterSet.Config as cms
 # - muon must be a global muon
 # - pT > 20
 # - |eta| < 2.1
-# - dxy wrt beamspot < 0.2 cm (dB < 0.2)
+# - |dxy wrt beamspot| < 0.2 cm (abs(dB) < 0.2)
 # - relative combined isolation < 15% ((isolationR03.sumPt + isolationR03.emEt + isolationR03.hadEt) / innerTrack.pt < 0.15)
 # - number of tracker hits > 10 (innerTrack.hitPattern.numberOfValidTrackerHits > 10)
 # - at least one pixel hit (innerTrack.hitPattern.numberOfValidPixelHits >= 1)
@@ -34,12 +34,12 @@ import FWCore.ParameterSet.Config as cms
 loose_cut = 'isGlobalMuon && ' \
             'pt > 20. && ' \
             'abs(eta) < 2.1 && ' \
-            'dB < 0.2 && ' \
+            'abs(dB) < 0.2 && ' \
             '(isolationR03.sumPt + isolationR03.emEt + isolationR03.hadEt) / innerTrack.pt < 0.15 && ' \
-            'innerTrack.hitPattern.numberOfValidTrackerHits > 10 && ' \
-            'innerTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \
+            'globalTrack.hitPattern.numberOfValidTrackerHits > 10 && ' \
+            'globalTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \
             'globalTrack.hitPattern.numberOfValidMuonHits > 0 && ' \
-            'globalTrack.hitPattern.muonStationsWithValidHits >= 2'
+            'numberOfMatches >= 2'
 
 # For the trigger match, currently HLT_Mu15_v1 is the lowest-pT
 # unprescaled single muon path. In runs <= 147119, HLT_Mu15_v1 did not

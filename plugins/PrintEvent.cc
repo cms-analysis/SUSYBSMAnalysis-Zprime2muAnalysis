@@ -20,13 +20,26 @@ class PrintEvent : public edm::EDAnalyzer {
 };
 
 PrintEvent::PrintEvent(const edm::ParameterSet& cfg) {
+  std::ostringstream out;
+  out << "configuration:\n";
+
   dump_trigger_names = cfg.existsAs<edm::InputTag>("trigger_results_src");
-  if (dump_trigger_names)
+  out << "dump_trigger_names: " << dump_trigger_names << " ";
+  if (dump_trigger_names) {
     trigger_results_src = cfg.getParameter<edm::InputTag>("trigger_results_src");
+    out << trigger_results_src;
+  }
+  out << "\n";
 
   dump_dileptons = cfg.existsAs<edm::InputTag>("dilepton_src");
-  if (dump_dileptons)
+  out << "dump_dileptons: " << dump_dileptons << " ";
+  if (dump_dileptons) {
     dilepton_src = cfg.getParameter<edm::InputTag>("dilepton_src");
+    out << dilepton_src;
+  }
+  out << "\n";
+
+  edm::LogInfo("PrintEvent") << out.str();
 }
 
 void PrintEvent::analyze(const edm::Event& event, const edm::EventSetup& setup) {

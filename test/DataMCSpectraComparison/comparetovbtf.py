@@ -8,23 +8,22 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import ROOT, ttree_iterator
 me = defaultdict(list)
 vbtf = defaultdict(list)
 
-me_json = LumiList('me.json')
-vbtf_json = LumiList('vbtf.json')
+me_json = LumiList('sept17.forlumi.json')
+vbtf_json = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions10/7TeV/StreamExpress/Cert_132440-149442_7TeV_StreamExpress_Collisions10_JSON.txt')
 
 peak_only = False
-use_jsons = True
 
 #fns = ['ana_datamc_vbtfvsours/ana_datamc_data_jul15_prompt.root', 'ana_datamc_vbtfvsours/ana_datamc_data_promptB_allgood.root']
-fns = ['ana_datamc_data.root', 'ana_datamc_vbtfvsours/ana_datamc_data_promptB_allgood.root']
+#fns = ['ana_datamc_data.root', 'ana_datamc_vbtfvsours/ana_datamc_data_promptB_allgood.root']
+fns = ['sept17.root']
 for fn in fns:
     f = ROOT.TFile(fn)
     for j,t in ttree_iterator(f.SimpleNtuplerVBTF.Get('t')):
-        if t.GoodVtx and t.NoScraping and t.HLTPhysicsDeclared:
-            if not peak_only or (t.dil_mass > 60 and t.dil_mass < 120):
-                r,l,e,m = t.run, t.lumi, t.event, t.dil_mass
-                for x in 'rle':
-                    exec '%s = int(%s)' % (x,x) # python ints are c longs
-                me[(r,l,e)].append(m)
+        if not peak_only or (t.dil_mass > 60 and t.dil_mass < 120):
+            r,l,e,m = t.run, t.lumi, t.event, t.dil_mass
+            for x in 'rle':
+                exec '%s = int(%s)' % (x,x) # python ints are c longs
+            me[(r,l,e)].append(m)
 
 for line in open('log_goldenZmumuCands_NoMassCuts_34p86.log'):
     if '*' not in line or 'Row' in line:

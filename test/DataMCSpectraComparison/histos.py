@@ -97,7 +97,9 @@ elif 'data' in sys.argv:
     process.source.fileNames = ['file:crab/crab_datamc_Run2010A/res/merged.root', 'file:crab/crab_datamc_promptB_all/res/merged.root']
     process.TFileService.fileName = 'ana_datamc_data.root'    
     process.GlobalTag.globaltag = 'GR10_P_V10::All'
-    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*eval(open('Run2010AB.cmssw').read()))
+
+    from goodlumis import Run2010AB
+    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010AB)
 
 def ntuplify(process, hlt_process_name='HLT'):
     process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler', hlt_src = cms.InputTag('TriggerResults', '', hlt_process_name), dimu_src = cms.InputTag('OurMuonsPlusMuonsMinus'))

@@ -68,7 +68,7 @@ std::ostream& operator<<(std::ostream& out, const reco::Track& tk) {
 }
 
 std::ostream& operator<<(std::ostream& out, const pat::Muon& mu) {
-  out << "pt: " << mu.pt() << " eta: " << mu.eta() << " phi: " << mu.phi() << " p: " << mu.p() << "\nisGlobal: " << mu.isGlobalMuon() << " isTracker: " << mu.isTrackerMuon() << " isStandAlone: " << mu.isStandAloneMuon();
+  out << "pt: " << mu.pt() << " eta: " << mu.eta() << " phi: " << mu.phi() << " p: " << mu.p() << " dB: " << mu.dB() << "\nisGlobal: " << mu.isGlobalMuon() << " isTracker: " << mu.isTrackerMuon() << " isStandAlone: " << mu.isStandAloneMuon();
   
   if (mu.genParticle())
     out << "\nMC match: " << *mu.genParticle();

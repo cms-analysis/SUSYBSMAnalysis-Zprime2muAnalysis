@@ -89,18 +89,6 @@ for cut_name in cuts:
     path = cms.Path(pobj)
     setattr(process, pathname, path)
 
-if 'olddata' in sys.argv:
-    process.source.fileNames = ['file:work/daata/jul15.root', 'file:work/daata/prompt.root']
-    process.TFileService.fileName = 'ana_datamc_data.root'
-    process.GlobalTag.globaltag = 'GR10_P_V7::All'
-elif 'data' in sys.argv:
-    process.source.fileNames = ['file:crab/crab_datamc_Run2010A/res/merged.root', 'file:crab/crab_datamc_promptB_all/res/merged.root']
-    process.TFileService.fileName = 'ana_datamc_data.root'    
-    process.GlobalTag.globaltag = 'GR10_P_V10::All'
-
-    from goodlumis import Run2010AB
-    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010AB)
-
 def ntuplify(process, hlt_process_name='HLT'):
     process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler', hlt_src = cms.InputTag('TriggerResults', '', hlt_process_name), dimu_src = cms.InputTag('OurMuonsPlusMuonsMinus'))
     process.SimpleNtuplerSS = process.SimpleNtupler.clone(dimu_src = cms.InputTag('OurMuonsSameSign'))
@@ -119,8 +107,15 @@ def printify(process):
 
     process.PrintEventVBTF = process.PrintEvent.clone(dilepton_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
     process.pathVBTF *= process.PrintEventVBTF
-    
-if 'data' in sys.argv or 'olddata' in sys.argv:
+
+if 'data' in sys.argv:
+    process.source.fileNames = ['file:crab/crab_datamc_Run2010A/res/merged.root', 'file:crab/crab_datamc_promptB_all/res/merged.root']
+    process.TFileService.fileName = 'ana_datamc_data.root'    
+    process.GlobalTag.globaltag = 'GR10_P_V10::All'
+
+    from goodlumis import Run2010AB
+    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010AB)
+
     printify(process)
     ntuplify(process)
 

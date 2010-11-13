@@ -20,6 +20,7 @@ namespace pat {
 }
 
 int mlprintf(const char* category, const char* fmt, ...);
+int osprintf(std::ostream& out, const char* fmt, ...);
 
 std::ostream& operator<<(std::ostream& out, const reco::GenParticle& gen);
 std::ostream& operator<<(std::ostream& out, const reco::HitPattern& hp);

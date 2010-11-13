@@ -32,8 +32,8 @@ import FWCore.ParameterSet.Config as cms
 # "tight" cut).
 
 loose_cut = 'isGlobalMuon && ' \
-            'pt > 20. && ' \
-            'abs(eta) < 2.1 && ' \
+            'innerTrack.pt > 20. && ' \
+            'abs(innerTrack.eta) < 2.1 && ' \
             'abs(dB) < 0.2 && ' \
             '(isolationR03.sumPt + isolationR03.emEt + isolationR03.hadEt) / innerTrack.pt < 0.15 && ' \
             'globalTrack.hitPattern.numberOfValidTrackerHits > 10 && ' \

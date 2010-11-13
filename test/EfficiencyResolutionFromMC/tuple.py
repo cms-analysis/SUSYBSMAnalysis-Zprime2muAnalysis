@@ -31,11 +31,10 @@ if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
 [CRAB]
 jobtype = cmssw
-scheduler = %(scheduler)s
+scheduler = condor
 
 [CMSSW]
 datasetpath = %(dataset)s
-%(dbs_url)s
 pset = %(pset_fn)s
 total_number_of_events = -1
 events_per_job = %(events)s
@@ -67,20 +66,13 @@ dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02
         ('zp1250', '/ZprimeSSMToMuMu_M-1250_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
         ('zp1500', '/ZprimeSSMToMuMu_M-1500_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
         ('zp1750', '/ZprimeSSMToMuMu_M-1750_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('mydy120', '/dy120-HLT-384p3-START38_V12/tucker-dy120-RECO-384p3-START38_V12-9ff36250bd8f90b0a768bc7051eaced7/USER'),
-        ('mydy200', '/dy200-HLT-384p3-START38_V12/tucker-dy200-RECO-384p3-START38_V12-9ff36250bd8f90b0a768bc7051eaced7/USER'),
-        ('mydy500', '/dy500-HLT-384p3-START38_V12/tucker-dy500-RECO-384p3-START38_V12-9ff36250bd8f90b0a768bc7051eaced7/USER'),
-        ('mydy800', '/dy800-HLT-384p3-START38_V12/tucker-dy800-RECO-384p3-START38_V12-9ff36250bd8f90b0a768bc7051eaced7/USER'),
     ]
 
     for name, dataset in samples:
-        if 'my' not in name:
+        if name == 'dy20':
             continue
         
         events = 11000 if name != 'dy20' else 40000
-        scheduler = 'condor' if name == 'dy20' or 'my' in name else 'glite'
-        dbs_url = 'dbs_url = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet' if 'my' in name else ''
-
         pset = open('tuple.py').read()
         if name == 'dy20':
             pset += '\nswitchHLTProcessName(process, "REDIGI38X")\n'
@@ -90,4 +82,4 @@ dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02
         open('crab.cfg', 'wt').write(crab_cfg % locals())
         if not just_testing:
             os.system('crab -create -submit all')
-            os.system('rm -v crab.cfg')
+            os.system('rm crab.cfg')

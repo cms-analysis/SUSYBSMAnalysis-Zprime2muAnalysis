@@ -83,7 +83,10 @@ for cut_name in cuts:
     # here, but rely on the selection to take care of it -- easy way
     # to handle the changing trigger names.
     pathname = 'path' + cut_name
-    path = cms.Path(process.goodDataFilter * process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list))
+    pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
+    if 'VBTF' not in cut_name:
+        pobj = process.goodDataFilter * pobj
+    path = cms.Path(pobj)
     setattr(process, pathname, path)
 
 if 'olddata' in sys.argv:

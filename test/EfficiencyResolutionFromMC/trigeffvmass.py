@@ -18,7 +18,7 @@ ROOT.gStyle.SetPadTopMargin(0.02)
 ROOT.gStyle.SetPadRightMargin(0.04)
 ROOT.TH1.AddDirectory(0)
 
-types = ['Acceptance', 'RecoWrtAcc', 'RecoWrtAccTrig', 'TotalReco', 'L1Path_0_L1_SingleMu7', 'L1OrEff', 'HLTPath_0_HLT_Mu11', 'HLTOrEff', 'TotalTrigEff']
+types = ['Acceptance', 'RecoWrtAcc', 'RecoWrtAccTrig', 'TotalReco', 'L1OrEff', 'HLTOrEff', 'TotalTrigEff']
 rebin_factor = 100
 make_individual_effs = False
 
@@ -26,6 +26,8 @@ files = {}
 plots = {}
 
 #samples, types = samples[0:1], types[0:1]
+
+samples_totals = []
 
 print '%30s%30s%30s%30s%30s' % ('sample', 'type', 'num', 'den', 'eff')
 for sample in samples:
@@ -69,10 +71,37 @@ for sample in samples:
         cden = den.Integral(0, nb+1)
         
         print '%30s%30s%30f%30f%30f' % (sample, t, cnum, cden, cnum/cden)
+        samples_totals.append((sample, t, cnum, cden))
         sys.stdout.flush()
 
 ps = plot_saver(plot_dir)
 
+totals_histos = {}
+for sample, t, cnum, cden in samples_totals:
+    if 'zp' not in sample and sample != 'dy20':
+        continue
+    if not totals_histos.has_key(t):
+        totals_histos[t] = ROOT.TH1F(t + '_totals_num', '', 2000, 0, 2000), ROOT.TH1F(t + '_totals_den', '', 2000, 0, 2000)
+    hnum, hden = totals_histos[t]
+    if 'zp' in sample:
+        mass = int(sample.replace('zp', ''))
+    else:
+        mass = 90
+    mass = hden.FindBin(mass)
+    hnum.SetBinContent(mass, cnum)
+    hden.SetBinContent(mass, cden)
+
+for t in sorted(totals_histos.iterkeys()):
+    eff = binomial_divide(*totals_histos[t])
+    if 'Accept' in t:
+        eff.GetYaxis().SetRangeUser(0.4, 1.01)
+    elif 'Reco' in t:
+        eff.GetYaxis().SetRangeUser(0., 1.01)
+    else:
+        eff.GetYaxis().SetRangeUser(0.75, 1.01)
+    eff.Draw('AP')
+    ps.save(t + '_totals', log=False)
+                  
 def do_overlay(name, samples, which):
     if not samples:
         return

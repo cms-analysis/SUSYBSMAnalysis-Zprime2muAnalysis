@@ -35,7 +35,7 @@ import FWCore.ParameterSet.Config as cms
 
 loose_cut = 'isGlobalMuon && ' \
             'pt > 20. && ' \
-            'isolationR03.sumPt < 10 &&' \
+            'isolationR03.sumPt < 10 && ' \
             'innerTrack.hitPattern.numberOfValidTrackerHits >= 10'
 
 # For the trigger match, currently HLT_Mu15_v1 is the lowest-pT

@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
+import os
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import *
 set_zp2mu_style()
 ROOT.gStyle.SetPadTopMargin(0.02)
 ROOT.gStyle.SetPadRightMargin(0.02)
 
 f = ROOT.TFile('dyall.root')
-d = f.respmc
+d = f.Resolutionpmc
 h = d.Get('DileptonMassResVMass')
 h = make_rms_hist(h)
 c = ROOT.TCanvas('c', '', 820, 630)

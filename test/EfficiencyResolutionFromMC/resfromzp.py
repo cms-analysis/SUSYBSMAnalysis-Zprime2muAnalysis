@@ -10,14 +10,14 @@ ROOT.gStyle.SetPadRightMargin(0.02)
 os.system('mkdir -p plots/resfromzp')
 c = ROOT.TCanvas('c', '', 820, 630)
 
-masses = [1000, 1250, 1500, 1750]
+masses = [500, 750, 1000, 1250, 1500, 1750]
 sigma = []
 esigma = []
 chnam, val, err, xlolim, xhilim, iuint = ROOT.TString(''), ROOT.Double(1), ROOT.Double(1), ROOT.Double(1), ROOT.Double(1), ROOT.Long(1)
 
 for m in masses:
     f = ROOT.TFile('ana_effres_zp%i.root' % m)
-    d = f.respmc
+    d = f.Resolutionpmc
     h = d.Get('DileptonMassRes')
     fcn = ROOT.TF1('mg', 'gaus', h.GetMean() - 1.5*h.GetRMS() , h.GetMean() + 1.5*h.GetRMS() )
     h.Fit(fcn, 'IVR')

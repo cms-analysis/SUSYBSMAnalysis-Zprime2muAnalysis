@@ -2,7 +2,7 @@
 
 import sys, os
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import cms, process
-process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/effres_dy20/8ca75260210b8943d361f4da5b0c0bcc/pat_1_1_Zi3.root']
+process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-120_7TeV-pythia6/effres_dy120/b62a83c345cd135ef96a2f3fe22d5e32/pat_3_1_Ped.root']
 process.options.wantSummary = True
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import rec_levels, rec_level_module
@@ -25,7 +25,15 @@ process.HLTSingleObjects = cms.EDProducer('HLTLeptonsFromTriggerEvent',
 process.EfficiencyFromMC.hlt_obj_src = 'HLTSingleObjects'
 process.EfficiencyFromMC.hlt_single_min_pt = 15
 
-process.p2 = cms.Path(process.Zprime2muAnalysisSequencePlain * process.HLTSingleObjects * process.EfficiencyFromMC)
+# Since LooseTightPairSelector ignores the cutFor that
+# Zprime2muLeptonProducer sets, don't need to redo leptons for the
+# VBTF path.
+import SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff as VBTFSelection
+process.allDimuonsVBTF = VBTFSelection.allDimuons.clone()
+process.dimuonsVBTF = VBTFSelection.dimuons.clone(src = 'allDimuonsVBTF')
+process.VBTFEfficiencyFromMC = process.EfficiencyFromMC.clone(dimuon_src = 'dimuonsVBTF')
+
+process.p2 = cms.Path(process.Zprime2muAnalysisSequencePlain * process.HLTSingleObjects * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC)
 process.p = cms.Path(process.DYGenMassFilter * process.Zprime2muAnalysisSequence)
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi')
@@ -40,6 +48,7 @@ process.p *= rec_level_module(process, process.ResolutionUsingMC, 'Resolution', 
 
 def switch_hlt_name(n):
     process.EfficiencyFromMC.triggerDecision.hltResults = cms.InputTag('TriggerResults', '', n)
+    process.VBTFEfficiencyFromMC.triggerDecision.hltResults = cms.InputTag('TriggerResults', '', n)
     process.HLTSingleObjects.summary = cms.InputTag('hltTriggerSummaryAOD', '', n)
     process.HLTSingleObjects.leptons = [cms.InputTag('hltL3MuonCandidates', '', n)]
 
@@ -59,34 +68,31 @@ datasetpath = %(dataset)s
 dbs_url = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
 pset = histos_crab.py
 total_number_of_events = -1
-events_per_job = 50000
+events_per_job = 60000
 
 [USER]
 ui_working_dir = crab/crab_ana_effres_%(name)s
 return_data = 1
 '''
+
     samples = [
-        ('dy20',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-8ca75260210b8943d361f4da5b0c0bcc/USER', 20, 120),
-        ('dy120',  '/dy120-HLT-384p3-START38_V12/tucker-effres_mydy120-b62a83c345cd135ef96a2f3fe22d5e32/USER', 120, 200),
-        ('dy200',  '/dy200-HLT-384p3-START38_V12/tucker-effres_mydy200-b62a83c345cd135ef96a2f3fe22d5e32/USER', 200, 500),
-        ('dy500',  '/dy500-HLT-384p3-START38_V12/tucker-effres_mydy500-b62a83c345cd135ef96a2f3fe22d5e32/USER', 500, 800),
-        ('dy800',  '/dy800-HLT-384p3-START38_V12/tucker-effres_mydy800-b62a83c345cd135ef96a2f3fe22d5e32/USER', 800, 20000),
-        ('zp1000', '', -20000, 20000),
-        ('zp1250', '', -20000, 20000),
-        ('zp1500', '', -20000, 20000),
-        ('zp1750', '', -20000, 20000),
+        ('dy20',  '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-8ca75260210b8943d361f4da5b0c0bcc/USER',  20, 120),
+        ('dy120', '/DYToMuMu_M-120_7TeV-pythia6/tucker-effres_dy120-b62a83c345cd135ef96a2f3fe22d5e32/USER',      120, 200),
+        ('dy200', '/DYToMuMu_M-200_7TeV-pythia6/tucker-effres_dy200-b62a83c345cd135ef96a2f3fe22d5e32/USER',      200, 500),
+        ('dy500', '/DYToMuMu_M-500_7TeV-pythia6/tucker-effres_dy500-b62a83c345cd135ef96a2f3fe22d5e32/USER',      500, 800),
+        ('dy800', '/DYToMuMu_M-800_7TeV-pythia6/tucker-effres_dy800-b62a83c345cd135ef96a2f3fe22d5e32/USER',      800, 20000),
+        ('zp500', '/ZprimeSSMToMuMu_M-500_7TeV-pythia6/tucker-effres_zp500-b62a83c345cd135ef96a2f3fe22d5e32/USER',    -20000, 20000),
+        ('zp750', '/ZprimeSSMToMuMu_M-750_7TeV-pythia6/tucker-effres_zp750-b62a83c345cd135ef96a2f3fe22d5e32/USER',    -20000, 20000),
+        ('zp1000', '/ZprimeSSMToMuMu_M-1000_7TeV-pythia6/tucker-effres_zp1000-b62a83c345cd135ef96a2f3fe22d5e32/USER', -20000, 20000),
+        ('zp1250', '/ZprimeSSMToMuMu_M-1250_7TeV-pythia6/tucker-effres_zp1250-b62a83c345cd135ef96a2f3fe22d5e32/USER', -20000, 20000),
+        ('zp1500', '/ZprimeSSMToMuMu_M-1500_7TeV-pythia6/tucker-effres_zp1500-b62a83c345cd135ef96a2f3fe22d5e32/USER', -20000, 20000),
+        ('zp1750', '/ZprimeSSMToMuMu_M-1750_7TeV-pythia6/tucker-effres_zp1750-b62a83c345cd135ef96a2f3fe22d5e32/USER', -20000, 20000),
         ]
 
     just_testing = 'testing' in sys.argv
 
-    if 'dump_files' in sys.argv:
-        for sample in samples:
-            print "('%s'," % sample[0]
-            os.system('dbss ana02 find file where dataset=%s' % sample[1])
-        sys.exit(0)
-
     for name, dataset, lo, hi in samples:
-        if 'zp' in name or name in ['dy20']:
+        if name != 'dy20':
             continue
         
         open('crab.cfg', 'wt').write(crab_cfg % locals())

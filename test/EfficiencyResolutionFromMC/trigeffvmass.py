@@ -2,9 +2,15 @@
 
 import sys, os
 
-samples = ['dy20', 'dy120', 'dy200', 'dy500', 'dy800'] #, 'zp1000', 'zp1250', 'zp1500', 'zp1750']
-dy = [(x, int(x.replace('dy',''))) for x in samples if 'dy' in x] # and 'dy120' not in x]
-zp = [] #(x, int(x.replace('zp',''))) for x in samples if 'zp' in x]
+samples = ['dy20', 'dy120', 'dy200', 'dy500', 'dy800', 'zp500', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750']
+dy = [(x, int(x.replace('dy',''))) for x in samples if 'dy' in x]
+zp = [(x, int(x.replace('zp',''))) for x in samples if 'zp' in x]
+if 'vbtf' in sys.argv:
+    which = 'VBTFEfficiencyFromMC'
+    plot_dir = 'plots/trigeffvsmassmctruth_vbtf'
+else:
+    which = 'EfficiencyFromMC'
+    plot_dir = 'plots/trigeffvsmassmctruth'
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import *
 set_zp2mu_style()
@@ -12,7 +18,6 @@ ROOT.gStyle.SetPadTopMargin(0.02)
 ROOT.gStyle.SetPadRightMargin(0.04)
 ROOT.TH1.AddDirectory(0)
 
-#types = ['Acceptance', 'L1OrEff', 'L1AndEff', 'HLTOrEff', 'HLTAndEff', 'TotalTrigEff']
 types = ['Acceptance', 'RecoWrtAcc', 'RecoWrtAccTrig', 'TotalReco', 'L1Path_0_L1_SingleMu7', 'L1OrEff', 'HLTPath_0_HLT_Mu11', 'HLTOrEff', 'TotalTrigEff']
 rebin_factor = 100
 make_individual_effs = False
@@ -25,8 +30,8 @@ plots = {}
 print '%30s%30s%30s%30s%30s' % ('sample', 'type', 'num', 'den', 'eff')
 for sample in samples:
     f = files[sample] = ROOT.TFile('ana_effres_%s.root' % sample)
-    d = f.EfficiencyFromMC
-    ps = plot_saver('plots/trigeffvsmassmctruth/%s' % sample)
+    d = f.Get(which)
+    ps = plot_saver(os.path.join(plot_dir, sample))
 
     for t in types:
         num = d.Get('Num' + t)
@@ -66,7 +71,7 @@ for sample in samples:
         print '%30s%30s%30f%30f%30f' % (sample, t, cnum, cden, cnum/cden)
         sys.stdout.flush()
 
-ps = plot_saver('plots/trigeffvsmassmctruth')
+ps = plot_saver(plot_dir)
 
 def do_overlay(name, samples, which):
     if not samples:

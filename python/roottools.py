@@ -274,8 +274,12 @@ class plot_saver:
             html.write('%10i ' % i)
             if log:
                 html.write(' <a href="%s">log</a>' % os.path.basename(log))
+            else:
+                html.write('    ')
             if root:
                 html.write(' <a href="%s">root</a>' % os.path.basename(root))
+            else:
+                html.write('     ')
             html.write('  <a href="%s">%s</a>' % (bn, bn))
             html.write('\n')
         html.write('<br><br>')

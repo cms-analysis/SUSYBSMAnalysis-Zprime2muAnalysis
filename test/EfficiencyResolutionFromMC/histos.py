@@ -32,8 +32,9 @@ import SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff as VBTFSelection
 process.allDimuonsVBTF = VBTFSelection.allDimuons.clone()
 process.dimuonsVBTF = VBTFSelection.dimuons.clone(src = 'allDimuonsVBTF')
 process.VBTFEfficiencyFromMC = process.EfficiencyFromMC.clone(dimuon_src = 'dimuonsVBTF')
+process.VBTFEfficiencyFromMC21 = process.VBTFEfficiencyFromMC.clone(acceptance_max_eta = 2.1)
 
-process.p2 = cms.Path(process.Zprime2muAnalysisSequencePlain * process.HLTSingleObjects * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC)
+process.p2 = cms.Path(process.Zprime2muAnalysisSequencePlain * process.HLTSingleObjects * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC * process.VBTFEfficiencyFromMC21)
 process.p = cms.Path(process.DYGenMassFilter * process.Zprime2muAnalysisSequence)
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi')
@@ -77,6 +78,7 @@ return_data = 1
 
     samples = [
         ('dy20',  '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-8ca75260210b8943d361f4da5b0c0bcc/USER',  20, 120),
+        ('dy60120', '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-8ca75260210b8943d361f4da5b0c0bcc/USER',  60, 120),
         ('dy120', '/DYToMuMu_M-120_7TeV-pythia6/tucker-effres_dy120-b62a83c345cd135ef96a2f3fe22d5e32/USER',      120, 200),
         ('dy200', '/DYToMuMu_M-200_7TeV-pythia6/tucker-effres_dy200-b62a83c345cd135ef96a2f3fe22d5e32/USER',      200, 500),
         ('dy500', '/DYToMuMu_M-500_7TeV-pythia6/tucker-effres_dy500-b62a83c345cd135ef96a2f3fe22d5e32/USER',      500, 800),

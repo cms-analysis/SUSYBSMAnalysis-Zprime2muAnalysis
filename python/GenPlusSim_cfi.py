@@ -28,4 +28,7 @@ prunedGenSimLeptons = cms.EDProducer('GenParticlePruner',
                                          )
                                      )
 
+prunedGenLeptons = prunedGenSimLeptons.clone(src = cms.InputTag('genParticles'))
+
+genSequence = cms.Sequence(prunedGenLeptons)
 genSimSequence = cms.Sequence(genSimLeptons + prunedGenSimLeptons)

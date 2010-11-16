@@ -8,6 +8,7 @@ from samples import *
 
 rebin_factor = 5
 x_axis_limits = 40, 1000
+x_axis_limits2 = 40, 500
 to_compare = 'DileptonMass'
 global_rescale = 3273/3404.6 if False else None
 draw_qcd = True
@@ -28,13 +29,15 @@ for x in sys.argv:
         histo_dir = x
 assert(histo_dir is not None)
 
-data_fns = glob.glob(os.path.join(histo_dir, 'ana_datamc_data_*.root'))
-
-#data_fs = [ROOT.TFile(x) for x in data_fns]
-# just hadd to tmp file for now, easier
-data_fn = 'anadatamcdatahaddtmp.root'
-hadd_tmp = True
-os.system('hadd -f %s %s' % (data_fn, ' '.join(data_fns)))
+data_fns = glob.glob(os.path.join(histo_dir, 'ana_datamc_data*.root'))
+if len(data_fns) == 1:
+    data_fn = data_fns[0]
+    hadd_tmp = False
+else:
+    # just hadd to tmp file for now, easier
+    data_fn = 'anadatamcdatahaddtmp.root'
+    hadd_tmp = True
+    os.system('hadd -f %s %s' % (data_fn, ' '.join(data_fns)))
 fdata = ROOT.TFile(data_fn)
 
 def parse_lumi_from_log(fn):
@@ -76,11 +79,11 @@ unitize = {
     'DileptonPt': 'GeV'
     }
 yaxis = {
-    'MuonsPlusMuonsMinus': (3e-3, 1750),
-    'MuonsSameSign': (5e-5, 2.5),
-    'MuonsElectronsOppSign': (5e-4, 6),
+    'MuonsPlusMuonsMinus': (1e-3, 7600),
+#    'MuonsSameSign': (5e-5, 2.5),
+#    'MuonsElectronsOppSign': (5e-4, 6),
     }
-use_yaxis = False
+use_yaxis = True
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign']
 cutss = ['VBTF', 'Our', 'OurNoIso', 'OurIso3', 'OurRelIso015', 'OurRelIso006', 'OurNoPx']
@@ -125,7 +128,7 @@ for cuts in cutss:
     data = dict((d, getattr(fdata, dir_name(cuts, d)).Get(to_compare).Clone()) for d in dileptons)
 
     for dilepton in dileptons:
-        x_axis_limits = (40,1000) if dilepton == 'MuonsPlusMuonsMinus' else (40,500)
+        xax = x_axis_limits if dilepton == 'MuonsPlusMuonsMinus' else x_axis_limits2
         
         for sample in samples:
             # It would be more efficient to have the sample loop be
@@ -135,7 +138,7 @@ for cuts in cutss:
             sample.mass = getattr(f, dir_name(cuts, dilepton)).Get(to_compare).Clone()
             sample.mass.Rebin(rebin_factor)
             sample.mass.Scale(sample.partial_weight * int_lumi)
-            move_above_into_bin(sample.mass, x_axis_limits[1])
+            move_above_into_bin(sample.mass, xax[1])
             sample.histos[cuts + dilepton] = sample.mass.Clone()
             
         h = samples[0].mass
@@ -217,20 +220,20 @@ for cuts in cutss:
 
         s.Draw('hist')
         # must call Draw first or the THStack doesn't have a histogram/axis
-        s.GetXaxis().SetRangeUser(*x_axis_limits)
+        s.GetXaxis().SetRangeUser(*xax)
 
         hdata = data[dilepton]
         hdata.Rebin(rebin_factor)
-        move_above_into_bin(hdata, x_axis_limits[1])
+        move_above_into_bin(hdata, xax[1])
 
-        if use_yaxis:
+        if use_yaxis and yaxis.has_key(dilepton):
             mymin, mymax = yaxis[dilepton]
         else:
-            mymin = real_hist_min(s.GetStack().Last(), user_range=x_axis_limits) * 0.7
-            #mymin = real_hist_min(last_mc, user_range=x_axis_limits) * 0.7
-            mymax = real_hist_max(s.GetStack().Last(), user_range=x_axis_limits, use_error_bars=False) * 1.05
+            mymin = real_hist_min(s.GetStack().Last(), user_range=xax) * 0.7
+            #mymin = real_hist_min(last_mc, user_range=xax) * 0.7
+            mymax = real_hist_max(s.GetStack().Last(), user_range=xax, use_error_bars=False) * 1.05
             if hdata.GetEntries() > 0:
-                rhm = real_hist_max(hdata, user_range=x_axis_limits)
+                rhm = real_hist_max(hdata, user_range=xax)
                 mymax = max(mymax, rhm)
 
         #sys.stderr.write('%s %s (real s min %s) %s %s\n' % ( cuts, dilepton, s.GetMinimum(), mymin, mymax))
@@ -239,7 +242,7 @@ for cuts in cutss:
         s.SetMaximum(mymax)
 
         hdata.SetTitle('')
-        hdata.GetXaxis().SetRangeUser(*x_axis_limits)
+        hdata.GetXaxis().SetRangeUser(*xax)
         hdata.GetXaxis().SetTitle(titleize[to_compare] % (subtitleize[dilepton], unitize[to_compare]))
         hdata.GetYaxis().SetTitle('Events/%i %s' % (rebin_factor, unitize[to_compare]))
         hdata.GetYaxis().SetTitleOffset(1.2)
@@ -255,7 +258,7 @@ for cuts in cutss:
             zp = zssm750.mass
             zp.SetTitle('')
             zp.SetLineWidth(2)
-            zp.GetXaxis().SetRangeUser(*x_axis_limits)
+            zp.GetXaxis().SetRangeUser(*xax)
             zp.SetMinimum(mymin)
             zp.SetMaximum(mymax)
             zp.SetStats(0)
@@ -289,7 +292,7 @@ for cuts in cutss:
         summc_c.SetLineColor(ROOT.kBlue)
 
         for h in (data_c, summc_c):
-            h.GetXaxis().SetRangeUser(*x_axis_limits)
+            h.GetXaxis().SetRangeUser(*x_axis_limits2)
             h.SetStats(0)
             h.SetTitle('')
             #h.GetYaxis().SetRangeUser(0.1, 6.5e3)

@@ -181,12 +181,12 @@ for t in types:
 for x,y in final_plots.iteritems():
     exec '%s = y' % x
    
-L1Single = final_plots['L1Path_0_L1_SingleMu7']
 L1Or = final_plots['L1OrEff']
-HLTSingle = final_plots['HLTPath_0_HLT_Mu11']
 HLTOr = final_plots['HLTOrEff']
 Total = final_plots['TotalTrigEff']
-   
+
+'''
+L1Single = final_plots['L1Path_0_L1_SingleMu7']
 L1Single.SetLineColor(ROOT.kRed)
 L1Or.SetLineColor(ROOT.kBlue)
 lg = ROOT.TLegend(0.13, 0.13, 0.44, 0.30)
@@ -197,6 +197,7 @@ L1Or.Draw('P same')
 lg.Draw()
 ps.save('summary_l1', log=False)
 
+HLTSingle = final_plots['HLTPath_0_HLT_Mu11']
 HLTSingle.SetLineColor(ROOT.kRed)
 HLTOr.SetLineColor(ROOT.kBlue)
 HLTSingle.Draw('AP')
@@ -206,6 +207,7 @@ lg.AddEntry(HLTSingle, 'HLT single', 'LE')
 lg.AddEntry(HLTOr, 'HLT single OR double', 'LE')
 lg.Draw()
 ps.save('summary_hlt', log=False)
+'''
 
 for h,c,m in [(L1Or, ROOT.kRed, 20), (HLTOr, ROOT.kGreen+2, 21), (Total, ROOT.kBlue, 22)]:
     h.SetMarkerStyle(m)

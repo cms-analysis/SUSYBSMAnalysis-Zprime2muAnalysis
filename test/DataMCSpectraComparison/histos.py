@@ -113,8 +113,9 @@ if 'data' in sys.argv:
     process.TFileService.fileName = 'ana_datamc_data.root'    
     process.GlobalTag.globaltag = 'GR10_P_V10::All'
 
-    from goodlumis import Run2010AB
+    from goodlumis import Run2010AB, Run2010ABMuonsOnly
     process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010AB)
+    #process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010ABMuonsOnly)
 
     printify(process)
     ntuplify(process)
@@ -147,7 +148,6 @@ return_data = 1
         new_py = open('histos.py').read()
         new_py += "\nprocess.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', '%(hlt_process_name)s')\n" % sample
         new_py += "\nntuplify(process, hlt_process_name='%(hlt_process_name)s')\n" % sample
-            
         open('histos_crab.py', 'wt').write(new_py)
 
         open('crab.cfg', 'wt').write(crab_cfg % sample)

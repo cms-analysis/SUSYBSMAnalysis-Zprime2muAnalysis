@@ -13,4 +13,5 @@ EfficiencyFromMC = cms.EDAnalyzer('EfficiencyFromMC',
                                   dimuon_src = cms.InputTag('dimuons'),
                                   hlt_obj_src = cms.InputTag(''),
                                   hlt_single_min_pt = cms.double(-1),
+                                  acceptance_max_eta = cms.double(2.4),
                                   )

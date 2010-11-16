@@ -21,6 +21,7 @@ class EfficiencyFromMC : public edm::EDAnalyzer {
   edm::InputTag dimuon_src;
   edm::InputTag hlt_obj_src;
   double hlt_single_min_pt;  
+  double acceptance_max_eta;
   TriggerDecision triggerDecision;
   HardInteraction hardInteraction;
 
@@ -62,6 +63,7 @@ EfficiencyFromMC::EfficiencyFromMC(const edm::ParameterSet& cfg)
     dimuon_src(cfg.getParameter<edm::InputTag>("dimuon_src")),
     hlt_obj_src(cfg.getParameter<edm::InputTag>("hlt_obj_src")),
     hlt_single_min_pt(cfg.getParameter<double>("hlt_single_min_pt")),
+    acceptance_max_eta(cfg.getParameter<double>("acceptance_max_eta")),
     hardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction"))    
 {
   triggerDecision.init(cfg.getParameter<edm::ParameterSet>("triggerDecision"));
@@ -98,7 +100,7 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
   totalreco.second->Fill(m);
 
   // both gen leptons in acceptance?
-  if (fabs(hardInteraction.lepMinus->eta()) < 2.4 && fabs(hardInteraction.lepPlus->eta()) < 2.4)
+  if (fabs(hardInteraction.lepMinus->eta()) < acceptance_max_eta && fabs(hardInteraction.lepPlus->eta()) < acceptance_max_eta)
     acceptance.first->Fill(m);
   else
     // Trigger efficiencies below are with respect to events where

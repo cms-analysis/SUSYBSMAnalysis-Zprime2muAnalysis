@@ -5,9 +5,9 @@ from tuple_common import process, crab_cfg
 
 just_testing = 'testing' in sys.argv
 
-process.source.fileNames = ['/store/data/Run2010B/Mu/RECO/PromptReco-v2/000/147/682/422A876B-71D5-DF11-A083-001D09F28E80.root']
+process.source.fileNames = ['/store/data/Run2010A/Mu/RECO/Sep17ReReco_v2/0024/F0CECCF7-9AC8-DF11-B047-0017A4770818.root', '/store/data/Run2010A/Mu/RECO/Sep17ReReco_v2/0026/403B2971-3FC9-DF11-8DDD-0017A4770438.root']
 process.maxEvents.input = 100
-process.GlobalTag.globaltag = 'GR10_P_V10::All'
+process.GlobalTag.globaltag = 'GR_R_38X_V13A::All'
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import removeMCUse
 removeMCUse(process)

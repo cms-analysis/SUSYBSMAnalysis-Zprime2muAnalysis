@@ -16,7 +16,7 @@ process.allDimuonsNoGlbChi2 = allDimuons.clone(tight_cut = tight_cut.replace(' &
 process.allDimuonsNoPxHits  = allDimuons.clone(tight_cut = tight_cut.replace(' && innerTrack.hitPattern.numberOfValidPixelHits >= 1', ''))
 process.allDimuonsNoMuStns  = allDimuons.clone(tight_cut = tight_cut.replace(' && globalTrack.hitPattern.muonStationsWithValidHits >= 2', ''))
 process.allDimuonsNoTkMuon  = allDimuons.clone(tight_cut = tight_cut.replace(' && isTrackerMuon', ''))
-process.allDimuonsNoTrgMtch = allDimuons.clone(tight_cut = tight_cut.replace(' && ' + vbtf_trigger_match, ''))
+process.allDimuonsNoTrgMtch = allDimuons.clone(tight_cut = tight_cut.replace(' && ' + trigger_match, ''))
 process.allDimuonsNoNo      = allDimuons.clone()
 
 alldimus = [x for x in dir(process) if 'allDimuonsNo' in x]
@@ -43,11 +43,48 @@ for dimu in ['dimuonsNoB2B', 'dimuonsNoVtxProb']:
     setattr(process, dimu.replace('dimuons', ''), hists)
     process.p *= getattr(process, dimu) * hists
 
-
-if 'olddata' in sys.argv:
-    process.source.fileNames = ['file:work/daata/jul15.root', 'file:work/daata/prompt.root']
-    process.TFileService.fileName = 'ana_nminus1_olddata.root'
-elif 'data' in sys.argv:
-    process.source.fileNames = ['file:../DataMCSpectraComparison/crab/crab_datamc_promptB_all/res/merged.root']
-    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*open('../DataMCSpectraComparison/ana_datamc/ana_datamc_data_promptB_allgood.cmssw').read().split(','))
+if 'data' in sys.argv:
+    process.source.fileNames = ['file:crab/crab_datamc_Run2010A/res/merged.root', 'file:crab/crab_datamc_promptB_all/res/merged.root']
+    process.GlobalTag.globaltag = 'GR10_P_V10::All'
+    from goodlumis import Run2010AB
+    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010AB)
     process.TFileService.fileName = 'ana_nminus1_data.root'
+
+if __name__ == '__main__' and 'submit' in sys.argv:
+    crab_cfg = '''
+[CRAB]
+jobtype = cmssw
+scheduler = condor
+
+[CMSSW]
+datasetpath = %(ana_dataset)s
+dbs_url = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
+pset = nminus1effs.py
+get_edm_output = 1
+total_number_of_events = -1
+events_per_job = 20000
+
+[USER]
+ui_working_dir = crab/crab_ana_nminus1_%(name)s
+return_data = 1
+'''
+
+    just_testing = 'testing' in sys.argv
+    
+    x = [
+        ('zmumu', '/DYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythia/tucker-datamc_zmumu-b4341788d83565203f0d6250b5475e6e/USER'),
+        ('zssm750', '/ZprimeSSMToMuMu_M-750_7TeV-pythia6/tucker-datamc_zssm750-b4341788d83565203f0d6250b5475e6e/USER'),
+        ('ttbar', '/TTJets_TuneZ2_7TeV-madgraph-tauola/tucker-datamc_ttbar-b4341788d83565203f0d6250b5475e6e/USER'),
+        ('dy120', '/DYToMuMu_M-120_7TeV-pythia6/tucker-effres_dy120-b62a83c345cd135ef96a2f3fe22d5e32/USER'),
+        ]
+    
+    for name, ana_dataset in x:
+        if name != 'dy120':
+            continue
+        print name
+        open('crab.cfg', 'wt').write(crab_cfg % locals())
+        if not just_testing:
+            os.system('crab -create -submit all')
+        
+    if not just_testing:
+        os.system('rm crab.cfg')

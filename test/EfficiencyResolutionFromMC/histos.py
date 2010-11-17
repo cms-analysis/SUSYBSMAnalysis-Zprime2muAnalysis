@@ -34,7 +34,7 @@ process.dimuonsVBTF = VBTFSelection.dimuons.clone(src = 'allDimuonsVBTF')
 process.VBTFEfficiencyFromMC = process.EfficiencyFromMC.clone(dimuon_src = 'dimuonsVBTF')
 process.VBTFEfficiencyFromMC21 = process.VBTFEfficiencyFromMC.clone(acceptance_max_eta = 2.1)
 
-process.p2 = cms.Path(process.Zprime2muAnalysisSequencePlain * process.HLTSingleObjects * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC * process.VBTFEfficiencyFromMC21)
+process.p2 = cms.Path(process.DYGenMassFilter * process.Zprime2muAnalysisSequencePlain * process.HLTSingleObjects * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC * process.VBTFEfficiencyFromMC21)
 process.p = cms.Path(process.DYGenMassFilter * process.Zprime2muAnalysisSequence)
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi')
@@ -50,6 +50,7 @@ process.p *= rec_level_module(process, process.ResolutionUsingMC, 'Resolution', 
 def switch_hlt_name(n):
     process.EfficiencyFromMC.triggerDecision.hltResults = cms.InputTag('TriggerResults', '', n)
     process.VBTFEfficiencyFromMC.triggerDecision.hltResults = cms.InputTag('TriggerResults', '', n)
+    process.VBTFEfficiencyFromMC21.triggerDecision.hltResults = cms.InputTag('TriggerResults', '', n)
     process.HLTSingleObjects.summary = cms.InputTag('hltTriggerSummaryAOD', '', n)
     process.HLTSingleObjects.leptons = [cms.InputTag('hltL3MuonCandidates', '', n)]
 
@@ -77,14 +78,14 @@ return_data = 1
 '''
 
     samples = [
-        ('dy20',  '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-8ca75260210b8943d361f4da5b0c0bcc/USER',  20, 120),
-        ('dy60120', '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-8ca75260210b8943d361f4da5b0c0bcc/USER',  60, 120),
+        ('dy20',  '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-8ca75260210b8943d361f4da5b0c0bcc/USER',  20,  60),
+        ('dy60',  '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-8ca75260210b8943d361f4da5b0c0bcc/USER',  60, 120),
         ('dy120', '/DYToMuMu_M-120_7TeV-pythia6/tucker-effres_dy120-b62a83c345cd135ef96a2f3fe22d5e32/USER',      120, 200),
         ('dy200', '/DYToMuMu_M-200_7TeV-pythia6/tucker-effres_dy200-b62a83c345cd135ef96a2f3fe22d5e32/USER',      200, 500),
         ('dy500', '/DYToMuMu_M-500_7TeV-pythia6/tucker-effres_dy500-b62a83c345cd135ef96a2f3fe22d5e32/USER',      500, 800),
         ('dy800', '/DYToMuMu_M-800_7TeV-pythia6/tucker-effres_dy800-b62a83c345cd135ef96a2f3fe22d5e32/USER',      800, 20000),
-        ('zp500', '/ZprimeSSMToMuMu_M-500_7TeV-pythia6/tucker-effres_zp500-b62a83c345cd135ef96a2f3fe22d5e32/USER',    -20000, 20000),
-        ('zp750', '/ZprimeSSMToMuMu_M-750_7TeV-pythia6/tucker-effres_zp750-b62a83c345cd135ef96a2f3fe22d5e32/USER',    -20000, 20000),
+        ('zp500',  '/ZprimeSSMToMuMu_M-500_7TeV-pythia6/tucker-effres_zp500-b62a83c345cd135ef96a2f3fe22d5e32/USER',   -20000, 20000),
+        ('zp750',  '/ZprimeSSMToMuMu_M-750_7TeV-pythia6/tucker-effres_zp750-b62a83c345cd135ef96a2f3fe22d5e32/USER',   -20000, 20000),
         ('zp1000', '/ZprimeSSMToMuMu_M-1000_7TeV-pythia6/tucker-effres_zp1000-b62a83c345cd135ef96a2f3fe22d5e32/USER', -20000, 20000),
         ('zp1250', '/ZprimeSSMToMuMu_M-1250_7TeV-pythia6/tucker-effres_zp1250-b62a83c345cd135ef96a2f3fe22d5e32/USER', -20000, 20000),
         ('zp1500', '/ZprimeSSMToMuMu_M-1500_7TeV-pythia6/tucker-effres_zp1500-b62a83c345cd135ef96a2f3fe22d5e32/USER', -20000, 20000),
@@ -94,15 +95,12 @@ return_data = 1
     just_testing = 'testing' in sys.argv
 
     for name, dataset, lo, hi in samples:
-        if name != 'dy20':
-            continue
-        
         open('crab.cfg', 'wt').write(crab_cfg % locals())
 
         new_py = open('histos.py').read()
         new_cut = dy_gen_mass_cut % locals()
         new_py += '\nprocess.DYGenMassFilter.cut = "%(new_cut)s"\n' % locals()
-        if name == 'dy20':
+        if name in ['dy20', 'dy60']:
             new_py += '\nswitch_hlt_name("REDIGI38X")\n'
         open('histos_crab.py', 'wt').write(new_py)
 

@@ -2,12 +2,15 @@
 
 import sys, os
 
-samples = ['dy20', 'dy120', 'dy200', 'dy500', 'dy800', 'zp500', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750']
+samples = ['dy20', 'dy60', 'dy120', 'dy200', 'dy500', 'dy800', 'zp500', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750']
 dy = [(x, int(x.replace('dy',''))) for x in samples if 'dy' in x]
 zp = [(x, int(x.replace('zp',''))) for x in samples if 'zp' in x]
 if 'vbtf' in sys.argv:
     which = 'VBTFEfficiencyFromMC'
     plot_dir = 'plots/trigeffvsmassmctruth_vbtf'
+elif 'vbtf21' in sys.argv:
+    which = 'VBTFEfficiencyFromMC21'
+    plot_dir = 'plots/trigeffvsmassmctruth_vbtf21'
 else:
     which = 'EfficiencyFromMC'
     plot_dir = 'plots/trigeffvsmassmctruth'
@@ -78,7 +81,7 @@ ps = plot_saver(plot_dir)
 
 totals_histos = {}
 for sample, t, cnum, cden in samples_totals:
-    if 'zp' not in sample and sample != 'dy20':
+    if 'zp' not in sample and sample != 'dy60':
         continue
     if not totals_histos.has_key(t):
         totals_histos[t] = ROOT.TH1F(t + '_totals_num', '', 2000, 0, 2000), ROOT.TH1F(t + '_totals_den', '', 2000, 0, 2000)

@@ -71,7 +71,7 @@ subtitleize= {
     'MuonsElectronsSameSign': '#mu^{#pm}e^{#pm}',
     }
 titleize = {
-    'DileptonMass': 'm_{%s} (%s)',
+    'DileptonMass': 'm(%s) (%s)',
     'DileptonPt': '%s p_{T} (%s)'
     }
 unitize = {

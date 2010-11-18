@@ -254,12 +254,14 @@ def move_overflow_into_last_bin(h):
 class plot_saver:
     i = 0
     
-    def __init__(self, plot_dir=None, html=True):
-        self.c = ROOT.TCanvas('c%i' % plot_saver.i, '', 820, 630)
+    def __init__(self, plot_dir=None, html=True, log=True, root=True, size=(820,630)):
+        self.c = ROOT.TCanvas('c%i' % plot_saver.i, '', *size)
         plot_saver.i += 1
         self.saved = []
         self.html = html
         self.set_plot_dir(plot_dir)
+        self.log = log
+        self.root = root
 
     def __del__(self):
         self.write_index()
@@ -295,11 +297,15 @@ class plot_saver:
     def set_plot_dir(self, plot_dir):
         self.write_index()
         self.saved = []
+        if plot_dir is not None and '~' in plot_dir:
+            plot_dir = os.path.expanduser(plot_dir)
         self.plot_dir = plot_dir
         if plot_dir is not None:
             os.system('mkdir -p %s' % self.plot_dir)
 
-    def save(self, n, log=True, root=True):
+    def save(self, n, log=None, root=None):
+        log = self.log if log is None else log
+        root = self.root if root is None else root
         if self.plot_dir is None:
             raise ValueError('save called before plot_dir set!')
         self.c.SetLogy(0)

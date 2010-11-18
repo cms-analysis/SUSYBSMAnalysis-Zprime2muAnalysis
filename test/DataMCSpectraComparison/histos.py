@@ -31,7 +31,7 @@ dils = [
 # Define groups of cuts for which to make plots. If using a selection
 # that doesn't have a trigger match, need to re-add hltFilter
 # somewhere below.
-cuts = ['VBTF', 'Our', 'OurNoIso', 'OurIso3', 'OurRelIso015', 'OurRelIso006', 'OurNoPx']
+cuts = ['VBTF', 'Our', 'OurNoIso', 'OurIso3', 'OurRelIso015', 'OurRelIso010', 'OurRelIso006', 'OurNoPx']
 
 for cut_name in cuts:
     # Keep track of modules to put in the path for this set of cuts.
@@ -67,7 +67,9 @@ for cut_name in cuts:
             alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt < 3')
         elif 'RelIso015' in cut_name:
             alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt / innerTrack.pt < 0.15')
-        elif 'RelIso006' in cut_name:
+        elif 'RelIso010' in cut_name:
+            alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt / innerTrack.pt < 0.10')
+        elif 'RelIso010' in cut_name:
             alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt / innerTrack.pt < 0.06')
         elif 'NoPx' in cut_name:
             alldil.tight_cut = alldil.tight_cut.value().replace(' && innerTrack.hitPattern.numberOfValidPixelHits >= 1', '')
@@ -95,6 +97,11 @@ def ntuplify(process, hlt_process_name='HLT'):
     process.SimpleNtuplerEmu = process.SimpleNtupler.clone(dimu_src = cms.InputTag('OurMuonsElectronsOppSign'))
     process.pathOur *= process.SimpleNtupler * process.SimpleNtuplerSS * process.SimpleNtuplerEmu
 
+    process.SimpleNtuplerRelIso015 = process.SimpleNtupler.clone(dimu_src = cms.InputTag('OurRelIso015MuonsPlusMuonsMinus'))
+    process.SimpleNtuplerRelIso010 = process.SimpleNtupler.clone(dimu_src = cms.InputTag('OurRelIso010MuonsPlusMuonsMinus'))
+    process.SimpleNtuplerRelIso006 = process.SimpleNtupler.clone(dimu_src = cms.InputTag('OurRelIso006MuonsPlusMuonsMinus'))
+    process.pathOur *= process.SimpleNtuplerRelIso015 * process.SimpleNtuplerRelIso006
+
     process.SimpleNtuplerVBTF = process.SimpleNtupler.clone(dimu_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
     process.pathVBTF *= process.SimpleNtuplerVBTF
 
@@ -114,8 +121,10 @@ if 'data' in sys.argv:
     process.GlobalTag.globaltag = 'GR10_P_V10::All'
 
     from goodlumis import Run2010AB, Run2010ABMuonsOnly
-    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010AB)
-    #process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010ABMuonsOnly)
+    if 'muons_only' in sys.argv:
+        process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010ABMuonsOnly)
+    else:
+        process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010AB)
 
     printify(process)
     ntuplify(process)

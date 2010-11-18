@@ -69,7 +69,7 @@ for cut_name in cuts:
             alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt / innerTrack.pt < 0.15')
         elif 'RelIso010' in cut_name:
             alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt / innerTrack.pt < 0.10')
-        elif 'RelIso010' in cut_name:
+        elif 'RelIso006' in cut_name:
             alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt < 10', ' && isolationR03.sumPt / innerTrack.pt < 0.06')
         elif 'NoPx' in cut_name:
             alldil.tight_cut = alldil.tight_cut.value().replace(' && innerTrack.hitPattern.numberOfValidPixelHits >= 1', '')
@@ -100,7 +100,9 @@ def ntuplify(process, hlt_process_name='HLT'):
     process.SimpleNtuplerRelIso015 = process.SimpleNtupler.clone(dimu_src = cms.InputTag('OurRelIso015MuonsPlusMuonsMinus'))
     process.SimpleNtuplerRelIso010 = process.SimpleNtupler.clone(dimu_src = cms.InputTag('OurRelIso010MuonsPlusMuonsMinus'))
     process.SimpleNtuplerRelIso006 = process.SimpleNtupler.clone(dimu_src = cms.InputTag('OurRelIso006MuonsPlusMuonsMinus'))
-    process.pathOur *= process.SimpleNtuplerRelIso015 * process.SimpleNtuplerRelIso006
+    process.pathOurRelIso015 *= process.SimpleNtuplerRelIso015
+    process.pathOurRelIso010 *= process.SimpleNtuplerRelIso010
+    process.pathOurRelIso006 *= process.SimpleNtuplerRelIso006
 
     process.SimpleNtuplerVBTF = process.SimpleNtupler.clone(dimu_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
     process.pathVBTF *= process.SimpleNtuplerVBTF

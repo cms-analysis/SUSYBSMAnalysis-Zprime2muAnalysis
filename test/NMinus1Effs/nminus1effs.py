@@ -9,7 +9,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection_cff import loose_cut, trigge
 # allDimuons maker. "NoX" means remove cut X (i.e. the denominators),
 # "NoNo" means remove nothing (i.e. the numerators). This will break
 # if loose_, tight_ cut strings are changed...
-process.allDimuonsNoIso     = allDimuons.clone(loose_cut = loose_cut.replace(' && isolationR03.sumPt < 10', ''))
+process.allDimuonsNoIso     = allDimuons.clone(loose_cut = loose_cut.replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', ''))
 process.allDimuonsNoTkHits  = allDimuons.clone(loose_cut = loose_cut.replace(' && innerTrack.hitPattern.numberOfValidTrackerHits >= 10', ''))
 process.allDimuonsNoDB      = allDimuons.clone(tight_cut = tight_cut.replace('dB < 0.2 && ', ''))
 process.allDimuonsNoGlbChi2 = allDimuons.clone(tight_cut = tight_cut.replace(' && globalTrack.normalizedChi2 < 10', ''))
@@ -46,8 +46,8 @@ for dimu in ['dimuonsNoB2B', 'dimuonsNoVtxProb']:
 if 'data' in sys.argv:
     process.source.fileNames = ['file:crab/crab_datamc_Run2010A/res/merged.root', 'file:crab/crab_datamc_promptB_all/res/merged.root']
     process.GlobalTag.globaltag = 'GR10_P_V10::All'
-    from goodlumis import Run2010AB
-    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010AB)
+    from goodlumis import Run2010ABMuonsOnly
+    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010ABMuonsOnly)
     process.TFileService.fileName = 'ana_nminus1_data.root'
 
 if __name__ == '__main__' and 'submit' in sys.argv:

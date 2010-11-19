@@ -79,7 +79,7 @@ unitize = {
     'DileptonPt': 'GeV'
     }
 yaxis = {
-    'MuonsPlusMuonsMinus': (1e-3, 7600),
+    'MuonsPlusMuonsMinus': (1e-3, None),
 #    'MuonsSameSign': (5e-5, 2.5),
 #    'MuonsElectronsOppSign': (5e-4, 6),
     }
@@ -226,15 +226,19 @@ for cuts in cutss:
         hdata.Rebin(rebin_factor)
         move_above_into_bin(hdata, xax[1])
 
+        mymin = real_hist_min(s.GetStack().Last(), user_range=xax) * 0.7
+        #mymin = real_hist_min(last_mc, user_range=xax) * 0.7
+        mymax = real_hist_max(s.GetStack().Last(), user_range=xax, use_error_bars=False) * 1.05
+        if hdata.GetEntries() > 0:
+            rhm = real_hist_max(hdata, user_range=xax)
+            mymax = max(mymax, rhm)
+
         if use_yaxis and yaxis.has_key(dilepton):
-            mymin, mymax = yaxis[dilepton]
-        else:
-            mymin = real_hist_min(s.GetStack().Last(), user_range=xax) * 0.7
-            #mymin = real_hist_min(last_mc, user_range=xax) * 0.7
-            mymax = real_hist_max(s.GetStack().Last(), user_range=xax, use_error_bars=False) * 1.05
-            if hdata.GetEntries() > 0:
-                rhm = real_hist_max(hdata, user_range=xax)
-                mymax = max(mymax, rhm)
+            yaxismin, yaxismax = yaxis[dilepton]
+            if yaxismin is not None:
+                mymin = yaxismin
+            if yaxismax is not None:
+                mymax = yaxismax
 
         #sys.stderr.write('%s %s (real s min %s) %s %s\n' % ( cuts, dilepton, s.GetMinimum(), mymin, mymax))
         

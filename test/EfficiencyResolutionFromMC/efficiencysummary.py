@@ -7,9 +7,9 @@ our_f = ROOT.TFile('plots/trigeffvsmassmctruth/RecoWrtAcc_totals.root')
 vbtf_f = ROOT.TFile('plots/trigeffvsmassmctruth_vbtf/RecoWrtAcc_totals.root')
 vbtf21_f = ROOT.TFile('plots/trigeffvsmassmctruth_vbtf21/RecoWrtAcc_totals.root')
 
-our = our_f.Get('c11').FindObject('Graph')
-vbtf = vbtf_f.Get('c11').FindObject('Graph')
-vbtf21 = vbtf21_f.Get('c11').FindObject('Graph')
+our = our_f.Get('c12').FindObject('Graph')
+vbtf = vbtf_f.Get('c12').FindObject('Graph')
+vbtf21 = vbtf21_f.Get('c12').FindObject('Graph')
 
 our.SetLineColor(ROOT.kRed)
 vbtf.SetLineColor(ROOT.kBlue)

@@ -86,7 +86,7 @@ yaxis = {
 use_yaxis = True
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign']
-cutss = ['VBTF', 'Our', 'OurNoIso', 'OurIso3', 'OurRelIso015', 'OurRelIso006', 'OurNoPx']
+cutss = ['VBTF', 'Our', 'OurNoIso']
 
 ROOT.TH1.AddDirectory(False)
 
@@ -128,6 +128,9 @@ for cuts in cutss:
     data = dict((d, getattr(fdata, dir_name(cuts, d)).Get(to_compare).Clone()) for d in dileptons)
 
     for dilepton in dileptons:
+        if int_lumi > 39 and 'Electron' in dilepton:
+            continue
+        
         xax = x_axis_limits if dilepton == 'MuonsPlusMuonsMinus' else x_axis_limits2
         
         for sample in samples:

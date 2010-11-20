@@ -35,7 +35,7 @@ pretty = {
     'NoTrgMtch': 'HLT match',
     'NoB2B': 'B2B cosmics',
     'NoVtxProb': '#chi^{2} #mu#mu vtx < 10',
-    'ana_nminus1_data.root': 'Data, 35.5 pb ^{-1}',
+    'ana_nminus1_data.root': 'Data, 40 pb ^{-1}',
     'ana_nminus1_zmumu.root': 'Z#rightarrow#mu#mu',
     'ana_nminus1_dy120.root': 'Z#rightarrow#mu#mu',
     'ana_nminus1_ttbar.root': 't#bar{t}',

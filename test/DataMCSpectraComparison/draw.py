@@ -16,6 +16,7 @@ draw_zssm = True
 
 joins = [
     ('qcd', 'QCD'),
+    ('inclmu15', 'QCD'),
     ]
 
 histo_dir = None
@@ -81,7 +82,7 @@ unitize = {
 yaxis = {
     'MuonsPlusMuonsMinus': (1e-3, None),
 #    'MuonsSameSign': (5e-5, 2.5),
-#    'MuonsElectronsOppSign': (5e-4, 6),
+#    'MuonsElectronsOppSign': (2e-3, 40),
     }
 use_yaxis = True
 
@@ -195,7 +196,10 @@ for cuts in cutss:
                 summc.Add(h)
             last_mc = h
 
-        l = ROOT.TLegend(0.60, 0.53, 0.87, 0.87)
+        if draw_zssm and dilepton == 'MuonsPlusMuonsMinus':
+            l = ROOT.TLegend(0.65, 0.48, 0.87, 0.87)
+        else:
+            l = ROOT.TLegend(0.73, 0.48, 0.87, 0.87)
         l.SetFillColor(0)
 
         m = ROOT.TMarker()
@@ -289,7 +293,7 @@ for cuts in cutss:
         
         ps.save(dilepton)
 
-        if dilepton == 'MuonsPlusMuonsMinus':
+        if False and dilepton == 'MuonsPlusMuonsMinus':
             ps.c.SetLogx(1)
             ps.save(dilepton + '_logx')
             ps.c.SetLogx(0)

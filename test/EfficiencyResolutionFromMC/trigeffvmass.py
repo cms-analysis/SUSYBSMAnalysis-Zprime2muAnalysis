@@ -8,9 +8,6 @@ zp = [(x, int(x.replace('zp',''))) for x in samples if 'zp' in x]
 if 'vbtf' in sys.argv:
     which = 'VBTFEfficiencyFromMC'
     plot_dir = 'plots/trigeffvsmassmctruth_vbtf'
-elif 'vbtf21' in sys.argv:
-    which = 'VBTFEfficiencyFromMC21'
-    plot_dir = 'plots/trigeffvsmassmctruth_vbtf21'
 else:
     which = 'EfficiencyFromMC'
     plot_dir = 'plots/trigeffvsmassmctruth'

@@ -31,10 +31,9 @@ process.EfficiencyFromMC.hlt_single_min_pt = 15
 import SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff as VBTFSelection
 process.allDimuonsVBTF = VBTFSelection.allDimuons.clone()
 process.dimuonsVBTF = VBTFSelection.dimuons.clone(src = 'allDimuonsVBTF')
-process.VBTFEfficiencyFromMC = process.EfficiencyFromMC.clone(dimuon_src = 'dimuonsVBTF')
-process.VBTFEfficiencyFromMC21 = process.VBTFEfficiencyFromMC.clone(acceptance_max_eta = 2.1)
+process.VBTFEfficiencyFromMC = process.EfficiencyFromMC.clone(dimuon_src = 'dimuonsVBTF', acceptance_max_eta = 2.1)
 
-process.p2 = cms.Path(process.DYGenMassFilter * process.Zprime2muAnalysisSequencePlain * process.HLTSingleObjects * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC * process.VBTFEfficiencyFromMC21)
+process.p2 = cms.Path(process.DYGenMassFilter * process.Zprime2muAnalysisSequencePlain * process.HLTSingleObjects * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC)
 process.p = cms.Path(process.DYGenMassFilter * process.Zprime2muAnalysisSequence)
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi')
@@ -50,7 +49,6 @@ process.p *= rec_level_module(process, process.ResolutionUsingMC, 'Resolution', 
 def switch_hlt_name(n):
     process.EfficiencyFromMC.triggerDecision.hltResults = cms.InputTag('TriggerResults', '', n)
     process.VBTFEfficiencyFromMC.triggerDecision.hltResults = cms.InputTag('TriggerResults', '', n)
-    process.VBTFEfficiencyFromMC21.triggerDecision.hltResults = cms.InputTag('TriggerResults', '', n)
     process.HLTSingleObjects.summary = cms.InputTag('hltTriggerSummaryAOD', '', n)
     process.HLTSingleObjects.leptons = [cms.InputTag('hltL3MuonCandidates', '', n)]
 

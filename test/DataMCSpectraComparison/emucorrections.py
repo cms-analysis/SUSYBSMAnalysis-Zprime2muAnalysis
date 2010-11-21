@@ -6,9 +6,9 @@ ps = plot_saver('plots/emucorrections')
 
 from samples import samples
 for sample in samples:
-    f = ROOT.TFile('ana_datamc/ana_datamc_%s.root' % sample.name)
+    f = ROOT.TFile('ana_datamc_mc/ana_datamc_%s.root' % sample.name)
 
-    cut = 'VBTF'
+    cut = 'Our'
     mumu = f.Get(cut + 'MuonsPlusMuonsMinusHistos').Get('DileptonMass')
     emu = f.Get(cut + 'MuonsElectronsOppSignHistos').Get('DileptonMass')
 
@@ -29,3 +29,6 @@ for sample in samples:
     h.Divide(emu)
     h.Draw('hist')
     ps.save('%s_div' % sample.name)
+    h.GetXaxis().SetRangeUser(120,2000)
+    ps.save('%s_div_120' % sample.name)
+    

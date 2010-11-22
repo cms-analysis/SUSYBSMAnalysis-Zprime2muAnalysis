@@ -10,6 +10,7 @@
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneralUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
@@ -47,23 +48,27 @@ class ResolutionUsingMC : public edm::EDAnalyzer {
   TProfile* LeptonInvPResVPGen;
   TH1F* LeptonInvPtPull;
   TH1F* LeptonInvPPull;
-  TH1F* LeptonInvPtResBarrel;
-  TH1F* LeptonInvPResBarrel;
-  TH1F* LeptonInvPtPullBarrel;
-  TH1F* LeptonInvPPullBarrel;
-  TH1F* LeptonInvPtResEndcap;
-  TH1F* LeptonInvPResEndcap;
-  TH1F* LeptonInvPtPullEndcap;
-  TH1F* LeptonInvPPullEndcap;
+
+  TH1F* LeptonInvPtResBy[W_L_MAX];
+  TH1F* LeptonInvPResBy[W_L_MAX];
+  TH1F* LeptonInvPtPullBy[W_L_MAX];
+  TH1F* LeptonInvPPullBy[W_L_MAX];
+
   TH1F* ChargeDiff;
   TH1F* ChargeRightVInvPt;
   TH1F* ChargeWrongVInvPt;
+
   TH1F* DileptonMassRes;
   TH1F* DileptonResMassRes;
   TH1F* ResonanceMassRes;
+
   TProfile* DileptonMassResVMass;
   TProfile* DileptonResMassResVMass;
   TProfile* ResonanceMassResVMass;
+
+  TH1F* DileptonMassResBy[W_D_MAX];
+  TH1F* DileptonResMassResBy[W_D_MAX];
+  TH1F* ResonanceMassResBy[W_D_MAX];
 };
 
 ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
@@ -95,18 +100,14 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
   
   LeptonInvPtPull = fs->make<TH1F>("LeptonInvPtPull", titlePrefix + "(1/pT - 1/gen pT)/#sigma_{1/pT}", 100, -10, 10);
   LeptonInvPPull  = fs->make<TH1F>("LeptonInvPPull",  titlePrefix + "(1/p - 1/gen p)/#sigma_{1/p}",    100, -10, 10);
-  
-  LeptonInvPtResBarrel = fs->make<TH1F>("LeptonInvPtResBarrel", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT), barrel", 100, -0.5, 0.5);
-  LeptonInvPResBarrel  = fs->make<TH1F>("LeptonInvPResBarrel",  titlePrefix + "(1/p - 1/gen p)/(1/gen p), barrel",    100, -0.5, 0.5);
-    
-  LeptonInvPtPullBarrel = fs->make<TH1F>("LeptonInvPtPullBarrel", titlePrefix + "(1/pT - 1/gen pT)/#sigma_{1/pT}, barrel", 100, -10, 10);
-  LeptonInvPPullBarrel  = fs->make<TH1F>("LeptonInvPPullBarrel",  titlePrefix + "(1/p - 1/gen p)/#sigma_{1/p}, barrel",    100, -10, 10);
 
-  LeptonInvPtResEndcap = fs->make<TH1F>("LeptonInvPtResEndcap", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT), endcap", 100, -0.5, 0.5);
-  LeptonInvPResEndcap  = fs->make<TH1F>("LeptonInvPResEndcap",  titlePrefix + "(1/p - 1/gen p)/(1/gen p), endcap",    100, -0.5, 0.5);
-    
-  LeptonInvPtPullEndcap = fs->make<TH1F>("LeptonInvPtPullEndcap", titlePrefix + "(1/pT - 1/gen pT)/#sigma_{1/pT}, endcap", 100, -10, 10);
-  LeptonInvPPullEndcap  = fs->make<TH1F>("LeptonInvPPullEndcap",  titlePrefix + "(1/p - 1/gen p)/#sigma_{1/p}, endcap",    100, -10, 10);
+  static const TString lepton_where_names[W_L_MAX] = {"Barrel", "Overlap", "Endcap", "Outside"};
+  for (size_t i = 0; i < W_L_MAX; ++i) {
+    LeptonInvPtResBy [i] = fs->make<TH1F>("LeptonInvPtRes"  + lepton_where_names[i], titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT), "    + lepton_where_names[i], 100, -0.5, 0.5);
+    LeptonInvPResBy  [i] = fs->make<TH1F>("LeptonInvPRes"   + lepton_where_names[i], titlePrefix + "(1/p - 1/gen p)/(1/gen p), "       + lepton_where_names[i], 100, -0.5, 0.5);
+    LeptonInvPtPullBy[i] = fs->make<TH1F>("LeptonInvPtPull" + lepton_where_names[i], titlePrefix + "(1/pT - 1/gen pT)/#sigma_{1/pT}, " + lepton_where_names[i], 100, -10, 10);
+    LeptonInvPPullBy [i] = fs->make<TH1F>("LeptonInvPPull"  + lepton_where_names[i], titlePrefix + "(1/p - 1/gen p)/#sigma_{1/p}, "    + lepton_where_names[i], 100, -10, 10);
+  }
 
   ChargeDiff = fs->make<TH1F>("ChargeDiff", titlePrefix + "q - gen q", 7, -3.5, 3.5);
   
@@ -123,6 +124,13 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
   DileptonMassResVMass    = fs->make<TProfile>("DileptonMassResVMass",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 100, 0, 2000, -0.5, 0.5);
   DileptonResMassResVMass = fs->make<TProfile>("DileptonResMassResVMass", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", 100, 0, 2000, -0.5, 0.5);
   ResonanceMassResVMass   = fs->make<TProfile>("ResonanceMassResVMass",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", 100, 0, 2000, -0.5, 0.5);
+
+  static const TString dilepton_where_names[W_D_MAX] = {"BB", "BO", "BE", "BU", "OO", "OE", "OU", "EE", "EU", "UU"};
+  for (size_t i = 0; i < W_D_MAX; ++i) {
+    DileptonMassResBy   [i] = fs->make<TH1F>("DileptonMassRes"    + dilepton_where_names[i], titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass), " + dilepton_where_names[i], 100, -0.5, 0.5);
+    DileptonResMassResBy[i] = fs->make<TH1F>("DileptonResMassRes" + dilepton_where_names[i], titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass), " + dilepton_where_names[i], 100, -0.5, 0.5);
+    ResonanceMassResBy  [i] = fs->make<TH1F>("ResonanceMassRes"   + dilepton_where_names[i], titlePrefix + "(res. mass - gen res. mass)/(gen res. mass), " + dilepton_where_names[i], 100, -0.5, 0.5);
+  }
 }
 
 void ResolutionUsingMC::fillLeptonResolution(const reco::GenParticle* gen_lep, const reco::CandidateBaseRef& lep) {
@@ -201,24 +209,13 @@ void ResolutionUsingMC::fillLeptonExtraMomentumResolution(const reco::GenParticl
   }
   
   // The above inverse momentum resolutions and pulls, except
-  // separately for barrel and endcap.
-  if (fabs(gen_lep->eta()) < 1.04) {
-    LeptonInvPtResBarrel->Fill(inv_pt_res);
-    LeptonInvPResBarrel ->Fill(inv_p_res);
-    
-    if (errorOK) {
-      LeptonInvPtPullBarrel->Fill(inv_pt_diff/inv_pt_error);
-      LeptonInvPPullBarrel ->Fill(inv_p_diff /inv_p_error);
-    }
-  }
-  else {
-    LeptonInvPtResEndcap->Fill(inv_pt_res);
-    LeptonInvPResEndcap ->Fill(inv_p_res);
-    
-    if (errorOK) {
-      LeptonInvPtPullEndcap->Fill(inv_pt_diff/inv_pt_error);
-      LeptonInvPPullEndcap ->Fill(inv_p_diff /inv_p_error);
-    }
+  // separately for barrel, overlap, and endcap.
+  size_t w = whereIsLepton(lep);
+  LeptonInvPtResBy[w]->Fill(inv_pt_res);
+  LeptonInvPResBy [w]->Fill(inv_p_res);
+  if (errorOK) {
+    LeptonInvPtPullBy[w]->Fill(inv_pt_diff/inv_pt_error);
+    LeptonInvPPullBy [w]->Fill(inv_p_diff /inv_p_error);
   }
 }
 
@@ -252,6 +249,11 @@ void ResolutionUsingMC::fillDileptonMassResolution(const reco::CompositeCandidat
   DileptonMassResVMass   ->Fill(gen_mass,     rdil*rdil);
   DileptonResMassResVMass->Fill(gen_res_mass, rdilres*rdilres);
   ResonanceMassResVMass  ->Fill(gen_res_mass, rres*rres);
+
+  size_t w = whereIsDilepton(dil);
+  DileptonMassResBy   [w]->Fill(rdil);
+  DileptonResMassResBy[w]->Fill(rdilres);
+  ResonanceMassResBy  [w]->Fill(rres);
 }
 
 const reco::GenParticle* getGenParticle(const reco::CandidateBaseRef& lep) {

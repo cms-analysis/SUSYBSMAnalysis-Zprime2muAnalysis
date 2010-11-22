@@ -109,10 +109,10 @@ WhereLepton whereIsLepton(const reco::CandidateBaseRef& lepton,
     else                      return W_OUTSIDE;
   }
   else {
-    if      (abseta < 0.9) return W_BARREL;
-    else if (abseta < 1.2) return W_OVERLAP;
-    else if (abseta < 2.4) return W_ENDCAP;
-    else                   return W_OUTSIDE;
+    if      (abseta < 0.85)  return W_BARREL;
+    else if (abseta < 1.2)  return W_OVERLAP;
+    else if (abseta < 2.45) return W_ENDCAP;
+    else                    return W_OUTSIDE;
   }
 }
 

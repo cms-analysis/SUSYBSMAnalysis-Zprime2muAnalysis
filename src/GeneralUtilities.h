@@ -36,12 +36,12 @@ void InitROOT(bool date_histograms=true);
 
 // Lepton location codes, used by whereIs(Di)Lepton() methods.
 enum WhereLepton { W_BARREL=0, W_OVERLAP, W_CRACK=W_OVERLAP,
-		   W_ENDCAP, W_OUTSIDE };
+		   W_ENDCAP, W_OUTSIDE, W_L_MAX};
 // For electrons, OVERLAP here means CRACK.
 enum WhereDilepton { W_BARRELBARREL=0, W_BARRELOVERLAP,  W_BARRELENDCAP,
 		     W_BARRELOUTSIDE,  W_OVERLAPOVERLAP, W_OVERLAPENDCAP, 
 		     W_OVERLAPOUTSIDE, W_ENDCAPENDCAP,   W_ENDCAPOUTSIDE,
-		     W_OUTSIDEOUTSIDE };
+		     W_OUTSIDEOUTSIDE, W_D_MAX };
   
 // Helper method to return a code (one of the W_* ones above) based
 // on where the lepton is in the muon system by eta; in the barrel,

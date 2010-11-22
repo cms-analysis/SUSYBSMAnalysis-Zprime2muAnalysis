@@ -103,8 +103,13 @@ if global_rescale is not None:
     pdir += '_normToZ'
 ps = plot_saver(pdir)
 
-def integ(h,a,b=1e9):
-    return h.Integral(h.FindBin(a), h.FindBin(b))
+def integ(h,a,b=None):
+    # Return the integral from [a,b); assumes a and b are on the bin
+    # boundaries. If b is None, that means the entire tail integral
+    # out to infinity (i.e. include the overflow bin).
+    if b is None:
+        return h.Integral(h.FindBin(a), h.GetNbinsX()+1)
+    return h.Integral(h.FindBin(a), h.FindBin(b)-1)
 
 def cumulative(h):
     nb = h.GetNbinsX()

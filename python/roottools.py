@@ -142,15 +142,15 @@ def get_integral(hist, xlo, xhi):
         wsq += hist.GetBinError(i)**2
     return integral, wsq**0.5
 
-def get_hist_stats(hist, factor=None):
+def get_hist_stats(hist, factor=None, draw=False):
     """For the given histogram, return a five-tuple of the number of
     entries, the underflow and overflow counts, the fitted sigma
     (using the function specified by fcnname, which must be an
     already-made ROOT.TF1 whose parameter(2) is the value used), and the
     RMS.
     """
-
-    results = fit_gaussian(hist, factor)
+    
+    results = fit_gaussian(hist, factor, draw)
     results.update({
         'entries': hist.GetEntries(),
         'under':   hist.GetBinContent(0),

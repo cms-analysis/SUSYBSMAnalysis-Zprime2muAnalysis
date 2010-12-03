@@ -16,21 +16,30 @@ nice_name = {
     'picky': 'Picky',
     'pmc': 'Tune P',
     'tmr': 'TMR',
-    'sigmaswitch': 'Sigma-switch'
+    'global': 'Global',
+    'sigmaswitch': 'Sigma-switch',
+    'LeptonInvPtRes': r'Muon $q / \pt$',
+    'LeptonPtRes': r'Muon $q \cdot \pt$',
+    'DileptonMassRes': 'Dimuon invariant mass',
     }
     
-def f(which_plot, xtitle, ytitle, m=1000, no_stats=True, errors_in_table=False):
-    print which_plot
+def f(which_plot, xtitle, ytitle, m=1000, no_stats=True, errors_in_table=True):
+    print r'\hline\hline'
+    print r'\multicolumn{6}{|l|}{%s} \\' % nice_name[which_plot]
     f = ROOT.TFile('ana_effres_zp%i.root' % m)
     cache = []
-    tracks = ['inner', 'tpfms', 'picky', 'pmc', 'tmr', 'sigmaswitch']
+    tracks = ['inner', 'tpfms', 'picky', 'pmc', 'tmr', 'sigmaswitch', 'global']
     histos = {}
-    print '%12s%10s%10s%10s%25s%25s%25s%25s%25s' % ('reco', 'entries', 'under', 'over', 'mean', 'rms', 'constant', 'mu', 'sigma')
+    print r'\hline'
+    print r'%20s & %15s & %25s & %25s & %15s & %15s \\' % ('Fit/selector', 'Entries', r'Fitted $\sigma$, \%', r'RMS, \%', r'$\# < -0.5$', r'$\# > 0.5$')
+    print r'\hline'
     for i,t in enumerate(tracks):
+        draw = t != 'global'
         d = f.Get('Resolution%s' % t)
         h = d.Get(which_plot)
         histos[t] = h
-        p = c.cd(i+1)
+        if draw:
+            p = c.cd(i+1)
         h.GetXaxis().SetTitle(xtitle)
         h.GetYaxis().SetTitle(ytitle)
         h.GetYaxis().SetLabelSize(0.02)
@@ -38,14 +47,19 @@ def f(which_plot, xtitle, ytitle, m=1000, no_stats=True, errors_in_table=False):
         h.SetTitle('')
         if no_stats:
             h.SetStats(0)
-        stats = get_hist_stats(h, factor=1.5, draw=True)
-        stats['reco'] = t
+        stats = get_hist_stats(h, factor=1.5, draw=draw)
+        stats['reco'] = nice_name[t]
         for x in ['mean', 'rms', 'constant', 'mu', 'sigma']:
             if errors_in_table:
-                stats[x] = '%6.4f \pm %6.4f' % stats[x]
+                y,z = stats[x]
+                y *= 100
+                z *= 100
+                stats[x] = '%6.1f $\pm$ %6.2f' % (y,z)
             else:
-                stats[x] = '%10.4f' % stats[x][0]
-        print '%(reco)12s%(entries)10i%(under)10i%(over)10i%(mean)25s%(rms)25s%(constant)25s%(mu)25s%(sigma)25s' % stats
+                stats[x] = '%6.1f' % stats[x][0]*100
+        print '%(reco)20s & %(entries)15i & %(sigma)25s & %(rms)25s & %(under)15i & %(over)15i \\\\' % stats
+        if not draw:
+            continue
         tl = ROOT.TLatex(0.13, 0.90, nice_name[t])
         tl.SetTextSize(0.06)
         tl.SetNDC(1)

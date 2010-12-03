@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
 import sys, os, glob
+from collections import defaultdict
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import move_above_into_bin, plot_saver, real_hist_max, real_hist_min, set_zp2mu_style, ROOT
 set_zp2mu_style()
+ROOT.gStyle.SetLineWidth(2)
 
 from samples import *
 
@@ -11,13 +13,19 @@ x_axis_limits = 40, 1000
 x_axis_limits2 = 40, 500
 to_compare = 'DileptonMass'
 global_rescale = 3273/3404.6 if False else None
-draw_qcd = True
 draw_zssm = True
 
-joins = [
-    ('qcd', 'QCD'),
+joins = [(s.name, 'QCD') for s in samples if 'qcd' in s.name]
+joins += [
     ('inclmu15', 'QCD'),
+    ('singletop_tW', 't#bar{t}-like'),
+    ('ztautau', 't#bar{t}-like'),
+    ('ww', 't#bar{t}-like'),
+    ('wz', 't#bar{t}-like'),
+    ('zz', 't#bar{t}-like'),
     ]
+joins = dict(joins)
+joins_colors = {'QCD': 801, 't#bar{t}-like': 4}
 
 histo_dir = None
 for x in sys.argv:
@@ -136,6 +144,8 @@ for cuts in cutss:
     for dilepton in dileptons:
         if int_lumi > 39 and 'Electron' in dilepton:
             continue
+
+        do_joins = True # ('Plus' in dilepton and 'Minus' in dilepton) or 'OppSign' in dilepton
         
         xax = x_axis_limits if dilepton == 'MuonsPlusMuonsMinus' else x_axis_limits2
         
@@ -161,6 +171,7 @@ for cuts in cutss:
 
         hdata = data[dilepton]
 
+        # Print a pretty table.
         for mass_range in [(60,120), (120,), (200,)]:
             print 'cuts: %s  dilepton: %s  mass range: %s' % (cuts, dilepton, mass_range)
             for sample in samples:
@@ -170,18 +181,26 @@ for cuts in cutss:
             print '%100s%20s%20.6f +/- %20.6f%20s' % ('data', '-', hdata_integral, hdata_integral**0.5, '-')
             sum_mc = 0.
             var_sum_mc = 0.
+            sums = defaultdict(float)
+            var_sums = defaultdict(float)
             for sample in sorted(samples, key=lambda x: x.integral, reverse=True):
                 w = sample.partial_weight*int_lumi
                 var = w * sample.integral # not w**2 * sample.integral because sample.integral is already I*w
                 if 'zssm' not in sample.name:
                     sum_mc += sample.integral
                     var_sum_mc += var
+                if joins.has_key(sample.name):
+                    join_name = joins[sample.name]
+                    sums[join_name] += sample.integral
+                    var_sums[join_name] += var
                 if sample.integral == 0:
                     limit = '%.6f' % (3*w)
                 else:
                     limit = '-'
                 print '%100s%20.6f%20.6f +/- %20.6f%20s' % (sample.nice_name, w, sample.integral, var**0.5, limit)
             print '%100s%20s%20.6f +/- %20.6f%20s' % ('sum MC (not including Z\')', '-', sum_mc, var_sum_mc**0.5, '-')
+            for join_name in sorted(sums.keys()):
+                print '%100s%20s%20.6f +/- %20.6f%20s' % (join_name, '-', sums[join_name], var_sums[join_name]**0.5, '-')
             print
         print
         
@@ -190,45 +209,41 @@ for cuts in cutss:
 
         last_mc = None
         for sample in samples:
-            if 'qcd' in sample.name and not draw_qcd:
-                continue
             h = sample.mass
-            h.SetLineColor(sample.color)
+            color = joins_colors[joins[sample.name]] if do_joins and joins.has_key(sample.name) else sample.color
+            h.SetLineColor(color)
             h.SetMarkerStyle(0)
             if 'zssm' not in sample.name:
-                h.SetFillColor(sample.color)
+                h.SetFillColor(color)
                 s.Add(h)
                 summc.Add(h)
             last_mc = h
 
         if draw_zssm and dilepton == 'MuonsPlusMuonsMinus':
-            l = ROOT.TLegend(0.65, 0.48, 0.87, 0.87)
+            l = ROOT.TLegend(0.63, 0.54, 0.87, 0.87)
         else:
-            l = ROOT.TLegend(0.73, 0.48, 0.87, 0.87)
+            l = ROOT.TLegend(0.70, 0.59, 0.87, 0.87)
         l.SetFillColor(0)
 
         m = ROOT.TMarker()
         m.SetMarkerStyle(20)
         m.SetMarkerSize(0.5)
         m.SetMarkerColor(ROOT.kBlack)
-        l.AddEntry(m, 'Data')
+        l.AddEntry(m, 'Data', 'LPE')
 
         legend_already = set()
         for sample in reversed(samples):
-            skip = False
-            for join_substr, join_nice_name in joins:
-                if join_substr in sample.name:
-                    if join_substr in legend_already:
-                        skip = True
-                    legend_already.add(join_substr)
-                    sample.nice_name = join_nice_name
-                    break
-            if skip or ('qcd' in sample.name and not draw_qcd):
-                continue
-            legend_already.add(sample.name)
+            nice_name = sample.nice_name
+            if do_joins and joins.has_key(sample.name):
+                join_nice_name = joins[sample.name]
+                if join_nice_name in legend_already:
+                    continue
+                else:
+                    legend_already.add(join_nice_name)
+                    nice_name = join_nice_name
             if 'zssm' in sample.name and (not draw_zssm or dilepton != 'MuonsPlusMuonsMinus'):
                 continue
-            l.AddEntry(sample.mass, sample.nice_name, 'F')
+            l.AddEntry(sample.mass, nice_name, 'F')
 
         s.Draw('hist')
         # must call Draw first or the THStack doesn't have a histogram/axis
@@ -305,31 +320,35 @@ for cuts in cutss:
 
         data_c = cumulative(hdata)
         summc_c = cumulative(summc)
-        summc_c.SetLineColor(ROOT.kBlue)
+        summc_c.SetLineColor(4)
+        data_c.SetMarkerStyle(20)
+        data_c.SetMarkerSize(0.5)
 
         for h in (data_c, summc_c):
+            h.SetLineWidth(2)
             h.GetXaxis().SetRangeUser(*x_axis_limits2)
             h.SetStats(0)
             h.SetTitle('')
             #h.GetYaxis().SetRangeUser(0.1, 6.5e3)
             h.GetXaxis().SetTitle(titleize[to_compare] % (subtitleize[dilepton], unitize[to_compare]))
-            h.GetYaxis().SetTitle('Events > X')
+            h.GetYaxis().SetTitle('Events #geq X')
             h.GetYaxis().SetTitleOffset(1.2)
             h.GetYaxis().SetLabelSize(0.028)
-            h.SetMarkerStyle(20)
-            h.SetMarkerSize(0.5)
 
-        h1,h2 = (data_c, summc_c) if data_c.GetMaximum() > summc_c.GetMaximum() else (summc_c, data_c)
-        h1.Draw()
-        h2.Draw('same')
+        if data_c.GetMaximum() > summc_c.GetMaximum():
+            data_c.Draw('pe')
+            summc_c.Draw('same')
+        else:
+            summc_c.Draw()
+            data_c.Draw('pe same')
 
         t1.Draw()
         t2.Draw()
 
-        l = ROOT.TLegend(0.62, 0.71, 0.87, 0.87)
+        l = ROOT.TLegend(0.60, 0.69, 0.86, 0.85)
         l.SetFillColor(0)
-        l.AddEntry(data_c, 'Data', 'L')
-        l.AddEntry(summc_c, 'Simulation', 'L')
+        l.AddEntry(data_c, 'Data', 'LPE')
+        l.AddEntry(summc_c, 'Bkg. prediction', 'L')
         l.Draw('same')
 
         ps.save(dilepton + '_cumulative')

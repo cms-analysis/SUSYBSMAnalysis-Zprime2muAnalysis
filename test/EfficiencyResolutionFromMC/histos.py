@@ -9,12 +9,8 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import rec_levels, 
 tracks = ['global', 'inner', 'tpfms', 'picky', 'pmc', 'tmr', 'sigmaswitch']
 rec_levels(process, tracks)
 
-dy_gen_mass_cut = 'status == 3 && (pdgId == 23 || pdgId == 32 || pdgId == 39 || pdgId == 5000039) && mass > %(lo)i && mass < %(hi)i'
-process.DYGenMassFilter = cms.EDFilter('CandViewSelector',
-                                       src = cms.InputTag('prunedGenSimLeptons'),
-                                       cut = cms.string(dy_gen_mass_cut % {'lo': 0, 'hi': 10000}),
-                                       filter = cms.bool(True),
-                                       )
+from SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi import dy_gen_mass_cut
+process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi')
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.EfficiencyFromMC_cfi')
 

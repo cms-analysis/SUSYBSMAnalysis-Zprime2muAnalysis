@@ -4,6 +4,9 @@ import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
 
+from SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi import dy_gen_mass_cut
+process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi')
+
 import SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff as VBTFSelection
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection_cff as OurSelection
 
@@ -141,10 +144,24 @@ return_data = 1
     from samples import samples
     for sample in samples:
         print sample.name
-        
+    
         new_py = open('histos.py').read()
         new_py += "\nprocess.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', '%(hlt_process_name)s')\n" % sample
         new_py += "\nntuplify(process, hlt_process_name='%(hlt_process_name)s')\n" % sample
+
+        if 'dy' in sample.name:
+            mass_limits = {
+                'dy20':  ( 20, 120),
+                'dy120': (120, 200),
+                'dy200': (200, 500),
+                'dy500': (500, 800),
+                'dy800': (800, 100000),
+                }
+            lo,hi = mass_limits[sample.name]
+            new_cut = dy_gen_mass_cut % locals()
+            new_py += '\nprocess.DYGenMassFilter.cut = "%(new_cut)s"\n' % locals()
+            new_py += '\nfor pn,p in process.paths.items():\n  setattr(process, pn, cms.Path(process.DYGenMassFilter*p._seq))\n'
+
         open('histos_crab.py', 'wt').write(new_py)
 
         open('crab.cfg', 'wt').write(crab_cfg % sample)

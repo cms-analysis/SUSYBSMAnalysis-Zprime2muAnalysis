@@ -50,6 +50,17 @@ if 'data' in sys.argv:
     process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010ABMuonsOnly)
     process.TFileService.fileName = 'ana_nminus1_data.root'
 
+if 'debugcuts' in sys.argv:
+    process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-800_7TeV-pythia6/datamc_dy800/20d63349d4f532c6f4f93a8966ef6c34/pat_2_1_rIJ.root']
+    process.maxEvents.input = 1000
+    process.GlobalTag.globaltag = 'START38_V14::All'
+    process.MessageLogger.categories.append('PrintEvent')
+    process.load('HLTrigger.HLTcore.triggerSummaryAnalyzerAOD_cfi')
+    process.p *= process.triggerSummaryAnalyzerAOD
+    process.PrintEvent = cms.EDAnalyzer('PrintEvent', dilepton_src = cms.InputTag('dimuonsNoNo'), trigger_results_src = cms.InputTag('TriggerResults','','HLT'))
+    process.PrintEventNoTrgMtch = cms.EDAnalyzer('PrintEvent', dilepton_src = cms.InputTag('dimuonsNoTrgMtch'))
+    process.p *= process.PrintEvent * process.PrintEventNoTrgMtch
+    
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
 [CRAB]

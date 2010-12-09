@@ -10,9 +10,6 @@ ROOT.gStyle.SetTitleX(0.12)
 c = ROOT.TCanvas('c', '', 820, 630)
 os.system('mkdir -p plots/nminus1effs')
 
-def integ(h,a,b=1e9):
-    return h.Integral(h.FindBin(a), h.FindBin(b))
-
 nminus1s = [
     'NoTkHits',
     'NoDB',
@@ -43,17 +40,24 @@ pretty = {
     'ana_nminus1_zssm750.root': 'Z\' SSM, M=750 GeV',
     }
 
+if 'debug' in sys.argv:
+    fn = 'zp2mu_histos.root'
+    f = ROOT.TFile(fn)
+    for nminus1 in nminus1s + ['NoNo']:
+        print nminus1, f.Get(nminus1).Get('DileptonMass').GetEntries()
+    sys.exit(0)
+        
 def table(fn):
     f = ROOT.TFile(fn)
     hnum = f.Get('NoNo').Get('DileptonMass')
-    num60120 = integ(hnum, 60, 120)
-    num120 = integ(hnum, 120)
+    num60120 = get_integral(hnum, 60, 120, integral_only=True, include_last_bin=False)
+    num120 = get_integral(hnum, 120, integral_only=True, include_last_bin=False)
     print 'numerator: 60-120:', num60120, ' 120-:', num120
     print '%20s%20s%20s%20s%20s' % ('name', 'den 60-120', 'eff 60-120', 'den 120', 'eff 120')
     for nminus1 in nminus1s:
         hden = f.Get(nminus1).Get('DileptonMass')
-        den60120 = integ(hden, 60, 120)
-        den120 = integ(hden, 120)
+        den60120 = get_integral(hden, 60, 120, integral_only=True, include_last_bin=False)
+        den120 = get_integral(hden, 120, integral_only=True, include_last_bin=False)
         print '%20s%20f%20f%20f%20f' % (nminus1, den60120, num60120/den60120, den120, num120/den120)
 
 if '120' in sys.argv:
@@ -83,10 +87,10 @@ for fn, mass_range, color, fill in items:
     nminus1_den = ROOT.TH1F('den', '', l, 0, l)
 
     hnum = f.Get('NoNo').Get('DileptonMass')
-    num = integ(hnum, *mass_range)
+    num = get_integral(hnum, *mass_range, integral_only=True, include_last_bin=False)
     for i,nminus1 in enumerate(nminus1s):
         hden = f.Get(nminus1).Get('DileptonMass')
-        den = integ(hden, *mass_range)
+        den = get_integral(hden, *mass_range, integral_only=True, include_last_bin=False)
         nminus1_num.SetBinContent(i+1, num)
         nminus1_den.SetBinContent(i+1, den)
 

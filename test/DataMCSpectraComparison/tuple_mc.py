@@ -4,12 +4,9 @@ import sys, os
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName
 from tuple_common import cms, process, crab_cfg
 
-process.source.fileNames = ['file:/uscmst1b_scratch/lpc1/3DayLifetime/tucker/tW_aodsim.root']
+process.source.fileNames = ['/store/mc/Fall10/DYToMuMu_M-120_7TeV-pythia6/GEN-SIM-RECO/START38_V12-v1/0002/E8EE9B50-F1C8-DF11-B9B3-0018FE286F12.root']
 process.maxEvents.input = 100
-process.GlobalTag.globaltag = 'START38_V12::All'
-
-#from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import AODOnly
-#AODOnly(process)
+process.GlobalTag.globaltag = 'START38_V14::All'
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     job_control = '''

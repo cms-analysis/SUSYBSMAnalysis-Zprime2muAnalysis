@@ -7,7 +7,7 @@ just_testing = 'testing' in sys.argv
 
 process.source.fileNames = ['/store/data/Run2010A/Mu/RECO/Sep17ReReco_v2/0024/F0CECCF7-9AC8-DF11-B047-0017A4770818.root', '/store/data/Run2010A/Mu/RECO/Sep17ReReco_v2/0026/403B2971-3FC9-DF11-8DDD-0017A4770438.root']
 process.maxEvents.input = 100
-process.GlobalTag.globaltag = 'GR_R_38X_V13A::All'
+process.GlobalTag.globaltag = 'GR_R_38X_V15::All'
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import removeMCUse
 removeMCUse(process)
@@ -61,8 +61,8 @@ lumis_per_job = %(lumis_per_job)s
         submit(locals())
     else:
         x = [
-            ('Commissioning10', '/MinimumBias/Commissioning10-Sep17ReReco_v2/RECO', 'GR_R_38X_V13A'),
-            ('Run2010A',        '/Mu/Run2010A-Sep17ReReco_v2/RECO',                 'GR_R_38X_V13A'),
+            ('Commissioning10', '/MinimumBias/Commissioning10-Sep17ReReco_v2/RECO', 'GR_R_38X_V15'),
+            ('Run2010A',        '/Mu/Run2010A-Sep17ReReco_v2/RECO',                 'GR_R_38X_V15'),
             ('Run2010B',        '/Mu/Run2010B-PromptReco-v2/RECO',                  'GR10_P_V10'),
             ]
         for name, dataset, tag in x:

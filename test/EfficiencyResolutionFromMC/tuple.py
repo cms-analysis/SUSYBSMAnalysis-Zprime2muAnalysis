@@ -4,7 +4,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.PATTuple_cfg import cms, process
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName
 
 process.maxEvents.input = 50
-process.GlobalTag.globaltag = 'START38_V12::All'
+process.GlobalTag.globaltag = 'START38_V14::All'
 process.source.fileNames = ['/store/mc/Fall10/ZprimeSSMToMuMu_M-750_7TeV-pythia6/GEN-SIM-RECO/START38_V12-v1/0001/F034C4E4-4BCD-DF11-B652-00E0812EEEC3.root']
 process.p = cms.Path(process.patDefaultSequence)
 

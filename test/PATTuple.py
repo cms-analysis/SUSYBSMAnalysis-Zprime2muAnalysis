@@ -10,8 +10,8 @@ input_is_MC = True
 # which you wish to run, most especially the globalTag (since the list
 # of files will be configured by CRAB itself so it doesn't matter what
 # gets put here for it).
-globalTag = 'START37_V6::All'
-files = ['/store/mc/Spring10/DYToMuMu_M-120_7TeV-pythia6/GEN-SIM-RECO/START3X_V26-v2/0026/F44E2CAC-A35A-DF11-B61B-002481CFE804.root']
+globalTag = 'START38_V14::All'
+files = ['/store/mc/Fall10/DYToMuMu_M-120_7TeV-pythia6/GEN-SIM-RECO/START38_V12-v1/0002/E8EE9B50-F1C8-DF11-B9B3-0018FE286F12.root']
 
 ########################################################################
 

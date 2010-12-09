@@ -2,7 +2,7 @@
 
 import sys, os, glob
 from collections import defaultdict
-from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import move_above_into_bin, plot_saver, real_hist_max, real_hist_min, set_zp2mu_style, ROOT
+from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import cumulative_histogram, get_integral, move_above_into_bin, plot_saver, real_hist_max, real_hist_min, set_zp2mu_style, ROOT
 set_zp2mu_style()
 ROOT.gStyle.SetLineWidth(2)
 
@@ -16,16 +16,13 @@ global_rescale = 3273/3404.6 if False else None
 draw_zssm = True
 
 joins = [(s.name, 'QCD') for s in samples if 'qcd' in s.name]
-joins += [
-    ('inclmu15', 'QCD'),
-    ('singletop_tW', 't#bar{t}-like'),
-    ('ztautau', 't#bar{t}-like'),
-    ('ww', 't#bar{t}-like'),
-    ('wz', 't#bar{t}-like'),
-    ('zz', 't#bar{t}-like'),
-    ]
+joins += [('inclmu15', 'QCD')]
+joins += [(x, 't#bar{t}-like') for x in ['singletop_tW', 'ztautau', 'ww', 'wz', 'zz']]
+joins += [(s.name, 'Z #rightarrow #mu^{+}#mu^{-}') for s in samples if 'dy' in s.name]
+joins += [('zmumu20200', 'Z #rightarrow #mu^{+}#mu^{-}')]
+
 joins = dict(joins)
-joins_colors = {'QCD': 801, 't#bar{t}-like': 4}
+joins_colors = {'QCD': 801, 't#bar{t}-like': 4, 'Z #rightarrow #mu^{+}#mu^{-}': 7}
 
 histo_dir = None
 for x in sys.argv:
@@ -111,22 +108,6 @@ if global_rescale is not None:
     pdir += '_normToZ'
 ps = plot_saver(pdir)
 
-def integ(h,a,b=None):
-    # Return the integral from [a,b); assumes a and b are on the bin
-    # boundaries. If b is None, that means the entire tail integral
-    # out to infinity (i.e. include the overflow bin).
-    if b is None:
-        return h.Integral(h.FindBin(a), h.GetNbinsX()+1)
-    return h.Integral(h.FindBin(a), h.FindBin(b)-1)
-
-def cumulative(h):
-    nb = h.GetNbinsX()
-    hc = ROOT.TH1F(h.GetName() + '_cumulative', '', nb, h.GetXaxis().GetXmin(), h.GetXaxis().GetXmax())
-    for i in xrange(nb+1, 0, -1):
-        prev = 0 if i == nb+1 else hc.GetBinContent(i+1)
-        hc.SetBinContent(i, h.GetBinContent(i) + prev)
-    return hc
-
 if global_rescale is not None:
     for s in samples:
         s.partial_weight *= global_rescale
@@ -175,8 +156,8 @@ for cuts in cutss:
         for mass_range in [(60,120), (120,), (200,)]:
             print 'cuts: %s  dilepton: %s  mass range: %s' % (cuts, dilepton, mass_range)
             for sample in samples:
-                sample.integral = integ(sample.mass, *mass_range)
-            hdata_integral = integ(hdata, *mass_range)
+                sample.integral = get_integral(sample.mass, *mass_range, integral_only=True, include_last_bin=False)
+            hdata_integral = get_integral(hdata, *mass_range, integral_only=True, include_last_bin=False)
             print '%100s%20s%20s +/- %20s%20s' % ('sample', 'weight for %i/nb' % int(int_lumi*1000), 'integral', 'error', 'limit if int=0')
             print '%100s%20s%20.6f +/- %20.6f%20s' % ('data', '-', hdata_integral, hdata_integral**0.5, '-')
             sum_mc = 0.
@@ -318,8 +299,8 @@ for cuts in cutss:
             ps.save(dilepton + '_logx')
             ps.c.SetLogx(0)
 
-        data_c = cumulative(hdata)
-        summc_c = cumulative(summc)
+        data_c = cumulative_histogram(hdata)
+        summc_c = cumulative_histogram(summc)
         summc_c.SetLineColor(4)
         data_c.SetMarkerStyle(20)
         data_c.SetMarkerSize(0.5)

@@ -49,8 +49,8 @@ addMuonStations(process)
 addMuonHitCount(process)
 addHEEPId(process)
 switchOnTrigger(process)
-switchOnTriggerMatchEmbedding(process)
-changeMuonHLTMatch(process)
+process.load('SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi')
+switchOnTriggerMatchEmbedding(process, triggerMatchers=['muonTriggerMatchHLTMuons'])
 process.out.outputCommands += ['keep *_cleanPatMuonsTriggerMatch_*_*', 'drop *_cleanPatMuons_*_*']
 
 # Embed the tracker tracks (by default, every other track is already

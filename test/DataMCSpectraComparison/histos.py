@@ -149,10 +149,9 @@ return_data = 1
         new_py += "\nprocess.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', '%(hlt_process_name)s')\n" % sample
         new_py += "\nntuplify(process, hlt_process_name='%(hlt_process_name)s')\n" % sample
 
-        if 'dy' in sample.name:
+        if sample.name == 'zmumu' or 'dy' in sample.name:
             mass_limits = {
-                'dy20':  ( 20, 120),
-                'dy120': (120, 200),
+                'zmumu': ( 20, 200),
                 'dy200': (200, 500),
                 'dy500': (500, 800),
                 'dy800': (800, 100000),

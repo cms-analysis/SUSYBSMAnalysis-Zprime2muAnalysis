@@ -19,7 +19,7 @@ joins = [(s.name, 'QCD') for s in samples if 'qcd' in s.name]
 joins += [('inclmu15', 'QCD')]
 joins += [(x, 't#bar{t}-like') for x in ['singletop_tW', 'ztautau', 'ww', 'wz', 'zz']]
 joins += [(s.name, 'Z #rightarrow #mu^{+}#mu^{-}') for s in samples if 'dy' in s.name]
-joins += [('zmumu20200', 'Z #rightarrow #mu^{+}#mu^{-}')]
+joins += [('zmumu', 'Z #rightarrow #mu^{+}#mu^{-}')]
 
 joins = dict(joins)
 joins_colors = {'QCD': 801, 't#bar{t}-like': 4, 'Z #rightarrow #mu^{+}#mu^{-}': 7}

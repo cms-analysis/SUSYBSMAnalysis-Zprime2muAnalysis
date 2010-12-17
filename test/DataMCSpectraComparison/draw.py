@@ -15,14 +15,14 @@ to_compare = 'DileptonMass'
 global_rescale = 3273/3404.6 if False else None
 draw_zssm = True
 
-joins = [(s.name, 'QCD') for s in samples if 'qcd' in s.name]
-joins += [('inclmu15', 'QCD')]
+joins = [(s.name, 'jets') for s in samples if 'qcd' in s.name]
+joins += [(x, 'jets') for x in ['inclmu15', 'wmunu', 'wjets']]
 joins += [(x, 't#bar{t}-like') for x in ['singletop_tW', 'ztautau', 'ww', 'wz', 'zz']]
 joins += [(s.name, 'Z #rightarrow #mu^{+}#mu^{-}') for s in samples if 'dy' in s.name]
 joins += [('zmumu', 'Z #rightarrow #mu^{+}#mu^{-}')]
 
 joins = dict(joins)
-joins_colors = {'QCD': 801, 't#bar{t}-like': 4, 'Z #rightarrow #mu^{+}#mu^{-}': 7}
+joins_colors = {'jets': 801, 't#bar{t}-like': 4, 'Z #rightarrow #mu^{+}#mu^{-}': 7}
 
 histo_dir = None
 for x in sys.argv:
@@ -153,7 +153,7 @@ for cuts in cutss:
         hdata = data[dilepton]
 
         # Print a pretty table.
-        for mass_range in [(60,120), (120,), (200,)]:
+        for mass_range in [(60,120), (120,200), (120,), (200,)]:
             print 'cuts: %s  dilepton: %s  mass range: %s' % (cuts, dilepton, mass_range)
             for sample in samples:
                 sample.integral = get_integral(sample.mass, *mass_range, integral_only=True, include_last_bin=False)

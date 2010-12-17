@@ -56,7 +56,7 @@ samples = [
     sample('wz',           'WZ',                                       '/WZtoAnything_TuneZ2_7TeV-pythia6-tauola/Fall10-START38_V12-v1/GEN-SIM-RECO',               2194752,   5, 18,  scheduler='glite'),
     sample('zz',           'ZZ',                                       '/ZZtoAnything_TuneZ2_7TeV-pythia6-tauola/Fall10-START38_V12-v1/GEN-SIM-RECO',               2113368,   6, 5.9, scheduler='glite'),
     sample('ztautau',      'Z #rightarrow #tau^{+}#tau^{-}',           '/DYToTauTau_M-20_CT10_TuneZ2_7TeV-powheg-pythia-tauola/Fall10-START38_V12-v1/GEN-SIM-RECO', 1994719,  46, 1631, hlt_process_name='HLT'),
-    sample('wmunu',        'W #rightarrow #mu#nu',                     '/WToMuNu_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',                           5330940,   3, 7899), # do not include the filter eff listed in the file because it wasn't run on this production -- to be checked
+    sample('wjets',        'W+jets',                                   '/WJetsToLNu_TuneZ2_7TeV-madgraph-tauola/Fall10-START38_V12-v1/GEN-SIM-RECO',               15168266,   3, 1.04e4, hlt_process_name='HLT'),
     sample('inclmu15',     'QCD (MuRich, muon p_{T} > 15 GeV)',        '/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',        29504866, 801, 0.0002855 * 296600000),
 #   sample('qcd15',        'QCD (15 < #hat{p_{T}} < 20 GeV)',          '/QCD_Pt-15to20_MuPt5Enriched_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',       2884915, 801, 0.00254 * 579200000),
 #   sample('qcd20',        'QCD (20 < #hat{p_{T}} < 30 GeV)',          '/QCD_Pt-20to30_MuPt5Enriched_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',      11461085, 802, 0.00518 * 236300000),

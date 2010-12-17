@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# (py draw.py ana_datamc_40ipb > & ! out.draw.40ipb) && (py draw.py ana_datamc_34ipb > & ! out.draw.34ipb) && tlock ~/asdf/plots.tgz plots/datamc_34ipb plots/datamc_40ipb
+
 import sys, os, glob
 from collections import defaultdict
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import cumulative_histogram, get_integral, move_above_into_bin, plot_saver, real_hist_max, real_hist_min, set_zp2mu_style, ROOT

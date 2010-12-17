@@ -3,8 +3,6 @@
 import sys, os, datetime
 from tuple_common import process, crab_cfg
 
-just_testing = 'testing' in sys.argv
-
 process.source.fileNames = ['/store/data/Run2010A/Mu/RECO/Sep17ReReco_v2/0024/F0CECCF7-9AC8-DF11-B047-0017A4770818.root', '/store/data/Run2010A/Mu/RECO/Sep17ReReco_v2/0026/403B2971-3FC9-DF11-8DDD-0017A4770438.root']
 process.maxEvents.input = 100
 process.GlobalTag.globaltag = 'GR_R_38X_V15::All'
@@ -22,6 +20,8 @@ lumis_per_job = %(lumis_per_job)s
 
     lumis_per_job = 200
     lumi_mask = ''
+
+    just_testing = 'testing' in sys.argv
 
     def submit(d):
         new_py = open('tuple_data.py').read()
@@ -43,6 +43,7 @@ lumis_per_job = %(lumis_per_job)s
             run_limits.append(int(x))
         except ValueError:
             pass
+
     if run_limits:
         if len(run_limits) != 2:
             raise RuntimeError('if any, must specify exactly two numeric arguments: min_run max_run')
@@ -61,11 +62,9 @@ lumis_per_job = %(lumis_per_job)s
         submit(locals())
     else:
         x = [
-            ('Commissioning10', '/MinimumBias/Commissioning10-Sep17ReReco_v2/RECO', 'GR_R_38X_V15'),
-            ('Run2010A',        '/Mu/Run2010A-Sep17ReReco_v2/RECO',                 'GR_R_38X_V15'),
-            ('Run2010B',        '/Mu/Run2010B-PromptReco-v2/RECO',                  'GR10_P_V10'),
+            ('Run2010A_DileptonMu', '/Mu/Run2010A-DiLeptonMu-Nov4Skim_v1/RECO', 'GR_R_38X_V15'),
+            ('Run2010B_DileptonMu', '/Mu/Run2010B-DiLeptonMu-Nov4Skim_v1/RECO', 'GR_R_38X_V15'),
             ]
         for name, dataset, tag in x:
-            lumis_per_job = 30 if name == 'Commissioning10' else 200
             submit(locals())
         

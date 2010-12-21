@@ -40,6 +40,7 @@ class ResolutionUsingMC : public edm::EDAnalyzer {
   TH1F* LeptonEtaDiff;
   TH1F* LeptonPhiDiff;
   TH1F* LeptonPtDiff;
+  TH2F* LeptonPtScatter;
   TH1F* LeptonPtRes;
   TH1F* LeptonPRes;
   TH1F* LeptonInvPtRes;
@@ -88,6 +89,7 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
   LeptonEtaDiff = fs->make<TH1F>("LeptonEtaDiff", titlePrefix + "#eta - gen #eta", 100, -0.002, 0.002);
   LeptonPhiDiff = fs->make<TH1F>("LeptonPhiDiff", titlePrefix + "#phi - gen #phi", 100, -0.002, 0.002);
   LeptonPtDiff  = fs->make<TH1F>("LeptonPtDiff",  titlePrefix + "pT - gen pT", 100, -20, 20);
+  LeptonPtScatter = fs->make<TH2F>("LeptonPtScatter", titlePrefix + "pT vs. gen pT", 100, 0, 2000, 100, 0, 2000);
 
   LeptonPtRes = fs->make<TH1F>("LeptonPtRes", titlePrefix + "(pT - gen pT)/(gen pT)", 100, -0.5, 0.5);
   LeptonPRes  = fs->make<TH1F>("LeptonPRes",  titlePrefix + "(p - gen p)/(gen p)",    100, -0.5, 0.5);
@@ -143,6 +145,7 @@ void ResolutionUsingMC::fillLeptonResolution(const reco::GenParticle* gen_lep, c
 
   // Momentum diffs/resolutions.
   LeptonPtDiff->Fill(lep->pt() - gen_pt);
+  LeptonPtScatter->Fill(gen_pt, lep->pt());
 
   LeptonPtRes->Fill((lep->pt() - gen_pt)/gen_pt);
   LeptonPRes ->Fill((lep->p()  - gen_p) /gen_p);

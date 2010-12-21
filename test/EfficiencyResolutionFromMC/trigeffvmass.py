@@ -18,7 +18,7 @@ ROOT.gStyle.SetPadTopMargin(0.02)
 ROOT.gStyle.SetPadRightMargin(0.04)
 ROOT.TH1.AddDirectory(0)
 
-types = ['Acceptance', 'RecoWrtAcc', 'RecoWrtAccTrig', 'TotalReco', 'L1OrEff', 'HLTOrEff', 'TotalTrigEff']
+types = ['AccNoPt', 'Acceptance', 'RecoWrtAcc', 'RecoWrtAccTrig', 'TotalReco', 'L1OrEff', 'HLTOrEff', 'TotalTrigEff']
 rebin_factor = 100
 make_individual_effs = False
 
@@ -41,7 +41,7 @@ for sample in samples:
 
         num.Rebin(rebin_factor)
         den.Rebin(rebin_factor)
-                
+            
         num.Draw()
         ps.save(t + 'Num')
         den.Draw()
@@ -56,7 +56,7 @@ for sample in samples:
         if make_individual_effs:
             eff = binomial_divide(num, den)
             eff.Draw('AP')
-            if t != 'Acceptance':
+            if t not in ['AccNoPt', 'Acceptance']:
                 eff.GetYaxis().SetRangeUser(0.85, 1.01)
             else:
                 eff.GetYaxis().SetRangeUser(0.5, 1.05)
@@ -93,7 +93,7 @@ for sample, t, cnum, cden in samples_totals:
 
 for t in sorted(totals_histos.iterkeys()):
     eff = binomial_divide(*totals_histos[t])
-    if 'Accept' in t:
+    if t.startswith('Acc'):
         eff.GetYaxis().SetRangeUser(0.4, 1.01)
     elif 'Reco' in t:
         eff.GetYaxis().SetRangeUser(0., 1.01)
@@ -112,7 +112,7 @@ def do_overlay(name, samples, which):
         g.SetLineColor(color)
         g.Draw(x)
         g.GetXaxis().SetLimits(40, 2000)
-        if which != 'Acceptance':
+        if which not in ['AccNoPt', 'Acceptance']:
             g.GetYaxis().SetRangeUser(0.85, 1.05)
         else:
             g.GetYaxis().SetRangeUser(0.4, 1.05)
@@ -153,7 +153,7 @@ def do_replace_or_add(name, samples, which, add=False):
     eff = binomial_divide(num, den)
     eff.Draw('AP')
     eff.GetXaxis().SetLimits(40, 2000)
-    if 'Accept' in which:
+    if which.startswith('Acc'):
         eff.GetYaxis().SetRangeUser(0.4, 1.01)
     elif 'Reco' in which:
         eff.GetYaxis().SetRangeUser(0., 1.01)
@@ -163,20 +163,13 @@ def do_replace_or_add(name, samples, which, add=False):
     eff.SetTitle('')
     eff.GetXaxis().SetTitle('dimuon invariant mass (GeV)')
     eff.GetYaxis().SetLabelSize(0.03)
-    eff.GetYaxis().SetTitle('acceptance' if which == 'Acceptance' else 'efficiency')
+    eff.GetYaxis().SetTitle('acceptance' if which in ['AccNoPt', 'Acceptance'] else 'efficiency')
     ps.save('%s_%s_%s' % (name, which, 'add' if add else 'replace'), log=False)
     return eff
-
-if False:
-    do_replace_or_add('dy', dy, 'Acceptance')
-    do_replace_or_add('dy', dy, 'TotalTrigEff')
-    do_replace_or_add('zp', zp, 'Acceptance')
-    do_replace_or_add('zp', zp, 'TotalTrigEff')
 
 final_plots = {}
 for t in types:
     final_plots[t] = do_replace_or_add('dy', dy, t, add=True)
-    do_replace_or_add('zp', zp, t, add=True)
 
 for x,y in final_plots.iteritems():
     exec '%s = y' % x

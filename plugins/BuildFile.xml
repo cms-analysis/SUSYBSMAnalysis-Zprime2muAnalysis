@@ -66,7 +66,7 @@
   <use name="PhysicsTools/UtilAlgos"/>
 </library>
 
-<library file="AsymmetryFrameAnalysis.cc,AsymmetryParametrizer.cc,CocktailAnalyzer.cc,EfficiencyFromMC.cc,GenPlots.cc,HistosFromPAT.cc,MuonsFromDimuons.cc,PrintEvent.cc,QCDBackground.cc,ResolutionUsingMC.cc,SimpleNtupler.cc,Zprime2muAsymmetry.cc,Zprime2muMassReach.cc" name="Zprime2muAnalyzers">
+<library file="AsymmetryFrameAnalysis.cc,AsymmetryParametrizer.cc,CocktailAnalyzer.cc,EfficiencyFromMC.cc,HardInteractionFilter.cc,HardInteractionNtuple.cc,HistosFromPAT.cc,MuonsFromDimuons.cc,PrintEvent.cc,QCDBackground.cc,ResolutionUsingMC.cc,SimpleNtupler.cc,Zprime2muAsymmetry.cc,Zprime2muMassReach.cc" name="Zprime2muAnalyzers">
   <use name="rootgraphics"/>
   <use name="CommonTools/UtilAlgos"/>
   <use name="DataFormats/PatCandidates"/>

@@ -9,10 +9,13 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import rec_levels, 
 tracks = ['global', 'inner', 'tpfms', 'picky', 'pmc', 'tmr', 'sigmaswitch']
 rec_levels(process, tracks)
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi import dy_gen_mass_cut
-process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi')
+process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HardInteractionFilter_cfi')
+process.HardInteractionFilterRes = process.HardInteractionFilter.clone(use_resonance_mass=True)
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.EfficiencyFromMC_cfi')
+
+#process.HardInteractionFilter.use_resonance_mass = True
+#process.EfficiencyFromMC.use_resonance_mass_denom = True
 
 process.HLTSingleObjects = cms.EDProducer('HLTLeptonsFromTriggerEvent',
                                           summary = cms.InputTag('hltTriggerSummaryAOD', '', 'HLT'),
@@ -29,8 +32,8 @@ process.allDimuonsVBTF = VBTFSelection.allDimuons.clone()
 process.dimuonsVBTF = VBTFSelection.dimuons.clone(src = 'allDimuonsVBTF')
 process.VBTFEfficiencyFromMC = process.EfficiencyFromMC.clone(dimuon_src = 'dimuonsVBTF', acceptance_max_eta = 2.1)
 
-process.p2 = cms.Path(process.DYGenMassFilter * process.Zprime2muAnalysisSequencePlain * process.HLTSingleObjects * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC)
-process.p = cms.Path(process.DYGenMassFilter * process.Zprime2muAnalysisSequence)
+process.p2 = cms.Path(process.HardInteractionFilter * process.Zprime2muAnalysisSequencePlain * process.HLTSingleObjects * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC)
+process.p = cms.Path(process.HardInteractionFilterRes * process.Zprime2muAnalysisSequence)
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi')
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.ResolutionUsingMC_cfi')
@@ -92,9 +95,11 @@ return_data = 1
         open('crab.cfg', 'wt').write(crab_cfg % locals())
 
         new_py = open('histos.py').read()
-        new_cut = dy_gen_mass_cut % locals()
-        new_py += '\nprocess.DYGenMassFilter.cut = "%(new_cut)s"\n' % locals()
-        if name in ['dy20', 'dy60']:
+        new_py += '\nprocess.HardInteractionFilter.min_mass = "%i"\n' % lo
+        new_py += '\nprocess.HardInteractionFilter.max_mass = "%i"\n' % hi
+        new_py += '\nprocess.HardInteractionFilterRes.min_mass = "%i"\n' % lo
+        new_py += '\nprocess.HardInteractionFilterRes.max_mass = "%i"\n' % hi
+        if dataset.startswith('/DYToMuMu_M-20_TuneZ2_7TeV-pythia6'):
             new_py += '\nswitch_hlt_name("REDIGI38X")\n'
         open('histos_crab.py', 'wt').write(new_py)
 

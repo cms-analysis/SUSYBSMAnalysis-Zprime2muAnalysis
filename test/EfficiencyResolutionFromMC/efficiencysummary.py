@@ -18,7 +18,7 @@ acc.SetTitle('')
 acc.GetXaxis().SetTitle('vector boson pole mass (GeV)')
 acc.GetYaxis().SetTitle('acceptance')
 acc.GetYaxis().SetTitleOffset(1.2)
-acc.GetYaxis().SetRangeUser(0.4, 0.96)
+acc.GetYaxis().SetRangeUser(0.36, 0.96)
 for i,h in enumerate([acc, acc21]):
     h.SetMarkerStyle(20+i)
     h.SetMarkerSize(0.9)
@@ -29,8 +29,8 @@ acc.Draw('APL')
 acc21.Draw('PL same')
 
 lg = ROOT.TLegend(0.38, 0.143, 0.86, 0.316)
-lg.AddEntry(acc,   'both muons | #eta| < 2.4', 'LPE')
-lg.AddEntry(acc21, 'both muons | #eta| < 2.1', 'LPE')
+lg.AddEntry(acc,   'both muons | #eta| < 2.4, p_{T} > 20 GeV', 'LPE')
+lg.AddEntry(acc21, 'both muons | #eta| < 2.1, p_{T} > 20 GeV', 'LPE')
 lg.Draw()
 
 ps.save('Acceptance', log=False)
@@ -38,7 +38,7 @@ ps.save('Acceptance', log=False)
 ################################################################################
 
 our_f = ROOT.TFile('plots/trigeffvsmassmctruth/RecoWrtAcc_totals.root')
-vbtf_f = ROOT.TFile('plots/trigeffvsmassmctruth_vbtf21/RecoWrtAcc_totals.root')
+vbtf_f = ROOT.TFile('plots/trigeffvsmassmctruth_vbtf/RecoWrtAcc_totals.root')
 
 our = our_f.Get(cname).FindObject('Graph')
 vbtf = vbtf_f.Get(cname).FindObject('Graph')
@@ -56,7 +56,7 @@ our.SetTitle('')
 our.GetXaxis().SetTitle('vector boson pole mass (GeV)')
 our.GetYaxis().SetTitle('trigger+reco+selection efficiency wrt acceptance')
 our.GetYaxis().SetTitleOffset(1.2)
-our.GetYaxis().SetRangeUser(0.815, 1)
+our.GetYaxis().SetRangeUser(0.855, 1)
 
 our.SetLineColor(ROOT.kRed)
 vbtf.SetLineColor(ROOT.kBlue)
@@ -72,9 +72,9 @@ our.Draw('APL')
 vbtf.Draw('PL same')
 ratio.Draw('PL same')
 
-lg = ROOT.TLegend(0.25, 0.13, 0.86, 0.29)
-lg.AddEntry(our,   'efficiency w/ Our selection (acc:   #left|#eta#right| < 2.4)', 'LPE')
-lg.AddEntry(vbtf,  'efficiency w/ VBTF selection (acc:   #left|#eta#right| < 2.1)', 'LPE')
+lg = ROOT.TLegend(0.20, 0.13, 0.86, 0.29)
+lg.AddEntry(our,   'efficiency w/ Our selection (acc:   #left|#eta#right| < 2.4, p_{T} > 20 GeV)', 'LPE')
+lg.AddEntry(vbtf,  'efficiency w/ VBTF selection (acc:   #left|#eta#right| < 2.1, p_{T} > 20 GeV)', 'LPE')
 lg.AddEntry(ratio, 'ratio VBTF/Ours', 'LPE')
 lg.Draw()
 
@@ -96,6 +96,10 @@ for i in xrange(our.GetN()):
     vbtf.GetPoint(i, vx, vy)
     our_ratio_to_z0.SetPoint(i, ox, our_z0/oy)
     vbtf_ratio_to_z0.SetPoint(i, vx, vbtf_z0/vy)
+    if i == 0:
+        for h in [our_ratio_to_z0, our_ratio_to_z0]:
+            h.SetPointEYlow(0)
+            h.SetPointEYhigh(0)
 
 our_ratio_to_z0.SetLineColor(ROOT.kRed)
 vbtf_ratio_to_z0.SetLineColor(ROOT.kBlue)
@@ -108,11 +112,11 @@ for i,h in enumerate([our_ratio_to_z0, vbtf_ratio_to_z0]):
 our_ratio_to_z0.GetXaxis().SetTitle('vector boson pole mass (GeV)')
 our_ratio_to_z0.GetYaxis().SetTitle("ratio efficiency(Z0)/efficiency(Z')")
 our_ratio_to_z0.GetYaxis().SetTitleOffset(1.3)
-our_ratio_to_z0.GetYaxis().SetRangeUser(0.87, 1.01)
+our_ratio_to_z0.GetYaxis().SetRangeUser(0.99, 1.015)
 our_ratio_to_z0.Draw('APL')
 vbtf_ratio_to_z0.Draw('PL same')
 
-lg = ROOT.TLegend(0.45, 0.68, 0.86, 0.85)
+lg = ROOT.TLegend(0.55, 0.14, 0.87, 0.27)
 lg.AddEntry(our_ratio_to_z0,  'Our selection', 'LPE')
 lg.AddEntry(vbtf_ratio_to_z0, 'VBTF selection', 'LPE')
 lg.Draw()
@@ -130,14 +134,14 @@ our_acc_times_eff.SetTitle('')
 our_acc_times_eff.GetXaxis().SetTitle('vector boson pole mass (GeV)')
 our_acc_times_eff.GetYaxis().SetTitle('acceptance times trigger+reco+selection efficiency')
 our_acc_times_eff.GetYaxis().SetTitleOffset(1.2)
-our_acc_times_eff.GetYaxis().SetRangeUser(0.4, 0.96)
+our_acc_times_eff.GetYaxis().SetRangeUser(0.4, 0.88)
 our_acc_times_eff.SetMarkerStyle(20)
 our_acc_times_eff.SetMarkerSize(0.9)
 
 ps.c.cd()
 our_acc_times_eff.Draw('APstats')
 
-fcn = ROOT.TF1('fcn', '[0] + [1]/(x + [2])', 0, 2000)
+fcn = ROOT.TF1('fcn', '[0] + [1]/(x + [2])', 50, 2000)
 fcn.SetParNames("a", "b", "c");
 ROOT.gStyle.SetOptFit(11)
 our_acc_times_eff.Fit(fcn, 'LVR')

@@ -18,15 +18,18 @@ class EfficiencyFromMC : public edm::EDAnalyzer {
   const double min_mass;
   const double max_mass;
   const bool use_resonance_mass;
-  edm::InputTag dimuon_src;
-  edm::InputTag hlt_obj_src;
-  double hlt_single_min_pt;  
-  double acceptance_max_eta;
+  const bool use_resonance_mass_denom;
+  const edm::InputTag dimuon_src;
+  const edm::InputTag hlt_obj_src;
+  const double hlt_single_min_pt;  
+  const double acceptance_max_eta;
+  const double acceptance_min_pt;
   TriggerDecision triggerDecision;
   HardInteraction hardInteraction;
 
   typedef std::pair<TH1F*, TH1F*> effhistos;
 
+  effhistos accnopt;
   effhistos acceptance;
   effhistos recowrtacc;
   effhistos recowrtacctrig;
@@ -60,16 +63,19 @@ EfficiencyFromMC::EfficiencyFromMC(const edm::ParameterSet& cfg)
     min_mass(cfg.getParameter<double>("min_mass")),
     max_mass(cfg.getParameter<double>("max_mass")),
     use_resonance_mass(cfg.getParameter<bool>("use_resonance_mass")),
+    use_resonance_mass_denom(cfg.getParameter<bool>("use_resonance_mass_denom")),
     dimuon_src(cfg.getParameter<edm::InputTag>("dimuon_src")),
     hlt_obj_src(cfg.getParameter<edm::InputTag>("hlt_obj_src")),
     hlt_single_min_pt(cfg.getParameter<double>("hlt_single_min_pt")),
     acceptance_max_eta(cfg.getParameter<double>("acceptance_max_eta")),
+    acceptance_min_pt(cfg.getParameter<double>("acceptance_min_pt")),
     hardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction"))    
 {
   triggerDecision.init(cfg.getParameter<edm::ParameterSet>("triggerDecision"));
 
   edm::Service<TFileService> fs;
 
+  accnopt = make_eff_pair("AccNoPt", "Acceptance (no p_{T} cut) vs. mass");
   acceptance = make_eff_pair("Acceptance", "Acceptance vs. mass");
   recowrtacc = make_eff_pair("RecoWrtAcc", "Offline dimuon efficiency for events in acceptance vs. mass");
   recowrtacctrig = make_eff_pair("RecoWrtAccTrig", "Offline dimuon efficiency for events in acceptance and firing the trigger vs. mass");
@@ -96,11 +102,17 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
   }
 
   const double m = use_resonance_mass ? hardInteraction.resonance->mass() : hardInteraction.dilepton().mass();
-  acceptance.second->Fill(m);
-  totalreco.second->Fill(m);
+  const double m_denom = use_resonance_mass_denom ? hardInteraction.resonance->mass() : hardInteraction.dilepton().mass();
+  accnopt.second->Fill(m_denom);
+  acceptance.second->Fill(m_denom);
+  totalreco.second->Fill(m_denom);
+
+  if (fabs(hardInteraction.lepMinus->eta()) < acceptance_max_eta && fabs(hardInteraction.lepPlus->eta()) < acceptance_max_eta)
+    accnopt.first->Fill(m);
 
   // both gen leptons in acceptance?
-  if (fabs(hardInteraction.lepMinus->eta()) < acceptance_max_eta && fabs(hardInteraction.lepPlus->eta()) < acceptance_max_eta)
+  if (fabs(hardInteraction.lepMinus->eta()) < acceptance_max_eta && fabs(hardInteraction.lepPlus->eta()) < acceptance_max_eta &&
+      hardInteraction.lepMinus->pt() > acceptance_min_pt && hardInteraction.lepPlus->pt() > acceptance_min_pt)
     acceptance.first->Fill(m);
   else
     // Trigger efficiencies below are with respect to events where

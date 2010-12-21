@@ -22,6 +22,9 @@ nminus1s = [
     'NoVtxProb',
 ]
 
+if 'test' in sys.argv:
+    nminus1s += ['NoPt', 'NoPt20Pt5']
+
 pretty = {
     'NoTkHits': '# tk hits #geq 10',
     'NoPxHits': '# px hits #geq 1',
@@ -68,6 +71,12 @@ if '120' in sys.argv:
         ('ana_nminus1_zssm750.root', (120, 1e9), ROOT.kGreen+2, 3004)
         ]
     lg = ROOT.TLegend(0.14, 0.14, 0.63, 0.34)
+elif 'test' in sys.argv:
+    items = [
+        ('ana_nminus1_testzmumu.root', (60, 120), 0, 0),
+        ('ana_nminus1_testzp500.root', (0, 1e9), 0, 0),
+        ]
+    lg = ROOT.TLegend(0.14, 0.14, 0.63, 0.34)
 else:         
     items = [
         ('ana_nminus1_data.root',     (60,120), ROOT.kBlack, -1),
@@ -108,20 +117,20 @@ for fn, mass_range, color, fill in items:
     if 'data' in fn:
         draw = 'P'
         eff.SetLineColor(color)
-        lg.AddEntry(eff, pretty[fn], 'L')
+        lg.AddEntry(eff, pretty.get(fn, fn), 'L')
     else:
         draw = '2'
         eff.SetLineColor(color)
         eff.SetFillColor(color)
         eff.SetFillStyle(fill)
-        lg.AddEntry(eff, pretty[fn], 'F')
+        lg.AddEntry(eff, pretty.get(fn, fn), 'F')
     draw += same
     eff.Draw(draw)
     effs.append(eff)
     same = ' same'
     bnr = eff.GetXaxis().GetNbins()/eff.GetN()
     for i in xrange(1,l+1):
-        eff.GetXaxis().SetBinLabel((i-1)*bnr+1, pretty[nminus1s[i-1]])
+        eff.GetXaxis().SetBinLabel((i-1)*bnr+1, pretty.get(nminus1s[i-1], nminus1s[i-1]))
     eff.GetXaxis().LabelsOption('u')
 
     print fn
@@ -129,6 +138,7 @@ for fn, mass_range, color, fill in items:
 
 lg.Draw()
 fn = 'plots/nminus1effs/nminus1%s.png' % ('120' if '120' in sys.argv else '')
-c.SaveAs(fn)
-c.SaveAs(fn.replace('png', 'root'))
+if 'test' not in sys.argv:
+    c.SaveAs(fn)
+    c.SaveAs(fn.replace('png', 'root'))
 

@@ -9,6 +9,8 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection_cff import loose_cut, trigge
 # allDimuons maker. "NoX" means remove cut X (i.e. the denominators),
 # "NoNo" means remove nothing (i.e. the numerators). This will break
 # if loose_, tight_ cut strings are changed...
+process.allDimuonsNoPt      = allDimuons.clone(loose_cut = loose_cut.replace(' && pt > 20.', ''))
+process.allDimuonsNoPt20Pt5 = allDimuons.clone(loose_cut = loose_cut.replace(' && pt > 20.', ' && pt > 5.'))
 process.allDimuonsNoIso     = allDimuons.clone(loose_cut = loose_cut.replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', ''))
 process.allDimuonsNoTkHits  = allDimuons.clone(loose_cut = loose_cut.replace(' && innerTrack.hitPattern.numberOfValidTrackerHits >= 10', ''))
 process.allDimuonsNoDB      = allDimuons.clone(tight_cut = tight_cut.replace('dB < 0.2 && ', ''))
@@ -87,11 +89,15 @@ return_data = 1
         ('zssm750', '/ZprimeSSMToMuMu_M-750_7TeV-pythia6/tucker-datamc_zssm750-b4341788d83565203f0d6250b5475e6e/USER'),
         ('ttbar', '/TTJets_TuneZ2_7TeV-madgraph-tauola/tucker-datamc_ttbar-b4341788d83565203f0d6250b5475e6e/USER'),
         ('dy120', '/DYToMuMu_M-120_7TeV-pythia6/tucker-effres_dy120-b62a83c345cd135ef96a2f3fe22d5e32/USER'),
+        ('testzmumu', '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-8ca75260210b8943d361f4da5b0c0bcc/USER'),
+        ('testzp500', '/ZprimeSSMToMuMu_M-500_7TeV-pythia6/tucker-effres_zp500-b62a83c345cd135ef96a2f3fe22d5e32/USER'),
         ]
     
     for name, ana_dataset in x:
-        if name != 'dy120':
+        if 'test' in name:
             continue
+            crab_cfg = crab_cfg.replace('total_number_of_events = -1', 'total_number_of_events = 55000')
+        
         print name
         open('crab.cfg', 'wt').write(crab_cfg % locals())
         if not just_testing:

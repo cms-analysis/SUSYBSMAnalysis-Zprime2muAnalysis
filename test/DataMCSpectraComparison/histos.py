@@ -107,9 +107,9 @@ def printify(process):
     process.pathVBTF *= process.PrintEventVBTF
 
 if 'data' in sys.argv:
-    process.source.fileNames = ['file:crab/crab_datamc_Run2010A_DileptonMu/res/merged.root', 'file:crab/crab_datamc_Run2010B_DileptonMu/res/merged.root']
-    process.TFileService.fileName = 'ana_datamc_data.root'    
-    process.GlobalTag.globaltag = 'GR_R_38X_V15::All'
+    process.source.fileNames = ['file:crab/crab_datamc_Run2010A/res/merged.root', 'file:crab/crab_datamc_promptB_all/res/merged.root']
+    process.TFileService.fileName = 'ana_datamc_data.root'
+    process.GlobalTag.globaltag = 'GR10_P_V10::All'
 
     from goodlumis import Run2010AB, Run2010ABMuonsOnly
     if 'all_good' in sys.argv:

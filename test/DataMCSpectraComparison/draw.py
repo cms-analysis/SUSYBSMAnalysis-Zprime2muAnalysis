@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# (py draw.py ana_datamc_40ipb > & ! out.draw.40ipb) && (py draw.py ana_datamc_34ipb > & ! out.draw.34ipb) && tlock ~/asdf/plots.tgz plots/datamc_34ipb plots/datamc_40ipb
+# (py draw.py ana_datamc_muonsonly > & ! out.draw.muonsonly) && (py draw.py ana_datamc_allgood > & ! out.draw.allgood) && tlock ~/asdf/plots.tgz plots/datamc_allgood plots/datamc_muonsonly
 
 import sys, os, glob
 from collections import defaultdict

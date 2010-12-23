@@ -71,7 +71,7 @@ samples = [
 #   sample('qcdbce20',     'QCD (BCtoE, 20 < #hat{p_{T}} < 30 GeV)',   '/QCD_Pt-20to30_BCtoE_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',               2243439, 811, 0.00056 * 236000000),
 #   sample('qcdbce30',     'QCD (BCtoE, 30 < #hat{p_{T}} < 80 GeV)',   '/QCD_Pt-30to80_BCtoE_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',               1995502, 812, 0.0023  *  59480000),
 #   sample('qcdbce80',     'QCD (BCtoE, 80 < #hat{p_{T}} < 170 GeV)',  '/QCD_Pt-80to170_BCtoE_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',              1043390, 813, 0.0104  *    900000),
-    sample('zssm750',      'Z_{SSM} (750) #rightarrow #mu^{+}#mu^{-}', '/ZprimeSSMToMuMu_M-750_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',                      55000,  40, 0.355, hlt_process_name='HLT'),
+    sample('zssm750',      'Z_{SSM} (750) #rightarrow #mu^{+}#mu^{-}', '/ZprimeSSMToMuMu_M-750_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',                      55000,  40, 0.355, k_factor=1.3, hlt_process_name='HLT'),
 ]
 samples.reverse()
 

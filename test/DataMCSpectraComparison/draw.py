@@ -17,12 +17,12 @@ to_compare = 'DileptonMass'
 global_rescale = 3273/3404.6 if False else None
 draw_zssm = True
 
+do_joins = True
 joins = [(s.name, 'jets') for s in samples if 'qcd' in s.name]
 joins += [(x, 'jets') for x in ['inclmu15', 'wmunu', 'wjets']]
 joins += [(x, 't#bar{t}-like') for x in ['singletop_tW', 'ztautau', 'ww', 'wz', 'zz']]
 joins += [(s.name, 'Z #rightarrow #mu^{+}#mu^{-}') for s in samples if 'dy' in s.name]
 joins += [('zmumu', 'Z #rightarrow #mu^{+}#mu^{-}')]
-
 joins = dict(joins)
 joins_colors = {'jets': 801, 't#bar{t}-like': 4, 'Z #rightarrow #mu^{+}#mu^{-}': 7}
 
@@ -58,16 +58,19 @@ subtitleize = {
     'MuonsPlusMuonsPlus':  '#mu^{+}#mu^{+}',
     'MuonsMinusMuonsMinus': '#mu^{-}#mu^{-}',
     'MuonsSameSign': '#mu^{#pm}#mu^{#pm}',
+    'MuonsAllSigns': '#mu#mu',
     'ElectronsPlusElectronsMinus': 'e^{+}e^{-}',
     'ElectronsPlusElectronsPlus': 'e^{+}e^{+}',
     'ElectronsMinusElectronsMinus': 'e^{-}e^{-}',
     'ElectronsSameSign': 'e^{#pm}e^{#pm}',
+    'ElectronsAllSigns': 'ee',
     'MuonsPlusElectronsMinus': '#mu^{+}e^{-}',
     'MuonsMinusElectronsPlus': '#mu^{-}e^{+}',
     'MuonsPlusElectronsPlus': '#mu^{+}e^{+}',
     'MuonsMinusElectronsMinus': '#mu^{-}e^{-}',
-    'MuonsElectronsOppSign': '#mu^{#pm}e^{-+}',
+    'MuonsElectronsOppSign': '#mu^{+}e^{-}/#mu^{-}e^{+}',
     'MuonsElectronsSameSign': '#mu^{#pm}e^{#pm}',
+    'MuonsElectronsAllSigns': 'e#mu',
     }
 titleize = {
     'DileptonMass': 'm(%s)%s',
@@ -85,7 +88,7 @@ yaxis = {
     }
 use_yaxis = True
 
-dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign']
+dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
 cutss = ['VBTF', 'Our', 'OurNoIso']
 
 ROOT.TH1.AddDirectory(False)
@@ -113,8 +116,6 @@ for cuts in cutss:
         for dilepton in dileptons:
             if int_lumi > 39 and 'Electron' in dilepton:
                 continue
-
-            do_joins = True # ('Plus' in dilepton and 'Minus' in dilepton) or 'OppSign' in dilepton
 
             xax = x_axis_limits if (dilepton == 'MuonsPlusMuonsMinus' and not cumulative) else x_axis_limits2
 

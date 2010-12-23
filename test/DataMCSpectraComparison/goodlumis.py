@@ -6,8 +6,8 @@ def combine(Sept17_ll, Prompt_ll):
     return Sept17_ll | Prompt_ll
 
 Sept17_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions10/7TeV/Reprocessing/Cert_132440-144114_7TeV_Sep17ReReco_Collisions10_JSON.txt')
-#Prompt_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions10/7TeV/StreamExpress/Cert_132440-149442_7TeV_StreamExpress_Collisions10_JSON_v2.txt')  # gives 35/pb
-Prompt_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions10/7TeV/StreamExpress/Cert_132440-149442_7TeV_StreamExpress_Collisions10_JSON_v3.txt')   # gives 33/pb
+Prompt_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions10/7TeV/StreamExpress/Cert_132440-149442_7TeV_StreamExpress_Collisions10_JSON_v2.txt')    # gives 35.5/pb when combined with Sept17
+#Prompt_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions10/7TeV/StreamExpress/Cert_132440-149442_7TeV_StreamExpress_Collisions10_JSON_v3.txt')   # gives 34/pb   when combined with Sept17
 Run2010AB_ll = combine(Sept17_ll, Prompt_ll)
 
 cmssw_base = os.environ['CMSSW_BASE']
@@ -17,5 +17,3 @@ Run2010ABMuonsOnly_ll = combine(Sept17MuonsOnly_ll, PromptMuonsOnly_ll)
 
 Run2010AB = Run2010AB_ll.getCMSSWString().split(',')
 Run2010ABMuonsOnly = Run2010ABMuonsOnly_ll.getCMSSWString().split(',')
-
-

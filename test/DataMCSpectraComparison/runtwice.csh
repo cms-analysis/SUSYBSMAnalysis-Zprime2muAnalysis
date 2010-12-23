@@ -15,10 +15,10 @@ lumiCalc.py -i ana_datamc_data.forlumi.json overview > ana_datamc_data.lumi
 mkdir ana_datamc_allgood
 mv ana_datamc_data.* ana_datamc_allgood/
 
-foreach x (`ls -1 --color=no ana_datamc_mc`)
+foreach x (`ls -1 --color=no ana_datamc_mc/*.root`)
   cd ana_datamc_muonsonly
-  ln -sf ../ana_datamc_mc/${x}
+  ln -sf ../${x}
   cd ../ana_datamc_allgood
-  ln -sf ../ana_datamc_mc/${x}
+  ln -sf ../${x}
   cd ..
 end

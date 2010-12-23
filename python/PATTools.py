@@ -42,15 +42,9 @@ def addMuonHitCount(process):
     from UserCode.Examples.muonHitCount_cfi import addUserData as addHitCount
     addHitCount(process.patMuons)
     process.patDefaultSequence.replace(process.patCandidates, process.muonHitCounts * process.patCandidates)
-    
-def removeMCUse(process):
-    # Remove anything that requires MC truth.
-    process.patDefaultSequence.remove(process.genSimLeptons)
-    process.patDefaultSequence.remove(process.prunedGenSimLeptons)
-    process.patDefaultSequence.remove(process.muonClassificationByHits)
 
-    from PhysicsTools.PatAlgos.tools.coreTools import removeMCMatching
-    removeMCMatching(process, ['All'])
+def removeMuonMCClassification(process):
+    process.patDefaultSequence.remove(process.muonClassificationByHits)
 
     # Remove the InputTags that were added to the userData of the
     # patMuons for the muonClassification.
@@ -69,6 +63,14 @@ def removeMCUse(process):
     process.patMuons.userData.userInts.src = i
     process.patMuons.userData.userFloats.src = f
 
+def removeMCUse(process):
+    # Remove anything that requires MC truth.
+    from PhysicsTools.PatAlgos.tools.coreTools import removeMCMatching
+    removeMCMatching(process, ['All'])
+    removeMuonMCClassification(process)
+    process.patDefaultSequence.remove(process.genSimLeptons)
+    process.patDefaultSequence.remove(process.prunedGenSimLeptons)
+    
 def changeMuonHLTMatch(process):
     # Configure the PAT trigger matcher as we want it.
     process.load('PhysicsTools.PatAlgos.triggerLayer1.triggerProducer_cff')
@@ -97,7 +99,6 @@ def addHEEPId(process):
     # and cannot be done later unless some modifications are done the
     # GsfElectron/GsfElectronCore classes.
     from SHarper.HEEPAnalyzer.HEEPSelectionCuts_cfi import heepBarrelCuts, heepEndcapCuts
-    heepEndcapCuts.cuts = heepEndcapCuts.cuts.value().replace(':dEtaIn','') # official prescription on HEEPElectronId twiki is to remove the dEtaIn cut in the endcaps for now
     process.HEEPId = cms.EDProducer('HEEPIdValueMapProducer',
                                     eleLabel = cms.InputTag('gsfElectrons'),
                                     barrelCuts = heepBarrelCuts,
@@ -109,6 +110,17 @@ def addHEEPId(process):
     
     process.patDefaultSequence.replace(process.patCandidates, process.HEEPId * process.patCandidates)
 
+def AODOnly(process):
+    raise NotImplementedError('JMTBAD')
+
+    from PhysicsTools.PatAlgos.tools.coreTools import restrictInputToAOD
+    restrictInputToAOD(process)
+
+    removeMuonMCClassification(process) # throw the baby out with the bathwater...
+
+    for x in (process.muonMatch, process.electronMatch):
+        x.matched = cms.InputTag('prunedGenLeptons')
+    process.patDefaultSequence.replace(process.genSimLeptons * process.prunedGenSimLeptons, process.prunedGenLeptons)
 
 
 # Some scraps to aid in debugging that can be put in your top-level

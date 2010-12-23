@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# (py trigeffvmass.py >&! out.trigeffvmass) && (py trigeffvmass.py vbtf >&! out.trigeffvmass_vbtf) && tar czvf ~/asdf/plots.tgz plots
+
 import sys, os
 
 samples = ['dy20', 'dy60', 'dy120', 'dy200', 'dy500', 'dy800', 'zp500', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750']
@@ -20,6 +22,7 @@ ROOT.TH1.AddDirectory(0)
 
 types = ['AccNoPt', 'Acceptance', 'RecoWrtAcc', 'RecoWrtAccTrig', 'TotalReco', 'L1OrEff', 'HLTOrEff', 'TotalTrigEff']
 rebin_factor = 100
+make_individual_plots = False
 make_individual_effs = False
 
 files = {}
@@ -33,7 +36,8 @@ print '%30s%30s%30s%30s%30s' % ('sample', 'type', 'num', 'den', 'eff')
 for sample in samples:
     f = files[sample] = ROOT.TFile('ana_effres_%s.root' % sample)
     d = f.Get(which)
-    ps = plot_saver(os.path.join(plot_dir, sample))
+    if make_individual_plots or make_individual_effs:
+        ps = plot_saver(os.path.join(plot_dir, sample))
 
     for t in types:
         num = d.Get('Num' + t)
@@ -41,17 +45,18 @@ for sample in samples:
 
         num.Rebin(rebin_factor)
         den.Rebin(rebin_factor)
-            
-        num.Draw()
-        ps.save(t + 'Num')
-        den.Draw()
-        ps.save(t + 'Den')
 
-        num.SetLineColor(ROOT.kRed)
-        den.SetLineColor(ROOT.kBlack)
-        den.Draw()
-        num.Draw('same')
-        ps.save(t + 'Both')
+        if make_individual_plots:
+            num.Draw()
+            ps.save(t + 'Num')
+            den.Draw()
+            ps.save(t + 'Den')
+
+            num.SetLineColor(ROOT.kRed)
+            den.SetLineColor(ROOT.kBlack)
+            den.Draw()
+            num.Draw('same')
+            ps.save(t + 'Both')
 
         if make_individual_effs:
             eff = binomial_divide(num, den)
@@ -92,7 +97,9 @@ for sample, t, cnum, cden in samples_totals:
     hden.SetBinContent(mass, cden)
 
 for t in sorted(totals_histos.iterkeys()):
-    eff = binomial_divide(*totals_histos[t])
+    hnum, hden = totals_histos[t]
+    eff = binomial_divide(hnum, hden)
+    totals_histos[t + '_eff'] = eff
     if t.startswith('Acc'):
         eff.GetYaxis().SetRangeUser(0.4, 1.01)
     elif 'Reco' in t:
@@ -101,7 +108,7 @@ for t in sorted(totals_histos.iterkeys()):
         eff.GetYaxis().SetRangeUser(0.75, 1.01)
     eff.Draw('AP')
     ps.save(t + '_totals', log=False)
-                  
+
 def do_overlay(name, samples, which):
     if not samples:
         return
@@ -235,3 +242,26 @@ RecoWrtAcc.Draw('P same')
 TotalReco.Draw('P same')
 lg.Draw()
 ps.save('summary_recoeff', log=False)
+
+# Dump the values of the total reconstruction curve (but take the
+# 60-120 and 120-200 from the total counts).
+print '\nTotal efficienies (acceptance times trigger+reconstruction+selection efficiencies)'
+print '%20s%10s%20s' % ('mass range', 'eff', '68%CL interval')
+x,y = ROOT.Double(), ROOT.Double()
+g = totals_histos['TotalReco_eff']
+g.GetPoint(0, x, y)
+print '%20s%10.4f%20s' % ( '60-120', y, '[%5.4f, %5.4f]' % (y-g.GetErrorYlow(0), y+g.GetErrorYhigh(0)))
+g.GetPoint(1, x, y)
+print '%20s%10.4f%20s' % ('120-200', y, '[%5.4f, %5.4f]' % (y-g.GetErrorYlow(1), y+g.GetErrorYhigh(1)))
+g = TotalReco
+n = g.GetN()
+for i in xrange(n):
+    g.GetPoint(i, x, y)
+    exl = g.GetErrorXlow(i)
+    exh = g.GetErrorXhigh(i)
+    eyl = g.GetErrorYlow(i)
+    eyh = g.GetErrorYhigh(i)
+    if x-exl < 200:
+        continue
+    print '%20s%10.4f%20s' % ('%.f-%.f' % (x-exl, x+exh), y, '[%5.4f, %5.4f]' % (y-eyl, y+eyh))
+    

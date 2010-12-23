@@ -30,3 +30,5 @@ events_per_job = 25000
         if not just_testing:
             os.system('crab -create -submit all')
             os.system('rm crab.cfg')
+
+# 4 8 15 16 23 42

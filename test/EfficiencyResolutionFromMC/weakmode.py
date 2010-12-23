@@ -58,7 +58,7 @@ for which, blammo in [('tkonly', 0.56), ('pmc', 0.73)]:
         M = float(x)
         sigma = float(y)*M
         hwm = doit(blammo, M, sigma)
-        print '%8.f%8.3f%8.3f%8.3f' % (M, hwm.GetMean() - M, sigma/M, hwm.GetRMS()/M)
+        print '%8.f%8.4f%8.4f%8.4f' % (M, hwm.GetMean() - M, sigma/M, hwm.GetRMS()/M)
         weakmoded_res.SetPoint(i, M, hwm.GetRMS()/M)
         weakmoded_res.SetPointError(i, pure_res.GetErrorX(i), hwm.GetRMSError()/M)
         del hwm

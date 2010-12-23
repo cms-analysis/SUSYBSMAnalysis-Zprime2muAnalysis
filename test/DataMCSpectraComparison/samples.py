@@ -65,7 +65,7 @@ samples = [
     sample('ztautau',      'Z #rightarrow #tau^{+}#tau^{-}',           '/DYToTauTau_M-20_CT10_TuneZ2_7TeV-powheg-pythia-tauola/Fall10-START38_V12-v1/GEN-SIM-RECO', 1994719,  46, 1631, hlt_process_name='HLT'),
     sample('wjets',        'W+jets',                                   '/WJetsToLNu_TuneZ2_7TeV-madgraph-tauola/Fall10-START38_V12-v1/GEN-SIM-RECO',               15168266,   3, 1.04e4, hlt_process_name='HLT'),
     sample('inclmu15',     'QCD (MuRich, muon p_{T} > 15 GeV)',        '/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',        29504866, 801, 0.0002855 * 296600000),
-    sample('zssm750',      'Z_{SSM} (750) #rightarrow #mu^{+}#mu^{-}', '/ZprimeSSMToMuMu_M-750_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',                      55000,  40, 0.355, k_factor=1.3, hlt_process_name='HLT'),
+    sample('zssm750',    'Z\'_{SSM}(750) #rightarrow #mu^{+}#mu^{-}',  '/ZprimeSSMToMuMu_M-750_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO',                      55000,  40, 0.355, k_factor=1.3, hlt_process_name='HLT'),
 ]
 samples.reverse()
 

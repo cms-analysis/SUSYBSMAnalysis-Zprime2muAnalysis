@@ -190,11 +190,12 @@ for cuts in cutss:
                     s.Add(h)
                 last_mc = h
 
-            if draw_zssm and dilepton == 'MuonsPlusMuonsMinus':
-                l = ROOT.TLegend(0.63, 0.54, 0.87, 0.87)
+            if draw_zssm and (dilepton == 'MuonsPlusMuonsMinus' and not cumulative):
+                l = ROOT.TLegend(0.62, 0.54, 0.87, 0.87)
             else:
                 l = ROOT.TLegend(0.70, 0.59, 0.87, 0.87)
             l.SetFillColor(0)
+            l.SetBorderSize(0)
 
             m = ROOT.TMarker()
             m.SetMarkerStyle(20)
@@ -212,7 +213,7 @@ for cuts in cutss:
                     else:
                         legend_already.add(join_nice_name)
                         nice_name = join_nice_name
-                if 'zssm' in sample.name and (not draw_zssm or dilepton != 'MuonsPlusMuonsMinus'):
+                if 'zssm' in sample.name and (not draw_zssm or dilepton != 'MuonsPlusMuonsMinus' or cumulative):
                     continue
                 l.AddEntry(sample.mass, nice_name, 'F')
 
@@ -270,7 +271,7 @@ for cuts in cutss:
                 zp.SetStats(0)
                 zp.Draw('hist same')
 
-            t1 = ROOT.TLatex(0.4, 0.93, '#sqrt{s} = 7 TeV,  #int L dt = %.1f pb^{-1}' % int_lumi)
+            t1 = ROOT.TLatex(0.4, 0.93, '#sqrt{s} = 7 TeV,  #int L dt = %.f pb^{-1}' % round(int_lumi))
             t2 = ROOT.TLatex(0.1, 0.93, 'CMS preliminary')
 
             for t in t1, t2:

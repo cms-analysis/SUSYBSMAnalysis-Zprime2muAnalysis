@@ -2,7 +2,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import *
 set_zp2mu_style()
 
 ps = plot_saver('plots/ourvsvbtfeff')
-cname = 'c12'
+cname = 'c0'
 
 ################################################################################
 
@@ -96,10 +96,11 @@ for i in xrange(our.GetN()):
     vbtf.GetPoint(i, vx, vy)
     our_ratio_to_z0.SetPoint(i, ox, our_z0/oy)
     vbtf_ratio_to_z0.SetPoint(i, vx, vbtf_z0/vy)
-    if i == 0:
-        for h in [our_ratio_to_z0, our_ratio_to_z0]:
-            h.SetPointEYlow(0)
-            h.SetPointEYhigh(0)
+    if i != 0:
+        pass # ignore correct errors for now
+for h in [our_ratio_to_z0, our_ratio_to_z0]:
+    h.SetPointEYlow(0,0)
+    h.SetPointEYhigh(0,0)
 
 our_ratio_to_z0.SetLineColor(ROOT.kRed)
 vbtf_ratio_to_z0.SetLineColor(ROOT.kBlue)

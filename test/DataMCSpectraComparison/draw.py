@@ -19,12 +19,12 @@ draw_zssm = True
 
 joins = [(s.name, 'jets') for s in samples if 'qcd' in s.name]
 joins += [(x, 'jets') for x in ['inclmu15', 'wmunu', 'wjets']]
-joins += [(x, 't#bar{t}-like') for x in ['singletop_tW', 'ztautau', 'ww', 'wz', 'zz']]
+joins += [(x, 't#bar{t}+t#bar{t}-like') for x in ['ttbar', 'singletop_tW', 'ztautau', 'ww', 'wz', 'zz']]
 joins += [(s.name, 'Z #rightarrow #mu^{+}#mu^{-}') for s in samples if 'dy' in s.name]
 joins += [('zmumu', 'Z #rightarrow #mu^{+}#mu^{-}')]
 
 joins = dict(joins)
-joins_colors = {'jets': 801, 't#bar{t}-like': 4, 'Z #rightarrow #mu^{+}#mu^{-}': 7}
+joins_colors = {'jets': ROOT.kBlue, 't#bar{t}+t#bar{t}-like': ROOT.kRed, 'Z #rightarrow #mu^{+}#mu^{-}': 801}
 
 histo_dir = None
 for x in sys.argv:
@@ -101,13 +101,9 @@ ROOT.TH1.AddDirectory(False)
 def dir_name(c, d):
     return c + d + 'Histos'
 
-sumMCfile = None # ROOT.TFile('sumMC.root', 'recreate')
-
 pdir = 'plots/datamc'
 if histo_dir != 'ana_datamc':
     pdir += '_' + histo_dir.replace('ana_datamc_', '')
-if global_rescale is not None:
-    pdir += '_normToZ'
 ps = plot_saver(pdir)
 
 if global_rescale is not None:
@@ -145,8 +141,6 @@ for cuts in cutss:
             
         h = samples[0].mass
         summc = ROOT.TH1F(cuts + dilepton + '_sumMC', '', h.GetNbinsX(), h.GetXaxis().GetXmin(), h.GetXaxis().GetXmax())
-        if sumMCfile is not None:
-            summc.SetDirectory(sumMCfile)
         
         ## Sort by increasing integral.
         #samples.sort(key=lambda x: x.mass.Integral(x.mass.FindBin(150), x.mass.FindBin(1e9)))
@@ -155,7 +149,7 @@ for cuts in cutss:
         hdata = data[dilepton]
 
         # Print a pretty table.
-        for mass_range in [(60,120), (120,200), (120,), (200,)]:
+        for mass_range in [(60,120), (120,200), (120,), (200,), (586, 914)]:
             print 'cuts: %s  dilepton: %s  mass range: %s' % (cuts, dilepton, mass_range)
             for sample in samples:
                 sample.integral = get_integral(sample.mass, *mass_range, integral_only=True, include_last_bin=False)
@@ -290,16 +284,7 @@ for cuts in cutss:
 
         l.Draw('same')
 
-        data_for_file = hdata.Clone(cuts + dilepton + '_data')
-        if sumMCfile is not None:
-            data_for_file.SetDirectory(sumMCfile)
-        
         ps.save(dilepton)
-
-        if False and dilepton == 'MuonsPlusMuonsMinus':
-            ps.c.SetLogx(1)
-            ps.save(dilepton + '_logx')
-            ps.c.SetLogx(0)
 
         data_c = cumulative_histogram(hdata)
         summc_c = cumulative_histogram(summc)
@@ -335,9 +320,6 @@ for cuts in cutss:
         l.Draw('same')
 
         ps.save(dilepton + '_cumulative')
-
-        if sumMCfile is not None:
-            sumMCfile.Write()
 
     if False:
         for sample in samples:

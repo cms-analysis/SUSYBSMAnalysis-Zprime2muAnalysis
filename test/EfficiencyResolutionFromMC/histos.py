@@ -89,10 +89,25 @@ return_data = 1
         ('zp1750', '/ZprimeSSMToMuMu_M-1750_7TeV-pythia6/tucker-effres_zp1750-b62a83c345cd135ef96a2f3fe22d5e32/USER', -20000, 20000),
         ]
 
+    resolutions = {
+        'zp500' : 0.048,
+        'zp750' : 0.060,
+        'zp1000': 0.071,
+        'zp1250': 0.080,
+        'zp1500': 0.086,
+        'zp1750': 0.089,
+        }
+    
     just_testing = 'testing' in sys.argv
 
     for name, dataset, lo, hi in samples:
         open('crab.cfg', 'wt').write(crab_cfg % locals())
+
+        if False and 'zp' in name:
+            mass = float(name.replace('zp', ''))
+            res = resolutions[name]
+            lo = mass - 1.5*res*mass
+            hi = mass + 1.5*res*mass
 
         new_py = open('histos.py').read()
         new_py += '\nprocess.HardInteractionFilter.min_mass = "%i"\n' % lo
@@ -105,4 +120,4 @@ return_data = 1
 
         if not just_testing:
             os.system('crab -create -submit all')
-            os.system('rm crab.cfg histos_crab.py')
+            os.system('rm crab.cfg histos_crab.py histos_crab.pyc')

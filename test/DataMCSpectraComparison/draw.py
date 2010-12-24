@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# (py draw.py ana_datamc_muonsonly > & ! out.draw.muonsonly) && (py draw.py ana_datamc_allgood > & ! out.draw.allgood) && tlock ~/asdf/plots.tgz plots/datamc_allgood plots/datamc_muonsonly
+# (py draw.py ana_datamc_current/muonsonly >! out.draw.muonsonly) && (py draw.py ana_datamc_current/allgood >! out.draw.allgood) && mv out.draw.* plots/datamc_current/ && tlock ~/asdf/plots.tgz plots/datamc_current
 
 import sys, os, glob
 from collections import defaultdict
@@ -52,6 +52,7 @@ def parse_lumi_from_log(fn):
 
 int_lumi = sum(parse_lumi_from_log(x.replace('.root', '.lumi')) for x in data_fns)
 print 'total lumi from data: %.1f/pb' % int_lumi
+lumi_syst_frac = 0.11
 
 subtitleize = {
     'MuonsPlusMuonsMinus': '#mu^{+}#mu^{-}',
@@ -149,30 +150,44 @@ for cuts in cutss:
                     for sample in samples:
                         sample.integral = get_integral(sample.mass, *mass_range, integral_only=True, include_last_bin=False)
                     hdata_integral = get_integral(hdata, *mass_range, integral_only=True, include_last_bin=False)
-                    print '%100s%20s%20s +/- %20s%20s' % ('sample', 'weight for %i/nb' % int(int_lumi*1000), 'integral', 'error', 'limit if int=0')
-                    print '%100s%20s%20.6f +/- %20.6f%20s' % ('data', '-', hdata_integral, hdata_integral**0.5, '-')
+                    print '%50s%20s%20s%20s%20s%20s%20s%20s' % ('sample', 'weight for %i/nb' % int(int_lumi*1000), 'integral', 'stat error', 'limit if int=0', 'syst error', 'lumi error', 'total error')
+                    print '%50s%20s%20.6f%20.6f' % ('data', '-', hdata_integral, hdata_integral**0.5)
                     sum_mc = 0.
                     var_sum_mc = 0.
+                    syst_var_sum_mc = 0.
                     sums = defaultdict(float)
                     var_sums = defaultdict(float)
+                    syst_var_sums = defaultdict(float)
                     for sample in sorted(samples, key=lambda x: x.integral, reverse=True):
                         w = sample.partial_weight*int_lumi
                         var = w * sample.integral # not w**2 * sample.integral because sample.integral is already I*w
+                        syst_var = (sample.syst_frac * sample.integral)**2
+
                         if 'zssm' not in sample.name:
                             sum_mc += sample.integral
                             var_sum_mc += var
+                            syst_var_sum_mc += syst_var
+
                         if joins.has_key(sample.name):
                             join_name = joins[sample.name]
                             sums[join_name] += sample.integral
                             var_sums[join_name] += var
-                        if sample.integral == 0:
-                            limit = '%.6f' % (3*w)
-                        else:
-                            limit = '-'
-                        print '%100s%20.6f%20.6f +/- %20.6f%20s' % (sample.nice_name, w, sample.integral, var**0.5, limit)
-                    print '%100s%20s%20.6f +/- %20.6f%20s' % ('sum MC (not including Z\')', '-', sum_mc, var_sum_mc**0.5, '-')
+                            syst_var_sums[join_name] += syst_var
+
+                        limit = '%.6f' % (3*w) if sample.integral == 0 else '-'
+
+                        lumi_err = lumi_syst_frac * sample.integral
+                        tot_err = (var + syst_var + lumi_err**2)**0.5
+
+                        print '%50s%20.6f%20.6f%20.6f%20s%20.6f%20.6f%20.6f' % (sample.nice_name, w, sample.integral, var**0.5, limit, syst_var**0.5, lumi_err, tot_err)
+
+                    lumi_err = lumi_syst_frac * sum_mc
+                    tot_err = (var_sum_mc + syst_var_sum_mc + lumi_err**2)**0.5
+                    print '%50s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f' % ('sum MC (not including Z\')', '-', sum_mc, var_sum_mc**0.5, '-', syst_var_sum_mc**0.5, lumi_err, tot_err)
                     for join_name in sorted(sums.keys()):
-                        print '%100s%20s%20.6f +/- %20.6f%20s' % (join_name, '-', sums[join_name], var_sums[join_name]**0.5, '-')
+                        lumi_err = lumi_syst_frac * sums[join_name]
+                        tot_err = (var_sums[join_name] + syst_var_sums[join_name] + lumi_err**2)**0.5
+                        print '%50s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f' % (join_name, '-', sums[join_name], var_sums[join_name]**0.5, '-', syst_var_sums[join_name]**0.5, lumi_err, tot_err)
                     print
                 print
 

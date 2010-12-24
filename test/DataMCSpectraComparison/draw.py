@@ -5,14 +5,52 @@
 import sys, os, glob
 from collections import defaultdict
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import cumulative_histogram, get_integral, move_above_into_bin, plot_saver, real_hist_max, real_hist_min, set_zp2mu_style, ROOT
+
 set_zp2mu_style()
-ROOT.gStyle.SetLineWidth(2)
+#ROOT.gStyle.SetLineWidth(2)
+
+ROOT.gStyle.SetCanvasColor(0)
+ROOT.gStyle.SetPalette(1)
+ROOT.gStyle.SetOptTitle(1)
+ROOT.gStyle.SetTitleFillColor(0)
+ROOT.gStyle.SetStatColor(0)
+ROOT.gStyle.SetOptFit(1111)
+ROOT.gStyle.SetCanvasBorderMode(0)
+ROOT.gStyle.SetTitleBorderSize(0)
+ROOT.gStyle.SetOptStat(0) 
+ROOT.gStyle.SetTitleXOffset(.9)
+ROOT.gStyle.SetTitleXSize(0.047)
+ROOT.gStyle.SetTitleYOffset(1.3)
+ROOT.gStyle.SetTitleYSize(0.047)
+ROOT.gStyle.SetTitleX(0.04)
+ROOT.gStyle.SetTitleY(0.99)
+ROOT.gStyle.SetTitleW(0.88)
+ROOT.gStyle.SetTitleH(0.06)
+ROOT.gStyle.SetAxisColor(1, 'XYZ')
+ROOT.gStyle.SetStripDecimals(1)
+ROOT.gStyle.SetTickLength(0.03, 'XYZ')
+ROOT.gStyle.SetNdivisions(510, 'XYZ')
+ROOT.gStyle.SetCanvasBorderMode(0)
+ROOT.gStyle.SetCanvasColor(0)
+ROOT.gStyle.SetCanvasDefH(600)
+ROOT.gStyle.SetCanvasDefW(600)
+ROOT.gStyle.SetCanvasDefX(0)
+ROOT.gStyle.SetCanvasDefY(0)
+#   ROOT.gStyle.SetPadTopMargin(0.09)
+ROOT.gStyle.SetPadTopMargin(0.13)
+#   ROOT.gStyle.SetPadBottomMargin(0.10)
+ROOT.gStyle.SetPadBottomMargin(0.13)
+ROOT.gStyle.SetPadLeftMargin(0.13)
+#   ROOT.gStyle.SetPadRightMargin(0.07)
+ROOT.gStyle.SetPadRightMargin(0.13)
+#   ROOT.gStyle.SetTitleBorderSize(0)
+
 
 from samples import *
 
 rebin_factor = 5
-x_axis_limits = 40, 1000
-x_axis_limits2 = 40, 500
+x_axis_limits = 50, 1050
+x_axis_limits2 = 50, 500
 to_compare = 'DileptonMass'
 global_rescale = 3273/3404.6 if False else None
 draw_zssm = True
@@ -20,11 +58,11 @@ draw_zssm = True
 do_joins = True
 joins = [(s.name, 'jets') for s in samples if 'qcd' in s.name]
 joins += [(x, 'jets') for x in ['inclmu15', 'wmunu', 'wjets']]
-joins += [(x, 't#bar{t}-like') for x in ['singletop_tW', 'ztautau', 'ww', 'wz', 'zz']]
-joins += [(s.name, 'Z #rightarrow #mu^{+}#mu^{-}') for s in samples if 'dy' in s.name]
-joins += [('zmumu', 'Z #rightarrow #mu^{+}#mu^{-}')]
+joins += [(x, 't#bar{t} + t#bar{t}-like') for x in ['ttbar', 'singletop_tW', 'ztautau', 'ww', 'wz', 'zz']]
+joins += [(s.name, '#gamma/Z #rightarrow #mu^{+}#mu^{-}') for s in samples if 'dy' in s.name]
+joins += [('zmumu', '#gamma/Z #rightarrow #mu^{+}#mu^{-}')]
 joins = dict(joins)
-joins_colors = {'jets': 801, 't#bar{t}-like': 4, 'Z #rightarrow #mu^{+}#mu^{-}': 7}
+joins_colors = {'jets': 4, 't#bar{t} + t#bar{t}-like': 2, '#gamma/Z #rightarrow #mu^{+}#mu^{-}': 7}
 
 histo_dir = [x for x in sys.argv if os.path.isdir(x)][0]
 
@@ -82,7 +120,7 @@ unitize = {
     'DileptonPt': ' (GeV)',
     }
 yaxis = {
-    ('MuonsPlusMuonsMinus', False): (1e-3, None),
+    ('MuonsPlusMuonsMinus', False): (4e-3, None),
     ('MuonsPlusMuonsMinus', True): (1.6, None),
 #   ('MuonsSameSign', False): (5e-5, 2.5),
 #   ('MuonsElectronsOppSign', False): (2e-3, 40),
@@ -100,7 +138,7 @@ def dir_name(c, d):
 pdir = 'plots/datamc'
 if histo_dir != 'ana_datamc':
     pdir += '_' + histo_dir.replace('ana_datamc_', '')
-ps = plot_saver(pdir)
+ps = plot_saver(pdir, size=(600,500))
 
 if global_rescale is not None:
     for s in samples:
@@ -206,17 +244,19 @@ for cuts in cutss:
                 last_mc = h
 
             if draw_zssm and (dilepton == 'MuonsPlusMuonsMinus' and not cumulative):
-                l = ROOT.TLegend(0.62, 0.54, 0.87, 0.87)
+                l = ROOT.TLegend(0.55, 0.60, 0.83, 0.85)
+            elif dilepton == 'MuonsPlusMuonsMinus' and cumulative:
+                l = ROOT.TLegend(0.61, 0.60, 0.83, 0.85)
             else:
-                l = ROOT.TLegend(0.70, 0.59, 0.87, 0.87)
+                l = ROOT.TLegend(0.69, 0.62, 0.88, 0.84)
             l.SetFillColor(0)
             l.SetBorderSize(0)
 
             m = ROOT.TMarker()
             m.SetMarkerStyle(20)
-            m.SetMarkerSize(0.5)
+            m.SetMarkerSize(0.6)
             m.SetMarkerColor(ROOT.kBlack)
-            l.AddEntry(m, 'Data', 'LPE')
+            l.AddEntry(m, 'DATA', 'LP')
 
             legend_already = set()
             for sample in reversed(samples):
@@ -235,7 +275,7 @@ for cuts in cutss:
             s.Draw('hist')
             # must call Draw first or the THStack doesn't have a histogram/axis
             s.GetXaxis().SetRangeUser(*xax)
-
+            
             hdata.Rebin(rebin_factor)
             if cumulative:
                 hdata = cumulative_histogram(hdata)
@@ -265,15 +305,18 @@ for cuts in cutss:
             if cumulative:
                 title = 'Events #geq %s' % (titleize[to_compare] % (subtitleize[dilepton], ''))
             else:
-                title = 'Events/%i%s' % (rebin_factor, unitize[to_compare].replace('(','').replace(')',''))
+                title = 'Events / %i%s' % (rebin_factor, unitize[to_compare].replace('(','').replace(')',''))
             hdata.GetYaxis().SetTitle(title)
+            hdata.GetXaxis().SetTitleOffset(0.9)
+            hdata.GetXaxis().SetTitleSize(0.047)
             hdata.GetYaxis().SetTitleOffset(1.2)
+            hdata.GetYaxis().SetTitleSize(0.047)
             hdata.SetMinimum(mymin)
             hdata.SetMaximum(mymax)
             hdata.SetMarkerStyle(20)
-            hdata.SetMarkerSize(0.5)
+            hdata.SetMarkerSize(0.6)
             hdata.SetStats(0)
-            hdata.Draw('same e1')
+            hdata.Draw('same p e')
 
             if draw_zssm and not cumulative and dilepton == 'MuonsPlusMuonsMinus':
                 from samples import zssm750
@@ -286,16 +329,18 @@ for cuts in cutss:
                 zp.SetStats(0)
                 zp.Draw('hist same')
 
-            t1 = ROOT.TLatex(0.4, 0.93, '#sqrt{s} = 7 TeV,  #int L dt = %.f pb^{-1}' % round(int_lumi))
-            t2 = ROOT.TLatex(0.1, 0.93, 'CMS preliminary')
-
+            t1 = ROOT.TPaveLabel(0.451, 0.879, 0.768, 0.970, '#sqrt{s} = 7 TeV, #int L dt = %.f pb^{-1}' % round(int_lumi), 'brNDC')
+            t2 = ROOT.TPaveLabel(0.125, 0.887, 0.389, 0.978, 'CMS preliminary', 'brNDC')
+            t1.SetTextSize(0.4)
+            t2.SetTextSize(0.45)
             for t in t1, t2:
-                t.SetTextSize(0.0375)
-                t.SetNDC()
+                t.SetBorderSize(0)
+                t.SetFillColor(0)
+                t.SetFillStyle(0)
+                t.Draw()
 
-            t1.Draw()
-            t2.Draw()
-
+            l.SetTextSize(0.03),
+            
             l.Draw('same')
 
             n = dilepton

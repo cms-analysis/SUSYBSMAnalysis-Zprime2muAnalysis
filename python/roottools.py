@@ -99,6 +99,7 @@ def cumulative_histogram(h, type='ge'):
     
     nb = h.GetNbinsX()
     hc = ROOT.TH1F(h.GetName() + '_cumulative_' + type, '', nb, h.GetXaxis().GetXmin(), h.GetXaxis().GetXmax())
+    hc.Sumw2()
     if type == 'ge':
         first, last, step = nb+1, 0, -1
     elif type == 'le':
@@ -107,7 +108,9 @@ def cumulative_histogram(h, type='ge'):
         raise ValueError('type %s not recognized' % type)
     for i in xrange(first, last, step):
         prev = 0 if i == first else hc.GetBinContent(i-step)
-        hc.SetBinContent(i, h.GetBinContent(i) + prev)
+        c = h.GetBinContent(i) + prev
+        hc.SetBinContent(i, c)
+        hc.SetBinError(i, c**0.5)
     return hc
 
 def fit_gaussian(hist, factor=None, draw=False, cache=[]):

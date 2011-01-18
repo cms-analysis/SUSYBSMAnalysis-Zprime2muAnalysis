@@ -3,9 +3,12 @@
 import sys, os
 from array import array
 
-sys.argv.append('-b')     # Start ROOT in batch mode;
-import ROOT; ROOT.TCanvas # make sure libGui gets initialized while '-b' is specified;
-sys.argv.remove('-b')     # and don't mess up sys.argv.
+if os.environ.has_key('ZPTMU_ROOTTOOLS_NOBATCHMODE'):
+    import ROOT
+else:
+    sys.argv.append('-b')     # Start ROOT in batch mode;
+    import ROOT; ROOT.TCanvas # make sure libGui gets initialized while '-b' is specified;
+    sys.argv.remove('-b')     # and don't mess up sys.argv.
 
 def apply_hist_commands(hist, hist_cmds=None):
     """With hist_cmds a list of n-tuples, where the first entry of the

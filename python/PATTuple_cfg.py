@@ -2,19 +2,23 @@
 
 import FWCore.ParameterSet.Config as cms
 
-# Standard CMSSW configuration, loading services and modules needed to
-# run the PAT.
+# Standard CMSSW configuration (mostly standard in PAT tuple/tools
+# use).
+
 process = cms.Process('PAT')
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True))
 process.source = cms.Source('PoolSource', fileNames = cms.untracked.vstring('file:PlaceHolder.root'))
+
+# Load services needed to run the PAT.
 process.load('Configuration.StandardSequences.Geometry_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.GlobalTag.globaltag = cms.string('PlaceHolder::All')
 
 # Configure the MessageLogger ~sanely. Also direct it to let the PAT
-# summary tables be reported.
+# summary tables be reported -- nice to see how many events had no
+# muons, how many had no "selected"/"clean" muons, etc.
 process.load('FWCore.MessageLogger.MessageLogger_cfi')
 process.MessageLogger.cerr.FwkReport.reportEvery = 5000
 process.MessageLogger.cerr.threshold = 'INFO'
@@ -36,22 +40,27 @@ process.out = cms.OutputModule('PoolOutputModule',
 process.outpath = cms.EndPath(process.out)
 
 # Load the PAT modules and sequences, and configure them as we
-# need. See the individual functions for their documentation. MC use
-# is assumed by default, and should be removed in the top-level config
-# using removeMCUse() from PATTools if running on data.
+# need. See the individual functions for their documentation.  MC use
+# is assumed by default, and should be removed after everything's
+# configured in the top-level config using removeMCUse() tool if
+# running on data.  (This is due to the design of the PAT: easier to
+# do it in this order rather than adding things for MC use later.)
 process.load('PhysicsTools.PatAlgos.patSequences_cff')
 
-from PhysicsTools.PatAlgos.tools.trigTools import switchOnTrigger, switchOnTriggerMatchEmbedding
-from PATTools import addGenSimLeptons, addMuonMCClassification, addMuonStations, addMuonHitCount, addHEEPId, changeMuonHLTMatch
+from PATTools import addGenSimLeptons, addMuonMCClassification, addMuonStations, addMuonHitCount, addHEEPId
 addGenSimLeptons(process)
 addMuonMCClassification(process)
 addMuonStations(process)
 addMuonHitCount(process)
 addHEEPId(process)
+
+from PhysicsTools.PatAlgos.tools.trigTools import switchOnTrigger, switchOnTriggerMatchEmbedding
 switchOnTrigger(process)
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi')
 switchOnTriggerMatchEmbedding(process, triggerMatchers=['muonTriggerMatchHLTMuons'])
 process.out.outputCommands += ['keep *_cleanPatMuonsTriggerMatch_*_*', 'drop *_cleanPatMuons_*_*']
+
+# Some extra configuration of the PAT.
 
 # Embed the tracker tracks (by default, every other track is already
 # embedded).
@@ -75,15 +84,16 @@ process.countPatMuons.minNumber = 1
 # Instead of filtering out events at PAT-tupling time based on things
 # like GoodVertex and NoScraping, schedule separate paths for all the
 # "good data" filters so that the results of them get stored in a
-# small TriggerResults::PAT object that can be read and used to filter
-# events in the analyzer process using e.g. the filter in
-# Zprime2muAnalysis_cff.py. (Useful so we don't have to keep around
-# the entire generalTracks collection for noscraping, for example.)
+# small TriggerResults::PAT object. This can be read and used to
+# filter events in the analyzer process using e.g. the filter in
+# Zprime2muAnalysis_cff.py. (This is useful so we don't have to keep
+# around the entire generalTracks collection to run the NoScraping
+# filter later, for example.)
 #
-# Make one for each so they can be accessed separately in the
-# TriggerResults object; the "All" path isn't necessary because it
-# could be emulated using the AND of all of the separate ones, but
-# it's nice for convenience.
+# Make one path for each (a very small storage burden) so they can be
+# accessed separately in the TriggerResults object; the "All" path
+# isn't necessary because it could be emulated using the AND of all of
+# the separate ones, but it's nice for convenience.
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
 process.goodDataHLTPhysicsDeclared = cms.Path(process.hltPhysicsDeclared)
 process.goodDataPrimaryVertexFilter = cms.Path(process.primaryVertexFilter)

@@ -36,45 +36,29 @@ process.p = cms.Path(process.patDefaultSequence)
 ########################################################################
 
 # Changing things/uncommenting below here can be done by slightly more
-# advanced users :-)
+# advanced users :-) You can use a bunch of core tools of PAT and some
+# Exotica tools to tailor your PAT configuration; for a few, examples
+# are commented out in the next several lines.
 
-# You can use a bunch of core tools of PAT and some Exotica tools to
-# tailor your PAT configuration; for a few examples are commented out
-# in the next several lines.
 #from PhysicsTools.PatAlgos.tools.coreTools import restrictInputToAOD, removeAllPATObjectsBut, removeSpecificPATObjects
 #restrictInputToAOD(process)
 #removeAllPATObjectsBut(process, ['Muons', 'Electrons'])
 #removeSpecificPATObjects(process, ['Taus'])
 
-# You can still run PAT in the 36X version on input files produced
-# within the 35X series. This requires some reconfigurations that are
-# done by the PAT for us with a canned function. Uncomment the next
-# two lines to use it.
-##save_discriminatorSources = process.patJets.discriminatorSources[:]
-#from PhysicsTools.PatAlgos.tools.cmsswVersionTools import run36xOn35xInput
-#run36xOn35xInput(process, 'ak5GenJets')
-##process.patJets.discriminatorSources = save_discriminatorSources
-
 # Some MC samples have the HLT process name different from "HLT".
 #from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName
-#switchHLTProcessName(process, "REDIGI36X")
+#switchHLTProcessName(process, "REDIGI38X")
 
 # You can change the default muon cut from "isGlobalMuon ||
-# isTrackerMuon" to your taste.
+# isTrackerMuon" to your taste. Some examples (only uncomment one!):
 #process.selectedPatMuons.cut = 'isTrackerMuon && pt > 1 && p > 2.5 && innerTrack.hitPattern.numberOfValidTrackerHits > 12 && innerTrack.normalizedChi2 < 5 && abs(dB) < 0.5 && abs(dZ) < 5 && muonID("TMLastStationAngTight")'
 #process.selectedPatMuons.cut = 'muonID("GlobalMuonPromptTight") && muonID("TMOneStationLoose") && (globalTrack.hitPattern.numberOfValidMuonCSCHits + globalTrack.hitPattern.numberOfValidMuonDTHits) >= 1 && innerTrack.hitPattern.trackerLayersWithMeasurement >= 6'
 
-# You may only want to bother with electrons that pass the HEEP cuts,
-# but will this screw up the PAT jet cleaning? Needs to be studied.
+# You may only want to keep electrons that pass the HEEP cuts, but
+# does this screw up the PAT jet cleaning? Needs to be studied.
 #process.selectedPatElectrons.cut = 'userInt("HEEPId") == 0'
 
-# If you're studying e.g. e/mu dileptons, you may want to 
+# If you're studying e.g. e/mu dileptons, you may want to change the
+# requirement from one/two muons to two leptons (= electrons + muons).
 #process.countPatMuons.minNumber = 0
 #process.countPatLeptons.minNumber = 2
-
-# Options for controlling how CMSSW works.
-#process.source.noEventSort = cms.untracked.bool(True)
-#process.source.duplicateCheckMode = cms.untracked.string('noDuplicateCheck')
-#process.maxEvents.input = 1000
-#process.out.fileName = 'myTuple.root'
-#process.options.wantSummary = False # to suppress the long output at the end of the job

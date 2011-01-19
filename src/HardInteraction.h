@@ -39,10 +39,14 @@ struct HardInteraction {
   void Fill(const edm::Event& event);
 
   reco::Particle::LorentzVector dileptonNoIB() const {
+    if (lepPlusNoIB == 0 || lepMinusNoIB == 0)
+      return reco::Particle::LorentzVector();
     return lepPlusNoIB->p4() + lepMinusNoIB->p4();
   }
 
   reco::Particle::LorentzVector dilepton() const {
+    if (lepPlus == 0 || lepMinus == 0)
+      return reco::Particle::LorentzVector();
     return lepPlus->p4() + lepMinus->p4();
   }
 

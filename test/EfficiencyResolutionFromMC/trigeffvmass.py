@@ -5,6 +5,21 @@
 import sys, os
 
 samples = ['dy20', 'dy60', 'dy120', 'dy200', 'dy500', 'dy800', 'zp500', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750']
+
+if False:
+    # Can use graviton samples too -- don't bother to change the rest
+    # of the code, just make symlinks so that the code below uses the
+    # graviton files instead of the real Z' files. In the plots made
+    # below and downstream in efficiencysummary.py, it'll be handled
+    # just fine (except for y-axis scale for increased acceptance
+    # needing to be changed, along with labels and titles referring to
+    # Z' or to e.g. "vector boson").
+    for i in [250,500,750,1000,1250,1500]:
+        os.system('ln -s ana_effres_rs%i.root ana_effres_zp%i.root' % (i,i))
+        #os.system('ln -s real_zprime/ana_effres_zp%i.root ana_effres_zp%i.root' % (i,i))
+    samples.remove('zp1750')
+    samples.insert(samples.index('zp500'), 'zp250')
+    
 dy = [(x, int(x.replace('dy',''))) for x in samples if 'dy' in x]
 zp = [(x, int(x.replace('zp',''))) for x in samples if 'zp' in x]
 if 'vbtf' in sys.argv:

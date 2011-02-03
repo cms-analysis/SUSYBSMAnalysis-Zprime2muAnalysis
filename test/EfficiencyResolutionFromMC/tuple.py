@@ -66,12 +66,15 @@ dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02
         ('zp1250', '/ZprimeSSMToMuMu_M-1250_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
         ('zp1500', '/ZprimeSSMToMuMu_M-1500_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
         ('zp1750', '/ZprimeSSMToMuMu_M-1750_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('rs250',  '/RSGravToMuMu_kMpl001_M-250_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('rs500',  '/RSGravToMuMu_kMpl001_M-500_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('rs750',  '/RSGravToMuMu_kMpl001_M-750_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('rs1000', '/RSGravToMuMu_kMpl001_M-1000_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('rs1250', '/RSGravToMuMu_kMpl001_M-1250_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('rs1500', '/RSGravToMuMu_kMpl001_M-1500_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
     ]
 
     for name, dataset in samples:
-        if name == 'dy20':
-            continue
-        
         events = 11000 if name != 'dy20' else 40000
         pset = open('tuple.py').read()
         if name == 'dy20':

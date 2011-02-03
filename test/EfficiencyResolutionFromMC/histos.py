@@ -87,24 +87,32 @@ return_data = 1
         ('zp1250', '/ZprimeSSMToMuMu_M-1250_7TeV-pythia6/tucker-effres_zp1250-b62a83c345cd135ef96a2f3fe22d5e32/USER', -20000, 20000),
         ('zp1500', '/ZprimeSSMToMuMu_M-1500_7TeV-pythia6/tucker-effres_zp1500-b62a83c345cd135ef96a2f3fe22d5e32/USER', -20000, 20000),
         ('zp1750', '/ZprimeSSMToMuMu_M-1750_7TeV-pythia6/tucker-effres_zp1750-b62a83c345cd135ef96a2f3fe22d5e32/USER', -20000, 20000),
+        ('rs250',  '/RSGravToMuMu_kMpl001_M-250_7TeV-pythia6/tucker-effres_rs001g250-1872548c7fb21f894e5c846186606525/USER',   -20000, 20000),
+        ('rs500',  '/RSGravToMuMu_kMpl001_M-500_7TeV-pythia6/tucker-effres_rs001g500-1872548c7fb21f894e5c846186606525/USER',   -20000, 20000),
+        ('rs750',  '/RSGravToMuMu_kMpl001_M-750_7TeV-pythia6/tucker-effres_rs001g750-1872548c7fb21f894e5c846186606525/USER',   -20000, 20000),
+        ('rs1000', '/RSGravToMuMu_kMpl001_M-1000_7TeV-pythia6/tucker-effres_rs001g1000-1872548c7fb21f894e5c846186606525/USER', -20000, 20000),
+        ('rs1250', '/RSGravToMuMu_kMpl001_M-1250_7TeV-pythia6/tucker-effres_rs001g1250-1872548c7fb21f894e5c846186606525/USER', -20000, 20000),
+        ('rs1500', '/RSGravToMuMu_kMpl001_M-1500_7TeV-pythia6/tucker-effres_rs001g1500-1872548c7fb21f894e5c846186606525/USER', -20000, 20000),
         ]
 
     resolutions = {
-        'zp500' : 0.048,
-        'zp750' : 0.060,
-        'zp1000': 0.071,
-        'zp1250': 0.080,
-        'zp1500': 0.086,
-        'zp1750': 0.089,
+        500 : 0.048,
+        750 : 0.060,
+        1000: 0.071,
+        1250: 0.080,
+        1500: 0.086,
+        1750: 0.089,
         }
     
     just_testing = 'testing' in sys.argv
+    restrict_mass_window = False
 
     for name, dataset, lo, hi in samples:
         open('crab.cfg', 'wt').write(crab_cfg % locals())
 
-        if False and 'zp' in name:
-            mass = float(name.replace('zp', ''))
+        if restrict_mass_window and ('zp' in name or 'rs' in name):
+            mass = name.replace('zp', '').replace('rs', '')
+            mass = float(mass)
             res = resolutions[name]
             lo = mass - 1.5*res*mass
             hi = mass + 1.5*res*mass

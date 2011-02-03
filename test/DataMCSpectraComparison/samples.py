@@ -83,3 +83,14 @@ wjets.nevents -= 25000
 
 print 'samples are:'
 print ' '.join(s.name for s in samples)
+
+if False:
+    from dbstools import dbsparents
+    for s in samples:
+        print s.dataset
+        parents = dbsparents(s.dataset)
+        for parent in parents:
+            for line in os.popen('dbss rel %s' % parent):
+                if 'CMSSW' in line:
+                    print parent, line,
+        print

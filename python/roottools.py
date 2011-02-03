@@ -31,6 +31,32 @@ def apply_hist_commands(hist, hist_cmds=None):
             args = (args,)
         getattr(hist, fn)(*args)
 
+def poisson_interval(nobs, alpha=(1-0.6827)/2, beta=(1-0.6827)/2):
+    lower = 0
+    if nobs > 0:
+        lower = 0.5 * ROOT.Math.chisquared_quantile_c(1-alpha, 2*nobs)
+    elif nobs == 0:
+        beta *= 2
+    upper = 0.5 * ROOT.Math.chisquared_quantile_c(beta, 2*(nobs+1))
+    return lower, upper
+
+def poisson_intervalize(h, zero_x=False, include_zero_bins=False):
+    h2 = ROOT.TGraphAsymmErrors(h)
+    for i in xrange(1, h.GetNbinsX()+1):
+        c = h.GetBinContent(i)
+        if c == 0 and not include_zero_bins:
+            continue
+        l,u = poisson_interval(c)
+        # i-1 in the following because ROOT TGraphs count from 0 but
+        # TH1s count from 1! hooray! totally not time to storm rene
+        # brun's office!
+        if zero_x:
+            h2.SetPointEXlow(i-1, 0)
+            h2.SetPointEXhigh(i-1, 0)
+        h2.SetPointEYlow(i-1, c-l)
+        h2.SetPointEYhigh(i-1, u-c)
+    return h2
+
 def clopper_pearson(n_on, n_tot, alpha=1-0.6827, equal_tailed=True):
     if equal_tailed:
         alpha_min = alpha/2
@@ -287,7 +313,7 @@ def move_overflow_into_last_bin(h):
 class plot_saver:
     i = 0
     
-    def __init__(self, plot_dir=None, html=True, log=True, root=True, size=(820,630)):
+    def __init__(self, plot_dir=None, html=True, log=True, root=True, pdf=False, pdf_log=False, size=(820,630)):
         self.c = ROOT.TCanvas('c%i' % plot_saver.i, '', *size)
         plot_saver.i += 1
         self.saved = []
@@ -295,6 +321,8 @@ class plot_saver:
         self.set_plot_dir(plot_dir)
         self.log = log
         self.root = root
+        self.pdf = pdf
+        self.pdf_log = pdf_log
 
     def __del__(self):
         self.write_index()
@@ -304,7 +332,7 @@ class plot_saver:
             return
         html = open(os.path.join(self.plot_dir, 'index.html'), 'wt')
         html.write('<html><body><pre>\n')
-        for i, (fn, log, root) in enumerate(self.saved):
+        for i, (fn, log, root, pdf, pdf_log) in enumerate(self.saved):
             bn = os.path.basename(fn)
             html.write('%10i ' % i)
             if log:
@@ -315,10 +343,18 @@ class plot_saver:
                 html.write(' <a href="%s">root</a>' % os.path.basename(root))
             else:
                 html.write('     ')
+            if pdf:
+                html.write(' <a href="%s">pdf</a>' % os.path.basename(pdf))
+            else:
+                html.write('     ')
+            if pdf_log:
+                html.write(' <a href="%s">pdf_log</a>' % os.path.basename(pdf_log))
+            else:
+                html.write('     ')
             html.write('  <a href="%s">%s</a>' % (bn, bn))
             html.write('\n')
         html.write('<br><br>')
-        for i, (fn, log, root) in enumerate(self.saved):
+        for i, (fn, log, root, pdf, pdf_log) in enumerate(self.saved):
             bn = os.path.basename(fn)
             html.write('%s<br>\n' % bn.replace('.png', ''))
             if log:
@@ -336,9 +372,11 @@ class plot_saver:
         if plot_dir is not None:
             os.system('mkdir -p %s' % self.plot_dir)
 
-    def save(self, n, log=None, root=None):
+    def save(self, n, log=None, root=None, pdf=None, pdf_log=None):
         log = self.log if log is None else log
         root = self.root if root is None else root
+        pdf = self.pdf if pdf is None else pdf
+        pdf_log = self.pdf_log if pdf_log is None else pdf_log
         if self.plot_dir is None:
             raise ValueError('save called before plot_dir set!')
         self.c.SetLogy(0)
@@ -352,7 +390,15 @@ class plot_saver:
             log = os.path.join(self.plot_dir, n + '.log.png')
             self.c.SaveAs(log)
             self.c.SetLogy(0)
-        self.saved.append((fn, log, root))
+        if pdf:
+            pdf = os.path.join(self.plot_dir, n + '.pdf')
+            self.c.SaveAs(pdf_fn)
+        if pdf_log:
+            self.c.SetLogy(1)
+            pdf_log = os.path.join(self.plot_dir, n + '.log.pdf')
+            self.c.SaveAs(pdf_log)
+            self.c.SetLogy(0)
+        self.saved.append((fn, log, root, pdf, pdf_log))
 
 def rainbow_palette(num_colors=500):
     """Make a rainbow palette with the specified number of

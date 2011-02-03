@@ -4,7 +4,7 @@
 
 import sys, os, glob
 from collections import defaultdict
-from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import cumulative_histogram, get_integral, move_above_into_bin, plot_saver, real_hist_max, real_hist_min, set_zp2mu_style, ROOT
+from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import cumulative_histogram, get_integral, move_above_into_bin, plot_saver, poisson_intervalize, real_hist_max, real_hist_min, set_zp2mu_style, ROOT
 
 set_zp2mu_style()
 #ROOT.gStyle.SetLineWidth(2)
@@ -51,18 +51,20 @@ from samples import *
 rebin_factor = 5
 x_axis_limits = 50, 1050
 x_axis_limits2 = 50, 500
+
 to_compare = 'DileptonMass'
 global_rescale = 3273/3404.6 if False else None
 draw_zssm = True
+use_poisson_intervals = False
 
 do_joins = True
 joins = [(s.name, 'jets') for s in samples if 'qcd' in s.name]
 joins += [(x, 'jets') for x in ['inclmu15', 'wmunu', 'wjets']]
-joins += [(x, 't#bar{t} + t#bar{t}-like') for x in ['ttbar', 'singletop_tW', 'ztautau', 'ww', 'wz', 'zz']]
+joins += [(x, 't#bar{t} + other prompt leptons') for x in ['ttbar', 'singletop_tW', 'ztautau', 'ww', 'wz', 'zz']]
 joins += [(s.name, '#gamma/Z #rightarrow #mu^{+}#mu^{-}') for s in samples if 'dy' in s.name]
 joins += [('zmumu', '#gamma/Z #rightarrow #mu^{+}#mu^{-}')]
 joins = dict(joins)
-joins_colors = {'jets': 4, 't#bar{t} + t#bar{t}-like': 2, '#gamma/Z #rightarrow #mu^{+}#mu^{-}': 7}
+joins_colors = {'jets': 4, 't#bar{t} + other prompt leptons': 2, '#gamma/Z #rightarrow #mu^{+}#mu^{-}': 7}
 
 histo_dir = [x for x in sys.argv if os.path.isdir(x)][0]
 
@@ -138,7 +140,7 @@ def dir_name(c, d):
 pdir = 'plots/datamc'
 if histo_dir != 'ana_datamc':
     pdir += '_' + histo_dir.replace('ana_datamc_', '')
-ps = plot_saver(pdir, size=(600,500))
+ps = plot_saver(pdir, size=(600,500), pdf_log=True)
 
 if global_rescale is not None:
     for s in samples:
@@ -238,17 +240,17 @@ for cuts in cutss:
                 color = joins_colors[joins[sample.name]] if do_joins and joins.has_key(sample.name) else sample.color
                 h.SetLineColor(color)
                 h.SetMarkerStyle(0)
-                if 'zssm' not in sample.name:
+                if 'zssm' not in sample.name and ('MuonsElectrons' not in dilepton or ('zmumu' not in sample.name and 'dy' not in sample.name)):
                     h.SetFillColor(color)
                     s.Add(h)
                 last_mc = h
 
             if draw_zssm and (dilepton == 'MuonsPlusMuonsMinus' and not cumulative):
-                l = ROOT.TLegend(0.55, 0.60, 0.83, 0.85)
+                l = ROOT.TLegend(0.52, 0.58, 0.73, 0.84)
             elif dilepton == 'MuonsPlusMuonsMinus' and cumulative:
-                l = ROOT.TLegend(0.61, 0.60, 0.83, 0.85)
+                l = ROOT.TLegend(0.52, 0.58, 0.73, 0.84)
             else:
-                l = ROOT.TLegend(0.69, 0.62, 0.88, 0.84)
+                l = ROOT.TLegend(0.53, 0.69, 0.76, 0.84)
             l.SetFillColor(0)
             l.SetBorderSize(0)
 
@@ -268,7 +270,7 @@ for cuts in cutss:
                     else:
                         legend_already.add(join_nice_name)
                         nice_name = join_nice_name
-                if 'zssm' in sample.name and (not draw_zssm or dilepton != 'MuonsPlusMuonsMinus' or cumulative):
+                if 'zssm' in sample.name and (not draw_zssm or dilepton != 'MuonsPlusMuonsMinus' or cumulative) or ('MuonsElectrons' in dilepton and ('zmumu' in sample.name or 'dy' in sample.name)):
                     continue
                 l.AddEntry(sample.mass, nice_name, 'F')
 
@@ -299,6 +301,9 @@ for cuts in cutss:
             s.SetMinimum(mymin)
             s.SetMaximum(mymax)
 
+            hdata.SetStats(0)
+            if use_poisson_intervals:
+                hdata = poisson_intervalize(hdata, True)
             hdata.SetTitle('')
             hdata.GetXaxis().SetRangeUser(*xax)
             hdata.GetXaxis().SetTitle(titleize[to_compare] % (subtitleize[dilepton], unitize[to_compare]))
@@ -315,7 +320,7 @@ for cuts in cutss:
             hdata.SetMaximum(mymax)
             hdata.SetMarkerStyle(20)
             hdata.SetMarkerSize(0.6)
-            hdata.SetStats(0)
+
             hdata.Draw('same p e')
 
             if draw_zssm and not cumulative and dilepton == 'MuonsPlusMuonsMinus':
@@ -339,8 +344,7 @@ for cuts in cutss:
                 t.SetFillStyle(0)
                 t.Draw()
 
-            l.SetTextSize(0.03),
-            
+            l.SetTextSize(0.03)
             l.Draw('same')
 
             n = dilepton

@@ -55,7 +55,7 @@ x_axis_limits2 = 50, 500
 to_compare = 'DileptonMass'
 global_rescale = 3273/3404.6 if False else None
 draw_zssm = True
-use_poisson_intervals = False
+use_poisson_intervals = True
 
 do_joins = True
 joins = [(s.name, 'jets') for s in samples if 'qcd' in s.name]
@@ -125,7 +125,7 @@ yaxis = {
     ('MuonsPlusMuonsMinus', False): (4e-3, None),
     ('MuonsPlusMuonsMinus', True): (1.6, None),
 #   ('MuonsSameSign', False): (5e-5, 2.5),
-#   ('MuonsElectronsOppSign', False): (2e-3, 40),
+   ('MuonsElectronsOppSign', False): (8e-3, 30),
     }
 use_yaxis = True
 
@@ -302,8 +302,10 @@ for cuts in cutss:
             s.SetMaximum(mymax)
 
             hdata.SetStats(0)
+            data_draw_cmd = 'same p e'
             if use_poisson_intervals:
                 hdata = poisson_intervalize(hdata, True)
+                data_draw_cmd += ' z'
             hdata.SetTitle('')
             hdata.GetXaxis().SetRangeUser(*xax)
             hdata.GetXaxis().SetTitle(titleize[to_compare] % (subtitleize[dilepton], unitize[to_compare]))
@@ -320,8 +322,7 @@ for cuts in cutss:
             hdata.SetMaximum(mymax)
             hdata.SetMarkerStyle(20)
             hdata.SetMarkerSize(0.6)
-
-            hdata.Draw('same p e')
+            hdata.Draw(data_draw_cmd)
 
             if draw_zssm and not cumulative and dilepton == 'MuonsPlusMuonsMinus':
                 from samples import zssm750

@@ -7,44 +7,8 @@ from collections import defaultdict
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import cumulative_histogram, get_integral, move_above_into_bin, plot_saver, poisson_intervalize, real_hist_max, real_hist_min, set_zp2mu_style, ROOT
 
 set_zp2mu_style()
-#ROOT.gStyle.SetLineWidth(2)
-
-ROOT.gStyle.SetCanvasColor(0)
-ROOT.gStyle.SetPalette(1)
-ROOT.gStyle.SetOptTitle(1)
-ROOT.gStyle.SetTitleFillColor(0)
-ROOT.gStyle.SetStatColor(0)
-ROOT.gStyle.SetOptFit(1111)
-ROOT.gStyle.SetCanvasBorderMode(0)
-ROOT.gStyle.SetTitleBorderSize(0)
-ROOT.gStyle.SetOptStat(0) 
-ROOT.gStyle.SetTitleXOffset(.9)
-ROOT.gStyle.SetTitleXSize(0.047)
-ROOT.gStyle.SetTitleYOffset(1.3)
-ROOT.gStyle.SetTitleYSize(0.047)
-ROOT.gStyle.SetTitleX(0.04)
-ROOT.gStyle.SetTitleY(0.99)
-ROOT.gStyle.SetTitleW(0.88)
-ROOT.gStyle.SetTitleH(0.06)
-ROOT.gStyle.SetAxisColor(1, 'XYZ')
-ROOT.gStyle.SetStripDecimals(1)
-ROOT.gStyle.SetTickLength(0.03, 'XYZ')
-ROOT.gStyle.SetNdivisions(510, 'XYZ')
-ROOT.gStyle.SetCanvasBorderMode(0)
-ROOT.gStyle.SetCanvasColor(0)
-ROOT.gStyle.SetCanvasDefH(600)
-ROOT.gStyle.SetCanvasDefW(600)
-ROOT.gStyle.SetCanvasDefX(0)
-ROOT.gStyle.SetCanvasDefY(0)
-#   ROOT.gStyle.SetPadTopMargin(0.09)
-ROOT.gStyle.SetPadTopMargin(0.13)
-#   ROOT.gStyle.SetPadBottomMargin(0.10)
-ROOT.gStyle.SetPadBottomMargin(0.13)
 ROOT.gStyle.SetPadLeftMargin(0.13)
-#   ROOT.gStyle.SetPadRightMargin(0.07)
-ROOT.gStyle.SetPadRightMargin(0.13)
-#   ROOT.gStyle.SetTitleBorderSize(0)
-
+ROOT.gStyle.SetPadRightMargin(0.07)
 
 from samples import *
 
@@ -140,7 +104,7 @@ def dir_name(c, d):
 pdir = 'plots/datamc'
 if histo_dir != 'ana_datamc':
     pdir += '_' + histo_dir.replace('ana_datamc_', '')
-ps = plot_saver(pdir, size=(600,500), pdf_log=True)
+ps = plot_saver(pdir, size=(600,600), pdf_log=True)
 
 if global_rescale is not None:
     for s in samples:
@@ -246,9 +210,9 @@ for cuts in cutss:
                 last_mc = h
 
             if draw_zssm and (dilepton == 'MuonsPlusMuonsMinus' and not cumulative):
-                l = ROOT.TLegend(0.52, 0.58, 0.73, 0.84)
+                l = ROOT.TLegend(0.47, 0.55, 0.88, 0.88)
             elif dilepton == 'MuonsPlusMuonsMinus' and cumulative:
-                l = ROOT.TLegend(0.52, 0.58, 0.73, 0.84)
+                l = ROOT.TLegend(0.47, 0.55, 0.88, 0.88)
             else:
                 l = ROOT.TLegend(0.53, 0.69, 0.76, 0.84)
             l.SetFillColor(0)
@@ -256,7 +220,7 @@ for cuts in cutss:
 
             m = ROOT.TMarker()
             m.SetMarkerStyle(20)
-            m.SetMarkerSize(0.6)
+            m.SetMarkerSize(1.0)
             m.SetMarkerColor(ROOT.kBlack)
             l.AddEntry(m, 'DATA', 'LP')
 
@@ -321,7 +285,7 @@ for cuts in cutss:
             hdata.SetMinimum(mymin)
             hdata.SetMaximum(mymax)
             hdata.SetMarkerStyle(20)
-            hdata.SetMarkerSize(0.6)
+            hdata.SetMarkerSize(1.0)
             hdata.Draw(data_draw_cmd)
 
             if draw_zssm and not cumulative and dilepton == 'MuonsPlusMuonsMinus':
@@ -335,9 +299,9 @@ for cuts in cutss:
                 zp.SetStats(0)
                 zp.Draw('hist same')
 
-            t1 = ROOT.TPaveLabel(0.451, 0.879, 0.768, 0.970, '#sqrt{s} = 7 TeV, #int L dt = %.f pb^{-1}' % round(int_lumi), 'brNDC')
-            t2 = ROOT.TPaveLabel(0.125, 0.887, 0.389, 0.978, 'CMS preliminary', 'brNDC')
-            t1.SetTextSize(0.4)
+            t1 = ROOT.TPaveLabel(0.458, 0.893, 0.908, 0.993, '#sqrt{s} = 7 TeV, #int L dt = %.f pb^{-1}' % round(int_lumi), 'brNDC')
+            t2 = ROOT.TPaveLabel(0.225, 0.907, 0.332, 0.997, 'CMS preliminary', 'brNDC')
+            t1.SetTextSize(0.35)
             t2.SetTextSize(0.45)
             for t in t1, t2:
                 t.SetBorderSize(0)

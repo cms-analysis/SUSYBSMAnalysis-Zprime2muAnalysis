@@ -48,8 +48,7 @@ def poisson_intervalize(h, zero_x=False, include_zero_bins=False):
             continue
         l,u = poisson_interval(c)
         # i-1 in the following because ROOT TGraphs count from 0 but
-        # TH1s count from 1! hooray! totally not time to storm rene
-        # brun's office!
+        # TH1s count from 1
         if zero_x:
             h2.SetPointEXlow(i-1, 0)
             h2.SetPointEXhigh(i-1, 0)
@@ -313,7 +312,7 @@ def move_overflow_into_last_bin(h):
 class plot_saver:
     i = 0
     
-    def __init__(self, plot_dir=None, html=True, log=True, root=True, pdf=False, pdf_log=False, size=(820,630)):
+    def __init__(self, plot_dir=None, html=True, log=True, root=True, pdf=False, pdf_log=False, C=False, C_log=False, size=(820,630)):
         self.c = ROOT.TCanvas('c%i' % plot_saver.i, '', *size)
         plot_saver.i += 1
         self.saved = []
@@ -323,6 +322,8 @@ class plot_saver:
         self.root = root
         self.pdf = pdf
         self.pdf_log = pdf_log
+        self.C = C
+        self.C_log = C_log
 
     def __del__(self):
         self.write_index()
@@ -332,7 +333,7 @@ class plot_saver:
             return
         html = open(os.path.join(self.plot_dir, 'index.html'), 'wt')
         html.write('<html><body><pre>\n')
-        for i, (fn, log, root, pdf, pdf_log) in enumerate(self.saved):
+        for i, (fn, log, root, pdf, pdf_log, C, C_log) in enumerate(self.saved):
             bn = os.path.basename(fn)
             html.write('%10i ' % i)
             if log:
@@ -351,10 +352,18 @@ class plot_saver:
                 html.write(' <a href="%s">pdf_log</a>' % os.path.basename(pdf_log))
             else:
                 html.write('     ')
+            if C:
+                html.write(' <a href="%s">C</a>' % os.path.basename(C))
+            else:
+                html.write('     ')
+            if C_log:
+                html.write(' <a href="%s">C_log</a>' % os.path.basename(C_log))
+            else:
+                html.write('     ')
             html.write('  <a href="%s">%s</a>' % (bn, bn))
             html.write('\n')
         html.write('<br><br>')
-        for i, (fn, log, root, pdf, pdf_log) in enumerate(self.saved):
+        for i, (fn, log, root, pdf, pdf_log, C, C_log) in enumerate(self.saved):
             bn = os.path.basename(fn)
             html.write('%s<br>\n' % bn.replace('.png', ''))
             if log:
@@ -372,11 +381,14 @@ class plot_saver:
         if plot_dir is not None:
             os.system('mkdir -p %s' % self.plot_dir)
 
-    def save(self, n, log=None, root=None, pdf=None, pdf_log=None):
+    def save(self, n, log=None, root=None, pdf=None, pdf_log=None, C=None, C_log=None):
         log = self.log if log is None else log
         root = self.root if root is None else root
         pdf = self.pdf if pdf is None else pdf
         pdf_log = self.pdf_log if pdf_log is None else pdf_log
+        C = self.C if C is None else C
+        C_log = self.C_log if C_log is None else C_log
+        
         if self.plot_dir is None:
             raise ValueError('save called before plot_dir set!')
         self.c.SetLogy(0)
@@ -398,7 +410,15 @@ class plot_saver:
             pdf_log = os.path.join(self.plot_dir, n + '.log.pdf')
             self.c.SaveAs(pdf_log)
             self.c.SetLogy(0)
-        self.saved.append((fn, log, root, pdf, pdf_log))
+        if C:
+            C = os.path.join(self.plot_dir, n + '.C')
+            self.c.SaveAs(C_fn)
+        if C_log:
+            self.c.SetLogy(1)
+            C_log = os.path.join(self.plot_dir, n + '.log.C')
+            self.c.SaveAs(C_log)
+            self.c.SetLogy(0)
+        self.saved.append((fn, log, root, pdf, pdf_log, C, C_log))
 
 def rainbow_palette(num_colors=500):
     """Make a rainbow palette with the specified number of
@@ -474,6 +494,7 @@ def set_zp2mu_style(date_pages=False):
     ROOT.gStyle.SetPaperSize(ROOT.TStyle.kA4)
     ROOT.gStyle.SetStatW(0.25)
     ROOT.gStyle.SetStatFormat('6.4g')
+    ROOT.gStyle.SetPalette(1)
     #ROOT.gStyle.SetTitleFont(52, 'XY')
     #ROOT.gStyle.SetLabelFont(52, 'XY')
     #ROOT.gStyle.SetStatFont(52)

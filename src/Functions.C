@@ -649,67 +649,9 @@ double expgaufun(double *x, double *par) {
 //=============================================================================
 
 TLorentzVector LorentzBoost(const TLorentzVector& boost_frame, const TLorentzVector& to_be_boosted) {
-#if 0
   TLorentzVector v = to_be_boosted;
   v.Boost(-boost_frame.BoostVector());
   return v;
-#endif
-
-  // Input:
-  // boost_frame  = 4 vector of a particle whose frame you want to boost into
-  // to_be_boosted   = 4 vector of the unboosted particle.
-  // 
-  // Output:
-  // Returns the 4 vector of a particle boosted into the frame of another
-  // particle.
-
-  static const bool debug = false;
-  // Assign values for rest and boosted 4 vectors;
-  TVector3 p_rest(to_be_boosted.Px(), to_be_boosted.Py(), to_be_boosted.Pz());
-  TVector3 p_boost(boost_frame.Px(), boost_frame.Py(), boost_frame.Pz());
-  double e_rest = to_be_boosted.E();
-  double e_boost = boost_frame.E();
-  double m_boost = boost_frame.M();
-
-  // Boost formula for the 3 vector term.
-  double scalar_term = (((p_rest*p_boost)/(e_boost+m_boost))-e_rest)/m_boost;
-  TVector3 boost_vector = p_rest + p_boost*scalar_term;
-
-  // Boost formula for the 4th component.
-  double boost_energy = ((e_rest*e_boost)-(p_rest*p_boost))/m_boost;
-
-  // Assign values to 4 vector and check consistency.
-  TLorentzVector boost_lorentz_vector(boost_vector, boost_energy);
-  if (boost_energy != boost_lorentz_vector.E())
-    edm::LogWarning("LorentzBoost")
-      << "Problem in energy assignment in Lorentz boost!\n"
-      << "Boost_energy " << boost_energy 
-      << "!= boost_lorentz_vector.E()"
-      << boost_lorentz_vector.E();
-
-  if (boost_vector != boost_lorentz_vector.Vect())
-    edm::LogWarning("LorentzBoost")
-      << "Problem in vector assignment in Lorentz boost!";
-
-  if (debug) {
-    ostringstream out;
-    out << "------------------------------------------------" << endl;
-    out << "In Lorentz Boost function: " << endl;
-    out << "Original 4 vector: (" << p_rest.Px() << ", "<< p_rest.Py() << ", "
-	<< p_rest.Pz() << ", " << e_rest << ")" << endl;
-    out << "4 Vector of prime frame: (" << p_boost.Px()<< ", " << p_boost.Py()
-	<< ", " << p_boost.Pz() << ", " << e_boost << ")" << endl;
-    out << "Scalar compononent: " << scalar_term << " Mass of boost vector: "
-	<< m_boost << endl;
-    out << "Boosted 4 Vector: (" << boost_lorentz_vector.Px() << ", "
-	<< boost_lorentz_vector.Py() << ", " << boost_lorentz_vector.Pz()
-	<< ", " << boost_lorentz_vector.E() << ")" << endl;
-    out << "-------------------------------------------------";
-    LogDebug("LorentzBoost") << out.str();
-  }
-
-  // Return the calculated 4-vector.
-  return boost_lorentz_vector;
 }
 
 double cos_angle(const TVector3& v1, const TVector3& v2) {

@@ -14,5 +14,5 @@ Zprime2muAsymmetry = cms.EDAnalyzer('Zprime2muAsymmetry',
                                     fixbIn1DFit = cms.bool(False),
                                     useCosTrueInFit = cms.bool(False),
                                     artificialCosCS = cms.bool(False),
-                                    paramCacheFile = cms.string('AsymmetryParametrizer.root'),
+                                    paramCacheFile = cms.string('Parametrizer.root'),
                                     )

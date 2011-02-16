@@ -16,7 +16,7 @@ files = [
     '/store/mc/Fall10/DYToMuMu_M-200_7TeV-pythia6/GEN-SIM-RECO/START38_V12-v1/0002/12EF6BBC-2BC9-DF11-898D-0018FE283CCC.root',
     ]
 maxEvents = -1
-output_filename = 'AsymmetryParametrizer.root'
+output_filename = 'Parametrizer.root'
 
 ################################################################################
 

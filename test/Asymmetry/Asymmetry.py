@@ -9,9 +9,14 @@ process.genDimuons = cms.EDProducer('GenDilCandViewShallowCloneCombiner',
                                     cut = cms.string('')
                                     )
 
-process.p = cms.Path(process.hltFilter * process.Zprime2muAnalysisSequence * process.genDimuons * process.Zprime2muAsymmetry)
+process.source.fileNames = ['file:/uscms_data/d1/tucker/pattuplesofeventsabove200gev/2010a.root', 'file:/uscms_data/d1/tucker/pattuplesofeventsabove200gev/2010b.root']
+process.p = cms.Path(process.Zprime2muAnalysisSequence * process.Zprime2muAsymmetry)
 
 process.Zprime2muAsymmetry.numFits = 4
+
+process.Zprime2muAsymmetry.calculateMistag = False
+process.Zprime2muAsymmetry.useGen = False
+#process.Zprime2muAsymmetry.noFit = True
 
 #process.Zprime2muAsymmetry.peakMass = cms.double(91.2)
 #process.Zprime2muAsymmetry.massDistType = cms.int32(3),

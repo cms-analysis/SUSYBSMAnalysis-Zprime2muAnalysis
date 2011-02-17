@@ -6,6 +6,7 @@
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "FWCore/Common/interface/TriggerNames.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Dumpers.h"
 

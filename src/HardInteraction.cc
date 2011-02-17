@@ -1,5 +1,6 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 
 HardInteraction::HardInteraction(const edm::ParameterSet cfg)

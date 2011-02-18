@@ -23,9 +23,16 @@ if not files:
     files = files_from_crab_dir(crab_dir)
     name = os.path.join(crab_dir, 'res', 'merged.root')
     
-print 'Files to run over:'
+print 'Files to run over:', len(files)
 pprint(files)
 process.source.fileNames = files
 print 'Merging to', name
 process.out = cms.OutputModule('PoolOutputModule', fileName = cms.untracked.string(name))
 process.outp = cms.EndPath(process.out)
+
+# Keeping Run/LumiSummary causes these sparse skims to be majorly
+# bloated; not using them right now, so drop them. Also drop that
+# MEtoEDMConverter garbage.
+process.options.emptyRunLumiMode = cms.untracked.string('doNotHandleEmptyRunsAndLumis')
+process.source.inputCommands = cms.untracked.vstring('keep *', 'drop *_MEtoEDMConverter_*_*')
+process.out.outputCommands = cms.untracked.vstring('keep *', 'drop LumiDetails_lumiProducer_*_*', 'drop LumiSummary_lumiProducer_*_*', 'drop RunSummary_lumiProducer_*_*')

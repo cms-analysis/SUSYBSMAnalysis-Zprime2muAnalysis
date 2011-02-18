@@ -1,0 +1,6 @@
+*.root
+versions
+out.*
+*.ps
+*.txt
+plots

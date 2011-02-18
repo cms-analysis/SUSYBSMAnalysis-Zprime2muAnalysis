@@ -70,7 +70,11 @@ def doit2(b1, b2, tn='SimpleNtupler', skip_understood_events=False, max_mass_dif
         if skip_understood_events and not old_json.contains((r,l)) and new_json.contains((r,l)):
             continue # skip events where it's just because we didn't run on it before
         print '%6s%6s%14s%14s%14s%25s%25s' % (old_json.contains((r,l)), new_json.contains((r,l)), r,l,e, m2s(old[rle]), m2s(new[rle]))
-        
+
+if 'simple' in sys.argv:
+    n = sys.argv.index('simple')
+    doit2(sys.argv[n+1], sys.argv[n+2])
+    raise 'done'
 
 doit2('ana_datamc_current/muonsonly', 'ana_datamc_nov4/muonsonly')
 print '\n************************************************\n'

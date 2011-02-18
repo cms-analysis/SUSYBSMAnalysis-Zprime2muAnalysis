@@ -124,7 +124,7 @@ if 'data' in sys.argv:
     process.TFileService.fileName = 'ana_datamc_data.root'
     process.GlobalTag.globaltag = 'GR10_P_V10::All'
 
-    from goodlumis import Run2010AB, Run2010ABMuonsOnly
+    from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2010AB, Run2010ABMuonsOnly
     if 'all_good' in sys.argv:
         process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010AB)
     else:

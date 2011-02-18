@@ -48,7 +48,7 @@ for dimu in ['dimuonsNoB2B', 'dimuonsNoVtxProb']:
 if 'data' in sys.argv:
     process.source.fileNames = ['file:crab/crab_datamc_Run2010A/res/merged.root', 'file:crab/crab_datamc_promptB_all/res/merged.root']
     process.GlobalTag.globaltag = 'GR10_P_V10::All'
-    from goodlumis import Run2010ABMuonsOnly
+    from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2010ABMuonsOnly
     process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010ABMuonsOnly)
     process.TFileService.fileName = 'ana_nminus1_data.root'
 

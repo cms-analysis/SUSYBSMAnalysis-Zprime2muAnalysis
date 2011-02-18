@@ -11,6 +11,7 @@ process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi')
 
 import SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff as VBTFSelection
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection_cff as OurSelection
+import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff as OurSelectionNew
 
 # CandCombiner includes charge-conjugate decays with no way to turn it
 # off. To get e.g. mu+mu+ separate from mu-mu-, cut on the sum of the
@@ -39,7 +40,7 @@ dils = [
 # Define groups of cuts for which to make plots. If using a selection
 # that doesn't have a trigger match, need to re-add hltFilter
 # somewhere below.
-cuts = ['VBTF', 'Our', 'OurNoIso']
+cuts = ['VBTF', 'Our', 'OurNoIso', 'OurFixDB', 'OurNew', 'VBTFFixTkMu']
 
 for cut_name in cuts:
     # Keep track of modules to put in the path for this set of cuts.
@@ -63,6 +64,8 @@ for cut_name in cuts:
 
         if 'VBTF' in cut_name:
             alldil, dil = VBTFSelection.allDimuons, VBTFSelection.dimuons
+        elif 'OurNew' in cut_name:
+            alldil, dil = OurSelectionNew.allDimuons, OurSelectionNew.dimuons
         else:
             alldil, dil = OurSelection.allDimuons, OurSelection.dimuons
             
@@ -73,6 +76,10 @@ for cut_name in cuts:
 
         if cut_name == 'OurNoIso':
             alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', '')
+        elif cut_name == 'OurFixDB':
+            alldil.tight_cut = alldil.tight_cut.value().replace('dB', 'abs(dB)')
+        elif cut_name == 'VBTFFixTkMu':
+            alldil.loose_cut = alldil.loose_cut.value() + ' && isTrackerMuon'
                     
         histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 
@@ -133,6 +140,20 @@ if 'data' in sys.argv:
     printify(process)
     ntuplify(process)
 
+if 'nov4' in sys.argv:
+    process.source.fileNames = ['file:crab/crab_datamc_Run2010A_DileptonMu/res/merged.root', 'file:crab/crab_datamc_Run2010B_DileptonMu/res/merged.root']
+    process.TFileService.fileName = 'ana_datamc_data.root'
+    process.GlobalTag.globaltag = 'GR_R_38X_V15::All'
+
+    from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Nov4Run2010AB, Nov4Run2010ABMuonsOnly
+    if 'all_good' in sys.argv:
+        process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Nov4Run2010AB)
+    else:
+        process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Nov4Run2010ABMuonsOnly)
+
+    printify(process)
+    ntuplify(process)
+
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
 [CRAB]
@@ -144,8 +165,7 @@ datasetpath = %(ana_dataset)s
 dbs_url = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
 pset = histos_crab.py
 get_edm_output = 1
-total_number_of_events = -1
-events_per_job = 20000
+job_control
 
 [USER]
 ui_working_dir = crab/crab_ana_datamc_%(name)s
@@ -153,6 +173,45 @@ return_data = 1
 '''
 
     just_testing = 'testing' in sys.argv
+
+    # Run on data.
+    from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Nov4Run2010AB_ll, Nov4Run2010ABMuonsOnly_ll
+    x = [
+        ('Run2010AAllGood',   '/Mu/tucker-datamc_Run2010A_DileptonMu-4b90be408f306fdc739fecf72d09b336/USER', Nov4Run2010AB_ll),
+        ('Run2010BAllGood',   '/Mu/tucker-datamc_Run2010B_DileptonMu-4b90be408f306fdc739fecf72d09b336/USER', Nov4Run2010AB_ll),
+        ('Run2010AMuonsOnly', '/Mu/tucker-datamc_Run2010A_DileptonMu-4b90be408f306fdc739fecf72d09b336/USER', Nov4Run2010ABMuonsOnly_ll),
+        ('Run2010BMuonsOnly', '/Mu/tucker-datamc_Run2010B_DileptonMu-4b90be408f306fdc739fecf72d09b336/USER', Nov4Run2010ABMuonsOnly_ll),
+        ]
+    
+    for name, ana_dataset, lumi_list in x:
+        print name
+        new_py = open('histos.py').read()
+        new_py += "\nntuplify(process)\n"
+        new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_38X_V15::All'\n"
+        open('histos_crab.py', 'wt').write(new_py)
+
+        new_crab_cfg = crab_cfg % locals()
+        lumi_list.writeJSON('tmp.json')
+
+        new_crab_cfg = new_crab_cfg.replace('job_control','''
+total_number_of_lumis = -1
+number_of_jobs = 5
+lumi_mask = tmp.json''')
+
+        open('crab.cfg', 'wt').write(new_crab_cfg)
+        if not just_testing:
+            os.system('crab -create -submit all')
+
+    if not just_testing:
+        os.system('rm crab.cfg histos_crab.py histos_crab.pyc tmp.json')
+
+    raise 'done'
+
+    # Set crab_cfg for MC.
+    crab_cfg = crab_cfg.replace('job_control','''
+total_number_of_events = -1
+events_per_job = 20000
+''')
 
     from samples import samples
     for sample in samples:
@@ -181,4 +240,67 @@ return_data = 1
             os.system('crab -create -submit all')
         
     if not just_testing:
-        os.system('rm crab.cfg histos_crab.py histos_crab.pyc')
+        os.system('rm crab.cfg histos_crab.py histos_crab.pyc tmp.json')
+
+'''
+################################################################################
+
+After running over data using crab:
+
+setenv XXXDIR nov4checkcrab
+mkdir -p ana_datamc_${XXXDIR}/muonsonly
+mkdir -p ana_datamc_${XXXDIR}/allgood
+hadd ana_datamc_${XXXDIR}/allgood/ana_datamc_data.root crab/crab_ana_datamc_Run2010?AllGood/res/*root
+hadd ana_datamc_${XXXDIR}/muonsonly/ana_datamc_data.root crab/crab_ana_datamc_Run2010?MuonsOnly/res/*root
+foreach x (crab/crab_ana_datamc_Run2010?AllGood crab/crab_ana_datamc_Run2010?MuonsOnly)
+  crab -c $x -report
+end
+compareJSON.py --and crab/crab_ana_datamc_Run2010?MuonsOnly/res/lumiSummary.json
+compareJSON.py --and crab/crab_ana_datamc_Run2010?AllGood/res/lumiSummary.json
+mergeJSON.py crab/crab_ana_datamc_Run2010?MuonsOnly/res/lumiSummary.json --output=ana_datamc_${XXXDIR}/muonsonly/ana_datamc_data.forlumi.json
+mergeJSON.py crab/crab_ana_datamc_Run2010?AllGood/res/lumiSummary.json --output=ana_datamc_${XXXDIR}/allgood/ana_datamc_data.forlumi.json
+lumiCalc.py -c frontier://LumiProd/CMS_LUMI_PROD -i ana_datamc_${XXXDIR}/muonsonly/ana_datamc_data.forlumi.json overview > ana_datamc_${XXXDIR}/muonsonly/ana_datamc_data.lumi
+lumiCalc.py -c frontier://LumiProd/CMS_LUMI_PROD -i ana_datamc_${XXXDIR}/allgood/ana_datamc_data.forlumi.json overview > ana_datamc_${XXXDIR}/allgood/ana_datamc_data.lumi
+
+setenv XXXDIR2 ~/nobackup/ana_datamc_mc/nov4upd
+mkdir -p $XXXDIR2
+cd ana_datamc_${XXXDIR}
+ln -s $XXXDIR2 mc
+etc
+
+################################################################################
+
+Workflow to run over data without using crab:
+
+setenv XXXDIR withNewStuff
+setenv XXXTODO data # or nov4
+
+cmsRun -j ana_datamc_data.fjr.xml histos.py $XXXTODO >&! /uscmst1b_scratch/lpc1/3DayLifetime/tucker/ana_datamc_data.out
+gzip /uscmst1b_scratch/lpc1/3DayLifetime/tucker/ana_datamc_data.out
+mv /uscmst1b_scratch/lpc1/3DayLifetime/tucker/ana_datamc_data.out.gz .
+fjr2json.py --output=ana_datamc_data.forlumi.json ana_datamc_data.fjr.xml
+lumiCalc.py -i ana_datamc_data.forlumi.json overview > ana_datamc_data.lumi
+mkdir ana_datamc_${XXXDIR}/muonsonly
+mv ana_datamc_data.* ana_datamc_${XXXDIR}/muonsonly/
+
+cmsRun -j ana_datamc_data.fjr.xml histos.py $XXXTODO all_good >&! /uscmst1b_scratch/lpc1/3DayLifetime/tucker/ana_datamc_data.out
+gzip /uscmst1b_scratch/lpc1/3DayLifetime/tucker/ana_datamc_data.out
+mv /uscmst1b_scratch/lpc1/3DayLifetime/tucker/ana_datamc_data.out.gz .
+fjr2json.py --output=ana_datamc_data.forlumi.json ana_datamc_data.fjr.xml
+lumiCalc.py -i ana_datamc_data.forlumi.json overview > ana_datamc_data.lumi
+mkdir ana_datamc_${XXXDIR}/allgood
+mv ana_datamc_data.* ana_datamc_${XXXDIR}/allgood/
+
+cd ana_datamc_${XXXDIR}
+foreach x (`ls -1 --color=no mc/*.root`)
+  cd muonsonly
+  ln -sf ../${x}
+  cd ../allgood
+  ln -sf ../${x}
+  cd ..
+end
+cd ..
+
+################################################################################
+
+'''

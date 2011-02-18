@@ -5,8 +5,8 @@ import FWCore.ParameterSet.Config as cms
 #
 # https://twiki.cern.ch/twiki/bin/view/CMS/VbtfZMuMuBaselineSelection
 #
-# We remove the cuts on muon pseudo-rapidity, change the isolation cut
-# to 10 GeV, and add cuts on the 3D angle between muons and the common
+# We remove the cuts on muon pseudo-rapidity, change the isolation
+# cut, and add cuts on the 3D angle between muons and the common
 # vertex chi2 probability (the latter two being implemented in
 # Zprime2muCompositeCandidatePicker, since they can't be done by the
 # StringCutParser).

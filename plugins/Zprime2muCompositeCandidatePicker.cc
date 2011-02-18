@@ -28,8 +28,8 @@ private:
   };
 
   void remove_overlap(pat::CompositeCandidateCollection&) const;
-  bool pass_back_to_back_cos_angle(const pat::CompositeCandidate&) const;
-  bool pass_vertex_chi2(const pat::CompositeCandidate&) const;
+  bool pass_back_to_back_cos_angle(const pat::CompositeCandidate&, double&) const;
+  bool pass_vertex_chi2(const pat::CompositeCandidate&, double&) const;
 
   edm::InputTag src;
   StringCutObjectSelector<pat::CompositeCandidate> selector;
@@ -94,14 +94,14 @@ void Zprime2muCompositeCandidatePicker::remove_overlap(pat::CompositeCandidateCo
   }
 }
 
-bool Zprime2muCompositeCandidatePicker::pass_back_to_back_cos_angle(const pat::CompositeCandidate& dil) const {
+bool Zprime2muCompositeCandidatePicker::pass_back_to_back_cos_angle(const pat::CompositeCandidate& dil, double& cos_angle) const {
   if (back_to_back_cos_angle_min < -1 || dil.numberOfDaughters() != 2)
     return true; // pass objects we don't know how to cut on
-  const double cos_angle = dil.daughter(0)->momentum().Dot(dil.daughter(1)->momentum()) / dil.daughter(0)->p() / dil.daughter(1)->p();
+  cos_angle = dil.daughter(0)->momentum().Dot(dil.daughter(1)->momentum()) / dil.daughter(0)->p() / dil.daughter(1)->p();
   return cos_angle > back_to_back_cos_angle_min;
 }
 
-bool Zprime2muCompositeCandidatePicker::pass_vertex_chi2(const pat::CompositeCandidate& dil) const {
+bool Zprime2muCompositeCandidatePicker::pass_vertex_chi2(const pat::CompositeCandidate& dil, double& vertex_chi2) const {
   if (vertex_chi2_max < 0)
     return true;
 
@@ -120,7 +120,14 @@ bool Zprime2muCompositeCandidatePicker::pass_vertex_chi2(const pat::CompositeCan
   KalmanVertexFitter kvf(true);
   TransientVertex tv = kvf.vertex(ttv);
   
-  return tv.isValid() && tv.normalisedChiSquared() < vertex_chi2_max;
+  if (tv.isValid()) {
+    vertex_chi2 = tv.normalisedChiSquared();
+    return vertex_chi2 < vertex_chi2_max;
+  }
+  else {
+    vertex_chi2 = -998;
+    return false;
+  }
 }
 
 void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::EventSetup& setup) {
@@ -142,16 +149,22 @@ void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::Ev
       continue;
    
     // Now apply cuts that can't.
+    
+    double cos_angle = -999, vertex_chi2 = -999;
 
     // Back-to-back cut to kill cosmics.
-    if (!pass_back_to_back_cos_angle(*c))
+    if (!pass_back_to_back_cos_angle(*c, cos_angle))
       continue;
 
     // Loose common vertex chi2 cut.
-    if (!pass_vertex_chi2(*c))
+    if (!pass_vertex_chi2(*c, vertex_chi2))
       continue;
 
+    // Save the dilepton since it passed the cuts, and store the cut
+    // variables for use later.
     new_cands->push_back(*c);
+    new_cands->back().addUserFloat("cos_angle",   cos_angle);
+    new_cands->back().addUserFloat("vertex_chi2", vertex_chi2);
   }
   
   // Remove cands of lower invariant mass that are comprised of a

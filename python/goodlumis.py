@@ -17,3 +17,13 @@ Run2010ABMuonsOnly_ll = combine(Sept17MuonsOnly_ll, PromptMuonsOnly_ll)
 
 Run2010AB = Run2010AB_ll.getCMSSWString().split(',')
 Run2010ABMuonsOnly = Run2010ABMuonsOnly_ll.getCMSSWString().split(',')
+
+Nov4_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions10/7TeV/Reprocessing/Cert_136033-149442_7TeV_Nov4ReReco_Collisions10_JSON.txt')
+Nov4MuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions10/7TeV/Reprocessing/Cert_136033-149442_7TeV_Nov4ReReco_Collisions10_JSON_MuonPhys.txt')
+
+Nov4Run2010AB = Nov4_ll.getCMSSWString().split(',')
+Nov4Run2010ABMuonsOnly = Nov4MuonsOnly_ll.getCMSSWString().split(',')
+
+if __name__ == '__main__':
+    Run2010AB_ll.writeJSON('sept17prompt.json')
+    Nov4MuonsOnly_ll.writeJSON('nov4.json')

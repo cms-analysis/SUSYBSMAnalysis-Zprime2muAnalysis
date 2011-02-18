@@ -21,6 +21,12 @@ lumis_per_job = %(lumis_per_job)s
     lumis_per_job = 200
     lumi_mask = ''
 
+    if False:
+        job_control_ex = '''
+total_number_of_lumis = -1
+number_of_jobs = 100
+'''
+
     just_testing = 'testing' in sys.argv
 
     def submit(d):
@@ -64,8 +70,9 @@ lumis_per_job = %(lumis_per_job)s
         x = [
             ('Run2010A',        '/Mu/Run2010A-Sep17ReReco_v2/RECO',                 'GR_R_38X_V15'),
             ('Run2010B',        '/Mu/Run2010B-PromptReco-v2/RECO',                  'GR10_P_V10'),
+            #('Run2010A_DileptonMu', '/Mu/Run2010A-DiLeptonMu-Nov4Skim_v1/RECO', 'GR_R_38X_V15'),
+            #('Run2010B_DileptonMu', '/Mu/Run2010B-DiLeptonMu-Nov4Skim_v1/RECO', 'GR_R_38X_V15'),
             ]
         for name, dataset, tag in x:
             submit(locals())
 
-# 4 8 15 16 23 42

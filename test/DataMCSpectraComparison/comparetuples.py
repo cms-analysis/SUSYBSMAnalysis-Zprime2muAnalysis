@@ -75,8 +75,8 @@ def doit2(b1, b2, tn='SimpleNtupler', skip_understood_events=False, max_mass_dif
 import sys
 if 'simple' in sys.argv:
     n = sys.argv.index('simple')
-    doit2(sys.argv[n+1], sys.argv[n+2])
-    raise 'done'
+    doit2(sys.argv[n+1], sys.argv[n+2], sys.argv[n+3] if len(sys.argv) > n+3 else 'SimpleNtupler')
+    sys.exit(0)
 
 doit2('ana_datamc_current/muonsonly', 'ana_datamc_nov4/muonsonly')
 print '\n************************************************\n'

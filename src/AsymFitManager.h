@@ -84,7 +84,7 @@ class AsymFitManager {
   double limit_low(unsigned int i) const { return _limit_low[i]; }
   double limit_upp(unsigned int i) const { return _limit_upp[i]; }
   double peak_mass() const { return _peak_mass; }
-  double beam_energy() const { return _beam_energy; }
+  double beam_energy() const { return 3500.; }
 
   MistagCalc* mistag_calc() const;
 
@@ -117,7 +117,6 @@ class AsymFitManager {
   double _max_pt;
   std::vector<double> _fit_win;
   double _peak_mass;
-  double _beam_energy;
   // These sigma are the reconstructed - generated for dilepton pt, rap, mass, 
   // phi, cos_cs, and phi_cs.  They are taken from DY generated above 1 TeV.
   // order: cos_cs, rapidity, pT, phi, mass, phi_cs (see above enum)

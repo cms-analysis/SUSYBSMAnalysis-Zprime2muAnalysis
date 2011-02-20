@@ -25,7 +25,6 @@ void AsymFitManager::setConstants(const edm::ParameterSet& pset) {
   _max_pt = pset.getParameter<double>("maxPt");
   _fit_win = pset.getParameter<std::vector<double> >("fitWindow");
   _peak_mass = pset.getParameter<double>("peakMass");
-  _beam_energy = pset.getParameter<double>("beamEnergy");
   _rec_sigma = pset.getParameter<std::vector<double> >("recSigma");
 
   _correct_mistags  = pset.getParameter<bool>("correctMistags");
@@ -33,9 +32,9 @@ void AsymFitManager::setConstants(const edm::ParameterSet& pset) {
   _use_mistag_hist  = pset.getParameter<bool>("useMistagHist");
 
   // initialize the mistag calculation using CTEQ6L pdfs
-  if (_beam_energy > 0 && _calculate_mistag) {
+  if (beam_energy() > 0 && _calculate_mistag) {
     char pdfname[] = "cteq6l.LHpdf";
-    _mistag_calc = new MistagCalc(2*_beam_energy, pdfname);
+    _mistag_calc = new MistagCalc(2*beam_energy(), pdfname);
   }
 
   static const double twopi = 2*3.14159265358979323846;

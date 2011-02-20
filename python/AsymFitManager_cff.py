@@ -18,9 +18,6 @@ AsymFitManager = cms.PSet(
     # the parameterization
     calculateMistag = cms.bool(True),
 
-    # the energy in GeV of one of the protons in the interaction
-    beamEnergy = cms.double(3500),
-
     # specifies the pdf for the dilepton mass: 1 = falling
     # exponential, 2 = lorentzian, 3 = exp + lorentzian. if type
     # is 2 or 3 then also need to specify peakMass below.

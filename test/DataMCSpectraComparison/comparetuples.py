@@ -71,6 +71,8 @@ def doit2(b1, b2, tn='SimpleNtupler', skip_understood_events=False, max_mass_dif
             continue # skip events where it's just because we didn't run on it before
         print '%6s%6s%14s%14s%14s%25s%25s' % (old_json.contains((r,l)), new_json.contains((r,l)), r,l,e, m2s(old[rle]), m2s(new[rle]))
 
+
+import sys
 if 'simple' in sys.argv:
     n = sys.argv.index('simple')
     doit2(sys.argv[n+1], sys.argv[n+2])

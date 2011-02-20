@@ -24,6 +24,7 @@ use_poisson_intervals = True
 do_joins = True
 joins = [(s.name, 'jets') for s in samples if 'qcd' in s.name]
 joins += [(x, 'jets') for x in ['inclmu15', 'wmunu', 'wjets']]
+#joins += [(x, 'other prompt leptons') for x in ['singletop_tW', 'ztautau', 'ww', 'wz', 'zz']]
 joins += [(x, 't#bar{t} + other prompt leptons') for x in ['ttbar', 'singletop_tW', 'ztautau', 'ww', 'wz', 'zz']]
 joins += [(s.name, '#gamma/Z #rightarrow #mu^{+}#mu^{-}') for s in samples if 'dy' in s.name]
 joins += [('zmumu', '#gamma/Z #rightarrow #mu^{+}#mu^{-}')]
@@ -105,6 +106,7 @@ pdir = 'plots/datamc'
 if histo_dir != 'ana_datamc':
     pdir += '_' + histo_dir.replace('ana_datamc_', '')
 ps = plot_saver(pdir, size=(600,600), pdf_log=True)
+save_plots = 'no_plots' not in sys.argv
 
 if global_rescale is not None:
     for s in samples:
@@ -147,7 +149,7 @@ for cuts in cutss:
 
             # Print a pretty table.
             if not cumulative:
-                for mass_range in [(60,120), (120,200), (120,), (200,), (586, 914)]:
+                for mass_range in [(60,120), (120,200), (120,), (200,), (586, 914), (150,200)]:
                     if mass_range == (586,914) and (cuts != 'Our' or dilepton != 'MuonsPlusMuonsMinus'):
                         continue
                     print 'cuts: %s  dilepton: %s  mass range: %s' % (cuts, dilepton, mass_range)
@@ -315,7 +317,8 @@ for cuts in cutss:
             n = dilepton
             if cumulative:
                 n += '_cumulative'
-            ps.save(n)
+            if save_plots:
+                ps.save(n)
 
 if hadd_tmp:
     os.system('rm %s' % data_fn)

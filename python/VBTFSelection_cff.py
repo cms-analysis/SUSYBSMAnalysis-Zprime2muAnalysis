@@ -32,6 +32,7 @@ import FWCore.ParameterSet.Config as cms
 # "tight" cut).
 
 loose_cut = 'isGlobalMuon && ' \
+            'isTrackerMuon && ' \
             'innerTrack.pt > 20. && ' \
             'abs(innerTrack.eta) < 2.1 && ' \
             'abs(dB) < 0.2 && ' \
@@ -64,7 +65,6 @@ allDimuons = cms.EDProducer('LooseTightCandViewShallowCloneCombiner',
 dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          src = cms.InputTag('allDimuons'),
                          cut = cms.string(''),
-                         max_candidates = cms.uint32(1),
-                         back_to_back_cos_angle_min = cms.double(-1),
-                         vertex_chi2_max = cms.double(-1),
+                         max_candidates = cms.uint32(100),
+                         do_remove_overlap = cms.bool(False),
                          )

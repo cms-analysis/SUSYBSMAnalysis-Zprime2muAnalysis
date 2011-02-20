@@ -18,7 +18,8 @@ def do(cmd):
     if not just_testing:
         cmds = cmd.split('\n') if '\n' in cmd else [cmd]
         for c in cmds:
-            os.system(c)
+            if cmd != '' and not cmd.startswith('#'):
+                os.system(c)
 
 if cmd == 'setdirs':
     do('''ln -s /uscms/home/tucker/nobackup/crab_dirs crab
@@ -48,3 +49,68 @@ elif cmd == 'hadd':
         else:
             do('hadd ana_datamc_%(name)s.root crab/crab_ana%(extra)s_datamc_%(name)s/res/zp2mu_histos*root' % locals())
 
+elif cmd == 'gatherhistos':
+    extra = extra[0] if extra else 'renameme'
+    for x in ['MuonsOnly', 'AllGood']:
+        xl = x.lower()
+        do('''
+mkdir -p ana_datamc_%(extra)s/%(xl)s
+hadd ana_datamc_%(extra)s/%(xl)s/ana_datamc_data.root crab/crab_ana_datamc_Run2010?%(x)s/res/*root
+crab -c crab/crab_ana_datamc_Run2010A%(x)s -report
+crab -c crab/crab_ana_datamc_Run2010B%(x)s -report
+compareJSON.py --and crab/crab_ana_datamc_Run2010?%(x)s/res/lumiSummary.json
+mergeJSON.py crab/crab_ana_datamc_Run2010?%(x)s/res/lumiSummary.json --output=ana_datamc_%(extra)s/%(xl)s/ana_datamc_data.forlumi.json
+# next two if comparing to an existing copy with little differences
+diff -s ana_datamc_%(extra)s/%(xl)s/ana_datamc_data.forlumi.json ana_datamc_nov4/%(xl)s/
+cp ana_datamc_nov4/%(xl)s/ana_datamc_data.lumi ana_datamc_%(extra)s/%(xl)s/
+# else this
+#lumiCalc.py -c frontier://LumiProd/CMS_LUMI_PROD -i ana_datamc_%(extra)s/%(xl)s/ana_datamc_data.forlumi.json overview > ana_datamc_%(extra)s/%(xl)s/ana_datamc_data.lumi
+''' % locals())
+
+
+
+'''
+setenv XXXDIR2 ~/nobackup/ana_datamc_mc/renameme
+mkdir -p $XXXDIR2
+# copy the mc
+foreach y (muonsonly allgood)
+  cd ana_datamc_renameme/${y}
+  pwd
+  foreach x (${XXXDIR2}/*.root)
+    ln -s $x
+  end
+  cd ../..
+end
+
+
+Workflow to run over data without using crab:
+
+setenv XXXDIR withNewStuff
+setenv XXXTODO data # or nov4
+
+cmsRun -j ana_datamc_data.fjr.xml histos.py $XXXTODO >&! /uscmst1b_scratch/lpc1/3DayLifetime/tucker/ana_datamc_data.out
+gzip /uscmst1b_scratch/lpc1/3DayLifetime/tucker/ana_datamc_data.out
+mv /uscmst1b_scratch/lpc1/3DayLifetime/tucker/ana_datamc_data.out.gz .
+fjr2json.py --output=ana_datamc_data.forlumi.json ana_datamc_data.fjr.xml
+lumiCalc.py -i ana_datamc_data.forlumi.json overview > ana_datamc_data.lumi
+mkdir ana_datamc_${XXXDIR}/muonsonly
+mv ana_datamc_data.* ana_datamc_${XXXDIR}/muonsonly/
+
+cmsRun -j ana_datamc_data.fjr.xml histos.py $XXXTODO all_good >&! /uscmst1b_scratch/lpc1/3DayLifetime/tucker/ana_datamc_data.out
+gzip /uscmst1b_scratch/lpc1/3DayLifetime/tucker/ana_datamc_data.out
+mv /uscmst1b_scratch/lpc1/3DayLifetime/tucker/ana_datamc_data.out.gz .
+fjr2json.py --output=ana_datamc_data.forlumi.json ana_datamc_data.fjr.xml
+lumiCalc.py -i ana_datamc_data.forlumi.json overview > ana_datamc_data.lumi
+mkdir ana_datamc_${XXXDIR}/allgood
+mv ana_datamc_data.* ana_datamc_${XXXDIR}/allgood/
+
+cd ana_datamc_${XXXDIR}
+foreach x (`ls -1 --color=no mc/*.root`)
+  cd muonsonly
+  ln -sf ../${x}
+  cd ../allgood
+  ln -sf ../${x}
+  cd ..
+end
+cd ..
+'''

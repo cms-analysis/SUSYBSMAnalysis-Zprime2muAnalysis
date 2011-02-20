@@ -20,7 +20,7 @@ import FWCore.ParameterSet.Config as cms
 #
 # Then one muon must pass the above plus a tighter set of cuts:
 #
-# - dxy < 0.2 cm (dB < 0.2)
+# - |dxy wrt beamspot| < 0.2 cm (abs(dB) < 0.2)
 # - muon global track chi2/ndof < 10 (globalTrack.normalizedChi2 < 10)
 # - at least one pixel hit (innerTrack.hitPattern.numberOfValidPixelHits >= 1)
 # - at least two muon stations in the fit (globalTrack.hitPattern.muonStationsWithValidHits >= 2)
@@ -48,7 +48,7 @@ trigger_match = '(' \
                 '!triggerObjectMatchesByPath("HLT_Mu15_v1").empty()' \
                 ')'
 
-tight_cut = 'dB < 0.2 && ' \
+tight_cut = 'abs(dB) < 0.2 && ' \
             'globalTrack.normalizedChi2 < 10 && ' \
             'innerTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \
             'globalTrack.hitPattern.muonStationsWithValidHits >= 2 && ' \
@@ -65,6 +65,7 @@ dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          src = cms.InputTag('allDimuons'),
                          cut = cms.string(''),
                          max_candidates = cms.uint32(1),
+                         do_remove_overlap = cms.bool(True),
                          back_to_back_cos_angle_min = cms.double(-0.9998), # this corresponds to the angle (pi - 0.02) rad = 178.9 deg
                          vertex_chi2_max = cms.double(10),
                          )

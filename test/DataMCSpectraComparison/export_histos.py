@@ -23,6 +23,7 @@ for cumulative in (False, True):
     dataHist.Rebin(rebin_factor)
     if cumulative:
         dataHist = cumulative_histogram(dataHist)
+        dataHist.SetName('dataHist')
     
     qcdHist = histos['inclmu15'].Clone('qcdHist')
     qcdHist.Add(histos['wjets'])

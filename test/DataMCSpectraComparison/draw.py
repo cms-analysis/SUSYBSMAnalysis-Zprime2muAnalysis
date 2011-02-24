@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # (py draw.py ana_datamc_current/muonsonly >! out.draw.muonsonly) && (py draw.py ana_datamc_current/allgood >! out.draw.allgood) && mv out.draw.* plots/datamc_current/ && tlock ~/asdf/plots.tgz plots/datamc_current
+# (py draw.py ana_datamc_nov4/muonsonly >! out.draw.muonsonly.nov4) && (py draw.py ana_datamc_nov4/allgood >! out.draw.allgood.nov4) && mv out.draw.* plots/datamc_nov4/ && tlock ~/asdf/plots.tgz plots/datamc_nov4
 
 import sys, os, glob
 from collections import defaultdict
@@ -95,7 +96,7 @@ yaxis = {
 use_yaxis = True
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
-cutss = ['VBTF', 'Our', 'OurNoIso']
+cutss = ['VBTF', 'Our']
 
 ROOT.TH1.AddDirectory(False)
 
@@ -115,6 +116,8 @@ if global_rescale is not None:
 #samples = [s for s in samples if not s.name in ['ww', 'zz', 'wz', 'qcd500']]
 
 for cuts in cutss:
+    if not hasattr(fdata, dir_name(cuts, 'MuonsPlusMuonsMinus')):
+        continue
     plot_dir = pdir + '/%s/%s' % (to_compare, cuts)
     ps.set_plot_dir(plot_dir)
     for cumulative in (False, True):
@@ -130,7 +133,7 @@ for cuts in cutss:
                 # It would be more efficient to have the sample loop be
                 # the outer one thanks to the file opening/closing, but
                 # the code is cleaner this way.
-                f = ROOT.TFile(os.path.join(histo_dir, 'ana_datamc_%s.root' % sample.name))
+                f = ROOT.TFile(os.path.join(histo_dir, 'mc', 'ana_datamc_%s.root' % sample.name))
                 sample.mass = getattr(f, dir_name(cuts, dilepton)).Get(to_compare).Clone()
                 sample.mass.Rebin(rebin_factor)
                 sample.mass.Scale(sample.partial_weight * int_lumi)
@@ -155,9 +158,10 @@ for cuts in cutss:
                     print 'cuts: %s  dilepton: %s  mass range: %s' % (cuts, dilepton, mass_range)
                     for sample in samples:
                         sample.integral = get_integral(sample.mass, *mass_range, integral_only=True, include_last_bin=False)
+                        sample.raw_integral = int(sample.integral / sample.partial_weight / int_lumi)
                     hdata_integral = get_integral(hdata, *mass_range, integral_only=True, include_last_bin=False)
-                    print '%50s%20s%20s%20s%20s%20s%20s%20s' % ('sample', 'weight for %i/nb' % int(int_lumi*1000), 'integral', 'stat error', 'limit if int=0', 'syst error', 'lumi error', 'total error')
-                    print '%50s%20s%20.6f%20.6f' % ('data', '-', hdata_integral, hdata_integral**0.5)
+                    print '%50s%20s%20s%20s%20s%20s%20s%20s%20s' % ('sample', 'weight for %i/nb' % int(int_lumi*1000), 'raw integral', 'integral', 'stat error', 'limit if int=0', 'syst error', 'lumi error', 'total error')
+                    print '%50s%20s%20i%20.6f%20.6f' % ('data', '-', int(hdata_integral), hdata_integral, hdata_integral**0.5)
                     sum_mc = 0.
                     var_sum_mc = 0.
                     syst_var_sum_mc = 0.
@@ -185,15 +189,15 @@ for cuts in cutss:
                         lumi_err = lumi_syst_frac * sample.integral
                         tot_err = (var + syst_var + lumi_err**2)**0.5
 
-                        print '%50s%20.6f%20.6f%20.6f%20s%20.6f%20.6f%20.6f' % (sample.nice_name, w, sample.integral, var**0.5, limit, syst_var**0.5, lumi_err, tot_err)
+                        print '%50s%20.6f%20i%20.6f%20.6f%20s%20.6f%20.6f%20.6f' % (sample.nice_name, w, sample.raw_integral, sample.integral, var**0.5, limit, syst_var**0.5, lumi_err, tot_err)
 
                     lumi_err = lumi_syst_frac * sum_mc
                     tot_err = (var_sum_mc + syst_var_sum_mc + lumi_err**2)**0.5
-                    print '%50s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f' % ('sum MC (not including Z\')', '-', sum_mc, var_sum_mc**0.5, '-', syst_var_sum_mc**0.5, lumi_err, tot_err)
+                    print '%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f' % ('sum MC (not including Z\')', '-', '-', sum_mc, var_sum_mc**0.5, '-', syst_var_sum_mc**0.5, lumi_err, tot_err)
                     for join_name in sorted(sums.keys()):
                         lumi_err = lumi_syst_frac * sums[join_name]
                         tot_err = (var_sums[join_name] + syst_var_sums[join_name] + lumi_err**2)**0.5
-                        print '%50s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f' % (join_name, '-', sums[join_name], var_sums[join_name]**0.5, '-', syst_var_sums[join_name]**0.5, lumi_err, tot_err)
+                        print '%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f' % (join_name, '-', '-', sums[join_name], var_sums[join_name]**0.5, '-', syst_var_sums[join_name]**0.5, lumi_err, tot_err)
                     print
                 print
 

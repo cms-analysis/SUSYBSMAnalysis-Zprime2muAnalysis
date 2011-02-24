@@ -67,7 +67,10 @@ cp ana_datamc_nov4/%(xl)s/ana_datamc_data.lumi ana_datamc_%(extra)s/%(xl)s/
 #lumiCalc.py -c frontier://LumiProd/CMS_LUMI_PROD -i ana_datamc_%(extra)s/%(xl)s/ana_datamc_data.forlumi.json overview > ana_datamc_%(extra)s/%(xl)s/ana_datamc_data.lumi
 ''' % locals())
 
-
+elif cmd == 'mclinks':
+    extra = extra[0] if extra else 'renameme'
+    for x in ['muonsonly', 'allgood']:
+        print('ln -s ~/nobackup/ana_datamc_mc/%s %s' % (extra, x))
 
 '''
 setenv XXXDIR2 ~/nobackup/ana_datamc_mc/renameme

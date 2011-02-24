@@ -21,6 +21,7 @@ to_compare = 'DileptonMass'
 global_rescale = 3273/3404.6 if False else None
 draw_zssm = True
 use_poisson_intervals = True
+overflow_bin = False
 
 do_joins = True
 joins = [(s.name, 'jets') for s in samples if 'qcd' in s.name]
@@ -84,14 +85,14 @@ titleize = {
     'DileptonPt': '%s p_{T}%s',
     }
 unitize = {
-    'DileptonMass': ' (GeV)',
-    'DileptonPt': ' (GeV)',
+    'DileptonMass': ' [GeV]',
+    'DileptonPt': ' [GeV]',
     }
 yaxis = {
     ('MuonsPlusMuonsMinus', False): (4e-3, None),
     ('MuonsPlusMuonsMinus', True): (1.6, None),
 #   ('MuonsSameSign', False): (5e-5, 2.5),
-   ('MuonsElectronsOppSign', False): (8e-3, 30),
+    ('MuonsElectronsOppSign', False): (1e-2, 20),
     }
 use_yaxis = True
 
@@ -140,7 +141,7 @@ for cuts in cutss:
                 if cumulative:
                     sample.mass_not_cumulative = sample.mass
                     sample.mass = cumulative_histogram(sample.mass)
-                else:
+                elif overflow_bin:
                     move_above_into_bin(sample.mass, xax[1])
 
             ## Sort by increasing integral.
@@ -220,15 +221,15 @@ for cuts in cutss:
             elif dilepton == 'MuonsPlusMuonsMinus' and cumulative:
                 l = ROOT.TLegend(0.47, 0.55, 0.88, 0.88)
             else:
-                l = ROOT.TLegend(0.53, 0.69, 0.76, 0.84)
+                l = ROOT.TLegend(0.50, 0.69, 0.76, 0.88)
             l.SetFillColor(0)
             l.SetBorderSize(0)
 
             m = ROOT.TMarker()
             m.SetMarkerStyle(20)
-            m.SetMarkerSize(1.0)
+            m.SetMarkerSize(0.8)
             m.SetMarkerColor(ROOT.kBlack)
-            l.AddEntry(m, 'DATA', 'LP')
+            l.AddEntry(m, 'DATA', 'EP')
 
             legend_already = set()
             for sample in reversed(samples):
@@ -247,12 +248,16 @@ for cuts in cutss:
             s.Draw('hist')
             # must call Draw first or the THStack doesn't have a histogram/axis
             s.GetXaxis().SetRangeUser(*xax)
-            
+
             hdata.Rebin(rebin_factor)
             if cumulative:
                 hdata = cumulative_histogram(hdata)
-            else:
+            elif overflow_bin:
                 move_above_into_bin(hdata, xax[1])
+            else:
+                overflow_integral = get_integral(hdata, xax[1], integral_only=True)
+                if overflow_integral > 0:
+                    print 'WARNING: in %s, data histogram has points in overflow (mass bins above %.f GeV)! integral = %f' % (cuts + ' ' + dilepton,  xax[1], overflow_integral)
 
             mymin = real_hist_min(s.GetStack().Last(), user_range=xax) * 0.7
             #mymin = real_hist_min(last_mc, user_range=xax) * 0.7
@@ -282,7 +287,7 @@ for cuts in cutss:
             if cumulative:
                 title = 'Events #geq %s' % (titleize[to_compare] % (subtitleize[dilepton], ''))
             else:
-                title = 'Events / %i%s' % (rebin_factor, unitize[to_compare].replace('(','').replace(')',''))
+                title = 'Events / %i%s' % (rebin_factor, unitize[to_compare].translate(None, '()[]'))
             hdata.GetYaxis().SetTitle(title)
             hdata.GetXaxis().SetTitleOffset(0.9)
             hdata.GetXaxis().SetTitleSize(0.047)
@@ -291,7 +296,7 @@ for cuts in cutss:
             hdata.SetMinimum(mymin)
             hdata.SetMaximum(mymax)
             hdata.SetMarkerStyle(20)
-            hdata.SetMarkerSize(1.0)
+            hdata.SetMarkerSize(0.8)
             hdata.Draw(data_draw_cmd)
 
             if draw_zssm and not cumulative and dilepton == 'MuonsPlusMuonsMinus':
@@ -305,18 +310,18 @@ for cuts in cutss:
                 zp.SetStats(0)
                 zp.Draw('hist same')
 
-            t1 = ROOT.TPaveLabel(0.458, 0.893, 0.908, 0.993, '#sqrt{s} = 7 TeV, #int L dt = %.f pb^{-1}' % round(int_lumi), 'brNDC')
-            t2 = ROOT.TPaveLabel(0.225, 0.907, 0.332, 0.997, 'CMS preliminary', 'brNDC')
-            t1.SetTextSize(0.35)
-            t2.SetTextSize(0.45)
-            for t in t1, t2:
-                t.SetBorderSize(0)
-                t.SetFillColor(0)
-                t.SetFillStyle(0)
-                t.Draw()
+            t = ROOT.TPaveLabel(0.40, 0.89, 0.86, 0.99, 'CMS    #sqrt{s} = 7 TeV    #int L dt = %.f pb^{-1}' % round(int_lumi), 'brNDC')
+            t.SetTextSize(0.35)
+            t.SetBorderSize(0)
+            t.SetFillColor(0)
+            t.SetFillStyle(0)
+            t.Draw()
 
             l.SetTextSize(0.03)
             l.Draw('same')
+            # huge crappy hack for "EP" in TLegend::AddEntry not working
+            ll = ROOT.TLine()
+            ll.DrawLineNDC(0.532, 0.82, 0.532, 0.875)
 
             n = dilepton
             if cumulative:

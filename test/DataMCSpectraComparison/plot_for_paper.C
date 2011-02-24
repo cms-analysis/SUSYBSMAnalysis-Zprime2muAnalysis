@@ -92,7 +92,7 @@ void plot_for_paper() {
     zeeHist->GetXaxis()->SetNdivisions(505);
   }
   else
-    zeeHist->SetTitle(TString::Format(";m(%s) (GeV); Events #geq m(%s)", dil_string, dil_string));
+    zeeHist->SetTitle(TString::Format(";m(%s) [GeV]; Events #geq m(%s)", dil_string, dil_string));
 
   zeeHist->SetFillColor(7);
   zeeHist->SetLineColor(7);
@@ -127,11 +127,7 @@ void plot_for_paper() {
     zeeHist->GetXaxis()->SetRangeUser(50, 500);
   }
 
-  TLegend *leg;
-  if (!isCHist)
-    leg = new TLegend(0.48, 0.53, 0.88, 0.88, NULL, "brNDC");
-  else
-    leg = new TLegend(0.530201, 0.67312, 0.8842282, 0.8776224, NULL, "brNDC");
+  TLegend *leg = new TLegend(0.48, 0.53, 0.88, 0.88, NULL, "brNDC");
   leg->SetBorderSize(0);
   leg->SetTextFont(62);
   leg->SetLineColor(1);
@@ -149,7 +145,7 @@ void plot_for_paper() {
   leg->SetFillStyle(0);
   leg->Draw();
 
-  TPaveLabel *pl = new TPaveLabel(0.40, 0.89, 0.86, 0.99, TString::Format("CMS 2010    #sqrt{s} = 7 TeV    #int L dt = %u pb^{-1}", isElectron ? 35 : 40), "brNDC");
+  TPaveLabel *pl = new TPaveLabel(0.40, 0.89, 0.86, 0.99, TString::Format("CMS    #sqrt{s} = 7 TeV    #int L dt = %u pb^{-1}", isElectron ? 35 : 40), "brNDC");
   pl->SetBorderSize(0);
   pl->SetFillColor(0);
   pl->SetFillStyle(0);
@@ -158,7 +154,10 @@ void plot_for_paper() {
 
   // huge crappy hack for "EP" in TLegend::AddEntry not working
   TLine ll;
-  ll.DrawLineNDC(0.53, 0.82, 0.53, 0.87);
+  if (isCHist)
+    ll.DrawLineNDC(0.53, 0.805, 0.53, 0.865);
+  else
+    ll.DrawLineNDC(0.53, 0.815, 0.53, 0.87);
 
   c1->RedrawAxis();
   c1->SetLogy(1);

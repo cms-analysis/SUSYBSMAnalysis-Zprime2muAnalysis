@@ -1,5 +1,8 @@
 // root -q -x -b plot_for_paper.C ; root -q -x -b plot_for_paper.C --muons ; root -q -x -b plot_for_paper.C --cumulative ; root -q -x -b plot_for_paper.C --muons --cumulative
 
+#include <cassert>
+#include <cstdlib>
+#include <string>
 #include "Math/QuantFuncMathCore.h"
 #include "TApplication.h"
 #include "TCanvas.h"
@@ -7,10 +10,13 @@
 #include "TGraphAsymmErrors.h"
 #include "TH1.h"
 #include "TLegend.h"
+#include "TLine.h"
 #include "TPaveLabel.h"
 #include "TROOT.h"
 #include "TStyle.h"
 #include "zprime.C"
+
+using namespace std;
 
 TGraphAsymmErrors* poisson_intervalize(TH1* h, bool zero_x) {
   static const double CL = 0.6827;
@@ -36,7 +42,118 @@ TGraphAsymmErrors* poisson_intervalize(TH1* h, bool zero_x) {
   return tgae;
 }
 
+//#define EMU
+
+#ifdef EMU
 void plot_for_paper() {
+#else
+void plot_for_paper2() {
+#endif
+  TFile fff("histos_export_emu.root");
+ 
+  TH1* dataHist = (TH1*)fff.Get("dataHist");
+  TH1* promptHist = (TH1*)fff.Get("promptHist");
+  TH1* jetsHist = (TH1*)fff.Get("jetsHist");
+
+  TCanvas *c1 = new TCanvas("c1", "c1",5,24,600,600);
+  gStyle->SetOptFit(1);
+  gStyle->SetOptStat(0);
+  c1->Range(-112.5,-3.952308,1137.5,5.117294);
+  c1->SetFillColor(0);
+  c1->SetBorderMode(0);
+  c1->SetBorderSize(2);
+  c1->SetTickx();
+  c1->SetTicky();
+  c1->SetLeftMargin(0.13);
+  c1->SetRightMargin(0.07);
+  c1->SetFrameBorderMode(0);
+  c1->SetFrameBorderMode(0);
+
+  promptHist->SetTitle(";m(#mu^{+}#font[42]{e}^{-}/^{}#font[42]{e}^{+}#mu^{-}) [GeV]; Events / 20 GeV");
+  promptHist->GetXaxis()->SetNdivisions(505);
+
+  promptHist->SetFillColor(2);
+  promptHist->SetLineColor(2);
+  jetsHist->SetFillColor(4);
+  jetsHist->SetLineColor(4);
+
+  promptHist->Draw("HIST");
+  jetsHist->Draw("SAME HIST");
+
+  TGraphAsymmErrors* dataHistPI = poisson_intervalize(dataHist, true);
+  dataHistPI->SetMarkerSize(0.8);
+  dataHistPI->SetMarkerStyle(20);
+  dataHistPI->Draw("EPZ SAME"); 
+
+  promptHist->GetXaxis()->SetTitleSize(0.047);
+  promptHist->GetXaxis()->SetTitleOffset(0.9);
+  promptHist->GetYaxis()->SetTitleSize(0.047);
+  promptHist->GetYaxis()->SetTitleOffset(1.2);
+
+  promptHist->GetXaxis()->SetRangeUser(40, 500);
+  promptHist->GetYaxis()->SetRangeUser(0.0001, 52.5);
+
+  TLegend *leg = new TLegend(0.48, 0.63, 0.88, 0.88, NULL, "brNDC");
+  leg->SetBorderSize(0);
+  leg->SetTextFont(62);
+  leg->SetLineColor(1);
+  leg->SetLineStyle(1);
+  leg->SetLineWidth(1);
+  leg->SetFillColor(19);
+  leg->SetFillStyle(0);
+  leg->AddEntry(dataHistPI, "DATA", "EP");
+  leg->AddEntry(promptHist, "t#bar{t} + other prompt leptons", "F"); 
+  leg->AddEntry(jetsHist, "jets", "F");
+  leg->SetBorderSize(0);
+  leg->SetFillStyle(0);
+  leg->Draw();
+
+  TPaveLabel *pl = new TPaveLabel(0.40, 0.89, 0.86, 0.99, "CMS    #sqrt{s} = 7 TeV    #int L dt = 35 pb^{-1}", "brNDC");
+  pl->SetBorderSize(0);
+  pl->SetFillColor(0);
+  pl->SetFillStyle(0);
+  pl->SetTextSize(0.35);
+  pl->Draw();
+
+  // huge crappy hack for "EP" in TLegend::AddEntry not working
+  TLine ll;
+  ll.DrawLineNDC(0.53, 0.81, 0.53, 0.87);
+
+  c1->RedrawAxis();
+  system("mkdir -p plots/for_paper");
+  TString fn = "MuonsElectronsOppSign";
+  fn = "plots/for_paper/" + fn;
+  c1->SaveAs(fn + ".pdf");
+  c1->SaveAs(fn + ".root");
+  c1->SaveAs(fn + ".png");
+  c1->SaveAs(fn + ".C");
+
+  int k = dataHist->FindBin(60);
+  int i = dataHist->FindBin(120);
+  int j = dataHist->FindBin(200);
+  assert(promptHist->FindBin(120) == i);
+  assert(jetsHist  ->FindBin(120) == i);
+  assert(promptHist->FindBin(200) == j);
+  assert(jetsHist  ->FindBin(200) == j);
+  printf("60-120 GeV:\n");
+  printf("data:        %.1f\n", dataHist  ->Integral(k, i-1));
+  printf("prompt+jets: %.1f\n", promptHist->Integral(k, i-1));
+  printf("jets:        %.1f\n", jetsHist  ->Integral(k, i-1));
+  printf("> 120 GeV:\n");
+  printf("data:        %.1f\n", dataHist  ->Integral(i, 1000000));
+  printf("prompt+jets: %.1f\n", promptHist->Integral(i, 1000000));
+  printf("jets:        %.1f\n", jetsHist  ->Integral(i, 1000000));
+  printf("> 200 GeV:\n");
+  printf("data:        %.1f\n", dataHist  ->Integral(j, 1000000));
+  printf("prompt+jets: %.1f\n", promptHist->Integral(j, 1000000));
+  printf("jets:        %.1f\n", jetsHist  ->Integral(j, 1000000));
+}
+
+#ifndef EMU
+void plot_for_paper() {
+#else
+void plot_for_paper2() {
+#endif
   bool isCHist = false; // true for cumulative hist
   bool isElectron = true;
 

@@ -167,8 +167,8 @@ void plot_for_paper2() {
       isElectron = false;
   }
 
-  const char* dil_string = isElectron ? "ee" : "#mu^{+}#mu^{-}";
-  const char* dil_string_signed = isElectron ? "e^{+}e^{-}" : "#mu^{+}#mu^{-}";
+  const char* dil_string = isElectron ? "#font[42]{ee}" : "#mu^{+}#mu^{-}";
+  const char* dil_string_signed = isElectron ? "#font[42]{e}^{+}#font[42]{e}^{-}" : "#mu^{+}#mu^{-}";
   TString in_fn;
   if (isCHist)
     in_fn = isElectron ? "cMassApprovAllFixed.root" : "histos_export_cumulative.root";

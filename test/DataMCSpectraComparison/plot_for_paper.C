@@ -126,6 +126,7 @@ void plot_for_paper2() {
   c1->SaveAs(fn + ".pdf");
   c1->SaveAs(fn + ".root");
   c1->SaveAs(fn + ".png");
+  c1->SaveAs(fn + ".gif");
   c1->SaveAs(fn + ".C");
 
   int k = dataHist->FindBin(60);
@@ -288,6 +289,7 @@ void plot_for_paper2() {
   c1->SaveAs(fn + ".pdf");
   c1->SaveAs(fn + ".root");
   c1->SaveAs(fn + ".png");
+  c1->SaveAs(fn + ".gif");
   c1->SaveAs(fn + ".C");
 
   /*

@@ -211,7 +211,7 @@ for cuts in cutss:
                 color = joins_colors[joins[sample.name]] if do_joins and joins.has_key(sample.name) else sample.color
                 h.SetLineColor(color)
                 h.SetMarkerStyle(0)
-                if 'zssm' not in sample.name and ('MuonsElectrons' not in dilepton or ('zmumu' not in sample.name and 'dy' not in sample.name)):
+                if 'zssm' not in sample.name:
                     h.SetFillColor(color)
                     s.Add(h)
                 last_mc = h

@@ -72,3 +72,7 @@
   <use name="DataFormats/PatCandidates"/>
   <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
 </library>
+
+<library file="VetoOtherDataset.cc" name="VetoOtherDataset">
+  <use name="HLTrigger/HLTcore"/>
+</library>

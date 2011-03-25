@@ -85,7 +85,8 @@ Zprime2muAnalysisPlots::Zprime2muAnalysisPlots(const edm::ParameterSet& pset):
     edm::Service<TFileService> fs;
 
     TFileDirectory md = fs->mkdir("metadata");
-    TDirectory *md_dir = md.cd();
+    md.cd(); // JMTBAD should check return value...
+    TDirectory *md_dir = md.getBareDirectory();
     md_dir->WriteTObject(new TObjString(dilepton_src_.encode().c_str()), "muons");
     md_dir->WriteTObject(new TObjString(pset.getParameter<std::string>("selection").c_str()), "selection");
     
@@ -187,7 +188,8 @@ Zprime2muAnalysisPlots::~Zprime2muAnalysisPlots()
 void Zprime2muAnalysisPlots::book(const TFileDirectory &fs, const edm::ParameterSet &pset, const std::string &name, const std::string &basename) 
 {
     typedef std::vector<double> vdouble;
-    TDirectory *fd = fs.cd();
+    fs.cd(); // JMTBAD should check return value
+    TDirectory *fd = fs.getBareDirectory();
     if (pset.existsAs<vdouble>(basename+"Bins")) {
         vdouble bins = pset.getParameter<vdouble>(basename+"Bins");
         plots[fd->GetName()][name] = fs.make<TH1D>(name.c_str(), name.c_str(), bins.size()-1, &bins[0]);

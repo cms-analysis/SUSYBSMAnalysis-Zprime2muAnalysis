@@ -63,7 +63,7 @@ int numDaughtersInAcc(const reco::CompositeCandidate& dil,
 const reco::CandidateBaseRef
 dileptonDaughter(const reco::CompositeCandidate& dil,
 		 const unsigned i) {
-  if (i < 0 || i >= dil.numberOfDaughters())
+  if (i >= dil.numberOfDaughters())
     return reco::CandidateBaseRef(); // an invalid reference
   return dil.daughter(i)->masterClone();
 }

@@ -1,51 +1,56 @@
-# The below is copy-pasted from the DBS config for
-# /DYToMuMu_M-10To20_TuneZ2_7TeV-pythia6/Fall10-START38_V9-v1/GEN-SIM-RAW
-# and modified to do what we want.
-
+# cmsDriver.py Configuration/GenProduction/python/PYTHIA6_EXOTICA_ZPrimeSSMMuMu_M500_7TeV_cff.py -s GEN,SIM,DIGI,L1,DIGI2RAW,HLT:GRun,RAW2DIGI,L1Reco,RECO --conditions START311_V1G1::All --datatier GEN-SIM-RECO --eventcontent RECOSIM --customise Configuration/GenProduction/geometry38X_customize.py,Configuration/GlobalRuns/reco_TLR_311X.py --cust_function customiseGeometry,customisePPMC --processName REDIGI311X --no_exec
+# and then hand edited
 import sys, os, FWCore.ParameterSet.Config as cms
 
-process = cms.Process('HLT')
+process = cms.Process('REDIGI311X')
 
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
-process.load('Configuration.StandardSequences.MixingNoPileUp_cff')
+process.load('SimGeneral.MixingModule.mixNoPU_cfi')
 process.load('Configuration.StandardSequences.GeometryDB_cff')
 process.load('Configuration.StandardSequences.MagneticField_38T_cff')
 process.load('Configuration.StandardSequences.Generator_cff')
-process.load('Configuration.StandardSequences.VtxSmearedRealistic7TeVCollision_cff')
+process.load('IOMC.EventVertexGenerators.VtxSmearedRealistic7TeVCollision_cfi')
+process.load('GeneratorInterface.Core.genFilterSummary_cff')
 process.load('Configuration.StandardSequences.SimIdeal_cff')
 process.load('Configuration.StandardSequences.Digi_cff')
 process.load('Configuration.StandardSequences.SimL1Emulator_cff')
 process.load('Configuration.StandardSequences.DigiToRaw_cff')
 process.load('HLTrigger.Configuration.HLT_GRun_cff')
+process.load('Configuration.StandardSequences.RawToDigi_cff')
+process.load('Configuration.StandardSequences.L1Reco_cff')
+process.load('Configuration.StandardSequences.Reconstruction_cff')
+process.load('Configuration.StandardSequences.EndOfProcess_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.load('Configuration.EventContent.EventContent_cff')
 
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(1))
-process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True))
 process.source = cms.Source("EmptySource")
+process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True))
 
-process.output = cms.OutputModule("PoolOutputModule",
+process.RECOSIMoutput = cms.OutputModule("PoolOutputModule",
     splitLevel = cms.untracked.int32(0),
-    outputCommands = process.RAWSIMEventContent.outputCommands,
-    fileName = cms.untracked.string('hlt.root'),
-    dataset = cms.untracked.PSet(dataTier = cms.untracked.string('GEN-SIM-RAW'), filterName = cms.untracked.string('')),
+    outputCommands = process.RECOSIMEventContent.outputCommands,
+    fileName = cms.untracked.string('reco.root'),
+    dataset = cms.untracked.PSet(
+        filterName = cms.untracked.string(''),
+        dataTier = cms.untracked.string('GEN-SIM-RECO')
+    ),
     SelectEvents = cms.untracked.PSet(SelectEvents = cms.vstring('generation_step'))
 )
 
-process.GlobalTag.globaltag = 'START38_V12::All'
+process.GlobalTag.globaltag = 'START311_V2::All'
 
 process.generator = cms.EDFilter("Pythia6GeneratorFilter",
-    pythiaPylistVerbosity = cms.untracked.int32(1),
+    pythiaPylistVerbosity = cms.untracked.int32(0),
     filterEfficiency = cms.untracked.double(1.0),
     pythiaHepMCVerbosity = cms.untracked.bool(False),
     comEnergy = cms.double(7000.0),
-    crossSection = cms.untracked.double(999999.0),
-    maxEventsToPrint = cms.untracked.int32(1),
+    crossSection = cms.untracked.double(2.01),
+    maxEventsToPrint = cms.untracked.int32(0),
     PythiaParameters = cms.PSet(
-        pythiaUESettings = cms.vstring(
-            'MSTU(21)=1     ! Check on possible errors during program execution', 
+        pythiaUESettings = cms.vstring('MSTU(21)=1     ! Check on possible errors during program execution', 
             'MSTJ(22)=2     ! Decay those unstable particles', 
             'PARJ(71)=10 .  ! for which ctau  10 mm', 
             'MSTP(33)=0     ! no K factors in hard cross sections', 
@@ -65,26 +70,75 @@ process.generator = cms.EDFilter("Pythia6GeneratorFilter",
             'MSTP(91)=1     ! Gaussian primordial kT', 
             'PARP(93)=10.0  ! primordial kT-max', 
             'MSTP(81)=21    ! multiple parton interactions 1 is Pythia default', 
-            'MSTP(82)=4     ! Defines the multi-parton model'
-            ),
-        processParameters = cms.vstring(),
+            'MSTP(82)=4     ! Defines the multi-parton model'),
+        processParameters = cms.vstring('MSEL=0             ! User defined processes', 
+            "MSUB(141)   = 1    ! ff -> gamma/Z0/Z\'", 
+            'MSTP(44)    = 3    ! no Zprime/Z/gamma interference', 
+            "PMAS(32,1)  = 500 ! Z\' mass (GeV)", 
+            'CKIN(1)     = -1  ! lower invariant mass cutoff (GeV)', 
+            'CKIN(2)     = -1   ! no upper invariant mass cutoff', 
+            'MDME(289,1) = 0    ! d dbar', 
+            'MDME(290,1) = 0    ! u ubar', 
+            'MDME(291,1) = 0    ! s sbar', 
+            'MDME(292,1) = 0    ! c cbar', 
+            'MDME(293,1) = 0    ! b bar', 
+            'MDME(294,1) = 0    ! t tbar', 
+            'MDME(295,1) = -1   ! 4th gen q qbar', 
+            'MDME(296,1) = -1   ! 4th gen q qbar', 
+            'MDME(297,1) = 0    ! e-     e+', 
+            'MDME(298,1) = 0    ! nu_e   nu_ebar', 
+            'MDME(299,1) = 1    ! mu-    mu+', 
+            'MDME(300,1) = 0    ! nu_mu  nu_mubar', 
+            'MDME(301,1) = 0    ! tau    tau', 
+            'MDME(302,1) = 0    ! nu_tau nu_taubar', 
+            'MDME(303,1) = -1   ! 4th gen l- l+', 
+            'MDME(304,1) = -1   ! 4th gen nu nubar', 
+            'MDME(305,1) = -1   ! W+ W-', 
+            'MDME(306,1) = -1   ! H+ H-', 
+            'MDME(307,1) = -1   ! Z0 gamma', 
+            'MDME(308,1) = -1   ! Z0 h0', 
+            'MDME(309,1) = -1   ! h0 A0', 
+            'MDME(310,1) = -1   ! H0 A0'),
         parameterSets = cms.vstring('pythiaUESettings', 'processParameters')
     )
 )
+
+process.ProductionFilterSequence = cms.Sequence(process.generator)
 
 process.generation_step = cms.Path(process.pgen)
 process.simulation_step = cms.Path(process.psim)
 process.digitisation_step = cms.Path(process.pdigi)
 process.L1simulation_step = cms.Path(process.SimL1Emulator)
 process.digi2raw_step = cms.Path(process.DigiToRaw)
-process.out_step = cms.EndPath(process.output)
+process.raw2digi_step = cms.Path(process.RawToDigi)
+process.L1Reco_step = cms.Path(process.L1Reco)
+process.reconstruction_step = cms.Path(process.reconstruction)
+process.genfiltersummary_step = cms.EndPath(process.genFilterSummary)
+process.endjob_step = cms.EndPath(process.endOfProcess)
+process.RECOSIMoutput_step = cms.EndPath(process.RECOSIMoutput)
 
-process.schedule = cms.Schedule(process.generation_step,process.simulation_step,process.digitisation_step,process.L1simulation_step,process.digi2raw_step)
+process.schedule = cms.Schedule(process.generation_step,process.genfiltersummary_step,process.simulation_step,process.digitisation_step,process.L1simulation_step,process.digi2raw_step)
 process.schedule.extend(process.HLTSchedule)
-process.schedule.extend([process.out_step])
+process.schedule.extend([process.raw2digi_step,process.L1Reco_step,process.reconstruction_step,process.endjob_step,process.RECOSIMoutput_step])
+for path in process.paths:
+	getattr(process,path)._seq = process.ProductionFilterSequence * getattr(process,path)._seq 
 
-for path in process.paths: 
-    getattr(process,path)._seq = process.generator*getattr(process,path)._seq
+process.XMLFromDBSource.label='Extended'
+process.GlobalTag.toGet = cms.VPSet(
+	cms.PSet(record = cms.string("GeometryFileRcd"),
+		 tag = cms.string("XMLFILE_Geometry_380V3_Extended_mc"),
+		 connect = cms.untracked.string("frontier://FrontierProd/CMS_COND_34X_GEOMETRY"),
+		 label = cms.untracked.string("Extended")
+		 )
+	)
+process.newSeedFromTriplets.OrderedHitsFactoryPSet.GeneratorPSet.maxElement = cms.uint32(100000)
+process.newSeedFromPairs.OrderedHitsFactoryPSet.maxElement = cms.uint32(100000)
+process.secTriplets.OrderedHitsFactoryPSet.GeneratorPSet.maxElement = cms.uint32(100000)
+process.thTripletsA.OrderedHitsFactoryPSet.GeneratorPSet.maxElement = cms.uint32(100000)
+process.thTripletsB.OrderedHitsFactoryPSet.GeneratorPSet.maxElement = cms.uint32(100000)
+process.fourthPLSeeds.OrderedHitsFactoryPSet.maxElement = cms.uint32(100000)
+process.fifthSeeds.OrderedHitsFactoryPSet.maxElement = cms.uint32(100000)
+process.pixelVertices.useBeamConstraint = False
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
@@ -101,12 +155,12 @@ events_per_job = 550
 first_lumi = 1
 
 [USER]
-ui_working_dir = crab/crab_hlt_%(name)s
+ui_working_dir = crab/crab_gensimreco_%(name)s
 copy_data = 1
 storage_element = T3_US_FNALLPC
 check_user_remote_dir = 0
 publish_data = 1
-publish_data_name = %(name)s-HLT-384p3-START38_V12
+publish_data_name = %(name)s-RECO-413p2-START311V2
 dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
 '''
 
@@ -190,29 +244,29 @@ dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02
 
 
     x = [
-        ('dy', None, 120, '7.9'),
+#       ('dy', None, 120, '7.9'),
         ('dy', None, 200, '0.965'),
         ('dy', None, 500, '0.0269'),
         ('dy', None, 800, '0.0031'),
-        ('dy', None, 1200, None),
-        ('dy', None, 1500, None),
-        ('dy', None, 1800, None),
-        ('zssm',  250, None, None),
+#       ('dy', None, 1200, None),
+#       ('dy', None, 1500, None),
+#       ('dy', None, 1800, None),
+#       ('zssm',  250, None, None),
         ('zssm',  500, None, '2.01'),
         ('zssm',  750, None, '0.355'),
         ('zssm', 1000, None, '0.0923'),
         ('zssm', 1250, None, '0.028'),
         ('zssm', 1500, None, '0.0099'),
         ('zssm', 1750, None, '0.0037'),
-        ('zssm', 2000, None, None),
-        ('zpsi',  250, None, None),
+#       ('zssm', 2000, None, None),
+#       ('zpsi',  250, None, None),
         ('zpsi',  500, None, None),
         ('zpsi',  750, None, None),
         ('zpsi', 1000, None, None),
         ('zpsi', 1250, None, None),
         ('zpsi', 1500, None, None),
         ('zpsi', 1750, None, None),
-        ('zpsi', 2000, None, None),
+#       ('zpsi', 2000, None, None),
         ]
         
     os.system('mkdir -p psets')
@@ -220,8 +274,8 @@ dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02
         
     for kind, mass, minmass, sigma in x:
         name = '%s%i' % (kind, mass if mass is not None else minmass)
-        pset_fn = 'psets/hlt_%(name)s.py' % locals()
-        pset = open('hlt.py').read()
+        pset_fn = 'psets/gensimreco_%(name)s.py' % locals()
+        pset = open('gensimreco.py').read()
         pars = pythia[kind] if kind != 'zpsi' else pythia['zssm'] + ' + ' + pythia['zpsi']
         pset += '\n\nprocess.generator.PythiaParameters.processParameters = ' + pars + '\n'
         if mass:

@@ -82,9 +82,9 @@ EfficiencyFromMC::EfficiencyFromMC(const edm::ParameterSet& cfg)
   totalreco = make_eff_pair("TotalReco", "Total dimuon efficiency vs. mass");
 
   for (size_t i = 0; i < triggerDecision.l1_paths().size(); ++i)
-    l1_path_effs.push_back(make_eff_pair(TString::Format("L1Path_%i_%s", i, triggerDecision.l1_paths().at(i).c_str()), TString::Format("#varepsilon(%s) vs. mass", triggerDecision.l1_paths().at(i).c_str())));
+    l1_path_effs.push_back(make_eff_pair(TString::Format("L1Path_%u_%s", unsigned(i), triggerDecision.l1_paths().at(i).c_str()), TString::Format("#varepsilon(%s) vs. mass", triggerDecision.l1_paths().at(i).c_str())));
   for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i)
-    hlt_path_effs.push_back(make_eff_pair(TString::Format("HLTPath_%i_%s", i, triggerDecision.hlt_paths().at(i).c_str()), TString::Format("#varepsilon(%s) vs. mass", triggerDecision.hlt_paths().at(i).c_str())));
+    hlt_path_effs.push_back(make_eff_pair(TString::Format("HLTPath_%u_%s", unsigned(i), triggerDecision.hlt_paths().at(i).c_str()), TString::Format("#varepsilon(%s) vs. mass", triggerDecision.hlt_paths().at(i).c_str())));
   
   l1_or_eff   = make_eff_pair("L1OrEff",   TString::Format("#varepsilon(%s) vs. mass", join(triggerDecision.l1_paths(),  std::string(" || ")).c_str()));
   hlt_or_eff  = make_eff_pair("HLTOrEff",  TString::Format("#varepsilon(%s) vs. mass", join(triggerDecision.hlt_paths(), std::string(" || ")).c_str()));

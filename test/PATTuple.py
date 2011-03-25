@@ -10,8 +10,9 @@ input_is_MC = True
 # which you wish to run, most especially the globalTag (since the list
 # of files will be configured by CRAB itself so it doesn't matter what
 # gets put here for it).
-globalTag = 'START38_V14::All'
-files = ['/store/mc/Fall10/DYToMuMu_M-120_7TeV-pythia6/GEN-SIM-RECO/START38_V12-v1/0002/E8EE9B50-F1C8-DF11-B9B3-0018FE286F12.root']
+globalTag = 'START311_V2::All'
+files = ['file:/uscms/home/tucker/nobackup/Spring11/DYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythia/AODSIM/PU_S1_START311_V1G1-v1/0002/181B6610-494E-E011-A311-001A4BE1C5D4.root']
+maxEvents = 100
 
 ########################################################################
 
@@ -22,6 +23,7 @@ import FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTuple_cfg import process
 process.GlobalTag.globaltag = globalTag
 process.source.fileNames = files
+process.maxEvents.input = maxEvents
 
 # Do the right thing depending on whether MC truth is supposed to be
 # available.
@@ -32,6 +34,9 @@ if not input_is_MC:
 # Our path. The name 'p' is expected by the configuration of the
 # OutputModule in PATTuple_cfg.
 process.p = cms.Path(process.patDefaultSequence)
+
+from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import AODOnly
+AODOnly(process)
 
 ########################################################################
 
@@ -46,8 +51,8 @@ process.p = cms.Path(process.patDefaultSequence)
 #removeSpecificPATObjects(process, ['Taus'])
 
 # Some MC samples have the HLT process name different from "HLT".
-#from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName
-#switchHLTProcessName(process, "REDIGI38X")
+from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName
+switchHLTProcessName(process, "REDIGI311X")
 
 # You can change the default muon cut from "isGlobalMuon ||
 # isTrackerMuon" to your taste. Some examples (only uncomment one!):

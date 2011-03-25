@@ -3,12 +3,7 @@ import FWCore.ParameterSet.Config as cms
 muonTriggerMatchHLTMuons = cms.EDProducer('PATTriggerMatcherDRDPtLessByR',
     src                   = cms.InputTag('cleanPatMuons'),
     matched               = cms.InputTag('patTrigger'),
-    andOr                 = cms.bool(False),
-    filterIdsEnum         = cms.vstring('TriggerMuon'),
-    filterIds             = cms.vint32(0),
-    filterLabels          = cms.vstring('*'),
-    pathNames             = cms.vstring('HLT_Mu9', 'HLT_Mu11', 'HLT_DoubleMu3', 'HLT_DoubleMu3_v2', 'HLT_Mu13_v1', 'HLT_Mu15_v1'),
-    collectionTags        = cms.vstring('*'),
+    matchedCuts           = cms.string('type("TriggerMuon") && (path("HLT_Mu15*") || path("HLT_Mu20*") || path("HLT_Mu24*"))'), # (path("HLT_Mu*") || path("HLT_DoubleMu*"))
     # Follow VBTF's matching criteria.
     maxDPtRel             = cms.double(1),
     maxDeltaR             = cms.double(0.2),

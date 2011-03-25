@@ -12,7 +12,7 @@ process.countPatMuons.minNumber = 0
 
 process.out.outputCommands = [
     'drop *',
-    'keep *_prunedGenSimLeptons_*_*',
+    'keep *_prunedMCLeptons_*_*',
     'keep patMuons_cleanPatMuonsTriggerMatch__PAT',
     'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__HLT*',
     'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__REDIGI*',

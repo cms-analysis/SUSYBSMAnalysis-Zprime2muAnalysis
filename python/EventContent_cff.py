@@ -1,6 +1,6 @@
 
 Zprime2muEventContent = [
-    'keep recoGenParticles_prunedGenSimLeptons_*_*',
+    'keep recoGenParticles_prunedMCLeptons_*_*',
     'keep GenEventInfoProduct_*_*_*',
     'keep GenRunInfoProduct_*_*_*',
     'keep *_offlineBeamSpot_*_*',

@@ -2,15 +2,21 @@
 
 import FWCore.ParameterSet.Config as cms
 
-def addGenSimLeptons(process):
-    # For muon and electron MC matching, want to be able to match to
-    # decays-in-flight produced in SIM (whether by GEANT or FastSim),
-    # so make some genParticles out of the simTracks.
-    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.GenPlusSim_cfi')
+def pruneMCLeptons(process, use_sim=False):
+    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
+    obj = process.prunedMCLeptons
     
+    if use_sim:
+        # For muon and electron MC matching, want to be able to match to
+        # decays-in-flight produced in SIM (whether by GEANT or FastSim),
+        # so make some genParticles out of the simTracks.
+        process.load('SUSYBSMAnalysis.Zprime2muAnalysis.GenPlusSim_cfi')
+        process.prunedMCLeptons.src = 'genSimLeptons'
+        obj = process.genSimLeptons * process.prunedMCLeptons
+
     for x in (process.muonMatch, process.electronMatch):
         # Switch to Use the new GEN+SIM particles created above.
-        x.matched = cms.InputTag('prunedGenSimLeptons')
+        x.matched = cms.InputTag('prunedMCLeptons')
         
         # Default PAT muon/electron-MC matching requires, in addition
         # to deltaR < 0.5, the MC and reconstructed leptons to have
@@ -19,7 +25,7 @@ def addGenSimLeptons(process):
         x.checkCharge = False
         x.maxDPtRel = 1e6
 
-    process.patDefaultSequence = cms.Sequence(process.genSimLeptons * process.prunedGenSimLeptons * process.patDefaultSequence._seq)
+    process.patDefaultSequence = cms.Sequence(obj * process.patDefaultSequence._seq)
 
 def addMuonMCClassification(process):
     # Run and embed in the patMuons the classification of muons by
@@ -67,13 +73,23 @@ def removeMuonMCClassification(process):
     process.patMuons.userData.userInts.src = i
     process.patMuons.userData.userFloats.src = f
 
+def removeSimLeptons(process):
+    if hasattr(process, 'genSimLeptons'):
+        process.patDefaultSequence.remove(process.genSimLeptons)
+        if hasattr(process, 'prunedMCLeptons'):
+            process.prunedMCLeptons.src = 'genParticles'
+
+def removePrunedMCLeptons(process):
+    if hasattr(process, 'prunedMCLeptons'):
+        process.patDefaultSequence.remove(process.prunedMCLeptons)
+
 def removeMCUse(process):
     # Remove anything that requires MC truth.
     from PhysicsTools.PatAlgos.tools.coreTools import removeMCMatching
     removeMCMatching(process, ['All'])
     removeMuonMCClassification(process)
-    process.patDefaultSequence.remove(process.genSimLeptons)
-    process.patDefaultSequence.remove(process.prunedGenSimLeptons)
+    removeSimLeptons(process)
+    removePrunedMCLeptons(process)
     
 def switchHLTProcessName(process, name):
     # As the correct trigger process name is different from the
@@ -102,18 +118,10 @@ def addHEEPId(process):
     process.patDefaultSequence.replace(process.patCandidates, process.HEEPId * process.patCandidates)
 
 def AODOnly(process):
-    # This is a work in process. It will be necessary for 2011!
-    raise NotImplementedError('JMTBAD')
-
     from PhysicsTools.PatAlgos.tools.coreTools import restrictInputToAOD
     restrictInputToAOD(process)
-
     removeMuonMCClassification(process) # throw the baby out with the bathwater...
-
-    for x in (process.muonMatch, process.electronMatch):
-        x.matched = cms.InputTag('prunedGenLeptons')
-    process.patDefaultSequence.replace(process.genSimLeptons * process.prunedGenSimLeptons, process.prunedGenLeptons)
-
+    removeSimLeptons(process)
 
 # Some scraps to aid in debugging that can be put in your top-level
 # config (could be turned into functions a la the above):

@@ -73,6 +73,6 @@
   <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
 </library>
 
-<library file="VetoOtherDataset.cc" name="VetoOtherDataset">
+<library file="CheckPrescale.cc,VetoOtherDataset.cc" name="Zprime2muTriggerPlugins">
   <use name="HLTrigger/HLTcore"/>
 </library>

@@ -22,12 +22,6 @@ lumis_per_job = %(lumis_per_job)s
     lumis_per_job = 200
     lumi_mask = ''
 
-    if False:
-        job_control_ex = '''
-total_number_of_lumis = -1
-number_of_jobs = 100
-'''
-
     just_testing = 'testing' in sys.argv
 
     def submit(d):
@@ -62,14 +56,14 @@ number_of_jobs = 100
         open('tmp.json', 'wt').write('{' + ', '.join(json) + '}')
         lumi_mask = 'lumi_mask = tmp.json'
 
-        name = 'promptB_' + datetime.datetime.today().strftime('%Y%m%d_%H%M%S')
+        name = 'SingleMu2011A_prompt_%i_%i_%s' % (run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
         print name
-        dataset = '/Mu/Run2010B-PromptReco-v2/RECO'
-        tag = 'GR10_P_V10'
+        dataset = '/SingleMu/Run2011A-PromptReco-v1/AOD'
+        tag = 'GR_R_311_V2'
         submit(locals())
     else:
         x = [
-            ('SingleMuRun2011A_testgrid1', '/SingleMu/Run2011A-PromptReco-v1/AOD', 'GR_R_311_V2'),
+            ('SingleMuRun2011A', '/SingleMu/Run2011A-PromptReco-v1/AOD', 'GR_R_311_V2'),
             ]
         for name, dataset, tag in x:
             scheduler = 'glite' if 'grid' in name else 'condor'

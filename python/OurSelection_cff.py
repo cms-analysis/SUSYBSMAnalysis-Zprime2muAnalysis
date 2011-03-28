@@ -25,7 +25,7 @@ import FWCore.ParameterSet.Config as cms
 # - at least one pixel hit (innerTrack.hitPattern.numberOfValidPixelHits >= 1)
 # - at least two muon stations in the fit (globalTrack.hitPattern.muonStationsWithValidHits >= 2)
 # - must be a tracker muon
-# - trigger matching to the single muon HLT path (e.g. !triggerObjectMatchesByPath("HLT_Mu9").empty())
+# - trigger matching to the single muon HLT path (e.g. !triggerObjectMatchesByPath("HLT_Mu15").empty())
 #
 # (The single muon HLT path used will change as the trigger menu
 # evolves with luminosity.)
@@ -40,12 +40,10 @@ loose_cut = 'isGlobalMuon && ' \
             'innerTrack.hitPattern.numberOfValidTrackerHits >= 10'
 
 # For the trigger match, currently HLT_Mu15_v1 is the lowest-pT
-# unprescaled single muon path. In runs <= 147119, HLT_Mu15_v1 did not
-# exist. Emulate it by using HLT_Mu9 (unprescaled in those runs) and a
-# pT cut.
+# unprescaled single muon path. (Will quickly go to 24.)
 trigger_match = '(' \
-                '(!triggerObjectMatchesByPath("HLT_Mu9").empty() && triggerObjectMatchesByPath("HLT_Mu9").at(0).pt() > 15) || ' \
-                '!triggerObjectMatchesByPath("HLT_Mu15_v1").empty()' \
+                '!triggerObjectMatchesByPath("HLT_Mu15_v1").empty() || ' \
+                '!triggerObjectMatchesByPath("HLT_Mu15_v2").empty()' \
                 ')'
 
 tight_cut = 'abs(dB) < 0.2 && ' \

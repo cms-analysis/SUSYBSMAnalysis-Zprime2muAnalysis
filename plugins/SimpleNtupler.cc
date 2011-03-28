@@ -191,13 +191,21 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
   const edm::TriggerNames& nameshlt = event.triggerNames(*reshlt);
 
   const unsigned r = event.id().run();
-  if (r <= 147119) {
+  if (!event.isRealData()) {
+    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu15_v1"));
+    t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu3_v2"));
+  }
+  else if (r <= 147119) {
     t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu9")); // changing this to pt > 15 is taken care of by the selection
     t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu3"));
   }
-  else {
+  else if (r <= 160000) { // JMTBAD actual run boundary please
     t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu15_v1"));
     t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu3_v2"));
+  }
+  else {
+    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu15_v2"));
+    t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu3_v3"));
   }
 
   edm::Handle<pat::CompositeCandidateCollection> dils;
@@ -267,7 +275,9 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	t.lep_glb_pt[w] = mu->globalTrack()->pt();
 	t.lep_glb_eta[w] = mu->globalTrack()->eta();
 	t.lep_glb_phi[w] = mu->globalTrack()->phi();
-	if (!mu->triggerObjectMatchesByPath("HLT_Mu15_v1").empty())
+	if (!mu->triggerObjectMatchesByPath("HLT_Mu15_v2").empty())
+	  t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath("HLT_Mu15_v2").at(0).pt();
+	else if (!mu->triggerObjectMatchesByPath("HLT_Mu15_v1").empty())
 	  t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath("HLT_Mu15_v1").at(0).pt();
 	else if (!mu->triggerObjectMatchesByPath("HLT_Mu9").empty())
 	  t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath("HLT_Mu9").at(0).pt();

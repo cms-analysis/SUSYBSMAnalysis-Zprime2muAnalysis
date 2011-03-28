@@ -2,7 +2,7 @@
 
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
-process.source.fileNames = ['/store/user/tucker/TTJets_TuneZ2_7TeV-madgraph-tauola/datamc_ttbar/b4341788d83565203f0d6250b5475e6e/pat_9_1_0F5.root']
+process.source.fileNames = ['/store/user/tucker/TTJets_TuneZ2_7TeV-madgraph-tauola/datamc_ttbar/396bcdaa1e090647f7fc37d15e445b1a/pat_2_1_qqF.root']
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
 
@@ -111,39 +111,18 @@ def printify(process):
     process.PrintEventSimple = process.PrintEvent.clone(dilepton_src = cms.InputTag('SimpleMuonsPlusMuonsMinus'))
     process.pathSimple *= process.PrintEventSimple
 
+def check_prescale(process, trigger_path, hlt_process_name='HLT'):
+    process.CheckPrescale = cms.EDAnalyzer('CheckPrescale',
+                                           hlt_process_name = cms.string(hlt_process_name),
+                                           trigger_path = cms.string(trigger_path)
+                                           )
+    process.pCheckPrescale = cms.Path(process.CheckPrescale)
+
 if 'bigfatbean' in sys.argv:
     ntuplify(process)
     for c in ['VBTF', 'Our', 'OurNew']:
         delattr(process, 'path%s' % c)
     process.pathSimple=cms.Path(process.muonPhotonMatch*process.SimpleLeptons*process.allSimpleMuonsAllSigns*process.SimpleMuonsAllSigns*process.SimpleMuonsAllSignsHistos*process.SimpleNtupler)
-    
-if 'data' in sys.argv:
-    process.source.fileNames = ['file:crab/crab_datamc_Run2010A/res/merged.root', 'file:crab/crab_datamc_promptB_all/res/merged.root']
-    process.TFileService.fileName = 'ana_datamc_data.root'
-    process.GlobalTag.globaltag = 'GR10_P_V10::All'
-
-    from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2010AB, Run2010ABMuonsOnly
-    if 'all_good' in sys.argv:
-        process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010AB)
-    else:
-        process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2010ABMuonsOnly)
-
-    printify(process)
-    ntuplify(process)
-
-if 'nov4' in sys.argv:
-    process.source.fileNames = ['file:crab/crab_datamc_Run2010A_DileptonMu/res/merged.root', 'file:crab/crab_datamc_Run2010B_DileptonMu/res/merged.root']
-    process.TFileService.fileName = 'ana_datamc_data.root'
-    process.GlobalTag.globaltag = 'GR_R_38X_V15::All'
-
-    from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Nov4Run2010AB, Nov4Run2010ABMuonsOnly
-    if 'all_good' in sys.argv:
-        process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Nov4Run2010AB)
-    else:
-        process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Nov4Run2010ABMuonsOnly)
-
-    printify(process)
-    ntuplify(process)
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
@@ -167,19 +146,18 @@ return_data = 1
 
     # Run on data.
     if 'no_data' not in sys.argv:
-        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Nov4Run2010AB_ll, Nov4Run2010ABMuonsOnly_ll
+        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import DCSOnly_ll
         x = [
-            ('Run2010AAllGood',   '/Mu/tucker-datamc_Run2010A_DileptonMu-4b90be408f306fdc739fecf72d09b336/USER', Nov4Run2010AB_ll),
-            ('Run2010BAllGood',   '/Mu/tucker-datamc_Run2010B_DileptonMu-4b90be408f306fdc739fecf72d09b336/USER', Nov4Run2010AB_ll),
-            ('Run2010AMuonsOnly', '/Mu/tucker-datamc_Run2010A_DileptonMu-4b90be408f306fdc739fecf72d09b336/USER', Nov4Run2010ABMuonsOnly_ll),
-            ('Run2010BMuonsOnly', '/Mu/tucker-datamc_Run2010B_DileptonMu-4b90be408f306fdc739fecf72d09b336/USER', Nov4Run2010ABMuonsOnly_ll),
+            ('SingleMuRun2011A', '/SingleMu/tucker-datamc_SingleMuRun2011A_testgrid3-b4af82d5ce94ab57cd9bc30d8eb6afae/USER', DCSOnly_ll)
             ]
 
         for name, ana_dataset, lumi_list in x:
             print name
             new_py = open('histos.py').read()
             new_py += "\nntuplify(process)\n"
-            new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_38X_V15::All'\n"
+            new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_311_V2::All'\n"
+            new_py += "\ncheck_prescale(process, 'HLT_Mu15_v2')\n"
+
             open('histos_crab.py', 'wt').write(new_py)
 
             new_crab_cfg = crab_cfg % locals()
@@ -201,8 +179,11 @@ lumi_mask = tmp.json''')
         # Set crab_cfg for MC.
         crab_cfg = crab_cfg.replace('job_control','''
 total_number_of_events = -1
-events_per_job = 20000
+events_per_job = 50000
     ''')
+
+        import samples
+        combine_dy_samples = len([x for x in samples.samples if x.name in ['dy200', 'dy500', 'dy800']]) > 0
 
         from samples import samples
         for sample in samples:
@@ -212,7 +193,7 @@ events_per_job = 20000
             new_py += "\nprocess.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', '%(hlt_process_name)s')\n" % sample
             new_py += "\nntuplify(process, hlt_process_name='%(hlt_process_name)s')\n" % sample
 
-            if sample.name == 'zmumu' or 'dy' in sample.name:
+            if combine_dy_samples and (sample.name == 'zmumu' or 'dy' in sample.name):
                 mass_limits = {
                     'zmumu': ( 20, 200),
                     'dy200': (200, 500),

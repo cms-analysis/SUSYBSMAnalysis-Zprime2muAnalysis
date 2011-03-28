@@ -2,3 +2,4 @@ out.*
 zp2mu_histos.root
 *.ps
 *.pdf
+pat.root

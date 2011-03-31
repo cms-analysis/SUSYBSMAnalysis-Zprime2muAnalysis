@@ -123,7 +123,8 @@ if False:
         os.system('grep "total events" ~/nobackup/crab_dirs/413p2/publish_logs/publish.crab_datamc_%s' % s.name)
         print
 
-if False:
+use_predefined_datasets = False
+if use_predefined_datasets:
     inclmu15.ana_dataset_ = "/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/tucker-datamc_inclmu15-396bcdaa1e090647f7fc37d15e445b1a/USER"
     wjets.ana_dataset_ = "/WJetsToLNu_TuneZ2_7TeV-madgraph-tauola/tucker-datamc_wjets-396bcdaa1e090647f7fc37d15e445b1a/USER"
     ztautau.ana_dataset_ = "/DYToTauTau_M-20_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ztautau-396bcdaa1e090647f7fc37d15e445b1a/USER"

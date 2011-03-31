@@ -23,7 +23,7 @@ datasetpath = %(ana_dataset)s
 dbs_url = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
 pset = tuple_merge.py
 get_edm_output = 1
-number_of_jobs = 1
+number_of_jobs = 20
 #total_number_of_lumis = -1
 total_number_of_events = -1
 

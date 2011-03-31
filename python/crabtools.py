@@ -61,13 +61,19 @@ def files_from_crab_dir(crab_dir):
         files.append(filename_mo.group(1))
 
     return files
-    
+
+def dataset_from_publish_log(publish_log_fn):
+    ad = [x.strip().replace('=== dataset ', '') for x in open(publish_log_fn).readlines() if x.startswith('=== dataset')]
+    assert(len(ad) == 1)
+    return ad[0]
+
 def last_crab_dir(crab_dir_base='crab', filter=''):
     return sorted([x for x in glob.glob(os.path.join(crab_dir_base, '*')) if filter in x and os.path.isdir(x) and os.path.isdir(os.path.join(x, 'res'))], key = lambda x: os.stat(x).st_ctime)[-1]
 
 __all__ = [
     'crab_status',
     'crabify_list',
+    'dataset_from_publish_log',
     'files_from_crab_dir',
     'last_crab_dir'
     ]

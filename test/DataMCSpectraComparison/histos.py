@@ -159,19 +159,26 @@ return_data = 1
 '''
 
     just_testing = 'testing' in sys.argv
-
+    use_predefined_datasets = False
+    
     # Run on data.
     if 'no_data' not in sys.argv:
-        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import HWW2011_ll
+        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import HWW2011_ll as goodLumis_ll
         from SUSYBSMAnalysis.Zprime2muAnalysis.crabtools import dataset_from_publish_log
 
-        x = []
-        for fn in glob.glob('crab/publish_logs/publish.crab_datamc_SingleMu2011A_prompt_*'):
-            name = fn.replace('crab/publish_logs/publish.crab_datamc_', '')
-            dataset = dataset_from_publish_log(fn)
-            x.append((name, dataset, HWW2011_ll))
-    
-        for name, ana_dataset, lumi_list in x:
+        dataset_details = []
+        if use_predefined_datasets:
+            dataset_details = [
+                ('SingleMu2011A_prompt_160329_161312', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_160329_161312_20110330032441-b4af82d5ce94ab57cd9bc30d8eb6afae/USER', goodLumis_ll)
+                ]
+        else:
+            # We'll try to figure out what the datasets are based on the publish logs.
+            for fn in glob.glob('crab/publish_logs/publish.crab_datamc_SingleMu2011A_prompt_*'):
+                name = fn.replace('crab/publish_logs/publish.crab_datamc_', '')
+                dataset = dataset_from_publish_log(fn)
+                dataset_details.append((name, dataset, goodLumis_ll))
+                
+        for name, ana_dataset, lumi_list in dataset_details:
             print name
             new_py = open('histos.py').read()
             new_py += "\nntuplify(process)\n"

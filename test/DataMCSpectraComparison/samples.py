@@ -122,3 +122,14 @@ if False:
         os.system('grep "total events" ~/nobackup/crab_dirs/384p3/publish_logs/publish.crab_datamc_%s' % s.name)
         os.system('grep "total events" ~/nobackup/crab_dirs/413p2/publish_logs/publish.crab_datamc_%s' % s.name)
         print
+
+if False:
+    inclmu15.ana_dataset_ = "/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/tucker-datamc_inclmu15-396bcdaa1e090647f7fc37d15e445b1a/USER"
+    wjets.ana_dataset_ = "/WJetsToLNu_TuneZ2_7TeV-madgraph-tauola/tucker-datamc_wjets-396bcdaa1e090647f7fc37d15e445b1a/USER"
+    ztautau.ana_dataset_ = "/DYToTauTau_M-20_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ztautau-396bcdaa1e090647f7fc37d15e445b1a/USER"
+    zz.ana_dataset_ = "/ZZtoAnything_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_zz-396bcdaa1e090647f7fc37d15e445b1a/USER"
+    wz.ana_dataset_ = "/WZtoAnything_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_wz-396bcdaa1e090647f7fc37d15e445b1a/USER"
+    ww.ana_dataset_ = "/WWtoAnything_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ww-396bcdaa1e090647f7fc37d15e445b1a/USER"
+    singletop_tW.ana_dataset_ = "/TToBLNu_TuneZ2_tW-channel_7TeV-madgraph/tucker-datamc_singletop_tW-396bcdaa1e090647f7fc37d15e445b1a/USER"
+    ttbar.ana_dataset_ = "/TTJets_TuneZ2_7TeV-madgraph-tauola/tucker-datamc_ttbar-396bcdaa1e090647f7fc37d15e445b1a/USER"
+    zmumu.ana_dataset_ = "/DYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythia/tucker-datamc_zmumu-396bcdaa1e090647f7fc37d15e445b1a/USER"

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import sys, os, FWCore.ParameterSet.Config as cms
+import sys, os, glob, FWCore.ParameterSet.Config as cms
+from pprint import pprint
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 process.source.fileNames = ['/store/user/tucker/TTJets_TuneZ2_7TeV-madgraph-tauola/datamc_ttbar/396bcdaa1e090647f7fc37d15e445b1a/pat_2_1_qqF.root']
 
@@ -98,8 +99,12 @@ def ntuplify(process, hlt_process_name='HLT'):
     process.SimpleNtuplerEmu = cms.EDAnalyzer('SimpleNtupler', hlt_src = cms.InputTag('TriggerResults', '', hlt_process_name), dimu_src = cms.InputTag('SimpleMuonsElectronsAllSigns'))
     process.pathSimple *= process.SimpleNtupler * process.SimpleNtuplerEmu
 
-def printify(process):
+def printify(process, hlt_process_name='HLT'):
     process.MessageLogger.categories.append('PrintEvent')
+
+    process.load('HLTrigger.HLTcore.triggerSummaryAnalyzerAOD_cfi')
+    process.triggerSummaryAnalyzerAOD.inputTag = cms.InputTag('hltTriggerSummaryAOD', '', hlt_process_name)
+
     process.PrintEvent = cms.EDAnalyzer('PrintEvent', dilepton_src = cms.InputTag('OurMuonsPlusMuonsMinus'))
     process.PrintEventSS = process.PrintEvent.clone(dilepton_src = cms.InputTag('OurMuonsSameSign'))
     process.PrintEventEmu = process.PrintEvent.clone(dilepton_src = cms.InputTag('OurMuonsElectronsOppSign'))
@@ -109,7 +114,7 @@ def printify(process):
     process.pathVBTF *= process.PrintEventVBTF
 
     process.PrintEventSimple = process.PrintEvent.clone(dilepton_src = cms.InputTag('SimpleMuonsPlusMuonsMinus'))
-    process.pathSimple *= process.PrintEventSimple
+    process.pathSimple *= process.triggerSummaryAnalyzerAOD * process.PrintEventSimple
 
 def check_prescale(process, trigger_path, hlt_process_name='HLT'):
     process.CheckPrescale = cms.EDAnalyzer('CheckPrescale',
@@ -123,6 +128,17 @@ if 'bigfatbean' in sys.argv:
     for c in ['VBTF', 'Our', 'OurNew']:
         delattr(process, 'path%s' % c)
     process.pathSimple=cms.Path(process.muonPhotonMatch*process.SimpleLeptons*process.allSimpleMuonsAllSigns*process.SimpleMuonsAllSigns*process.SimpleMuonsAllSignsHistos*process.SimpleNtupler)
+
+if 'data' in sys.argv:
+    process.source.fileNames = ['file:crab/crab_datamc_SingleMuRun2011A_testgrid3/res/merged.root']
+    process.TFileService.fileName = 'ana_datamc_data.root'
+    process.GlobalTag.globaltag = 'GR_R_311_V2::All'
+
+    from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import HWW2011
+    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*HWW2011)
+
+    printify(process)
+    ntuplify(process)
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
@@ -146,11 +162,15 @@ return_data = 1
 
     # Run on data.
     if 'no_data' not in sys.argv:
-        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import DCSOnly_ll
-        x = [
-            ('SingleMuRun2011A', '/SingleMu/tucker-datamc_SingleMuRun2011A_testgrid3-b4af82d5ce94ab57cd9bc30d8eb6afae/USER', DCSOnly_ll)
-            ]
+        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import HWW2011_ll
+        from SUSYBSMAnalysis.Zprime2muAnalysis.crabtools import dataset_from_publish_log
 
+        x = []
+        for fn in glob.glob('crab/publish_logs/publish.crab_datamc_SingleMu2011A_prompt_*'):
+            name = fn.replace('crab/publish_logs/publish.crab_datamc_', '')
+            dataset = dataset_from_publish_log(fn)
+            x.append((name, dataset, HWW2011_ll))
+    
         for name, ana_dataset, lumi_list in x:
             print name
             new_py = open('histos.py').read()
@@ -165,7 +185,7 @@ return_data = 1
 
             new_crab_cfg = new_crab_cfg.replace('job_control','''
 total_number_of_lumis = -1
-number_of_jobs = 5
+number_of_jobs = 1
 lumi_mask = tmp.json''')
 
             open('crab.cfg', 'wt').write(new_crab_cfg)
@@ -186,7 +206,7 @@ events_per_job = 50000
         combine_dy_samples = len([x for x in samples.samples if x.name in ['dy200', 'dy500', 'dy800']]) > 0
 
         from samples import samples
-        for sample in samples:
+        for sample in reversed(samples):
             print sample.name
 
             new_py = open('histos.py').read()

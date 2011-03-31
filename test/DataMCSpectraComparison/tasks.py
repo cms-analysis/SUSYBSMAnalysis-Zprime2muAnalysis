@@ -51,20 +51,24 @@ elif cmd == 'hadd':
 
 elif cmd == 'gatherhistos':
     extra = extra[0] if extra else 'renameme'
-    for x in ['MuonsOnly', 'AllGood']:
-        xl = x.lower()
-        do('''
-mkdir -p ana_datamc_%(extra)s/%(xl)s
-hadd ana_datamc_%(extra)s/%(xl)s/ana_datamc_data.root crab/crab_ana_datamc_Run2010?%(x)s/res/*root
-crab -c crab/crab_ana_datamc_Run2010A%(x)s -report
-crab -c crab/crab_ana_datamc_Run2010B%(x)s -report
-compareJSON.py --and crab/crab_ana_datamc_Run2010?%(x)s/res/lumiSummary.json
-mergeJSON.py crab/crab_ana_datamc_Run2010?%(x)s/res/lumiSummary.json --output=ana_datamc_%(extra)s/%(xl)s/ana_datamc_data.forlumi.json
-# next two if comparing to an existing copy with little differences
-diff -s ana_datamc_%(extra)s/%(xl)s/ana_datamc_data.forlumi.json ana_datamc_nov4/%(xl)s/
-cp ana_datamc_nov4/%(xl)s/ana_datamc_data.lumi ana_datamc_%(extra)s/%(xl)s/
-# else this
-#lumiCalc.py -c frontier://LumiProd/CMS_LUMI_PROD -i ana_datamc_%(extra)s/%(xl)s/ana_datamc_data.forlumi.json overview > ana_datamc_%(extra)s/%(xl)s/ana_datamc_data.lumi
+    do('''
+mkdir -p ana_datamc_%(extra)s
+hadd ana_datamc_%(extra)s/ana_datamc_data.root crab/crab_ana_datamc_SingleMu2011A_*/res/*root
+''' % locals())
+    dirs = glob.glob('crab/crab_ana_datamc_SingleMu2011A_*')
+    for dir in dirs:
+        do('crab -c %s -report' % dir)
+    jsons = [os.path.join(dir, 'res/lumiSummary.json') for dir in dirs]
+    for i,json1 in enumerate(jsons):
+        for json2 in jsons[i+1:]:
+            # probably a better way to do this using LumiList but oh well
+            print 'checking overlap between', json1, json2
+            if os.popen('compareJSON.py --and %s %s' % (json1, json2)).read() != '{}\n':
+                raise RuntimeError('overlap between %s and %s lumisections' % (json1, json2))
+    jsons = ' '.join(jsons)
+    do('''
+mergeJSON.py %(jsons)s --output ana_datamc_%(extra)s/ana_datamc_data.forlumi.json
+lumiCalc.py -i ana_datamc_%(extra)s/ana_datamc_data.forlumi.json overview > ana_datamc_%(extra)s/ana_datamc_data.lumi
 ''' % locals())
 
 elif cmd == 'mclinks':

@@ -105,8 +105,11 @@ std::ostream& operator<<(std::ostream& out, const pat::Muon& mu) {
   int itosa = 0;
   BOOST_FOREACH(const pat::TriggerObjectStandAlone& tosa, mu.triggerObjectMatches()) {
     out << "\nTriggerObjectStandAlone #" << itosa++ << "\npaths:";
-    BOOST_FOREACH(const std::string& s, tosa.pathNames())
-      out << "\n" << s;
+    BOOST_FOREACH(const std::string& s, tosa.pathNames()) {
+      out << "\n" << s << "  # matches: " << mu.triggerObjectMatchesByPath(s).size();
+      for (size_t trg_i = 0; trg_i < mu.triggerObjectMatchesByPath(s).size(); ++trg_i)
+	out << "  pt of match " << trg_i << ": " << mu.triggerObjectMatchesByPath(s).at(trg_i).pt();
+    }
     out << "\nfilters:";
     BOOST_FOREACH(const std::string& s, tosa.filterLabels())
       out << "\n" << s;

@@ -14,14 +14,14 @@ ROOT.gStyle.SetPadRightMargin(0.07)
 from samples import *
 
 rebin_factor = 5
-x_axis_limits = 50, 1050
-x_axis_limits2 = 50, 500
+x_axis_limits = 50, 1100
+x_axis_limits2 = 50, 1100
 
 to_compare = 'DileptonMass'
 global_rescale = 3273/3404.6 if False else None
-draw_zssm = True
+draw_zssm = False 
 use_poisson_intervals = True
-overflow_bin = False
+overflow_bin = True
 
 do_joins = True
 joins = [(s.name, 'jets') for s in samples if 'qcd' in s.name]
@@ -97,7 +97,7 @@ yaxis = {
 use_yaxis = True
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
-cutss = ['VBTF', 'Our']
+cutss = ['VBTF', 'Our', 'Simple']
 
 ROOT.TH1.AddDirectory(False)
 
@@ -310,7 +310,7 @@ for cuts in cutss:
                 zp.SetStats(0)
                 zp.Draw('hist same')
 
-            t = ROOT.TPaveLabel(0.40, 0.89, 0.86, 0.99, 'CMS    #sqrt{s} = 7 TeV    #int L dt = %.f pb^{-1}' % round(int_lumi), 'brNDC')
+            t = ROOT.TPaveLabel(0.20, 0.89, 0.86, 0.99, 'CMS 2011 preliminary   #sqrt{s} = 7 TeV    #int L dt = %.f pb^{-1}' % round(int_lumi), 'brNDC')
             t.SetTextSize(0.35)
             t.SetBorderSize(0)
             t.SetFillColor(0)

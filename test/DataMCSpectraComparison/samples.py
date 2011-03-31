@@ -2,6 +2,7 @@
 
 import os
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import files_from_dbs
+from SUSYBSMAnalysis.Zprime2muAnalysis.crabtools import dataset_from_publish_log
 
 class sample:
     def __init__(self, name, nice_name, dataset, nevents, color, syst_frac, cross_section, k_factor=1, filenames=None, scheduler='glite', hlt_process_name='REDIGI311X', ana_dataset=None):
@@ -26,11 +27,8 @@ class sample:
     def ana_dataset(self):
         if self.ana_dataset_ is not None:
             return self.ana_dataset_
-        publish_log_fn = 'crab/publish_logs/publish.crab_datamc_%s' % self.name
-        ad = [x.strip().replace('=== dataset ', '') for x in open(publish_log_fn).readlines() if x.startswith('=== dataset')]
-        assert(len(ad) == 1)
-        self.ana_dataset_ = ad[0]
-        return ad[0]
+        self.ana_dataset_ = ds = dataset_from_publish_log('crab/publish_logs/publish.crab_datamc_%s' % self.name)
+        return ds
 
     @property
     def filenames(self):
@@ -74,7 +72,8 @@ for sample in samples:
     exec '%s = sample' % sample.name
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import big_warn
-big_warn("don't worry, be happy")
+big_warn("dropping 100kevt from ttbar since you lost 2 jobs")
+ttbar.nevents -= 100000
 
 print 'samples are:'
 print ' '.join(s.name for s in samples)
@@ -116,3 +115,10 @@ if False:
                     pass
         fuf('dbss nevents %s' % s.dataset)
         fuf('dbss nevents %s' % s.dataset.replace('AODSIM','GEN-SIM-RECO'))
+
+if False:
+    for s in samples:
+        print s.name
+        os.system('grep "total events" ~/nobackup/crab_dirs/384p3/publish_logs/publish.crab_datamc_%s' % s.name)
+        os.system('grep "total events" ~/nobackup/crab_dirs/413p2/publish_logs/publish.crab_datamc_%s' % s.name)
+        print

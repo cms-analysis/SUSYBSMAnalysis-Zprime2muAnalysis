@@ -134,8 +134,8 @@ if 'data' in sys.argv:
     process.TFileService.fileName = 'ana_datamc_data.root'
     process.GlobalTag.globaltag = 'GR_R_311_V2::All'
 
-    from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import HWW2011
-    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*HWW2011)
+    from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2011AMuonsOnly
+    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2011AMuonsOnly)
 
     printify(process)
     ntuplify(process)
@@ -163,7 +163,7 @@ return_data = 1
     
     # Run on data.
     if 'no_data' not in sys.argv:
-        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import HWW2011_ll as goodLumis_ll
+        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2011AMuonsOnly_ll as goodLumis_ll
         from SUSYBSMAnalysis.Zprime2muAnalysis.crabtools import dataset_from_publish_log
 
         dataset_details = []

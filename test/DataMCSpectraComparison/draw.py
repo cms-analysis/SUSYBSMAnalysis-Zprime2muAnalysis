@@ -4,6 +4,7 @@
 # (py draw.py ana_datamc_nov4/muonsonly >! out.draw.muonsonly.nov4) && (py draw.py ana_datamc_nov4/allgood >! out.draw.allgood.nov4) && mv out.draw.* plots/datamc_nov4/ && tlock ~/asdf/plots.tgz plots/datamc_nov4
 
 import sys, os, glob
+from pprint import pprint
 from collections import defaultdict
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import cumulative_histogram, get_integral, move_above_into_bin, plot_saver, poisson_intervalize, real_hist_max, real_hist_min, set_zp2mu_style, ROOT
 
@@ -18,7 +19,7 @@ x_axis_limits = 50, 1100
 x_axis_limits2 = 50, 1100
 
 to_compare = 'DileptonMass'
-global_rescale = 3273/3404.6 if False else None
+global_rescale = 8202/8026.
 draw_zssm = False 
 use_poisson_intervals = True
 overflow_bin = True
@@ -58,8 +59,15 @@ def parse_lumi_from_log(fn):
             this = True
 
 int_lumi = sum(parse_lumi_from_log(x.replace('.root', '.lumi')) for x in data_fns)
+lumi_syst_frac = 0.04
+
+print '"joins" are:'
+pprint(joins)
 print 'total lumi from data: %.1f/pb' % int_lumi
-lumi_syst_frac = 0.11
+print 'rescaling all MC histograms by a factor of', global_rescale
+print 'comparing', to_compare
+print 'using poisson error bars on plots:', use_poisson_intervals
+print 'last bin contains overflow:', overflow_bin
 
 subtitleize = {
     'MuonsPlusMuonsMinus': '#mu^{+}#mu^{-}',
@@ -125,9 +133,6 @@ for cuts in cutss:
         data = dict((d, getattr(fdata, dir_name(cuts, d)).Get(to_compare).Clone()) for d in dileptons)
 
         for dilepton in dileptons:
-            if int_lumi > 39 and 'Electron' in dilepton:
-                continue
-
             xax = x_axis_limits if (dilepton == 'MuonsPlusMuonsMinus' and not cumulative) else x_axis_limits2
 
             for sample in samples:

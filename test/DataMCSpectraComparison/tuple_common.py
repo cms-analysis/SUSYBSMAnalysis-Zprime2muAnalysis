@@ -47,7 +47,7 @@ publish_data_name = datamc_%(name)s
 dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
 
 [GRID]
-ce_black_list = T2_IN_TIFR, T2_ES_IFCA
+ce_black_list = T2_IN_TIFR
 '''
 
 os.system('mkdir -p psets')

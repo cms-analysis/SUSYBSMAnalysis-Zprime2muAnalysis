@@ -12,7 +12,6 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import removeMCUse
 removeMCUse(process)
 
 if __name__ == '__main__' and 'submit' in sys.argv:
-    scheduler = 'condor'
     job_control_ex = '''
 total_number_of_lumis = -1
 lumis_per_job = %(lumis_per_job)s
@@ -23,6 +22,8 @@ lumis_per_job = %(lumis_per_job)s
     lumi_mask = ''
 
     just_testing = 'testing' in sys.argv
+    scheduler = 'condor' if 'condor' in sys.argv else 'glite'
+    use_reco = 'use_reco' in sys.argv
 
     def submit(d):
         new_py = open('tuple_data.py').read()
@@ -46,8 +47,9 @@ lumis_per_job = %(lumis_per_job)s
             pass
 
     if run_limits:
-        if len(run_limits) != 2:
-            raise RuntimeError('if any, must specify exactly two numeric arguments: min_run max_run')
+        run1, run2 = run_limits
+        if len(run_limits) != 2 or run1 > run2:
+            raise RuntimeError('if any, must specify exactly two numeric arguments   min_run max_run  with max_run >= min_run')
 
         # Make up a fake lumi_mask that contains all lumis possible
         # for every run in the run range, since crab doesn't seem to
@@ -58,14 +60,25 @@ lumis_per_job = %(lumis_per_job)s
 
         name = 'SingleMu2011A_prompt_%i_%i_%s' % (run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
         print name
-        dataset = '/SingleMu/Run2011A-PromptReco-v1/AOD'
+
+        if run1 >= 160329 and run2 <= 161312:
+            dataset = '/SingleMu/Run2011A-PromptReco-v1/AOD'
+        elif run1 >= 162718:
+            dataset = '/SingleMu/Run2011A-PromptReco-v2/AOD'
+        else:
+            raise ValueError("don't know how to do a run_limits production for run range [%i,%i]" % run_limits)
+
+        if use_reco:
+            dataset = dataset.replace('AOD', 'RECO')
+            name = name + '_fromRECO'
+        
         tag = 'GR_R_311_V2'
         submit(locals())
     else:
         x = [
-            ('SingleMuRun2011A', '/SingleMu/Run2011A-PromptReco-v1/AOD', 'GR_R_311_V2'),
+            ('SingleMuRun2011A_promptv1', '/SingleMu/Run2011A-PromptReco-v1/AOD', 'GR_R_311_V2'),
+            ('SingleMuRun2011A_promptv2', '/SingleMu/Run2011A-PromptReco-v2/AOD', 'GR_R_311_V2'),
             ]
         for name, dataset, tag in x:
-            scheduler = 'glite' if 'grid' in name else 'condor'
             submit(locals())
 

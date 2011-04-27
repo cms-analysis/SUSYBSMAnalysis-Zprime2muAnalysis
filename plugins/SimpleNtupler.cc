@@ -192,20 +192,20 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 
   const unsigned r = event.id().run();
   if (!event.isRealData()) {
-    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu15_v1"));
+    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu15_v1")); // changing this to pt > 24 is taken care of by the selection
     t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu3_v2"));
   }
   else if (r <= 147119) {
-    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu9")); // changing this to pt > 15 is taken care of by the selection
+    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu9")); // changing this to pt > 24 is taken care of by the selection
     t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu3"));
   }
-  else if (r <= 160000) { // JMTBAD actual run boundary please
-    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu15_v1"));
-    t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu3_v2"));
+  else if (r <= 160329 && r <= 163261) {
+    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu24_v1"));
+    t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu7_v1"));
   }
-  else {
-    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu15_v2"));
-    t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu3_v3"));
+  else if (r > 163261) {
+    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu24_v2"));
+    t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu7_v2"));
   }
 
   edm::Handle<pat::CompositeCandidateCollection> dils;
@@ -275,7 +275,11 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	t.lep_glb_pt[w] = mu->globalTrack()->pt();
 	t.lep_glb_eta[w] = mu->globalTrack()->eta();
 	t.lep_glb_phi[w] = mu->globalTrack()->phi();
-	if (!mu->triggerObjectMatchesByPath("HLT_Mu15_v2").empty())
+	if (!mu->triggerObjectMatchesByPath("HLT_Mu24_v2").empty())
+	  t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath("HLT_Mu24_v2").at(0).pt();
+	else if (!mu->triggerObjectMatchesByPath("HLT_Mu24_v1").empty())
+	  t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath("HLT_Mu24_v1").at(0).pt();
+	else if (!mu->triggerObjectMatchesByPath("HLT_Mu15_v2").empty())
 	  t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath("HLT_Mu15_v2").at(0).pt();
 	else if (!mu->triggerObjectMatchesByPath("HLT_Mu15_v1").empty())
 	  t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath("HLT_Mu15_v1").at(0).pt();

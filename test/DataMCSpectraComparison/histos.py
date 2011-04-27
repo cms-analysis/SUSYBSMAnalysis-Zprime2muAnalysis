@@ -116,10 +116,10 @@ def printify(process, hlt_process_name='HLT'):
     process.PrintEventSimple = process.PrintEvent.clone(dilepton_src = cms.InputTag('SimpleMuonsPlusMuonsMinus'))
     process.pathSimple *= process.triggerSummaryAnalyzerAOD * process.PrintEventSimple
 
-def check_prescale(process, trigger_path, hlt_process_name='HLT'):
+def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.CheckPrescale = cms.EDAnalyzer('CheckPrescale',
                                            hlt_process_name = cms.string(hlt_process_name),
-                                           trigger_path = cms.string(trigger_path)
+                                           trigger_paths = cms.vstring(*trigger_paths)
                                            )
     process.pCheckPrescale = cms.Path(process.CheckPrescale)
 
@@ -187,7 +187,7 @@ return_data = 1
             new_py = open('histos.py').read()
             new_py += "\nntuplify(process)\n"
             new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_311_V2::All'\n"
-            new_py += "\ncheck_prescale(process, 'HLT_Mu15_v2')\n"
+            new_py += "\ncheck_prescale(process, ['HLT_Mu24_v1', 'HLT_Mu24_v2'])\n"
 
             open('histos_crab.py', 'wt').write(new_py)
 

@@ -41,13 +41,11 @@ loose_cut = 'isGlobalMuon && ' \
             'globalTrack.hitPattern.numberOfValidMuonHits > 0 && ' \
             'globalTrack.hitPattern.muonStationsWithValidHits >= 2'
 
-# For the trigger match, currently HLT_Mu15_v1 is the lowest-pT
-# unprescaled single muon path. In runs <= 147119, HLT_Mu15_v1 did not
-# exist. Emulate it by using HLT_Mu9 (unprescaled in those runs) and a
-# pT cut.
+# For the trigger match, currently HLT_Mu24_v1/v2 is the lowest-pT
+# unprescaled single muon path.
 trigger_match = '(' \
-                '(!triggerObjectMatchesByPath("HLT_Mu9").empty() && triggerObjectMatchesByPath("HLT_Mu9").at(0).pt() > 15) || ' \
-                '!triggerObjectMatchesByPath("HLT_Mu15_v1").empty()' \
+                '!triggerObjectMatchesByPath("HLT_Mu24_v1").empty() || ' \
+                '!triggerObjectMatchesByPath("HLT_Mu24_v2").empty()' \
                 ')'
 
 tight_cut = trigger_match

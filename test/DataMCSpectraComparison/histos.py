@@ -170,10 +170,8 @@ return_data = 1
         if use_predefined_datasets:
             dataset_details = [
                 ('SingleMu2011A_prompt_160329_161312',              '/SingleMu/tucker-datamc_SingleMu2011A_prompt_160329_161312_20110330032441-b4af82d5ce94ab57cd9bc30d8eb6afae/USER', Run2011AMuonsOnly_ll),
-                ('SingleMu2011A_prompt_162718_162828_minus_162822', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_162718_162828_20110421113929-44f5c264672bbeb96d2ae39b712749b4/USER', Run2011AMuonsOnly_ll),
-                ('SingleMu2011A_prompt_162822',                     '/SingleMu/tucker-datamc_SingleMu2011A_prompt_162822_162822_20110422155602-44f5c264672bbeb96d2ae39b712749b4/USER', Run2011AMuonsOnly_ll),
-                ('SingleMu2011A_prompt_162829_163078_minus_162924', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_162829_163078_20110422160251-44f5c264672bbeb96d2ae39b712749b4/USER', Run2011AMuonsOnly_ll),
-                ('SingleMu2011A_prompt_162918_163078_minus_162924_DCSOnly', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_162829_163078_20110422160251-44f5c264672bbeb96d2ae39b712749b4/USER', DCSOnlyForNewRuns_ll),
+                ('SingleMu2011A_prompt_162718_163308',              '/SingleMu/tucker-datamc_SingleMu2011A_prompt_162718_163308_20110426151657-44f5c264672bbeb96d2ae39b712749b4/USER', Run2011AMuonsOnly_ll),
+                ('SingleMu2011A_prompt_162718_163308_DCSOnly',      '/SingleMu/tucker-datamc_SingleMu2011A_prompt_162718_163308_20110426151657-44f5c264672bbeb96d2ae39b712749b4/USER', DCSOnlyForNewRuns_ll),
                 ]
         else:
             # We'll try to figure out what the datasets are based on the publish logs.

@@ -53,6 +53,7 @@ elif cmd == 'gatherhistos':
     extra = extra[0] if extra else 'renameme'
     do('''
 mkdir -p ana_datamc_%(extra)s
+ln -s /uscms_data/d2/tucker/zp2mu_ana_datamc_mc/V00-10-04 ana_datamc_%(extra)s/mc
 hadd ana_datamc_%(extra)s/ana_datamc_data.root crab/crab_ana_datamc_SingleMu2011A_*/res/*root
 ''' % locals())
     dirs = glob.glob('crab/crab_ana_datamc_SingleMu2011A_*')

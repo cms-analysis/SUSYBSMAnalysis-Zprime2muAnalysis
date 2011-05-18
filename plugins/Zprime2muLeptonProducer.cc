@@ -20,7 +20,7 @@ private:
   std::pair<pat::Electron*, int> doLepton(const pat::Electron&, const reco::CandidateBaseRef&) const;
   std::pair<pat::Muon*,     int> doLepton(const pat::Muon&,     const reco::CandidateBaseRef&) const;
 
-  template <typename T> void doLeptons(edm::Event&, const edm::InputTag&, const std::string&) const;
+  template <typename T> edm::OrphanHandle<std::vector<T> > doLeptons(edm::Event&, const edm::InputTag&, const std::string&) const;
 
   edm::InputTag muon_src;
   edm::InputTag electron_src;
@@ -31,6 +31,8 @@ private:
   std::vector<std::string> muon_tracks_for_momentum;
   edm::InputTag muon_photon_match_src;
   edm::Handle<reco::CandViewMatchMap> muon_photon_match_map;
+  double electron_muon_veto_dR;
+  std::vector<std::pair<float,float> > global_muon_eta_phis;
 };
 
 Zprime2muLeptonProducer::Zprime2muLeptonProducer(const edm::ParameterSet& cfg)
@@ -40,7 +42,8 @@ Zprime2muLeptonProducer::Zprime2muLeptonProducer(const edm::ParameterSet& cfg)
     electron_selector(cfg.getParameter<std::string>("electron_cuts")),
     muon_track_for_momentum(cfg.getParameter<std::string>("muon_track_for_momentum")),
     muon_track_for_momentum_primary(muon_track_for_momentum),
-    muon_photon_match_src(cfg.getParameter<edm::InputTag>("muon_photon_match_src"))
+    muon_photon_match_src(cfg.getParameter<edm::InputTag>("muon_photon_match_src")),
+    electron_muon_veto_dR(cfg.getParameter<double>("electron_muon_veto_dR"))
 {
   if (cfg.existsAs<std::vector<std::string> >("muon_tracks_for_momentum"))
     muon_tracks_for_momentum = cfg.getParameter<std::vector<std::string> >("muon_tracks_for_momentum");
@@ -119,6 +122,13 @@ pat::Muon* Zprime2muLeptonProducer::cloneAndSwitchMuonTrack(const pat::Muon& muo
 }
 
 std::pair<pat::Electron*,int> Zprime2muLeptonProducer::doLepton(const pat::Electron& el, const reco::CandidateBaseRef&) const {
+  // Electrons can be faked by muons leaving energy in the ECAL. Don't
+  // keep the electron if it's within the dR specified of any global
+  // muon (a la HEEP).
+  for (std::vector<std::pair<float,float> >::const_iterator mu = global_muon_eta_phis.begin(), end = global_muon_eta_phis.end(); mu != end; ++mu)
+    if (reco::deltaR(mu->first, mu->second, el.eta(), el.phi()) < electron_muon_veto_dR)
+      return std::make_pair((pat::Electron*)(0), -1);
+
   // Caller will own this pointer.
   pat::Electron* new_el = cloneAndSwitchElectronEnergy(el);
   int cutFor = new_el == 0 ? -1 : electron_selector(*new_el) ? 0 : 1;
@@ -158,7 +168,7 @@ std::pair<pat::Muon*,int> Zprime2muLeptonProducer::doLepton(const pat::Muon& mu,
 }
 
 template <typename T>
-void Zprime2muLeptonProducer::doLeptons(edm::Event& event, const edm::InputTag& src, const std::string& instance_label) const {
+edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer::doLeptons(edm::Event& event, const edm::InputTag& src, const std::string& instance_label) const {
   typedef std::vector<T> TCollection;
   edm::Handle<TCollection> leptons; 
   event.getByLabel(src, leptons); 
@@ -169,7 +179,7 @@ void Zprime2muLeptonProducer::doLeptons(edm::Event& event, const edm::InputTag& 
       edm::LogWarning("LeptonsNotFound") << src << " for " << instance_label << " not found, not producing anything -- not warning any more either.";
       warned[instance_label] = true;
     }
-    return;
+    return edm::OrphanHandle<std::vector<T> >();
   }
 
   edm::Handle<reco::CandidateView> lepton_view;
@@ -186,7 +196,7 @@ void Zprime2muLeptonProducer::doLeptons(edm::Event& event, const edm::InputTag& 
     delete res.first;
   }
 
-  event.put(new_leptons, instance_label);
+  return event.put(new_leptons, instance_label);
 }
 
 void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& setup) {
@@ -198,7 +208,18 @@ void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& 
   }
 
   muon_track_for_momentum = muon_track_for_momentum_primary;
-  doLeptons<pat::Muon>(event, muon_src, "muons");
+  edm::OrphanHandle<pat::MuonCollection> muons = doLeptons<pat::Muon>(event, muon_src, "muons");
+
+  // If requested, prepare list of eta,phi coordinates of global muons
+  // for vetoing electrons near them.
+  global_muon_eta_phis.clear();
+  if (electron_muon_veto_dR > 0) {
+    if (!muons.isValid())
+      throw cms::Exception("Zprime2muLeptonProducer") << "requested to veto electrons near muons, but main muon collection is invalid!\n";
+
+    for (pat::MuonCollection::const_iterator mu = muons->begin(), end = muons->end(); mu != end; ++mu)
+      global_muon_eta_phis.push_back(std::make_pair(mu->eta(), mu->phi()));
+  }
 
   for (size_t i = 0; i < muon_tracks_for_momentum.size(); ++i) {
     muon_track_for_momentum = muon_tracks_for_momentum[i];

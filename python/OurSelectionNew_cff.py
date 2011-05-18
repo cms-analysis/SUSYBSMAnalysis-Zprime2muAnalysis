@@ -42,8 +42,10 @@ loose_cut = 'isGlobalMuon && ' \
             'globalTrack.hitPattern.muonStationsWithValidHits >= 2'
 
 # For the trigger match, currently HLT_Mu24_v1/v2 is the lowest-pT
-# unprescaled single muon path.
+# unprescaled single muon path. MC does not have such a path; emulate
+# with Mu15.
 trigger_match = '(' \
+                '(!triggerObjectMatchesByPath("HLT_Mu15_v1").empty() && triggerObjectMatchesByPath("HLT_Mu15_v1").at(0).pt() > 24) || ' \
                 '!triggerObjectMatchesByPath("HLT_Mu24_v1").empty() || ' \
                 '!triggerObjectMatchesByPath("HLT_Mu24_v2").empty()' \
                 ')'

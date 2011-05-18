@@ -32,7 +32,8 @@ leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          muon_cuts = cms.string(loose_cut),
                          electron_cuts = cms.string('userInt("HEEPId") == 0'),
                          muon_track_for_momentum = cms.string('pmc'),
-                         muon_photon_match_src = cms.InputTag('muonPhotonMatch')
+                         muon_photon_match_src = cms.InputTag('muonPhotonMatch'),
+                         electron_muon_veto_dR = cms.double(-1),
                          )
 
 Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)

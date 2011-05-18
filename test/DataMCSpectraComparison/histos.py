@@ -37,10 +37,12 @@ dils = [
 # that doesn't have a trigger match, need to re-add hltFilter
 # somewhere below.
 cuts = {
-    'VBTF'  : VBTFSelection,
-    'Our'   : OurSelection,
-    'OurNew': OurSelectionNew,
-    'Simple': OurSelection,
+    'VBTF'    : VBTFSelection,
+    'Our'     : OurSelection,
+    'OurNew'  : OurSelectionNew,
+    'OurNoIso': OurSelection,
+    'EmuVeto' : OurSelection,
+    'Simple'  : OurSelection, # the Selection module here is ignored below.
     }
 
 for cut_name in cuts.keys():
@@ -53,11 +55,16 @@ for cut_name in cuts.keys():
     # we're doing here flagged.
     leptons_name = cut_name + 'Leptons'
     leptons = process.leptons.clone(muon_cuts = '' if cut_name == 'Simple' else Selection.loose_cut)
+    if cut_name == 'EmuVeto':
+        leptons.electron_muon_veto_dR = 0.1
     setattr(process, leptons_name, leptons)
     path_list.append(leptons)
 
     # Make all the combinations of dileptons we defined above.
     for dil_name, dil_decay, dil_cut in dils:
+        if cut_name == 'EmuVeto' and 'Electron' not in dil_name:
+            continue
+        
         name = cut_name + dil_name
         allname = 'all' + name
 
@@ -76,7 +83,9 @@ for cut_name in cuts.keys():
             dil.do_remove_overlap = False
             delattr(dil, 'back_to_back_cos_angle_min')
             delattr(dil, 'vertex_chi2_max')
-                    
+        elif cut_name == 'OurNoIso':
+            alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', '')
+        
         histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 
         setattr(process, allname, alldil)

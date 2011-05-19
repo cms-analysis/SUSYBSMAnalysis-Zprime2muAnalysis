@@ -20,8 +20,8 @@ x_axis_limits2 = 50, 1100
 
 to_compare = 'DileptonMass'
 global_rescale = {
-    'Our': 10499/10177.4,
-    'VBTF': 8593/8225.3,
+    'Our': 96030/89484.7,
+    'VBTF': 78313/72861.5,
     }
 draw_zssm = False 
 use_poisson_intervals = True
@@ -106,10 +106,10 @@ yaxis = {
 #   ('MuonsSameSign', False): (5e-5, 2.5),
     ('MuonsElectronsOppSign', False): (1e-2, 20),
     }
-use_yaxis = True
+use_yaxis = False
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
-cutss = ['VBTF', 'Our', 'Simple']
+cutss = ['VBTF', 'Our', 'Simple', 'EmuVeto', 'OurNoIso']
 
 ROOT.TH1.AddDirectory(False)
 
@@ -119,7 +119,7 @@ def dir_name(c, d):
 pdir = 'plots/datamc'
 if histo_dir != 'ana_datamc':
     pdir += '_' + histo_dir.replace('ana_datamc_', '')
-ps = plot_saver(pdir, size=(600,600), pdf_log=True)
+ps = plot_saver(pdir, size=(1000,600), pdf_log=True)
 save_plots = 'no_plots' not in sys.argv
 
 #samples = [s for s in samples if not s.name in ['ww', 'zz', 'wz', 'qcd500']]
@@ -129,10 +129,16 @@ for cuts in cutss:
         continue
     plot_dir = pdir + '/%s/%s' % (to_compare, cuts)
     ps.set_plot_dir(plot_dir)
-    for cumulative in (False, True):
-        data = dict((d, getattr(fdata, dir_name(cuts, d)).Get(to_compare).Clone()) for d in dileptons)
 
-        for dilepton in dileptons:
+    if cuts != 'EmuVeto':
+        dils = dileptons
+    else:
+        dils = [x for x in dileptons if 'Electron' in x]
+
+    for cumulative in (False, True):
+        data = dict((d, getattr(fdata, dir_name(cuts, d)).Get(to_compare).Clone()) for d in dils)
+
+        for dilepton in dils:
             xax = x_axis_limits if (dilepton == 'MuonsPlusMuonsMinus' and not cumulative) else x_axis_limits2
 
             for sample in samples:
@@ -250,9 +256,20 @@ for cuts in cutss:
                     continue
                 l.AddEntry(sample.mass, nice_name, 'F')
 
+            xtitle = titleize[to_compare] % (subtitleize[dilepton], unitize[to_compare])
+            if cumulative:
+                ytitle = 'Events #geq %s' % (titleize[to_compare] % (subtitleize[dilepton], ''))
+            else:
+                ytitle = 'Events / %i%s' % (rebin_factor, unitize[to_compare].translate(None, '()[]'))
+
+            s.SetTitle(';%s;%s' % (xtitle, ytitle))
             s.Draw('hist')
             # must call Draw first or the THStack doesn't have a histogram/axis
             s.GetXaxis().SetRangeUser(*xax)
+            s.GetXaxis().SetTitleOffset(0.9)
+            s.GetXaxis().SetTitleSize(0.047)
+            s.GetYaxis().SetTitleOffset(1.2)
+            s.GetYaxis().SetTitleSize(0.047)
 
             hdata.Rebin(rebin_factor)
             if cumulative:
@@ -286,18 +303,7 @@ for cuts in cutss:
             if use_poisson_intervals:
                 hdata = poisson_intervalize(hdata, True)
                 data_draw_cmd += ' z'
-            hdata.SetTitle('')
             hdata.GetXaxis().SetRangeUser(*xax)
-            hdata.GetXaxis().SetTitle(titleize[to_compare] % (subtitleize[dilepton], unitize[to_compare]))
-            if cumulative:
-                title = 'Events #geq %s' % (titleize[to_compare] % (subtitleize[dilepton], ''))
-            else:
-                title = 'Events / %i%s' % (rebin_factor, unitize[to_compare].translate(None, '()[]'))
-            hdata.GetYaxis().SetTitle(title)
-            hdata.GetXaxis().SetTitleOffset(0.9)
-            hdata.GetXaxis().SetTitleSize(0.047)
-            hdata.GetYaxis().SetTitleOffset(1.2)
-            hdata.GetYaxis().SetTitleSize(0.047)
             hdata.SetMinimum(mymin)
             hdata.SetMaximum(mymax)
             hdata.SetMarkerStyle(20)
@@ -324,9 +330,9 @@ for cuts in cutss:
 
             l.SetTextSize(0.03)
             l.Draw('same')
-            # huge crappy hack for "EP" in TLegend::AddEntry not working
-            ll = ROOT.TLine()
-            ll.DrawLineNDC(0.532, 0.82, 0.532, 0.875)
+            ## huge crappy hack for "EP" in TLegend::AddEntry not working
+            #ll = ROOT.TLine()
+            #ll.DrawLineNDC(0.532, 0.82, 0.532, 0.875)
 
             n = dilepton
             if cumulative:

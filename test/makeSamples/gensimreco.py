@@ -7,7 +7,7 @@ process = cms.Process('REDIGI311X')
 process.load('Configuration.StandardSequences.Services_cff')
 process.load('SimGeneral.HepPDTESSource.pythiapdt_cfi')
 process.load('FWCore.MessageService.MessageLogger_cfi')
-process.load('SimGeneral.MixingModule.mixNoPU_cfi')
+process.load('SimGeneral.MixingModule.mix_E7TeV_FlatDist10_2011EarlyData_inTimeOnly_cfi')
 process.load('Configuration.StandardSequences.GeometryDB_cff')
 process.load('Configuration.StandardSequences.MagneticField_38T_cff')
 process.load('Configuration.StandardSequences.Generator_cff')
@@ -144,7 +144,7 @@ if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
 [CRAB]
 jobtype = cmssw
-scheduler = glite
+scheduler = condor
 
 [CMSSW]
 datasetpath = None
@@ -155,12 +155,12 @@ events_per_job = 550
 first_lumi = 1
 
 [USER]
-ui_working_dir = crab/crab_gensimreco_%(name)s
+ui_working_dir = crab/crab_gensimreco_PU_%(name)s
 copy_data = 1
 storage_element = T3_US_FNALLPC
 check_user_remote_dir = 0
 publish_data = 1
-publish_data_name = %(name)s-RECO-413p2-START311V2
+publish_data_name = %(name)s-RECO-413p2-START311V2_PU
 dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
 '''
 
@@ -271,7 +271,7 @@ dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02
         
     os.system('mkdir -p psets')
     os.system('mkdir -p crab')
-        
+
     for kind, mass, minmass, sigma in x:
         name = '%s%i' % (kind, mass if mass is not None else minmass)
         pset_fn = 'psets/gensimreco_%(name)s.py' % locals()

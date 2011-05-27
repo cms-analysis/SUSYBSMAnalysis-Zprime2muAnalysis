@@ -3,10 +3,9 @@
 import sys, os, datetime
 from tuple_common import process, crab_cfg
 
-process.source.fileNames = ['/store/data/Run2011A/SingleMu/AOD/PromptReco-v1/000/160/405/4642D954-D64F-E011-8280-003048F024DE.root']
-process.source.fileNames = ['/store/data/Run2011A/SingleMu/AOD/PromptReco-v1/000/160/957/FCEB1657-5E55-E011-BCD7-000423D9890C.root']
+process.source.fileNames = ['file:/uscms/home/tucker/scratch/165548.root']
 process.maxEvents.input = 2000
-process.GlobalTag.globaltag = 'GR_R_311_V2::All'
+process.GlobalTag.globaltag = 'GR_R_42_V13::All'
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import removeMCUse
 removeMCUse(process)
@@ -21,6 +20,7 @@ lumis_per_job = %(lumis_per_job)s
     lumis_per_job = 200
     lumi_mask = ''
 
+    create_only = 'create_only' in sys.argv
     just_testing = 'testing' in sys.argv
     scheduler = 'condor' if 'condor' in sys.argv else 'glite'
     use_reco = 'use_reco' in sys.argv
@@ -36,7 +36,10 @@ lumis_per_job = %(lumis_per_job)s
             d[k] = v
         open('crab.cfg', 'wt').write(crab_cfg % d)
         if not just_testing:
-            os.system('crab -create -submit all')
+            if create_only:
+                os.system('crab -create')
+            else:
+                os.system('crab -create -submit all')
             os.system('rm -f crab.cfg tmp.json')
 
     run_limits = []
@@ -61,10 +64,8 @@ lumis_per_job = %(lumis_per_job)s
         name = 'SingleMu2011A_prompt_%i_%i_%s' % (run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
         print name
 
-        if run1 >= 160329 and run2 <= 161312:
-            dataset = '/SingleMu/Run2011A-PromptReco-v1/AOD'
-        elif run1 >= 162718:
-            dataset = '/SingleMu/Run2011A-PromptReco-v2/AOD'
+        if run1 >= 165071:
+            dataset = '/SingleMu/Run2011A-PromptReco-v4/AOD'
         else:
             raise ValueError("don't know how to do a run_limits production for run range [%i,%i]" % run_limits)
 
@@ -72,12 +73,11 @@ lumis_per_job = %(lumis_per_job)s
             dataset = dataset.replace('AOD', 'RECO')
             name = name + '_fromRECO'
         
-        tag = 'GR_R_311_V2'
+        tag = 'GR_R_42_V13'
         submit(locals())
     else:
         x = [
-            ('SingleMuRun2011A_promptv1', '/SingleMu/Run2011A-PromptReco-v1/AOD', 'GR_R_311_V2'),
-            ('SingleMuRun2011A_promptv2', '/SingleMu/Run2011A-PromptReco-v2/AOD', 'GR_R_311_V2'),
+            ('SingleMuRun2011A_May10', '/SingleMu/Run2011A-May10ReReco-v1/AOD', 'FT_R_42_V13A'),
             ]
         for name, dataset, tag in x:
             submit(locals())

@@ -1,7 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-# The starting point is the (old) VBTF selection, which is documented
-# at
+# The starting point is the VBTF selection, which is documented at
 #
 # https://twiki.cern.ch/twiki/bin/view/CMS/VbtfZMuMuBaselineSelection
 #
@@ -14,15 +13,16 @@ import FWCore.ParameterSet.Config as cms
 # Both muons must pass this selection:
 #
 # - muon must be a global muon and a tracker muon (isGlobalMuon && isTrackerMuon)
-# - pT > 20 (innerTrack.pt > 20.)
+# - pT > 35 (pt > 35.)
 # - |dxy wrt beamspot| < 0.2 cm (abs(dB) < 0.2)
+# - muon global track chi2/ndof < 10 (globalTrack.normalizedChi2 < 10)
 # - relative tracker isolation less than 10% (isolationR03.sumPt / innerTrack.pt < 0.10)
 # - number of tracker hits > 10 (globalTrack.hitPattern.numberOfValidTrackerHits > 10)
 # - at least one pixel hit (globalTrack.hitPattern.numberOfValidPixelHits >= 1)
 # - at least two muon stations in the fit (globalTrack.hitPattern.muonStationsWithValidHits >= 2)
 #
 # Then at least one muon must be trigger-matched to the single muon
-# HLT path (e.g. !triggerObjectMatchesByPath("HLT_Mu9").empty()) (The
+# HLT path (e.g. !triggerObjectMatchesByPath("HLT_Mu30").empty()) (The
 # single muon HLT path used will change as the trigger menu evolves
 # with luminosity.)
 #
@@ -33,21 +33,23 @@ import FWCore.ParameterSet.Config as cms
 
 loose_cut = 'isGlobalMuon && ' \
             'isTrackerMuon && ' \
-            'innerTrack.pt > 20. && ' \
+            'pt > 35. && ' \
             'abs(dB) < 0.2 && ' \
+            'globalTrack.normalizedChi2 < 10 && ' \
             'isolationR03.sumPt / innerTrack.pt < 0.10 && ' \
             'globalTrack.hitPattern.numberOfValidTrackerHits > 10 && ' \
             'globalTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \
             'globalTrack.hitPattern.numberOfValidMuonHits > 0 && ' \
             'globalTrack.hitPattern.muonStationsWithValidHits >= 2'
 
-# For the trigger match, currently HLT_Mu24_v1/v2 is the lowest-pT
-# unprescaled single muon path. MC does not have such a path; emulate
-# with Mu15.
+# For the trigger match, currently HLT_Mu30_v3 is the lowest-pT
+# unprescaled single muon path. Spring11 MC does not have such a path;
+# emulate with Mu15.
 trigger_match = '(' \
-                '(!triggerObjectMatchesByPath("HLT_Mu15_v1").empty() && triggerObjectMatchesByPath("HLT_Mu15_v1").at(0).pt() > 24) || ' \
-                '!triggerObjectMatchesByPath("HLT_Mu24_v1").empty() || ' \
-                '!triggerObjectMatchesByPath("HLT_Mu24_v2").empty()' \
+                '(!triggerObjectMatchesByPath("HLT_Mu15_v1").empty() && triggerObjectMatchesByPath("HLT_Mu15_v1").at(0).pt() > 30) || ' \
+                '!triggerObjectMatchesByPath("HLT_Mu30_v1").empty() || ' \
+                '!triggerObjectMatchesByPath("HLT_Mu30_v2").empty() || ' \
+                '!triggerObjectMatchesByPath("HLT_Mu30_v3").empty()' \
                 ')'
 
 tight_cut = trigger_match

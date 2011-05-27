@@ -33,6 +33,8 @@ class SimpleNtupler : public edm::EDAnalyzer {
     float vertex_chi2;
     float cos_cs;
     float phi_cs;
+    float vertex_constrained_mass;
+    float vertex_constrained_mass_error;
     int lep_id[2];
     float lep_pt[2];
     float lep_eta[2];
@@ -63,8 +65,6 @@ class SimpleNtupler : public edm::EDAnalyzer {
     bool HLTPhysicsDeclared;
     bool GoodVtx;
     bool NoScraping;
-    bool HLT_Single;
-    bool HLT_Double;
   };
 
   tree_t t;
@@ -80,7 +80,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 {
   edm::Service<TFileService> fs;
   tree = fs->make<TTree>("t", "");
-  tree->Branch("tt", &t, "run/i:lumi:event:dil_mass/F:dil_pt:dil_rap:dil_eta:dil_phi:cos_angle:vertex_chi2:cos_cs:phi_cs:lep_id[2]/I:lep_pt[2]/F:lep_eta[2]:lep_phi[2]:lep_tk_pt[2]:lep_tk_eta[2]:lep_tk_phi[2]:lep_glb_pt[2]:lep_glb_eta[2]:lep_glb_phi[2]:lep_triggerMatchPt[2]:lep_chi2dof[2]:lep_dB[2]:lep_sumPt[2]:lep_emEt[2]:lep_hadEt[2]:lep_hoEt[2]:lep_tk_numberOfValidTrackerHits[2]/S:lep_tk_numberOfValidPixelHits[2]:lep_glb_numberOfValidTrackerHits[2]:lep_glb_numberOfValidPixelHits[2]:lep_glb_numberOfValidMuonHits[2]:lep_glb_muonStationsWithValidHits[2]:lep_numberOfMatches[2]:lep_isGlobalMuon[2]/O:lep_isTrackerMuon[2]:GoodDataRan:HLTPhysicsDeclared:GoodVtx:NoScraping:HLT_Single:HLT_Double");
+  tree->Branch("tt", &t, "run/i:lumi:event:dil_mass/F:dil_pt:dil_rap:dil_eta:dil_phi:cos_angle:vertex_chi2:cos_cs:phi_cs:vertex_constrained_mass:vertex_constrained_mass_error:lep_id[2]/I:lep_pt[2]/F:lep_eta[2]:lep_phi[2]:lep_tk_pt[2]:lep_tk_eta[2]:lep_tk_phi[2]:lep_glb_pt[2]:lep_glb_eta[2]:lep_glb_phi[2]:lep_triggerMatchPt[2]:lep_chi2dof[2]:lep_dB[2]:lep_sumPt[2]:lep_emEt[2]:lep_hadEt[2]:lep_hoEt[2]:lep_tk_numberOfValidTrackerHits[2]/S:lep_tk_numberOfValidPixelHits[2]:lep_glb_numberOfValidTrackerHits[2]:lep_glb_numberOfValidPixelHits[2]:lep_glb_numberOfValidMuonHits[2]:lep_glb_muonStationsWithValidHits[2]:lep_numberOfMatches[2]:lep_isGlobalMuon[2]/O:lep_isTrackerMuon[2]:GoodDataRan:HLTPhysicsDeclared:GoodVtx:NoScraping");
 
   tree->SetAlias("OurSel",
 		 "("							\
@@ -186,28 +186,6 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
     t.NoScraping = respat->accept(namespat.triggerIndex("goodDataNoScraping"));
   }
 
-  edm::Handle<edm::TriggerResults> reshlt;
-  event.getByLabel(hlt_src, reshlt);
-  const edm::TriggerNames& nameshlt = event.triggerNames(*reshlt);
-
-  const unsigned r = event.id().run();
-  if (!event.isRealData()) {
-    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu15_v1")); // changing this to pt > 24 is taken care of by the selection
-    t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu3_v2"));
-  }
-  else if (r <= 147119) {
-    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu9")); // changing this to pt > 24 is taken care of by the selection
-    t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu3"));
-  }
-  else if (r <= 160329 && r <= 163261) {
-    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu24_v1"));
-    t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu7_v1"));
-  }
-  else if (r > 163261) {
-    t.HLT_Single = reshlt->accept(nameshlt.triggerIndex("HLT_Mu24_v2"));
-    t.HLT_Double = reshlt->accept(nameshlt.triggerIndex("HLT_DoubleMu7_v2"));
-  }
-
   edm::Handle<pat::CompositeCandidateCollection> dils;
   event.getByLabel(dimu_src, dils);
 
@@ -275,18 +253,17 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	t.lep_glb_pt[w] = mu->globalTrack()->pt();
 	t.lep_glb_eta[w] = mu->globalTrack()->eta();
 	t.lep_glb_phi[w] = mu->globalTrack()->phi();
-	if (!mu->triggerObjectMatchesByPath("HLT_Mu24_v2").empty())
-	  t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath("HLT_Mu24_v2").at(0).pt();
-	else if (!mu->triggerObjectMatchesByPath("HLT_Mu24_v1").empty())
-	  t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath("HLT_Mu24_v1").at(0).pt();
-	else if (!mu->triggerObjectMatchesByPath("HLT_Mu15_v2").empty())
-	  t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath("HLT_Mu15_v2").at(0).pt();
-	else if (!mu->triggerObjectMatchesByPath("HLT_Mu15_v1").empty())
-	  t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath("HLT_Mu15_v1").at(0).pt();
-	else if (!mu->triggerObjectMatchesByPath("HLT_Mu9").empty())
-	  t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath("HLT_Mu9").at(0).pt();
-	else
-	  t.lep_triggerMatchPt[w] = -999;
+
+	static const size_t n_single_mu_path_names = 8;
+	static const char* single_mu_path_names[n_single_mu_path_names] = {"HLT_Mu30_v3", "HLT_Mu30_v2", "HLT_Mu30_v1", "HLT_Mu24_v2", "HLT_Mu24_v1", "HLT_Mu15_v2", "HLT_Mu15_v1", "HLT_Mu9"};
+	t.lep_triggerMatchPt[w] = -999;
+	for (size_t j = 0; j < n_single_mu_path_names; ++j) {
+	  if (!mu->triggerObjectMatchesByPath(single_mu_path_names[j]).empty()) { 
+	    t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath(single_mu_path_names[j]).at(0).pt();
+	    break;
+	  }
+	}
+
 	t.lep_chi2dof[w] = mu->globalTrack()->normalizedChi2();
 	t.lep_dB[w] = mu->dB();
 	t.lep_sumPt[w] = mu->isolationR03().sumPt;
@@ -320,6 +297,9 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
       t.phi_cs = -999;
     }
 
+    t.vertex_constrained_mass       = dil.hasUserFloat("vertexConstrainedMass")      ? dil.userFloat("vertexConstrainedMass")      : -999;
+    t.vertex_constrained_mass_error = dil.hasUserFloat("vertexConstrainedMassError") ? dil.userFloat("vertexConstrainedMassError") : -999;
+    
     tree->Fill();
   }
 }

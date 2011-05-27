@@ -10,9 +10,9 @@ input_is_MC = True
 # which you wish to run, most especially the globalTag (since the list
 # of files will be configured by CRAB itself so it doesn't matter what
 # gets put here for it).
-globalTag = 'START311_V2::All'
-files = ['file:/uscms/home/tucker/nobackup/Spring11/DYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythia/AODSIM/PU_S1_START311_V1G1-v1/0002/181B6610-494E-E011-A311-001A4BE1C5D4.root']
-maxEvents = 100
+globalTag = 'START42_V11::All'
+files = ['file:/uscms/home/tucker/scratch/store/mc/Summer11/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/AODSIM/PU_S3_START42_V11-v2/0000/0084EB16-C57C-E011-A0B4-003048C693E2.root']
+maxEvents = -1
 
 ########################################################################
 
@@ -51,8 +51,8 @@ AODOnly(process)
 #removeSpecificPATObjects(process, ['Taus'])
 
 # Some MC samples have the HLT process name different from "HLT".
-from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName
-switchHLTProcessName(process, "REDIGI311X")
+#from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName
+#switchHLTProcessName(process, "REDIGI311X")
 
 # You can change the default muon cut from "isGlobalMuon ||
 # isTrackerMuon" to your taste. Some examples (only uncomment one!):

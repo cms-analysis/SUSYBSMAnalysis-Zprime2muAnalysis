@@ -11,7 +11,7 @@ import FWCore.ParameterSet.Config as cms
 # include it.
 import HLTrigger.HLTfilters.hltHighLevel_cfi
 hltFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
-hltFilter.HLTPaths = ['HLT_Mu24_v2']
+hltFilter.HLTPaths = ['HLT_Mu30_v3']
 
 # A filter for post-tuple filtering on the goodData results as stored
 # in a TriggerResults object instead of filtering at tuple-making

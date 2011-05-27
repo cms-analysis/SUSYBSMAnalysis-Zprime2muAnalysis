@@ -49,6 +49,7 @@
   <use name="CommonTools/Utils"/>
   <use name="DataFormats/PatCandidates"/>
   <use name="RecoVertex/KalmanVertexFit"/>
+  <use name="RecoVertex/KinematicFit"/>
   <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
   <use name="TrackingTools/Records"/>
   <use name="TrackingTools/TransientTrack"/>

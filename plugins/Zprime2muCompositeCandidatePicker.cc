@@ -6,6 +6,8 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "RecoVertex/KalmanVertexFit/interface/KalmanVertexFitter.h"
+#include "RecoVertex/KinematicFit/interface/KinematicParticleVertexFitter.h"
+#include "RecoVertex/KinematicFitPrimitives/interface/KinematicParticleFactoryFromTransientTrack.h"
 #include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
@@ -29,7 +31,9 @@ private:
 
   void remove_overlap(pat::CompositeCandidateCollection&) const;
   float back_to_back_cos_angle(const pat::CompositeCandidate&) const;
+  std::vector<reco::TransientTrack> get_transient_tracks(const pat::CompositeCandidate&) const;
   float vertex_chi2(const pat::CompositeCandidate&) const;
+  void embed_vertex_constrained_fit(pat::CompositeCandidate&) const;
 
   const edm::InputTag src;
   StringCutObjectSelector<pat::CompositeCandidate> selector;
@@ -101,25 +105,57 @@ float Zprime2muCompositeCandidatePicker::back_to_back_cos_angle(const pat::Compo
   return dil.daughter(0)->momentum().Dot(dil.daughter(1)->momentum()) / dil.daughter(0)->p() / dil.daughter(1)->p();
 }
 
+std::vector<reco::TransientTrack> Zprime2muCompositeCandidatePicker::get_transient_tracks(const pat::CompositeCandidate& dil) const {
+  std::vector<reco::TransientTrack> ttv;
+
+  const size_t n = dil.numberOfDaughters();
+  for (size_t i = 0; i < n; ++i) {
+    const pat::Muon* mu = toConcretePtr<pat::Muon>(dileptonDaughter(dil, i));
+    if (mu == 0)
+      continue;
+    const reco::TrackRef& tk = patmuon::getPickedTrack(*mu);
+    ttv.push_back(ttkb->build(tk));
+  }
+
+  return ttv;
+}
+
 float Zprime2muCompositeCandidatePicker::vertex_chi2(const pat::CompositeCandidate& dil) const {
   assert(dil.numberOfDaughters() == 2);
-
-  const pat::Muon* mu0 = toConcretePtr<pat::Muon>(dileptonDaughter(dil, 0));
-  const pat::Muon* mu1 = toConcretePtr<pat::Muon>(dileptonDaughter(dil, 1));
-  if (mu0 == 0 || mu1 == 0)
-    return -999; // pass objects we don't know how to cut on
-
-  const reco::TrackRef& tk0 = patmuon::getPickedTrack(*mu0);
-  const reco::TrackRef& tk1 = patmuon::getPickedTrack(*mu1);
-  
-  std::vector<reco::TransientTrack> ttv;
-  ttv.push_back(ttkb->build(tk0));
-  ttv.push_back(ttkb->build(tk1));
+  if (abs(dil.daughter(0)->pdgId()) != 13 || abs(dil.daughter(1)->pdgId()) != 13)
+    return -999; // pass objects we don't know how to cut on, i.e. e-mu dileptons
 
   KalmanVertexFitter kvf(true);
-  TransientVertex tv = kvf.vertex(ttv);
+  TransientVertex tv = kvf.vertex(get_transient_tracks(dil));
 
   return tv.isValid() ? tv.normalisedChiSquared() : 1e8;
+}
+
+void Zprime2muCompositeCandidatePicker::embed_vertex_constrained_fit(pat::CompositeCandidate& dil) const {
+  assert(dil.numberOfDaughters() == 2);
+  if (abs(dil.daughter(0)->pdgId()) != 13 || abs(dil.daughter(1)->pdgId()) != 13)
+    return; // don't do anything if it's not a dimuon
+
+  KinematicParticleFactoryFromTransientTrack pfactory;
+  std::vector<RefCountedKinematicParticle> muons;
+  std::vector<reco::TransientTrack> ttv = get_transient_tracks(dil);
+  const size_t n = ttv.size();
+  assert(n >= 2);
+  float m_sigma = 0.0000001;
+  for (size_t i = 0; i < n; ++i)
+    muons.push_back(pfactory.particle(ttv[i], 0.1056583, 0., 0., m_sigma));
+
+  KinematicParticleVertexFitter fitter;
+  RefCountedKinematicTree tree = fitter.fit(muons);
+
+  if (tree->isValid()) {
+    tree->movePointerToTheTop();
+    RefCountedKinematicParticle fitted_dimu = tree->currentParticle();
+    const AlgebraicVector7& params = fitted_dimu->currentState().kinematicParameters().vector();
+    const AlgebraicSymMatrix77& covmat = fitted_dimu->currentState().kinematicParametersError().matrix();
+    dil.addUserFloat("vertexConstrainedMass", params(6));
+    dil.addUserFloat("vertexConstrainedMassError", sqrt(covmat(6,6)));
+  }
 }
 
 void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::EventSetup& setup) {
@@ -132,7 +168,8 @@ void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::Ev
   std::auto_ptr<pat::CompositeCandidateCollection> new_cands(new pat::CompositeCandidateCollection);
 
   // Copy all the candidates that pass the specified cuts into the new
-  // output vector.
+  // output vector. Also embed into the output dimuons any other
+  // things that are best to just calculate once and for all.
   for (pat::CompositeCandidateCollection::const_iterator c = cands->begin(), ce = cands->end(); c != ce; ++c) {
     // Some cuts can be simply specified through the
     // StringCutSelector.
@@ -156,6 +193,9 @@ void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::Ev
     new_cands->push_back(*c);
     new_cands->back().addUserFloat("cos_angle",   cos_angle);
     new_cands->back().addUserFloat("vertex_chi2", vtx_chi2);
+
+    // Add any other userData.
+    embed_vertex_constrained_fit(new_cands->back());
   }
 
   // Sort candidates so we keep the ones with larger invariant

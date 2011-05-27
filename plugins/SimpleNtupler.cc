@@ -85,12 +85,12 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->SetAlias("OurSel",
 		 "("							\
 		 "lep_isGlobalMuon[0] && "				\
-		 "lep_pt[0] > 20 && "					\
+		 "lep_pt[0] > 35 && "					\
 		 "lep_tk_numberOfValidTrackerHits[0] >= 10 && "		\
 		 "lep_sumPt[0] / lep_tk_pt[0] < 0.1"			\
 		 ") && ("						\
 		 "lep_isGlobalMuon[1] && "				\
-		 "lep_pt[1] > 20 && "					\
+		 "lep_pt[1] > 35 && "					\
 		 "lep_tk_numberOfValidTrackerHits[1] >= 10 && "		\
 		 "lep_sumPt[1] / lep_tk_pt[1] < 0.1"			\
 		 ") && ( ("						\
@@ -99,14 +99,14 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "lep_tk_numberOfValidPixelHits[0] >= 1 && "		\
 		 "lep_glb_muonStationsWithValidHits[0] >= 2 && "	\
 		 "lep_isTrackerMuon[0] && "				\
-		 "lep_triggerMatchPt[0] >= 15"				\
+		 "lep_triggerMatchPt[0] >= 30"				\
 		 ") || ("						\
 		 "abs(lep_dB[1]) < 0.2 && "				\
 		 "lep_chi2dof[1] < 10 && "				\
 		 "lep_tk_numberOfValidPixelHits[1] >= 1 && "		\
 		 "lep_glb_muonStationsWithValidHits[1] >= 2 && "	\
 		 "lep_isTrackerMuon[1] && "				\
-		 "lep_triggerMatchPt[1] >= 15"				\
+		 "lep_triggerMatchPt[1] >= 30"				\
 		 ") ) && "						\
 		 "lep_id[0] + lep_id[1] == 0 && "			\
 		 "cos_angle > -0.9998 && "				\
@@ -137,14 +137,15 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "lep_glb_numberOfValidPixelHits[1] >= 1 && "		\
 		 "lep_glb_numberOfValidMuonHits[1] > 0 && "		\
 		 "lep_numberOfMatches[1] >= 2 && "			\
-		 "(lep_triggerMatchPt[0] >= 15 || lep_triggerMatchPt[1] >= 15) && " \
+		 "(lep_triggerMatchPt[0] >= 30 || lep_triggerMatchPt[1] >= 30) && " \
 		 "lep_id[0] + lep_id[1] == 0");
 
   tree->SetAlias("OurNewSel",
 		 "lep_isGlobalMuon[0] && "				\
 		 "lep_isTrackerMuon[0] && "				\
-		 "lep_tk_pt[0] > 20 && "				\
+		 "lep_pt[0] > 35 && "					\
 		 "abs(lep_dB[0]) < 0.2 && "				\
+		 "lep_chi2dof[0] < 10 && "				\
 		 "lep_sumPt[0] / lep_tk_pt[0] < 0.1 && "		\
 		 "lep_glb_numberOfValidTrackerHits[0] > 10 && "		\
 		 "lep_glb_numberOfValidPixelHits[0] >= 1 && "		\
@@ -152,14 +153,15 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "lep_glb_muonStationsWithValidHits[0] >= 2 && "	\
 		 "lep_isGlobalMuon[1] && "				\
 		 "lep_isTrackerMuon[1] && "				\
-		 "lep_tk_pt[1] > 20 && "				\
+		 "lep_pt[1] > 35 && "					\
 		 "abs(lep_dB[1]) < 0.2 && "				\
+		 "lep_chi2dof[1] < 10 && "				\
 		 "lep_sumPt[1] / lep_tk_pt[1] < 0.1 && "		\
 		 "lep_glb_numberOfValidTrackerHits[1] > 10 && "		\
 		 "lep_glb_numberOfValidPixelHits[1] >= 1 && "		\
 		 "lep_glb_numberOfValidMuonHits[1] > 0 && "		\
 		 "lep_glb_muonStationsWithValidHits[1] >= 2 && "	\
-		 "(lep_triggerMatchPt[0] >= 15 || lep_triggerMatchPt[1] >= 15) && " \
+		 "(lep_triggerMatchPt[0] >= 30 || lep_triggerMatchPt[1] >= 30) && " \
 		 "lep_id[0] + lep_id[1] == 0 && "			\
 		 "cos_angle > -0.9998 && "				\
 		 "vertex_chi2 < 10 && "					\

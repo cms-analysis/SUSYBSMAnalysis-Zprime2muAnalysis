@@ -77,6 +77,8 @@ lumis_per_job = %(lumis_per_job)s
         submit(locals())
     else:
         x = [
+            ('MuRun2010A_Apr21',       '/Mu/Run2010A-Apr21ReReco-v1/AOD',       'FT_R_42_V10A'),
+            ('MuRun2010B_Apr21',       '/Mu/Run2010B-Apr21ReReco-v1/AOD',       'FT_R_42_V10A'),
             ('SingleMuRun2011A_May10', '/SingleMu/Run2011A-May10ReReco-v1/AOD', 'FT_R_42_V13A'),
             ]
         for name, dataset, tag in x:

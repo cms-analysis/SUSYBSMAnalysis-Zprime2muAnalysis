@@ -59,6 +59,7 @@ class SimpleNtupler : public edm::EDAnalyzer {
     short lep_glb_numberOfValidMuonHits[2];
     short lep_glb_muonStationsWithValidHits[2];
     short lep_numberOfMatches[2];
+    short lep_numberOfMatchedStations[2];
     bool lep_isGlobalMuon[2];
     bool lep_isTrackerMuon[2];
     bool GoodDataRan;
@@ -80,7 +81,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 {
   edm::Service<TFileService> fs;
   tree = fs->make<TTree>("t", "");
-  tree->Branch("tt", &t, "run/i:lumi:event:dil_mass/F:dil_pt:dil_rap:dil_eta:dil_phi:cos_angle:vertex_chi2:cos_cs:phi_cs:vertex_constrained_mass:vertex_constrained_mass_error:lep_id[2]/I:lep_pt[2]/F:lep_eta[2]:lep_phi[2]:lep_tk_pt[2]:lep_tk_eta[2]:lep_tk_phi[2]:lep_glb_pt[2]:lep_glb_eta[2]:lep_glb_phi[2]:lep_triggerMatchPt[2]:lep_chi2dof[2]:lep_dB[2]:lep_sumPt[2]:lep_emEt[2]:lep_hadEt[2]:lep_hoEt[2]:lep_tk_numberOfValidTrackerHits[2]/S:lep_tk_numberOfValidPixelHits[2]:lep_glb_numberOfValidTrackerHits[2]:lep_glb_numberOfValidPixelHits[2]:lep_glb_numberOfValidMuonHits[2]:lep_glb_muonStationsWithValidHits[2]:lep_numberOfMatches[2]:lep_isGlobalMuon[2]/O:lep_isTrackerMuon[2]:GoodDataRan:HLTPhysicsDeclared:GoodVtx:NoScraping");
+  tree->Branch("tt", &t, "run/i:lumi:event:dil_mass/F:dil_pt:dil_rap:dil_eta:dil_phi:cos_angle:vertex_chi2:cos_cs:phi_cs:vertex_constrained_mass:vertex_constrained_mass_error:lep_id[2]/I:lep_pt[2]/F:lep_eta[2]:lep_phi[2]:lep_tk_pt[2]:lep_tk_eta[2]:lep_tk_phi[2]:lep_glb_pt[2]:lep_glb_eta[2]:lep_glb_phi[2]:lep_triggerMatchPt[2]:lep_chi2dof[2]:lep_dB[2]:lep_sumPt[2]:lep_emEt[2]:lep_hadEt[2]:lep_hoEt[2]:lep_tk_numberOfValidTrackerHits[2]/S:lep_tk_numberOfValidPixelHits[2]:lep_glb_numberOfValidTrackerHits[2]:lep_glb_numberOfValidPixelHits[2]:lep_glb_numberOfValidMuonHits[2]:lep_glb_muonStationsWithValidHits[2]:lep_numberOfMatches[2]:lep_numberOfMatchedStations[2]:lep_isGlobalMuon[2]/O:lep_isTrackerMuon[2]:GoodDataRan:HLTPhysicsDeclared:GoodVtx:NoScraping");
 
   tree->SetAlias("OurSel",
 		 "("							\
@@ -99,14 +100,14 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "lep_tk_numberOfValidPixelHits[0] >= 1 && "		\
 		 "lep_glb_muonStationsWithValidHits[0] >= 2 && "	\
 		 "lep_isTrackerMuon[0] && "				\
-		 "lep_triggerMatchPt[0] >= 30"				\
+		 "lep_triggerMatchPt[0] > 30"				\
 		 ") || ("						\
 		 "abs(lep_dB[1]) < 0.2 && "				\
 		 "lep_chi2dof[1] < 10 && "				\
 		 "lep_tk_numberOfValidPixelHits[1] >= 1 && "		\
 		 "lep_glb_muonStationsWithValidHits[1] >= 2 && "	\
 		 "lep_isTrackerMuon[1] && "				\
-		 "lep_triggerMatchPt[1] >= 30"				\
+		 "lep_triggerMatchPt[1] > 30"				\
 		 ") ) && "						\
 		 "lep_id[0] + lep_id[1] == 0 && "			\
 		 "cos_angle > -0.9998 && "				\
@@ -119,25 +120,25 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->SetAlias("VBTFSel",
 		 "lep_isGlobalMuon[0] && "				\
 		 "lep_isTrackerMuon[0] && "				\
-		 "lep_tk_pt[0] > 20 && "				\
+		 "lep_tk_pt[0] > 35 && "				\
 		 "abs(lep_tk_eta[0]) < 2.1 && "				\
 		 "abs(lep_dB[0]) < 0.2 && "				\
-		 "(lep_sumPt[0] + lep_emEt[0] + lep_hadEt[0]) / lep_tk_pt[0] < 0.15 && " \
+		 "lep_sumPt[0] < 3 && "					\
 		 "lep_glb_numberOfValidTrackerHits[0] > 10 && "		\
-		 "lep_glb_numberOfValidPixelHits[0] >= 1 && "		\
+		 "lep_glb_numberOfValidPixelHits[0] > 0 && "		\
 		 "lep_glb_numberOfValidMuonHits[0] > 0 && "		\
-		 "lep_numberOfMatches[0] >= 2 && "			\
+		 "lep_numberOfMatches[0] > 1 && "			\
 		 "lep_isGlobalMuon[1] && "				\
 		 "lep_isTrackerMuon[1] && "				\
-		 "lep_tk_pt[1] > 20 && "				\
+		 "lep_tk_pt[1] > 35 && "				\
 		 "abs(lep_tk_eta[1]) < 2.1 && "				\
 		 "abs(lep_dB[1]) < 0.2 && "				\
-		 "(lep_sumPt[1] + lep_emEt[1] + lep_hadEt[1]) / lep_tk_pt[1] < 0.15 && " \
+		 "lep_sumPt[1] < 3 && "					\
 		 "lep_glb_numberOfValidTrackerHits[1] > 10 && "		\
-		 "lep_glb_numberOfValidPixelHits[1] >= 1 && "		\
+		 "lep_glb_numberOfValidPixelHits[1] > 0 && "		\
 		 "lep_glb_numberOfValidMuonHits[1] > 0 && "		\
-		 "lep_numberOfMatches[1] >= 2 && "			\
-		 "(lep_triggerMatchPt[0] >= 30 || lep_triggerMatchPt[1] >= 30) && " \
+		 "lep_numberOfMatches[1] > 1 && "			\
+		 "(lep_triggerMatchPt[0] > 30 || lep_triggerMatchPt[1] > 30) && " \
 		 "lep_id[0] + lep_id[1] == 0");
 
   tree->SetAlias("OurNewSel",
@@ -150,7 +151,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "lep_glb_numberOfValidTrackerHits[0] > 10 && "		\
 		 "lep_glb_numberOfValidPixelHits[0] >= 1 && "		\
 		 "lep_glb_numberOfValidMuonHits[0] > 0 && "		\
-		 "lep_glb_muonStationsWithValidHits[0] >= 2 && "	\
+		 "lep_numberOfMatchedStations[0] > 1 && "		\
 		 "lep_isGlobalMuon[1] && "				\
 		 "lep_isTrackerMuon[1] && "				\
 		 "lep_pt[1] > 35 && "					\
@@ -160,8 +161,8 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "lep_glb_numberOfValidTrackerHits[1] > 10 && "		\
 		 "lep_glb_numberOfValidPixelHits[1] >= 1 && "		\
 		 "lep_glb_numberOfValidMuonHits[1] > 0 && "		\
-		 "lep_glb_muonStationsWithValidHits[1] >= 2 && "	\
-		 "(lep_triggerMatchPt[0] >= 30 || lep_triggerMatchPt[1] >= 30) && " \
+		 "lep_numberOfMatchedStations[1] > 1 && "		\
+		 "(lep_triggerMatchPt[0] > 30 || lep_triggerMatchPt[1] > 30) && " \
 		 "lep_id[0] + lep_id[1] == 0 && "			\
 		 "cos_angle > -0.9998 && "				\
 		 "vertex_chi2 < 10 && "					\
@@ -242,6 +243,7 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	t.lep_glb_numberOfValidMuonHits[w] = -999;
 	t.lep_glb_muonStationsWithValidHits[w] = -999;
 	t.lep_numberOfMatches[w] = -999;
+	t.lep_numberOfMatchedStations[w] = -999;
 	t.lep_isGlobalMuon[w] = false;
 	t.lep_isTrackerMuon[w] = false;
       }
@@ -279,6 +281,7 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	t.lep_glb_numberOfValidMuonHits[w] = mu->globalTrack()->hitPattern().numberOfValidMuonHits();
 	t.lep_glb_muonStationsWithValidHits[w] = mu->globalTrack()->hitPattern().muonStationsWithValidHits();
 	t.lep_numberOfMatches[w] = mu->numberOfMatches();
+	t.lep_numberOfMatchedStations[w] = mu->numberOfMatchedStations();
 	t.lep_isGlobalMuon[w] = mu->isGlobalMuon();
 	t.lep_isTrackerMuon[w] = mu->isTrackerMuon();
       }

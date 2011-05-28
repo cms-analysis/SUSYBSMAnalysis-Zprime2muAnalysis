@@ -1,24 +1,29 @@
 import FWCore.ParameterSet.Config as cms
 
-# This attempts to implement exactly the VBTF selection, which is
-# documented at
+# This attempts to implement exactly the VBTF selection, for which the
+# twiki is out of date. The most up-to-date info comes from AN-10-395 and
 #
-# https://twiki.cern.ch/twiki/bin/view/CMS/VbtfZMuMuBaselineSelection
+# http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/CMSSW/ElectroWeakAnalysis/ZMuMu/python/ZMuMuGolden_cfi.py?revision=1.7&view=markup
 #
-# but this is slightly out of date. The most up-to-date info comes
-# from AN-10-264, AN-10-345, and e-mail with Michele de Gruttola.
+# (Since the single muon trigger threshold is now pT > 30 GeV, here
+# the offline pT cut is raised to 35 from 20 GeV.)
 #
-# Currently, their golden dimuons are formed from opposite-charged
+# Their golden dimuons are formed from opposite-charged
 # pairs in which both muons must pass this selection:
 #
-# - muon must be a global muon
-# - pT > 20
-# - |eta| < 2.1
+# - muon must be a global muon (isGlobalMuon)
+# - muon must be a tracker muon (isTrackerMuon)
+# - pT > 35 GeV (innerTrack.pt > 35)
+# - |eta| < 2.1 (abs(innerTrack.eta) < 2.1)
 # - |dxy wrt beamspot| < 0.2 cm (abs(dB) < 0.2)
-# - relative combined isolation < 15% ((isolationR03.sumPt + isolationR03.emEt + isolationR03.hadEt) / innerTrack.pt < 0.15)
+# - absolute tracker-only isolation < 3 GeV (isolationR03.sumPt < 3)
 # - number of tracker hits > 10 (innerTrack.hitPattern.numberOfValidTrackerHits > 10)
-# - at least one pixel hit (innerTrack.hitPattern.numberOfValidPixelHits >= 1)
-# - at least two muon stations in the fit (globalTrack.hitPattern.muonStationsWithValidHits >= 2)
+# - at least one pixel hit (innerTrack.hitPattern.numberOfValidPixelHits > 0)
+# - at least two muon segments matched (numberOfMatches > 1)
+#
+# The ZMuMuGolden_cfi.py linked above uses abs(globalTrack.dxy) < 1.0
+# for some reason. Also it has a cut on the global-track chi2, which
+# AN-10-395 says isn't used. Follow
 #
 # At least one muon must be matched to a trigger object firing the
 # single muon HLT path
@@ -33,14 +38,14 @@ import FWCore.ParameterSet.Config as cms
 
 loose_cut = 'isGlobalMuon && ' \
             'isTrackerMuon && ' \
-            'innerTrack.pt > 20. && ' \
+            'innerTrack.pt > 35. && ' \
             'abs(innerTrack.eta) < 2.1 && ' \
+            'isolationR03.sumPt < 3 && ' \
             'abs(dB) < 0.2 && ' \
-            '(isolationR03.sumPt + isolationR03.emEt + isolationR03.hadEt) / innerTrack.pt < 0.15 && ' \
             'globalTrack.hitPattern.numberOfValidTrackerHits > 10 && ' \
-            'globalTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \
+            'globalTrack.hitPattern.numberOfValidPixelHits > 0 && ' \
             'globalTrack.hitPattern.numberOfValidMuonHits > 0 && ' \
-            'numberOfMatches >= 2'
+            'numberOfMatches > 1'
 
 # For the trigger match, currently HLT_Mu30_v3 is the lowest-pT
 # unprescaled single muon path. Spring11 MC does not have such a path;

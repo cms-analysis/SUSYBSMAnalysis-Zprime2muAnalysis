@@ -21,7 +21,7 @@ import FWCore.ParameterSet.Config as cms
 # - relative tracker isolation less than 10% (isolationR03.sumPt / innerTrack.pt < 0.10)
 # - number of tracker hits > 10 (globalTrack.hitPattern.numberOfValidTrackerHits > 10)
 # - at least one pixel hit (globalTrack.hitPattern.numberOfValidPixelHits >= 1)
-# - at least two muon stations in the fit (globalTrack.hitPattern.muonStationsWithValidHits >= 2)
+# - at least two muon stations in the fit; this implies trackerMuon (numberOfMatchedStations > 1)
 #
 # Then at least one muon must be trigger-matched to the single muon
 # HLT path (e.g. !triggerObjectMatchesByPath("HLT_Mu30").empty()) (The
@@ -42,7 +42,7 @@ loose_cut = 'isGlobalMuon && ' \
             'globalTrack.hitPattern.numberOfValidTrackerHits > 10 && ' \
             'globalTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \
             'globalTrack.hitPattern.numberOfValidMuonHits > 0 && ' \
-            'globalTrack.hitPattern.muonStationsWithValidHits >= 2'
+            'numberOfMatchedStations > 1'
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match
 

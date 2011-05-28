@@ -37,12 +37,13 @@ Run2011APlusDCSOnlyMuonsOnly_ll = combine(May10MuonsOnly_ll, PromptMuonsOnly_ll,
 Run2010_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions10/7TeV/Reprocessing/Cert_136033-149442_7TeV_Apr21ReReco_Collisions10_JSON.txt')
 Run2010MuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions10/7TeV/Reprocessing/Cert_136033-149442_7TeV_Apr21ReReco_Collisions10_JSON_MuonPhys.txt')
 
-for x in ['DCSOnly', 'DCSOnlyForNewRuns', 'Prompt', 'PromptMuonsOnly', 'May10', 'May10MuonsOnly', 'Run2011A', 'Run2011AMuonsOnly', 'Run2011APlusDCSOnly', 'Run2011APlusDCSOnlyMuonsOnly', 'Run2010', 'Run2010MuonsOnly']:
+all_lls = ['DCSOnly', 'DCSOnlyForNewRuns', 'Prompt', 'PromptMuonsOnly', 'May10', 'May10MuonsOnly', 'Run2011A', 'Run2011AMuonsOnly', 'Run2011APlusDCSOnly', 'Run2011APlusDCSOnlyMuonsOnly', 'Run2010', 'Run2010MuonsOnly']
+for x in all_lls:
     exec '%s = for_cmssw(%s_ll)' % (x,x)
 
 if __name__ == '__main__':
     import sys
-    if 'WriteGoodLumiJSONs' in sys.argv:
-        for name in ['DCSOnly_ll', 'DCSOnlyForNewRuns_ll', 'Prompt_ll', 'PromptMuonsOnly_ll', 'May10', 'May10MuonsOnly', 'Run2011A_ll', 'Run2011AMuonsOnly_ll']:
-            obj = eval(name)
-            obj.writeJSON('zp2mu_goodlumis_%s.json' % name.replace('_ll', ''))
+    if 'write' in sys.argv:
+        for name in all_lls:
+            obj = eval(name + '_ll')
+            obj.writeJSON('zp2mu_goodlumis_%s.json' % name)

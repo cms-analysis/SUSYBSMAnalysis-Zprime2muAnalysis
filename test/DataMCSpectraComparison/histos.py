@@ -183,9 +183,6 @@ return_data = 1
                 jobs.append(dd + (lumi_name, ll))
                 
         for dataset_name, ana_dataset, lumi_name, lumi_list in jobs:
-            name = '%s_%s' % (lumi_name, dataset_name)
-            print name
-
             if lumi_list is not None:
                 json_fn = 'tmp.json'
                 lumi_list.writeJSON(json_fn)
@@ -194,6 +191,9 @@ return_data = 1
                 lumi_name = 'NoLumiMask'
                 lumi_mask = ''
                 
+            name = '%s_%s' % (lumi_name, dataset_name)
+            print name
+
             new_py = open('histos.py').read()
             new_py += "\nntuplify(process)\n"
             new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_42_V13::All'\n"

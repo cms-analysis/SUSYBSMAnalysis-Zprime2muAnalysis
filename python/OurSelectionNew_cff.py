@@ -1,16 +1,18 @@
 import FWCore.ParameterSet.Config as cms
 
-# The starting point is the VBTF selection, which is documented at
+# The starting point is the Muon POG tight muon selection, documented
+# at
 #
-# https://twiki.cern.ch/twiki/bin/view/CMS/VbtfZMuMuBaselineSelection
+# https://twiki.cern.ch/twiki/bin/view/CMS/MuonRecoPerformance2010
 #
-# We remove the cuts on muon pseudo-rapidity, change the isolation
-# cut, and add cuts on the 3D angle between muons and the common
-# vertex chi2 probability (the latter two being implemented in
+# We add cuts on isolation, on the 3D angle between muons to suppress
+# cosmics, and on the vertex chi2 (the latter two being implemented in
 # Zprime2muCompositeCandidatePicker, since they can't be done by the
-# StringCutParser).
+# StringCutParser). The dimuons must be opposite-sign, and in events
+# with more than one dimuon passing all the cuts, we keep the highest
+# mass one.
 #
-# Both muons must pass this selection:
+# So, both muons must pass this selection:
 #
 # - muon must be a global muon and a tracker muon (isGlobalMuon && isTrackerMuon)
 # - pT > 35 (pt > 35.)
@@ -42,15 +44,7 @@ loose_cut = 'isGlobalMuon && ' \
             'globalTrack.hitPattern.numberOfValidMuonHits > 0 && ' \
             'globalTrack.hitPattern.muonStationsWithValidHits >= 2'
 
-# For the trigger match, currently HLT_Mu30_v3 is the lowest-pT
-# unprescaled single muon path. Spring11 MC does not have such a path;
-# emulate with Mu15.
-trigger_match = '(' \
-                '(!triggerObjectMatchesByPath("HLT_Mu15_v1").empty() && triggerObjectMatchesByPath("HLT_Mu15_v1").at(0).pt() > 30) || ' \
-                '!triggerObjectMatchesByPath("HLT_Mu30_v1").empty() || ' \
-                '!triggerObjectMatchesByPath("HLT_Mu30_v2").empty() || ' \
-                '!triggerObjectMatchesByPath("HLT_Mu30_v3").empty()' \
-                ')'
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match
 
 tight_cut = trigger_match
 

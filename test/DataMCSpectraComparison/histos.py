@@ -3,7 +3,7 @@
 import sys, os, glob, FWCore.ParameterSet.Config as cms
 from pprint import pprint
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
-process.source.fileNames = ['/store/user/tucker/TTJets_TuneZ2_7TeV-madgraph-tauola/datamc_ttbar/396bcdaa1e090647f7fc37d15e445b1a/pat_2_1_qqF.root']
+process.source.fileNames = ['file:/uscms/home/tucker/scratch/store/mc/Summer11/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/AODSIM/PU_S3_START42_V11-v2/0000/pat.root']
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
 
@@ -132,22 +132,11 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
                                            )
     process.pCheckPrescale = cms.Path(process.CheckPrescale)
 
-if 'bigfatbean' in sys.argv:
+if 'gogo' in sys.argv:
     ntuplify(process)
-    for c in ['VBTF', 'Our', 'OurNew']:
-        delattr(process, 'path%s' % c)
-    process.pathSimple=cms.Path(process.muonPhotonMatch*process.SimpleLeptons*process.allSimpleMuonsAllSigns*process.SimpleMuonsAllSigns*process.SimpleMuonsAllSignsHistos*process.SimpleNtupler)
-
-if 'data' in sys.argv:
-    process.source.fileNames = ['file:crab/crab_datamc_SingleMuRun2011A_testgrid3/res/merged.root']
-    process.TFileService.fileName = 'ana_datamc_data.root'
-    process.GlobalTag.globaltag = 'GR_R_311_V2::All'
-
-    from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2011AMuonsOnly
-    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2011AMuonsOnly)
-
     printify(process)
-    ntuplify(process)
+    from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import files_from_argv
+    #files_from_argv(process)
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
@@ -172,28 +161,28 @@ return_data = 1
     
     # Run on data.
     if 'no_data' not in sys.argv:
-        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import DCSOnlyForNewRuns_ll, Run2011AMuonsOnly_ll
+        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2011AMuonsOnly_ll, Run2011A_ll, Run2011APlusDCSOnlyMuonsOnly_ll, Run2011APlusDCSOnly_ll
         from SUSYBSMAnalysis.Zprime2muAnalysis.crabtools import dataset_from_publish_log
 
         dataset_details = []
         if use_predefined_datasets:
             dataset_details = [
-                ('SingleMu2011A_prompt_160329_161312', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_160329_161312_20110330032441-b4af82d5ce94ab57cd9bc30d8eb6afae/USER', Run2011AMuonsOnly_ll),
-                ('SingleMu2011A_prompt_162718_164236', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_162718_164236_20110512163053-44f5c264672bbeb96d2ae39b712749b4/USER', Run2011AMuonsOnly_ll),
+                ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10-7b18eaf160f3796dde5c7353a5ebfddf/USER',                            Run2011APlusDCSOnlyMuonsOnly_ll),
+                ('SingleMu2011A_Prompt_165071_165558', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_165558_20110526195544-8788f1b70631d1fb57e97a89f5e8007c/USER', Run2011APlusDCSOnlyMuonsOnly_ll),
                 ]
         else:
             # We'll try to figure out what the datasets are based on the publish logs.
             for fn in glob.glob('crab/publish_logs/publish.crab_datamc_SingleMu2011A_prompt_*'):
                 name = fn.replace('crab/publish_logs/publish.crab_datamc_', '')
                 dataset = dataset_from_publish_log(fn)
-                dataset_details.append((name, dataset, Run2011AMuonsOnly_ll | DCSOnlyForNewRuns_ll))
+                dataset_details.append((name, dataset, Run2011APlusDCSOnlyMuonsOnly_ll))
                 
         for name, ana_dataset, lumi_list in dataset_details:
             print name
             new_py = open('histos.py').read()
             new_py += "\nntuplify(process)\n"
             new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_311_V2::All'\n"
-            new_py += "\ncheck_prescale(process, ['HLT_Mu24_v1', 'HLT_Mu24_v2'])\n"
+            new_py += "\ncheck_prescale(process, ['HLT_Mu30_v1', 'HLT_Mu30_v2', 'HLT_Mu30_v3'])\n"
 
             open('histos_crab.py', 'wt').write(new_py)
 
@@ -202,7 +191,7 @@ return_data = 1
 
             new_crab_cfg = new_crab_cfg.replace('job_control','''
 total_number_of_lumis = -1
-number_of_jobs = 1
+number_of_jobs = 20
 lumi_mask = tmp.json''')
 
             open('crab.cfg', 'wt').write(new_crab_cfg)

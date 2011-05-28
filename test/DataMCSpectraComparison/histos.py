@@ -157,46 +157,68 @@ return_data = 1
 '''
 
     just_testing = 'testing' in sys.argv
-    use_predefined_datasets = True
     
     # Run on data.
     if 'no_data' not in sys.argv:
-        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2011AMuonsOnly_ll, Run2011A_ll, Run2011APlusDCSOnlyMuonsOnly_ll, Run2011APlusDCSOnly_ll
+        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
         from SUSYBSMAnalysis.Zprime2muAnalysis.crabtools import dataset_from_publish_log
 
-        dataset_details = []
-        if use_predefined_datasets:
-            dataset_details = [
-                ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10-7b18eaf160f3796dde5c7353a5ebfddf/USER',                            Run2011APlusDCSOnlyMuonsOnly_ll),
-                ('SingleMu2011A_Prompt_165071_165558', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_165558_20110526195544-8788f1b70631d1fb57e97a89f5e8007c/USER', Run2011APlusDCSOnlyMuonsOnly_ll),
-                ]
-        else:
-            # We'll try to figure out what the datasets are based on the publish logs.
-            for fn in glob.glob('crab/publish_logs/publish.crab_datamc_SingleMu2011A_prompt_*'):
-                name = fn.replace('crab/publish_logs/publish.crab_datamc_', '')
-                dataset = dataset_from_publish_log(fn)
-                dataset_details.append((name, dataset, Run2011APlusDCSOnlyMuonsOnly_ll))
+        dataset_details = [
+            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10-7b18eaf160f3796dde5c7353a5ebfddf/USER'),
+            ('SingleMu2011A_Prompt_165071_165558', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_165558_20110526195544-8788f1b70631d1fb57e97a89f5e8007c/USER'),
+            ]
+
+        lumi_lists = [
+            'Run2011AMuonsOnly',
+            'Run2011A',
+            'Run2011APlusDCSOnlyMuonsOnly',
+            'Run2011APlusDCSOnly',
+            '',
+            ]
+
+        jobs = []
+        for lumi_name in lumi_lists:
+            ll = eval(lumi_name + '_ll') if lumi_name != '' else None
+            for dd in dataset_details:
+                jobs.append(dd + (lumi_name, ll))
                 
-        for name, ana_dataset, lumi_list in dataset_details:
+        for dataset_name, ana_dataset, lumi_name, lumi_list in jobs:
+            name = '%s_%s' % (lumi_name, dataset_name)
             print name
+
+            if lumi_list is not None:
+                json_fn = 'tmp.json'
+                lumi_list.writeJSON(json_fn)
+                lumi_mask = 'lumi_mask = %s' % json_fn
+            else:
+                lumi_name = 'NoLumiMask'
+                lumi_mask = ''
+                
             new_py = open('histos.py').read()
             new_py += "\nntuplify(process)\n"
-            new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_311_V2::All'\n"
+            new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_42_V13::All'\n"
             new_py += "\ncheck_prescale(process, ['HLT_Mu30_v1', 'HLT_Mu30_v2', 'HLT_Mu30_v3'])\n"
-
             open('histos_crab.py', 'wt').write(new_py)
 
             new_crab_cfg = crab_cfg % locals()
-            lumi_list.writeJSON('tmp.json')
 
-            new_crab_cfg = new_crab_cfg.replace('job_control','''
+            job_control = '''
 total_number_of_lumis = -1
 number_of_jobs = 20
-lumi_mask = tmp.json''')
+%(lumi_mask)s''' % locals()
 
+            new_crab_cfg = new_crab_cfg.replace('job_control', job_control)
             open('crab.cfg', 'wt').write(new_crab_cfg)
+
             if not just_testing:
                 os.system('crab -create -submit all')
+            else:
+                cmd = 'diff histos.py histos_crab.py | less'
+                print cmd
+                os.system(cmd)
+                cmd = 'less crab.cfg'
+                print cmd
+                os.system(cmd)
 
         if not just_testing:
             os.system('rm crab.cfg histos_crab.py histos_crab.pyc tmp.json')

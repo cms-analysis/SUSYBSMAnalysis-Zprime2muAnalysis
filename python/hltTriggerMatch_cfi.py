@@ -10,3 +10,13 @@ muonTriggerMatchHLTMuons = cms.EDProducer('PATTriggerMatcherDRDPtLessByR',
     resolveAmbiguities    = cms.bool(True),
     resolveByMatchQuality = cms.bool(False)
 )
+
+# For the trigger match, currently HLT_Mu30_v3 is the lowest-pT
+# unprescaled single muon path. Spring11 MC does not have such a path;
+# emulate with Mu15.
+trigger_match = '(' \
+                '(!triggerObjectMatchesByPath("HLT_Mu15_v1").empty() && triggerObjectMatchesByPath("HLT_Mu15_v1").at(0).pt() > 30) || ' \
+                '!triggerObjectMatchesByPath("HLT_Mu30_v1").empty() || ' \
+                '!triggerObjectMatchesByPath("HLT_Mu30_v2").empty() || ' \
+                '!triggerObjectMatchesByPath("HLT_Mu30_v3").empty()' \
+                ')'

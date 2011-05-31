@@ -109,7 +109,7 @@ yaxis = {
 use_yaxis = False
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
-cutss = ['VBTF', 'Our', 'Simple', 'EmuVeto', 'OurNoIso']
+cutss = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso']
 
 ROOT.TH1.AddDirectory(False)
 

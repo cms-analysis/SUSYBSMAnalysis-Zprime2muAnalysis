@@ -38,11 +38,11 @@ dils = [
 # somewhere below.
 cuts = {
     'VBTF'    : VBTFSelection,
-    'Our'     : OurSelection,
+    'OurOld'  : OurSelection,
     'OurNew'  : OurSelectionNew,
     'OurNoIso': OurSelection,
     'EmuVeto' : OurSelection,
-    'Simple'  : OurSelection, # the Selection module here is ignored below.
+    'Simple'  : OurSelection, # the selection cuts in the module listed here are ignored below
     }
 
 for cut_name in cuts.keys():
@@ -77,7 +77,7 @@ for cut_name in cuts.keys():
         dil = Selection.dimuons.clone(src = cms.InputTag(allname))
 
         if cut_name == 'Simple':
-            alldil.loose_cut = 'isGlobalMuon && (pt > 20. || innerTrack.pt > 20.)'
+            alldil.loose_cut = 'isGlobalMuon && (pt > 35. || innerTrack.pt > 35.)'
             alldil.tight_cut = ''
             dil.max_candidates = 100
             dil.do_remove_overlap = False
@@ -161,11 +161,11 @@ return_data = 1
     # Run on data.
     if 'no_data' not in sys.argv:
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
-        from SUSYBSMAnalysis.Zprime2muAnalysis.crabtools import dataset_from_publish_log
 
         dataset_details = [
-            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10-7b18eaf160f3796dde5c7353a5ebfddf/USER'),
-            ('SingleMu2011A_Prompt_165071_165558', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_165558_20110526195544-8788f1b70631d1fb57e97a89f5e8007c/USER'),
+            ('SingleMu2011A_May10',                '/SingleMu/tucker-merge_20110530174156_may10temp-a3691da421b8c16b08067510400469a1/USER'),
+            ('SingleMu2011A_Prompt_165071_165558', '/SingleMu/tucker-merge_20110530174156_prompt165071165558-a3691da421b8c16b08067510400469a1/USER'),
+            ('SingleMu2011A_Prompt_165559_165627', '/SingleMu/tucker-merge_20110530174156_prompt165559165627-a3691da421b8c16b08067510400469a1/USER'),
             ]
 
         lumi_lists = [

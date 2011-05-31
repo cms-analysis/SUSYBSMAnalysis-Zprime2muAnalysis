@@ -40,9 +40,9 @@ cuts = {
     'VBTF'    : VBTFSelection,
     'OurOld'  : OurSelection,
     'OurNew'  : OurSelectionNew,
-    'OurNoIso': OurSelection,
-    'EmuVeto' : OurSelection,
-    'Simple'  : OurSelection, # the selection cuts in the module listed here are ignored below
+    'OurNoIso': OurSelectionNew,
+    'EmuVeto' : OurSelectionNew,
+    'Simple'  : OurSelectionNew, # the selection cuts in the module listed here are ignored below
     }
 
 for cut_name in cuts.keys():

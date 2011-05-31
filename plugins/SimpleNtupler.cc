@@ -66,6 +66,7 @@ class SimpleNtupler : public edm::EDAnalyzer {
     bool HLTPhysicsDeclared;
     bool GoodVtx;
     bool NoScraping;
+    bool firstOppDimu;
   };
 
   tree_t t;
@@ -81,7 +82,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 {
   edm::Service<TFileService> fs;
   tree = fs->make<TTree>("t", "");
-  tree->Branch("tt", &t, "run/i:lumi:event:dil_mass/F:dil_pt:dil_rap:dil_eta:dil_phi:cos_angle:vertex_chi2:cos_cs:phi_cs:vertex_constrained_mass:vertex_constrained_mass_error:lep_id[2]/I:lep_pt[2]/F:lep_eta[2]:lep_phi[2]:lep_tk_pt[2]:lep_tk_eta[2]:lep_tk_phi[2]:lep_glb_pt[2]:lep_glb_eta[2]:lep_glb_phi[2]:lep_triggerMatchPt[2]:lep_chi2dof[2]:lep_dB[2]:lep_sumPt[2]:lep_emEt[2]:lep_hadEt[2]:lep_hoEt[2]:lep_tk_numberOfValidTrackerHits[2]/S:lep_tk_numberOfValidPixelHits[2]:lep_glb_numberOfValidTrackerHits[2]:lep_glb_numberOfValidPixelHits[2]:lep_glb_numberOfValidMuonHits[2]:lep_glb_muonStationsWithValidHits[2]:lep_numberOfMatches[2]:lep_numberOfMatchedStations[2]:lep_isGlobalMuon[2]/O:lep_isTrackerMuon[2]:GoodDataRan:HLTPhysicsDeclared:GoodVtx:NoScraping");
+  tree->Branch("tt", &t, "run/i:lumi:event:dil_mass/F:dil_pt:dil_rap:dil_eta:dil_phi:cos_angle:vertex_chi2:cos_cs:phi_cs:vertex_constrained_mass:vertex_constrained_mass_error:lep_id[2]/I:lep_pt[2]/F:lep_eta[2]:lep_phi[2]:lep_tk_pt[2]:lep_tk_eta[2]:lep_tk_phi[2]:lep_glb_pt[2]:lep_glb_eta[2]:lep_glb_phi[2]:lep_triggerMatchPt[2]:lep_chi2dof[2]:lep_dB[2]:lep_sumPt[2]:lep_emEt[2]:lep_hadEt[2]:lep_hoEt[2]:lep_tk_numberOfValidTrackerHits[2]/S:lep_tk_numberOfValidPixelHits[2]:lep_glb_numberOfValidTrackerHits[2]:lep_glb_numberOfValidPixelHits[2]:lep_glb_numberOfValidMuonHits[2]:lep_glb_muonStationsWithValidHits[2]:lep_numberOfMatches[2]:lep_numberOfMatchedStations[2]:lep_isGlobalMuon[2]/O:lep_isTrackerMuon[2]:GoodDataRan:HLTPhysicsDeclared:GoodVtx:NoScraping:firstOppDimu");
 
   tree->SetAlias("OurSel",
 		 "("							\
@@ -115,7 +116,8 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "GoodDataRan && "					\
 		 "HLTPhysicsDeclared && "				\
 		 "NoScraping && "					\
-		 "GoodVtx");
+		 "GoodVtx && "						\
+		 "firstOppDimu");
 
   tree->SetAlias("VBTFSel",
 		 "lep_isGlobalMuon[0] && "				\
@@ -169,7 +171,8 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "GoodDataRan && "					\
 		 "HLTPhysicsDeclared && "				\
 		 "NoScraping && "					\
-		 "GoodVtx");
+		 "GoodVtx && "						\
+		 "firstOppDimu");
 }
 
 void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
@@ -192,6 +195,8 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
   edm::Handle<pat::CompositeCandidateCollection> dils;
   event.getByLabel(dimu_src, dils);
 
+  bool seen_first_oppsign_dimu = false;
+
   BOOST_FOREACH(const pat::CompositeCandidate& dil, *dils) {
     t.dil_mass = dil.mass();
     t.dil_pt = dil.pt();
@@ -206,7 +211,17 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 
     const bool opp_sign = dil.daughter(0)->charge() + dil.daughter(1)->charge() == 0;
     const bool diff_flavor = abs(dil.daughter(0)->pdgId()) != abs(dil.daughter(1)->pdgId());
+    const bool dimuon = abs(dil.daughter(0)->pdgId()) == 13 && abs(dil.daughter(1)->pdgId()) == 13;
 
+    if (opp_sign && dimuon) {
+      if (!seen_first_oppsign_dimu) {
+	t.firstOppDimu = true;
+	seen_first_oppsign_dimu = true;
+      }
+      else
+	t.firstOppDimu = false;
+    }
+      
     for (size_t i = 0; i < 2; ++i) {
       // For e-mu dileptons, put the muon first. For opposite-sign
       // dileptons, always put the negative lepton first. Otherwise

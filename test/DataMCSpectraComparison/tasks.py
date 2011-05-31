@@ -51,12 +51,13 @@ elif cmd == 'hadd':
 
 elif cmd == 'gatherhistos':
     extra = extra[0] if extra else 'renameme'
+    dirs = 'crab/crab_ana_datamc_Run2011APlusDCSOnlyMuonsOnly_SingleMu2011A_May10 crab/crab_ana_datamc_Run2011APlusDCSOnlyMuonsOnly_SingleMu2011A_Prompt_165071_165558 crab/crab_ana_datamc_Run2011APlusDCSOnlyMuonsOnly_SingleMu2011A_Prompt_165559_165627'.split(' ')
+    files_glob = ' '.join([os.path.join(x, 'res/*.root') for x in dirs])
     do('''
 mkdir -p ana_datamc_%(extra)s
-ln -s /uscms_data/d2/tucker/zp2mu_ana_datamc_mc/V00-10-11 ana_datamc_%(extra)s/mc
-hadd ana_datamc_%(extra)s/ana_datamc_data.root crab/crab_ana_datamc_SingleMu2011A_May10_MuonsOnly/res/*root
+ln -s /uscms_data/d2/tucker/zp2mu_ana_datamc_mc/V00-10-12 ana_datamc_%(extra)s/mc
+hadd ana_datamc_%(extra)s/ana_datamc_data.root %(files_glob)s
 ''' % locals())
-    dirs = glob.glob('crab/crab_ana_datamc_SingleMu2011A_May10_MuonsOnly')
     for dir in dirs:
         do('crab -c %s -report' % dir)
     jsons = [os.path.join(dir, 'res/lumiSummary.json') for dir in dirs]

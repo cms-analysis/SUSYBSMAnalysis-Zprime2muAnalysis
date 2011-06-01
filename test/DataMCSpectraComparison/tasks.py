@@ -51,7 +51,9 @@ elif cmd == 'hadd':
 
 elif cmd == 'gatherhistos':
     extra = extra[0] if extra else 'renameme'
-    dirs = 'crab/crab_ana_datamc_Run2011APlusDCSOnlyMuonsOnly_SingleMu2011A_May10 crab/crab_ana_datamc_Run2011APlusDCSOnlyMuonsOnly_SingleMu2011A_Prompt_165071_165558 crab/crab_ana_datamc_Run2011APlusDCSOnlyMuonsOnly_SingleMu2011A_Prompt_165559_165627'.split(' ')
+    which = 'Run2011APlusDCSOnlyMuonsOnly'
+    which = 'Run2011A'
+    dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMu2011A_*' % which)
     files_glob = ' '.join([os.path.join(x, 'res/*.root') for x in dirs])
     do('''
 mkdir -p ana_datamc_%(extra)s

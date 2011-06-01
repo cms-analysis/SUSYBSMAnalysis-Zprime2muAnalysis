@@ -20,8 +20,9 @@ x_axis_limits2 = 50, 1100
 
 to_compare = 'DileptonMass'
 global_rescale = {
-    'Our': 96030/89484.7,
-    'VBTF': 78313/72861.5,
+    'OurNew': 71876/65798.0,
+    'OurOld': 75408/68655.7,
+    'VBTF': 62623/57595.9,
     }
 draw_zssm = False 
 use_poisson_intervals = True
@@ -164,13 +165,13 @@ for cuts in cutss:
 
             # Print a pretty table.
             if not cumulative:
-                for mass_range in [(60,120), (120,200), (120,), (200,), (586, 914), (150,200)]:
+                for mass_range in [(60,120), (120,200), (120,), (200,), (586, 914), (150,200), (40, 200)]:
                     if mass_range == (586,914) and (cuts != 'Our' or dilepton != 'MuonsPlusMuonsMinus'):
                         continue
                     print 'cuts: %s  dilepton: %s  mass range: %s' % (cuts, dilepton, mass_range)
                     for sample in samples:
                         sample.integral = get_integral(sample.mass, *mass_range, integral_only=True, include_last_bin=False)
-                        sample.raw_integral = int(sample.integral / global_rescale.get(cuts, 1.) / sample.partial_weight / int_lumi)
+                        sample.raw_integral = sample.integral / global_rescale.get(cuts, 1.) / sample.partial_weight / int_lumi
                     hdata_integral = get_integral(hdata, *mass_range, integral_only=True, include_last_bin=False)
                     print '%50s%20s%20s%20s%20s%20s%20s%20s%20s' % ('sample', 'weight for %i/nb' % int(int_lumi*1000), 'raw integral', 'integral', 'stat error', 'limit if int=0', 'syst error', 'lumi error', 'total error')
                     print '%50s%20s%20i%20.6f%20.6f' % ('data', '-', int(hdata_integral), hdata_integral, hdata_integral**0.5)
@@ -201,7 +202,7 @@ for cuts in cutss:
                         lumi_err = lumi_syst_frac * sample.integral
                         tot_err = (var + syst_var + lumi_err**2)**0.5
 
-                        print '%50s%20.6f%20i%20.6f%20.6f%20s%20.6f%20.6f%20.6f' % (sample.nice_name, w, sample.raw_integral, sample.integral, var**0.5, limit, syst_var**0.5, lumi_err, tot_err)
+                        print '%50s%20.6f%20f%20.6f%20.6f%20s%20.6f%20.6f%20.6f' % (sample.nice_name, w, sample.raw_integral, sample.integral, var**0.5, limit, syst_var**0.5, lumi_err, tot_err)
 
                     lumi_err = lumi_syst_frac * sum_mc
                     tot_err = (var_sum_mc + syst_var_sum_mc + lumi_err**2)**0.5

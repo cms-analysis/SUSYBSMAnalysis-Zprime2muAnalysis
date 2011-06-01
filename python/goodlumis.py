@@ -8,9 +8,17 @@ last_rereco_run = 163869
 last_prompt_run = 165542
 assert last_prompt_run > last_rereco_run
 
+runs_to_remove_from_dcsonly = range(160404, last_prompt_run+1)
+# These runs are <= last_prompt_run, but they were not actually
+# considered in the certification for the latest prompt JSON. So,
+# don't drop them from the DCS-only list when combining later.
+runs_to_remove_from_dcsonly.remove(165467)
+runs_to_remove_from_dcsonly.remove(165514)
+runs_to_remove_from_dcsonly.remove(165537)
+
 DCSOnly_ll           = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/DCSOnly/json_DCSONLY.txt')
 DCSOnlyForNewRuns_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/DCSOnly/json_DCSONLY.txt')
-DCSOnlyForNewRuns_ll.removeRuns(xrange(160404, last_prompt_run+1))
+DCSOnlyForNewRuns_ll.removeRuns(runs_to_remove_from_dcsonly)
 
 Prompt_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Prompt/Cert_160404-%i_7TeV_PromptReco_Collisions11_JSON.txt'          % last_prompt_run)
 PromptMuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Prompt/Cert_160404-%i_7TeV_PromptReco_Collisions11_JSON_MuonPhys.txt' % last_prompt_run)
@@ -24,7 +32,7 @@ def combine(may10_ll, prompt_ll, dcsonly_ll=None):
     ll = may10_ll | prompt_ll
     if dcsonly_ll is not None:
         dcsonly_ll = copy.deepcopy(dcsonly_ll)
-        dcsonly_ll.removeRuns(xrange(160404, last_prompt_run+1))
+        dcsonly_ll.removeRuns(runs_to_remove_from_dcsonly)
         ll = ll | dcsonly_ll
     return ll
 

@@ -6,11 +6,11 @@ from tuple_common import cms, process, crab_cfg
 
 AODOnly(process)
 
-process.source.fileNames = ['file:/uscms/home/tucker/nobackup/Spring11/DYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythia/AODSIM/PU_S1_START311_V1G1-v1/0002/181B6610-494E-E011-A311-001A4BE1C5D4.root']
+process.source.fileNames = ['file:/uscms/home/tucker/scratch/FE434AF5-D188-E011-BDE0-0017A4771000.root']
 process.maxEvents.input = 100
-process.GlobalTag.globaltag = 'START311_V2::All'
+process.GlobalTag.globaltag = 'START42_V11::All'
 
-switchHLTProcessName(process, 'REDIGI311X')
+#switchHLTProcessName(process, 'REDIGI311X')
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     job_control = '''

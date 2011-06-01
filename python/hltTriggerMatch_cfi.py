@@ -16,6 +16,7 @@ muonTriggerMatchHLTMuons = cms.EDProducer('PATTriggerMatcherDRDPtLessByR',
 # emulate with Mu15.
 trigger_match = '(' \
                 '(!triggerObjectMatchesByPath("HLT_Mu15_v1").empty() && triggerObjectMatchesByPath("HLT_Mu15_v1").at(0).pt() > 30) || ' \
+                '(!triggerObjectMatchesByPath("HLT_Mu15_v2").empty() && triggerObjectMatchesByPath("HLT_Mu15_v2").at(0).pt() > 30) || ' \
                 '!triggerObjectMatchesByPath("HLT_Mu30_v1").empty() || ' \
                 '!triggerObjectMatchesByPath("HLT_Mu30_v2").empty() || ' \
                 '!triggerObjectMatchesByPath("HLT_Mu30_v3").empty()' \

@@ -4,6 +4,8 @@
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "FWCore/Common/interface/TriggerNames.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
@@ -15,15 +17,22 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 
 class SimpleNtupler : public edm::EDAnalyzer {
- public:
+public:
   explicit SimpleNtupler(const edm::ParameterSet&);
   void analyze(const edm::Event&, const edm::EventSetup&);
 
- private:
+private:
   struct tree_t {
     unsigned run;
     unsigned lumi;
     unsigned event;
+    float beamspot_x;
+    float beamspot_x_err;
+    float beamspot_y;
+    float beamspot_y_err;
+    float beamspot_z;
+    float beamspot_z_err;
+    int nvertices;
     float dil_mass;
     float dil_pt;
     float dil_rap;
@@ -33,18 +42,35 @@ class SimpleNtupler : public edm::EDAnalyzer {
     float vertex_chi2;
     float cos_cs;
     float phi_cs;
-    float vertex_constrained_mass;
-    float vertex_constrained_mass_error;
+    float vertex_m;
+    float vertex_m_err;
+    float vertex_x;
+    float vertex_x_err;
+    float vertex_y;
+    float vertex_y_err;
+    float vertex_z;
+    float vertex_z_err;
     int lep_id[2];
     float lep_pt[2];
+    float lep_pt_err[2];
     float lep_eta[2];
     float lep_phi[2];
     float lep_tk_pt[2];
+    float lep_tk_pt_err[2];
     float lep_tk_eta[2];
     float lep_tk_phi[2];
     float lep_glb_pt[2];
+    float lep_glb_pt_err[2];
     float lep_glb_eta[2];
     float lep_glb_phi[2];
+    float lep_tpfms_pt[2];
+    float lep_tpfms_pt_err[2];
+    float lep_tpfms_eta[2];
+    float lep_tpfms_phi[2];
+    float lep_picky_pt[2];
+    float lep_picky_pt_err[2];
+    float lep_picky_eta[2];
+    float lep_picky_phi[2];
     float lep_triggerMatchPt[2];
     float lep_chi2dof[2];
     float lep_dB[2];
@@ -74,15 +100,87 @@ class SimpleNtupler : public edm::EDAnalyzer {
 
   edm::InputTag hlt_src;
   edm::InputTag dimu_src;
+  edm::InputTag beamspot_src;
+  edm::InputTag vertices_src;
 };
 
 SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   : hlt_src(cfg.getParameter<edm::InputTag>("hlt_src")),
-    dimu_src(cfg.getParameter<edm::InputTag>("dimu_src"))
+    dimu_src(cfg.getParameter<edm::InputTag>("dimu_src")),
+    beamspot_src(cfg.getParameter<edm::InputTag>("beamspot_src")),
+    vertices_src(cfg.getParameter<edm::InputTag>("vertices_src"))
 {
   edm::Service<TFileService> fs;
   tree = fs->make<TTree>("t", "");
-  tree->Branch("tt", &t, "run/i:lumi:event:dil_mass/F:dil_pt:dil_rap:dil_eta:dil_phi:cos_angle:vertex_chi2:cos_cs:phi_cs:vertex_constrained_mass:vertex_constrained_mass_error:lep_id[2]/I:lep_pt[2]/F:lep_eta[2]:lep_phi[2]:lep_tk_pt[2]:lep_tk_eta[2]:lep_tk_phi[2]:lep_glb_pt[2]:lep_glb_eta[2]:lep_glb_phi[2]:lep_triggerMatchPt[2]:lep_chi2dof[2]:lep_dB[2]:lep_sumPt[2]:lep_emEt[2]:lep_hadEt[2]:lep_hoEt[2]:lep_tk_numberOfValidTrackerHits[2]/S:lep_tk_numberOfValidPixelHits[2]:lep_glb_numberOfValidTrackerHits[2]:lep_glb_numberOfValidPixelHits[2]:lep_glb_numberOfValidMuonHits[2]:lep_glb_muonStationsWithValidHits[2]:lep_numberOfMatches[2]:lep_numberOfMatchedStations[2]:lep_isGlobalMuon[2]/O:lep_isTrackerMuon[2]:GoodDataRan:HLTPhysicsDeclared:GoodVtx:NoScraping:firstOppDimu");
+  tree->Branch("run", &t.run, "run/i");
+  tree->Branch("lumi", &t.lumi, "lumi/i");
+  tree->Branch("event", &t.event, "event/i");
+  tree->Branch("beamspot_x", &t.beamspot_x, "beamspot_x/F");
+  tree->Branch("beamspot_x_err", &t.beamspot_x_err, "beamspot_x_err/F");
+  tree->Branch("beamspot_y", &t.beamspot_y, "beamspot_y/F");
+  tree->Branch("beamspot_y_err", &t.beamspot_y_err, "beamspot_y_err/F");
+  tree->Branch("beamspot_z", &t.beamspot_z, "beamspot_z/F");
+  tree->Branch("beamspot_z_err", &t.beamspot_z_err, "beamspot_z_err/F");
+  tree->Branch("nvertices", &t.nvertices, "nvertices/I");
+  tree->Branch("dil_mass", &t.dil_mass, "dil_mass/F");
+  tree->Branch("dil_pt", &t.dil_pt, "dil_pt/F");
+  tree->Branch("dil_rap", &t.dil_rap, "dil_rap/F");
+  tree->Branch("dil_eta", &t.dil_eta, "dil_eta/F");
+  tree->Branch("dil_phi", &t.dil_phi, "dil_phi/F");
+  tree->Branch("cos_angle", &t.cos_angle, "cos_angle/F");
+  tree->Branch("vertex_chi2", &t.vertex_chi2, "vertex_chi2/F");
+  tree->Branch("cos_cs", &t.cos_cs, "cos_cs/F");
+  tree->Branch("phi_cs", &t.phi_cs, "phi_cs/F");
+  tree->Branch("vertex_m", &t.vertex_m, "vertex_m/F");
+  tree->Branch("vertex_m_err", &t.vertex_m_err, "vertex_m_err/F");
+  tree->Branch("vertex_x", &t.vertex_x, "vertex_x/F");
+  tree->Branch("vertex_x_err", &t.vertex_x_err, "vertex_x_err/F");
+  tree->Branch("vertex_y", &t.vertex_y, "vertex_y/F");
+  tree->Branch("vertex_y_err", &t.vertex_y_err, "vertex_y_err/F");
+  tree->Branch("vertex_z", &t.vertex_z, "vertex_z/F");
+  tree->Branch("vertex_z_err", &t.vertex_z_err, "vertex_z_err/F");
+  tree->Branch("lep_id", t.lep_id, "lep_id[2]/I");
+  tree->Branch("lep_pt", t.lep_pt, "lep_pt[2]/F");
+  tree->Branch("lep_eta", t.lep_eta, "lep_eta[2]/F");
+  tree->Branch("lep_phi", t.lep_phi, "lep_phi[2]/F");
+  tree->Branch("lep_tk_pt", t.lep_tk_pt, "lep_tk_pt[2]/F");
+  tree->Branch("lep_tk_pt_err", t.lep_tk_pt_err, "lep_tk_pt_err[2]/F");
+  tree->Branch("lep_tk_eta", t.lep_tk_eta, "lep_tk_eta[2]/F");
+  tree->Branch("lep_tk_phi", t.lep_tk_phi, "lep_tk_phi[2]/F");
+  tree->Branch("lep_glb_pt", t.lep_glb_pt, "lep_glb_pt[2]/F");
+  tree->Branch("lep_glb_pt_err", t.lep_glb_pt_err, "lep_glb_pt_err[2]/F");
+  tree->Branch("lep_glb_eta", t.lep_glb_eta, "lep_glb_eta[2]/F");
+  tree->Branch("lep_glb_phi", t.lep_glb_phi, "lep_glb_phi[2]/F");
+  tree->Branch("lep_tpfms_pt", t.lep_tpfms_pt, "lep_tpfms_pt[2]/F");
+  tree->Branch("lep_tpfms_pt_err", t.lep_tpfms_pt_err, "lep_tpfms_pt_err[2]/F");
+  tree->Branch("lep_tpfms_eta", t.lep_tpfms_eta, "lep_tpfms_eta[2]/F");
+  tree->Branch("lep_tpfms_phi", t.lep_tpfms_phi, "lep_tpfms_phi[2]/F");
+  tree->Branch("lep_picky_pt", t.lep_picky_pt, "lep_picky_pt[2]/F");
+  tree->Branch("lep_picky_pt_err", t.lep_picky_pt_err, "lep_picky_pt_err[2]/F");
+  tree->Branch("lep_picky_eta", t.lep_picky_eta, "lep_picky_eta[2]/F");
+  tree->Branch("lep_picky_phi", t.lep_picky_phi, "lep_picky_phi[2]/F");
+  tree->Branch("lep_triggerMatchPt", t.lep_triggerMatchPt, "lep_triggerMatchPt[2]/F");
+  tree->Branch("lep_chi2dof", t.lep_chi2dof, "lep_chi2dof[2]/F");
+  tree->Branch("lep_dB", t.lep_dB, "lep_dB[2]/F");
+  tree->Branch("lep_sumPt", t.lep_sumPt, "lep_sumPt[2]/F");
+  tree->Branch("lep_emEt", t.lep_emEt, "lep_emEt[2]/F");
+  tree->Branch("lep_hadEt", t.lep_hadEt, "lep_hadEt[2]/F");
+  tree->Branch("lep_hoEt", t.lep_hoEt, "lep_hoEt[2]/F");
+  tree->Branch("lep_tk_numberOfValidTrackerHits", t.lep_tk_numberOfValidTrackerHits, "lep_tk_numberOfValidTrackerHits[2]/S");
+  tree->Branch("lep_tk_numberOfValidPixelHits", t.lep_tk_numberOfValidPixelHits, "lep_tk_numberOfValidPixelHits[2]/S");
+  tree->Branch("lep_glb_numberOfValidTrackerHits", t.lep_glb_numberOfValidTrackerHits, "lep_glb_numberOfValidTrackerHits[2]/S");
+  tree->Branch("lep_glb_numberOfValidPixelHits", t.lep_glb_numberOfValidPixelHits, "lep_glb_numberOfValidPixelHits[2]/S");
+  tree->Branch("lep_glb_numberOfValidMuonHits", t.lep_glb_numberOfValidMuonHits, "lep_glb_numberOfValidMuonHits[2]/S");
+  tree->Branch("lep_glb_muonStationsWithValidHits", t.lep_glb_muonStationsWithValidHits, "lep_glb_muonStationsWithValidHits[2]/S");
+  tree->Branch("lep_numberOfMatches", t.lep_numberOfMatches, "lep_numberOfMatches[2]/S");
+  tree->Branch("lep_numberOfMatchedStations", t.lep_numberOfMatchedStations, "lep_numberOfMatchedStations[2]/S");
+  tree->Branch("lep_isGlobalMuon", t.lep_isGlobalMuon, "lep_isGlobalMuon[2]/O");
+  tree->Branch("lep_isTrackerMuon", t.lep_isTrackerMuon, "lep_isTrackerMuon[2]/O");
+  tree->Branch("GoodDataRan", &t.GoodDataRan, "GoodDataRan/O");
+  tree->Branch("HLTPhysicsDeclared", &t.HLTPhysicsDeclared, "HLTPhysicsDeclared/O");
+  tree->Branch("GoodVtx", &t.GoodVtx, "GoodVtx/O");
+  tree->Branch("NoScraping", &t.NoScraping, "NoScraping/O");
+  tree->Branch("firstOppDimu", &t.firstOppDimu, "firstOppDimu/O");
 
   tree->SetAlias("OurSel",
 		 "("							\
@@ -175,6 +273,20 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "firstOppDimu");
 }
 
+float userFloat(const pat::CompositeCandidate& dil, const char* name, float def=-999.) {
+  if (dil.hasUserFloat(name))
+    return dil.userFloat(name);
+  else
+    return def;
+}
+
+int userInt(const pat::CompositeCandidate& dil, const char* name, int def=-999) {
+  if (dil.hasUserInt(name))
+    return dil.userInt(name);
+  else
+    return def;
+}
+
 void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
   memset(&t, 0, sizeof(tree_t));
 
@@ -191,6 +303,22 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
     t.GoodVtx = respat->accept(namespat.triggerIndex("goodDataPrimaryVertexFilter"));
     t.NoScraping = respat->accept(namespat.triggerIndex("goodDataNoScraping"));
   }
+
+  edm::Handle<reco::BeamSpot> bs;
+  event.getByLabel(beamspot_src, bs);
+  t.beamspot_x     = bs->x0();
+  t.beamspot_x_err = bs->x0Error();
+  t.beamspot_y     = bs->y0();
+  t.beamspot_y_err = bs->y0Error();
+  t.beamspot_z     = bs->z0();
+  t.beamspot_z_err = bs->z0Error();
+
+  edm::Handle<reco::VertexCollection> pvs;
+  event.getByLabel(vertices_src, pvs);
+  t.nvertices = 0;
+  BOOST_FOREACH(const reco::Vertex& vtx, *pvs)
+    if (vtx.ndof() > 4 && fabs(vtx.z()) <= 24 && fabs(vtx.position().rho()) <= 2)
+      t.nvertices += 1;
 
   edm::Handle<pat::CompositeCandidateCollection> dils;
   event.getByLabel(dimu_src, dils);
@@ -238,12 +366,23 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
       t.lep_phi[w] = dil.daughter(i)->phi();
 
       if (abs(t.lep_id[w]) != 13) {
+	t.lep_pt_err[w] = -999;
 	t.lep_tk_pt[w] = -999;
+	t.lep_tk_pt_err[w] = -999;
 	t.lep_tk_eta[w] = -999;
 	t.lep_tk_phi[w] = -999;
 	t.lep_glb_pt[w] = -999;
+	t.lep_glb_pt_err[w] = -999;
 	t.lep_glb_eta[w] = -999;
 	t.lep_glb_phi[w] = -999;
+	t.lep_tpfms_pt[w] = -999;
+	t.lep_tpfms_pt_err[w] = -999;
+	t.lep_tpfms_eta[w] = -999;
+	t.lep_tpfms_phi[w] = -999;
+	t.lep_picky_pt[w] = -999;
+	t.lep_picky_pt_err[w] = -999;
+	t.lep_picky_eta[w] = -999;
+	t.lep_picky_phi[w] = -999;
 	t.lep_triggerMatchPt[w] = -999;
 	t.lep_chi2dof[w] = -999;
 	t.lep_dB[w] = -999;
@@ -267,11 +406,21 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	assert(mu);
 
 	t.lep_tk_pt[w] = mu->innerTrack()->pt();
+	t.lep_tk_pt_err[w] = mu->innerTrack()->ptError();
 	t.lep_tk_eta[w] = mu->innerTrack()->eta();
 	t.lep_tk_phi[w] = mu->innerTrack()->phi();
 	t.lep_glb_pt[w] = mu->globalTrack()->pt();
+	t.lep_glb_pt_err[w] = mu->globalTrack()->ptError();
 	t.lep_glb_eta[w] = mu->globalTrack()->eta();
 	t.lep_glb_phi[w] = mu->globalTrack()->phi();
+	t.lep_tpfms_pt[w] = mu->tpfmsMuon()->pt();
+	t.lep_tpfms_pt_err[w] = mu->tpfmsMuon()->ptError();
+	t.lep_tpfms_eta[w] = mu->tpfmsMuon()->eta();
+	t.lep_tpfms_phi[w] = mu->tpfmsMuon()->phi();
+	t.lep_picky_pt[w] = mu->pickyMuon()->pt();
+	t.lep_picky_pt_err[w] = mu->pickyMuon()->ptError();
+	t.lep_picky_eta[w] = mu->pickyMuon()->eta();
+	t.lep_picky_phi[w] = mu->pickyMuon()->phi();
 
 	static const size_t n_single_mu_path_names = 8;
 	static const char* single_mu_path_names[n_single_mu_path_names] = {"HLT_Mu30_v3", "HLT_Mu30_v2", "HLT_Mu30_v1", "HLT_Mu24_v2", "HLT_Mu24_v1", "HLT_Mu15_v2", "HLT_Mu15_v1", "HLT_Mu9"};
@@ -302,8 +451,16 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
       }
     }
 
-    t.cos_angle = dil.hasUserFloat("cos_angle") ? dil.userFloat("cos_angle") : 999;
-    t.vertex_chi2 = dil.hasUserFloat("vertex_chi2") ? dil.userFloat("vertex_chi2") : -999;
+    t.cos_angle    = userFloat(dil, "cos_angle", 999);
+    t.vertex_chi2  = userFloat(dil, "vertex_chi2");
+    t.vertex_m     = userFloat(dil, "vertexM");
+    t.vertex_m_err = userFloat(dil, "vertexMError");
+    t.vertex_x     = userFloat(dil, "vertexX");
+    t.vertex_x_err = userFloat(dil, "vertexXError");
+    t.vertex_y     = userFloat(dil, "vertexY");
+    t.vertex_y_err = userFloat(dil, "vertexYError");
+    t.vertex_z     = userFloat(dil, "vertexZ");
+    t.vertex_z_err = userFloat(dil, "vertexZError");
 
     if (opp_sign) {
       const reco::CandidateBaseRef mum = dileptonDaughterByCharge(dil, -1);
@@ -316,13 +473,9 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
       t.cos_cs = -999;
       t.phi_cs = -999;
     }
-
-    t.vertex_constrained_mass       = dil.hasUserFloat("vertexConstrainedMass")      ? dil.userFloat("vertexConstrainedMass")      : -999;
-    t.vertex_constrained_mass_error = dil.hasUserFloat("vertexConstrainedMassError") ? dil.userFloat("vertexConstrainedMassError") : -999;
     
     tree->Fill();
   }
 }
-
 
 DEFINE_FWK_MODULE(SimpleNtupler);

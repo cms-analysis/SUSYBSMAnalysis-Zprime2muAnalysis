@@ -63,7 +63,7 @@ def files_from_crab_dir(crab_dir):
     return files
 
 def dataset_from_publish_log(publish_log_fn):
-    ad = [x.strip().replace('=== dataset ', '') for x in open(publish_log_fn).readlines() if x.startswith('=== dataset')]
+    ad = [x.strip().replace('=== dataset ', '') for x in open(publish_log_fn).readlines() if x.startswith('=== dataset') and not x.startswith('=== dataset description')]
     assert(len(ad) == 1)
     return ad[0]
 

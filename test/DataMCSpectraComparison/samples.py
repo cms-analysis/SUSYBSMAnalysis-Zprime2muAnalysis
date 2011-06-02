@@ -130,6 +130,15 @@ if False:
         print
 
 if False:
+    os.system('mkdir ~/scratch/wjets')
+    for fn in wjets.filenames:
+        assert fn.startswith('/store')
+        fn = '/pnfs/cms/WAX/11' + fn
+        cmd = 'dccp %s ~/scratch/wjets/' % fn
+        print cmd
+        os.system(cmd)
+
+if False:
     for s in samples:
         print s.name
         os.system('dbss site %s' % s.dataset)

@@ -84,6 +84,9 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TH2F* DileptonDaughterIds;
   TH1F* DileptonDaughterDeltaR;
   TH1F* DileptonDaughterDeltaPhi;
+  TH1F* DimuonMassVertexConstrained;
+  TH2F* DimuonMassConstrainedVsUn;
+  TH2F* DimuonMassVertexConstrainedError;
 };
 
 Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
@@ -183,6 +186,11 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   DileptonDaughterIds = fs->make<TH2F>("DileptonDaughterIds", "", 27, -13, 14, 27, -13, 14);
   DileptonDaughterDeltaR = fs->make<TH1F>("DileptonDaughterDeltaR", "", 100, 0, 5);
   DileptonDaughterDeltaPhi = fs->make<TH1F>("DileptonDaughterDeltaPhi", "", 100, 0, 3.15);
+
+  // Dimuons have a vertex-constrained fit: some associated histograms.
+  DimuonMassVertexConstrained = fs->make<TH1F>("DimuonMassVertexConstrained", titlePrefix + "dimu. vertex-constrained mass", 2000, 0, 2000);
+  DimuonMassConstrainedVsUn = fs->make<TH2F>("DimuonMassConstrainedVsUn", titlePrefix + "dimu. vertex-constrained vs. non-constrained mass", 200, 0, 2000, 200, 0, 2000);
+  DimuonMassVertexConstrainedError = fs->make<TH2F>("DimuonMassVertexConstrainedError", titlePrefix + "dimu. vertex-constrained mass error vs. mass", 100, 0, 2000, 100, 0, 400);
 }
 
 void Zprime2muHistosFromPAT::fillBasicLeptonHistos(const reco::CandidateBaseRef& lep) {
@@ -299,6 +307,15 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 
   DileptonDaughterDeltaR->Fill(reco::deltaR(*dil.daughter(0), *dil.daughter(1)));
   DileptonDaughterDeltaPhi->Fill(reco::deltaPhi(dil.daughter(0)->phi(), dil.daughter(1)->phi())); 
+
+  if (dil.hasUserFloat("vertexM") && dil.hasUserFloat("vertexMError")) {
+    float vertex_mass = dil.userFloat("vertexM");
+    float vertex_mass_err = dil.userFloat("vertexMError");
+
+    DimuonMassVertexConstrained->Fill(vertex_mass);
+    DimuonMassConstrainedVsUn->Fill(dil.mass(), vertex_mass);
+    DimuonMassVertexConstrainedError->Fill(vertex_mass, vertex_mass_err);
+  }
 }
 
 void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidateCollection& dileptons) {

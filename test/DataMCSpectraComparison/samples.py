@@ -68,9 +68,11 @@ samples = [
     sample('inclmu15',     'QCD (MuRich, muon p_{T} > 15 GeV)',                  '/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/Spring11-PU_S1_START311_V1G1-v1/AODSIM',    29429811, 801, 0.1,   0.0002855 * 296600000, scheduler='condor'),
 #   sample('zssm750',      'Z\'_{SSM} (750 GeV) #rightarrow #mu^{+}#mu^{-}',     '/ZprimeSSMToMuMu_M-750_7TeV-pythia6/Spring11-PU_S1_START311_V1G1-v1/AODSIM',                  55000,  38, 0.05,  0.355, k_factor=1.3, scheduler='condor'),
 ]
+
 for sample in samples:
-    if 'START311' in sample.dataset:
+    if 'Spring11' in sample.dataset:
         sample.hlt_process_name = 'REDIGI311X'
+        
 samples.reverse()
 
 for sample in samples:
@@ -133,14 +135,28 @@ if False:
         os.system('dbss site %s' % s.dataset)
         print
 
-use_predefined_datasets = False
+if False:
+    for s in samples:
+        try:
+            print '    %(name)s.ana_dataset_ = "%(ana_dataset)s"' % s
+        except IOError:
+            pass
+
+use_predefined_datasets = True
 if use_predefined_datasets:
-    inclmu15.ana_dataset_ = "/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/tucker-datamc_inclmu15-396bcdaa1e090647f7fc37d15e445b1a/USER"
-    wjets.ana_dataset_ = "/WJetsToLNu_TuneZ2_7TeV-madgraph-tauola/tucker-datamc_wjets-396bcdaa1e090647f7fc37d15e445b1a/USER"
-    ztautau.ana_dataset_ = "/DYToTauTau_M-20_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ztautau-396bcdaa1e090647f7fc37d15e445b1a/USER"
-    zz.ana_dataset_ = "/ZZtoAnything_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_zz-396bcdaa1e090647f7fc37d15e445b1a/USER"
-    wz.ana_dataset_ = "/WZtoAnything_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_wz-396bcdaa1e090647f7fc37d15e445b1a/USER"
-    ww.ana_dataset_ = "/WWtoAnything_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ww-396bcdaa1e090647f7fc37d15e445b1a/USER"
-    singletop_tW.ana_dataset_ = "/TToBLNu_TuneZ2_tW-channel_7TeV-madgraph/tucker-datamc_singletop_tW-396bcdaa1e090647f7fc37d15e445b1a/USER"
-    ttbar.ana_dataset_ = "/TTJets_TuneZ2_7TeV-madgraph-tauola/tucker-datamc_ttbar-396bcdaa1e090647f7fc37d15e445b1a/USER"
-    zmumu.ana_dataset_ = "/DYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythia/tucker-datamc_zmumu-396bcdaa1e090647f7fc37d15e445b1a/USER"
+    inclmu15.ana_dataset_ = '/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/tucker-datamc_inclmu15-396bcdaa1e090647f7fc37d15e445b1a/USER'
+    wjets.ana_dataset_ = '/WJetsToLNu_TuneZ2_7TeV-madgraph-tauola/tucker-datamc_wjets-396bcdaa1e090647f7fc37d15e445b1a/USER'
+    zz.ana_dataset_ = '/ZZtoAnything_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_zz-396bcdaa1e090647f7fc37d15e445b1a/USER'
+    wz.ana_dataset_ = '/WZtoAnything_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_wz-396bcdaa1e090647f7fc37d15e445b1a/USER'
+    ww.ana_dataset_ = '/WWtoAnything_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ww-396bcdaa1e090647f7fc37d15e445b1a/USER'
+    singletop_tW.ana_dataset_ = '/TToBLNu_TuneZ2_tW-channel_7TeV-madgraph/tucker-datamc_singletop_tW-396bcdaa1e090647f7fc37d15e445b1a/USER'
+
+    ztautau.ana_dataset_ = "/DYToTauTau_M-20_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ztautau-5222c20b53e3c47b6c8353d464ee954c/USER"
+    ttbar.ana_dataset_ = "/TT_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ttbar-5222c20b53e3c47b6c8353d464ee954c/USER"
+    dy1000.ana_dataset_ = "/DYToMuMu_M-1000_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy1000-5222c20b53e3c47b6c8353d464ee954c/USER"
+    dy800.ana_dataset_ = "/DYToMuMu_M-800_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy800-5222c20b53e3c47b6c8353d464ee954c/USER"
+    dy500.ana_dataset_ = "/DYToMuMu_M-500_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy500-5222c20b53e3c47b6c8353d464ee954c/USER"
+    dy200.ana_dataset_ = "/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy200-5222c20b53e3c47b6c8353d464ee954c/USER"
+    dy120.ana_dataset_ = "/DYToMuMu_M-120_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy120-5222c20b53e3c47b6c8353d464ee954c/USER"
+    zmumu.ana_dataset_ = "/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-datamc_zmumu-5222c20b53e3c47b6c8353d464ee954c/USER"
+                                

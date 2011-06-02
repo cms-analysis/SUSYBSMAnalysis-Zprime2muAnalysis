@@ -153,8 +153,15 @@ void Zprime2muCompositeCandidatePicker::embed_vertex_constrained_fit(pat::Compos
     RefCountedKinematicParticle fitted_dimu = tree->currentParticle();
     const AlgebraicVector7& params = fitted_dimu->currentState().kinematicParameters().vector();
     const AlgebraicSymMatrix77& covmat = fitted_dimu->currentState().kinematicParametersError().matrix();
-    dil.addUserFloat("vertexConstrainedMass", params(6));
-    dil.addUserFloat("vertexConstrainedMassError", sqrt(covmat(6,6)));
+
+    static const char* names[7] = { "X", "Y", "Z", "PX", "PY", "PZ", "M" };
+    char buf[256];
+    for (int i = 0; i < 7; ++i) {
+      snprintf(buf, 256, "vertex%s", names[i]);
+      dil.addUserFloat(buf, params(i));
+      snprintf(buf, 256, "vertex%sError", names[i]);
+      dil.addUserFloat(buf, sqrt(covmat(i,i)));
+    }
   }
 }
 

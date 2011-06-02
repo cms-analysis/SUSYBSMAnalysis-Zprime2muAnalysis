@@ -3,7 +3,7 @@
 import sys, os, glob, FWCore.ParameterSet.Config as cms
 from pprint import pprint
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
-process.source.fileNames = ['file:/uscms/home/tucker/scratch/store/mc/Summer11/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/AODSIM/PU_S3_START42_V11-v2/0000/pat.root']
+process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/datamc_zmumu/5222c20b53e3c47b6c8353d464ee954c/pat_42_3_74A.root']
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
 
@@ -104,8 +104,13 @@ for cut_name in cuts.keys():
     setattr(process, pathname, path)
 
 def ntuplify(process, hlt_process_name='HLT'):
-    process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler', hlt_src = cms.InputTag('TriggerResults', '', hlt_process_name), dimu_src = cms.InputTag('SimpleMuonsAllSigns'))
-    process.SimpleNtuplerEmu = cms.EDAnalyzer('SimpleNtupler', hlt_src = cms.InputTag('TriggerResults', '', hlt_process_name), dimu_src = cms.InputTag('SimpleMuonsElectronsAllSigns'))
+    process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler',
+                                           hlt_src = cms.InputTag('TriggerResults', '', hlt_process_name),
+                                           dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
+                                           beamspot_src = cms.InputTag('offlineBeamSpot'),
+                                           vertices_src = cms.InputTag('offlinePrimaryVertices')
+                                           )
+    process.SimpleNtuplerEmu = process.SimpleNtupler.clone(dimu_src = cms.InputTag('SimpleMuonsElectronsAllSigns'))
     process.pathSimple *= process.SimpleNtupler * process.SimpleNtuplerEmu
 
 def printify(process, hlt_process_name='HLT'):
@@ -232,6 +237,7 @@ events_per_job = 50000
 
         import samples
         combine_dy_samples = len([x for x in samples.samples if x.name in ['dy200', 'dy500', 'dy800']]) > 0
+        print 'combine_dy_samples:', combine_dy_samples
 
         from samples import samples
         for sample in reversed(samples):
@@ -243,10 +249,12 @@ events_per_job = 50000
 
             if combine_dy_samples and (sample.name == 'zmumu' or 'dy' in sample.name):
                 mass_limits = {
-                    'zmumu': ( 20, 200),
-                    'dy200': (200, 500),
-                    'dy500': (500, 800),
-                    'dy800': (800, 100000),
+                    'zmumu' : (  20,    120),
+                    'dy120' : ( 120,    200),
+                    'dy200' : ( 200,    500),
+                    'dy500' : ( 500,    800),
+                    'dy800' : ( 800,   1000),
+                    'dy1000': (1000, 100000),
                     }
                 lo,hi = mass_limits[sample.name]
                 new_cut = dy_gen_mass_cut % locals()

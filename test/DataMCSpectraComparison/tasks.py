@@ -43,7 +43,7 @@ elif cmd == 'hadd':
         fn = 'ana_datamc_%(name)s.root' % locals()
         n = len(glob.glob(pattern))
         if n == 0:
-            raise RuntimeError('no files matching %s' % pattern)
+            big_warn('no files matching %s' % pattern)
         elif n == 1:
             do('cp %s %s' % (pattern, fn))
         else:
@@ -57,7 +57,7 @@ elif cmd == 'gatherhistos':
     files_glob = ' '.join([os.path.join(x, 'res/*.root') for x in dirs])
     do('''
 mkdir -p ana_datamc_%(extra)s
-ln -s /uscms_data/d2/tucker/zp2mu_ana_datamc_mc/V00-10-12 ana_datamc_%(extra)s/mc
+ln -s /uscms_data/d2/tucker/zp2mu_ana_datamc_mc/V00-10-13 ana_datamc_%(extra)s/mc
 hadd ana_datamc_%(extra)s/ana_datamc_data.root %(files_glob)s
 ''' % locals())
     for dir in dirs:

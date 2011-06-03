@@ -414,14 +414,30 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	t.lep_glb_pt_err[w] = mu->globalTrack()->ptError();
 	t.lep_glb_eta[w] = mu->globalTrack()->eta();
 	t.lep_glb_phi[w] = mu->globalTrack()->phi();
-	t.lep_tpfms_pt[w] = mu->tpfmsMuon()->pt();
-	t.lep_tpfms_pt_err[w] = mu->tpfmsMuon()->ptError();
-	t.lep_tpfms_eta[w] = mu->tpfmsMuon()->eta();
-	t.lep_tpfms_phi[w] = mu->tpfmsMuon()->phi();
-	t.lep_picky_pt[w] = mu->pickyMuon()->pt();
-	t.lep_picky_pt_err[w] = mu->pickyMuon()->ptError();
-	t.lep_picky_eta[w] = mu->pickyMuon()->eta();
-	t.lep_picky_phi[w] = mu->pickyMuon()->phi();
+	if (mu->tpfmsMuon().isNull()) {
+	  t.lep_tpfms_pt[w] = -999;
+	  t.lep_tpfms_pt_err[w] = -999;
+	  t.lep_tpfms_eta[w] = -999;
+	  t.lep_tpfms_phi[w] = -999;
+	}
+	else {
+	  t.lep_tpfms_pt[w] = mu->tpfmsMuon()->pt();
+	  t.lep_tpfms_pt_err[w] = mu->tpfmsMuon()->ptError();
+	  t.lep_tpfms_eta[w] = mu->tpfmsMuon()->eta();
+	  t.lep_tpfms_phi[w] = mu->tpfmsMuon()->phi();
+	}
+	if (mu->pickyMuon().isNull()) {
+	  t.lep_picky_pt[w] = -999;
+	  t.lep_picky_pt_err[w] = -999;
+	  t.lep_picky_eta[w] = -999;
+	  t.lep_picky_phi[w] = -999;
+	}
+	else {
+	  t.lep_picky_pt[w] = mu->pickyMuon()->pt();
+	  t.lep_picky_pt_err[w] = mu->pickyMuon()->ptError();
+	  t.lep_picky_eta[w] = mu->pickyMuon()->eta();
+	  t.lep_picky_phi[w] = mu->pickyMuon()->phi();
+	}
 
 	static const size_t n_single_mu_path_names = 8;
 	static const char* single_mu_path_names[n_single_mu_path_names] = {"HLT_Mu30_v3", "HLT_Mu30_v2", "HLT_Mu30_v1", "HLT_Mu24_v2", "HLT_Mu24_v1", "HLT_Mu15_v2", "HLT_Mu15_v1", "HLT_Mu9"};

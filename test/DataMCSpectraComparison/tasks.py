@@ -57,7 +57,7 @@ elif cmd == 'gatherhistos':
     files_glob = ' '.join([os.path.join(x, 'res/*.root') for x in dirs])
     do('''
 mkdir -p ana_datamc_%(extra)s
-ln -s /uscms_data/d2/tucker/zp2mu_ana_datamc_mc/V00-10-13 ana_datamc_%(extra)s/mc
+ln -s /uscms_data/d2/tucker/zp2mu_ana_datamc_mc/latest ana_datamc_%(extra)s/mc
 hadd ana_datamc_%(extra)s/ana_datamc_data.root %(files_glob)s
 ''' % locals())
     for dir in dirs:

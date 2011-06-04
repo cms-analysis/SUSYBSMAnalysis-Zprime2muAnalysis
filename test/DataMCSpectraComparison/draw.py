@@ -19,11 +19,18 @@ x_axis_limits = 50, 1100
 x_axis_limits2 = 50, 1100
 
 to_compare = 'DileptonMass'
+
 global_rescale = {
-    'OurNew': 71876/65798.0,
-    'OurOld': 75408/68655.7,
-    'VBTF': 62623/57595.9,
+    'OurNew': 94141/82867.2,
+    'OurOld': 98803/86717.4,
+    'VBTF': 81923/71338.2
     }
+if 'norescale' in sys.argv:
+    global_rescale = {}
+def get_rescale_factor(cuts, dilepton):
+    # Don't rescale e-mu plots.
+    return 1. if 'electron' in dilepton.lower() else global_rescale.get(cuts, 1.)
+    
 draw_zssm = False 
 use_poisson_intervals = True
 overflow_bin = True
@@ -68,7 +75,7 @@ lumi_syst_frac = 0.04
 print '"joins" are:'
 pprint(joins)
 print 'total lumi from data: %.1f/pb' % int_lumi
-print 'rescaling all MC histograms by these cut-dependent factors:'
+print 'rescaling mumu MC histograms by these cut-dependent factors:'
 pprint(global_rescale)
 print 'comparing', to_compare
 print 'using poisson error bars on plots:', use_poisson_intervals
@@ -149,7 +156,8 @@ for cuts in cutss:
                 f = ROOT.TFile(os.path.join(histo_dir, 'mc', 'ana_datamc_%s.root' % sample.name))
                 sample.mass = getattr(f, dir_name(cuts, dilepton)).Get(to_compare).Clone()
                 sample.mass.Rebin(rebin_factor)
-                sample.mass.Scale(global_rescale.get(cuts, 1.) * sample.partial_weight * int_lumi)
+                sample.scaled_by = get_rescale_factor(cuts, dilepton) * sample.partial_weight * int_lumi
+                sample.mass.Scale(sample.scaled_by)
                 if cumulative:
                     sample.mass_not_cumulative = sample.mass
                     sample.mass = cumulative_histogram(sample.mass)
@@ -171,7 +179,7 @@ for cuts in cutss:
                     print 'cuts: %s  dilepton: %s  mass range: %s' % (cuts, dilepton, mass_range)
                     for sample in samples:
                         sample.integral = get_integral(sample.mass, *mass_range, integral_only=True, include_last_bin=False)
-                        sample.raw_integral = sample.integral / global_rescale.get(cuts, 1.) / sample.partial_weight / int_lumi
+                        sample.raw_integral = sample.integral / sample.scaled_by
                     hdata_integral = get_integral(hdata, *mass_range, integral_only=True, include_last_bin=False)
                     print '%50s%20s%20s%20s%20s%20s%20s%20s%20s' % ('sample', 'weight for %i/nb' % int(int_lumi*1000), 'raw integral', 'integral', 'stat error', 'limit if int=0', 'syst error', 'lumi error', 'total error')
                     print '%50s%20s%20i%20.6f%20.6f' % ('data', '-', int(hdata_integral), hdata_integral, hdata_integral**0.5)
@@ -182,7 +190,7 @@ for cuts in cutss:
                     var_sums = defaultdict(float)
                     syst_var_sums = defaultdict(float)
                     for sample in sorted(samples, key=lambda x: x.integral, reverse=True):
-                        w = global_rescale.get(cuts, 1.) * sample.partial_weight * int_lumi
+                        w = sample.scaled_by
                         var = w * sample.integral # not w**2 * sample.integral because sample.integral is already I*w
                         syst_var = (sample.syst_frac * sample.integral)**2
 

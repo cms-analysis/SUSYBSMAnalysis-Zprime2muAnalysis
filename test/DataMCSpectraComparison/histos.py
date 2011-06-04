@@ -168,16 +168,15 @@ return_data = 1
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
 
         dataset_details = [
-            ('SingleMu2011A_May10',                '/SingleMu/tucker-merge_20110530174156_may10temp-a3691da421b8c16b08067510400469a1/USER'),
-            ('SingleMu2011A_Prompt_165071_165558', '/SingleMu/tucker-merge_20110530174156_prompt165071165558-a3691da421b8c16b08067510400469a1/USER'),
-            ('SingleMu2011A_Prompt_165559_165627', '/SingleMu/tucker-merge_20110530174156_prompt165559165627-a3691da421b8c16b08067510400469a1/USER'),
+            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10_new-b2cd34b4395e3cc0cd295229bc3495ca/USER'),
+            ('SingleMu2011A_Prompt_165071_165999', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_165999_20110601165210-8788f1b70631d1fb57e97a89f5e8007c/USER'),
             ]
 
         lumi_lists = [
-            'Run2011AMuonsOnly',
+            #'Run2011AMuonsOnly',
             'Run2011A',
             'Run2011APlusDCSOnlyMuonsOnly',
-            'Run2011APlusDCSOnly',
+            #'Run2011APlusDCSOnly',
             '',
             ]
 
@@ -242,6 +241,8 @@ events_per_job = 50000
         from samples import samples
         for sample in reversed(samples):
             print sample.name
+            if 'Summer11' not in sample.dataset:
+                continue
 
             new_py = open('histos.py').read()
             new_py += "\nprocess.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', '%(hlt_process_name)s')\n" % sample

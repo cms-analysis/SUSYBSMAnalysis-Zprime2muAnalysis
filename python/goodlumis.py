@@ -4,17 +4,17 @@ from FWCore.PythonUtilities.LumiList import LumiList
 def for_cmssw(ll):
     return ll.getCMSSWString().split(',')
 
+# These numbers dictate how the rereco, prompt, DCS-only jsons are
+# combined below.
 last_rereco_run = 163869
-last_prompt_run = 165542
+last_prompt_run = 165970
 assert last_prompt_run > last_rereco_run
 
 runs_to_remove_from_dcsonly = range(160404, last_prompt_run+1)
 # These runs are <= last_prompt_run, but they were not actually
 # considered in the certification for the latest prompt JSON. So,
 # don't drop them from the DCS-only list when combining later.
-runs_to_remove_from_dcsonly.remove(165467)
-runs_to_remove_from_dcsonly.remove(165514)
-runs_to_remove_from_dcsonly.remove(165537)
+#runs_to_remove_from_dcsonly.remove()
 
 DCSOnly_ll           = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/DCSOnly/json_DCSONLY.txt')
 DCSOnlyForNewRuns_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/DCSOnly/json_DCSONLY.txt')
@@ -52,6 +52,8 @@ for x in all_lls:
 if __name__ == '__main__':
     import sys
     if 'write' in sys.argv:
+        Run2011APlusDCSOnlyMuonsOnly_ll.writeJSON('Run2011APlusDCSOnlyMuonsOnly.json')
+    elif 'write_all' in sys.argv:
         for name in all_lls:
             obj = eval(name + '_ll')
             obj.writeJSON('zp2mu_goodlumis_%s.json' % name)

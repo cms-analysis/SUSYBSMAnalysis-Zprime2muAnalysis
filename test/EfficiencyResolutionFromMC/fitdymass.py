@@ -53,7 +53,7 @@ def fit_just_tail(lo, hi):
     fcn.SetParNames("Norm", "a", "b")
     fcn.SetLineColor(ROOT.kBlue)
         
-    htot.Fit(fcn, 'LVR')
+    htot.Fit(fcn, 'VR')
 
     ps.c.Update()
     s = htot.GetListOfFunctions().FindObject("stats")

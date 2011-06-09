@@ -119,10 +119,10 @@ def printify(process, hlt_process_name='HLT'):
     process.load('HLTrigger.HLTcore.triggerSummaryAnalyzerAOD_cfi')
     process.triggerSummaryAnalyzerAOD.inputTag = cms.InputTag('hltTriggerSummaryAOD', '', hlt_process_name)
 
-    process.PrintEvent = cms.EDAnalyzer('PrintEvent', dilepton_src = cms.InputTag('OurMuonsPlusMuonsMinus'))
-    process.PrintEventSS = process.PrintEvent.clone(dilepton_src = cms.InputTag('OurMuonsSameSign'))
-    process.PrintEventEmu = process.PrintEvent.clone(dilepton_src = cms.InputTag('OurMuonsElectronsOppSign'))
-    process.pathOur *= process.PrintEvent * process.PrintEventSS * process.PrintEventEmu
+    process.PrintEvent = cms.EDAnalyzer('PrintEvent', dilepton_src = cms.InputTag('OurNewMuonsPlusMuonsMinus'))
+    process.PrintEventSS = process.PrintEvent.clone(dilepton_src = cms.InputTag('OurNewMuonsSameSign'))
+    process.PrintEventEmu = process.PrintEvent.clone(dilepton_src = cms.InputTag('OurNewMuonsElectronsOppSign'))
+    process.pathOurNew *= process.PrintEvent * process.PrintEventSS * process.PrintEventEmu
 
     process.PrintEventVBTF = process.PrintEvent.clone(dilepton_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
     process.pathVBTF *= process.PrintEventVBTF
@@ -170,6 +170,7 @@ return_data = 1
         dataset_details = [
             ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10_new-b2cd34b4395e3cc0cd295229bc3495ca/USER'),
             ('SingleMu2011A_Prompt_165071_165999', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_165999_20110601165210-8788f1b70631d1fb57e97a89f5e8007c/USER'),
+            ('SingleMu2011A_Prompt_166000_166562', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_166000_166562_20110608180104-8788f1b70631d1fb57e97a89f5e8007c/USER'),
             ]
 
         lumi_lists = [

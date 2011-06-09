@@ -6,9 +6,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "RecoVertex/KalmanVertexFit/interface/KalmanVertexFitter.h"
-#include "RecoVertex/KinematicFit/interface/KinematicParticleVertexFitter.h"
-#include "RecoVertex/KinematicFitPrimitives/interface/KinematicParticleFactoryFromTransientTrack.h"
-#include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
+#include "RecoVertex/VertexTools/interface/InvariantMassFromVertex.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
@@ -23,6 +21,7 @@ public:
 private:
   virtual void produce(edm::Event&, const edm::EventSetup&);
 
+  // Helper stuff.
   struct reverse_mass_sort {
     bool operator()(const pat::CompositeCandidate& lhs, const pat::CompositeCandidate& rhs) {
       return lhs.mass() > rhs.mass();
@@ -30,17 +29,32 @@ private:
   };
 
   void remove_overlap(pat::CompositeCandidateCollection&) const;
-  float back_to_back_cos_angle(const pat::CompositeCandidate&) const;
   std::vector<reco::TransientTrack> get_transient_tracks(const pat::CompositeCandidate&) const;
-  float vertex_chi2(const pat::CompositeCandidate&) const;
-  void embed_vertex_constrained_fit(pat::CompositeCandidate&) const;
+
+  // Evaluate cuts. Return values are pair<cut decision, variable or
+  // variables to embed>. The cut decision should be made whether
+  // we're actually going to drop the candidate because of this
+  // decision or not (controlled by the cut_on_* variables); that will
+  // be handled in the loop in produce.
+  std::pair<bool, float>             back_to_back_cos_angle(const pat::CompositeCandidate&) const;
+  std::pair<bool, CachingVertex<5> > vertex_constrained_fit(const pat::CompositeCandidate&) const;
+
+  // If the variable to embed in the methods above is a simple int or
+  // float or is going to be embedded wholesale with the generic
+  // userData mechanism, we'll do those explicitly in the loop in
+  // produce. Otherwise if it's more complicated, the methods here
+  // take care of it.
+  void embed_vertex_constrained_fit(pat::CompositeCandidate&, const CachingVertex<5>& vtx) const;
 
   const edm::InputTag src;
   StringCutObjectSelector<pat::CompositeCandidate> selector;
+
   const unsigned max_candidates;
   const bool do_remove_overlap;
+
   const bool cut_on_back_to_back_cos_angle;
   const double back_to_back_cos_angle_min;
+
   const bool cut_on_vertex_chi2;
   const double vertex_chi2_max;
 
@@ -61,6 +75,11 @@ Zprime2muCompositeCandidatePicker::Zprime2muCompositeCandidatePicker(const edm::
 }
 
 void Zprime2muCompositeCandidatePicker::remove_overlap(pat::CompositeCandidateCollection& cands) const {
+  // For the list of CompositeCandidates, find any that share leptons
+  // and remove one of them. The sort order of the input is used to
+  // determine which of the pair is to be removed: we keep the first
+  // one.
+
   // Don't bother doing anything if there's just one candidate.
   if (cands.size() < 2) return; 
 
@@ -100,19 +119,15 @@ void Zprime2muCompositeCandidatePicker::remove_overlap(pat::CompositeCandidateCo
   }
 }
 
-float Zprime2muCompositeCandidatePicker::back_to_back_cos_angle(const pat::CompositeCandidate& dil) const {
-  assert(dil.numberOfDaughters() == 2);
-  return dil.daughter(0)->momentum().Dot(dil.daughter(1)->momentum()) / dil.daughter(0)->p() / dil.daughter(1)->p();
-}
-
 std::vector<reco::TransientTrack> Zprime2muCompositeCandidatePicker::get_transient_tracks(const pat::CompositeCandidate& dil) const {
-  std::vector<reco::TransientTrack> ttv;
+  // Get TransientTracks (for use in e.g. the vertex fit) for each of
+  // the muon tracks, using e.g. the cocktail momentum.
 
+  std::vector<reco::TransientTrack> ttv;
   const size_t n = dil.numberOfDaughters();
   for (size_t i = 0; i < n; ++i) {
     const pat::Muon* mu = toConcretePtr<pat::Muon>(dileptonDaughter(dil, i));
-    if (mu == 0)
-      continue;
+    assert(mu);
     const reco::TrackRef& tk = patmuon::getPickedTrack(*mu);
     ttv.push_back(ttkb->build(tk));
   }
@@ -120,49 +135,51 @@ std::vector<reco::TransientTrack> Zprime2muCompositeCandidatePicker::get_transie
   return ttv;
 }
 
-float Zprime2muCompositeCandidatePicker::vertex_chi2(const pat::CompositeCandidate& dil) const {
+std::pair<bool, float> Zprime2muCompositeCandidatePicker::back_to_back_cos_angle(const pat::CompositeCandidate& dil) const {
+  // Back-to-back cut to kill cosmics.
   assert(dil.numberOfDaughters() == 2);
-  if (abs(dil.daughter(0)->pdgId()) != 13 || abs(dil.daughter(1)->pdgId()) != 13)
-    return -999; // pass objects we don't know how to cut on, i.e. e-mu dileptons
-
-  KalmanVertexFitter kvf(true);
-  TransientVertex tv = kvf.vertex(get_transient_tracks(dil));
-
-  return tv.isValid() ? tv.normalisedChiSquared() : 1e8;
+  const float cos_angle = dil.daughter(0)->momentum().Dot(dil.daughter(1)->momentum()) / dil.daughter(0)->p() / dil.daughter(1)->p();
+  return std::make_pair(cos_angle >= back_to_back_cos_angle_min, cos_angle);
 }
 
-void Zprime2muCompositeCandidatePicker::embed_vertex_constrained_fit(pat::CompositeCandidate& dil) const {
+std::pair<bool, CachingVertex<5> > Zprime2muCompositeCandidatePicker::vertex_constrained_fit(const pat::CompositeCandidate& dil) const {
+  // Loose common vertex chi2 cut.
   assert(dil.numberOfDaughters() == 2);
   if (abs(dil.daughter(0)->pdgId()) != 13 || abs(dil.daughter(1)->pdgId()) != 13)
-    return; // don't do anything if it's not a dimuon
+    return std::make_pair(true, CachingVertex<5>()); // pass objects we don't know how to cut on, i.e. e-mu dileptons
 
-  KinematicParticleFactoryFromTransientTrack pfactory;
-  std::vector<RefCountedKinematicParticle> muons;
-  std::vector<reco::TransientTrack> ttv = get_transient_tracks(dil);
-  const size_t n = ttv.size();
-  assert(n >= 2);
-  float m_sigma = 0.0000001;
-  for (size_t i = 0; i < n; ++i)
-    muons.push_back(pfactory.particle(ttv[i], 0.1056583, 0., 0., m_sigma));
+  KalmanVertexFitter kvf(true);
+  CachingVertex<5> v = kvf.vertex(get_transient_tracks(dil));
 
-  KinematicParticleVertexFitter fitter;
-  RefCountedKinematicTree tree = fitter.fit(muons);
+  return std::make_pair(v.isValid() && v.totalChiSquared()/v.degreesOfFreedom() <= vertex_chi2_max, v);
+}
 
-  if (tree->isValid()) {
-    tree->movePointerToTheTop();
-    RefCountedKinematicParticle fitted_dimu = tree->currentParticle();
-    const AlgebraicVector7& params = fitted_dimu->currentState().kinematicParameters().vector();
-    const AlgebraicSymMatrix77& covmat = fitted_dimu->currentState().kinematicParametersError().matrix();
-
-    static const char* names[7] = { "X", "Y", "Z", "PX", "PY", "PZ", "M" };
-    char buf[256];
-    for (int i = 0; i < 7; ++i) {
-      snprintf(buf, 256, "vertex%s", names[i]);
-      dil.addUserFloat(buf, params(i));
-      snprintf(buf, 256, "vertex%sError", names[i]);
-      dil.addUserFloat(buf, sqrt(covmat(i,i)));
-    }
+void Zprime2muCompositeCandidatePicker::embed_vertex_constrained_fit(pat::CompositeCandidate& dil, const CachingVertex<5>& vtx) const {
+  if (!vtx.isValid()) {
+    dil.addUserFloat("vertex_chi2", 1e8);
+    return;
   }
+
+  dil.addUserFloat("vertex_chi2", vtx.totalChiSquared()/vtx.degreesOfFreedom());
+
+  dil.addUserFloat("vertexX", vtx.position().x());
+  dil.addUserFloat("vertexY", vtx.position().y());
+  dil.addUserFloat("vertexZ", vtx.position().z());
+  dil.addUserFloat("vertexXError", sqrt(vtx.error().cxx()));
+  dil.addUserFloat("vertexYError", sqrt(vtx.error().cyy()));
+  dil.addUserFloat("vertexZError", sqrt(vtx.error().czz()));
+
+  InvariantMassFromVertex imfv;
+  static const double muon_mass = 0.1056583;
+  InvariantMassFromVertex::LorentzVector p4 = imfv.p4(vtx, muon_mass);
+  Measurement1D mass = imfv.invariantMass(vtx, muon_mass);
+
+  dil.addUserFloat("vertexPX", p4.X());
+  dil.addUserFloat("vertexPY", p4.Y());
+  dil.addUserFloat("vertexPZ", p4.Z());
+
+  dil.addUserFloat("vertexM",      mass.value());
+  dil.addUserFloat("vertexMError", mass.error());
 }
 
 void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::EventSetup& setup) {
@@ -186,23 +203,20 @@ void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::Ev
     // Now apply cuts that can't.
 
     // Back-to-back cut to kill cosmics.
-    const float cos_angle = back_to_back_cos_angle(*c);
-    if (cut_on_back_to_back_cos_angle && cos_angle < back_to_back_cos_angle_min)
+    std::pair<bool, float> cos_angle = back_to_back_cos_angle(*c);
+    if (cut_on_back_to_back_cos_angle && !cos_angle.first)
       continue;
 
     // Loose common vertex chi2 cut.
-    const float vtx_chi2 = vertex_chi2(*c);
-    if (cut_on_vertex_chi2 && vtx_chi2 > vertex_chi2_max)
+    std::pair<bool, CachingVertex<5> > vertex = vertex_constrained_fit(*c);
+    if (cut_on_vertex_chi2 && !vertex.first)
       continue;
 
     // Save the dilepton since it passed the cuts, and store the cut
-    // variables for use later.
+    // variables and other stuff for use later.
     new_cands->push_back(*c);
-    new_cands->back().addUserFloat("cos_angle",   cos_angle);
-    new_cands->back().addUserFloat("vertex_chi2", vtx_chi2);
-
-    // Add any other userData.
-    embed_vertex_constrained_fit(new_cands->back());
+    new_cands->back().addUserFloat("cos_angle",   cos_angle.second);
+    embed_vertex_constrained_fit(new_cands->back(), vertex.second);
   }
 
   // Sort candidates so we keep the ones with larger invariant

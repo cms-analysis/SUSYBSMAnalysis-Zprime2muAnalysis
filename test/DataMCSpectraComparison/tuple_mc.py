@@ -22,6 +22,8 @@ events_per_job = 50000
     from samples import samples
     for sample in samples:
         print sample.name
+        if 'Summer11' not in sample.dataset:
+            continue
 
         new_py = open('tuple_mc.py').read()
         new_py += '\nswitchHLTProcessName(process, "%(hlt_process_name)s")\n' % sample.__dict__

@@ -174,10 +174,10 @@ return_data = 1
             ]
 
         lumi_lists = [
-            #'Run2011AMuonsOnly',
+            'Run2011AMuonsOnly',
             'Run2011A',
             'Run2011APlusDCSOnlyMuonsOnly',
-            #'Run2011APlusDCSOnly',
+            'Run2011APlusDCSOnly',
             '',
             ]
 

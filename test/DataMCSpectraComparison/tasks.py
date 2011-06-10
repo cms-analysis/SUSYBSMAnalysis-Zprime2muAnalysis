@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import sys, os, glob
+from itertools import combinations
 from FWCore.PythonUtilities.LumiList import LumiList
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import big_warn
 
@@ -25,9 +26,11 @@ def do(cmd):
 latest_dataset = '/SingleMu/Run2011A-PromptReco-v4/AOD'
 
 if cmd == 'setdirs':
-    do('''ln -s /uscms/home/tucker/nobackup/crab_dirs crab
+    do('''
+ln -s /uscms/home/tucker/nobackup/crab_dirs crab
 mkdir -p psets
-ln -s `pwd`/psets crab/psets''')
+ln -s `pwd`/psets crab/psets
+''')
 
 elif cmd == 'checkevents':
     from samples import samples
@@ -56,30 +59,34 @@ elif cmd == 'hadd':
             do('hadd ana_datamc_%(name)s.root crab/crab_ana%(extra)s_datamc_%(name)s/res/zp2mu_histos*root' % locals())
 
 elif cmd == 'gatherhistos':
-    extra = extra[0] if extra else 'renameme'
-    which = 'Run2011APlusDCSOnlyMuonsOnly'
-    #which = 'Run2011A'
-    dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMu2011A_*' % which)
-    files_glob = ' '.join([os.path.join(x, 'res/*.root') for x in dirs])
-    do('''
-mkdir -p ana_datamc_%(extra)s
-ln -s /uscms_data/d2/tucker/zp2mu_ana_datamc_mc/latest ana_datamc_%(extra)s/mc
-hadd ana_datamc_%(extra)s/ana_datamc_data.root %(files_glob)s
-''' % locals())
-    for dir in dirs:
-        do('crab -c %s -report' % dir)
-    jsons = [os.path.join(dir, 'res/lumiSummary.json') for dir in dirs]
-    for i,json1 in enumerate(jsons):
-        for json2 in jsons[i+1:]:
-            # probably a better way to do this using LumiList but oh well
-            print 'checking overlap between', json1, json2
-            if os.popen('compareJSON.py --and %s %s' % (json1, json2)).read() != '{}\n':
-                raise RuntimeError('overlap between %s and %s lumisections' % (json1, json2))
-    jsons = ' '.join(jsons)
-    do('''
-mergeJSON.py %(jsons)s --output ana_datamc_%(extra)s/ana_datamc_data.forlumi.json
-lumiCalc.py -i ana_datamc_%(extra)s/ana_datamc_data.forlumi.json overview > ana_datamc_%(extra)s/ana_datamc_data.lumi
-''' % locals())
+    extra = (extra[0] + '_') if extra else ''
+
+    for which in ['Run2011APlusDCSOnlyMuonsOnly', 'Run2011A', 'NoLumiMask']:
+        print which
+        dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMu2011A_*' % which)
+        files_glob = ' '.join([os.path.join(x, 'res/*.root') for x in dirs])
+
+        wdir = 'ana_datamc_%(extra)s%(which)s' % locals()
+        os.mkdir(wdir)
+        do('ln -s /uscms_data/d2/tucker/zp2mu_ana_datamc_mc/latest %(wdir)s/mc' % locals())
+        do('hadd %(wdir)s/ana_datamc_data.root %(files_glob)s' % locals())
+
+        for dir in dirs:
+            do('crab -c %(dir)s -status ; crab -c %(dir)s -report' % locals())
+
+        jsons = [os.path.join(dir, 'res/lumiSummary.json') for dir in dirs]
+        lls = [(j, LumiList(j)) for j in jsons]
+        for (j1, ll1), (j2, ll2) in combinations(lls, 2):
+            cl = (ll1 & ll2).getCompactList()
+            print 'checking overlap between', j1, j2,
+            if cl:
+                raise RuntimeError('\noverlap between %s and %s lumisections' % (j1,j2))
+            else:
+                print cl
+                                        
+        reduce(lambda x,y: x|y, (LumiList(j) for j in jsons)).writeJSON('%(wdir)s/ana_datamc_data.forlumi.json' % locals())
+        do('lumiCalc.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())
+        print 'done with', which, '\n'
 
 elif cmd == 'mclinks':
     extra = extra[0] if extra else 'renameme'

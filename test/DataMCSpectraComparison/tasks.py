@@ -65,7 +65,7 @@ elif cmd == 'hadd':
 elif cmd == 'gatherhistos':
     extra = (extra[0] + '_') if extra else ''
 
-    for which in ['Run2011APlusDCSOnlyMuonsOnly', 'Run2011A', 'NoLumiMask']:
+    for which in ['Run2011AMuonsOnly', 'Run2011APlusDCSOnlyMuonsOnly', 'Run2011A', 'NoLumiMask']:
         print which
         dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMu2011A_*' % which)
         files_glob = ' '.join([os.path.join(x, 'res/*.root') for x in dirs])
@@ -174,7 +174,7 @@ elif cmd == 'drawall':
         if r != 0:
             sys.exit(r)
     do('mv out.draw.* plots/')
-    do('tar czvf ~/asdf/plots.tgz plots/datamc_* plots/out.draw.*')
+    do('tlock ~/asdf/plots.tgz plots/datamc_* plots/out.draw.*')
 else:
     raise ValueError('command %s not recognized!' % cmd)
 

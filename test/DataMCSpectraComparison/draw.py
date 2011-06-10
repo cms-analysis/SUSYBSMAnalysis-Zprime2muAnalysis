@@ -1,13 +1,5 @@
 #!/usr/bin/env python
 
-'''
-foreach x (ana_datamc_*)
-  echo $x
-  py draw.py ${x} >! out.draw.${x}
-end
-tlp plots/ana_datamc_*
-'''
-
 import sys, os, glob
 from pprint import pprint
 from collections import defaultdict
@@ -20,8 +12,8 @@ ROOT.gStyle.SetPadRightMargin(0.07)
 from samples import *
 
 rebin_factor = 5
-x_axis_limits = 50, 1100
-x_axis_limits2 = 50, 1100
+x_axis_limits = 60, 1100
+x_axis_limits2 = 60, 1100
 
 to_compare = 'DileptonMass'
 
@@ -76,7 +68,7 @@ def parse_lumi_from_log(fn):
             this = True
 
 int_lumi = sum(parse_lumi_from_log(x.replace('.root', '.lumi')) for x in data_fns)
-lumi_syst_frac = 0.04
+lumi_syst_frac = 0.10
 
 print '"joins" are:'
 pprint(joins)
@@ -141,7 +133,7 @@ def dir_name(c, d):
 pdir = 'plots/datamc'
 if histo_dir != 'ana_datamc':
     pdir += '_' + histo_dir.replace('ana_datamc_', '')
-ps = plot_saver(pdir, size=(1000,600), pdf_log=True)
+ps = plot_saver(pdir, size=(1000,600), pdf_log=True, pdf=True)
 save_plots = 'no_plots' not in sys.argv
 
 #samples = [s for s in samples if not s.name in ['ww', 'zz', 'wz', 'qcd500']]

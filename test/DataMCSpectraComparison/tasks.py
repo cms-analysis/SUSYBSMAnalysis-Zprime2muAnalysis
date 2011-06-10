@@ -17,11 +17,15 @@ except IndexError:
 
 def do(cmd):
     print cmd
+    ret = []
     if not just_testing:
         cmds = cmd.split('\n') if '\n' in cmd else [cmd]
         for c in cmds:
             if cmd != '' and not cmd.startswith('#'):
-                os.system(c)
+                ret.append(os.system(c))
+    if len(ret) == 1:
+        ret = ret[0]
+    return ret
 
 latest_dataset = '/SingleMu/Run2011A-PromptReco-v4/AOD'
 
@@ -163,3 +167,14 @@ elif cmd == 'checkavail':
     print 'run range for', latest_dataset, ':', runrange[0], runrange[-1]
     print 'these lumis are in the DCS-only JSON but not (yet) in', latest_dataset
     print str(dcs_ll - ll - ok)
+
+elif cmd == 'drawall':
+    for x in glob.glob('ana_datamc_*'):
+        r = do('python draw.py %s > out.draw.%s' % (x,x))
+        if r != 0:
+            sys.exit(r)
+    do('mv out.draw.* plots/')
+    do('tar czvf ~/asdf/plots.tgz plots/datamc_* plots/out.draw.*')
+else:
+    raise ValueError('command %s not recognized!' % cmd)
+

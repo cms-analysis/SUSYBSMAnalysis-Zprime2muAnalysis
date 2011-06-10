@@ -404,7 +404,7 @@ class plot_saver:
             self.c.SetLogy(0)
         if pdf:
             pdf = os.path.join(self.plot_dir, n + '.pdf')
-            self.c.SaveAs(pdf_fn)
+            self.c.SaveAs(pdf)
         if pdf_log:
             self.c.SetLogy(1)
             pdf_log = os.path.join(self.plot_dir, n + '.log.pdf')

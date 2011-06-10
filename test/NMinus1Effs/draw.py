@@ -15,7 +15,8 @@ nminus1s = [
     'NoDB',
     'NoGlbChi2',
     'NoPxHits',
-    'NoMuStns',
+    'NoMuHits',
+    'NoMuSegs',
     'NoTkMuon',
     'NoTrgMtch',
     'NoB2B',
@@ -23,19 +24,19 @@ nminus1s = [
 ]
 
 if 'test' in sys.argv:
-    nminus1s += ['NoPt', 'NoPt20Pt5']
+    nminus1s += ['NoPt', 'NoPt35Pt5']
 
 pretty = {
-    'NoTkHits': '# tk hits #geq 10',
+    'NoTkHits': '# tk hits #gt 10',
     'NoPxHits': '# px hits #geq 1',
-    'NoMuStns': '# muon st #geq 2',
-    'NoDB': '|d_{xy}| < 0.2',
+    'NoMuStns': '# mu segs #gt 1',
+    'NoDB': '|dB| < 0.2',
     'NoGlbChi2': 'glb #chi^{2}/ndf < 10',
     'NoTkMuon': 'isTrackerMuon',
     'NoTrgMtch': 'HLT match',
     'NoB2B': 'B2B cosmics',
     'NoVtxProb': '#chi^{2} #mu#mu vtx < 10',
-    'ana_nminus1_data.root': 'Data, 40 pb ^{-1}',
+    'ana_nminus1_data.root': 'Data, 366 pb ^{-1}',
     'ana_nminus1_zmumu.root': 'Z#rightarrow#mu#mu',
     'ana_nminus1_dy120.root': 'Z#rightarrow#mu#mu',
     'ana_nminus1_ttbar.root': 't#bar{t}',

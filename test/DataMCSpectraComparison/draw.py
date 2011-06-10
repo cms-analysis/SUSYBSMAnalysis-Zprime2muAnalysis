@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
-# (py draw.py ana_datamc_current/muonsonly >! out.draw.muonsonly) && (py draw.py ana_datamc_current/allgood >! out.draw.allgood) && mv out.draw.* plots/datamc_current/ && tlock ~/asdf/plots.tgz plots/datamc_current
-# (py draw.py ana_datamc_nov4/muonsonly >! out.draw.muonsonly.nov4) && (py draw.py ana_datamc_nov4/allgood >! out.draw.allgood.nov4) && mv out.draw.* plots/datamc_nov4/ && tlock ~/asdf/plots.tgz plots/datamc_nov4
+'''
+foreach x (ana_datamc_*)
+  echo $x
+  py draw.py ${x} >! out.draw.${x}
+end
+tlp plots/ana_datamc_*
+'''
 
 import sys, os, glob
 from pprint import pprint
@@ -21,9 +26,10 @@ x_axis_limits2 = 50, 1100
 to_compare = 'DileptonMass'
 
 global_rescale = {
-    'OurNew': 94141/82867.2,
-    'OurOld': 98803/86717.4,
-    'VBTF': 81923/71338.2
+    'OurNew': 81702/71916.58,
+    'OurOld': 85704/75257.94,
+    'OurNoIso': 83056/72933.5,
+    'VBTF': 71046/61911.08,
     }
 if 'norescale' in sys.argv:
     global_rescale = {}
@@ -118,6 +124,14 @@ use_yaxis = False
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
 cutss = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso']
+mass_ranges_for_table = [(60,120), (120,), (200,), (400,)]
+
+if 'forscale' in sys.argv:
+    global_rescale = {}
+    mass_ranges_for_table = [(60,120)]
+    dileptons = ['MuonsPlusMuonsMinus']
+    cutss.remove('Simple')
+    cutss.remove('EmuVeto')
 
 ROOT.TH1.AddDirectory(False)
 
@@ -173,7 +187,7 @@ for cuts in cutss:
 
             # Print a pretty table.
             if not cumulative:
-                for mass_range in [(60,120), (120,200), (120,), (200,), (586, 914), (150,200), (40, 200)]:
+                for mass_range in mass_ranges_for_table:
                     if mass_range == (586,914) and (cuts != 'Our' or dilepton != 'MuonsPlusMuonsMinus'):
                         continue
                     print 'cuts: %s  dilepton: %s  mass range: %s' % (cuts, dilepton, mass_range)

@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTuple_cfg import cms, process
-from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName
+from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName, AODOnly
 
 process.maxEvents.input = 50
-process.GlobalTag.globaltag = 'START38_V14::All'
-process.source.fileNames = ['/store/mc/Fall10/ZprimeSSMToMuMu_M-750_7TeV-pythia6/GEN-SIM-RECO/START38_V12-v1/0001/F034C4E4-4BCD-DF11-B652-00E0812EEEC3.root']
+process.GlobalTag.globaltag = 'START42_V11::All'
+process.source.fileNames = ['file:/uscms/home/tucker/nobackup/store/mc/Summer11/ZprimeSSMToMuMu_M-1000_TuneZ2_7TeV-pythia6/AODSIM/PU_S4_START42_V11-v1/0000/065F848B-3D93-E011-8E9F-78E7D164BFC8.root']
 process.p = cms.Path(process.patDefaultSequence)
+
+AODOnly(process)
 
 process.countPatMuons.minNumber = 0
 
@@ -37,7 +39,7 @@ scheduler = condor
 datasetpath = %(dataset)s
 pset = %(pset_fn)s
 total_number_of_events = -1
-events_per_job = %(events)s
+events_per_job = %(events_per_job)s
 get_edm_output = 1
 
 [USER]
@@ -55,30 +57,28 @@ dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02
     just_testing = 'testing' in sys.argv
     
     samples = [
-        ('dy20',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('dy120',  '/DYToMuMu_M-120_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('dy200',  '/DYToMuMu_M-200_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('dy500',  '/DYToMuMu_M-500_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('dy800',  '/DYToMuMu_M-800_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('zp500',  '/ZprimeSSMToMuMu_M-500_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('zp750',  '/ZprimeSSMToMuMu_M-750_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('zp1000', '/ZprimeSSMToMuMu_M-1000_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('zp1250', '/ZprimeSSMToMuMu_M-1250_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('zp1500', '/ZprimeSSMToMuMu_M-1500_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('zp1750', '/ZprimeSSMToMuMu_M-1750_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('rs250',  '/RSGravToMuMu_kMpl001_M-250_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('rs500',  '/RSGravToMuMu_kMpl001_M-500_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('rs750',  '/RSGravToMuMu_kMpl001_M-750_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('rs1000', '/RSGravToMuMu_kMpl001_M-1000_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('rs1250', '/RSGravToMuMu_kMpl001_M-1250_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
-        ('rs1500', '/RSGravToMuMu_kMpl001_M-1500_7TeV-pythia6/Fall10-START38_V12-v1/GEN-SIM-RECO'),
+        ('dy20',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/Summer11-PU_S3_START42_V11-v2/AODSIM'),
+        ('dy120',  '/DYToMuMu_M-120_TuneZ2_7TeV-pythia6-tauola/Summer11-PU_S3_START42_V11-v2/AODSIM'),
+        ('dy200',  '/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/Summer11-PU_S3_START42_V11-v2/AODSIM'),
+        ('dy500',  '/DYToMuMu_M-500_TuneZ2_7TeV-pythia6-tauola/Summer11-PU_S3_START42_V11-v2/AODSIM'),
+        ('dy800',  '/DYToMuMu_M-800_TuneZ2_7TeV-pythia6-tauola/Summer11-PU_S3_START42_V11-v2/AODSIM'),
+        ('dy1000', '/DYToMuMu_M-1000_TuneZ2_7TeV-pythia6-tauola/Summer11-PU_S3_START42_V11-v2/AODSIM'),
+        ('zp750',  '/ZprimeSSMToMuMu_M-750_TuneZ2_7TeV-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM'),
+        ('zp1000', '/ZprimeSSMToMuMu_M-1000_TuneZ2_7TeV-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM'),
+        ('zp1250', '/ZprimeSSMToMuMu_M-1250_TuneZ2_7TeV-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM'),
+        ('zp1500', '/ZprimeSSMToMuMu_M-1500_TuneZ2_7TeV-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM'),
+        ('zp1750', '/ZprimeSSMToMuMu_M-1750_TuneZ2_7TeV-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM'),
+        ('zp2000', '/ZprimeSSMToMuMu_M-2000_TuneZ2_7TeV-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM'),
+        ('zp2250', '/ZprimeSSMToMuMu_M-2250_TuneZ2_7TeV-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM'),
+        # RSG samples...
     ]
 
     for name, dataset in samples:
-        events = 11000 if name != 'dy20' else 40000
+        events_per_job = 22000
+
         pset = open('tuple.py').read()
-        if name == 'dy20':
-            pset += '\nswitchHLTProcessName(process, "REDIGI38X")\n'
+        #if name == 'dy20':
+        #    pset += '\nswitchHLTProcessName(process, "REDIGI38X")\n'
         pset_fn = 'psets/tuple_effres_crab_%s.py' % name
         open(pset_fn, 'wt').write(pset)
         

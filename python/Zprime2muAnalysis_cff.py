@@ -22,9 +22,7 @@ goodDataFilter.HLTPaths = ['goodDataAll'] # can set to just 'goodDataPrimaryVert
 goodDataFilter.andOr = False # = AND
 
 from MuonPhotonMatch_cff import muonPhotonMatch
-#from PATCandViewShallowCloneCombiner_cfi import allDimuons
-#from VBTFSelection_cff import allDimuons, dimuons, loose_cut
-from OurSelection_cff import allDimuons, dimuons, loose_cut
+from OurSelectionNew_cff import allDimuons, dimuons, loose_cut
 
 leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'),

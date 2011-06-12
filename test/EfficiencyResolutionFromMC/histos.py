@@ -2,7 +2,7 @@
 
 import sys, os
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import cms, process
-process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-120_7TeV-pythia6/effres_dy120/b62a83c345cd135ef96a2f3fe22d5e32/pat_3_1_Ped.root']
+process.source.fileNames = ['file:pat.root']
 process.options.wantSummary = True
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import rec_levels, rec_level_module
@@ -22,7 +22,7 @@ process.HLTSingleObjects = cms.EDProducer('HLTLeptonsFromTriggerEvent',
                                           leptons = cms.VInputTag(cms.InputTag('hltL3MuonCandidates', '', 'HLT'))
                                           )
 process.EfficiencyFromMC.hlt_obj_src = 'HLTSingleObjects'
-process.EfficiencyFromMC.hlt_single_min_pt = 15
+process.EfficiencyFromMC.hlt_single_min_pt = 30
 
 # Since LooseTightPairSelector ignores the cutFor that
 # Zprime2muLeptonProducer sets, don't need to redo leptons for the
@@ -42,7 +42,7 @@ process.HistosFromPAT.leptonsFromDileptons = True
 process.ResolutionUsingMC.leptonsFromDileptons = True
 process.ResolutionUsingMC.doQoverP = True
 
-process.p *= rec_level_module(process, process.HistosFromPAT,     'Histos', tracks)
+process.p *= rec_level_module(process, process.HistosFromPAT,     'Histos',     tracks)
 process.p *= rec_level_module(process, process.ResolutionUsingMC, 'Resolution', tracks)
 
 def switch_hlt_name(n):

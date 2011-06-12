@@ -107,16 +107,13 @@ unitize = {
     'DileptonPt': ' [GeV]',
     }
 yaxis = {
-    ('MuonsPlusMuonsMinus', False): (4e-3, None),
-    ('MuonsPlusMuonsMinus', True): (1.6, None),
-#   ('MuonsSameSign', False): (5e-5, 2.5),
-    ('MuonsElectronsOppSign', False): (1e-2, 20),
+    ('MuonsSameSign', False): (1e-4, 3.5),
     }
-use_yaxis = False
+use_yaxis = True
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
 cutss = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso']
-mass_ranges_for_table = [(60,120), (120,), (200,), (400,)]
+mass_ranges_for_table = [(60,120), (120,200), (200,400), (400,), (600,)]
 
 if 'forscale' in sys.argv:
     global_rescale = {}
@@ -187,7 +184,7 @@ for cuts in cutss:
                         sample.integral = get_integral(sample.mass, *mass_range, integral_only=True, include_last_bin=False)
                         sample.raw_integral = sample.integral / sample.scaled_by
                     hdata_integral = get_integral(hdata, *mass_range, integral_only=True, include_last_bin=False)
-                    print '%50s%20s%20s%20s%20s%20s%20s%20s%20s' % ('sample', 'weight for %i/nb' % int(int_lumi*1000), 'raw integral', 'integral', 'stat error', 'limit if int=0', 'syst error', 'lumi error', 'total error')
+                    print '%50s%20s%20s%20s%20s%20s%20s%20s%20s' % ('sample', 'weight for %.1f/pb' % int_lumi, 'raw integral', 'integral', 'stat error', 'limit if int=0', 'syst error', 'lumi error', 'total error')
                     print '%50s%20s%20i%20.6f%20.6f' % ('data', '-', int(hdata_integral), hdata_integral, hdata_integral**0.5)
                     sum_mc = 0.
                     var_sum_mc = 0.
@@ -326,8 +323,8 @@ for cuts in cutss:
             hdata.Draw(data_draw_cmd)
 
             if draw_zssm and not cumulative and dilepton == 'MuonsPlusMuonsMinus':
-                from samples import zssm750
-                zp = zssm750.mass
+                from samples import zssm1000
+                zp = zssm1000.mass
                 zp.SetTitle('')
                 zp.SetLineWidth(2)
                 zp.GetXaxis().SetRangeUser(*xax)

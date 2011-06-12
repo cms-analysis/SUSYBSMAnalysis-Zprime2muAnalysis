@@ -41,7 +41,7 @@ for cumulative in (False, True):
     zeeHist.Add(histos['dy500'])
     zeeHist.Add(histos['dy800'])
 
-    zprime = histos['zssm750'].Clone('zprime')
+    zprime = histos['zssm1000'].Clone('zprime')
     
     # simulate stacking
     ttbarHist.Add(qcdHist)

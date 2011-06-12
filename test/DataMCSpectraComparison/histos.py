@@ -11,7 +11,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi import dy_gen_mass_cu
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi')
 
 import SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff as VBTFSelection
-import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection_cff as OurSelection
+import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionOld_cff as OurSelectionOld
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff as OurSelectionNew
 
 # CandCombiner includes charge-conjugate decays with no way to turn it
@@ -38,7 +38,7 @@ dils = [
 # somewhere below.
 cuts = {
     'VBTF'    : VBTFSelection,
-    'OurOld'  : OurSelection,
+    'OurOld'  : OurSelectionOld,
     'OurNew'  : OurSelectionNew,
     'OurNoIso': OurSelectionNew,
     'EmuVeto' : OurSelectionNew,
@@ -174,10 +174,9 @@ return_data = 1
             ]
 
         lumi_lists = [
-            'Run2011AMuonsOnly',
             'Run2011A',
+            'Run2011AMuonsOnly',
             'Run2011APlusDCSOnlyMuonsOnly',
-            'Run2011APlusDCSOnly',
             '',
             ]
 

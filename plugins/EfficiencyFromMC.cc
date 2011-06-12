@@ -107,12 +107,15 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
   acceptance.second->Fill(m_denom);
   totalreco.second->Fill(m_denom);
 
-  if (fabs(hardInteraction.lepMinus->eta()) < acceptance_max_eta && fabs(hardInteraction.lepPlus->eta()) < acceptance_max_eta)
+  if (fabs(hardInteraction.lepMinus->eta()) < acceptance_max_eta &&
+      fabs(hardInteraction.lepPlus ->eta()) < acceptance_max_eta)
     accnopt.first->Fill(m);
 
   // both gen leptons in acceptance?
-  if (fabs(hardInteraction.lepMinus->eta()) < acceptance_max_eta && fabs(hardInteraction.lepPlus->eta()) < acceptance_max_eta &&
-      hardInteraction.lepMinus->pt() > acceptance_min_pt && hardInteraction.lepPlus->pt() > acceptance_min_pt)
+  if (fabs(hardInteraction.lepMinus->eta()) < acceptance_max_eta &&
+      fabs(hardInteraction.lepPlus ->eta()) < acceptance_max_eta &&
+      hardInteraction.lepMinus->pt() > acceptance_min_pt &&
+      hardInteraction.lepPlus ->pt() > acceptance_min_pt)
     acceptance.first->Fill(m);
   else
     // Trigger efficiencies below are with respect to events where

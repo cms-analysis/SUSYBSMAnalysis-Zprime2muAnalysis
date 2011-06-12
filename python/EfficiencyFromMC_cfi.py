@@ -15,5 +15,5 @@ EfficiencyFromMC = cms.EDAnalyzer('EfficiencyFromMC',
                                   hlt_obj_src = cms.InputTag(''),
                                   hlt_single_min_pt = cms.double(-1),
                                   acceptance_max_eta = cms.double(2.4),
-                                  acceptance_min_pt = cms.double(20),
+                                  acceptance_min_pt = cms.double(35),
                                   )

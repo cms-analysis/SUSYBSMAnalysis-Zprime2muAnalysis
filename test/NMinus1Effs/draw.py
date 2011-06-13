@@ -41,7 +41,7 @@ pretty = {
     'ana_nminus1_dy120.root': 'Z#rightarrow#mu#mu',
     'ana_nminus1_ttbar.root': 't#bar{t}',
     'ana_nminus1_inclmu15.root': 'QCD',
-    'ana_nminus1_zssm750.root': 'Z\' SSM, M=750 GeV',
+    'ana_nminus1_zssm1000.root': 'Z\' SSM, M=1000 GeV',
     }
 
 if 'debug' in sys.argv:
@@ -69,7 +69,7 @@ if '120' in sys.argv:
         ('ana_nminus1_data.root',    (120, 1e9), ROOT.kBlack, -1),
         ('ana_nminus1_dy120.root',   (120, 1e9), ROOT.kBlue, 3006),
         ('ana_nminus1_ttbar.root',   (120, 1e9), ROOT.kRed, 3007),
-        ('ana_nminus1_zssm750.root', (120, 1e9), ROOT.kGreen+2, 3004)
+        ('ana_nminus1_zssm1000.root', (120, 1e9), ROOT.kGreen+2, 3004)
         ]
     lg = ROOT.TLegend(0.14, 0.14, 0.63, 0.34)
 elif 'test' in sys.argv:

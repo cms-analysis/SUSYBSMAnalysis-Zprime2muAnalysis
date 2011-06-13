@@ -124,13 +124,22 @@ pat::Muon* Zprime2muLeptonProducer::cloneAndSwitchMuonTrack(const pat::Muon& muo
 std::pair<pat::Electron*,int> Zprime2muLeptonProducer::doLepton(const pat::Electron& el, const reco::CandidateBaseRef&) const {
   // Electrons can be faked by muons leaving energy in the ECAL. Don't
   // keep the electron if it's within the dR specified of any global
-  // muon (a la HEEP).
-  for (std::vector<std::pair<float,float> >::const_iterator mu = global_muon_eta_phis.begin(), end = global_muon_eta_phis.end(); mu != end; ++mu)
-    if (reco::deltaR(mu->first, mu->second, el.eta(), el.phi()) < electron_muon_veto_dR)
+  // muon (a la HEEP). Also keep track of the minimum such dR for
+  // embedding in the saved electron.
+  double min_muon_dR = 1e99;
+  for (std::vector<std::pair<float,float> >::const_iterator mu = global_muon_eta_phis.begin(), end = global_muon_eta_phis.end(); mu != end; ++mu) {
+    double muon_dR = reco::deltaR(mu->first, mu->second, el.eta(), el.phi());
+    if (muon_dR < min_muon_dR)
+      min_muon_dR = muon_dR;
+
+    if (muon_dR < electron_muon_veto_dR)
       return std::make_pair((pat::Electron*)(0), -1);
+  }
 
   // Caller will own this pointer.
   pat::Electron* new_el = cloneAndSwitchElectronEnergy(el);
+  new_el->addUserFloat("min_muon_dR", float(min_muon_dR));
+
   int cutFor = new_el == 0 ? -1 : electron_selector(*new_el) ? 0 : 1;
   return std::make_pair(new_el, cutFor);
 }

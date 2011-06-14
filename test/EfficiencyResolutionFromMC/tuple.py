@@ -5,7 +5,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName, AOD
 
 process.maxEvents.input = 50
 process.GlobalTag.globaltag = 'START42_V11::All'
-process.source.fileNames = ['file:/uscms/home/tucker/nobackup/store/mc/Summer11/ZprimeSSMToMuMu_M-1000_TuneZ2_7TeV-pythia6/AODSIM/PU_S4_START42_V11-v1/0000/065F848B-3D93-E011-8E9F-78E7D164BFC8.root']
+process.source.fileNames = ['file:/uscms/home/tucker/nobackup/store/mc/Summer11/ZprimeSSMToMuMu_M-2250_TuneZ2_7TeV-pythia6/AODSIM/PU_S4_START42_V11-v1/0000/7032435D-1A93-E011-94D5-0017A4770008.root']
 process.p = cms.Path(process.patDefaultSequence)
 
 AODOnly(process)
@@ -15,6 +15,9 @@ process.countPatMuons.minNumber = 0
 process.out.outputCommands = [
     'drop *',
     'keep *_prunedMCLeptons_*_*',
+    'keep *_offlineBeamSpot_*_*',
+    'keep *_offlinePrimaryVertices_*_*',
+    'keep *_addPileupInfo_*_*',
     'keep patMuons_cleanPatMuonsTriggerMatch__PAT',
     'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__HLT*',
     'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__REDIGI*',

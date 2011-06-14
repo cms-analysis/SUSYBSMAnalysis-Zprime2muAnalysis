@@ -153,19 +153,19 @@ if False:
 
 use_predefined_datasets = True
 if use_predefined_datasets:
-    inclmu15.ana_dataset_ = '/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/tucker-datamc_inclmu15-396bcdaa1e090647f7fc37d15e445b1a/USER'
     wjets.ana_dataset_ = '/WJetsToLNu_TuneZ2_7TeV-madgraph-tauola/tucker-datamc_wjets-396bcdaa1e090647f7fc37d15e445b1a/USER'
     zz.ana_dataset_ = '/ZZtoAnything_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_zz-396bcdaa1e090647f7fc37d15e445b1a/USER'
     wz.ana_dataset_ = '/WZtoAnything_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_wz-396bcdaa1e090647f7fc37d15e445b1a/USER'
     ww.ana_dataset_ = '/WWtoAnything_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ww-396bcdaa1e090647f7fc37d15e445b1a/USER'
     singletop_tW.ana_dataset_ = '/TToBLNu_TuneZ2_tW-channel_7TeV-madgraph/tucker-datamc_singletop_tW-396bcdaa1e090647f7fc37d15e445b1a/USER'
 
-    ztautau.ana_dataset_ = "/DYToTauTau_M-20_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ztautau-5222c20b53e3c47b6c8353d464ee954c/USER"
-    ttbar.ana_dataset_ = "/TT_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ttbar-5222c20b53e3c47b6c8353d464ee954c/USER"
-    dy1000.ana_dataset_ = "/DYToMuMu_M-1000_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy1000-5222c20b53e3c47b6c8353d464ee954c/USER"
-    dy800.ana_dataset_ = "/DYToMuMu_M-800_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy800-5222c20b53e3c47b6c8353d464ee954c/USER"
-    dy500.ana_dataset_ = "/DYToMuMu_M-500_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy500-5222c20b53e3c47b6c8353d464ee954c/USER"
-    dy200.ana_dataset_ = "/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy200-5222c20b53e3c47b6c8353d464ee954c/USER"
-    dy120.ana_dataset_ = "/DYToMuMu_M-120_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy120-5222c20b53e3c47b6c8353d464ee954c/USER"
-    zmumu.ana_dataset_ = "/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-datamc_zmumu-5222c20b53e3c47b6c8353d464ee954c/USER"
-                                
+    zssm1000.ana_dataset_ = '/ZprimeSSMToMuMu_M-1000_TuneZ2_7TeV-pythia6/tucker-datamc_zssm1000-5222c20b53e3c47b6c8353d464ee954c/USER'
+    inclmu15.ana_dataset_ = '/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/tucker-datamc_inclmu15-5222c20b53e3c47b6c8353d464ee954c/USER'
+    ztautau.ana_dataset_ = '/DYToTauTau_M-20_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ztautau-5222c20b53e3c47b6c8353d464ee954c/USER'
+    ttbar.ana_dataset_ = '/TT_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ttbar-5222c20b53e3c47b6c8353d464ee954c/USER'
+    dy1000.ana_dataset_ = '/DYToMuMu_M-1000_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy1000-5222c20b53e3c47b6c8353d464ee954c/USER'
+    dy800.ana_dataset_ = '/DYToMuMu_M-800_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy800-5222c20b53e3c47b6c8353d464ee954c/USER'
+    dy500.ana_dataset_ = '/DYToMuMu_M-500_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy500-5222c20b53e3c47b6c8353d464ee954c/USER'
+    dy200.ana_dataset_ = '/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy200-5222c20b53e3c47b6c8353d464ee954c/USER'
+    dy120.ana_dataset_ = '/DYToMuMu_M-120_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy120-5222c20b53e3c47b6c8353d464ee954c/USER'
+    zmumu.ana_dataset_ = '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-datamc_zmumu-5222c20b53e3c47b6c8353d464ee954c/USER'

@@ -3,6 +3,7 @@
 #include "TProfile.h"
 
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
+#include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/Math/interface/deltaPhi.h"
 #include "DataFormats/Math/interface/deltaR.h"
@@ -11,6 +12,8 @@
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/TrackReco/interface/HitPattern.h"
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
@@ -27,6 +30,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   void analyze(const edm::Event&, const edm::EventSetup&);
 
  private:
+  void getBSandPV(const edm::Event&);
   void fillBasicLeptonHistos(const reco::CandidateBaseRef&);
   void fillOfflineMuonHistos(const pat::Muon*);
   void fillOfflineElectronHistos(const pat::Electron*);
@@ -39,7 +43,15 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   edm::InputTag lepton_src;
   edm::InputTag dilepton_src;
   const bool leptonsFromDileptons;
+  edm::InputTag beamspot_src;
+  edm::InputTag vertex_src;
 
+  // mmm bare ptrs
+  const reco::BeamSpot* beamspot;
+  const reco::Vertex*   vertex;
+
+  TH1F* NBeamSpot;
+  TH1F* NVertices;
   TH1F* NLeptons;
   TH2F* LeptonSigns;
   TH1F* LeptonEta;
@@ -51,8 +63,13 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TProfile* LeptonPVsEta;
   TProfile* LeptonPtVsEta;
   TH1F* IsoSumPt;
+  TH1F* RelIsoSumPt;
   TH1F* IsoEcal;   
   TH1F* IsoHcal;   
+  TH1F* CombIso;
+  TH1F* RelCombIso;
+  TH1F* CombIsoNoECAL;
+  TH1F* RelCombIsoNoECAL;
   TH1F* IsoNTracks;
   TH1F* IsoNJets;  
   TH1F* NPxHits;
@@ -65,8 +82,10 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TH1F* NStLayers;
   TH1F* NTkLayers;
   TH1F* Chi2dof;
-  TH1F* TrackD0;
-  TH1F* TrackDz;
+  TH1F* TrackD0BS;
+  TH1F* TrackDZBS;
+  TH1F* TrackD0PV;
+  TH1F* TrackDZPV;
   TH1F* NDileptons;
   TH1F* DileptonEta;
   TH1F* DileptonRap;
@@ -92,7 +111,9 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
 Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   : lepton_src(cfg.getParameter<edm::InputTag>("lepton_src")),
     dilepton_src(cfg.getParameter<edm::InputTag>("dilepton_src")),
-    leptonsFromDileptons(cfg.getParameter<bool>("leptonsFromDileptons"))
+    leptonsFromDileptons(cfg.getParameter<bool>("leptonsFromDileptons")),
+    beamspot_src(cfg.getParameter<edm::InputTag>("beamspot_src")),
+    vertex_src(cfg.getParameter<edm::InputTag>("vertex_src"))
 {
   std::string title_prefix = cfg.getUntrackedParameter<std::string>("titlePrefix", "");
   if (title_prefix.size() && title_prefix[title_prefix.size()-1] != ' ')
@@ -101,10 +122,15 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
 
   edm::Service<TFileService> fs;
 
+  // Whole-event things.
+
+  NBeamSpot = fs->make<TH1F>("NBeamSpot", titlePrefix + "# beamspots/event",  2, 0,  2);
+  NVertices = fs->make<TH1F>("NVertices", titlePrefix + "# vertices/event",  20, 0, 20);
+
   // Basic kinematics.
 
   // Lepton multiplicity.
-  NLeptons = fs->make<TH1F>("NLeptons", titlePrefix + "# leptons/event, " + titlePrefix, 10, 0, 10);
+  NLeptons = fs->make<TH1F>("NLeptons", titlePrefix + "# leptons/event", 10, 0, 10);
 
   // Opposite/like-sign counts.
   LeptonSigns = fs->make<TH2F>("LeptonSigns", titlePrefix + "lepton sign combinations", 6, 0, 6, 13, -6, 7);
@@ -128,11 +154,16 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   // Muon specific histos.
 
   // Delta R < 0.3 isolation variables.
-  IsoSumPt   = fs->make<TH1F>("IsoSumPt",   titlePrefix + "Iso. (#Delta R < 0.3) #Sigma pT", 30, 0, 30);
-  IsoEcal    = fs->make<TH1F>("IsoEcal",    titlePrefix + "Iso. (#Delta R < 0.3) ECAL",      30, 0, 30);
-  IsoHcal    = fs->make<TH1F>("IsoHcal",    titlePrefix + "Iso. (#Delta R < 0.3) HCAL",      30, 0, 30);
-  IsoNTracks = fs->make<TH1F>("IsoNTracks", titlePrefix + "Iso. (#Delta R < 0.3) nTracks",   10, 0, 10);
-  IsoNJets   = fs->make<TH1F>("IsoNJets",   titlePrefix + "Iso. (#Delta R < 0.3) nJets",     10, 0, 10);
+  IsoSumPt         = fs->make<TH1F>("IsoSumPt",         titlePrefix + "Iso. (#Delta R < 0.3) #Sigma pT",           50, 0, 50);
+  RelIsoSumPt      = fs->make<TH1F>("RelIsoSumPt",      titlePrefix + "Iso. (#Delta R < 0.3) #Sigma pT / tk. pT",  50, 0, 1);
+  IsoEcal          = fs->make<TH1F>("IsoEcal",          titlePrefix + "Iso. (#Delta R < 0.3) ECAL",                50, 0, 50);
+  IsoHcal          = fs->make<TH1F>("IsoHcal",          titlePrefix + "Iso. (#Delta R < 0.3) HCAL",                50, 0, 50);
+  CombIso          = fs->make<TH1F>("CombIso",          titlePrefix + "Iso. (#Delta R < 0.3), combined",           50, 0, 50);
+  RelCombIso       = fs->make<TH1F>("RelCombIso",       titlePrefix + "Iso. (#Delta R < 0.3), combined / tk. pT",  50, 0, 1);
+  CombIsoNoECAL    = fs->make<TH1F>("CombIsoNoECAL",    titlePrefix + "Iso. (#Delta R < 0.3), combined (no ECAL)", 50, 0, 50);
+  RelCombIsoNoECAL = fs->make<TH1F>("RelCombIsoNoECAL", titlePrefix + "Iso. (#Delta R < 0.3), combined (no ECAL), relative", 50, 0, 50);
+  IsoNTracks       = fs->make<TH1F>("IsoNTracks",       titlePrefix + "Iso. (#Delta R < 0.3) nTracks",             10, 0, 10);
+  IsoNJets         = fs->make<TH1F>("IsoNJets",         titlePrefix + "Iso. (#Delta R < 0.3) nJets",               10, 0, 10);
     
   // Track hit counts.
   NPxHits = fs->make<TH1F>("NPxHits", titlePrefix + "# pixel hits",    8, 0,  8);
@@ -144,13 +175,15 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   NInvalidHits = fs->make<TH1F>("NInvalidHits", titlePrefix + "# invalid hits", 78, 0, 78);
 
   NPxLayers = fs->make<TH1F>("NPxLayers", titlePrefix + "# pixel layers",    8, 0,  8);
-  NStLayers = fs->make<TH1F>("NStLayers", titlePrefix + "# strip layers",   12, 0, 12);
+  NStLayers = fs->make<TH1F>("NStLayers", titlePrefix + "# strip layers",   15, 0, 15);
   NTkLayers = fs->make<TH1F>("NTkLayers", titlePrefix + "# tracker layers", 20, 0, 20);
 
   // Other track variables.
-  Chi2dof = fs->make<TH1F>("Chi2dof", titlePrefix + "#chi^{2}/dof", 100, 0, 5);
-  TrackD0 = fs->make<TH1F>("TrackD0", titlePrefix + "|d0|",         100, 0, 0.1);
-  TrackDz = fs->make<TH1F>("TrackDz", titlePrefix + "|dz|",         100, 0, 5);
+  Chi2dof = fs->make<TH1F>("Chi2dof", titlePrefix + "#chi^{2}/dof", 100, 0, 10);
+  TrackD0BS = fs->make<TH1F>("TrackD0BS", titlePrefix + "|d0 wrt BS|",         100, 0, 0.2);
+  TrackDZBS = fs->make<TH1F>("TrackDZBS", titlePrefix + "|dz wrt BS|",         100, 0, 5);
+  TrackD0PV = fs->make<TH1F>("TrackD0PV", titlePrefix + "|d0 wrt PV|",         100, 0, 0.2);
+  TrackDZPV = fs->make<TH1F>("TrackDZPV", titlePrefix + "|dz wrt PV|",         100, 0, 5);
 
   // Electron specific histos (none yet).
 
@@ -174,8 +207,8 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   DileptonPtVsEta = fs->make<TProfile>("DileptonPtVsEta", titlePrefix + "dil. pT vs. #eta", 100, -6, 6);
   
   // Dilepton invariant mass.
-  DileptonMass            = fs->make<TH1F>("DileptonMass",            titlePrefix + "dil. mass", 2000, 0, 2000);
-  DileptonWithPhotonsMass = fs->make<TH1F>("DileptonWithPhotonsMass", titlePrefix + "res. mass", 2000, 0, 2000);
+  DileptonMass            = fs->make<TH1F>("DileptonMass",            titlePrefix + "dil. mass", 3000, 0, 3000);
+  DileptonWithPhotonsMass = fs->make<TH1F>("DileptonWithPhotonsMass", titlePrefix + "res. mass", 3000, 0, 3000);
   
   // Plots comparing the daughter lepton momenta.
   DileptonDeltaPt  = fs->make<TH1F>("DileptonDeltaPt",  titlePrefix + "dil. |pT^{1}| - |pT^{2}|",                100, -100, 100);
@@ -188,9 +221,31 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   DileptonDaughterDeltaPhi = fs->make<TH1F>("DileptonDaughterDeltaPhi", "", 100, 0, 3.15);
 
   // Dimuons have a vertex-constrained fit: some associated histograms.
-  DimuonMassVertexConstrained = fs->make<TH1F>("DimuonMassVertexConstrained", titlePrefix + "dimu. vertex-constrained mass", 2000, 0, 2000);
-  DimuonMassConstrainedVsUn = fs->make<TH2F>("DimuonMassConstrainedVsUn", titlePrefix + "dimu. vertex-constrained vs. non-constrained mass", 200, 0, 2000, 200, 0, 2000);
-  DimuonMassVertexConstrainedError = fs->make<TH2F>("DimuonMassVertexConstrainedError", titlePrefix + "dimu. vertex-constrained mass error vs. mass", 100, 0, 2000, 100, 0, 400);
+  DimuonMassVertexConstrained = fs->make<TH1F>("DimuonMassVertexConstrained", titlePrefix + "dimu. vertex-constrained mass", 3000, 0, 3000);
+  DimuonMassConstrainedVsUn = fs->make<TH2F>("DimuonMassConstrainedVsUn", titlePrefix + "dimu. vertex-constrained vs. non-constrained mass", 200, 0, 3000, 200, 0, 3000);
+  DimuonMassVertexConstrainedError = fs->make<TH2F>("DimuonMassVertexConstrainedError", titlePrefix + "dimu. vertex-constrained mass error vs. mass", 100, 0, 3000, 100, 0, 400);
+}
+
+void Zprime2muHistosFromPAT::getBSandPV(const edm::Event& event) {
+  // We store these as bare pointers. Should find better way, but
+  // don't want to pass them around everywhere...
+  edm::Handle<reco::BeamSpot> hbs;
+  event.getByLabel(beamspot_src, hbs);
+  beamspot = hbs.isValid() ? &*hbs : 0; // nice and fragile
+  NBeamSpot->Fill(beamspot != 0);
+
+  edm::Handle<reco::VertexCollection> vertices;
+  event.getByLabel(vertex_src, vertices);
+  vertex = 0;
+  int vertex_count = 0;
+  for (reco::VertexCollection::const_iterator it = vertices->begin(), ite = vertices->end(); it != ite; ++it) {
+    if (it->ndof() > 4 && fabs(it->z()) <= 24 && fabs(it->position().rho()) <= 2) {
+      if (vertex == 0)
+	vertex = &*it;
+      ++vertex_count;
+    }
+  }
+  NVertices->Fill(vertex_count);
 }
 
 void Zprime2muHistosFromPAT::fillBasicLeptonHistos(const reco::CandidateBaseRef& lep) {
@@ -208,17 +263,31 @@ void Zprime2muHistosFromPAT::fillBasicLeptonHistos(const reco::CandidateBaseRef&
 
 void Zprime2muHistosFromPAT::fillOfflineMuonHistos(const pat::Muon* mu) {
   const reco::MuonIsolation& iso = mu->isolationR03();
-  IsoSumPt  ->Fill(iso.sumPt);
-  IsoEcal   ->Fill(iso.emEt);
-  IsoHcal   ->Fill(iso.hadEt + iso.hoEt);
-  IsoNTracks->Fill(iso.nTracks);
-  IsoNJets  ->Fill(iso.nJets);
+  IsoSumPt   ->Fill(iso.sumPt);
+  RelIsoSumPt->Fill(iso.sumPt / mu->innerTrack()->pt());
+  IsoEcal    ->Fill(iso.emEt);
+  IsoHcal    ->Fill(iso.hadEt + iso.hoEt);
+  CombIso    ->Fill( iso.sumPt + iso.emEt + iso.hadEt + iso.hoEt);
+  RelCombIso ->Fill((iso.sumPt + iso.emEt + iso.hadEt + iso.hoEt) / mu->innerTrack()->pt());
+  IsoNTracks ->Fill(iso.nTracks);
+  IsoNJets   ->Fill(iso.nJets);
+
+  CombIsoNoECAL   ->Fill( iso.sumPt + iso.hadEt + iso.hoEt);
+  RelCombIsoNoECAL->Fill((iso.sumPt + iso.hadEt + iso.hoEt) / mu->innerTrack()->pt());
 
   const reco::TrackRef track = patmuon::getPickedTrack(*mu);
   if (track.isAvailable()) {
     Chi2dof->Fill(track->normalizedChi2());
-    TrackD0->Fill(fabs(track->d0()));
-    TrackDz->Fill(fabs(track->dz()));
+
+    if (beamspot != 0) {
+      TrackD0BS->Fill(fabs(track->dxy(beamspot->position())));
+      TrackDZBS->Fill(fabs(track->dz (beamspot->position())));
+    }
+
+    if (vertex != 0) {
+      TrackD0PV->Fill(fabs(track->dxy(vertex->position())));
+      TrackDZPV->Fill(fabs(track->dz (vertex->position())));
+    }
 
     const reco::HitPattern& hp = track->hitPattern();
     NPxHits->Fill(hp.numberOfValidPixelHits());
@@ -263,12 +332,23 @@ void Zprime2muHistosFromPAT::fillLeptonHistos(const edm::View<reco::Candidate>& 
 }
 
 void Zprime2muHistosFromPAT::fillLeptonHistosFromDileptons(const pat::CompositeCandidateCollection& dileptons) {
+  int nleptons = 0;
+  int total_q = 0;
+
   pat::CompositeCandidateCollection::const_iterator dil = dileptons.begin(), dile = dileptons.end();
   for ( ; dil != dile; ++dil)
-    for (size_t i = 0; i < dil->numberOfDaughters(); ++i)
+    for (size_t i = 0; i < dil->numberOfDaughters(); ++i) {
       // JMTBAD if photons ever become daughters of the
       // CompositeCandidate, need to protect against this here
       fillLeptonHistos(dileptonDaughter(*dil, i));
+      
+      ++nleptons;
+      total_q += dileptonDaughter(*dil, i)->charge();
+    }
+
+  // These become sanity checks.
+  NLeptons->Fill(nleptons);
+  LeptonSigns->Fill(nleptons, total_q);
 }
 
 void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& dil) {
@@ -327,6 +407,8 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidateCol
 }
 
 void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSetup& setup) {
+  getBSandPV(event);
+
   edm::Handle<edm::View<reco::Candidate> > leptons;
   event.getByLabel(lepton_src, leptons);
 

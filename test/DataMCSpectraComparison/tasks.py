@@ -20,9 +20,9 @@ def do(cmd):
     ret = []
     if not just_testing:
         cmds = cmd.split('\n') if '\n' in cmd else [cmd]
-        for c in cmds:
+        for cmd in cmds:
             if cmd != '' and not cmd.startswith('#'):
-                ret.append(os.system(c))
+                ret.append(os.system(cmd))
     if len(ret) == 1:
         ret = ret[0]
     return ret
@@ -162,6 +162,13 @@ elif cmd == 'checkavail':
                                "166377": [[57, 57]],
                                "166380": [[712, 714]],
                                "166486": [[96, 96]],
+                               "166512": [[431, 431], [1280, 1280], [1819, 1820], [1863, 1867], [1869, 1869], [1872, 1872], [1875, 1876]],
+                               "166514": [[465, 465]],
+                               "166554": [[288, 289], [318, 319], [731, 731], [735, 735], [737, 738]],
+                               "166699": [[678, 680], [913, 915]],
+                               "166701": [[14, 15]],
+                               "166781": [[383, 387]],
+                               "166782": [[570, 571]],
                                })
 
     print 'run range for', latest_dataset, ':', runrange[0], runrange[-1]

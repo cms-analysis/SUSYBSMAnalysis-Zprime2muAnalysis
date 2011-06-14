@@ -75,24 +75,20 @@ return_data = 1
 '''
 
     samples = [
-        ('dy20',  '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-8ca75260210b8943d361f4da5b0c0bcc/USER',  20,  60),
-        ('dy60',  '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-8ca75260210b8943d361f4da5b0c0bcc/USER',  60, 120),
-        ('dy120', '/DYToMuMu_M-120_7TeV-pythia6/tucker-effres_dy120-b62a83c345cd135ef96a2f3fe22d5e32/USER',      120, 200),
-        ('dy200', '/DYToMuMu_M-200_7TeV-pythia6/tucker-effres_dy200-b62a83c345cd135ef96a2f3fe22d5e32/USER',      200, 500),
-        ('dy500', '/DYToMuMu_M-500_7TeV-pythia6/tucker-effres_dy500-b62a83c345cd135ef96a2f3fe22d5e32/USER',      500, 800),
-        ('dy800', '/DYToMuMu_M-800_7TeV-pythia6/tucker-effres_dy800-b62a83c345cd135ef96a2f3fe22d5e32/USER',      800, 20000),
-        ('zp500',  '/ZprimeSSMToMuMu_M-500_7TeV-pythia6/tucker-effres_zp500-b62a83c345cd135ef96a2f3fe22d5e32/USER',   -20000, 20000),
-        ('zp750',  '/ZprimeSSMToMuMu_M-750_7TeV-pythia6/tucker-effres_zp750-b62a83c345cd135ef96a2f3fe22d5e32/USER',   -20000, 20000),
-        ('zp1000', '/ZprimeSSMToMuMu_M-1000_7TeV-pythia6/tucker-effres_zp1000-b62a83c345cd135ef96a2f3fe22d5e32/USER', -20000, 20000),
-        ('zp1250', '/ZprimeSSMToMuMu_M-1250_7TeV-pythia6/tucker-effres_zp1250-b62a83c345cd135ef96a2f3fe22d5e32/USER', -20000, 20000),
-        ('zp1500', '/ZprimeSSMToMuMu_M-1500_7TeV-pythia6/tucker-effres_zp1500-b62a83c345cd135ef96a2f3fe22d5e32/USER', -20000, 20000),
-        ('zp1750', '/ZprimeSSMToMuMu_M-1750_7TeV-pythia6/tucker-effres_zp1750-b62a83c345cd135ef96a2f3fe22d5e32/USER', -20000, 20000),
-        ('rs250',  '/RSGravToMuMu_kMpl001_M-250_7TeV-pythia6/tucker-effres_rs001g250-1872548c7fb21f894e5c846186606525/USER',   -20000, 20000),
-        ('rs500',  '/RSGravToMuMu_kMpl001_M-500_7TeV-pythia6/tucker-effres_rs001g500-1872548c7fb21f894e5c846186606525/USER',   -20000, 20000),
-        ('rs750',  '/RSGravToMuMu_kMpl001_M-750_7TeV-pythia6/tucker-effres_rs001g750-1872548c7fb21f894e5c846186606525/USER',   -20000, 20000),
-        ('rs1000', '/RSGravToMuMu_kMpl001_M-1000_7TeV-pythia6/tucker-effres_rs001g1000-1872548c7fb21f894e5c846186606525/USER', -20000, 20000),
-        ('rs1250', '/RSGravToMuMu_kMpl001_M-1250_7TeV-pythia6/tucker-effres_rs001g1250-1872548c7fb21f894e5c846186606525/USER', -20000, 20000),
-        ('rs1500', '/RSGravToMuMu_kMpl001_M-1500_7TeV-pythia6/tucker-effres_rs001g1500-1872548c7fb21f894e5c846186606525/USER', -20000, 20000),
+        ('dy20',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy20-dd2126535e23ba03e5a28af2e68bf29c/USER',       20,    60),
+        ('dy60',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy20-dd2126535e23ba03e5a28af2e68bf29c/USER',       60,   120),
+        ('dy120',  '/DYToMuMu_M-120_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy120-dd2126535e23ba03e5a28af2e68bf29c/USER',    120,   200),
+        ('dy200',  '/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy200-dd2126535e23ba03e5a28af2e68bf29c/USER',    200,   500),
+        ('dy500',  '/DYToMuMu_M-500_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy500-dd2126535e23ba03e5a28af2e68bf29c/USER',    500,   800),
+        ('dy800',  '/DYToMuMu_M-800_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy800-dd2126535e23ba03e5a28af2e68bf29c/USER',    800,  1000),
+        ('dy1000', '/DYToMuMu_M-1000_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy1000-dd2126535e23ba03e5a28af2e68bf29c/USER', 1000, 20000),
+        ('zp750',  '/ZprimeSSMToMuMu_M-750_TuneZ2_7TeV-pythia6/tucker-effres_zp750-dd2126535e23ba03e5a28af2e68bf29c/USER',   -1, 20000),
+        ('zp1000', '/ZprimeSSMToMuMu_M-1000_TuneZ2_7TeV-pythia6/tucker-effres_zp1000-dd2126535e23ba03e5a28af2e68bf29c/USER', -1, 20000),
+        ('zp1250', '/ZprimeSSMToMuMu_M-1250_TuneZ2_7TeV-pythia6/tucker-effres_zp1250-dd2126535e23ba03e5a28af2e68bf29c/USER', -1, 20000),
+        ('zp1500', '/ZprimeSSMToMuMu_M-1500_TuneZ2_7TeV-pythia6/tucker-effres_zp1500-dd2126535e23ba03e5a28af2e68bf29c/USER', -1, 20000),
+        ('zp1750', '/ZprimeSSMToMuMu_M-1750_TuneZ2_7TeV-pythia6/tucker-effres_zp1750-dd2126535e23ba03e5a28af2e68bf29c/USER', -1, 20000),
+        ('zp2000', '/ZprimeSSMToMuMu_M-2000_TuneZ2_7TeV-pythia6/tucker-effres_zp2000-dd2126535e23ba03e5a28af2e68bf29c/USER', -1, 20000),
+        ('zp2250', '/ZprimeSSMToMuMu_M-2250_TuneZ2_7TeV-pythia6/tucker-effres_zp2250-dd2126535e23ba03e5a28af2e68bf29c/USER', -1, 20000),
         ]
 
     resolutions = {
@@ -122,8 +118,6 @@ return_data = 1
         new_py += '\nprocess.HardInteractionFilter.max_mass = "%i"\n' % hi
         new_py += '\nprocess.HardInteractionFilterRes.min_mass = "%i"\n' % lo
         new_py += '\nprocess.HardInteractionFilterRes.max_mass = "%i"\n' % hi
-        if dataset.startswith('/DYToMuMu_M-20_TuneZ2_7TeV-pythia6'):
-            new_py += '\nswitch_hlt_name("REDIGI38X")\n'
         open('histos_crab.py', 'wt').write(new_py)
 
         if not just_testing:

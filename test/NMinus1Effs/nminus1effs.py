@@ -69,13 +69,12 @@ return_data = 1
 
     just_testing = 'testing' in sys.argv
     if not 'no_data' in sys.argv:
-        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2011AMuonsOnly
-        Run2011AMuonsOnly.writeJSON('tmp.json')
+        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2011AMuonsOnly_ll
+        Run2011AMuonsOnly_ll.writeJSON('tmp.json')
 
         dataset_details = [
             ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10_new-b2cd34b4395e3cc0cd295229bc3495ca/USER'),
             ('SingleMu2011A_Prompt_165071_165999', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_165999_20110601165210-8788f1b70631d1fb57e97a89f5e8007c/USER'),
-            ('SingleMu2011A_Prompt_166000_166562', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_166000_166562_20110608180104-8788f1b70631d1fb57e97a89f5e8007c/USER'),
             ]
 
         for name, ana_dataset in dataset_details:
@@ -106,18 +105,14 @@ events_per_job = 50000
 ''')
 
         dataset_details = [
-            ('zmumu', '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-datamc_zmumu-5222c20b53e3c47b6c8353d464ee954c/USER'),
-            ('ttbar', '/TT_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ttbar-5222c20b53e3c47b6c8353d464ee954c/USER'),
-            ('dy200', '/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy200-5222c20b53e3c47b6c8353d464ee954c/USER'),
-            ('dy500', '/DYToMuMu_M-500_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy500-5222c20b53e3c47b6c8353d464ee954c/USER'),
-            #('zssm750', ''),
+            ('zmumu',    '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-datamc_zmumu-5222c20b53e3c47b6c8353d464ee954c/USER'),
+            ('ttbar',    '/TT_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ttbar-5222c20b53e3c47b6c8353d464ee954c/USER'),
+            ('dy200',    '/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy200-5222c20b53e3c47b6c8353d464ee954c/USER'),
+            ('dy500',    '/DYToMuMu_M-500_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy500-5222c20b53e3c47b6c8353d464ee954c/USER'),
+            ('zssm1000', '/ZprimeSSMToMuMu_M-1000_TuneZ2_7TeV-pythia6/tucker-datamc_zssm1000-5222c20b53e3c47b6c8353d464ee954c/USER'),
             ]
 
         for name, ana_dataset in dataset_details:
-            if 'test' in name:
-                continue
-                crab_cfg = crab_cfg.replace('total_number_of_events = -1', 'total_number_of_events = 55000')
-
             print name
             open('crab.cfg', 'wt').write(crab_cfg % locals())
             if not just_testing:

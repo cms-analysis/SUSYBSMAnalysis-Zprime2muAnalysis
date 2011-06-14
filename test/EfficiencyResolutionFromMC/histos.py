@@ -75,8 +75,8 @@ return_data = 1
 '''
 
     samples = [
-        ('dy20',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy20-dd2126535e23ba03e5a28af2e68bf29c/USER',       20,    60),
-        ('dy60',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy20-dd2126535e23ba03e5a28af2e68bf29c/USER',       60,   120),
+        ('dy20',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-dd2126535e23ba03e5a28af2e68bf29c/USER',              20,    60),
+        ('dy60',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-dd2126535e23ba03e5a28af2e68bf29c/USER',              60,   120),
         ('dy120',  '/DYToMuMu_M-120_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy120-dd2126535e23ba03e5a28af2e68bf29c/USER',    120,   200),
         ('dy200',  '/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy200-dd2126535e23ba03e5a28af2e68bf29c/USER',    200,   500),
         ('dy500',  '/DYToMuMu_M-500_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy500-dd2126535e23ba03e5a28af2e68bf29c/USER',    500,   800),

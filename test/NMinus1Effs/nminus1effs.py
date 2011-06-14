@@ -14,17 +14,25 @@ process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-20_TuneZ2_7TeV-pythia
 process.allDimuonsNoPt      = allDimuons.clone(loose_cut = loose_cut.replace(' && pt > 35.', ''))
 process.allDimuonsNoPt35Pt5 = allDimuons.clone(loose_cut = loose_cut.replace(' && pt > 35.', ' && pt > 5.'))
 process.allDimuonsNoIso     = allDimuons.clone(loose_cut = loose_cut.replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', ''))
-process.allDimuonsNoTkHits  = allDimuons.clone(loose_cut = loose_cut.replace(' && innerTrack.hitPattern.numberOfValidTrackerHits > 10', ''))
-process.allDimuonsNoDB      = allDimuons.clone(tight_cut = loose_cut.replace(' && abs(dB) < 0.2', ''))
-process.allDimuonsNoGlbChi2 = allDimuons.clone(tight_cut = loose_cut.replace(' && globalTrack.normalizedChi2 < 10', ''))
-process.allDimuonsNoPxHits  = allDimuons.clone(tight_cut = loose_cut.replace(' && globalTrack.hitPattern.numberOfValidPixelHits >= 1', ''))
-process.allDimuonsNoMuHits  = allDimuons.clone(tight_cut = loose_cut.replace(' && globalTrack.hitPattern.numberOfValidMuonHits > 0', ''))
-process.allDimuonsNoMuSegs  = allDimuons.clone(tight_cut = loose_cut.replace(' && numberOfMatchedStations > 1', ''))
-process.allDimuonsNoTkMuon  = allDimuons.clone(tight_cut = loose_cut.replace(' && isTrackerMuon', ''))
+process.allDimuonsNoTkHits  = allDimuons.clone(loose_cut = loose_cut.replace(' && globalTrack.hitPattern.numberOfValidTrackerHits > 10', ''))
+process.allDimuonsNoDB      = allDimuons.clone(loose_cut = loose_cut.replace(' && abs(dB) < 0.2', ''))
+process.allDimuonsNoGlbChi2 = allDimuons.clone(loose_cut = loose_cut.replace(' && globalTrack.normalizedChi2 < 10', ''))
+process.allDimuonsNoPxHits  = allDimuons.clone(loose_cut = loose_cut.replace(' && globalTrack.hitPattern.numberOfValidPixelHits >= 1', ''))
+process.allDimuonsNoMuHits  = allDimuons.clone(loose_cut = loose_cut.replace(' && globalTrack.hitPattern.numberOfValidMuonHits > 0', ''))
+process.allDimuonsNoMuSegs  = allDimuons.clone(loose_cut = loose_cut.replace(' && numberOfMatchedStations > 1', ''))
+process.allDimuonsNoTkMuon  = allDimuons.clone(loose_cut = loose_cut.replace(' && isTrackerMuon', ''))
 process.allDimuonsNoTrgMtch = allDimuons.clone(tight_cut = tight_cut.replace(trigger_match, ''))
 process.allDimuonsNoNo      = allDimuons.clone()
 
 alldimus = [x for x in dir(process) if 'allDimuonsNo' in x]
+
+# Sanity check that the replaces above did something.
+for x in alldimus:
+    if 'NoNo' in x:
+        continue
+    o = getattr(process, x)
+    assert o.loose_cut.value() != process.allDimuons.loose_cut.value() or o.tight_cut.value() != process.allDimuons.tight_cut.value()
+
 process.p = cms.Path(process.goodDataFilter * process.muonPhotonMatch * process.leptons * reduce(lambda x,y: x*y, [getattr(process, x) for x in alldimus]))
 
 # For all the allDimuons producers, make dimuons producers, and
@@ -107,6 +115,7 @@ events_per_job = 50000
         dataset_details = [
             ('zmumu',    '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-datamc_zmumu-5222c20b53e3c47b6c8353d464ee954c/USER'),
             ('ttbar',    '/TT_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ttbar-5222c20b53e3c47b6c8353d464ee954c/USER'),
+            ('dy120',    '/DYToMuMu_M-120_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy120-5222c20b53e3c47b6c8353d464ee954c/USER'),
             ('dy200',    '/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy200-5222c20b53e3c47b6c8353d464ee954c/USER'),
             ('dy500',    '/DYToMuMu_M-500_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy500-5222c20b53e3c47b6c8353d464ee954c/USER'),
             ('zssm1000', '/ZprimeSSMToMuMu_M-1000_TuneZ2_7TeV-pythia6/tucker-datamc_zssm1000-5222c20b53e3c47b6c8353d464ee954c/USER'),

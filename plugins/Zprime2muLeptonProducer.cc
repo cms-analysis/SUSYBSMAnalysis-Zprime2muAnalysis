@@ -62,17 +62,6 @@ pat::Electron* Zprime2muLeptonProducer::cloneAndSwitchElectronEnergy(const pat::
   // weighted combination of the calorimeter and track-fit energy. See
   // the section "General Comments" at
   // https://twiki.cern.ch/twiki/bin/view/CMS/HEEPElectronID.
-  //
-  // Temporary hack: we disabled dEtaIn for the endcap in
-  // HEEPIdValueMapProducer at the tupling stage. Fortunately it is
-  // one of the cuts that can still be done on the pat::Electron (some
-  // others need the original reco::GsfElectron, which is why we do
-  // the HEEP id at tupling time anyway). So, instead of redoing
-  // tuples, apply the cut now. This won't have any effect on new
-  // tuples produced with dEtaIn enabled in the endcap.
-  if (!electron.isEB() && fabs(electron.deltaEtaSuperClusterTrackAtVtx()) > 0.007)
-    return 0;
-
   pat::Electron* el = electron.clone();
   el->setP4(electron.p4() * (electron.caloEnergy() / electron.energy()));
   return el;
@@ -138,9 +127,18 @@ std::pair<pat::Electron*,int> Zprime2muLeptonProducer::doLepton(const pat::Elect
 
   // Caller will own this pointer.
   pat::Electron* new_el = cloneAndSwitchElectronEnergy(el);
+
+  if (new_el == 0)
+    return std::make_pair(new_el, -1);
+
+  // Store the minimum muon dR for later use.
   new_el->addUserFloat("min_muon_dR", float(min_muon_dR));
 
-  int cutFor = new_el == 0 ? -1 : electron_selector(*new_el) ? 0 : 1;
+  // Evaluate cuts here with string object selector, and any code that
+  // cannot be done in the string object selector (so far, just the
+  // minimum muon dR above).
+  int cutFor = electron_selector(*new_el) ? 0 : 1;
+
   return std::make_pair(new_el, cutFor);
 }
 

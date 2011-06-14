@@ -45,6 +45,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   const bool leptonsFromDileptons;
   edm::InputTag beamspot_src;
   edm::InputTag vertex_src;
+  const bool use_bs_and_pv;
 
   // mmm bare ptrs
   const reco::BeamSpot* beamspot;
@@ -113,7 +114,10 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
     dilepton_src(cfg.getParameter<edm::InputTag>("dilepton_src")),
     leptonsFromDileptons(cfg.getParameter<bool>("leptonsFromDileptons")),
     beamspot_src(cfg.getParameter<edm::InputTag>("beamspot_src")),
-    vertex_src(cfg.getParameter<edm::InputTag>("vertex_src"))
+    vertex_src(cfg.getParameter<edm::InputTag>("vertex_src")),
+    use_bs_and_pv(cfg.getParameter<bool>("use_bs_and_pv")),
+    beamspot(0),
+    vertex(0)
 {
   std::string title_prefix = cfg.getUntrackedParameter<std::string>("titlePrefix", "");
   if (title_prefix.size() && title_prefix[title_prefix.size()-1] != ' ')
@@ -407,7 +411,8 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidateCol
 }
 
 void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSetup& setup) {
-  getBSandPV(event);
+  if (use_bs_and_pv)
+    getBSandPV(event);
 
   edm::Handle<edm::View<reco::Candidate> > leptons;
   event.getByLabel(lepton_src, leptons);

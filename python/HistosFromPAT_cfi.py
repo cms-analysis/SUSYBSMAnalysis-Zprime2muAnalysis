@@ -6,4 +6,5 @@ HistosFromPAT = cms.EDAnalyzer('Zprime2muHistosFromPAT',
                                leptonsFromDileptons = cms.bool(False),
                                beamspot_src = cms.InputTag('offlineBeamSpot'),
                                vertex_src = cms.InputTag('offlinePrimaryVertices'),
+                               use_bs_and_pv = cms.bool(True),
                                )

@@ -88,27 +88,27 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
   
   LeptonEtaDiff = fs->make<TH1F>("LeptonEtaDiff", titlePrefix + "#eta - gen #eta", 100, -0.002, 0.002);
   LeptonPhiDiff = fs->make<TH1F>("LeptonPhiDiff", titlePrefix + "#phi - gen #phi", 100, -0.002, 0.002);
-  LeptonPtDiff  = fs->make<TH1F>("LeptonPtDiff",  titlePrefix + "pT - gen pT", 100, -20, 20);
+  LeptonPtDiff  = fs->make<TH1F>("LeptonPtDiff",  titlePrefix + "pT - gen pT", 200, -100, 100);
   LeptonPtScatter = fs->make<TH2F>("LeptonPtScatter", titlePrefix + "pT vs. gen pT", 100, 0, 2000, 100, 0, 2000);
 
-  LeptonPtRes = fs->make<TH1F>("LeptonPtRes", titlePrefix + "(pT - gen pT)/(gen pT)", 100, -0.5, 0.5);
-  LeptonPRes  = fs->make<TH1F>("LeptonPRes",  titlePrefix + "(p - gen p)/(gen p)",    100, -0.5, 0.5);
+  LeptonPtRes = fs->make<TH1F>("LeptonPtRes", titlePrefix + "(pT - gen pT)/(gen pT)", 200, -1, 1);
+  LeptonPRes  = fs->make<TH1F>("LeptonPRes",  titlePrefix + "(p - gen p)/(gen p)",    200, -1, 1);
 
-  LeptonInvPtRes = fs->make<TH1F>("LeptonInvPtRes", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT)", 100, -0.5, 0.5);
-  LeptonInvPRes  = fs->make<TH1F>("LeptonInvPRes",  titlePrefix + "(1/p - 1/gen p)/(1/gen p)",    100, -0.5, 0.5);
+  LeptonInvPtRes = fs->make<TH1F>("LeptonInvPtRes", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT)", 200, -1, 1);
+  LeptonInvPRes  = fs->make<TH1F>("LeptonInvPRes",  titlePrefix + "(1/p - 1/gen p)/(1/gen p)",    200, -1, 1);
 
-  LeptonInvPtResVPtGen = fs->make<TProfile>("LeptonInvPtResVPtGen", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT", 50, 0, 1000, -0.5, 0.5);
-  LeptonInvPResVPGen   = fs->make<TProfile>("LeptonInvPResVPGen",   titlePrefix + "(1/p - 1/gen p)/(1/gen p) vs. gen p",     50, 0, 1000, -0.5, 0.5);
+  LeptonInvPtResVPtGen = fs->make<TProfile>("LeptonInvPtResVPtGen", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT", 100, 0, 1500, -1, 1);
+  LeptonInvPResVPGen   = fs->make<TProfile>("LeptonInvPResVPGen",   titlePrefix + "(1/p - 1/gen p)/(1/gen p) vs. gen p",     100, 0, 1500, -1, 1);
   
   LeptonInvPtPull = fs->make<TH1F>("LeptonInvPtPull", titlePrefix + "(1/pT - 1/gen pT)/#sigma_{1/pT}", 100, -10, 10);
   LeptonInvPPull  = fs->make<TH1F>("LeptonInvPPull",  titlePrefix + "(1/p - 1/gen p)/#sigma_{1/p}",    100, -10, 10);
 
   static const TString lepton_where_names[W_L_MAX] = {"Barrel", "Overlap", "Endcap", "Outside"};
   for (size_t i = 0; i < W_L_MAX; ++i) {
-    LeptonInvPtResBy [i] = fs->make<TH1F>("LeptonInvPtRes"  + lepton_where_names[i], titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT), "    + lepton_where_names[i], 100, -0.5, 0.5);
-    LeptonInvPResBy  [i] = fs->make<TH1F>("LeptonInvPRes"   + lepton_where_names[i], titlePrefix + "(1/p - 1/gen p)/(1/gen p), "       + lepton_where_names[i], 100, -0.5, 0.5);
-    LeptonInvPtPullBy[i] = fs->make<TH1F>("LeptonInvPtPull" + lepton_where_names[i], titlePrefix + "(1/pT - 1/gen pT)/#sigma_{1/pT}, " + lepton_where_names[i], 100, -10, 10);
-    LeptonInvPPullBy [i] = fs->make<TH1F>("LeptonInvPPull"  + lepton_where_names[i], titlePrefix + "(1/p - 1/gen p)/#sigma_{1/p}, "    + lepton_where_names[i], 100, -10, 10);
+    LeptonInvPtResBy [i] = fs->make<TH1F>("LeptonInvPtRes"  + lepton_where_names[i], titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT), "    + lepton_where_names[i], 200, -1, 1);
+    LeptonInvPResBy  [i] = fs->make<TH1F>("LeptonInvPRes"   + lepton_where_names[i], titlePrefix + "(1/p - 1/gen p)/(1/gen p), "       + lepton_where_names[i], 200, -1, 1);
+    LeptonInvPtPullBy[i] = fs->make<TH1F>("LeptonInvPtPull" + lepton_where_names[i], titlePrefix + "(1/pT - 1/gen pT)/#sigma_{1/pT}, " + lepton_where_names[i], 200, -10, 10);
+    LeptonInvPPullBy [i] = fs->make<TH1F>("LeptonInvPPull"  + lepton_where_names[i], titlePrefix + "(1/p - 1/gen p)/#sigma_{1/p}, "    + lepton_where_names[i], 200, -10, 10);
   }
 
   ChargeDiff = fs->make<TH1F>("ChargeDiff", titlePrefix + "q - gen q", 7, -3.5, 3.5);
@@ -119,19 +119,19 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
   ChargeRightVInvPt->Sumw2();
   ChargeWrongVInvPt->Sumw2();
 
-  DileptonMassRes    = fs->make<TH1F>("DileptonMassRes",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 100, -0.5, 0.5);
-  DileptonResMassRes = fs->make<TH1F>("DileptonResMassRes", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", 100, -0.5, 0.5);
-  ResonanceMassRes   = fs->make<TH1F>("ResonanceMassRes",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", 100, -0.5, 0.5);
+  DileptonMassRes    = fs->make<TH1F>("DileptonMassRes",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 200, -1, 1);
+  DileptonResMassRes = fs->make<TH1F>("DileptonResMassRes", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", 200, -1, 1);
+  ResonanceMassRes   = fs->make<TH1F>("ResonanceMassRes",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", 200, -1, 1);
   
-  DileptonMassResVMass    = fs->make<TProfile>("DileptonMassResVMass",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 100, 0, 2000, -0.5, 0.5);
-  DileptonResMassResVMass = fs->make<TProfile>("DileptonResMassResVMass", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", 100, 0, 2000, -0.5, 0.5);
-  ResonanceMassResVMass   = fs->make<TProfile>("ResonanceMassResVMass",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", 100, 0, 2000, -0.5, 0.5);
+  DileptonMassResVMass    = fs->make<TProfile>("DileptonMassResVMass",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 300, 0, 3000, -1, 1);
+  DileptonResMassResVMass = fs->make<TProfile>("DileptonResMassResVMass", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", 300, 0, 3000, -1, 1);
+  ResonanceMassResVMass   = fs->make<TProfile>("ResonanceMassResVMass",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", 300, 0, 3000, -1, 1);
 
   static const TString dilepton_where_names[W_D_MAX] = {"BB", "BO", "BE", "BU", "OO", "OE", "OU", "EE", "EU", "UU"};
   for (size_t i = 0; i < W_D_MAX; ++i) {
-    DileptonMassResBy   [i] = fs->make<TH1F>("DileptonMassRes"    + dilepton_where_names[i], titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass), " + dilepton_where_names[i], 100, -0.5, 0.5);
-    DileptonResMassResBy[i] = fs->make<TH1F>("DileptonResMassRes" + dilepton_where_names[i], titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass), " + dilepton_where_names[i], 100, -0.5, 0.5);
-    ResonanceMassResBy  [i] = fs->make<TH1F>("ResonanceMassRes"   + dilepton_where_names[i], titlePrefix + "(res. mass - gen res. mass)/(gen res. mass), " + dilepton_where_names[i], 100, -0.5, 0.5);
+    DileptonMassResBy   [i] = fs->make<TH1F>("DileptonMassRes"    + dilepton_where_names[i], titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass), " + dilepton_where_names[i], 200, -1, 1);
+    DileptonResMassResBy[i] = fs->make<TH1F>("DileptonResMassRes" + dilepton_where_names[i], titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass), " + dilepton_where_names[i], 200, -1, 1);
+    ResonanceMassResBy  [i] = fs->make<TH1F>("ResonanceMassRes"   + dilepton_where_names[i], titlePrefix + "(res. mass - gen res. mass)/(gen res. mass), " + dilepton_where_names[i], 200, -1, 1);
   }
 }
 

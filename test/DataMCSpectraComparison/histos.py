@@ -140,7 +140,7 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
 if 'gogo' in sys.argv:
     ntuplify(process)
     printify(process)
-    from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import files_from_argv
+    from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import files_from_argv, set_events_to_process
     #files_from_argv(process)
 
 if __name__ == '__main__' and 'submit' in sys.argv:
@@ -240,9 +240,9 @@ events_per_job = 50000
 
         from samples import samples
         for sample in reversed(samples):
-            print sample.name
             if 'Summer11' not in sample.dataset:
                 continue
+            print sample.name
 
             new_py = open('histos.py').read()
             new_py += "\nprocess.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', '%(hlt_process_name)s')\n" % sample

@@ -15,15 +15,15 @@ process.GlobalTag.globaltag = 'START42_V11::All'
 if __name__ == '__main__' and 'submit' in sys.argv:
     job_control = '''
 total_number_of_events = -1
-events_per_job = 50000
+events_per_job = 100000
 '''
 
     just_testing = 'testing' in sys.argv
     from samples import samples
     for sample in samples:
-        print sample.name
         if 'Summer11' not in sample.dataset:
             continue
+        print sample.name
 
         new_py = open('tuple_mc.py').read()
         new_py += '\nswitchHLTProcessName(process, "%(hlt_process_name)s")\n' % sample.__dict__

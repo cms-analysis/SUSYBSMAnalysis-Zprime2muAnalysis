@@ -33,7 +33,7 @@ if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
 [CRAB]
 jobtype = cmssw
-scheduler = condor
+scheduler = glite
 
 [CMSSW]
 datasetpath = %(dataset)s

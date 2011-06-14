@@ -65,3 +65,9 @@ def rec_level_module(process, module, name, tracks):
         setattr(process, name + t, h)
         p.append(h)
     return reduce(lambda x,y: x*y, p)
+
+def switch_to_old_selection(process):
+    import OurSelectionOld_cff
+    process.leptons.muon_cuts = OurSelectionOld_cff.loose_cut
+    process.allDimuons = OurSelectionOld_cff.allDimuons
+    process.dimuons = OurSelectionOld_cff.dimuons

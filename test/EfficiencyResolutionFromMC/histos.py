@@ -2,7 +2,13 @@
 
 import sys, os
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import cms, process
-process.source.fileNames = ['file:pat.root']
+
+use_old_selection = False
+if use_old_selection:
+    from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_to_old_selection
+    switch_to_old_selection(process)   
+
+process.source.fileNames = ['/store/user/tucker/ZprimeSSMToMuMu_M-2250_TuneZ2_7TeV-pythia6/effres_zp2250/dd2126535e23ba03e5a28af2e68bf29c/pat_1_2_pYX.root']
 process.options.wantSummary = True
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import rec_levels, rec_level_module
@@ -39,6 +45,7 @@ process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi')
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.ResolutionUsingMC_cfi')
 
 process.HistosFromPAT.leptonsFromDileptons = True
+process.HistosFromPAT.use_bs_and_pv = False
 process.ResolutionUsingMC.leptonsFromDileptons = True
 process.ResolutionUsingMC.doQoverP = True
 
@@ -98,6 +105,8 @@ return_data = 1
         1250: 0.080,
         1500: 0.086,
         1750: 0.089,
+        2000: 0.092,
+        2250: 0.095,
         }
     
     just_testing = 'testing' in sys.argv

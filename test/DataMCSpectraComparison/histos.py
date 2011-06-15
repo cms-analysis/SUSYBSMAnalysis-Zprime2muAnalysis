@@ -169,8 +169,7 @@ return_data = 1
 
         dataset_details = [
             ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10_new-b2cd34b4395e3cc0cd295229bc3495ca/USER'),
-            ('SingleMu2011A_Prompt_165071_165999', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_165999_20110601165210-8788f1b70631d1fb57e97a89f5e8007c/USER'),
-            ('SingleMu2011A_Prompt_166000_166562', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_166000_166562_20110608180104-8788f1b70631d1fb57e97a89f5e8007c/USER'),
+            ('SingleMu2011A_Prompt_165071_166839', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_166839_20110614010836-8788f1b70631d1fb57e97a89f5e8007c/USER'),
             ]
 
         lumi_lists = [
@@ -208,7 +207,7 @@ return_data = 1
 
             job_control = '''
 total_number_of_lumis = -1
-number_of_jobs = 20
+lumis_per_job = 500
 %(lumi_mask)s''' % locals()
 
             new_crab_cfg = new_crab_cfg.replace('job_control', job_control)
@@ -231,11 +230,11 @@ number_of_jobs = 20
         # Set crab_cfg for MC.
         crab_cfg = crab_cfg.replace('job_control','''
 total_number_of_events = -1
-events_per_job = 50000
+events_per_job = 100000
     ''')
 
         import samples
-        combine_dy_samples = len([x for x in samples.samples if x.name in ['dy200', 'dy500', 'dy800']]) > 0
+        combine_dy_samples = len([x for x in samples.samples if x.name in ['dy200', 'dy500', 'dy800', 'dy1000']]) > 0
         print 'combine_dy_samples:', combine_dy_samples
 
         from samples import samples

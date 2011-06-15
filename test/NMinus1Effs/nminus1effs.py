@@ -8,30 +8,47 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff import loose_cut, tri
 process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/datamc_zmumu/5222c20b53e3c47b6c8353d464ee954c/pat_42_3_74A.root']
 
 # Define the numerators and denominators, removing cuts from the
-# allDimuons maker. "NoX" means remove cut X (i.e. the denominators),
-# "NoNo" means remove nothing (i.e. the numerators). This will break
-# if loose_, tight_ cut strings are changed...
-process.allDimuonsNoPt      = allDimuons.clone(loose_cut = loose_cut.replace(' && pt > 35.', ''))
-process.allDimuonsNoPt35Pt5 = allDimuons.clone(loose_cut = loose_cut.replace(' && pt > 35.', ' && pt > 5.'))
-process.allDimuonsNoIso     = allDimuons.clone(loose_cut = loose_cut.replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', ''))
-process.allDimuonsNoTkHits  = allDimuons.clone(loose_cut = loose_cut.replace(' && globalTrack.hitPattern.numberOfValidTrackerHits > 10', ''))
-process.allDimuonsNoDB      = allDimuons.clone(loose_cut = loose_cut.replace(' && abs(dB) < 0.2', ''))
-process.allDimuonsNoGlbChi2 = allDimuons.clone(loose_cut = loose_cut.replace(' && globalTrack.normalizedChi2 < 10', ''))
-process.allDimuonsNoPxHits  = allDimuons.clone(loose_cut = loose_cut.replace(' && globalTrack.hitPattern.numberOfValidPixelHits >= 1', ''))
-process.allDimuonsNoMuHits  = allDimuons.clone(loose_cut = loose_cut.replace(' && globalTrack.hitPattern.numberOfValidMuonHits > 0', ''))
-process.allDimuonsNoMuSegs  = allDimuons.clone(loose_cut = loose_cut.replace(' && numberOfMatchedStations > 1', ''))
-process.allDimuonsNoTkMuon  = allDimuons.clone(loose_cut = loose_cut.replace(' && isTrackerMuon', ''))
-process.allDimuonsNoTrgMtch = allDimuons.clone(tight_cut = tight_cut.replace(trigger_match, ''))
-process.allDimuonsNoNo      = allDimuons.clone()
+# allDimuons maker. "NoX" means remove cut X entirely (i.e. the
+# loose_cut denominators), "TiX" means move cut X from the loose_cut
+# to the tight_cut (meaning only one muon instead of two has to pass
+# the cut).  "NoNo" means remove nothing (i.e. the numerator). This
+# will break if loose_, tight_cut strings are changed upstream, so we
+# try to check those with a silly hash next. (Don't want to check full
+# string equality since then we have one more string to maintain
+# besides the N of the below.)
 
-alldimus = [x for x in dir(process) if 'allDimuonsNo' in x]
+assert hash(loose_cut) == -5604570599357377599
+assert hash(tight_cut) == -2883478064365267914
+
+cuts = [
+    ('TkMuon',  'isTrackerMuon'),
+    ('Pt',      'pt > 35.'),
+    ('DB',      'abs(dB) < 0.2'),
+    ('GlbChi2', 'globalTrack.normalizedChi2 < 10'),
+    ('Iso',     'isolationR03.sumPt / innerTrack.pt < 0.10'),
+    ('TkHits',  'globalTrack.hitPattern.numberOfValidTrackerHits > 10'),
+    ('PxHits',  'globalTrack.hitPattern.numberOfValidPixelHits >= 1'),
+    ('MuHits',  'globalTrack.hitPattern.numberOfValidMuonHits > 0'),
+    ('MuMatch', 'numberOfMatchedStations > 1'),
+    ]
+
+for name, cut in cuts:
+    obj_no = allDimuons.clone(loose_cut = loose_cut.replace(' && %s' % cut, '')) # Relies on none of the cuts above being first in the list.
+    setattr(process, 'allDimuonsNo' + name, obj_no)
+    obj_ti = obj_no.clone(tight_cut = tight_cut + ' && ' + cut)
+    setattr(process, 'allDimuonsTi' + name, obj_ti)
+
+process.allDimuonsNoNo      = allDimuons.clone()
+process.allDimuonsNoTrgMtch = allDimuons.clone(tight_cut = tight_cut.replace(trigger_match, ''))
+
+alldimus = [x for x in dir(process) if 'allDimuonsNo' in x or 'allDimuonsTi' in x]
 
 # Sanity check that the replaces above did something.
 for x in alldimus:
     if 'NoNo' in x:
         continue
     o = getattr(process, x)
-    assert o.loose_cut.value() != process.allDimuons.loose_cut.value() or o.tight_cut.value() != process.allDimuons.tight_cut.value()
+    assert o.loose_cut.value() != loose_cut or o.tight_cut.value() != tight_cut
 
 process.p = cms.Path(process.goodDataFilter * process.muonPhotonMatch * process.leptons * reduce(lambda x,y: x*y, [getattr(process, x) for x in alldimus]))
 
@@ -118,7 +135,7 @@ events_per_job = 50000
             ('dy120',    '/DYToMuMu_M-120_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy120-5222c20b53e3c47b6c8353d464ee954c/USER'),
             ('dy200',    '/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy200-5222c20b53e3c47b6c8353d464ee954c/USER'),
             ('dy500',    '/DYToMuMu_M-500_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy500-5222c20b53e3c47b6c8353d464ee954c/USER'),
-            ('zssm1000', '/ZprimeSSMToMuMu_M-1000_TuneZ2_7TeV-pythia6/tucker-datamc_zssm1000-5222c20b53e3c47b6c8353d464ee954c/USER'),
+            ('dy1000',   '/DYToMuMu_M-1000_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy1000-5222c20b53e3c47b6c8353d464ee954c/USER'),
             ]
 
         for name, ana_dataset in dataset_details:

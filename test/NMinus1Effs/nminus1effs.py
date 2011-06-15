@@ -6,6 +6,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
 from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff import loose_cut, trigger_match, tight_cut, allDimuons
 
 process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/datamc_zmumu/5222c20b53e3c47b6c8353d464ee954c/pat_42_3_74A.root']
+process.maxEvents.input = 1000
 
 # Define the numerators and denominators, removing cuts from the
 # allDimuons maker. "NoX" means remove cut X entirely (i.e. the
@@ -21,7 +22,6 @@ assert hash(loose_cut) == -5604570599357377599
 assert hash(tight_cut) == -2883478064365267914
 
 cuts = [
-    ('TkMuon',  'isTrackerMuon'),
     ('Pt',      'pt > 35.'),
     ('DB',      'abs(dB) < 0.2'),
     ('GlbChi2', 'globalTrack.normalizedChi2 < 10'),
@@ -29,13 +29,21 @@ cuts = [
     ('TkHits',  'globalTrack.hitPattern.numberOfValidTrackerHits > 10'),
     ('PxHits',  'globalTrack.hitPattern.numberOfValidPixelHits >= 1'),
     ('MuHits',  'globalTrack.hitPattern.numberOfValidMuonHits > 0'),
-    ('MuMatch', 'numberOfMatchedStations > 1'),
+    ('MuMatch', ('numberOfMatchedStations > 1', 'isTrackerMuon')),
     ]
 
 for name, cut in cuts:
-    obj_no = allDimuons.clone(loose_cut = loose_cut.replace(' && %s' % cut, '')) # Relies on none of the cuts above being first in the list.
+    if type(cut) != tuple:
+        cut = (cut,)
+
+    lc = loose_cut
+    for c in cut:
+        lc = lc.replace(' && ' + c, '') # Relies on none of the cuts above being first in the list.
+
+    obj_no = allDimuons.clone(loose_cut = lc)
     setattr(process, 'allDimuonsNo' + name, obj_no)
-    obj_ti = obj_no.clone(tight_cut = tight_cut + ' && ' + cut)
+    
+    obj_ti = obj_no.clone(tight_cut = tight_cut + ' && ' + ' && '.join(cut))
     setattr(process, 'allDimuonsTi' + name, obj_ti)
 
 process.allDimuonsNoNo      = allDimuons.clone()

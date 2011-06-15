@@ -82,6 +82,14 @@ for dimu in ['dimuonsNoB2B', 'dimuonsNoVtxProb']:
     setattr(process, dimu.replace('dimuons', ''), hists)
     process.p *= getattr(process, dimu) * hists
 
+# Special case to remove |dB| and B2B cuts simultaneously, as they can
+# be correlated (anti-cosmics).
+process.allDimuonsNoCosm = process.allDimuons.clone(loose_cut = loose_cut.replace(' && abs(dB) < 0.2', ''))
+process.dimuonsNoCosm = process.dimuons.clone(src = 'allDimuonsNoCosm')
+delattr(process.dimuonsNoCosm, 'back_to_back_cos_angle_min')
+process.NoCosm = HistosFromPAT.clone(dilepton_src = 'dimuonsNoCosm', leptonsFromDileptons = True)
+process.p *= process.allDimuonsNoCosm * process.dimuonsNoCosm * process.NoCosm
+
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
 [CRAB]

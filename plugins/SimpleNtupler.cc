@@ -16,6 +16,7 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymFunctions.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneralUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 
 class SimpleNtupler : public edm::EDAnalyzer {
@@ -61,18 +62,32 @@ private:
     float lep_tk_pt_err[2];
     float lep_tk_eta[2];
     float lep_tk_phi[2];
+    float lep_tk_chi2[2];
+    float lep_tk_ndf[2];
     float lep_glb_pt[2];
     float lep_glb_pt_err[2];
     float lep_glb_eta[2];
     float lep_glb_phi[2];
+    float lep_glb_chi2[2];
+    float lep_glb_ndf[2];
     float lep_tpfms_pt[2];
     float lep_tpfms_pt_err[2];
     float lep_tpfms_eta[2];
     float lep_tpfms_phi[2];
+    float lep_tpfms_chi2[2];
+    float lep_tpfms_ndf[2];
     float lep_picky_pt[2];
     float lep_picky_pt_err[2];
     float lep_picky_eta[2];
     float lep_picky_phi[2];
+    float lep_picky_chi2[2];
+    float lep_picky_ndf[2];
+    float lep_cocktail_pt[2];
+    float lep_cocktail_pt_err[2];
+    float lep_cocktail_eta[2];
+    float lep_cocktail_phi[2];
+    float lep_cocktail_chi2[2];
+    float lep_cocktail_ndf[2];
     float lep_triggerMatchPt[2];
     float lep_chi2dof[2];
     float lep_dB[2];
@@ -151,24 +166,39 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->Branch("vertex_z_err", &t.vertex_z_err, "vertex_z_err/F");
   tree->Branch("lep_id", t.lep_id, "lep_id[2]/I");
   tree->Branch("lep_pt", t.lep_pt, "lep_pt[2]/F");
+  tree->Branch("lep_pt_err", t.lep_pt_err, "lep_pt_err[2]/F");
   tree->Branch("lep_eta", t.lep_eta, "lep_eta[2]/F");
   tree->Branch("lep_phi", t.lep_phi, "lep_phi[2]/F");
   tree->Branch("lep_tk_pt", t.lep_tk_pt, "lep_tk_pt[2]/F");
   tree->Branch("lep_tk_pt_err", t.lep_tk_pt_err, "lep_tk_pt_err[2]/F");
   tree->Branch("lep_tk_eta", t.lep_tk_eta, "lep_tk_eta[2]/F");
   tree->Branch("lep_tk_phi", t.lep_tk_phi, "lep_tk_phi[2]/F");
+  tree->Branch("lep_tk_chi2", t.lep_tk_chi2, "lep_tk_chi2[2]/F");
+  tree->Branch("lep_tk_ndf", t.lep_tk_ndf, "lep_tk_ndf[2]/F");
   tree->Branch("lep_glb_pt", t.lep_glb_pt, "lep_glb_pt[2]/F");
   tree->Branch("lep_glb_pt_err", t.lep_glb_pt_err, "lep_glb_pt_err[2]/F");
   tree->Branch("lep_glb_eta", t.lep_glb_eta, "lep_glb_eta[2]/F");
   tree->Branch("lep_glb_phi", t.lep_glb_phi, "lep_glb_phi[2]/F");
+  tree->Branch("lep_glb_chi2", t.lep_glb_chi2, "lep_glb_chi2[2]/F");
+  tree->Branch("lep_glb_ndf", t.lep_glb_ndf, "lep_glb_ndf[2]/F");
   tree->Branch("lep_tpfms_pt", t.lep_tpfms_pt, "lep_tpfms_pt[2]/F");
   tree->Branch("lep_tpfms_pt_err", t.lep_tpfms_pt_err, "lep_tpfms_pt_err[2]/F");
   tree->Branch("lep_tpfms_eta", t.lep_tpfms_eta, "lep_tpfms_eta[2]/F");
   tree->Branch("lep_tpfms_phi", t.lep_tpfms_phi, "lep_tpfms_phi[2]/F");
+  tree->Branch("lep_tpfms_chi2", t.lep_tpfms_chi2, "lep_tpfms_chi2[2]/F");
+  tree->Branch("lep_tpfms_ndf", t.lep_tpfms_ndf, "lep_tpfms_ndf[2]/F");
   tree->Branch("lep_picky_pt", t.lep_picky_pt, "lep_picky_pt[2]/F");
   tree->Branch("lep_picky_pt_err", t.lep_picky_pt_err, "lep_picky_pt_err[2]/F");
   tree->Branch("lep_picky_eta", t.lep_picky_eta, "lep_picky_eta[2]/F");
   tree->Branch("lep_picky_phi", t.lep_picky_phi, "lep_picky_phi[2]/F");
+  tree->Branch("lep_picky_chi2", t.lep_picky_chi2, "lep_picky_chi2[2]/F");
+  tree->Branch("lep_picky_ndf", t.lep_picky_ndf, "lep_picky_ndf[2]/F");
+  tree->Branch("lep_cocktail_pt", t.lep_cocktail_pt, "lep_cocktail_pt[2]/F");
+  tree->Branch("lep_cocktail_pt_err", t.lep_cocktail_pt_err, "lep_cocktail_pt_err[2]/F");
+  tree->Branch("lep_cocktail_eta", t.lep_cocktail_eta, "lep_cocktail_eta[2]/F");
+  tree->Branch("lep_cocktail_phi", t.lep_cocktail_phi, "lep_cocktail_phi[2]/F");
+  tree->Branch("lep_cocktail_chi2", t.lep_cocktail_chi2, "lep_cocktail_chi2[2]/F");
+  tree->Branch("lep_cocktail_ndf", t.lep_cocktail_ndf, "lep_cocktail_ndf[2]/F");
   tree->Branch("lep_triggerMatchPt", t.lep_triggerMatchPt, "lep_triggerMatchPt[2]/F");
   tree->Branch("lep_chi2dof", t.lep_chi2dof, "lep_chi2dof[2]/F");
   tree->Branch("lep_dB", t.lep_dB, "lep_dB[2]/F");
@@ -398,18 +428,32 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	t.lep_tk_pt_err[w] = -999;
 	t.lep_tk_eta[w] = -999;
 	t.lep_tk_phi[w] = -999;
+	t.lep_tk_chi2[w] = -999;
+	t.lep_tk_ndf[w] = -999;
 	t.lep_glb_pt[w] = -999;
 	t.lep_glb_pt_err[w] = -999;
 	t.lep_glb_eta[w] = -999;
 	t.lep_glb_phi[w] = -999;
+	t.lep_glb_chi2[w] = -999;
+	t.lep_glb_ndf[w] = -999;
 	t.lep_tpfms_pt[w] = -999;
 	t.lep_tpfms_pt_err[w] = -999;
 	t.lep_tpfms_eta[w] = -999;
 	t.lep_tpfms_phi[w] = -999;
+	t.lep_tpfms_chi2[w] = -999;
+	t.lep_tpfms_ndf[w] = -999;
 	t.lep_picky_pt[w] = -999;
 	t.lep_picky_pt_err[w] = -999;
 	t.lep_picky_eta[w] = -999;
 	t.lep_picky_phi[w] = -999;
+	t.lep_picky_chi2[w] = -999;
+	t.lep_picky_ndf[w] = -999;
+	t.lep_cocktail_pt[w] = -999;
+	t.lep_cocktail_pt_err[w] = -999;
+	t.lep_cocktail_eta[w] = -999;
+	t.lep_cocktail_phi[w] = -999;
+	t.lep_cocktail_chi2[w] = -999;
+	t.lep_cocktail_ndf[w] = -999;
 	t.lep_triggerMatchPt[w] = -999;
 	t.lep_chi2dof[w] = -999;
 	t.lep_dB[w] = -999;
@@ -446,37 +490,70 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	const pat::Muon* mu = toConcretePtr<pat::Muon>(dileptonDaughter(dil, i));
 	assert(mu);
 
+	reco::TrackRef pickedTrack = patmuon::getPickedTrack(*mu);
+	t.lep_pt_err[w] = pickedTrack->ptError();
+
 	t.lep_tk_pt[w] = mu->innerTrack()->pt();
 	t.lep_tk_pt_err[w] = mu->innerTrack()->ptError();
 	t.lep_tk_eta[w] = mu->innerTrack()->eta();
 	t.lep_tk_phi[w] = mu->innerTrack()->phi();
+	t.lep_tk_chi2[w] = mu->innerTrack()->chi2();
+	t.lep_tk_ndf[w] = mu->innerTrack()->ndof();
 	t.lep_glb_pt[w] = mu->globalTrack()->pt();
 	t.lep_glb_pt_err[w] = mu->globalTrack()->ptError();
 	t.lep_glb_eta[w] = mu->globalTrack()->eta();
 	t.lep_glb_phi[w] = mu->globalTrack()->phi();
+	t.lep_glb_chi2[w] = mu->globalTrack()->chi2();
+	t.lep_glb_ndf[w] = mu->globalTrack()->ndof();
 	if (mu->tpfmsMuon().isNull()) {
 	  t.lep_tpfms_pt[w] = -999;
 	  t.lep_tpfms_pt_err[w] = -999;
 	  t.lep_tpfms_eta[w] = -999;
 	  t.lep_tpfms_phi[w] = -999;
+	  t.lep_tpfms_chi2[w] = -999;
+	  t.lep_tpfms_ndf[w] = -999;
 	}
 	else {
 	  t.lep_tpfms_pt[w] = mu->tpfmsMuon()->pt();
 	  t.lep_tpfms_pt_err[w] = mu->tpfmsMuon()->ptError();
 	  t.lep_tpfms_eta[w] = mu->tpfmsMuon()->eta();
 	  t.lep_tpfms_phi[w] = mu->tpfmsMuon()->phi();
+	  t.lep_tpfms_chi2[w] = mu->tpfmsMuon()->chi2();
+	  t.lep_tpfms_ndf[w] = mu->tpfmsMuon()->ndof();
 	}
 	if (mu->pickyMuon().isNull()) {
 	  t.lep_picky_pt[w] = -999;
 	  t.lep_picky_pt_err[w] = -999;
 	  t.lep_picky_eta[w] = -999;
 	  t.lep_picky_phi[w] = -999;
+	  t.lep_picky_chi2[w] = -999;
+	  t.lep_picky_ndf[w] = -999;
 	}
 	else {
 	  t.lep_picky_pt[w] = mu->pickyMuon()->pt();
 	  t.lep_picky_pt_err[w] = mu->pickyMuon()->ptError();
 	  t.lep_picky_eta[w] = mu->pickyMuon()->eta();
 	  t.lep_picky_phi[w] = mu->pickyMuon()->phi();
+	  t.lep_picky_chi2[w] = mu->pickyMuon()->chi2();
+	  t.lep_picky_ndf[w] = mu->pickyMuon()->ndof();
+	}
+
+	reco::TrackRef cocktail = patmuon::pmcTrack(*mu);
+	if (cocktail.isNull()) {
+	  t.lep_cocktail_pt[w] = -999;
+	  t.lep_cocktail_pt_err[w] = -999;
+	  t.lep_cocktail_eta[w] = -999;
+	  t.lep_cocktail_phi[w] = -999;
+	  t.lep_cocktail_chi2[w] = -999;
+	  t.lep_cocktail_ndf[w] = -999;
+	}
+	else {
+	  t.lep_cocktail_pt[w] = cocktail->pt();
+	  t.lep_cocktail_pt_err[w] = cocktail->ptError();
+	  t.lep_cocktail_eta[w] = cocktail->eta();
+	  t.lep_cocktail_phi[w] = cocktail->phi();
+	  t.lep_cocktail_chi2[w] = cocktail->chi2();
+	  t.lep_cocktail_ndf[w] = cocktail->ndof();
 	}
 
 	static const size_t n_single_mu_path_names = 8;

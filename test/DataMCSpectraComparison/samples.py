@@ -78,79 +78,6 @@ samples.reverse()
 for sample in samples:
     exec '%s = sample' % sample.name
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.tools import big_warn
-big_warn("roll that beautiful bean footage")
-
-print 'samples are:'
-print ' '.join(s.name for s in samples)
-
-if False:
-    from dbstools import dbsparents
-    for s in samples:
-        print s.dataset
-        parents = dbsparents(s.dataset)
-        for parent in parents:
-            for line in os.popen('dbss rel %s' % parent):
-                if 'CMSSW' in line:
-                    print parent, line,
-        print
-
-if False:
-    import os
-    from dbstools import dbsparents
-    for s in [ww,wz,zz]:
-        print s.dataset
-        parents = dbsparents(s.dataset)
-        print parents
-        os.system('dbsconfig %s > %s' % (parents[-1], s.name))
-
-    os.system('dbss nevents %s' % x.replace('RECO','RAW'))
-    os.system('dbss nevents %s' % x)
-
-if False:
-    import os
-    from dbstools import dbsparents
-    for s in samples:
-        print s.dataset
-        def fuf(y):
-            x = os.popen(y).read()
-            for line in x.split('\n'):
-                try:
-                    print int(line)
-                except ValueError:
-                    pass
-        fuf('dbss nevents %s' % s.dataset)
-        fuf('dbss nevents %s' % s.dataset.replace('AODSIM','GEN-SIM-RECO'))
-
-if False:
-    for s in samples:
-        print s.name
-        os.system('grep "total events" ~/nobackup/crab_dirs/384p3/publish_logs/publish.crab_datamc_%s' % s.name)
-        os.system('grep "total events" ~/nobackup/crab_dirs/413p2/publish_logs/publish.crab_datamc_%s' % s.name)
-        print
-
-if False:
-    os.system('mkdir ~/scratch/wjets')
-    for fn in wjets.filenames:
-        assert fn.startswith('/store')
-        fn = '/pnfs/cms/WAX/11' + fn
-        cmd = 'dccp %s ~/scratch/wjets/' % fn
-        print cmd
-        os.system(cmd)
-
-if False:
-    for s in samples:
-        print s.name
-        os.system('dbss site %s' % s.dataset)
-        print
-
-if False:
-    for s in samples:
-        try:
-            print '    %(name)s.ana_dataset_ = "%(ana_dataset)s"' % s
-        except IOError:
-            pass
-
 use_predefined_datasets = True
 if use_predefined_datasets:
     wjets.ana_dataset_ = '/WJetsToLNu_TuneZ2_7TeV-madgraph-tauola/tucker-datamc_wjets-396bcdaa1e090647f7fc37d15e445b1a/USER'
@@ -169,3 +96,77 @@ if use_predefined_datasets:
     dy200.ana_dataset_ = '/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy200-5222c20b53e3c47b6c8353d464ee954c/USER'
     dy120.ana_dataset_ = '/DYToMuMu_M-120_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy120-5222c20b53e3c47b6c8353d464ee954c/USER'
     zmumu.ana_dataset_ = '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-datamc_zmumu-5222c20b53e3c47b6c8353d464ee954c/USER'
+
+from SUSYBSMAnalysis.Zprime2muAnalysis.tools import big_warn
+big_warn("roll that beautiful bean footage")
+
+print 'samples are:'
+print ' '.join(s.name for s in samples)
+
+if __name__ == '__main__':
+    if False:
+        from dbstools import dbsparents
+        for s in samples:
+            print s.dataset
+            parents = dbsparents(s.dataset)
+            for parent in parents:
+                for line in os.popen('dbss rel %s' % parent):
+                    if 'CMSSW' in line:
+                        print parent, line,
+            print
+
+    if False:
+        import os
+        from dbstools import dbsparents
+        for s in [ww,wz,zz]:
+            print s.dataset
+            parents = dbsparents(s.dataset)
+            print parents
+            os.system('dbsconfig %s > %s' % (parents[-1], s.name))
+
+        os.system('dbss nevents %s' % x.replace('RECO','RAW'))
+        os.system('dbss nevents %s' % x)
+
+    if False:
+        import os
+        from dbstools import dbsparents
+        for s in samples:
+            print s.dataset
+            def fuf(y):
+                x = os.popen(y).read()
+                for line in x.split('\n'):
+                    try:
+                        print int(line)
+                    except ValueError:
+                        pass
+            fuf('dbss nevents %s' % s.dataset)
+            fuf('dbss nevents %s' % s.dataset.replace('AODSIM','GEN-SIM-RECO'))
+
+    if False:
+        for s in samples:
+            print s.name
+            os.system('grep "total events" ~/nobackup/crab_dirs/384p3/publish_logs/publish.crab_datamc_%s' % s.name)
+            os.system('grep "total events" ~/nobackup/crab_dirs/413p2/publish_logs/publish.crab_datamc_%s' % s.name)
+            print
+
+    if False:
+        os.system('mkdir ~/scratch/wjets')
+        for fn in wjets.filenames:
+            assert fn.startswith('/store')
+            fn = '/pnfs/cms/WAX/11' + fn
+            cmd = 'dccp %s ~/scratch/wjets/' % fn
+            print cmd
+            os.system(cmd)
+
+    if False:
+        for s in samples:
+            print s.name
+            os.system('dbss site %s' % s.dataset)
+            print
+
+    if False:
+        for s in samples:
+            try:
+                print '    %(name)s.ana_dataset_ = "%(ana_dataset)s"' % s
+            except IOError:
+                pass

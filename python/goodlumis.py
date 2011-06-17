@@ -7,7 +7,7 @@ def for_cmssw(ll):
 # These numbers dictate how the rereco, prompt, DCS-only jsons are
 # combined below.
 last_rereco_run = 163869
-last_prompt_run = 166502
+last_prompt_run = 166861
 assert last_prompt_run > last_rereco_run
 
 runs_to_remove_from_dcsonly = range(160404, last_prompt_run+1)

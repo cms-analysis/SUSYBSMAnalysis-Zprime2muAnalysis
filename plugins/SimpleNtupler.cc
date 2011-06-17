@@ -129,6 +129,12 @@ private:
   edm::InputTag vertices_src;
 };
 
+TString replace_all(const TString& a, const TString& b, const TString& c) {
+  TString ret = a;
+  ret.ReplaceAll(b, c);
+  return ret;
+}
+
 SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   : hlt_src(cfg.getParameter<edm::InputTag>("hlt_src")),
     dimu_src(cfg.getParameter<edm::InputTag>("dimu_src")),
@@ -230,20 +236,25 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->Branch("firstSameDimu", &t.firstSameDimu, "firstSameDimu/O");
   tree->Branch("firstAny", &t.firstAny, "firstAny/O");
 
-  tree->SetAlias("OppSign", "lep_id[0]*lep_id[1] < 0");
-  tree->SetAlias("Dimu",    "abs(lep_id[0]*lep_id[1]) == 169");
-  tree->SetAlias("Emu",     "abs(lep_id[0]*lep_id[1]) == 143");
+  tree->SetAlias("OppSign",  "lep_id[0]*lep_id[1] < 0");
+  tree->SetAlias("SameSign", "lep_id[0]*lep_id[1] > 0");
+  tree->SetAlias("Dimu",     "abs(lep_id[0]*lep_id[1]) == 169");
+  tree->SetAlias("Emu",      "abs(lep_id[0]*lep_id[1]) == 143");
 
-  tree->SetAlias("offlineMinPt", "35");
-  tree->SetAlias("triggerMatchMinPt", "30");
+#define offlineMinPt "35"
+#define triggerMatchMinPt "30"
 
-  tree->SetAlias("triggerMatched", "lep_triggerMatchPt[0] > triggerMatchMinPt || lep_triggerMatchPt[1] > triggerMatchMinPt");
+  tree->SetAlias("trigger_match_0", "lep_triggerMatchPt[0] > " triggerMatchMinPt);
+  tree->SetAlias("trigger_match_1", "lep_triggerMatchPt[1] > " triggerMatchMinPt);
+  tree->SetAlias("triggerMatched", "trigger_match_0 || trigger_match_1");
 
   tree->SetAlias("GoodData", "GoodDataRan && HLTPhysicsDeclared && NoScraping && GoodVtx");
-  
+
+  tree->SetAlias("extraDimuonCuts", "cos_angle > -0.9998 && vertex_chi2 < 10");
+
   TString loose_old =
     "lep_isGlobalMuon[X] && "						\
-    "lep_pt[X] > offlineMinPt && "					\
+    "lep_pt[X] > " offlineMinPt " && "					\
     "lep_tk_numberOfValidTrackerHits[X] >= 10 && "			\
     "lep_sumPt[X] / lep_tk_pt[X] < 0.1";
 
@@ -253,12 +264,12 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
     "lep_tk_numberOfValidPixelHits[X] >= 1 && "				\
     "lep_glb_muonStationsWithValidHits[X] >= 2 && "			\
     "lep_isTrackerMuon[X] && "						\
-    "lep_triggerMatchPt[X] > triggerMatchMinPt";
+    "lep_triggerMatchPt[X] > " triggerMatchMinPt;
 
   TString vbtf =
     "lep_isGlobalMuon[X] && "						\
     "lep_isTrackerMuon[X] && "						\
-    "lep_tk_pt[X] > offlineMinPt && "					\
+    "lep_tk_pt[X] > " offlineMinPt " && "				\
     "abs(lep_tk_eta[X]) < 2.1 && "					\
     "abs(lep_dB[X]) < 0.2 && "						\
     "lep_sumPt[X] < 3 && "						\
@@ -267,33 +278,35 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
     "lep_glb_numberOfValidMuonHits[X] > 0 && "				\
     "lep_numberOfMatches[X] > 1";
 
-  TString loose_new =
+  TString loose_no_iso =
     "lep_isGlobalMuon[X] && "						\
     "lep_isTrackerMuon[X] && "						\
-    "lep_pt[X] > offlineMinPt && "					\
+    "lep_pt[X] > " offlineMinPt " && "					\
     "abs(lep_dB[X]) < 0.2 && "						\
     "lep_chi2dof[X] < 10 && "						\
-    "lep_sumPt[X] / lep_tk_pt[X] < 0.1 && "				\
     "lep_glb_numberOfValidTrackerHits[X] > 10 && "			\
     "lep_glb_numberOfValidPixelHits[X] >= 1 && "			\
     "lep_glb_numberOfValidMuonHits[X] > 0 && "				\
     "lep_numberOfMatchedStations[X] > 1";
 
-  tree->SetAlias("loose_old_0", loose_old.ReplaceAll("[X]", "[0]"));
-  tree->SetAlias("loose_old_1", loose_old.ReplaceAll("[X]", "[1]"));
-  tree->SetAlias("tight_old_0", tight_old.ReplaceAll("[X]", "[0]"));
-  tree->SetAlias("tight_old_1", tight_old.ReplaceAll("[X]", "[1]"));
-  tree->SetAlias("vbtf_0",      vbtf     .ReplaceAll("[X]", "[0]"));
-  tree->SetAlias("vbtf_1",      vbtf     .ReplaceAll("[X]", "[1]"));
-  tree->SetAlias("loose_new_0", loose_new.ReplaceAll("[X]", "[0]"));
-  tree->SetAlias("loose_new_1", loose_new.ReplaceAll("[X]", "[1]"));
+  TString loose_new = loose_no_iso + " && lep_sumPt[X] / lep_tk_pt[X] < 0.1";
+
+  tree->SetAlias("loose_old_0",    replace_all(loose_old,    "[X]", "[0]"));
+  tree->SetAlias("loose_old_1",    replace_all(loose_old,    "[X]", "[1]"));
+  tree->SetAlias("tight_old_0",    replace_all(tight_old,    "[X]", "[0]"));
+  tree->SetAlias("tight_old_1",    replace_all(tight_old,    "[X]", "[1]"));
+  tree->SetAlias("vbtf_0",         replace_all(vbtf,         "[X]", "[0]"));
+  tree->SetAlias("vbtf_1",         replace_all(vbtf,         "[X]", "[1]"));
+  tree->SetAlias("loose_no_iso_0", replace_all(loose_no_iso, "[X]", "[0]"));
+  tree->SetAlias("loose_no_iso_1", replace_all(loose_no_iso, "[X]", "[1]"));
+  tree->SetAlias("loose_new_0",    replace_all(loose_new,    "[X]", "[0]"));
+  tree->SetAlias("loose_new_1",    replace_all(loose_new,    "[X]", "[1]"));
 
   tree->SetAlias("OurSelOld",
 		 "loose_old_0 && loose_old_1 && "			\
 		 "(tight_old_0 || tight_old_1) && "			\
 		 "firstOppDimu && "					\
-		 "cos_angle > -0.9998 && "				\
-		 "vertex_chi2 < 10 && "					\
+		 "extraDimuonCuts && "					\
 		 "GoodData");
  
   tree->SetAlias("VBTFSel",
@@ -302,10 +315,9 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "OppSign");
 	 
   tree->SetAlias("OurSelNewNoSign",
-		 "loose_new_0 && loose_new_1"				\
+		 "loose_new_0 && loose_new_1 && "			\
 		 "triggerMatched && "					\
-		 "cos_angle > -0.9998 && "				\
-		 "vertex_chi2 < 10 && "					\
+		 "extraDimuonCuts && "					\
 		 "GoodData");
 
   tree->SetAlias("OurSelNew", "OurSelNewNoSign && firstOppDimu");
@@ -315,7 +327,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->SetAlias("EmuSelNoSign",
 		 "abs(lep_id[1]) == 11 && "				\
 		 "loose_new_0 && "					\
-		 "lep_triggerMatchPt[0] > triggerMatchMinPt && "	\
+		 "trigger_match_0 && "					\
 		 "GoodData");
 
   tree->SetAlias("EmuSel", "EmuSelNoSign && firstAny && OppSign");

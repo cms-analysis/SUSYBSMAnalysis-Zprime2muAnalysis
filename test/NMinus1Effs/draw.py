@@ -8,22 +8,38 @@ ROOT.gStyle.SetPadRightMargin(0.02)
 ROOT.gStyle.SetTitleX(0.12)
 #ROOT.gStyle.SetTitleH(0.07)
 
-ps = plot_saver('plots/nminus1effs', log=False)
+do_tight = 'tight' in sys.argv
+psn = 'plots/nminus1effs'
+if do_tight:
+    psn += '_tight'
+ps = plot_saver(psn, log=False)
 
-nminus1s = [
-    #'NoPt',
-    'NoDB',
-    'NoGlbChi2',
-    'NoIso',
-    'NoTkHits',
-    'NoPxHits',
-    'NoMuHits',
-    'NoMuMatch',
-    'NoTrgMtch',
-    'NoB2B',
-    'NoVtxProb',
-    'NoCosm',
-]
+if do_tight:
+    nminus1s = [
+        #'TiPt',
+        'TiDB',
+        'TiGlbChi2',
+        'TiIso',
+        'TiTkHits',
+        'TiPxHits',
+        'TiMuHits',
+        'TiMuMatch',
+        ]
+else:
+    nminus1s = [
+        #'NoPt',
+        'NoDB',
+        'NoGlbChi2',
+        'NoIso',
+        'NoTkHits',
+        'NoPxHits',
+        'NoMuHits',
+        'NoMuMatch',
+        'NoTrgMtch',
+        'NoB2B',
+        'NoVtxProb',
+        'NoCosm',
+        ]
 
 mass_ranges = [
     ('60m120',  '60 < M < 120 GeV',  ( 60, 120)),

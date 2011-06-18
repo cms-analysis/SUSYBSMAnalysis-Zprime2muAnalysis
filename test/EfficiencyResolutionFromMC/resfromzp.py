@@ -9,7 +9,7 @@ ROOT.gStyle.SetPadRightMargin(0.02)
 
 ps = plot_saver('plots/resfromzp')
 
-masses = [500, 750, 1000, 1250, 1500, 1750]
+masses = [750, 1000, 1250, 1500, 1750]
 chnam, val, err, xlolim, xhilim, iuint = ROOT.TString(''), ROOT.Double(1), ROOT.Double(1), ROOT.Double(1), ROOT.Double(1), ROOT.Long(1)
 
 for basein, baseout in [('Resolutioninner', 'tkonly'), ('Resolutionpmc', 'pmc')]:
@@ -20,7 +20,7 @@ for basein, baseout in [('Resolutioninner', 'tkonly'), ('Resolutionpmc', 'pmc')]
         f = ROOT.TFile('ana_effres_zp%i.root' % m)
         h = f.Get(basein).Get('DileptonMassRes')
         fcn = ROOT.TF1('mg', 'gaus', h.GetMean() - 1.5*h.GetRMS() , h.GetMean() + 1.5*h.GetRMS() )
-        h.Fit(fcn, 'IVR')
+        h.Fit(fcn, 'ILVR')
         ps.save('%s_%i' % (baseout, m))
         ROOT.gMinuit.mnpout(2, chnam, val, err, xlolim, xhilim, iuint)
         print val, err, chnam

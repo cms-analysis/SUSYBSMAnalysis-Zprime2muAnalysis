@@ -20,9 +20,7 @@ if __name__ == '__main__' and 'submit' in sys.argv:
     
     crab_cfg = '''
 [CMSSW]
-lumi_mask = pick_events.json
-total_number_of_lumis = -1
-lumis_per_job = 1
+%(job_control)s
 pset = pick_events_crab.py
 datasetpath = %(dataset)s
 get_edm_output = 1
@@ -37,6 +35,7 @@ jobtype = cmssw
 '''
 
     just_testing = 'testing' in sys.argv
+    create_only = 'create_only' in sys.argv
     uniq = datetime.datetime.today().strftime('%Y%m%d%H%M%S')
 
     def get_dataset(run):
@@ -55,6 +54,7 @@ jobtype = cmssw
     # event for the dataset to use. Otherwise, we figure out the
     # dataset here based on the run number.
     events_fn = [x for x in sys.argv[1:] if os.path.isfile(x)][0]
+    is_mc = False
     for line in open(events_fn):
         line = line.split(':')
         dataset = None
@@ -66,14 +66,10 @@ jobtype = cmssw
         if dataset is None:
             dataset = get_dataset(run)
         batches[dataset].append((run, lumi, event))
-
+    
     for dataset, batch in batches.iteritems():
         name = name_for_dataset(dataset)
         print name
-        if just_testing:
-            if 'May10' not in name:
-                continue
-            print dataset, batch
             
         lumi_mask = []
         events_to_process = []
@@ -82,8 +78,26 @@ jobtype = cmssw
             lumi_mask.append((run, lumi))
             events_to_process.append((run, event))
 
-        ll = LumiList(lumis=lumi_mask)
-        ll.writeJSON('pick_events.json')
+        ls = set(l for r,l in lumi_mask)
+
+        if ls == set([-1]):
+            is_mc = True
+        elif -1 in ls:
+            raise ValueError('batch for dataset %s has lumis -1 and others' % dataset)
+        else:
+            is_mc = False
+
+        if not is_mc:
+            job_control = '''
+lumi_mask = pick_events.json
+total_number_of_lumis = -1
+lumis_per_job = 1'''
+            ll = LumiList(lumis=lumi_mask)
+            ll.writeJSON('pick_events.json')
+        else:
+            job_control = '''
+total_number_of_events = -1
+events_per_job = 100000'''
 
         scheduler = 'condor' if 'May10' in dataset else 'glite'
         open('crab.cfg', 'wt').write(crab_cfg % locals())
@@ -95,7 +109,10 @@ jobtype = cmssw
         open('pick_events_crab.py', 'wt').write(pset)
 
         if not just_testing:
-            os.system('crab -create -submit')
+            if create_only:
+                os.system('crab -create')
+            else:
+                os.system('crab -create -submit')
         else:
             print 'crab.cfg'
             os.system('less crab.cfg')

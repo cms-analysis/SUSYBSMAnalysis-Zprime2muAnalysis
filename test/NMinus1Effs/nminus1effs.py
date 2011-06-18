@@ -152,6 +152,7 @@ events_per_job = 50000
             ('dy200',    '/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy200-5222c20b53e3c47b6c8353d464ee954c/USER'),
             ('dy500',    '/DYToMuMu_M-500_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy500-5222c20b53e3c47b6c8353d464ee954c/USER'),
             ('dy1000',   '/DYToMuMu_M-1000_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy1000-5222c20b53e3c47b6c8353d464ee954c/USER'),
+            ('inclmu15', '/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/tucker-datamc_inclmu15-5222c20b53e3c47b6c8353d464ee954c/USER'),
             ]
 
         for name, ana_dataset in dataset_details:

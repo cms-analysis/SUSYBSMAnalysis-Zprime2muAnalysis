@@ -99,7 +99,7 @@ lumis_per_job = 1'''
 total_number_of_events = -1
 events_per_job = 100000'''
 
-        scheduler = 'condor' if 'May10' in dataset else 'glite'
+        scheduler = 'condor' if 'condor' in sys.argv else 'glite'
         open('crab.cfg', 'wt').write(crab_cfg % locals())
 
         pset = open('pick_events.py').read()
@@ -122,6 +122,4 @@ events_per_job = 100000'''
             os.system('diff pick_events.py pick_events_crab.py | less')
 
     if not just_testing:
-        os.system('rm crab.cfg pick_events.json pick_events_crab.py')
-    
-
+        os.system('rm crab.cfg pick_events.json pick_events_crab.py pick_events_crab.pyc')

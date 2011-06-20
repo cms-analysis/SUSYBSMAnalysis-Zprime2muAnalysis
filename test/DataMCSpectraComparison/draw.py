@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+'''
+foreach x (ana_datamc_NoLumiMask ana_datamc_Run2011A*)
+  echo $x
+  py draw.py $x >! plots/out.draw.${x}
+end
+tlp plots/datamc* plots/out.draw.*
+'''
+
 import sys, os, glob
 from pprint import pprint
 from collections import defaultdict
@@ -18,10 +26,12 @@ x_axis_limits2 = 60, 1100
 to_compare = 'DileptonMass'
 
 global_rescale = {
-    'OurNew': 81702/71916.58,
-    'OurOld': 85704/75257.94,
-    'OurNoIso': 83056/72933.5,
-    'VBTF': 71046/61911.08,
+    'OurNew': 179613/156730.74,
+    'OurOld': 188452/164010.55,
+    'OurNoIso': 182607/158981.24,
+    'OurNoChi2': 181853/158189.07,
+    'OurNoChi2NoMuMatch': 184046/160234.68,
+    'VBTF': 156065/134925.34,
     }
 if 'norescale' in sys.argv:
     global_rescale = {}
@@ -107,12 +117,12 @@ unitize = {
     'DileptonPt': ' [GeV]',
     }
 yaxis = {
-    ('MuonsSameSign', False): (1e-4, 3.5),
+    ('MuonsSameSign', False): (1e-4, 5),
     }
 use_yaxis = True
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
-cutss = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso']
+cutss = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso', 'OurNoChi2', 'OurNoChi2NoMuMatch']
 mass_ranges_for_table = [(60,120), (120,200), (200,400), (400,), (600,)]
 
 if 'forscale' in sys.argv:
@@ -130,7 +140,7 @@ def dir_name(c, d):
 pdir = 'plots/datamc'
 if histo_dir != 'ana_datamc':
     pdir += '_' + histo_dir.replace('ana_datamc_', '')
-ps = plot_saver(pdir, size=(1000,600), pdf_log=True, pdf=True)
+ps = plot_saver(pdir, size=(600,600), pdf_log=True, pdf=True)
 save_plots = 'no_plots' not in sys.argv
 
 #samples = [s for s in samples if not s.name in ['ww', 'zz', 'wz', 'qcd500']]

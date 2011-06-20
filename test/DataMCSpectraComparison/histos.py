@@ -208,7 +208,7 @@ return_data = 1
             new_py = open('histos.py').read()
             new_py += "\nntuplify(process)\n"
             new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_42_V13::All'\n"
-            new_py += "\ncheck_prescale(process, ['HLT_Mu30_v1', 'HLT_Mu30_v2', 'HLT_Mu30_v3'])\n"
+            new_py += "\ncheck_prescale(process, ['HLT_Mu30_v1', 'HLT_Mu30_v2', 'HLT_Mu30_v3', 'HLT_Mu30_v4', 'HLT_Mu30_v5'])\n"
             open('histos_crab.py', 'wt').write(new_py)
 
             new_crab_cfg = crab_cfg % locals()

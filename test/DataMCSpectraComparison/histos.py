@@ -177,6 +177,7 @@ return_data = 1
         dataset_details = [
             ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10_new-b2cd34b4395e3cc0cd295229bc3495ca/USER'),
             ('SingleMu2011A_Prompt_165071_166839', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_166839_20110614010836-8788f1b70631d1fb57e97a89f5e8007c/USER'),
+            ('SingleMu2011A_Prompt_166840_166949', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_166840_166949_20110619114838-e0e58cf0dbd55d2562f61b8061f4c446/USER'),
             ]
 
         lumi_lists = [

@@ -7,6 +7,7 @@ Zprime2muEventContent = [
     'keep *_offlinePrimaryVertices_*_*',
     'keep edmTriggerResults_TriggerResults__HLT*',
     'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__HLT*',
+    'keep L1GlobalTriggerReadoutRecord_gtDigis__*',
     'keep *_hltTriggerSummaryAOD__HLT*',
     'keep edmTriggerResults_TriggerResults__REDIGI*',
     'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__REDIGI*',

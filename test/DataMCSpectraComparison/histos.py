@@ -37,12 +37,14 @@ dils = [
 # that doesn't have a trigger match, need to re-add hltFilter
 # somewhere below.
 cuts = {
-    'VBTF'    : VBTFSelection,
-    'OurOld'  : OurSelectionOld,
-    'OurNew'  : OurSelectionNew,
-    'OurNoIso': OurSelectionNew,
-    'EmuVeto' : OurSelectionNew,
-    'Simple'  : OurSelectionNew, # the selection cuts in the module listed here are ignored below
+    'VBTF'     : VBTFSelection,
+    'OurOld'   : OurSelectionOld,
+    'OurNew'   : OurSelectionNew,
+    'OurNoIso' : OurSelectionNew,
+    'EmuVeto'  : OurSelectionNew,
+    'OurNoChi2': OurSelectionNew,
+    'OurNoChi2NoMuMatch': OurSelectionNew,
+    'Simple'   : OurSelectionNew, # the selection cuts in the module listed here are ignored below
     }
 
 for cut_name in cuts.keys():
@@ -85,6 +87,11 @@ for cut_name in cuts.keys():
             delattr(dil, 'vertex_chi2_max')
         elif cut_name == 'OurNoIso':
             alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', '')
+        elif cut_name == 'OurNoChi2':
+            alldil.loose_cut = alldil.loose_cut.value().replace(' && globalTrack.normalizedChi2 < 10', '')
+        elif cut_name == 'OurNoChi2NoMuMatch':
+            alldil.loose_cut = alldil.loose_cut.value().replace(' && globalTrack.normalizedChi2 < 10', '')
+            alldil.loose_cut = alldil.loose_cut.value().replace(' && numberOfMatchedStations > 1', '')
         
         histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 

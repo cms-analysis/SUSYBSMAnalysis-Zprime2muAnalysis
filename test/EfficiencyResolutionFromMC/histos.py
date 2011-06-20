@@ -3,12 +3,22 @@
 import sys, os
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import cms, process
 
+ex = ''
+
 use_old_selection = False
 if use_old_selection:
+    ex += 'oldsel'
     from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_to_old_selection
     switch_to_old_selection(process)   
 
-process.source.fileNames = ['/store/user/tucker/ZprimeSSMToMuMu_M-2250_TuneZ2_7TeV-pythia6/effres_zp2250/dd2126535e23ba03e5a28af2e68bf29c/pat_1_2_pYX.root']
+disable_chi2_cut = True
+if disable_chi2_cut:
+    ex += 'nochi2'
+    process.leptons.muon_cuts = process.leptons.muon_cuts.value().replace(' && globalTrack.normalizedChi2 < 10', '')
+    process.allDimuons.loose_cut = process.allDimuons.loose_cut.value().replace(' && globalTrack.normalizedChi2 < 10', '')
+
+process.maxEvents.input = 5000
+process.source.fileNames = ['/store/user/tucker/ZprimeSSMToMuMu_M-2250_TuneZ2_7TeV-pythia6/effres_zp2250/dd2126535e23ba03e5a28af2e68bf29c/pat_1_1_nHf.root']
 process.options.wantSummary = True
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import rec_levels, rec_level_module
@@ -45,7 +55,6 @@ process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi')
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.ResolutionUsingMC_cfi')
 
 process.HistosFromPAT.leptonsFromDileptons = True
-process.HistosFromPAT.use_bs_and_pv = False
 process.ResolutionUsingMC.leptonsFromDileptons = True
 process.ResolutionUsingMC.doQoverP = True
 
@@ -77,10 +86,10 @@ total_number_of_events = -1
 events_per_job = 60000
 
 [USER]
-ui_working_dir = crab/crab_ana_effres_%(name)s
+ui_working_dir = crab/ana_effres%(ex)s/crab_ana_effres_%(name)s
 return_data = 1
 '''
-
+        
     samples = [
         ('dy20',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-dd2126535e23ba03e5a28af2e68bf29c/USER',              20,    60),
         ('dy60',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-dd2126535e23ba03e5a28af2e68bf29c/USER',              60,   120),
@@ -110,15 +119,21 @@ return_data = 1
         }
     
     just_testing = 'testing' in sys.argv
-    restrict_mass_window = False
+    restrict_mass_window = True
+
+    if restrict_mass_window:
+        ex += 'masswin'
+        
+    if ex:
+        ex = '_' + ex
 
     for name, dataset, lo, hi in samples:
         open('crab.cfg', 'wt').write(crab_cfg % locals())
 
         if restrict_mass_window and ('zp' in name or 'rs' in name):
             mass = name.replace('zp', '').replace('rs', '')
-            mass = float(mass)
-            res = resolutions[name]
+            mass = int(mass)
+            res = resolutions[mass]
             lo = mass - 1.5*res*mass
             hi = mass + 1.5*res*mass
 

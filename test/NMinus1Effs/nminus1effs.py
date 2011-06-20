@@ -19,7 +19,7 @@ process.maxEvents.input = 1000
 # besides the N of the below.)
 
 assert hash(loose_cut) == -5604570599357377599
-assert hash(tight_cut) == -2883478064365267914
+assert hash(tight_cut) == 2504961902963065197
 
 cuts = [
     ('Pt',      'pt > 35.'),

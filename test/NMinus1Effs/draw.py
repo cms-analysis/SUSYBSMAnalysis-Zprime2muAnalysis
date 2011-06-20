@@ -71,12 +71,12 @@ pretty = {
     'NoB2B': 'back-to-back',
     'NoVtxProb': '#chi^{2} #mu#mu vtx < 10',
     'NoIso': 'rel. tk. iso.',
-    'ana_nminus1_data.root': 'Data, 366 pb ^{-1}',
+    'ana_nminus1_data.root': 'Data, 366 pb^{-1}',
     'ana_nminus1_zmumu.root': 'Z#rightarrow#mu#mu, 60 < M < 120 GeV',
-    'ana_nminus1_dy120.root': 'DY, M > 120 GeV',
-    'ana_nminus1_dy200.root': 'DY, M > 200 GeV',
-    'ana_nminus1_dy500.root': 'DY, M > 500 GeV',
-    'ana_nminus1_dy1000.root': 'DY, M > 1000 GeV',
+    'ana_nminus1_dy120.root': 'DY#rightarrow#mu#mu, M > 120 GeV',
+    'ana_nminus1_dy200.root': 'DY#rightarrow#mu#mu, M > 200 GeV',
+    'ana_nminus1_dy500.root': 'DY#rightarrow#mu#mu, M > 500 GeV',
+    'ana_nminus1_dy1000.root': 'DY#rightarrow#mu#mu, M > 1000 GeV',
     'ana_nminus1_ttbar.root': 't#bar{t}',
     'ana_nminus1_inclmu15.root': 'QCD',
     'ana_nminus1_zssm1000.root': 'Z\' SSM, M=1000 GeV',
@@ -84,13 +84,13 @@ pretty = {
 
 styles = {
     'ana_nminus1_data.root':      (ROOT.kBlack,     -1),
-    'ana_nminus1_zmumu.root':     (ROOT.kGreen+2, 3001),
-    'ana_nminus1_dy120.root':     (ROOT.kGreen+2, 3001),
-    'ana_nminus1_dy200.root':     (ROOT.kGreen+2, 3001),
-    'ana_nminus1_dy500.root':     (ROOT.kGreen+2, 3001),
-    'ana_nminus1_dy1000.root':    (ROOT.kRed,     3002),
-    'ana_nminus1_ttbar.root':     (46,            3004),
-    'ana_nminus1_inclmu15.root':  (28,            3005),
+    'ana_nminus1_zmumu.root':     (ROOT.kRed,     1001),
+    'ana_nminus1_dy120.root':     (ROOT.kRed,     1001),
+    'ana_nminus1_dy200.root':     (ROOT.kRed,     1001),
+    'ana_nminus1_dy500.root':     (ROOT.kRed,     1001),
+    'ana_nminus1_dy1000.root':    (ROOT.kBlue,    1001),
+    'ana_nminus1_ttbar.root':     (ROOT.kGreen+2, 3005),
+    'ana_nminus1_inclmu15.root':  (28,            3002),
     }
 
 ymin = {
@@ -114,14 +114,15 @@ def table(f, mass_range):
         e,l,h = clopper_pearson(num, den)
         print '%20s%20f%20f%15f%15f' % (nminus1, den, e, l, h)
 
-ROOT.gStyle.SetTitleX(0.45)
+ROOT.gStyle.SetTitleX(0.40)
 ROOT.gStyle.SetTitleY(0.40)
 
 for name, pretty_name, mass_range in mass_ranges:
     print name, pretty_name
 
-    lg = ROOT.TLegend(0.45, 0.13, 0.94, 0.33)
+    lg = ROOT.TLegend(0.40, 0.13, 0.96, 0.33)
     lg.SetFillColor(0)
+    lg.SetBorderSize(1)
     
     same = 'A'
     effs = []
@@ -154,7 +155,9 @@ for name, pretty_name, mass_range in mass_ranges:
         if 'data' in fn:
             draw = 'P'
             eff.SetLineColor(color)
-            lg.AddEntry(eff, pretty.get(fn, fn), 'L')
+            eff.SetMarkerStyle(20)
+            eff.SetMarkerSize(1.05)
+            lg.AddEntry(eff, pretty.get(fn, fn), 'LP')
         else:
             draw = '2'
             eff.SetLineColor(color)

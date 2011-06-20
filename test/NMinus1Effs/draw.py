@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# (py draw.py >! out.draw) && (py draw.py tight >! out.draw_tight) && tlp plots/nminus1effs*
+
 import sys, os, glob
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import *
 set_zp2mu_style()
@@ -12,7 +14,7 @@ do_tight = 'tight' in sys.argv
 psn = 'plots/nminus1effs'
 if do_tight:
     psn += '_tight'
-ps = plot_saver(psn, log=False)
+ps = plot_saver(psn, size=(600,600), log=False, pdf=True)
 
 if do_tight:
     nminus1s = [
@@ -42,10 +44,10 @@ else:
         ]
 
 mass_ranges = [
-    ('60m120',  '60 < M < 120 GeV',  ( 60, 120)),
-    ('120m200', '120 < M < 200 GeV', (120, 200)),
-    ('200m400', '200 < M < 400 GeV', (200, 400)),
-    ('400m',    'M > 400 GeV',       (400, 1e9)),
+    ('60m120',  '60 < m < 120 GeV',  ( 60, 120)),
+    ('120m200', '120 < m < 200 GeV', (120, 200)),
+    ('200m400', '200 < m < 400 GeV', (200, 400)),
+    ('400m',    'm > 400 GeV',       (400, 1e9)),
     ]
 
 to_use = {
@@ -56,14 +58,17 @@ to_use = {
     }
 
 pretty = {
-    'NoTkHits': '# tk hits #gt 10',
-    'NoPxHits': '# px hits #geq 1',
-    'NoMuStns': '# mu segs #gt 1',
+    'NoTkHits': '# tk hits > 10',
+    'NoPxHits': '# px hits > 0',
+    'NoMuStns': '# mu segs > 1',
     'NoDB': '|dB| < 0.2',
     'NoGlbChi2': 'glb #chi^{2}/ndf < 10',
     'NoTkMuon': 'isTrackerMuon',
+    'NoMuHits': '# mu hits > 0',
+    'NoMuMatch': '# tk. #mu seg > 1',
+    'NoCosm': 'anti-cosmic',
     'NoTrgMtch': 'HLT match',
-    'NoB2B': 'B2B cosmics',
+    'NoB2B': 'back-to-back',
     'NoVtxProb': '#chi^{2} #mu#mu vtx < 10',
     'NoIso': 'rel. tk. iso.',
     'ana_nminus1_data.root': 'Data, 366 pb ^{-1}',
@@ -79,15 +84,23 @@ pretty = {
 
 styles = {
     'ana_nminus1_data.root':      (ROOT.kBlack,     -1),
-    'ana_nminus1_zmumu.root':     (8,             3001),
-    'ana_nminus1_dy120.root':     (ROOT.kBlue,    3004),
-    'ana_nminus1_dy200.root':     (ROOT.kGreen+2, 3005),
-    'ana_nminus1_dy500.root':     (ROOT.kOrange,  3006),
-    'ana_nminus1_dy1000.root':    (ROOT.kPink,    3007),
-    'ana_nminus1_ttbar.root':     (46,            3016),
-    'ana_nminus1_inclmu15.root':  (28,            3020),
+    'ana_nminus1_zmumu.root':     (ROOT.kGreen+2, 3001),
+    'ana_nminus1_dy120.root':     (ROOT.kGreen+2, 3001),
+    'ana_nminus1_dy200.root':     (ROOT.kGreen+2, 3001),
+    'ana_nminus1_dy500.root':     (ROOT.kGreen+2, 3001),
+    'ana_nminus1_dy1000.root':    (ROOT.kRed,     3002),
+    'ana_nminus1_ttbar.root':     (46,            3004),
+    'ana_nminus1_inclmu15.root':  (28,            3005),
     }
-        
+
+ymin = {
+    '60m120':  0.95,
+    '120m200': 0.87,
+    '200m400': 0.85,
+    '400m':    0.81,
+    }
+global_ymin = 0.75
+
 def table(f, mass_range):
     hnum = f.Get('NoNo').Get('DileptonMass')
     mlo, mhi = mass_range
@@ -101,10 +114,13 @@ def table(f, mass_range):
         e,l,h = clopper_pearson(num, den)
         print '%20s%20f%20f%15f%15f' % (nminus1, den, e, l, h)
 
+ROOT.gStyle.SetTitleX(0.45)
+ROOT.gStyle.SetTitleY(0.40)
+
 for name, pretty_name, mass_range in mass_ranges:
     print name, pretty_name
 
-    lg = ROOT.TLegend(0.14, 0.14, 0.63, 0.34)
+    lg = ROOT.TLegend(0.45, 0.13, 0.94, 0.33)
     lg.SetFillColor(0)
     
     same = 'A'
@@ -131,10 +147,9 @@ for name, pretty_name, mass_range in mass_ranges:
 
         eff = binomial_divide(nminus1_num, nminus1_den)
         eff.SetTitle(pretty_name)
-        eff.SetTitle('')
-        eff.GetYaxis().SetRangeUser(0.75,1.005)
+        eff.GetYaxis().SetRangeUser(global_ymin if global_ymin is not None else ymin[name], 1.005)
         eff.GetXaxis().SetTitle('cut')
-        eff.GetYaxis().SetLabelSize(0.03)
+        eff.GetYaxis().SetLabelSize(0.027)
         eff.GetYaxis().SetTitle('n-1 efficiency')
         if 'data' in fn:
             draw = 'P'
@@ -150,9 +165,9 @@ for name, pretty_name, mass_range in mass_ranges:
         eff.Draw(draw)
         effs.append(eff)
         same = ' same'
-        bnr = eff.GetXaxis().GetNbins()/eff.GetN()
+        bnr = eff.GetXaxis().GetNbins()/float(eff.GetN())
         for i in xrange(1,l+1):
-            eff.GetXaxis().SetBinLabel((i-1)*bnr+1, pretty.get(nminus1s[i-1], nminus1s[i-1]))
+            eff.GetXaxis().SetBinLabel(int((i-1)*bnr)+1, pretty.get(nminus1s[i-1], nminus1s[i-1]))
         eff.GetXaxis().LabelsOption('u')
 
     lg.Draw()

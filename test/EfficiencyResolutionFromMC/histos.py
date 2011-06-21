@@ -1,25 +1,32 @@
 #!/usr/bin/env python
 
+use_old_selection = False
+disable_chi2_cut = True # to be removed once this gets pushed upstream
+restrict_mass_window = True
+# intime_bin numbering: bin 0 = 0-5, bin 1 = 6-11, bin 2 = 12-26
+# late_bin numbering: bin 0 = 0-9, bin 2 = 10-26
+intime_bin, late_bin = -1, -1 
+
+################################################################################
+
 import sys, os
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import cms, process
 
+process.maxEvents.input = 5000
+process.source.fileNames = ['/store/user/tucker/ZprimeSSMToMuMu_M-2250_TuneZ2_7TeV-pythia6/effres_zp2250/dd2126535e23ba03e5a28af2e68bf29c/pat_1_1_nHf.root']
+process.options.wantSummary = True
+
 ex = ''
 
-use_old_selection = False
 if use_old_selection:
     ex += 'oldsel'
     from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_to_old_selection
     switch_to_old_selection(process)   
 
-disable_chi2_cut = True
 if disable_chi2_cut:
     ex += 'nochi2'
     process.leptons.muon_cuts = process.leptons.muon_cuts.value().replace(' && globalTrack.normalizedChi2 < 10', '')
     process.allDimuons.loose_cut = process.allDimuons.loose_cut.value().replace(' && globalTrack.normalizedChi2 < 10', '')
-
-process.maxEvents.input = 5000
-process.source.fileNames = ['/store/user/tucker/ZprimeSSMToMuMu_M-2250_TuneZ2_7TeV-pythia6/effres_zp2250/dd2126535e23ba03e5a28af2e68bf29c/pat_1_1_nHf.root']
-process.options.wantSummary = True
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import rec_levels, rec_level_module
 tracks = ['global', 'inner', 'tpfms', 'picky', 'pmc', 'tmr', 'sigmaswitch']
@@ -48,8 +55,27 @@ process.allDimuonsVBTF = VBTFSelection.allDimuons.clone()
 process.dimuonsVBTF = VBTFSelection.dimuons.clone(src = 'allDimuonsVBTF')
 process.VBTFEfficiencyFromMC = process.EfficiencyFromMC.clone(dimuon_src = 'dimuonsVBTF', acceptance_max_eta = 2.1)
 
-process.p2 = cms.Path(process.HardInteractionFilter * process.Zprime2muAnalysisSequencePlain * process.HLTSingleObjects * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC)
-process.p = cms.Path(process.HardInteractionFilterRes * process.Zprime2muAnalysisSequence)
+p2 = process.HardInteractionFilter * process.Zprime2muAnalysisSequencePlain * process.HLTSingleObjects * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC
+p  = process.HardInteractionFilterRes * process.Zprime2muAnalysisSequence # this will get all the Histospmc, Histospicky, Histosglobal, etc. below.
+
+if intime_bin in range(0,3) and late_bin in range(0,2):
+    # Able to filter on the number of (in-time, late) simulated pileup
+    # interactions. By default no filtering is done.
+    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.GenPileupFilter_cfi') 
+
+    min_intime, max_intime = [(0,5), (6,11), (12,26)][intime_bin]
+    min_late, max_late = [(0,9), (10, 26)][late_bin]
+    ex += 'PU%i%i%i%i' % (min_intime, max_intime, min_late, max_late)
+    process.GenPileupFilter.min_intime = min_intime
+    process.GenPileupFilter.max_intime = max_intime
+    process.GenPileupFilter.min_late = min_late
+    process.GenPileupFilter.max_late = max_late
+
+    p2 = process.GenPileupFilter * p2
+    p  = process.GenPileupFilter * p
+
+process.p2 = cms.Path(p2)
+process.p  = cms.Path(p)
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi')
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.ResolutionUsingMC_cfi')
@@ -58,6 +84,8 @@ process.HistosFromPAT.leptonsFromDileptons = True
 process.ResolutionUsingMC.leptonsFromDileptons = True
 process.ResolutionUsingMC.doQoverP = True
 
+# Duplicate all the lepton+dimuon+histogram production for each of
+# what we call "rec levels", i.e. the different TeV reconstructors.
 process.p *= rec_level_module(process, process.HistosFromPAT,     'Histos',     tracks)
 process.p *= rec_level_module(process, process.ResolutionUsingMC, 'Resolution', tracks)
 
@@ -86,7 +114,7 @@ total_number_of_events = -1
 events_per_job = 60000
 
 [USER]
-ui_working_dir = crab/ana_effres%(ex)s/crab_ana_effres_%(name)s
+ui_working_dir = %(base_dir)s/crab_ana_effres_%(name)s
 return_data = 1
 '''
         
@@ -119,14 +147,15 @@ return_data = 1
         }
     
     just_testing = 'testing' in sys.argv
-    restrict_mass_window = True
 
     if restrict_mass_window:
         ex += 'masswin'
-        
-    if ex:
-        ex = '_' + ex
 
+    base_dir = 'crab/ana_effres'
+    if ex:
+        base_dir = os.path.join(base_dir, ex)
+    os.system('mkdir -p %s' % base_dir)
+    
     for name, dataset, lo, hi in samples:
         open('crab.cfg', 'wt').write(crab_cfg % locals())
 

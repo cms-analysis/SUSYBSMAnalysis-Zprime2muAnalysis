@@ -18,13 +18,18 @@ process.maxEvents.input = 1000
 # string equality since then we have one more string to maintain
 # besides the N of the below.)
 
-assert hash(loose_cut) == -5604570599357377599
-assert hash(tight_cut) == 2504961902963065197
+try:
+    assert hash(loose_cut) == -7903716600785592168
+    assert hash(tight_cut) == 2504961902963065197
+except AssertionError:
+    print 'hashes wrong:'
+    print hash(loose_cut)
+    print hash(tight_cut)
+    raise
 
 cuts = [
     ('Pt',      'pt > 35.'),
     ('DB',      'abs(dB) < 0.2'),
-    ('GlbChi2', 'globalTrack.normalizedChi2 < 10'),
     ('Iso',     'isolationR03.sumPt / innerTrack.pt < 0.10'),
     ('TkHits',  'globalTrack.hitPattern.numberOfValidTrackerHits > 10'),
     ('PxHits',  'globalTrack.hitPattern.numberOfValidPixelHits >= 1'),
@@ -114,8 +119,8 @@ return_data = 1
         Run2011AMuonsOnly_ll.writeJSON('tmp.json')
 
         dataset_details = [
-            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10_new-b2cd34b4395e3cc0cd295229bc3495ca/USER'),
-            ('SingleMu2011A_Prompt_165071_165999', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_165999_20110601165210-8788f1b70631d1fb57e97a89f5e8007c/USER'),
+            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMu2011A_May10-3c88448713b4112b83eb5e163e8441f1/USER'),
+            ('SingleMu2011A_Prompt_165071_167150', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_167150_20110620045014-e0e58cf0dbd55d2562f61b8061f4c446/USER'),
             ]
 
         for name, ana_dataset in dataset_details:

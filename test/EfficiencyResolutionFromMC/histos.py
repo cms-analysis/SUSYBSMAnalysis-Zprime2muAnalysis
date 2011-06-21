@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 use_old_selection = False
-disable_chi2_cut = True # to be removed once this gets pushed upstream
 restrict_mass_window = True
 # intime_bin numbering: bin 0 = 0-5, bin 1 = 6-11, bin 2 = 12-26
 # late_bin numbering: bin 0 = 0-9, bin 2 = 10-26
@@ -22,11 +21,6 @@ if use_old_selection:
     ex += 'oldsel'
     from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_to_old_selection
     switch_to_old_selection(process)   
-
-if disable_chi2_cut:
-    ex += 'nochi2'
-    process.leptons.muon_cuts = process.leptons.muon_cuts.value().replace(' && globalTrack.normalizedChi2 < 10', '')
-    process.allDimuons.loose_cut = process.allDimuons.loose_cut.value().replace(' && globalTrack.normalizedChi2 < 10', '')
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import rec_levels, rec_level_module
 tracks = ['global', 'inner', 'tpfms', 'picky', 'pmc', 'tmr', 'sigmaswitch']

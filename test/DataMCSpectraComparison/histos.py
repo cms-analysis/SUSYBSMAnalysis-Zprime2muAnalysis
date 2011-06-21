@@ -42,8 +42,6 @@ cuts = {
     'OurNew'   : OurSelectionNew,
     'OurNoIso' : OurSelectionNew,
     'EmuVeto'  : OurSelectionNew,
-    'OurNoChi2': OurSelectionNew,
-    'OurNoChi2NoMuMatch': OurSelectionNew,
     'Simple'   : OurSelectionNew, # the selection cuts in the module listed here are ignored below
     }
 
@@ -87,11 +85,6 @@ for cut_name in cuts.keys():
             delattr(dil, 'vertex_chi2_max')
         elif cut_name == 'OurNoIso':
             alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', '')
-        elif cut_name == 'OurNoChi2':
-            alldil.loose_cut = alldil.loose_cut.value().replace(' && globalTrack.normalizedChi2 < 10', '')
-        elif cut_name == 'OurNoChi2NoMuMatch':
-            alldil.loose_cut = alldil.loose_cut.value().replace(' && globalTrack.normalizedChi2 < 10', '')
-            alldil.loose_cut = alldil.loose_cut.value().replace(' && numberOfMatchedStations > 1', '')
         
         histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 
@@ -146,9 +139,16 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
 
 if 'gogo' in sys.argv:
     ntuplify(process)
-    printify(process)
-    from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import files_from_argv, set_events_to_process
+    #printify(process)
+    #from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import files_from_argv, set_events_to_process
     #files_from_argv(process)
+    process.source.fileNames = ['/store/user/tucker/SingleMu/datamc_SingleMu2011A_prompt_165071_166839_20110614010836/8788f1b70631d1fb57e97a89f5e8007c/pat_8_1_CMg.root','/store/user/tucker/SingleMu/datamc_SingleMu2011A_prompt_165071_166839_20110614010836/8788f1b70631d1fb57e97a89f5e8007c/pat_156_1_GA0.root']
+    process.GlobalTag.globaltag = 'GR_R_42_V13::All'
+    check_prescale(process, ['HLT_Mu30_v1', 'HLT_Mu30_v2', 'HLT_Mu30_v3', 'HLT_Mu30_v4', 'HLT_Mu30_v5'])
+    from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2011AMuonsOnly
+    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2011AMuonsOnly)
+    process.options.wantSummary = True
+                            
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
@@ -175,9 +175,8 @@ return_data = 1
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
 
         dataset_details = [
-            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10_new-b2cd34b4395e3cc0cd295229bc3495ca/USER'),
-            ('SingleMu2011A_Prompt_165071_166839', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_166839_20110614010836-8788f1b70631d1fb57e97a89f5e8007c/USER'),
-            ('SingleMu2011A_Prompt_166840_166949', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_166840_166949_20110619114838-e0e58cf0dbd55d2562f61b8061f4c446/USER'),
+            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMu2011A_May10-3c88448713b4112b83eb5e163e8441f1/USER'),
+            ('SingleMu2011A_Prompt_165071_167150', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_167150_20110620045014-e0e58cf0dbd55d2562f61b8061f4c446/USER'),
             ]
 
         lumi_lists = [

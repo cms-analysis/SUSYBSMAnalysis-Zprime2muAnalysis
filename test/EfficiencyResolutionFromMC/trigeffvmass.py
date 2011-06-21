@@ -4,7 +4,7 @@
 
 import sys, os
 
-samples = ['dy20', 'dy60', 'dy120', 'dy200', 'dy500', 'dy800', 'zp500', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750']
+samples = ['dy20', 'dy60', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750'] #, 'zp2000', 'zp2250']
 
 if False:
     # Can use graviton samples too -- don't bother to change the rest
@@ -250,13 +250,38 @@ lg = ROOT.TLegend(0.42, 0.13, 0.92, 0.33)
 lg.AddEntry(RecoWrtAccTrig, 'wrt triggered events in acceptance', 'LPE')
 lg.AddEntry(RecoWrtAcc, 'wrt events in acceptance', 'LPE')
 lg.AddEntry(TotalReco, 'total', 'LPE')
-RecoWrtAccTrig.GetXaxis().SetRangeUser(100, 2000)
-RecoWrtAccTrig.GetYaxis().SetRangeUser(0.5, 1.01)
+RecoWrtAccTrig.GetXaxis().SetRangeUser(0, 2000)
+RecoWrtAccTrig.GetYaxis().SetRangeUser(0.1, 1.01)
 RecoWrtAccTrig.Draw('AP')
 RecoWrtAcc.Draw('P same')
 TotalReco.Draw('P same')
+fcn = ROOT.TF1('fcn', '[0] + [1]/(x + [2])', 200, 1200)
+fcn.SetParNames("a", "b", "c")
+fcn.SetLineColor(TotalReco.GetLineColor())
+lg.AddEntry(fcn, 'fit to a + b/(m+c)', 'L')
 lg.Draw()
+ROOT.gStyle.SetOptFit(1111)
+TotalReco.Fit(fcn, 'VR')
+ps.c.Update()
+s = TotalReco.GetListOfFunctions().FindObject('stats')
+s.SetFitFormat('5.3g')
+s.SetX1NDC(0.57)
+s.SetY1NDC(0.35)
+s.SetX2NDC(0.92)
+s.SetY2NDC(0.51)
 ps.save('summary_recoeff', log=False)
+x,y = ROOT.Double(), ROOT.Double()
+hres = ROOT.TH1F('hres', '', 20, 0, 2000)
+for i in xrange(TotalReco.GetN()):
+    TotalReco.GetPoint(i, x, y)
+    f = fcn.Eval(x)
+    b = hres.FindBin(x)
+    hres.SetBinContent(b, f/y-1)
+    hres.SetBinError(b, max(TotalReco.GetErrorYlow(i), TotalReco.GetErrorYhigh(i)))
+hres.SetTitle(';dimuon invariant mass (GeV);f/h-1')
+hres.Draw('hist e1')
+hres.Fit('pol1', 'VR', '', 200, 1200)
+ps.save('totalreco_fit_residuals')
 
 # Dump the values of the total reconstruction curve (but take the
 # 60-120 and 120-200 from the total counts).

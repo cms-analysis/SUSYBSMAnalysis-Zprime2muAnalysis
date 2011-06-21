@@ -115,9 +115,6 @@ private:
     bool HLTPhysicsDeclared;
     bool GoodVtx;
     bool NoScraping;
-    bool firstOppDimu;
-    bool firstSameDimu;
-    bool firstAny;
   };
 
   tree_t t;
@@ -232,9 +229,6 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->Branch("HLTPhysicsDeclared", &t.HLTPhysicsDeclared, "HLTPhysicsDeclared/O");
   tree->Branch("GoodVtx", &t.GoodVtx, "GoodVtx/O");
   tree->Branch("NoScraping", &t.NoScraping, "NoScraping/O");
-  tree->Branch("firstOppDimu", &t.firstOppDimu, "firstOppDimu/O");
-  tree->Branch("firstSameDimu", &t.firstSameDimu, "firstSameDimu/O");
-  tree->Branch("firstAny", &t.firstAny, "firstAny/O");
 
   tree->SetAlias("OppSign",  "lep_id[0]*lep_id[1] < 0");
   tree->SetAlias("SameSign", "lep_id[0]*lep_id[1] > 0");
@@ -304,7 +298,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->SetAlias("OurSelOld",
 		 "loose_old_0 && loose_old_1 && "			\
 		 "(tight_old_0 || tight_old_1) && "			\
-		 "firstOppDimu && "					\
+		 "OppSign && "						\
 		 "extraDimuonCuts && "					\
 		 "GoodData");
  
@@ -319,7 +313,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "extraDimuonCuts && "					\
 		 "GoodData");
 
-  tree->SetAlias("OurSelNew", "OurSelNewNoSign && firstOppDimu");
+  tree->SetAlias("OurSelNew", "OurSelNewNoSign && OppSign");
 
   // For e-mu dileptons, below we always put the muon in [0] and the
   // electron in [1], so don't have to check the other combination.
@@ -329,7 +323,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "trigger_match_0 && "					\
 		 "GoodData");
 
-  tree->SetAlias("EmuSel", "EmuSelNoSign && firstAny && OppSign");
+  tree->SetAlias("EmuSel", "EmuSelNoSign && OppSign");
 }
 
 template <typename T>
@@ -378,10 +372,6 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
   edm::Handle<pat::CompositeCandidateCollection> dils;
   event.getByLabel(dimu_src, dils);
 
-  bool seen_first = false;
-  bool seen_first_oppsign_dimu = false;
-  bool seen_first_samesign_dimu = false;
-
   BOOST_FOREACH(const pat::CompositeCandidate& dil, *dils) {
     t.dil_mass = dil.mass();
     t.dil_pt = dil.pt();
@@ -396,28 +386,8 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 
     const bool opp_sign = dil.daughter(0)->charge() + dil.daughter(1)->charge() == 0;
     const bool diff_flavor = abs(dil.daughter(0)->pdgId()) != abs(dil.daughter(1)->pdgId());
-    const bool dimuon = abs(dil.daughter(0)->pdgId()) == 13 && abs(dil.daughter(1)->pdgId()) == 13;
+    //const bool dimuon = abs(dil.daughter(0)->pdgId()) == 13 && abs(dil.daughter(1)->pdgId()) == 13;
 
-    t.firstAny = !seen_first;
-    if (dimuon) {
-      if (opp_sign) {
-	if (!seen_first_oppsign_dimu) {
-	  t.firstOppDimu = true;
-	  seen_first_oppsign_dimu = true;
-	}
-	else
-	  t.firstOppDimu = false;
-      }
-      else {
-	if (!seen_first_samesign_dimu) {
-	  t.firstSameDimu = true;
-	  seen_first_samesign_dimu = true;
-	}
-	else
-	  t.firstSameDimu = false;
-      }
-    }
-      
     for (size_t i = 0; i < 2; ++i) {
       // For e-mu dileptons, put the muon first. For opposite-sign
       // dileptons, always put the negative lepton first. Otherwise
@@ -634,8 +604,6 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
       t.phi_cs = -999;
     }
     
-    seen_first = true;
-
     tree->Fill();
   }
 }

@@ -568,7 +568,7 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	}
 
 	static const size_t n_single_mu_path_names = 8;
-	static const char* single_mu_path_names[n_single_mu_path_names] = {"HLT_Mu30_v3", "HLT_Mu30_v2", "HLT_Mu30_v1", "HLT_Mu24_v2", "HLT_Mu24_v1", "HLT_Mu15_v2", "HLT_Mu15_v1", "HLT_Mu9"};
+	static const char* single_mu_path_names[n_single_mu_path_names] = {"HLT_Mu30_v5", "HLT_Mu30_v4", "HLT_Mu30_v3", "HLT_Mu30_v2", "HLT_Mu30_v1", "HLT_Mu24_v2", "HLT_Mu24_v1", "HLT_Mu15_v2", "HLT_Mu15_v1", "HLT_Mu9"};
 	t.lep_triggerMatchPt[w] = -999;
 	for (size_t j = 0; j < n_single_mu_path_names; ++j) {
 	  if (!mu->triggerObjectMatchesByPath(single_mu_path_names[j]).empty()) { 

@@ -10,6 +10,12 @@ last_rereco_run = 163869
 last_prompt_run = 166861
 assert last_prompt_run > last_rereco_run
 
+# Lumis to manually throw out.
+to_remove = {
+    '166530': [[1,105]], # During physics-declared, this run had Mu30_v3 prescaled by 20. https://cmswbm.web.cern.ch/cmswbm/cmsdb/servlet/PrescaleChanges?RUN=166530   https://cmswbm.web.cern.ch/cmswbm/cmsdb/servlet/LumiSections?RUN=166530
+    }
+to_remove = LumiList(compactList=to_remove)
+
 runs_to_remove_from_dcsonly = range(160404, last_prompt_run+1)
 # These runs are <= last_prompt_run, but they were not actually
 # considered in the certification for the latest prompt JSON. So,
@@ -44,16 +50,20 @@ Run2011APlusDCSOnlyMuonsOnly_ll = combine(May10MuonsOnly_ll, PromptMuonsOnly_ll,
 
 Run2010_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions10/7TeV/Reprocessing/Cert_136033-149442_7TeV_Apr21ReReco_Collisions10_JSON.txt')
 Run2010MuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions10/7TeV/Reprocessing/Cert_136033-149442_7TeV_Apr21ReReco_Collisions10_JSON_MuonPhys.txt')
+                                   
+all_ll_names = ['DCSOnly', 'DCSOnlyForNewRuns', 'Prompt', 'PromptMuonsOnly', 'May10', 'May10MuonsOnly', 'Run2011A', 'Run2011AMuonsOnly', 'Run2011APlusDCSOnly', 'Run2011APlusDCSOnlyMuonsOnly', 'Run2010', 'Run2010MuonsOnly']
 
-all_lls = ['DCSOnly', 'DCSOnlyForNewRuns', 'Prompt', 'PromptMuonsOnly', 'May10', 'May10MuonsOnly', 'Run2011A', 'Run2011AMuonsOnly', 'Run2011APlusDCSOnly', 'Run2011APlusDCSOnlyMuonsOnly', 'Run2010', 'Run2010MuonsOnly']
-for x in all_lls:
-    exec '%s = for_cmssw(%s_ll)' % (x,x)
+def all_lls():
+    return [(x, eval(x + '_ll')) for x in all_ll_names]
+
+for base_name, ll in all_lls():
+    exec '%s_ll = ll - to_remove' % base_name
+    exec '%s = for_cmssw(%s_ll)' % (base_name, base_name)
 
 if __name__ == '__main__':
     import sys
     if 'write' in sys.argv:
         Run2011APlusDCSOnlyMuonsOnly_ll.writeJSON('Run2011APlusDCSOnlyMuonsOnly.json')
     elif 'write_all' in sys.argv:
-        for name in all_lls:
-            obj = eval(name + '_ll')
-            obj.writeJSON('zp2mu_goodlumis_%s.json' % name)
+        for base_name, ll in all_lls():
+            ll.writeJSON('zp2mu_goodlumis_%s.json' % base_name)

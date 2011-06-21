@@ -77,3 +77,9 @@
 <library file="CheckPrescale.cc,VetoOtherDataset.cc" name="Zprime2muTriggerPlugins">
   <use name="HLTrigger/HLTcore"/>
 </library>
+
+<library file="GenPileupFilter.cc" name="Zprime2muPileupPlugins">
+  <use name="rootgraphics"/>
+  <use name="CommonTools/UtilAlgos"/>
+  <use name="SimDataFormats/PileupSummaryInfo"/>
+</library>

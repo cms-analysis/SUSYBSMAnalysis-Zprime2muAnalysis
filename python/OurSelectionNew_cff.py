@@ -37,7 +37,6 @@ loose_cut = 'isGlobalMuon && ' \
             'isTrackerMuon && ' \
             'pt > 35. && ' \
             'abs(dB) < 0.2 && ' \
-            'globalTrack.normalizedChi2 < 10 && ' \
             'isolationR03.sumPt / innerTrack.pt < 0.10 && ' \
             'globalTrack.hitPattern.numberOfValidTrackerHits > 10 && ' \
             'globalTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \

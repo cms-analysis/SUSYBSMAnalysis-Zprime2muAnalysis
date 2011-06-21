@@ -283,7 +283,6 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
     "lep_isTrackerMuon[X] && "						\
     "lep_pt[X] > " offlineMinPt " && "					\
     "abs(lep_dB[X]) < 0.2 && "						\
-    "lep_chi2dof[X] < 10 && "						\
     "lep_glb_numberOfValidTrackerHits[X] > 10 && "			\
     "lep_glb_numberOfValidPixelHits[X] >= 1 && "			\
     "lep_glb_numberOfValidMuonHits[X] > 0 && "				\

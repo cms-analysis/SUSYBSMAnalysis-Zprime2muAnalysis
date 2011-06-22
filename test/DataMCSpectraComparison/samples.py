@@ -59,15 +59,17 @@ samples = [
     sample('dy800',        'DY800',                                              '/DYToMuMu_M-800_TuneZ2_7TeV-pythia6-tauola/Summer11-PU_S3_START42_V11-v2/AODSIM',             55000, 435, 0.05, 0.0031,         k_factor=1.3),
     sample('dy1000',       'DY1000',                                             '/DYToMuMu_M-1000_TuneZ2_7TeV-pythia6-tauola/Summer11-PU_S3_START42_V11-v2/AODSIM',            55000, 435, 0.05, 9.7e-4,         k_factor=1.3),
     sample('ttbar',        't#bar{t}',                                           '/TT_TuneZ2_7TeV-pythia6-tauola/Summer11-PU_S3_START42_V11-v2/AODSIM',                       1089625,   2, 0.15, 157),
+#      sample('ttbar',        't#bar{t}',                                           '/TTJets_TuneZ2_7TeV-madgraph-tauola/Summer11-PU_S4_START42_V11-v1/AODSIM',                  3701947,   2, 0.15, 157),
     sample('singletop_tW', 'tW',                                                 '/TToBLNu_TuneZ2_tW-channel_7TeV-madgraph/Spring11-PU_S1_START311_V1G1-v1/AODSIM',            489417,   1, 0.075, 10.6),
     sample('ww',           'WW',                                                 '/WWtoAnything_TuneZ2_7TeV-pythia6-tauola/Spring11-PU_S1_START311_V1G1-v1/AODSIM',           2061760,   4, 0.035, 43),
-    sample('wz',           'WZ',                                                 '/WZtoAnything_TuneZ2_7TeV-pythia6-tauola/Spring11-PU_S1_START311_V1G1-v1/AODSIM',           2108416,   5, 0.038, 18),
+    sample('wz',           'WZ',                                                 '/WZtoAnything_TuneZ2_7TeV-pythia6-tauola/Spring11-PU_S1_START311_V1G1-v1/AODSIM',           2108416,  30, 0.038, 18),
     sample('zz',           'ZZ',                                                 '/ZZtoAnything_TuneZ2_7TeV-pythia6-tauola/Spring11-PU_S1_START311_V1G1-v1/AODSIM',           2108608,   6, 0.025, 5.9),
     sample('ztautau',      'Z #rightarrow #tau^{+}#tau^{-}',                     '/DYToTauTau_M-20_TuneZ2_7TeV-pythia6-tauola/Summer11-PU_S3_START42_V11-v2/AODSIM',          2032536,  46, 0.05, 1631),
     sample('wjets',        'W+jets',                                             '/WJetsToLNu_TuneZ2_7TeV-madgraph-tauola/Spring11-PU_S1_START311_V1G1-v1/AODSIM',           15110974,   3, 0.05,  3.1e4, scheduler='condor'),
     sample('inclmu15',     'QCD (MuRich, muon p_{T} > 15 GeV)',                  '/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM',      20416038, 801, 0.1,   2.855e-4 * 2.966e8),
     sample('zssm1000',     'Z\'_{SSM} (1 TeV) #rightarrow #mu^{+}#mu^{-}',       '/ZprimeSSMToMuMu_M-1000_TuneZ2_7TeV-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM',            20328,  38, 0.05,  0.089, k_factor=1.3),
 ]
+
 
 for sample in samples:
     if 'Spring11' in sample.dataset:

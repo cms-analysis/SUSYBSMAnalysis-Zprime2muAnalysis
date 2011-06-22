@@ -75,7 +75,11 @@ def clopper_pearson(n_on, n_tot, alpha=1-0.6827, equal_tailed=True):
     else:
         return float(n_on)/n_tot, lower, upper
 
-def binomial_divide(h1, h2, confint=clopper_pearson):
+def clopper_pearson_poisson_means(x, y, alpha=1-0.6827):
+    r, rl, rh = clopper_pearson(x, x+y, alpha)
+    return r/(1 - r), rl/(1 - rl), rh/(1 - rh)
+
+def binomial_divide(h1, h2, confint=clopper_pearson, force_lt_1=True):
     nbins = h1.GetNbinsX()
     xax = h1.GetXaxis()
     if h2.GetNbinsX() != nbins: # or xax2.GetBinLowEdge(1) != xax.GetBinLowEdge(1) or xax2.GetBinLowEdge(nbins) != xax.GetBinLowEdge(nbins):
@@ -94,7 +98,7 @@ def binomial_divide(h1, h2, confint=clopper_pearson):
             continue
 
         p_hat = float(s)/t
-        if s > t:
+        if s > t and force_lt_1:
             print 'warning: bin %i has p_hat > 1, in interval forcing p_hat = 1' % ibin
             s = t
         rat, a,b = confint(s,t)
@@ -500,6 +504,15 @@ def set_zp2mu_style(date_pages=False):
     #ROOT.gStyle.SetStatFont(52)
     ROOT.gErrorIgnoreLevel = 1001 # Suppress TCanvas::SaveAs messages.
 
+def sort_histogram_pair(h1, h2, by=real_hist_max):
+    """Return the pair ordered by e.g. real_hist_max to know which to
+    draw first."""
+    
+    if real_hist_max(h1) > real_hist_max(h2):
+        return h1,h2
+    else:
+        return h2,h1
+
 def ttree_iterator(tree, return_tree=True):
     for jentry in xrange(tree.GetEntriesFast()):
         if tree.LoadTree(jentry) < 0: break
@@ -513,6 +526,7 @@ __all__ = [
     'apply_hist_commands',
     'binomial_divide',
     'clopper_pearson',
+    'clopper_pearson_poisson_means',
     'core_gaussian',
     'cumulative_histogram',
     'fit_gaussian',
@@ -527,6 +541,7 @@ __all__ = [
     'real_hist_max',
     'real_hist_min',
     'set_zp2mu_style',
+    'sort_histogram_pair',
     'ttree_iterator',
     'ROOT',
     ]

@@ -1,10 +1,19 @@
+# (py emucorrections.py >! plots/out.emucorrections) && tlp plots/emucorrections
+
 from array import array
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import *
 set_zp2mu_style()
+ROOT.gStyle.SetPadTopMargin(0.02)
+ROOT.gStyle.SetPadRightMargin(0.04)
 
-ps = plot_saver('plots/emucorrections')
+titles_on_individual = False
+if titles_on_individual:
+    ROOT.gStyle.SetTitleX(0.25)
+    ROOT.gStyle.SetTitleY(0.40)
 
-bins = array('d', [120, 200, 300, 400, 600])
+ps = plot_saver('plots/emucorrections', size=(600,600), pdf=True, pdf_log=True)
+
+bins = array('d', [120, 200, 400, 600])
 
 total_mumu = ROOT.TH1F('mumu', '', len(bins)-1, bins)
 total_emu  = ROOT.TH1F('emu',  '', len(bins)-1, bins)
@@ -14,20 +23,32 @@ samples = [ttbar, ww, singletop_tW, ztautau, wz, zz]
 cut = 'OurNew'
 
 def draw(sample):
-    for h,c in [(sample.emu, 9), (sample.mumu, 46)]:
+    for h,c in [(sample.emu, ROOT.kRed), (sample.mumu, ROOT.kBlue)]:
         #h.SetFillColor(c)
         h.SetLineWidth(2)
         h.SetLineColor(c)
         h.SetStats(0)
-        h.SetTitle('%s;dilepton mass (GeV);arb. units' % sample.name)
+        title = '%s;dilepton mass (GeV);reconstructed events/bin' % (sample.nice_name if titles_on_individual else '')
+        h.SetTitle(title)
+        h.GetYaxis().SetTitleOffset(1.1)
+        h.GetYaxis().SetLabelSize(0.025)
+        h.GetXaxis().SetRangeUser(100, 620)
 
     h1,h2 = sort_histogram_pair(sample.mumu, sample.emu)
     h1.Draw('e')
     h2.Draw('e same')
+
+    lg = ROOT.TLegend(0.67, 0.79, 0.90, 0.93)
+    lg.AddEntry(sample.emu,  '#mu^{+}e^{-}/#mu^{-}e^{+}', 'LE')
+    lg.AddEntry(sample.mumu, '#mu^{+}#mu^{-}', 'LE')
+    lg.Draw()
+    
     ps.save('%s_mumu_emu' % sample.name)
 
     sample.div = g = binomial_divide(sample.mumu, sample.emu, clopper_pearson_poisson_means, force_lt_1=False)
     g.SetTitle(';dilepton mass (GeV);correction factor n(#mu#mu)/n(e#mu)')
+    g.GetYaxis().SetTitleOffset(1.2)
+    g.GetYaxis().SetLabelSize(0.03)
     g.Draw('AP')
     ps.save('%s_div' % sample.name, log=False)
 
@@ -48,11 +69,10 @@ for sample in samples:
 
     draw(sample)
 
-#draw('total', mumu, emu, simple_div=True)
-
-lg = ROOT.TLegend(0.62, 0.13, 0.81, 0.33)
 
 # Normalize by the sum of the weights.
+lg = ROOT.TLegend(0.74, 0.14, 0.89, 0.47)
+ROOT.gStyle.SetPaintTextFormat('.1e')
 sum_weights = samples[0].weight.Clone('sum_weights')
 for sample in samples[1:]:
     sum_weights.Add(sample.weight)
@@ -72,14 +92,18 @@ for sample in samples:
     lg.AddEntry(sample.weight, sample.nice_name, 'LE')
 lg.Draw()
 ps.save('weights')
-        
+
+
+# Now draw the correction factors overlaid.
+lg = ROOT.TLegend(0.16, 0.16, 0.43, 0.32)
 first = True
-for sample in samples:
+for sample in [ttbar, ww]: # samples:
     g = sample.div
     g.SetLineWidth(2)
     g.SetLineColor(sample.color)
     g.Draw('AP' if first else 'P same')
     first = False
+    lg.AddEntry(sample.weight, sample.nice_name, 'LE')
 
     n = g.GetN()
     x,y = ROOT.Double(), ROOT.Double()

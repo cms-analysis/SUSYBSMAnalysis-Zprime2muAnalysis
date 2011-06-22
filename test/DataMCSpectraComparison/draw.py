@@ -29,8 +29,6 @@ global_rescale = {
     'OurNew': 179613/156730.74,
     'OurOld': 188452/164010.55,
     'OurNoIso': 182607/158981.24,
-    'OurNoChi2': 181853/158189.07,
-    'OurNoChi2NoMuMatch': 184046/160234.68,
     'VBTF': 156065/134925.34,
     }
 if 'norescale' in sys.argv:
@@ -39,7 +37,7 @@ def get_rescale_factor(cuts, dilepton):
     # Don't rescale e-mu plots.
     return 1. if 'electron' in dilepton.lower() else global_rescale.get(cuts, 1.)
     
-draw_zssm = False 
+draw_zssm = True 
 use_poisson_intervals = True
 overflow_bin = True
 
@@ -122,7 +120,7 @@ yaxis = {
 use_yaxis = True
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
-cutss = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso', 'OurNoChi2', 'OurNoChi2NoMuMatch']
+cutss = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso']
 mass_ranges_for_table = [(60,120), (120,200), (200,400), (400,), (600,)]
 
 if 'forscale' in sys.argv:
@@ -140,7 +138,7 @@ def dir_name(c, d):
 pdir = 'plots/datamc'
 if histo_dir != 'ana_datamc':
     pdir += '_' + histo_dir.replace('ana_datamc_', '')
-ps = plot_saver(pdir, size=(600,600), pdf_log=True, pdf=True)
+ps = plot_saver(pdir, size=(900,600), pdf_log=True, pdf=True)
 save_plots = 'no_plots' not in sys.argv
 
 #samples = [s for s in samples if not s.name in ['ww', 'zz', 'wz', 'qcd500']]

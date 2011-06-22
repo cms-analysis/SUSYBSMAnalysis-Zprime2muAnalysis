@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# (py draw.py >! out.draw) && (py draw.py tight >! out.draw_tight) && tlp plots/nminus1effs*
+# (py draw.py >! plots/nminus1effs/out.draw) && tlp plots/nminus1effs
 
 import sys, os, glob
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import *
@@ -29,9 +29,8 @@ if do_tight:
         ]
 else:
     nminus1s = [
-        #'NoPt',
+        'NoPt',
         'NoDB',
-        'NoGlbChi2',
         'NoIso',
         'NoTkHits',
         'NoPxHits',
@@ -71,7 +70,7 @@ pretty = {
     'NoB2B': 'back-to-back',
     'NoVtxProb': '#chi^{2} #mu#mu vtx < 10',
     'NoIso': 'rel. tk. iso.',
-    'ana_nminus1_data.root': 'Data, 366 pb^{-1}',
+    'ana_nminus1_data.root': 'Data, 746 pb^{-1}',
     'ana_nminus1_zmumu.root': 'Z#rightarrow#mu#mu, 60 < M < 120 GeV',
     'ana_nminus1_dy120.root': 'DY#rightarrow#mu#mu, M > 120 GeV',
     'ana_nminus1_dy200.root': 'DY#rightarrow#mu#mu, M > 200 GeV',
@@ -99,7 +98,7 @@ ymin = {
     '200m400': 0.85,
     '400m':    0.81,
     }
-global_ymin = 0.75
+global_ymin = 0.58
 
 def table(f, mass_range):
     hnum = f.Get('NoNo').Get('DileptonMass')
@@ -114,13 +113,13 @@ def table(f, mass_range):
         e,l,h = clopper_pearson(num, den)
         print '%20s%20f%20f%15f%15f' % (nminus1, den, e, l, h)
 
-ROOT.gStyle.SetTitleX(0.40)
+ROOT.gStyle.SetTitleX(0.25)
 ROOT.gStyle.SetTitleY(0.40)
 
 for name, pretty_name, mass_range in mass_ranges:
     print name, pretty_name
 
-    lg = ROOT.TLegend(0.40, 0.13, 0.96, 0.33)
+    lg = ROOT.TLegend(0.25, 0.13, 0.81, 0.33)
     lg.SetFillColor(0)
     lg.SetBorderSize(1)
     
@@ -148,7 +147,7 @@ for name, pretty_name, mass_range in mass_ranges:
 
         eff = binomial_divide(nminus1_num, nminus1_den)
         eff.SetTitle(pretty_name)
-        eff.GetYaxis().SetRangeUser(global_ymin if global_ymin is not None else ymin[name], 1.005)
+        eff.GetYaxis().SetRangeUser(global_ymin if global_ymin is not None else ymin[name], 1.01)
         eff.GetXaxis().SetTitle('cut')
         eff.GetYaxis().SetLabelSize(0.027)
         eff.GetYaxis().SetTitle('n-1 efficiency')

@@ -13,6 +13,7 @@ assert last_prompt_run > last_rereco_run
 # Lumis to manually throw out.
 to_remove = {
     '166530': [[1,105]], # During physics-declared, this run had Mu30_v3 prescaled by 20. https://cmswbm.web.cern.ch/cmswbm/cmsdb/servlet/PrescaleChanges?RUN=166530   https://cmswbm.web.cern.ch/cmswbm/cmsdb/servlet/LumiSections?RUN=166530
+    '167102': [[1,7]],   # Mu30_v5 was prescaled by 35 then went down to prescale 1 after these lumis.  https://cmswbm2.web.cern.ch/cmswbm2/cmsdb/servlet/PrescaleChanges?RUN=167102
     }
 to_remove = LumiList(compactList=to_remove)
 

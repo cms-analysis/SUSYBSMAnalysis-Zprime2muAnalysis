@@ -57,6 +57,7 @@ to_use = {
     }
 
 pretty = {
+    'NoPt': 'p_{T} > 35 GeV',
     'NoTkHits': '# tk hits > 10',
     'NoPxHits': '# px hits > 0',
     'NoMuStns': '# mu segs > 1',
@@ -167,9 +168,9 @@ for name, pretty_name, mass_range in mass_ranges:
         eff.Draw(draw)
         effs.append(eff)
         same = ' same'
-        bnr = eff.GetXaxis().GetNbins()/float(eff.GetN())
+        bnr = (eff.GetXaxis().GetNbins()-3)/float(eff.GetN())
         for i in xrange(1,l+1):
-            eff.GetXaxis().SetBinLabel(int((i-1)*bnr)+1, pretty.get(nminus1s[i-1], nminus1s[i-1]))
+            eff.GetXaxis().SetBinLabel(int((i-1)*bnr)+1+4, pretty.get(nminus1s[i-1], nminus1s[i-1]))
         eff.GetXaxis().LabelsOption('u')
 
     lg.Draw()

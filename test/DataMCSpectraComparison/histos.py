@@ -183,23 +183,18 @@ return_data = 1
             'Run2011A',
             'Run2011AMuonsOnly',
             'Run2011APlusDCSOnlyMuonsOnly',
-            '',
             ]
 
         jobs = []
         for lumi_name in lumi_lists:
-            ll = eval(lumi_name + '_ll') if lumi_name != '' else None
+            ll = eval(lumi_name + '_ll')
             for dd in dataset_details:
                 jobs.append(dd + (lumi_name, ll))
                 
         for dataset_name, ana_dataset, lumi_name, lumi_list in jobs:
-            if lumi_list is not None:
-                json_fn = 'tmp.json'
-                lumi_list.writeJSON(json_fn)
-                lumi_mask = 'lumi_mask = %s' % json_fn
-            else:
-                lumi_name = 'NoLumiMask'
-                lumi_mask = ''
+            json_fn = 'tmp.json'
+            lumi_list.writeJSON(json_fn)
+            lumi_mask = 'lumi_mask = %s' % json_fn
                 
             name = '%s_%s' % (lumi_name, dataset_name)
             print name

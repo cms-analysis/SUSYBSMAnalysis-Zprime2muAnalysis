@@ -537,6 +537,7 @@ __all__ = [
     'move_above_into_bin',
     'move_overflow_into_last_bin',
     'plot_saver',
+    'poisson_intervalize',
     'rainbow_palette',
     'real_hist_max',
     'real_hist_min',

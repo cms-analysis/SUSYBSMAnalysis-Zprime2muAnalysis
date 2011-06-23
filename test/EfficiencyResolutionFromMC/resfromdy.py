@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# (py resfromdy.py >! plots/out.resfromdy) && tlp plots/*resfromdy
+
 import os
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import *
 set_zp2mu_style()

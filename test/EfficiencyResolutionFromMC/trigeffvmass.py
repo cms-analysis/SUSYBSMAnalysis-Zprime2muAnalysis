@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-# (py trigeffvmass.py >&! out.trigeffvmass) && (py trigeffvmass.py vbtf >&! out.trigeffvmass_vbtf) && tar czvf ~/asdf/plots.tgz plots
+# (py trigeffvmass.py >! plots/out.trigeffvsmassmctruth) && (py trigeffvmass.py vbtf >! plots/out.trigeffvsmassmctruth_vbtf) && tlp plots/*trigeffvsmassmctruth*
 
 import sys, os
+from array import array
 
-samples = ['dy20', 'dy60', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750'] #, 'zp2000', 'zp2250']
+samples = ['dy60', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750'] #, 'zp2000', 'zp2250']
 
 if False:
     # Can use graviton samples too -- don't bother to change the rest
@@ -36,7 +37,7 @@ ROOT.gStyle.SetPadRightMargin(0.04)
 ROOT.TH1.AddDirectory(0)
 
 types = ['AccNoPt', 'Acceptance', 'RecoWrtAcc', 'RecoWrtAccTrig', 'TotalReco', 'L1OrEff', 'HLTOrEff', 'TotalTrigEff']
-rebin_factor = 100
+rebin_factor = 50
 make_individual_plots = False
 make_individual_effs = False
 
@@ -52,7 +53,7 @@ for sample in samples:
     f = files[sample] = ROOT.TFile('ana_effres_%s.root' % sample)
     d = f.Get(which)
     if make_individual_plots or make_individual_effs:
-        ps = plot_saver(os.path.join(plot_dir, sample))
+        ps = plot_saver(os.path.join(plot_dir, sample), pdf=True)
 
     for t in types:
         num = d.Get('Num' + t)
@@ -94,7 +95,7 @@ for sample in samples:
         samples_totals.append((sample, t, cnum, cden))
         sys.stdout.flush()
 
-ps = plot_saver(plot_dir)
+ps = plot_saver(plot_dir, pdf=True)
 
 totals_histos = {}
 for sample, t, cnum, cden in samples_totals:
@@ -270,17 +271,22 @@ s.SetY1NDC(0.35)
 s.SetX2NDC(0.92)
 s.SetY2NDC(0.51)
 ps.save('summary_recoeff', log=False)
+
+residuals = TotalReco.Clone('residuals')
 x,y = ROOT.Double(), ROOT.Double()
-hres = ROOT.TH1F('hres', '', 20, 0, 2000)
 for i in xrange(TotalReco.GetN()):
     TotalReco.GetPoint(i, x, y)
     f = fcn.Eval(x)
-    b = hres.FindBin(x)
-    hres.SetBinContent(b, f/y-1)
-    hres.SetBinError(b, max(TotalReco.GetErrorYlow(i), TotalReco.GetErrorYhigh(i)))
-hres.SetTitle(';dimuon invariant mass (GeV);f/h-1')
-hres.Draw('hist e1')
-hres.Fit('pol1', 'VR', '', 200, 1200)
+    residuals.SetPoint(i, x, f/y-1)
+residuals.SetTitle(';dimuon invariant mass (GeV);relative residual f/h-1')
+residuals.Draw('AP')
+residuals.Fit('pol1', 'VR', '', 200, 1200)
+ps.c.Update()
+s = residuals.GetListOfFunctions().FindObject('stats')
+s.SetX1NDC(0.19)
+s.SetY1NDC(0.17)
+s.SetX2NDC(0.54)
+s.SetY2NDC(0.33)
 ps.save('totalreco_fit_residuals')
 
 # Dump the values of the total reconstruction curve (but take the

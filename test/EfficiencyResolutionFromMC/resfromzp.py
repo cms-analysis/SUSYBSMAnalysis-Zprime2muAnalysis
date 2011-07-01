@@ -11,7 +11,7 @@ ROOT.gStyle.SetPadRightMargin(0.02)
 
 ps = plot_saver('plots/resfromzp')
 
-masses = [750, 1000, 1250, 1500, 1750, 2000, 2250]
+masses = [750, 1000, 1250, 1500, 1750]
 chnam, val, err, xlolim, xhilim, iuint = ROOT.TString(''), ROOT.Double(1), ROOT.Double(1), ROOT.Double(1), ROOT.Double(1), ROOT.Long(1)
 
 for basein, baseout in [('Resolutioninner', 'tkonly'), ('Resolutionpmc', 'pmc')]:

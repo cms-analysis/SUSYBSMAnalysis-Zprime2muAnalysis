@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# (py diffrecores.py >! plots/out.diffrecores) && tlp plots/*diffrecores
+
 import os
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import *
 set_zp2mu_style()

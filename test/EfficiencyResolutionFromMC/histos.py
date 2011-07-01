@@ -5,7 +5,7 @@ restrict_mass_window = True
 # intime_bin numbering: bin 0 = 0-5, bin 1 = 6-11, bin 2 = 12-26
 # late_bin numbering: bin 0 = 0-9, bin 2 = 10-26
 intime_bin, late_bin = -1, -1 
-use_old_vbtf_selection = True
+use_old_vbtf_selection = False
 
 ################################################################################
 

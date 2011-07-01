@@ -5,6 +5,7 @@ restrict_mass_window = True
 # intime_bin numbering: bin 0 = 0-5, bin 1 = 6-11, bin 2 = 12-26
 # late_bin numbering: bin 0 = 0-9, bin 2 = 10-26
 intime_bin, late_bin = -1, -1 
+use_old_vbtf_selection = True
 
 ################################################################################
 
@@ -49,6 +50,20 @@ process.allDimuonsVBTF = VBTFSelection.allDimuons.clone()
 process.dimuonsVBTF = VBTFSelection.dimuons.clone(src = 'allDimuonsVBTF')
 process.VBTFEfficiencyFromMC = process.EfficiencyFromMC.clone(dimuon_src = 'dimuonsVBTF', acceptance_max_eta = 2.1)
 
+if use_old_vbtf_selection:
+    ex += 'oldvbtf'
+    process.allDimuonsVBTF.loose_cut = 'isGlobalMuon && ' \
+                                       'isTrackerMuon && ' \
+                                       'innerTrack.pt > 35. && ' \
+                                       'abs(innerTrack.eta) < 2.1 && ' \
+                                       'abs(dB) < 0.2 && ' \
+                                       '(isolationR03.sumPt + isolationR03.emEt + isolationR03.hadEt) / innerTrack.pt < 0.15 && ' \
+                                       'globalTrack.hitPattern.numberOfValidTrackerHits > 10 && ' \
+                                       'globalTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \
+                                       'globalTrack.hitPattern.numberOfValidMuonHits > 0 && ' \
+                                       'numberOfMatches >= 2'
+
+    
 p2 = process.HardInteractionFilter * process.Zprime2muAnalysisSequencePlain * process.HLTSingleObjects * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC
 p  = process.HardInteractionFilterRes * process.Zprime2muAnalysisSequence # this will get all the Histospmc, Histospicky, Histosglobal, etc. below.
 
@@ -124,8 +139,6 @@ return_data = 1
         ('zp1250', '/ZprimeSSMToMuMu_M-1250_TuneZ2_7TeV-pythia6/tucker-effres_zp1250-dd2126535e23ba03e5a28af2e68bf29c/USER', -1, 20000),
         ('zp1500', '/ZprimeSSMToMuMu_M-1500_TuneZ2_7TeV-pythia6/tucker-effres_zp1500-dd2126535e23ba03e5a28af2e68bf29c/USER', -1, 20000),
         ('zp1750', '/ZprimeSSMToMuMu_M-1750_TuneZ2_7TeV-pythia6/tucker-effres_zp1750-dd2126535e23ba03e5a28af2e68bf29c/USER', -1, 20000),
-        ('zp2000', '/ZprimeSSMToMuMu_M-2000_TuneZ2_7TeV-pythia6/tucker-effres_zp2000-dd2126535e23ba03e5a28af2e68bf29c/USER', -1, 20000),
-        ('zp2250', '/ZprimeSSMToMuMu_M-2250_TuneZ2_7TeV-pythia6/tucker-effres_zp2250-dd2126535e23ba03e5a28af2e68bf29c/USER', -1, 20000),
         ]
 
     resolutions = {
@@ -135,8 +148,6 @@ return_data = 1
         1250: 0.080,
         1500: 0.086,
         1750: 0.089,
-        2000: 0.092,
-        2250: 0.095,
         }
     
     just_testing = 'testing' in sys.argv

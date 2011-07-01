@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-foreach x (ana_datamc_NoLumiMask ana_datamc_Run2011A*)
+foreach x (ana_datamc_Run2011AMuonsOnly ana_datamc_Run2011AMuonsOnly)
   echo $x
   py draw.py $x >! plots/out.draw.${x}
 end
@@ -26,10 +26,10 @@ x_axis_limits2 = 60, 1100
 to_compare = 'DileptonMass'
 
 global_rescale = {
-    'OurNew': 179613/156730.74,
-    'OurOld': 188452/164010.55,
-    'OurNoIso': 182607/158981.24,
-    'VBTF': 156065/134925.34,
+    'OurNew': 180812/157189.13,
+    'OurOld': 187373/162973.81,
+    'OurNoIso': 183840/159451.43,
+    'VBTF': 155159/134072.45,
     }
 if 'norescale' in sys.argv:
     global_rescale = {}
@@ -49,7 +49,7 @@ joins += [(x, 't#bar{t} + other prompt leptons') for x in ['ttbar', 'singletop_t
 joins += [(s.name, '#gamma/Z #rightarrow #mu^{+}#mu^{-}') for s in samples if 'dy' in s.name]
 joins += [('zmumu', '#gamma/Z #rightarrow #mu^{+}#mu^{-}')]
 joins = dict(joins)
-joins_colors = {'jets': 4, 't#bar{t} + other prompt leptons': 2, '#gamma/Z #rightarrow #mu^{+}#mu^{-}': 7}
+joins_colors = {'jets': 4, 't#bar{t} + other prompt leptons': 2, 'other prompt leptons': 2, '#gamma/Z #rightarrow #mu^{+}#mu^{-}': 7}
 
 histo_dir = [x for x in sys.argv if os.path.isdir(x)][0]
 
@@ -76,7 +76,7 @@ def parse_lumi_from_log(fn):
             this = True
 
 int_lumi = sum(parse_lumi_from_log(x.replace('.root', '.lumi')) for x in data_fns)
-lumi_syst_frac = 0.10
+lumi_syst_frac = 0.06
 
 print '"joins" are:'
 pprint(joins)
@@ -121,7 +121,7 @@ use_yaxis = True
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
 cutss = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso']
-mass_ranges_for_table = [(60,120), (120,200), (200,400), (400,), (600,)]
+mass_ranges_for_table = [(60,120), (120,200), (200,), (200,400), (400,), (600,)]
 
 if 'forscale' in sys.argv:
     global_rescale = {}

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os
+import os, cPickle, gzip
 
 def big_warn(s):
     x = '#' * len(s)
@@ -90,6 +90,13 @@ def strip_comments(cpp_src):
     cpp_src = replace_all(cpp_src, '//', '\n', '\n')
     cpp_src = replace_all(cpp_src, '/*', '*/')
     return cpp_src
+
+def to_pickle(obj, fn, proto=-1, comp=False):
+    if comp or '.gzpickle' in fn:
+        f = gzip.GzipFile(fn, 'wb')
+    else:
+        f = open(fn, 'wb')
+    cPickle.dump(obj, f, proto)
 
 __all__ = ['big_warn', 'files_from_dbs', 'parse_enum', 'rec_level_code', 'rec_levels', 'replace_all', 'strip_comments']
 

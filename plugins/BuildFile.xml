@@ -75,6 +75,8 @@
 </library>
 
 <library file="CheckPrescale.cc,VetoOtherDataset.cc" name="Zprime2muTriggerPlugins">
+  <use name="rootgraphics"/>
+  <use name="CommonTools/UtilAlgos"/>
   <use name="HLTrigger/HLTcore"/>
 </library>
 

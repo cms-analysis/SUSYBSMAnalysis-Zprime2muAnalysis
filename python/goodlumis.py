@@ -7,7 +7,7 @@ def for_cmssw(ll):
 # These numbers dictate how the rereco, prompt, DCS-only jsons are
 # combined below.
 last_rereco_run = 163869
-last_prompt_run = 166861
+last_prompt_run = 167784
 assert last_prompt_run > last_rereco_run
 
 # Lumis to manually throw out.
@@ -17,11 +17,16 @@ to_remove = {
     }
 to_remove = LumiList(compactList=to_remove)
 
-runs_to_remove_from_dcsonly = range(160404, last_prompt_run+1)
 # These runs are <= last_prompt_run, but they were not actually
 # considered in the certification for the latest prompt JSON. So,
 # don't drop them from the DCS-only list when combining later.
-#runs_to_remove_from_dcsonly.remove()
+holes = [167746]
+
+
+runs_to_remove_from_dcsonly = range(160404, last_prompt_run+1)
+for hole in holes:
+    print 'goodlumis warning: re-adding "hole" run %i from DCS-only list' % hole
+    runs_to_remove_from_dcsonly.remove(hole)
 
 DCSOnly_ll           = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/DCSOnly/json_DCSONLY.txt')
 DCSOnlyForNewRuns_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/DCSOnly/json_DCSONLY.txt')

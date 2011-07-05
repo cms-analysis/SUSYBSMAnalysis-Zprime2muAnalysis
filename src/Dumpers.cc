@@ -73,14 +73,22 @@ std::ostream& operator<<(std::ostream& out, const pat::Muon& mu) {
   if (mu.genParticle())
     out << "\nMC match: " << *mu.genParticle();
 
-  if (mu.hasUserInt("trackUsedForMomentum")) 
-    out << "\nTrack used for momentum: " << mu.userInt("trackUsedForMomentum");
-  
+  if (mu.hasUserInt("trackUsedForMomentum")) {
+    patmuon::TrackType type = patmuon::getPickedTrackType(mu);
+    out << "\nTrack used for momentum: " << type << " (" << patmuon::track_names[type] << ")";
+    if (patmuon::wasCocktailUsed(mu)) {
+      patmuon::TrackType type = patmuon::resolveCocktail(mu);
+      out << "\nThis cocktail chose this track: " << type << " (" << patmuon::track_names[type] << ")";
+    }
+  }
+  else
+    out << "\nWARNING muon did not have trackUsedForMomentum userInt!";
+
   out << "\nTeV refit values:";
   osprintf(out, "\n%20s%20s%20s%20s%20s", "refit", "pt", "eta", "phi", "chi2/dof");
   for (size_t i = 0; i < patmuon::nTrackTypes; ++i) {
     reco::TrackRef tk = patmuon::trackByType(mu, patmuon::TrackType(i));
-    osprintf(out, "\n%20s%20.1f%20.1f%20.1f%20.1f", patmuon::track_names[i].c_str(), tk->pt(), tk->eta(), tk->phi(), tk->normalizedChi2());
+    osprintf(out, "\n%20s%20.1f%20.1f%20.3f%20.3f", patmuon::track_names[i].c_str(), tk->pt(), tk->eta(), tk->phi(), tk->normalizedChi2());
   }
     
   if (mu.isTrackerMuon())

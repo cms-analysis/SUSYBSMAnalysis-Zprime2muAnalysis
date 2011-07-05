@@ -50,8 +50,39 @@ namespace patmuon {
     else
       return reco::TrackRef();
   }
-
+  
+  TrackType getPickedTrackType(const pat::Muon& mu) {
+    if (!mu.hasUserInt("trackUsedForMomentum"))
+      throw cms::Exception("Zp2muPATUtilities") << "getPickedTrackType called on muon without trackUsedForMomentum userInt!\n";
+    return TrackType(mu.userInt("trackUsedForMomentum"));
+  }
+  
   reco::TrackRef getPickedTrack(const pat::Muon& mu) {
-    return trackByType(mu, TrackType(mu.userInt("trackUsedForMomentum")));
+    return trackByType(mu, getPickedTrackType(mu));
+  }
+  
+  bool wasCocktailUsed(const TrackType type) {
+    return type == TkPMC || type == TkTMR || type == TkSigmaSwitch;
+  }
+
+  bool wasCocktailUsed(const pat::Muon& mu) {
+    return wasCocktailUsed(getPickedTrackType(mu));
+  }
+
+  TrackType resolveCocktail(const pat::Muon& mu) {
+    TrackType type = getPickedTrackType(mu);
+    if (!wasCocktailUsed(type)) // could throw but leave up to caller to check
+      return type;
+    reco::TrackRef picked = getPickedTrack(mu);
+    if (picked == mu.globalTrack())
+      return TkGlobal;
+    else if (picked == mu.innerTrack())
+      return TkInner;
+    else if (picked == mu.tpfmsMuon())
+      return TkTPFMS;
+    else if (picked == mu.pickyMuon())
+      return TkPicky;
+    else
+      return nTrackTypes;
   }
 }

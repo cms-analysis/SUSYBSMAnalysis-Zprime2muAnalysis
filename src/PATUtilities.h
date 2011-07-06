@@ -19,6 +19,7 @@ namespace patmuon {
   reco::TrackRef getPickedTrack(const pat::Muon& mu);
   bool wasCocktailUsed(const TrackType type);
   bool wasCocktailUsed(const pat::Muon& mu);
+  TrackType whichTrack(const pat::Muon& mu, const reco::TrackRef& tk);
   TrackType resolveCocktail(const pat::Muon& mu);
 }
 

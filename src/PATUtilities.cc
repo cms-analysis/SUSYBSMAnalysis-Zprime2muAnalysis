@@ -69,20 +69,25 @@ namespace patmuon {
     return wasCocktailUsed(getPickedTrackType(mu));
   }
 
+  TrackType whichTrack(const pat::Muon& mu, const reco::TrackRef& tk) {
+    if (tk == mu.globalTrack())
+      return TkGlobal;
+    else if (tk == mu.innerTrack())
+      return TkInner;
+    else if (tk == mu.outerTrack())
+      return TkOuter;
+    else if (tk == mu.tpfmsMuon())
+      return TkTPFMS;
+    else if (tk == mu.pickyMuon())
+      return TkPicky;
+    else
+      return nTrackTypes;
+  }
+
   TrackType resolveCocktail(const pat::Muon& mu) {
     TrackType type = getPickedTrackType(mu);
     if (!wasCocktailUsed(type)) // could throw but leave up to caller to check
       return type;
-    reco::TrackRef picked = getPickedTrack(mu);
-    if (picked == mu.globalTrack())
-      return TkGlobal;
-    else if (picked == mu.innerTrack())
-      return TkInner;
-    else if (picked == mu.tpfmsMuon())
-      return TkTPFMS;
-    else if (picked == mu.pickyMuon())
-      return TkPicky;
-    else
-      return nTrackTypes;
+    return whichTrack(mu, getPickedTrack(mu));
   }
 }

@@ -144,7 +144,7 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
 
 if 'gogo' in sys.argv:
     ntuplify(process) #, fill_gen_info=True)
-#    printify(process)
+    #printify(process)
     
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
@@ -172,13 +172,13 @@ return_data = 1
 
         dataset_details = [
             ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMu2011A_May10-3c88448713b4112b83eb5e163e8441f1/USER'),
-            ('SingleMu2011A_Prompt_165071_167150', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_167150_20110620045014-e0e58cf0dbd55d2562f61b8061f4c446/USER'),
+            ('SingleMu2011A_Prompt_165071_167913', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_167913_20110705115318-e0e58cf0dbd55d2562f61b8061f4c446/USER'),
             ]
 
         lumi_lists = [
             'Run2011A',
             'Run2011AMuonsOnly',
-            'Run2011APlusDCSOnlyMuonsOnly',
+            #'Run2011APlusDCSOnlyMuonsOnly',
             ]
 
         jobs = []

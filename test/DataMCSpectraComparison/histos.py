@@ -3,7 +3,7 @@
 import sys, os, glob, FWCore.ParameterSet.Config as cms
 from pprint import pprint
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
-process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/datamc_zmumu/5222c20b53e3c47b6c8353d464ee954c/pat_42_3_74A.root']
+#process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/datamc_zmumu/5222c20b53e3c47b6c8353d464ee954c/pat_42_3_74A.root']
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
 
@@ -103,7 +103,7 @@ for cut_name in cuts.keys():
     path = cms.Path(pobj)
     setattr(process, pathname, path)
 
-def ntuplify(process, hlt_process_name='HLT'):
+def ntuplify(process, hlt_process_name='HLT', fill_gen_info=False):
     process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler',
                                            hlt_src = cms.InputTag('TriggerResults', '', hlt_process_name),
                                            dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
@@ -111,6 +111,11 @@ def ntuplify(process, hlt_process_name='HLT'):
                                            vertices_src = cms.InputTag('offlinePrimaryVertices')
                                            )
     process.SimpleNtuplerEmu = process.SimpleNtupler.clone(dimu_src = cms.InputTag('SimpleMuonsElectronsAllSigns'))
+
+    if fill_gen_info:
+        from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction
+        process.SimpleNtupler.hardInteraction = hardInteraction
+
     process.pathSimple *= process.SimpleNtupler * process.SimpleNtuplerEmu
 
 def printify(process, hlt_process_name='HLT'):
@@ -138,18 +143,9 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.pCheckPrescale = cms.Path(process.CheckPrescale)
 
 if 'gogo' in sys.argv:
-    ntuplify(process)
-    #printify(process)
-    #from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import files_from_argv, set_events_to_process
-    #files_from_argv(process)
-    process.source.fileNames = ['/store/user/tucker/SingleMu/datamc_SingleMu2011A_prompt_165071_166839_20110614010836/8788f1b70631d1fb57e97a89f5e8007c/pat_8_1_CMg.root','/store/user/tucker/SingleMu/datamc_SingleMu2011A_prompt_165071_166839_20110614010836/8788f1b70631d1fb57e97a89f5e8007c/pat_156_1_GA0.root']
-    process.GlobalTag.globaltag = 'GR_R_42_V13::All'
-    check_prescale(process, ['HLT_Mu30_v1', 'HLT_Mu30_v2', 'HLT_Mu30_v3', 'HLT_Mu30_v4', 'HLT_Mu30_v5'])
-    from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2011AMuonsOnly
-    process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange(*Run2011AMuonsOnly)
-    process.options.wantSummary = True
-                            
-
+    ntuplify(process) #, fill_gen_info=True)
+#    printify(process)
+    
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
 [CRAB]
@@ -247,7 +243,9 @@ events_per_job = 100000
 
             new_py = open('histos.py').read()
             new_py += "\nprocess.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', '%(hlt_process_name)s')\n" % sample
-            new_py += "\nntuplify(process, hlt_process_name='%(hlt_process_name)s')\n" % sample
+
+            sample.fill_gen_info = sample.name in ['zmumu', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'zssm1000']
+            new_py += "\nntuplify(process, hlt_process_name='%(hlt_process_name)s', fill_gen_info=%(fill_gen_info)s)\n" % sample
 
             if combine_dy_samples and (sample.name == 'zmumu' or 'dy' in sample.name):
                 mass_limits = {
@@ -268,6 +266,13 @@ events_per_job = 100000
             open('crab.cfg', 'wt').write(crab_cfg % sample)
             if not just_testing:
                 os.system('crab -create -submit all')
+            else:
+                cmd = 'diff histos.py histos_crab.py | less'
+                print cmd
+                os.system(cmd)
+                cmd = 'less crab.cfg'
+                print cmd
+                os.system(cmd)
 
         if not just_testing:
             os.system('rm crab.cfg histos_crab.py histos_crab.pyc')

@@ -1,2 +1,4 @@
 *.gzpickle
 *.log
+out.*
+*.root

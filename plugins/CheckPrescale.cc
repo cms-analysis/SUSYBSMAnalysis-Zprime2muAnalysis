@@ -24,6 +24,7 @@ private:
   struct tree_t {
     unsigned run;
     unsigned lumi;
+    unsigned event;
     int l1;
     int hlt;
   };
@@ -41,7 +42,7 @@ CheckPrescale::CheckPrescale(const edm::ParameterSet& cfg)
   if (dump_prescales) {
     edm::Service<TFileService> fs;
     tree = fs->make<TTree>("t", "");
-    tree->Branch("tt", &t, "run/i:lumi:l1/I:hlt");
+    tree->Branch("tt", &t, "run/i:lumi:event:l1/I:hlt");
   }
 }
 
@@ -74,11 +75,13 @@ void CheckPrescale::analyze(const edm::Event& event, const edm::EventSetup& setu
       continue;
 
     std::pair<int, int> prescales = hlt_cfg.prescaleValues(event, setup, *trigger_path);
+    //std::cout << "trigger path " << *trigger_path << " has L1/HLT prescales: " << prescales.first << "/" << prescales.second << "   event r/l/e: " << event.id().run() << "/" << event.luminosityBlock() << "/" << event.id().event() << " orbitNum: " << event.orbitNumber() << " BX: " << event.bunchCrossing() << " seconds since the epoch: " << event.time().unixTime() << "\n";
+
     if (prescales.first != 1 || prescales.second != 1) {
       std::ostringstream out;
-      out << "trigger path " << *trigger_path << " has prescale != 1! L1 prescale = " << prescales.first << "  HLT prescale: " << prescales.second << "\n";
+      out << "trigger path " << *trigger_path << " has prescale != 1! L1 prescale = " << prescales.first << "  HLT prescale: " << prescales.second;
       if (throw_on_prescale)
-        throw cms::Exception("CheckPrescale") << out.str();
+        throw cms::Exception("CheckPrescale") << out.str() << "\n";
       else
         edm::LogWarning("CheckPrescale") << out.str();
     }
@@ -88,12 +91,15 @@ void CheckPrescale::analyze(const edm::Event& event, const edm::EventSetup& setu
 
       t.run  = event.id().run();
       t.lumi = event.luminosityBlock();
+      t.event = event.id().event();
       t.l1   = prescales.first;
       t.hlt  = prescales.second;
 
-      if (t.run == last_t.run && t.lumi == last_t.lumi)
-        assert(t.l1 == last_t.l1 && t.hlt == last_t.hlt);
-      else
+      //if (t.run == last_t.run && t.lumi == last_t.lumi) {
+      //  if (t.l1 != last_t.l1 || t.hlt != last_t.hlt)
+      //    throw cms::Exception("CheckPrescale") << "for trigger path " << *trigger_path << ", inside (run, lumi) = (" << t.run << ", " << t.lumi << ") going to event " << event.id().event() << " different L1/HLT prescales found: before " << last_t.l1 << "/" << last_t.hlt << "  now: " << t.l1 << "/" << t.hlt << "\n";
+      //}
+      //else
         tree->Fill();
       
       last_t = t;

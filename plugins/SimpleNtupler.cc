@@ -90,6 +90,7 @@ private:
     float lep_cocktail_phi[2];
     float lep_cocktail_chi2[2];
     float lep_cocktail_ndf[2];
+    short lep_cocktail_choice[2];
     float lep_triggerMatchPt[2];
     float lep_chi2dof[2];
     float lep_dB[2];
@@ -225,6 +226,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->Branch("lep_cocktail_phi", t.lep_cocktail_phi, "lep_cocktail_phi[2]/F");
   tree->Branch("lep_cocktail_chi2", t.lep_cocktail_chi2, "lep_cocktail_chi2[2]/F");
   tree->Branch("lep_cocktail_ndf", t.lep_cocktail_ndf, "lep_cocktail_ndf[2]/F");
+  tree->Branch("lep_cocktail_choice", t.lep_cocktail_choice, "lep_cocktail_choice[2]/S");
   tree->Branch("lep_triggerMatchPt", t.lep_triggerMatchPt, "lep_triggerMatchPt[2]/F");
   tree->Branch("lep_chi2dof", t.lep_chi2dof, "lep_chi2dof[2]/F");
   tree->Branch("lep_dB", t.lep_dB, "lep_dB[2]/F");
@@ -601,6 +603,7 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	  t.lep_cocktail_phi[w] = -999;
 	  t.lep_cocktail_chi2[w] = -999;
 	  t.lep_cocktail_ndf[w] = -999;
+	  t.lep_cocktail_choice[w] = -999;
 	}
 	else {
 	  t.lep_cocktail_pt[w] = cocktail->pt();
@@ -609,6 +612,7 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	  t.lep_cocktail_phi[w] = cocktail->phi();
 	  t.lep_cocktail_chi2[w] = cocktail->chi2();
 	  t.lep_cocktail_ndf[w] = cocktail->ndof();
+	  t.lep_cocktail_choice[w] = short(patmuon::whichTrack(*mu, cocktail));
 	}
 
 	static const size_t n_single_mu_path_names = 10;

@@ -56,6 +56,9 @@ jobtype = cmssw
     events_fn = [x for x in sys.argv[1:] if os.path.isfile(x)][0]
     is_mc = False
     for line in open(events_fn):
+        line = line.strip()
+        if not line:
+            continue
         line = line.split(':')
         dataset = None
         if len(line) == 4:

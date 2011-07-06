@@ -16,12 +16,14 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymFunctions.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneralUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 
 class SimpleNtupler : public edm::EDAnalyzer {
 public:
   explicit SimpleNtupler(const edm::ParameterSet&);
+  ~SimpleNtupler() { delete hardInteraction; }
   void analyze(const edm::Event&, const edm::EventSetup&);
 
 private:
@@ -115,6 +117,22 @@ private:
     bool HLTPhysicsDeclared;
     bool GoodVtx;
     bool NoScraping;
+    float gen_res_mass;
+    float gen_res_pt;
+    float gen_res_rap;
+    float gen_res_eta;
+    float gen_res_phi;
+    float gen_dil_mass;
+    float gen_dil_pt;
+    float gen_dil_rap;
+    float gen_dil_eta;
+    float gen_dil_phi;
+    float gen_lep_pt[2];
+    float gen_lep_eta[2];
+    float gen_lep_phi[2];
+    float gen_lep_noib_pt[2];
+    float gen_lep_noib_eta[2];
+    float gen_lep_noib_phi[2];
   };
 
   tree_t t;
@@ -124,6 +142,9 @@ private:
   edm::InputTag dimu_src;
   edm::InputTag beamspot_src;
   edm::InputTag vertices_src;
+
+  const bool fill_gen_info;
+  HardInteraction* hardInteraction;
 };
 
 TString replace_all(const TString& a, const TString& b, const TString& c) {
@@ -136,7 +157,9 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   : hlt_src(cfg.getParameter<edm::InputTag>("hlt_src")),
     dimu_src(cfg.getParameter<edm::InputTag>("dimu_src")),
     beamspot_src(cfg.getParameter<edm::InputTag>("beamspot_src")),
-    vertices_src(cfg.getParameter<edm::InputTag>("vertices_src"))
+    vertices_src(cfg.getParameter<edm::InputTag>("vertices_src")),
+    fill_gen_info(cfg.existsAs<edm::ParameterSet>("hardInteraction")),
+    hardInteraction(fill_gen_info ? new HardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction")) : 0)
 {
   edm::Service<TFileService> fs;
   tree = fs->make<TTree>("t", "");
@@ -229,6 +252,24 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->Branch("HLTPhysicsDeclared", &t.HLTPhysicsDeclared, "HLTPhysicsDeclared/O");
   tree->Branch("GoodVtx", &t.GoodVtx, "GoodVtx/O");
   tree->Branch("NoScraping", &t.NoScraping, "NoScraping/O");
+  if (fill_gen_info) {
+    tree->Branch("gen_res_mass", &t.gen_res_mass, "gen_res_mass/F");
+    tree->Branch("gen_res_pt", &t.gen_res_pt, "gen_res_pt/F");
+    tree->Branch("gen_res_rap", &t.gen_res_rap, "gen_res_rap/F");
+    tree->Branch("gen_res_eta", &t.gen_res_eta, "gen_res_eta/F");
+    tree->Branch("gen_res_phi", &t.gen_res_phi, "gen_res_phi/F");
+    tree->Branch("gen_dil_mass", &t.gen_dil_mass, "gen_dil_mass/F");
+    tree->Branch("gen_dil_pt", &t.gen_dil_pt, "gen_dil_pt/F");
+    tree->Branch("gen_dil_rap", &t.gen_dil_rap, "gen_dil_rap/F");
+    tree->Branch("gen_dil_eta", &t.gen_dil_eta, "gen_dil_eta/F");
+    tree->Branch("gen_dil_phi", &t.gen_dil_phi, "gen_dil_phi/F");
+    tree->Branch("gen_lep_pt", t.gen_lep_pt, "gen_lep_pt[2]/F");
+    tree->Branch("gen_lep_eta", t.gen_lep_eta, "gen_lep_eta[2]/F");
+    tree->Branch("gen_lep_phi", t.gen_lep_phi, "gen_lep_phi[2]/F");
+    tree->Branch("gen_lep_noib_pt", t.gen_lep_noib_pt, "gen_lep_noib_pt[2]/F");
+    tree->Branch("gen_lep_noib_eta", t.gen_lep_noib_eta, "gen_lep_noib_eta[2]/F");
+    tree->Branch("gen_lep_noib_phi", t.gen_lep_noib_phi, "gen_lep_noib_phi[2]/F");
+  }
 
   tree->SetAlias("OppSign",  "lep_id[0]*lep_id[1] < 0");
   tree->SetAlias("SameSign", "lep_id[0]*lep_id[1] > 0");
@@ -368,6 +409,39 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
   BOOST_FOREACH(const reco::Vertex& vtx, *pvs)
     if (vtx.ndof() > 4 && fabs(vtx.z()) <= 24 && fabs(vtx.position().rho()) <= 2)
       t.nvertices += 1;
+  
+  if (fill_gen_info) {
+    // This only works for DY/Z'/RSG events, and really just for PYTHIA!
+    hardInteraction->Fill(event);
+
+    t.gen_res_mass = hardInteraction->resonance->mass();
+    t.gen_res_pt   = hardInteraction->resonance->pt();
+    t.gen_res_rap  = hardInteraction->resonance->rapidity();
+    t.gen_res_eta  = hardInteraction->resonance->eta();
+    t.gen_res_phi  = hardInteraction->resonance->phi();
+
+    t.gen_dil_mass = hardInteraction->dilepton().mass();
+    t.gen_dil_pt   = hardInteraction->dilepton().pt();
+    t.gen_dil_rap  = hardInteraction->dilepton().Rapidity();
+    t.gen_dil_eta  = hardInteraction->dilepton().eta();
+    t.gen_dil_phi  = hardInteraction->dilepton().phi();
+
+    t.gen_lep_pt[0]  = hardInteraction->lepMinus->pt();
+    t.gen_lep_eta[0] = hardInteraction->lepMinus->eta();
+    t.gen_lep_phi[0] = hardInteraction->lepMinus->phi();
+
+    t.gen_lep_pt[1]  = hardInteraction->lepPlus->pt();
+    t.gen_lep_eta[1] = hardInteraction->lepPlus->eta();
+    t.gen_lep_phi[1] = hardInteraction->lepPlus->phi();
+
+    t.gen_lep_noib_pt[0]  = hardInteraction->lepMinusNoIB->pt();
+    t.gen_lep_noib_eta[0] = hardInteraction->lepMinusNoIB->eta();
+    t.gen_lep_noib_phi[0] = hardInteraction->lepMinusNoIB->phi();
+
+    t.gen_lep_noib_pt[1]  = hardInteraction->lepPlusNoIB->pt();
+    t.gen_lep_noib_eta[1] = hardInteraction->lepPlusNoIB->eta();
+    t.gen_lep_noib_phi[1] = hardInteraction->lepPlusNoIB->phi();
+  }
 
   edm::Handle<pat::CompositeCandidateCollection> dils;
   event.getByLabel(dimu_src, dils);
@@ -603,7 +677,7 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
       t.cos_cs = -999;
       t.phi_cs = -999;
     }
-    
+
     tree->Fill();
   }
 }

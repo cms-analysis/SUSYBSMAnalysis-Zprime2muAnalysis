@@ -5,7 +5,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import ROOT
 
 path = 'ana_datamc_Run2011AMuonsOnly/ana_datamc_data.root'
 tmp_fn = 'micro_ntuple.temp.txt'
-branch_spec = 'dil_mass'
+branch_spec = 'vertex_m'
 cut = 'OurSelNew'
 
 f = ROOT.TFile(path)

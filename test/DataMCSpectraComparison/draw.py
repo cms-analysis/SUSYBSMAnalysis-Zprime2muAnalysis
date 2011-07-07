@@ -1,12 +1,6 @@
 #!/usr/bin/env python
 
-'''
-foreach x (ana_datamc_Run2011AMuonsOnly ana_datamc_Run2011AMuonsOnly)
-  echo $x
-  py draw.py $x >! plots/out.draw.${x}
-end
-tlp plots/datamc* plots/out.draw.*
-'''
+# (py draw.py ana_datamc_Run2011AMuonsOnly >! plots/out.draw.ana_datamc_Run2011AMuonsOnly) && (py draw.py ana_datamc_Run2011AMuonsOnly compare=DimuonMassVertexConstrained >! plots/out.draw.ana_datamc_Run2011AMuonsOnly_DimuonMassVertexConstrained) && (py draw.py ana_datamc_Run2011A >! plots/out.draw.ana_datamc_Run2011A) && tlp plots/datamc* plots/out.draw.*
 
 import sys, os, glob
 from pprint import pprint
@@ -104,19 +98,22 @@ subtitleize = {
     }
 titleize = {
     'DileptonMass': 'm(%s)%s',
+    'DimuonMassVertexConstrained': 'm(%s)%s',
     'DileptonPt': '%s p_{T}%s',
     }
 unitize = {
     'DileptonMass': ' [GeV]',
+    'DimuonMassVertexConstrained': ' [GeV]',
     'DileptonPt': ' [GeV]',
     }
 yaxis = {
-    ('MuonsSameSign', False): (1e-4, 5),
+    #('MuonsSameSign', False): (1e-4, 5),
     }
 use_yaxis = True
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
 cutss = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso']
+#cutss = ['OurNew']
 mass_ranges_for_table = [(60,120), (120,200), (200,), (200,400), (400,), (600,)]
 
 if 'forscale' in sys.argv:
@@ -145,10 +142,13 @@ for cuts in cutss:
     plot_dir = pdir + '/%s/%s' % (to_compare, cuts)
     ps.set_plot_dir(plot_dir)
 
-    if cuts != 'EmuVeto' and 'Dimuon' not in to_compare:
-        dils = dileptons
-    else:
+    if cuts == 'EmuVeto':
         dils = [x for x in dileptons if 'Electron' in x]
+    else:
+        dils = dileptons
+
+    if 'Dimuon' in to_compare:
+        dils = [x for x in dils if 'Electron' not in x]
 
     for cumulative in (False, True):
         data = dict((d, getattr(fdata, dir_name(cuts, d)).Get(to_compare).Clone()) for d in dils)

@@ -20,16 +20,20 @@ ROOT.gStyle.SetPadRightMargin(0.07)
 from samples import *
 
 rebin_factor = 5
-x_axis_limits = 60, 1100
-x_axis_limits2 = 60, 1100
+x_axis_limits = 70, 1300
+x_axis_limits2 = 70, 1300
 
 to_compare = 'DileptonMass'
+for x in sys.argv:
+    if x.startswith('compare='):
+        to_compare = x.replace('compare=', '')
+        break
 
 global_rescale = {
-    'OurNew': 180812/157189.13,
-    'OurOld': 187373/162973.81,
-    'OurNoIso': 183840/159451.43,
-    'VBTF': 155159/134072.45,
+    'VBTF': 236163/202178.739663,
+    'OurNew': 275060/237045.128578,
+    'OurOld': 284999/245756.305310,
+    'OurNoIso': 279681/240450.139476,
     }
 if 'norescale' in sys.argv:
     global_rescale = {}
@@ -53,15 +57,7 @@ joins_colors = {'jets': 4, 't#bar{t} + other prompt leptons': 2, 'other prompt l
 
 histo_dir = [x for x in sys.argv if os.path.isdir(x)][0]
 
-data_fns = glob.glob(os.path.join(histo_dir, 'ana_datamc_data*.root'))
-if len(data_fns) == 1:
-    data_fn = data_fns[0]
-    hadd_tmp = False
-else:
-    # just hadd to tmp file for now, easier
-    data_fn = 'anadatamcdatahaddtmp.root'
-    hadd_tmp = True
-    os.system('hadd -f %s %s' % (data_fn, ' '.join(data_fns)))
+data_fn = os.path.join(histo_dir, 'ana_datamc_data.root')
 fdata = ROOT.TFile(data_fn)
 
 def parse_lumi_from_log(fn):
@@ -75,7 +71,7 @@ def parse_lumi_from_log(fn):
         if line == '-------------------------------------------------------------------\n':
             this = True
 
-int_lumi = sum(parse_lumi_from_log(x.replace('.root', '.lumi')) for x in data_fns)
+int_lumi = parse_lumi_from_log(data_fn.replace('.root', '.lumi'))
 lumi_syst_frac = 0.06
 
 print '"joins" are:'
@@ -141,7 +137,7 @@ if histo_dir != 'ana_datamc':
 ps = plot_saver(pdir, size=(900,600), pdf_log=True, pdf=True)
 save_plots = 'no_plots' not in sys.argv
 
-#samples = [s for s in samples if not s.name in ['ww', 'zz', 'wz', 'qcd500']]
+#samples = [s for s in samples if not s.name in ['wjets']]
 
 for cuts in cutss:
     if not hasattr(fdata, dir_name(cuts, 'MuonsPlusMuonsMinus')):
@@ -149,7 +145,7 @@ for cuts in cutss:
     plot_dir = pdir + '/%s/%s' % (to_compare, cuts)
     ps.set_plot_dir(plot_dir)
 
-    if cuts != 'EmuVeto':
+    if cuts != 'EmuVeto' and 'Dimuon' not in to_compare:
         dils = dileptons
     else:
         dils = [x for x in dileptons if 'Electron' in x]
@@ -359,6 +355,3 @@ for cuts in cutss:
                 n += '_cumulative'
             if save_plots:
                 ps.save(n)
-
-if hadd_tmp:
-    os.system('rm %s' % data_fn)

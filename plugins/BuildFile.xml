@@ -74,7 +74,8 @@
   <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
 </library>
 
-<library file="CheckPrescale.cc,VetoOtherDataset.cc" name="Zprime2muTriggerPlugins">
+<library file="CheckPrescale.cc,PrescaleToCommon.cc,VetoOtherDataset.cc" name="Zprime2muTriggerPlugins">
+  <use name="clhep"/>
   <use name="rootgraphics"/>
   <use name="CommonTools/UtilAlgos"/>
   <use name="HLTrigger/HLTcore"/>

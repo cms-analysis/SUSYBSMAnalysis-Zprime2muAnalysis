@@ -5,6 +5,22 @@ from pprint import pprint
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 #process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/datamc_zmumu/5222c20b53e3c47b6c8353d464ee954c/pat_42_3_74A.root']
 
+# This is needed for random numbers when doing the extra prescaling
+# for the Mu15 path.
+process.RandomNumberGeneratorService = cms.Service('RandomNumberGeneratorService', PrescaleToCommon = cms.PSet(initialSeed = cms.untracked.uint32(1219)))
+Mu15s = ['HLT_Mu15_v2', 'HLT_Mu15_v3', 'HLT_Mu15_v4', 'HLT_Mu15_v5', 'HLT_Mu15_v6']
+
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match
+mu15_trigger_match = ' || '.join('!triggerObjectMatchesByPath("%s").empty()' % p for p in Mu15s)
+
+# Since Mu15 comes with different prescales in different runs/lumis,
+# this filter prescales it to a common factor to make things simpler.
+process.PrescaleToCommon = cms.EDFilter('PrescaleToCommon',
+                                        hlt_process_name = cms.string('HLT'),
+                                        trigger_paths = cms.vstring(*Mu15s),
+                                        overall_prescale = cms.int32(350),
+                                        )
+
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi import dy_gen_mass_cut
@@ -43,18 +59,24 @@ cuts = {
     'OurNoIso' : OurSelectionNew,
     'EmuVeto'  : OurSelectionNew,
     'Simple'   : OurSelectionNew, # the selection cuts in the module listed here are ignored below
+    'VBTFMu15' : VBTFSelection,
+    'OurMu15'  : OurSelectionNew,
     }
 
-for cut_name in cuts.keys():
+for cut_name, Selection in cuts.iteritems():
     # Keep track of modules to put in the path for this set of cuts.
     path_list = []
-
-    Selection = cuts[cut_name]
 
     # Clone the LeptonProducer to make leptons with the set of cuts
     # we're doing here flagged.
     leptons_name = cut_name + 'Leptons'
-    leptons = process.leptons.clone(muon_cuts = '' if cut_name == 'Simple' else Selection.loose_cut)
+    if cut_name == 'Simple':
+        muon_cuts = ''
+    elif 'Mu15' in cut_name:
+        muon_cuts = Selection.loose_cut.replace('pt > 35', 'pt > 20')
+    else:
+        muon_cuts = Selection.loose_cut
+    leptons = process.leptons.clone(muon_cuts = muon_cuts)
     if cut_name == 'EmuVeto':
         leptons.electron_muon_veto_dR = 0.1
     setattr(process, leptons_name, leptons)
@@ -62,7 +84,12 @@ for cut_name in cuts.keys():
 
     # Make all the combinations of dileptons we defined above.
     for dil_name, dil_decay, dil_cut in dils:
+        # For the EmuVeto path, we only care about e-mu events.
         if cut_name == 'EmuVeto' and 'Electron' not in dil_name:
+            continue
+
+        # For the Mu15 paths, we don't care about e-mu events.
+        if 'Mu15' in cut_name and 'Electron' in dil_name:
             continue
         
         name = cut_name + dil_name
@@ -76,8 +103,9 @@ for cut_name in cuts.keys():
             alldil.checkCharge = cms.bool(False)
         dil = Selection.dimuons.clone(src = cms.InputTag(allname))
 
+        # Implement the differences to the selections.
         if cut_name == 'Simple':
-            alldil.loose_cut = 'isGlobalMuon && (pt > 35. || innerTrack.pt > 35.)'
+            alldil.loose_cut = 'isGlobalMuon && pt > 20.'
             alldil.tight_cut = ''
             dil.max_candidates = 100
             dil.do_remove_overlap = False
@@ -85,9 +113,15 @@ for cut_name in cuts.keys():
             delattr(dil, 'vertex_chi2_max')
         elif cut_name == 'OurNoIso':
             alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', '')
-        
+        elif 'Mu15' in cut_name:
+            alldil.loose_cut = alldil.loose_cut.value().replace('pt > 35', 'pt > 20')
+            assert alldil.tight_cut == trigger_match
+            alldil.tight_cut = mu15_trigger_match
+
+        # Histos now just needs to know which leptons and dileptons to use.
         histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 
+        # Add all these modules to the process and the path list.
         setattr(process, allname, alldil)
         setattr(process, name, dil)
         setattr(process, name + 'Histos', histos)
@@ -100,6 +134,8 @@ for cut_name in cuts.keys():
     pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
     if 'VBTF' not in cut_name and cut_name != 'Simple':
         pobj = process.goodDataFilter * pobj
+    if 'Mu15' in cut_name:
+        pobj = process.PrescaleToCommon * pobj
     path = cms.Path(pobj)
     setattr(process, pathname, path)
 

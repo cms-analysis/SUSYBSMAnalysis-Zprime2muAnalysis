@@ -12,8 +12,8 @@ ps = plot_saver('plots/subtract_new_from_old_sel', pdf_log=True)
 
 f = ROOT.TFile('ana_datamc_Run2011AMuonsOnly/ana_datamc_data.root')
 
-hold = f.OurOldMuonsPlusMuonsMinusHistos.Get('DileptonMass')
-hnew = f.OurNewMuonsPlusMuonsMinusHistos.Get('DileptonMass')
+hold = f.OurOldMuonsPlusMuonsMinusHistos.Get('DimuonMassVertexConstrained')
+hnew = f.OurNewMuonsPlusMuonsMinusHistos.Get('DimuonMassVertexConstrained')
 
 for h in (hold,hnew):
     h.Rebin(5)

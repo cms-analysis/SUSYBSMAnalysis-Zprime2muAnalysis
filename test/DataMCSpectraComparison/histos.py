@@ -3,7 +3,8 @@
 import sys, os, glob, FWCore.ParameterSet.Config as cms
 from pprint import pprint
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
-#process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/datamc_zmumu/5222c20b53e3c47b6c8353d464ee954c/pat_42_3_74A.root']
+process.maxEvents.input = 5000
+process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/datamc_zmumu/5222c20b53e3c47b6c8353d464ee954c/pat_42_3_74A.root']
 
 # This is needed for random numbers when doing the extra prescaling
 # for the Mu15 path.
@@ -19,6 +20,7 @@ process.PrescaleToCommon = cms.EDFilter('PrescaleToCommon',
                                         hlt_process_name = cms.string('HLT'),
                                         trigger_paths = cms.vstring(*Mu15s),
                                         overall_prescale = cms.int32(350),
+                                        assume_simulation_has_prescale_1 = cms.bool(True) # Current PAT tuples of MC samples don't have both L1 branches :-(
                                         )
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT

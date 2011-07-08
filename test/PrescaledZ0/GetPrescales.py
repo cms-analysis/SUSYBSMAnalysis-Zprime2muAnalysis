@@ -1,10 +1,11 @@
-import sys
+import sys, os
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import cms, process
 
-process.source.fileNames = ['/store/user/tucker/SingleMu/datamc_SingleMu2011A_prompt_165071_167150_20110620045014/e0e58cf0dbd55d2562f61b8061f4c446/pat_7_1_Te6.root']
+process.source.fileNames = ['/store/data/Run2011A/SingleMu/AOD/May10ReReco-v1/0000/E6E8249F-9E7D-E011-B106-002481A8A782.root']
 process.GlobalTag.globaltag = 'GR_R_42_V13::All'
-process.maxEvents.input = 1000
+process.maxEvents.input = 5000
 process.options.wantSummary = True
+process.MessageLogger.cerr.FwkReport.reportEvery = 100000
 
 CheckPrescale = cms.EDAnalyzer('CheckPrescale',
                                hlt_process_name = cms.string('HLT'),
@@ -35,7 +36,7 @@ if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
 [CRAB]
 jobtype = cmssw
-scheduler = condor
+scheduler = glite
 
 [CMSSW]
 datasetpath = %(dataset)s
@@ -45,8 +46,11 @@ number_of_jobs = 50
 lumi_mask = tmp.json
 
 [USER]
-ui_working_dir = crab_getprescales_%(name)s
+ui_working_dir = crab/crab_getprescales_%(name)s
 return_data = 1
+
+[GRID]
+ce_white_list = T2_EE_Estonia,T2_CH_CSCS,T2_BR_UERJ,T2_BR_SPRACE
 '''
 
     just_testing = 'testing' in sys.argv

@@ -91,6 +91,13 @@ def strip_comments(cpp_src):
     cpp_src = replace_all(cpp_src, '/*', '*/')
     return cpp_src
 
+def from_pickle(fn, comp=False):
+    if comp or '.gzpickle' in fn:
+        f = gzip.GzipFile(fn, 'rb')
+    else:
+        f = open(fn, 'rb')
+    return cPickle.load(f)
+
 def to_pickle(obj, fn, proto=-1, comp=False):
     if comp or '.gzpickle' in fn:
         f = gzip.GzipFile(fn, 'wb')

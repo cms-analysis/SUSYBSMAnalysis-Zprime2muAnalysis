@@ -9,7 +9,7 @@ process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-20_TuneZ2_7TeV-pythia
 # This is needed for random numbers when doing the extra prescaling
 # for the Mu15 path.
 process.RandomNumberGeneratorService = cms.Service('RandomNumberGeneratorService', PrescaleToCommon = cms.PSet(initialSeed = cms.untracked.uint32(1219)))
-Mu15s = ['HLT_Mu15_v2', 'HLT_Mu15_v3', 'HLT_Mu15_v4', 'HLT_Mu15_v5', 'HLT_Mu15_v6']
+Mu15s = ['HLT_Mu15_v1', 'HLT_Mu15_v2', 'HLT_Mu15_v3', 'HLT_Mu15_v4', 'HLT_Mu15_v5', 'HLT_Mu15_v6']
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match
 mu15_trigger_match = ' || '.join('!triggerObjectMatchesByPath("%s").empty()' % p for p in Mu15s)

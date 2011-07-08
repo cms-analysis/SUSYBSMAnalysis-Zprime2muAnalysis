@@ -189,7 +189,7 @@ for cuts in cutss:
                         sample.raw_integral = sample.integral / sample.scaled_by
                     hdata_integral = get_integral(hdata, *mass_range, integral_only=True, include_last_bin=False)
                     add_lumi_error_to_total = 'Electron' in dilepton or not global_rescale.has_key(cuts)
-                    print '%50s%20s%20s%20s%20s%20s%20s%20s%20s' % ('sample', 'weight for %.1f/pb' % int_lumi, 'raw integral', 'integral', 'stat error', 'limit if int=0', 'syst error', 'lumi error', 'total error' + (' (nolumi)' if not add_lumi_error_to_total else ''))
+                    print '%50s%20s%20s%20s%20s%20s%20s%20s%20s' % ('sample', 'weight for %.1f/pb' % int_lumi, 'raw integral', 'integral', 'stat error', 'limit if int=0', 'syst error', 'lumi error', 'tot error' + (' (nolumi)' if not add_lumi_error_to_total else ''))
                     print '%50s%20s%20i%20.6f%20.6f' % ('data', '-', int(hdata_integral), hdata_integral, hdata_integral**0.5)
                     sum_mc = 0.
                     var_sum_mc = 0.

@@ -18,13 +18,15 @@ private:
   const std::string hlt_process_name;
   const std::vector<std::string> trigger_paths;
   const int overall_prescale;
+  const bool assume_simulation_has_prescale_1;
   HLTConfigProvider hlt_cfg;
 };
 
 PrescaleToCommon::PrescaleToCommon(const edm::ParameterSet& cfg)
   : hlt_process_name(cfg.getParameter<std::string>("hlt_process_name")),
     trigger_paths(cfg.getParameter<std::vector<std::string> >("trigger_paths")),
-    overall_prescale(cfg.getParameter<int>("overall_prescale"))
+    overall_prescale(cfg.getParameter<int>("overall_prescale")),
+    assume_simulation_has_prescale_1(cfg.getParameter<bool>("assume_simulation_has_prescale_1"))
 {
 }
 
@@ -72,7 +74,12 @@ bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
   if (!hlt_results->accept(path_index))
     return false;
   
-  const std::pair<int, int> prescales = hlt_cfg.prescaleValues(event, setup, trigger_path);
+  std::pair<int, int> prescales;
+  // For MC samples, can assume the prescales are 1.
+  if (event.isRealData() || !assume_simulation_has_prescale_1) 
+    prescales = hlt_cfg.prescaleValues(event, setup, trigger_path);
+  else
+    prescales = std::make_pair(1,1);
 
   if (prescales.first != 1)
     throw cms::Exception("PrescaleToCommon") << "being run on path where L1 seed is prescaled by " << prescales.first << "; not supported!\n";

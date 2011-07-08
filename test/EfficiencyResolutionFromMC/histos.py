@@ -6,6 +6,7 @@ restrict_mass_window = True
 # late_bin numbering: bin 0 = 0-9, bin 2 = 10-26
 intime_bin, late_bin = -1, -1 
 use_old_vbtf_selection = False
+use_prescaled_mu = True
 
 ################################################################################
 
@@ -83,8 +84,29 @@ if intime_bin in range(0,3) and late_bin in range(0,2):
     p2 = process.GenPileupFilter * p2
     p  = process.GenPileupFilter * p
 
-process.p2 = cms.Path(p2)
-process.p  = cms.Path(p)
+
+if use_prescaled_mu:
+    min_hlt_pt, min_offline_pt = 15, 20
+    ex += 'mu' + str(min_hlt_pt)
+
+    l1,hlt = 'L1_SingleMu10', 'HLT_Mu15_v2'
+    from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match
+    new_trigger_match = '!triggerObjectMatchesByPath("%s").empty()' % hlt
+
+    for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
+        eff.triggerDecision.l1Paths = [l1]
+        eff.triggerDecision.hltPaths = [hlt]
+        eff.hlt_single_min_pt = min_hlt_pt
+        eff.acceptance_min_pt = min_offline_pt
+
+    process.leptons.muon_cuts = 'isGlobalMuon && pt > %i' % min_offline_pt  # Overridden in dimuon construction anyway.
+
+    for d in [process.allDimuonsVBTF, process.allDimuons]:
+        assert 'pt > 35' in d.loose_cut.value()
+        d.loose_cut = d.loose_cut.value().replace('pt > 35', 'pt > %i' % min_offline_pt)
+        assert d.tight_cut == trigger_match
+        d.tight_cut = new_trigger_match
+
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi')
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.ResolutionUsingMC_cfi')
@@ -93,10 +115,16 @@ process.HistosFromPAT.leptonsFromDileptons = True
 process.ResolutionUsingMC.leptonsFromDileptons = True
 process.ResolutionUsingMC.doQoverP = True
 
-# Duplicate all the lepton+dimuon+histogram production for each of
-# what we call "rec levels", i.e. the different TeV reconstructors.
-process.p *= rec_level_module(process, process.HistosFromPAT,     'Histos',     tracks)
-process.p *= rec_level_module(process, process.ResolutionUsingMC, 'Resolution', tracks)
+# Don't care about resolution/etc. when checking the Mu15 path.
+if not use_prescaled_mu:
+    process.p  = cms.Path(p)
+
+    # Duplicate all the lepton+dimuon+histogram production for each of
+    # what we call "rec levels", i.e. the different TeV reconstructors.
+    process.p *= rec_level_module(process, process.HistosFromPAT,     'Histos',     tracks)
+    process.p *= rec_level_module(process, process.ResolutionUsingMC, 'Resolution', tracks)
+
+process.p2 = cms.Path(p2)
 
 def switch_hlt_name(n):
     process.EfficiencyFromMC.triggerDecision.hltResults = cms.InputTag('TriggerResults', '', n)

@@ -32,8 +32,13 @@ global_rescale = {
 if 'norescale' in sys.argv:
     global_rescale = {}
 def get_rescale_factor(cuts, dilepton):
-    # Don't rescale e-mu plots.
-    return 1. if 'electron' in dilepton.lower() else global_rescale.get(cuts, 1.)
+    # Don't rescale e-mu plots. Otherwise, try to get the rescale
+    # factor from the global_rescale dict; if the requested one does
+    # not exist, don't rescale.
+    if 'Electron' in dilepton:
+        return 1.
+    else:
+        return global_rescale.get(cuts, 1.)
     
 draw_zssm = True 
 use_poisson_intervals = True
@@ -112,9 +117,9 @@ yaxis = {
 use_yaxis = True
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
-cutss = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso']
+cutss = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso'] #, 'OurMu15', 'VBTFMu15']
 #cutss = ['OurNew']
-mass_ranges_for_table = [(60,120), (120,200), (200,), (200,400), (400,), (600,)]
+mass_ranges_for_table = [(60,120), (120,), (120,200), (200,), (200,400), (400,), (600,)]
 
 if 'forscale' in sys.argv:
     global_rescale = {}
@@ -134,7 +139,8 @@ if histo_dir != 'ana_datamc':
 ps = plot_saver(pdir, size=(900,600), pdf_log=True, pdf=True)
 save_plots = 'no_plots' not in sys.argv
 
-#samples = [s for s in samples if not s.name in ['wjets']]
+# Can redefine which samples get included.
+#samples = [s for s in samples if not s.name in ['wjets', 'zz', 'singletop_tW']]
 
 for cuts in cutss:
     if not hasattr(fdata, dir_name(cuts, 'MuonsPlusMuonsMinus')):
@@ -142,11 +148,16 @@ for cuts in cutss:
     plot_dir = pdir + '/%s/%s' % (to_compare, cuts)
     ps.set_plot_dir(plot_dir)
 
+    # Depending on the cut set, skip certain dileptons.
     if cuts == 'EmuVeto':
         dils = [x for x in dileptons if 'Electron' in x]
+    elif 'Mu15' in cuts:
+        dils = [x for x in dileptons if 'Electron' not in x]
     else:
         dils = dileptons
 
+    # Also depending on the histogram to be compared, skip certain
+    # dileptons.
     if 'Dimuon' in to_compare:
         dils = [x for x in dils if 'Electron' not in x]
 
@@ -279,7 +290,7 @@ for cuts in cutss:
                     else:
                         legend_already.add(join_nice_name)
                         nice_name = join_nice_name
-                if 'zssm' in sample.name and (not draw_zssm or dilepton != 'MuonsPlusMuonsMinus' or cumulative) or ('MuonsElectrons' in dilepton and ('zmumu' in sample.name or 'dy' in sample.name)):
+                if 'zssm' in sample.name and (not draw_zssm or dilepton != 'MuonsPlusMuonsMinus' or cumulative):
                     continue
                 l.AddEntry(sample.mass, nice_name, 'F')
 

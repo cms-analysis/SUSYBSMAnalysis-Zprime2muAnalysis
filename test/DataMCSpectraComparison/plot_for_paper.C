@@ -14,7 +14,11 @@
 #include "TPaveLabel.h"
 #include "TROOT.h"
 #include "TStyle.h"
+
+//#define DRAW_ZPRIME
+#ifdef DRAW_ZPRIME
 #include "zprime.C"
+#endif
 
 using namespace std;
 
@@ -53,6 +57,7 @@ void plot_for_paper2() {
  
   TH1* dataHist = (TH1*)fff.Get("dataHist");
   TH1* promptHist = (TH1*)fff.Get("promptHist");
+  TH1* zdyHist = (TH1*)fff.Get("zdyHist");
   TH1* jetsHist = (TH1*)fff.Get("jetsHist");
 
   TCanvas *c1 = new TCanvas("c1", "c1",5,24,600,600);
@@ -62,22 +67,25 @@ void plot_for_paper2() {
   c1->SetFillColor(0);
   c1->SetBorderMode(0);
   c1->SetBorderSize(2);
+  c1->SetLogy();
   c1->SetTickx();
   c1->SetTicky();
   c1->SetLeftMargin(0.13);
-  c1->SetRightMargin(0.07);
-  c1->SetFrameBorderMode(0);
+  c1->SetRightMargin(0.02);
+  c1->SetTopMargin(0.02);
   c1->SetFrameBorderMode(0);
 
   promptHist->SetTitle(";m(#mu^{+}#font[42]{e}^{-}/^{}#font[42]{e}^{+}#mu^{-}) [GeV]; Events / 20 GeV");
-  promptHist->GetXaxis()->SetNdivisions(505);
 
   promptHist->SetFillColor(2);
   promptHist->SetLineColor(2);
+  zdyHist->SetFillColor(7);
+  zdyHist->SetLineColor(7);
   jetsHist->SetFillColor(4);
   jetsHist->SetLineColor(4);
 
   promptHist->Draw("HIST");
+  zdyHist->Draw("SAME HIST");
   jetsHist->Draw("SAME HIST");
 
   TGraphAsymmErrors* dataHistPI = poisson_intervalize(dataHist, true);
@@ -90,10 +98,10 @@ void plot_for_paper2() {
   promptHist->GetYaxis()->SetTitleSize(0.047);
   promptHist->GetYaxis()->SetTitleOffset(1.2);
 
-  promptHist->GetXaxis()->SetRangeUser(40, 500);
-  promptHist->GetYaxis()->SetRangeUser(0.0001, 52.5);
+  promptHist->GetXaxis()->SetRangeUser(120,  900);
+  promptHist->GetYaxis()->SetRangeUser(0.01, 500);
 
-  TLegend *leg = new TLegend(0.48, 0.63, 0.88, 0.88, NULL, "brNDC");
+  TLegend *leg = new TLegend(0.429, 0.668, 0.944, 0.885, NULL, "brNDC");
   leg->SetBorderSize(0);
   leg->SetTextFont(62);
   leg->SetLineColor(1);
@@ -103,12 +111,13 @@ void plot_for_paper2() {
   leg->SetFillStyle(0);
   leg->AddEntry(dataHistPI, "DATA", "EP");
   leg->AddEntry(promptHist, "t#bar{t} + other prompt leptons", "F"); 
+  leg->AddEntry(zdyHist, "Z/#gamma*#rightarrow#mu^{+}#mu^{-}", "F");
   leg->AddEntry(jetsHist, "jets", "F");
   leg->SetBorderSize(0);
   leg->SetFillStyle(0);
   leg->Draw();
 
-  TPaveLabel *pl = new TPaveLabel(0.40, 0.89, 0.86, 0.99, "CMS    #sqrt{s} = 7 TeV    #int L dt = 35 pb^{-1}", "brNDC");
+  TPaveLabel *pl = new TPaveLabel(0.450, 0.858, 0.910, 0.958, "CMS    #sqrt{s} = 7 TeV    #int L dt = 1.1 fb^{-1}", "brNDC");
   pl->SetBorderSize(0);
   pl->SetFillColor(0);
   pl->SetFillStyle(0);
@@ -117,12 +126,12 @@ void plot_for_paper2() {
 
   // huge crappy hack for "EP" in TLegend::AddEntry not working
   TLine ll;
-  ll.DrawLineNDC(0.53, 0.81, 0.53, 0.87);
+  ll.DrawLineNDC(0.494, 0.832, 0.494, 0.882);
 
   c1->RedrawAxis();
-  system("mkdir -p plots/for_paper");
+  system("mkdir -p plots/for_zprime_paper");
   TString fn = "MuonsElectronsOppSign";
-  fn = "plots/for_paper/" + fn;
+  fn = "plots/for_zprime_paper/" + fn;
   c1->SaveAs(fn + ".pdf");
   c1->SaveAs(fn + ".root");
   c1->SaveAs(fn + ".png");
@@ -133,21 +142,26 @@ void plot_for_paper2() {
   int i = dataHist->FindBin(120);
   int j = dataHist->FindBin(200);
   assert(promptHist->FindBin(120) == i);
+  assert(zdyHist   ->FindBin(120) == i);
   assert(jetsHist  ->FindBin(120) == i);
   assert(promptHist->FindBin(200) == j);
+  assert(zdyHist   ->FindBin(200) == j);
   assert(jetsHist  ->FindBin(200) == j);
   printf("60-120 GeV:\n");
-  printf("data:        %.1f\n", dataHist  ->Integral(k, i-1));
-  printf("prompt+jets: %.1f\n", promptHist->Integral(k, i-1));
-  printf("jets:        %.1f\n", jetsHist  ->Integral(k, i-1));
+  printf("data:            %.1f\n", dataHist  ->Integral(k, i-1));
+  printf("prompt+jets+zdy: %.1f\n", promptHist->Integral(k, i-1));
+  printf("zdy+jets:        %.1f\n", zdyHist   ->Integral(k, i-1));
+  printf("jets:            %.1f\n", jetsHist  ->Integral(k, i-1));
   printf("> 120 GeV:\n");
-  printf("data:        %.1f\n", dataHist  ->Integral(i, 1000000));
-  printf("prompt+jets: %.1f\n", promptHist->Integral(i, 1000000));
-  printf("jets:        %.1f\n", jetsHist  ->Integral(i, 1000000));
+  printf("data:            %.1f\n", dataHist  ->Integral(i, 1000000));
+  printf("prompt+jets+zdy: %.1f\n", promptHist->Integral(i, 1000000));
+  printf("zdy+jets:        %.1f\n", zdyHist   ->Integral(i, 1000000));
+  printf("jets:            %.1f\n", jetsHist  ->Integral(i, 1000000));
   printf("> 200 GeV:\n");
-  printf("data:        %.1f\n", dataHist  ->Integral(j, 1000000));
-  printf("prompt+jets: %.1f\n", promptHist->Integral(j, 1000000));
-  printf("jets:        %.1f\n", jetsHist  ->Integral(j, 1000000));
+  printf("data:            %.1f\n", dataHist  ->Integral(j, 1000000));
+  printf("prompt+jets+zdy: %.1f\n", promptHist->Integral(j, 1000000));
+  printf("zdy+jets:        %.1f\n", zdyHist   ->Integral(j, 1000000));
+  printf("jets:            %.1f\n", jetsHist  ->Integral(j, 1000000));
 }
 
 #ifndef EMU
@@ -172,23 +186,28 @@ void plot_for_paper2() {
   const char* dil_string_signed = isElectron ? "#font[42]{e}^{+}#font[42]{e}^{-}" : "#mu^{+}#mu^{-}";
   TString in_fn;
   if (isCHist)
-    in_fn = isElectron ? "cMassApprovAllFixed.root" : "histos_export_cumulative.root";
+    in_fn = isElectron ? "histos_export_heep_cumulative.root" : "histos_export_cumulative.root";
   else
-    in_fn = isElectron ? "massApprovAllFixed.root" : "histos_export.root";
+    in_fn = isElectron ? "histos_export_heep.root" : "histos_export.root";
   TFile fff(in_fn);
  
   TH1* dataHist = (TH1*)fff.Get("dataHist");
-  TH1* zeeHist = (TH1*)fff.Get("zeeHist");
-  TH1* ttbarHist = (TH1*)fff.Get("ttbarHist");
-  TH1* qcdHist = (TH1*)fff.Get("qcdHist");
-  TH1* zprime = 0;
+  TH1* zdyHist = (TH1*)fff.Get("zdyHist");
+  TH1* promptHist = (TH1*)fff.Get("promptHist");
+  TH1* jetsHist = (TH1*)fff.Get("jetsHist");
 
+  TH1* zprime = 0;
+#ifdef DRAW_ZPRIME
+  bool draw_zprime = !isCHist;
   if (isElectron) {
     gROOT->ProcessLine(".L zprime.C");
     zprime = makeZPrime();
   }
   else
     zprime = (TH1*)fff.Get("zprime");
+#else
+  bool draw_zprime = false;
+#endif
 
   TCanvas *c1 = new TCanvas("c1", "c1",5,24,600,600);
   gStyle->SetOptFit(1);
@@ -201,51 +220,51 @@ void plot_for_paper2() {
   c1->SetTickx();
   c1->SetTicky();
   c1->SetLeftMargin(0.13);
-  c1->SetRightMargin(0.07);
-  c1->SetFrameBorderMode(0);
+  c1->SetRightMargin(0.02);
+  c1->SetTopMargin(0.02);
   c1->SetFrameBorderMode(0);
 
-  if (!isCHist) {
-    zeeHist->SetTitle(TString::Format(";m(%s) [GeV]; Events / 5 GeV", dil_string));
-    zeeHist->GetXaxis()->SetNdivisions(505);
-  }
+  if (!isCHist)
+    zdyHist->SetTitle(TString::Format(";m(%s) [GeV]; Events / 5 GeV", dil_string));
   else
-    zeeHist->SetTitle(TString::Format(";m(%s) [GeV]; Events #geq m(%s)", dil_string, dil_string));
+    zdyHist->SetTitle(TString::Format(";m(%s) [GeV]; Events #geq m(%s)", dil_string, dil_string));
 
-  zeeHist->SetFillColor(7);
-  zeeHist->SetLineColor(7);
-  ttbarHist->SetFillColor(2);
-  ttbarHist->SetLineColor(2);
-  qcdHist->SetFillColor(4);
-  qcdHist->SetLineColor(4);
-  zprime->SetLineColor(38);
-  zprime->SetLineWidth(2);
+  zdyHist->SetFillColor(7);
+  zdyHist->SetLineColor(7);
+  promptHist->SetFillColor(2);
+  promptHist->SetLineColor(2);
+  jetsHist->SetFillColor(5);
+  jetsHist->SetLineColor(5);
+  if (draw_zprime) {
+    zprime->SetLineColor(38);
+    zprime->SetLineWidth(2);
+  }
 
-  zeeHist->Draw("HIST");
-  ttbarHist->Draw("SAME HIST");
-  qcdHist->Draw("SAME HIST");
-  if (!isCHist) zprime->Draw("SAME HIST");
+  zdyHist->Draw("HIST");
+  promptHist->Draw("SAME HIST");
+  jetsHist->Draw("SAME HIST");
+  if (draw_zprime && !isCHist) zprime->Draw("SAME HIST");
 
   TGraphAsymmErrors* dataHistPI = poisson_intervalize(dataHist, true);
-  dataHistPI->SetMarkerSize(0.8);
+  dataHistPI->SetMarkerSize(0.6);
   dataHistPI->SetMarkerStyle(20);
   dataHistPI->Draw("EPZ SAME"); 
 
-  zeeHist->GetXaxis()->SetTitleSize(0.047);
-  zeeHist->GetXaxis()->SetTitleOffset(0.9);
-  zeeHist->GetYaxis()->SetTitleSize(0.047);
-  zeeHist->GetYaxis()->SetTitleOffset(1.2);
+  zdyHist->GetXaxis()->SetTitleSize(0.047);
+  zdyHist->GetXaxis()->SetTitleOffset(0.9);
+  zdyHist->GetYaxis()->SetTitleSize(0.047);
+  zdyHist->GetYaxis()->SetTitleOffset(1.2);
 
   if (!isCHist) {
-    zeeHist->GetYaxis()->SetRangeUser(1e-3, 2e4);
-    zeeHist->GetXaxis()->SetRangeUser(50, 1000);
+    zdyHist->GetYaxis()->SetRangeUser(1e-3, 3e5);
+    zdyHist->GetXaxis()->SetRangeUser(60, 1300);
   }
   else {
-    zeeHist->GetYaxis()->SetRangeUser(5e-1, 3e4);
-    zeeHist->GetXaxis()->SetRangeUser(50, 500);
+    zdyHist->GetYaxis()->SetRangeUser(1e-2, 5e5);
+    zdyHist->GetXaxis()->SetRangeUser(60, 1300);
   }
 
-  TLegend *leg = new TLegend(0.48, 0.53, 0.88, 0.88, NULL, "brNDC");
+  TLegend *leg = new TLegend(0.46, 0.56, 0.92, 0.87, NULL, "brNDC");
   leg->SetBorderSize(0);
   leg->SetTextFont(62);
   leg->SetLineColor(1);
@@ -254,16 +273,16 @@ void plot_for_paper2() {
   leg->SetFillColor(19);
   leg->SetFillStyle(0);
   leg->AddEntry(dataHistPI, "DATA", "EP");
-  leg->AddEntry(zeeHist, TString::Format("Z/#gamma*#rightarrow%s", dil_string_signed), "F");
+  leg->AddEntry(zdyHist, TString::Format("Z/#gamma*#rightarrow%s", dil_string_signed), "F");
   //leg->AddEntry(wjetHist, "w+jet (MC)", "F");
-  leg->AddEntry(ttbarHist, "t#bar{t} + other prompt leptons", "F"); 
-  leg->AddEntry(qcdHist, isElectron ? "jets (data)" : "jets", "F");
-  if (!isCHist) leg->AddEntry(zprime, TString::Format("Z'_{SSM} (750 GeV) #rightarrow %s", dil_string_signed), "F");
+  leg->AddEntry(promptHist, "t#bar{t} + other prompt leptons", "F"); 
+  leg->AddEntry(jetsHist, isElectron ? "jets (data)" : "jets", "F");
+  if (draw_zprime && !isCHist) leg->AddEntry(zprime, TString::Format("Z'_{SSM} (1 TeV) #rightarrow %s", dil_string_signed), "F");
   leg->SetBorderSize(0);
   leg->SetFillStyle(0);
   leg->Draw();
 
-  TPaveLabel *pl = new TPaveLabel(0.40, 0.89, 0.86, 0.99, TString::Format("CMS    #sqrt{s} = 7 TeV    #int L dt = %u pb^{-1}", isElectron ? 35 : 40), "brNDC");
+  TPaveLabel *pl = new TPaveLabel(0.45, 0.85, 0.91, 0.95, "CMS    #sqrt{s} = 7 TeV    #int L dt = 1.1 fb^{-1}", "brNDC");
   pl->SetBorderSize(0);
   pl->SetFillColor(0);
   pl->SetFillStyle(0);
@@ -272,20 +291,17 @@ void plot_for_paper2() {
 
   // huge crappy hack for "EP" in TLegend::AddEntry not working
   TLine ll;
-  if (isCHist)
-    ll.DrawLineNDC(0.53, 0.805, 0.53, 0.865);
-  else
-    ll.DrawLineNDC(0.53, 0.815, 0.53, 0.87);
+  ll.DrawLineNDC(0.518, 0.794, 0.518, 0.865);
 
   c1->RedrawAxis();
   c1->SetLogy(1);
-  system("mkdir -p plots/for_paper");
+  system("mkdir -p plots/for_zprime_paper");
   TString fn;
   if (isCHist)
-    fn = isElectron ? "cMassHist35ForPaper" : "MuonsPlusMuonsMinus_cumulative_log";
+    fn = isElectron ? "cMassHist1100pb" : "MuonsPlusMuonsMinus_cumulative_log";
   else
-    fn = isElectron ? "massHist35ForPaper" : "MuonsPlusMuonsMinus_log";
-  fn = "plots/for_paper/" + fn;
+    fn = isElectron ? "massHist1100pb" : "MuonsPlusMuonsMinus_log";
+  fn = "plots/for_zprime_paper/" + fn;
   c1->SaveAs(fn + ".pdf");
   c1->SaveAs(fn + ".root");
   c1->SaveAs(fn + ".png");
@@ -295,12 +311,12 @@ void plot_for_paper2() {
   /*
   for (size_t i = 0; i < dataHist->GetNbinsX()+2; ++i)
     printf("data bin %i content %.4f error %.4f\n", i, dataHist->GetBinContent(i), dataHist->GetBinError(i));
-  for (size_t i = 0; i < zeeHist->GetNbinsX()+2; ++i)
-    printf("zee bin %i content %.4f error %.4f\n", i, zeeHist->GetBinContent(i), zeeHist->GetBinError(i));
-  for (size_t i = 0; i < ttbarHist->GetNbinsX()+2; ++i)
-    printf("ttbar bin %i content %.4f error %.4f\n", i, ttbarHist->GetBinContent(i), ttbarHist->GetBinError(i));
-  for (size_t i = 0; i < qcdHist->GetNbinsX()+2; ++i)
-    printf("qcd bin %i content %.4f error %.4f\n", i, qcdHist->GetBinContent(i), qcdHist->GetBinError(i));
+  for (size_t i = 0; i < zdyHist->GetNbinsX()+2; ++i)
+    printf("zdy bin %i content %.4f error %.4f\n", i, zdyHist->GetBinContent(i), zdyHist->GetBinError(i));
+  for (size_t i = 0; i < promptHist->GetNbinsX()+2; ++i)
+    printf("prompt bin %i content %.4f error %.4f\n", i, promptHist->GetBinContent(i), promptHist->GetBinError(i));
+  for (size_t i = 0; i < jetsHist->GetNbinsX()+2; ++i)
+    printf("jets bin %i content %.4f error %.4f\n", i, jetsHist->GetBinContent(i), jetsHist->GetBinError(i));
   for (size_t i = 0; i < zprime->GetNbinsX()+2; ++i)
     printf("zprime bin %i content %.4f error %.4f\n", i, zprime->GetBinContent(i), zprime->GetBinError(i));
   printf("\n");
@@ -310,26 +326,25 @@ void plot_for_paper2() {
     printf("120-200 GeV:\n");
     int i = dataHist->FindBin(120);
     int j = dataHist->FindBin(200);
-    int iz = zprime->FindBin(120);
-    int jz = zprime->FindBin(200);
-    assert(zeeHist  ->FindBin(120) == i);
-    assert(ttbarHist->FindBin(120) == i);
-    assert(qcdHist  ->FindBin(120) == i);
-    assert(zprime   ->FindBin(120) == iz);
-    assert(zeeHist  ->FindBin(200) == j);
-    assert(ttbarHist->FindBin(200) == j);
-    assert(qcdHist  ->FindBin(200) == j);
-    assert(zprime   ->FindBin(200) == jz);
-    printf("data:   %.1f\n", dataHist ->Integral(i, j-1));
-    printf("zee:    %.1f\n", zeeHist  ->Integral(i, j-1));
-    printf("ttbar:  %.1f\n", ttbarHist->Integral(i, j-1));
-    printf("qcd:    %.1f\n", qcdHist  ->Integral(i, j-1));
-    printf("zprime: %.1f\n", zprime   ->Integral(iz, jz-1));
+    assert(zdyHist  ->FindBin(120) == i);
+    assert(promptHist->FindBin(120) == i);
+    assert(jetsHist  ->FindBin(120) == i);
+    assert(zdyHist  ->FindBin(200) == j);
+    assert(promptHist->FindBin(200) == j);
+    assert(jetsHist  ->FindBin(200) == j);
+    printf("data:            %7.1f\n",                      dataHist  ->Integral(i, j-1));
+    printf("zdy+prompt+jets: %7.1f   zdy alone:    %7.1f\n", zdyHist   ->Integral(i, j-1), zdyHist   ->Integral(i, j-1) - promptHist->Integral(i, j-1));
+    printf("prompt+jets:     %7.1f   prompt alone: %7.1f\n", promptHist->Integral(i, j-1), promptHist->Integral(i, j-1) - jetsHist  ->Integral(i, j-1));
+    printf("jets:            %7.1f\n",                      jetsHist  ->Integral(i, j-1));
     printf("200 GeV:\n");
-    printf("data:   %.1f\n", dataHist ->Integral(j, 1000000));
-    printf("zee:    %.1f\n", zeeHist  ->Integral(j, 1000000));
-    printf("ttbar:  %.1f\n", ttbarHist->Integral(j, 1000000));
-    printf("qcd:    %.1f\n", qcdHist  ->Integral(j, 1000000));
-    printf("zprime: %.1f\n", zprime   ->Integral(jz, 1000000));
+    printf("data:            %7.1f\n",                      dataHist  ->Integral(j, 1000000));
+    printf("zdy+prompt+jets: %7.1f   zdy alone:    %7.1f\n", zdyHist   ->Integral(j, 1000000), zdyHist   ->Integral(j, 1000000) - promptHist->Integral(j, 1000000));
+    printf("prompt+jets:     %7.1f   prompt alone: %7.1f\n", promptHist->Integral(j, 1000000), promptHist->Integral(j, 1000000) - jetsHist  ->Integral(j, 1000000));
+    printf("jets:            %7.1f\n",                      jetsHist  ->Integral(j, 1000000));
+    if (draw_zprime) {
+      int iz = zprime->FindBin(805);
+      int jz = zprime->FindBin(1195);
+      printf("\nzprime in 805-1195 GeV: %7.1f\n", zprime->Integral(iz, jz-1));
+    }
   }
 }

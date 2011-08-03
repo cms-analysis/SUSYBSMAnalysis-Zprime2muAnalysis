@@ -46,7 +46,7 @@ TGraphAsymmErrors* poisson_intervalize(TH1* h, bool zero_x) {
   return tgae;
 }
 
-//#define EMU
+#define EMU
 
 #ifdef EMU
 void plot_for_paper() {
@@ -79,13 +79,10 @@ void plot_for_paper2() {
 
   promptHist->SetFillColor(2);
   promptHist->SetLineColor(2);
-  zdyHist->SetFillColor(7);
-  zdyHist->SetLineColor(7);
-  jetsHist->SetFillColor(4);
-  jetsHist->SetLineColor(4);
+  jetsHist->SetFillColor(5);
+  jetsHist->SetLineColor(5);
 
   promptHist->Draw("HIST");
-  zdyHist->Draw("SAME HIST");
   jetsHist->Draw("SAME HIST");
 
   TGraphAsymmErrors* dataHistPI = poisson_intervalize(dataHist, true);
@@ -111,13 +108,12 @@ void plot_for_paper2() {
   leg->SetFillStyle(0);
   leg->AddEntry(dataHistPI, "DATA", "EP");
   leg->AddEntry(promptHist, "t#bar{t} + other prompt leptons", "F"); 
-  leg->AddEntry(zdyHist, "Z/#gamma*#rightarrow#mu^{+}#mu^{-}", "F");
   leg->AddEntry(jetsHist, "jets", "F");
   leg->SetBorderSize(0);
   leg->SetFillStyle(0);
   leg->Draw();
 
-  TPaveLabel *pl = new TPaveLabel(0.450, 0.858, 0.910, 0.958, "CMS    #sqrt{s} = 7 TeV    #int L dt = 1.1 fb^{-1}", "brNDC");
+  TPaveLabel *pl = new TPaveLabel(0.350, 0.858, 0.810, 0.958, "CMS preliminary   #sqrt{s} = 7 TeV    #int L dt = 1.1 fb^{-1}", "brNDC");
   pl->SetBorderSize(0);
   pl->SetFillColor(0);
   pl->SetFillStyle(0);
@@ -126,7 +122,7 @@ void plot_for_paper2() {
 
   // huge crappy hack for "EP" in TLegend::AddEntry not working
   TLine ll;
-  ll.DrawLineNDC(0.494, 0.832, 0.494, 0.882);
+  ll.DrawLineNDC(0.494, 0.822, 0.494, 0.872);
 
   c1->RedrawAxis();
   system("mkdir -p plots/for_zprime_paper");
@@ -142,26 +138,22 @@ void plot_for_paper2() {
   int i = dataHist->FindBin(120);
   int j = dataHist->FindBin(200);
   assert(promptHist->FindBin(120) == i);
-  assert(zdyHist   ->FindBin(120) == i);
   assert(jetsHist  ->FindBin(120) == i);
   assert(promptHist->FindBin(200) == j);
-  assert(zdyHist   ->FindBin(200) == j);
   assert(jetsHist  ->FindBin(200) == j);
+  printf("remember, here prompt includes Z/DY\n");
   printf("60-120 GeV:\n");
-  printf("data:            %.1f\n", dataHist  ->Integral(k, i-1));
-  printf("prompt+jets+zdy: %.1f\n", promptHist->Integral(k, i-1));
-  printf("zdy+jets:        %.1f\n", zdyHist   ->Integral(k, i-1));
-  printf("jets:            %.1f\n", jetsHist  ->Integral(k, i-1));
+  printf("data:        %.1f\n", dataHist  ->Integral(k, i-1));
+  printf("prompt+jets: %.1f\n", promptHist->Integral(k, i-1));
+  printf("jets:        %.1f\n", jetsHist  ->Integral(k, i-1));
   printf("> 120 GeV:\n");
-  printf("data:            %.1f\n", dataHist  ->Integral(i, 1000000));
-  printf("prompt+jets+zdy: %.1f\n", promptHist->Integral(i, 1000000));
-  printf("zdy+jets:        %.1f\n", zdyHist   ->Integral(i, 1000000));
-  printf("jets:            %.1f\n", jetsHist  ->Integral(i, 1000000));
+  printf("data:        %.1f\n", dataHist  ->Integral(i, 1000000));
+  printf("prompt+jets: %.1f\n", promptHist->Integral(i, 1000000));
+  printf("jets:        %.1f\n", jetsHist  ->Integral(i, 1000000));
   printf("> 200 GeV:\n");
-  printf("data:            %.1f\n", dataHist  ->Integral(j, 1000000));
-  printf("prompt+jets+zdy: %.1f\n", promptHist->Integral(j, 1000000));
-  printf("zdy+jets:        %.1f\n", zdyHist   ->Integral(j, 1000000));
-  printf("jets:            %.1f\n", jetsHist  ->Integral(j, 1000000));
+  printf("data:        %.1f\n", dataHist  ->Integral(j, 1000000));
+  printf("prompt+jets: %.1f\n", promptHist->Integral(j, 1000000));
+  printf("jets:        %.1f\n", jetsHist  ->Integral(j, 1000000));
 }
 
 #ifndef EMU
@@ -282,7 +274,7 @@ void plot_for_paper2() {
   leg->SetFillStyle(0);
   leg->Draw();
 
-  TPaveLabel *pl = new TPaveLabel(0.45, 0.85, 0.91, 0.95, "CMS    #sqrt{s} = 7 TeV    #int L dt = 1.1 fb^{-1}", "brNDC");
+  TPaveLabel *pl = new TPaveLabel(0.35, 0.85, 0.81, 0.95, "CMS preliminary   #sqrt{s} = 7 TeV    #int L dt = 1.1 fb^{-1}", "brNDC");
   pl->SetBorderSize(0);
   pl->SetFillColor(0);
   pl->SetFillStyle(0);

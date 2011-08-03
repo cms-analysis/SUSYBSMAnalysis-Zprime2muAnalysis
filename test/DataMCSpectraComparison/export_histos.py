@@ -20,9 +20,11 @@ emu_mc_fn_base = os.path.join(mc_fn_base, 'ana_datamc_%s.root')
 emu_data_fn = os.path.join(data_fn_base, 'ana_datamc_Run2011A/ana_datamc_data.root')
 emu_rebin_factor = 20
 emu_histogram = 'DileptonMass'
-emu_scale = 1086.9
+emu_scale = 1083.5
 add_heep = True
 heep_fn = 'massHist1100pb.root'
+
+#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
 
 # First mu+mu-, differential and cumulative.
 for cumulative in (False, True):
@@ -34,6 +36,7 @@ for cumulative in (False, True):
         h.Scale(sample.partial_weight * mumu_scale)
         if cumulative:
             h = cumulative_histogram(h)
+            h.SetName(h.GetName().replace('_cumulative_ge', ''))
         histos[sample.name] = h
 
     f = ROOT.TFile(mumu_data_fn)
@@ -43,40 +46,43 @@ for cumulative in (False, True):
         dataHist = cumulative_histogram(dataHist)
         dataHist.SetName('dataHist')
     
-    qcdHist = histos['inclmu15'].Clone('qcdHist')
-    qcdHist.Add(histos['wjets'])
+    jetsHist = histos['inclmu15'].Clone('jetsHist')
+    jetsHist.Add(histos['wjets'])
 
-    ttbarHist = histos['ttbar'].Clone('ttbarHist')
-    ttbarHist.Add(histos['singletop_tW'])
-    ttbarHist.Add(histos['ww'])
-    ttbarHist.Add(histos['wz'])
-    ttbarHist.Add(histos['zz'])
-    ttbarHist.Add(histos['ztautau'])
+    promptHist = histos['ttbar'].Clone('promptHist')
+    promptHist.Add(histos['singletop_tW'])
+    promptHist.Add(histos['ww'])
+    promptHist.Add(histos['wz'])
+    promptHist.Add(histos['zz'])
+    promptHist.Add(histos['ztautau'])
     
-    zeeHist = histos['zmumu'].Clone('zeeHist')
-    zeeHist.Add(histos['dy200'])
-    zeeHist.Add(histos['dy500'])
-    zeeHist.Add(histos['dy800'])
-    zeeHist.Add(histos['dy1000'])
+    zdyHist = histos['zmumu'].Clone('zdyHist')
+    zdyHist.Add(histos['dy120'])
+    zdyHist.Add(histos['dy200'])
+    zdyHist.Add(histos['dy500'])
+    zdyHist.Add(histos['dy800'])
+    zdyHist.Add(histos['dy1000'])
 
     zprime = histos['zssm1000'].Clone('zprime')
     
     # simulate stacking
-    ttbarHist.Add(qcdHist)
-    zeeHist.Add(qcdHist)
-    zeeHist.Add(ttbarHist)
+    promptHist.Add(jetsHist)
+    zdyHist.Add(jetsHist)
+    zdyHist.Add(promptHist)
 
     fexport = ROOT.TFile('histos_export%s.root' % ('_cumulative' if cumulative else ''), 'RECREATE')
     dataHist.Write()
-    zeeHist.Write()
-    ttbarHist.Write()
-    qcdHist.Write()
+    zdyHist.Write()
+    promptHist.Write()
+    jetsHist.Write()
     zprime.Write()
     fexport.Close()
 
     if not cumulative:
         print 'our Z peak events in data:', dataHist.Integral(dataHist.FindBin(60),dataHist.FindBin(120)-1)
-        print 'our Z peak events in MC:  ', zeeHist.Integral(zeeHist.FindBin(60),zeeHist.FindBin(120)-1)
+        print 'our Z peak events in MC:  ', zdyHist.Integral(zdyHist.FindBin(60),zdyHist.FindBin(120)-1)
+
+#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
 
 # Now e-mu.
 histos = {}
@@ -95,21 +101,19 @@ jetsHist = histos['inclmu15'].Clone('jetsHist')
 jetsHist.Add(histos['wjets'])
 
 promptHist = histos['ttbar'].Clone('promptHist')
-for x in ['zmumu', 'singletop_tW', 'ww', 'wz', 'zz', 'ztautau', 'dy200', 'dy500', 'dy800']:
+for x in ['singletop_tW', 'ww', 'wz', 'zz', 'ztautau', 'zmumu', 'dy120', 'dy200', 'dy500', 'dy800']:
     promptHist.Add(histos[x])
-promptHist.Add(jetsHist)
 
-zeeHist = histos['zmumu'].Clone('zeeHist')
-zeeHist.Add(histos['dy200'])
-zeeHist.Add(histos['dy500'])
-zeeHist.Add(histos['dy800'])
-zeeHist.Add(histos['dy1000'])
+# Simulate stack.
+promptHist.Add(jetsHist)
                 
 fexport = ROOT.TFile('histos_export_emu.root', 'RECREATE')
 dataHist.Write()
-jetsHist.Write()
 promptHist.Write()
+jetsHist.Write()
 fexport.Close()
+
+#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
 
 # In the past the HEEP histograms came pre-added, now they don't.
 if not add_heep:
@@ -125,33 +129,35 @@ for cumulative in (False, True):
     jetsHist.Add(f.Get('phoJetHistEBEB'))
     jetsHist.Add(f.Get('phoJetHistEBEE'))
 
-    ttbarHist = f.Get('ttbarHistEBEB').Clone('ttbarHist')
-    ttbarHist.Add(f.Get('ttbarHistEBEE'))
+    promptHist = f.Get('ttbarHistEBEB').Clone('promptHist')
+    promptHist.Add(f.Get('ttbarHistEBEE'))
 
-    zeeHist = f.Get('zeeHistEBEB').Clone('zeeHist')
-    zeeHist.Add(f.Get('zeeHistEBEE'))
+    zdyHist = f.Get('zeeHistEBEB').Clone('zdyHist')
+    zdyHist.Add(f.Get('zeeHistEBEE'))
 
     dataHist = f.Get('dataHistEBEB').Clone('dataHist')
     dataHist.Add(f.Get('dataHistEBEE'))
     
     if cumulative:
-        jetsHist  = cumulative_histogram(jetsHist)
-        ttbarHist = cumulative_histogram(ttbarHist)
-        zeeHist   = cumulative_histogram(zeeHist)
-        dataHist  = cumulative_histogram(dataHist)
+        jetsHist   = cumulative_histogram(jetsHist)
+        promptHist = cumulative_histogram(promptHist)
+        zdyHist    = cumulative_histogram(zdyHist)
+        dataHist   = cumulative_histogram(dataHist)
+        for h in [jetsHist, promptHist, zdyHist, dataHist]:
+            h.SetName(h.GetName().replace('_cumulative_ge', ''))
 
     # simulate stacking
-    ttbarHist.Add(jetsHist)
-    zeeHist.Add(jetsHist)
-    zeeHist.Add(ttbarHist)
+    promptHist.Add(jetsHist)
+    zdyHist.Add(jetsHist)
+    zdyHist.Add(promptHist)
 
     fexport = ROOT.TFile('histos_export_heep%s.root' % ('_cumulative' if cumulative else ''), 'RECREATE')
     dataHist.Write()
-    zeeHist.Write()
-    ttbarHist.Write()
+    zdyHist.Write()
+    promptHist.Write()
     jetsHist.Write()
     fexport.Close()
 
     if not cumulative:
-        print 'HEEP Z peak events in data:', dataHist.Integral(dataHist.FindBin(60),dataHist.FindBin(120)-1)
-        print 'HEEP Z peak events in MC:  ', zeeHist.Integral(zeeHist.FindBin(60),zeeHist.FindBin(120)-1)
+        print 'HEEP Z peak events in data:', dataHist.Integral(dataHist.FindBin(60), dataHist.FindBin(120)-1)
+        print 'HEEP Z peak events in MC:  ', zdyHist .Integral(zdyHist .FindBin(60), zdyHist .FindBin(120)-1)

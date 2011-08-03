@@ -7,20 +7,8 @@ from array import array
 
 samples = ['dy60', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750'] #, 'zp2000', 'zp2250']
 
-if False:
-    # Can use graviton samples too -- don't bother to change the rest
-    # of the code, just make symlinks so that the code below uses the
-    # graviton files instead of the real Z' files. In the plots made
-    # below and downstream in efficiencysummary.py, it'll be handled
-    # just fine (except for y-axis scale for increased acceptance
-    # needing to be changed, along with labels and titles referring to
-    # Z' or to e.g. "vector boson").
-    for i in [250,500,750,1000,1250,1500]:
-        os.system('ln -s ana_effres_rs%i.root ana_effres_zp%i.root' % (i,i))
-        #os.system('ln -s real_zprime/ana_effres_zp%i.root ana_effres_zp%i.root' % (i,i))
-    samples.remove('zp1750')
-    samples.insert(samples.index('zp500'), 'zp250')
-    
+kind = [x for x in sys.argv[1:] if os.path.isdir(x)]
+
 dy = [(x, int(x.replace('dy',''))) for x in samples if 'dy' in x]
 zp = [(x, int(x.replace('zp',''))) for x in samples if 'zp' in x]
 if 'vbtf' in sys.argv:
@@ -29,6 +17,12 @@ if 'vbtf' in sys.argv:
 else:
     which = 'EfficiencyFromMC'
     plot_dir = 'plots/trigeffvsmassmctruth'
+
+if kind:
+    kind = kind[0]
+    plot_dir += '_' + kind
+else:
+    kind = 'normal'
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import *
 set_zp2mu_style()
@@ -50,7 +44,7 @@ samples_totals = []
 
 print '%30s%30s%30s%30s%30s' % ('sample', 'type', 'num', 'den', 'eff')
 for sample in samples:
-    f = files[sample] = ROOT.TFile('ana_effres_%s.root' % sample)
+    f = files[sample] = ROOT.TFile(os.path.join(kind, 'ana_effres_%s.root' % sample))
     d = f.Get(which)
     if make_individual_plots or make_individual_effs:
         ps = plot_saver(os.path.join(plot_dir, sample), pdf=True)

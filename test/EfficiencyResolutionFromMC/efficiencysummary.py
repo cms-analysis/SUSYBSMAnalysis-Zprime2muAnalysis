@@ -18,7 +18,7 @@ acc.SetTitle('')
 acc.GetXaxis().SetTitle('vector boson pole mass (GeV)')
 acc.GetYaxis().SetTitle('acceptance')
 acc.GetYaxis().SetTitleOffset(1.2)
-acc.GetYaxis().SetRangeUser(0.36, 0.96)
+acc.GetYaxis().SetRangeUser(0.18, 0.96)
 for i,h in enumerate([acc, acc21]):
     h.SetMarkerStyle(20+i)
     h.SetMarkerSize(0.9)
@@ -29,8 +29,8 @@ acc.Draw('APL')
 acc21.Draw('PL same')
 
 lg = ROOT.TLegend(0.38, 0.143, 0.86, 0.316)
-lg.AddEntry(acc,   'both muons | #eta| < 2.4, p_{T} > 20 GeV', 'LPE')
-lg.AddEntry(acc21, 'both muons | #eta| < 2.1, p_{T} > 20 GeV', 'LPE')
+lg.AddEntry(acc,   'both muons | #eta| < 2.4, p_{T} > 35 GeV', 'LPE')
+lg.AddEntry(acc21, 'both muons | #eta| < 2.1, p_{T} > 35 GeV', 'LPE')
 lg.Draw()
 
 ps.save('Acceptance', log=False)
@@ -73,8 +73,8 @@ vbtf.Draw('PL same')
 ratio.Draw('PL same')
 
 lg = ROOT.TLegend(0.20, 0.13, 0.86, 0.29)
-lg.AddEntry(our,   'efficiency w/ Our selection (acc:   #left|#eta#right| < 2.4, p_{T} > 20 GeV)', 'LPE')
-lg.AddEntry(vbtf,  'efficiency w/ VBTF selection (acc:   #left|#eta#right| < 2.1, p_{T} > 20 GeV)', 'LPE')
+lg.AddEntry(our,   'efficiency w/ Our selection (acc:   #left|#eta#right| < 2.4, p_{T} > 35 GeV)', 'LPE')
+lg.AddEntry(vbtf,  'efficiency w/ VBTF selection (acc:   #left|#eta#right| < 2.1, p_{T} > 35 GeV)', 'LPE')
 lg.AddEntry(ratio, 'ratio VBTF/Ours', 'LPE')
 lg.Draw()
 
@@ -123,40 +123,3 @@ lg.AddEntry(vbtf_ratio_to_z0, 'VBTF selection', 'LPE')
 lg.Draw()
 
 ps.save('LowToHighMass', log=False)
-
-################################################################################
-
-our_f = ROOT.TFile('plots/trigeffvsmassmctruth/TotalReco_totals.root')
-vbtf_f = ROOT.TFile('plots/trigeffvsmassmctruth_vbtf/TotalReco_totals.root')
-vbtf_acc_times_eff_at_z0 = get_z0(vbtf_f.Get(cname).FindObject('Graph'))
-
-our_acc_times_eff = our_f.Get(cname).FindObject('Graph')
-our_acc_times_eff.SetTitle('')
-our_acc_times_eff.GetXaxis().SetTitle('vector boson pole mass (GeV)')
-our_acc_times_eff.GetYaxis().SetTitle('acceptance times trigger+reco+selection efficiency')
-our_acc_times_eff.GetYaxis().SetTitleOffset(1.2)
-our_acc_times_eff.GetYaxis().SetRangeUser(0.4, 0.88)
-our_acc_times_eff.SetMarkerStyle(20)
-our_acc_times_eff.SetMarkerSize(0.9)
-
-ps.c.cd()
-our_acc_times_eff.Draw('APstats')
-
-fcn = ROOT.TF1('fcn', '[0] + [1]/(x + [2])', 50, 2000)
-fcn.SetParNames("a", "b", "c");
-ROOT.gStyle.SetOptFit(11)
-our_acc_times_eff.Fit(fcn, 'LVR')
-
-tl = ROOT.TLatex(0.56, 0.36, 'a + #frac{b}{mass + c}')
-tl.SetNDC()
-tl.Draw()
-
-ps.c.Update()
-s = our_acc_times_eff.GetListOfFunctions().FindObject('stats')
-s.SetFitFormat('5.3g')
-s.SetX1NDC(0.51)
-s.SetY1NDC(0.15)
-s.SetX2NDC(0.85)
-s.SetY2NDC(0.31)
-
-ps.save('AcceptanceTimesEfficiency', log=False)

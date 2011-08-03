@@ -199,8 +199,7 @@ for cuts in cutss:
                         sample.integral = get_integral(sample.mass, *mass_range, integral_only=True, include_last_bin=False)
                         sample.raw_integral = sample.integral / sample.scaled_by
                     hdata_integral = get_integral(hdata, *mass_range, integral_only=True, include_last_bin=False)
-                    add_lumi_error_to_total = 'Electron' in dilepton or not global_rescale.has_key(cuts)
-                    print '%50s%20s%20s%20s%20s%20s%20s%20s%20s' % ('sample', 'weight for %.1f/pb' % int_lumi, 'raw integral', 'integral', 'stat error', 'limit if int=0', 'syst error', 'lumi error', 'tot error' + (' (nolumi)' if not add_lumi_error_to_total else ''))
+                    print '%50s%20s%20s%20s%20s%20s%20s%20s%20s%20s' % ('sample', 'weight for %.1f/pb' % int_lumi, 'raw integral', 'integral', 'stat error', 'limit if int=0', 'syst error', 'syst(+)stat', 'lumi error', 'total')
                     print '%50s%20s%20i%20.6f%20.6f' % ('data', '-', int(hdata_integral), hdata_integral, hdata_integral**0.5)
                     sum_mc = 0.
                     var_sum_mc = 0.
@@ -227,27 +226,20 @@ for cuts in cutss:
                         limit = '%.6f' % (3*w) if sample.integral == 0 else '-'
 
                         lumi_err = lumi_syst_frac * sample.integral
-                        if add_lumi_error_to_total:
-                            tot_err = (var + syst_var + lumi_err**2)**0.5
-                        else:
-                            tot_err = (var + syst_var)**0.5
-
-                        print '%50s%20.6f%20f%20.6f%20.6f%20s%20.6f%20.6f%20.6f' % (sample.nice_name, w, sample.raw_integral, sample.integral, var**0.5, limit, syst_var**0.5, lumi_err, tot_err)
+                        syst_plus_stat = (var + syst_var)**0.5
+                        tot_err = (var + syst_var + lumi_err**2)**0.5
+                        print '%50s%20.6f%20f%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f' % (sample.nice_name, w, sample.raw_integral, sample.integral, var**0.5, limit, syst_var**0.5, syst_plus_stat, lumi_err, tot_err)
 
                     lumi_err = lumi_syst_frac * sum_mc
-                    if add_lumi_error_to_total:
-                        tot_err = (var_sum_mc + syst_var_sum_mc + lumi_err**2)**0.5
-                    else:
-                        tot_err = (var_sum_mc + syst_var_sum_mc)**0.5
+                    syst_plus_stat = (var_sum_mc + syst_var_sum_mc)**0.5
+                    tot_err = (var_sum_mc + syst_var_sum_mc + lumi_err**2)**0.5
                         
-                    print '%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f' % ('sum MC (not including Z\')', '-', '-', sum_mc, var_sum_mc**0.5, '-', syst_var_sum_mc**0.5, lumi_err, tot_err)
+                    print '%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f' % ('sum MC (not including Z\')', '-', '-', sum_mc, var_sum_mc**0.5, '-', syst_var_sum_mc**0.5, syst_plus_stat, lumi_err, tot_err)
                     for join_name in sorted(sums.keys()):
                         lumi_err = lumi_syst_frac * sums[join_name]
-                        if add_lumi_error_to_total:
-                            tot_err = (var_sums[join_name] + syst_var_sums[join_name] + lumi_err**2)**0.5
-                        else:
-                            tot_err = (var_sums[join_name] + syst_var_sums[join_name])**0.5
-                        print '%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f' % (join_name, '-', '-', sums[join_name], var_sums[join_name]**0.5, '-', syst_var_sums[join_name]**0.5, lumi_err, tot_err)
+                        syst_plus_stat = (var_sums[join_name] + syst_var_sums[join_name])**0.5
+                        tot_err = (var_sums[join_name] + syst_var_sums[join_name] + lumi_err**2)**0.5
+                        print '%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f' % (join_name, '-', '-', sums[join_name], var_sums[join_name]**0.5, '-', syst_var_sums[join_name]**0.5, syst_plus_stat, lumi_err, tot_err)
                     print
                 print
 

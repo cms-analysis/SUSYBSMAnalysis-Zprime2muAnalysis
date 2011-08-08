@@ -1,3 +1,6 @@
+// JMTBAD make this fill lepton histos from all leptons + those that
+// make it into dileptons always, not just depending on flag.
+
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TProfile.h"

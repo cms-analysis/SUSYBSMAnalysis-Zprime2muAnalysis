@@ -34,6 +34,16 @@
 // of the) Zprime2muAnalysis class defined here. The Zprime2muAnalysis
 // class is not left in its own file so that no one thinks it is
 // available to be or should be used.
+//
+// The python files for MassReach were also removed (still in Attic,
+// of course) since they involved keeping around the old master file
+// Zprime2muAnalysisCommon_cff, which leads to confusion. We keep the
+// .cc file intact so that if changes are made to the rest of the
+// library that require changes here, the latter will get taken care
+// of, at least to keep the compile from breaking.
+//
+// Personally (JMT), if this is to be resurrected, I would prefer to
+// break it back out of CMSSW entirely.
 
 class Zprime2muAnalysis : public edm::EDAnalyzer {
  public:

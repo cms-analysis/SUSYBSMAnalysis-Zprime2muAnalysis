@@ -1,45 +1,6 @@
 import glob, os, re
 from collections import defaultdict
 
-def crab_status(working_dir, debug=False):
-    d = defaultdict(list)
-    
-    cmd = 'crab -c %s -status' % working_dir
-    if debug: print cmd
-    s = os.popen4(cmd)[1].read()
-    
-    if 'Total Jobs' not in s:
-        raise RuntimeError('unable to get status for working_dir=' + working_dir)
-    
-    for x in s.split('\n'):
-        x = [y.strip() for y in x.split(' ') if y.strip()]
-        if len(x) < 2: continue
-
-        try:
-            x[0] = int(x[0])
-        except ValueError:
-            pass
-        else:
-            id, status = x[:2]
-            if len(x) > 3:
-                codes = x[3:]
-                
-            if status == 'Retrieved':
-                key = '%s_%s' % (status, '_'.join(codes))
-            else:
-                key = status
-            d[key].append(id)
-
-    if debug:
-        print s
-        for k in sorted(d.keys()):
-            print '%s: %s' % (k.ljust(25), crabify_list(d[k]))
-            
-    return d
-
-def crabify_list(l):
-    return ','.join(str(x) for x in sorted(l))
-
 def files_from_crab_dir(crab_dir):
     fjrs = glob.glob(os.path.join(crab_dir, 'res', 'crab_fjr*xml'))
     fjrs.sort(key = lambda x: int(x.split('_')[-1].split('.xml')[0]))
@@ -67,13 +28,7 @@ def dataset_from_publish_log(publish_log_fn):
     assert(len(ad) == 1)
     return ad[0]
 
-def last_crab_dir(crab_dir_base='crab', filter=''):
-    return sorted([x for x in glob.glob(os.path.join(crab_dir_base, '*')) if filter in x and os.path.isdir(x) and os.path.isdir(os.path.join(x, 'res'))], key = lambda x: os.stat(x).st_ctime)[-1]
-
 __all__ = [
-    'crab_status',
-    'crabify_list',
     'dataset_from_publish_log',
     'files_from_crab_dir',
-    'last_crab_dir'
     ]

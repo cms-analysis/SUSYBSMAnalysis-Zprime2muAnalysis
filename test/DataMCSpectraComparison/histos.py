@@ -3,6 +3,7 @@
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, offline_pt_threshold, trigger_paths, prescaled_trigger_paths, prescaled_trigger_match, prescaled_offline_pt_threshold, overall_prescale
+process.source.fileNames = ['/store/user/tucker/SingleMu/datamc_SingleMu2011A_prompt_165071_167913_20110705115318/e0e58cf0dbd55d2562f61b8061f4c446/pat_158_1_Qyd.root']
 
 # Since the prescaled trigger comes with different prescales in
 # different runs/lumis, this filter prescales it to a common factor to
@@ -179,7 +180,8 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
 if 'gogo' in sys.argv:
     ntuplify(process) #, fill_gen_info=True)
     #printify(process)
-    
+    process.GlobalTag.globaltag = 'GR_R_42_V13::All'
+
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
 [CRAB]

@@ -27,9 +27,27 @@ process.MessageLogger.cerr.PATSummaryTables = cms.untracked.PSet(limit = cms.unt
 
 # Define the output file with the output commands defining the
 # branches we want to have in our PAT tuple.
-from PhysicsTools.PatAlgos.patEventContent_cff import patEventContent, patTriggerEventContent
-from SUSYBSMAnalysis.Zprime2muAnalysis.EventContent_cff import Zprime2muEventContent
-ourEventContent = patEventContent + patTriggerEventContent + Zprime2muEventContent 
+from PhysicsTools.PatAlgos.patEventContent_cff import patEventContent
+ourEventContent = patEventContent + [
+    'keep recoGenParticles_prunedMCLeptons_*_*',
+    'keep GenEventInfoProduct_*_*_*',
+    'keep GenRunInfoProduct_*_*_*',
+    'keep *_offlineBeamSpot_*_*',
+    'keep *_offlinePrimaryVertices_*_*',
+    'keep edmTriggerResults_TriggerResults__HLT*',
+    'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__HLT*',
+    'keep L1GlobalTriggerReadoutRecord_gtDigis__*',
+    'keep *_hltTriggerSummaryAOD__HLT*',
+    'keep edmTriggerResults_TriggerResults__REDIGI*',
+    'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__REDIGI*',
+    'keep *_hltTriggerSummaryAOD__REDIGI*',
+    'keep edmTriggerResults_TriggerResults__PAT', # for post-tuple filtering on the goodData paths
+    'drop *_cleanPatJets_*_*',
+    'drop *_selectedPatJets_*_*',
+    'drop *_cleanPatTaus_*_*',
+    'drop *_patMETs_*_*',
+    ]
+
 process.out = cms.OutputModule('PoolOutputModule',
                                fileName = cms.untracked.string('pat.root'),
                                # If your path in your top-level config is not called 'p', you'll need
@@ -37,6 +55,7 @@ process.out = cms.OutputModule('PoolOutputModule',
                                SelectEvents   = cms.untracked.PSet(SelectEvents = cms.vstring('p')),
                                outputCommands = cms.untracked.vstring('drop *', *ourEventContent)
                                )
+
 process.outpath = cms.EndPath(process.out)
 
 # Load the PAT modules and sequences, and configure them as we
@@ -58,7 +77,12 @@ from PhysicsTools.PatAlgos.tools.trigTools import switchOnTrigger, switchOnTrigg
 switchOnTrigger(process)
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi')
 switchOnTriggerMatchEmbedding(process, triggerMatchers=['muonTriggerMatchHLTMuons'])
-process.out.outputCommands += ['keep *_cleanPatMuonsTriggerMatch_*_*', 'drop *_cleanPatMuons_*_*']
+process.out.outputCommands += [
+    'keep *_cleanPatMuonsTriggerMatch_*_*',
+    'drop *_cleanPatMuons_*_*',
+    'drop *_patTrigger_*_*',
+    'drop *_patTriggerEvent_*_*',
+]
 
 # Some extra configuration of the PAT.
 

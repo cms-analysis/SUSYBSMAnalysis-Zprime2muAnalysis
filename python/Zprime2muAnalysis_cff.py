@@ -1,18 +1,5 @@
 import FWCore.ParameterSet.Config as cms
 
-# By putting it in the analysis path, this module can be used to
-# filter out whole events that do not pass our trigger selection,
-# which is currently the highest-pT unprescaled single muon trigger in
-# the 5E32 menu, HLT_Mu24_v1. When using one of the two selections
-# VBTFSelection and OurSelection, one muon is required to match to a
-# trigger object passing the single muon trigger anyway, so using this
-# is redundant in some cases. It does not go in
-# Zprime2muAnalysisSequence by default; users must specifically
-# include it.
-import HLTrigger.HLTfilters.hltHighLevel_cfi
-hltFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
-hltFilter.HLTPaths = ['HLT_Mu30_v3']
-
 # A filter for post-tuple filtering on the goodData results as stored
 # in a TriggerResults object instead of filtering at tuple-making
 # time.

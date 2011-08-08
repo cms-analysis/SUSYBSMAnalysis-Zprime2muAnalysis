@@ -2,7 +2,7 @@
 
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
-from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, offline_pt_threshold, trigger_paths, mc_trigger_paths, prescaled_trigger_paths, prescaled_trigger_match, prescaled_offline_pt_threshold, overall_prescale
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import *
 process.source.fileNames = ['/store/user/tucker/SingleMu/datamc_SingleMu2011A_prompt_165071_167913_20110705115318/e0e58cf0dbd55d2562f61b8061f4c446/pat_158_1_Qyd.root']
 
 # Since the prescaled trigger comes with different prescales in
@@ -203,7 +203,7 @@ return_data = 1
 '''
 
     just_testing = 'testing' in sys.argv
-    
+        
     # Run on data.
     if 'no_data' not in sys.argv:
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
@@ -236,7 +236,7 @@ return_data = 1
             new_py = open('histos.py').read()
             new_py += "\nntuplify(process)\n"
             new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_42_V13::All'\n"
-            new_py += "\ncheck_prescale(process, trigger_paths)\n"
+            new_py += "\ncheck_prescale(process, trigger_paths + old_trigger_paths)\n"
             open('histos_crab.py', 'wt').write(new_py)
 
             new_crab_cfg = crab_cfg % locals()
@@ -293,10 +293,10 @@ events_per_job = 100000
                     'dy1000': (1000, 100000),
                     }
                 lo,hi = mass_limits[sample.name]
+                from SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi import dy_gen_mass_cut
                 new_cut = dy_gen_mass_cut % locals()
 
                 new_py += '''
-from SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi import dy_gen_mass_cut
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi')
 
 process.DYGenMassFilter.cut = "%(new_cut)s"

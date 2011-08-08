@@ -22,8 +22,9 @@ trigger_pt_threshold = 40
 offline_pt_threshold = 45
 mc_trigger_paths = ['HLT_Mu15_v1', 'HLT_Mu15_v2']
 trigger_paths = ['HLT_Mu40_v1', 'HLT_Mu40_v2', 'HLT_Mu40_v3', 'HLT_Mu40_v4', 'HLT_Mu40_v5']
+old_trigger_paths = ['HLT_Mu30_v1', 'HLT_Mu30_v2'] # In runs 160329-163869, there was no HLT_Mu40 in the trigger menu. The next run with data, 165071, uses a trigger menu with HLT_Mu30_v3 and HLT_Mu40_v1. CheckPrescales downstream should behave correctly because of this configuration.
 
-trigger_match =  ['(!triggerObjectMatchesByPath("%s").empty() && triggerObjectMatchesByPath("%s").at(0).pt() > %i)' % (n,n, trigger_pt_threshold) for n in mc_trigger_paths]
+trigger_match =  ['(!triggerObjectMatchesByPath("%s").empty() && triggerObjectMatchesByPath("%s").at(0).pt() > %i)' % (n,n, trigger_pt_threshold) for n in mc_trigger_paths + old_trigger_paths]
 trigger_match += ['!triggerObjectMatchesByPath("%s").empty()' % n for n in trigger_paths]
 trigger_match = '(' + ' || '.join(trigger_match) + ')'
 

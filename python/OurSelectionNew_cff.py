@@ -15,7 +15,7 @@ import FWCore.ParameterSet.Config as cms
 # So, both muons must pass this selection:
 #
 # - muon must be a global muon and a tracker muon (isGlobalMuon && isTrackerMuon)
-# - pT > 35 (pt > 35.)
+# - pT > offline_pt_threshold
 # - |dxy wrt beamspot| < 0.2 cm (abs(dB) < 0.2)
 # - muon global track chi2/ndof < 10 (globalTrack.normalizedChi2 < 10)
 # - relative tracker isolation less than 10% (isolationR03.sumPt / innerTrack.pt < 0.10)
@@ -24,18 +24,20 @@ import FWCore.ParameterSet.Config as cms
 # - at least two muon stations in the fit; this implies trackerMuon (numberOfMatchedStations > 1)
 #
 # Then at least one muon must be trigger-matched to the single muon
-# HLT path (e.g. !triggerObjectMatchesByPath("HLT_Mu30").empty()) (The
-# single muon HLT path used will change as the trigger menu evolves
-# with luminosity.)
+# HLT path. (The single muon HLT path used will change as the trigger
+# menu evolves with luminosity, so the details are kept in a single
+# file as they get used multiple places.)
 #
 # So we have a LooseTightCandViewShallowCloneCombiner that requires
 # both muons to pass the above cuts ("loose" is then a misnomer), and
 # at least one must pass the trigger match requirement (the only
 # "tight" cut).
 
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, offline_pt_threshold
+
 loose_cut = 'isGlobalMuon && ' \
             'isTrackerMuon && ' \
-            'pt > 35. && ' \
+            'pt > %s && ' \
             'abs(dB) < 0.2 && ' \
             'isolationR03.sumPt / innerTrack.pt < 0.10 && ' \
             'globalTrack.hitPattern.numberOfValidTrackerHits > 10 && ' \
@@ -43,7 +45,7 @@ loose_cut = 'isGlobalMuon && ' \
             'globalTrack.hitPattern.numberOfValidMuonHits > 0 && ' \
             'numberOfMatchedStations > 1'
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match
+loose_cut = loose_cut % offline_pt_threshold
 
 tight_cut = trigger_match
 

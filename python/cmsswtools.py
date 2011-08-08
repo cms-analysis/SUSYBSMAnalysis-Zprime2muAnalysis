@@ -11,7 +11,32 @@ def cmssw_version(as_tuple=True):
         return tuple(int(y) for y in x[:3]) + tuple(x[3:])
     else:
         return x
-                                
+
+def extra_provenance(target_fn, cvs_cmd='env KRB5CCNAME=/tmp/krb_cern_`id -u` cvs'):
+    target_fn = os.path.abspath(target_fn)
+    if os.path.isdir(target_fn):
+        target_fn = os.path.join(target_fn, 'extra_provenance')
+    if os.path.isfile(target_fn):
+        raise RuntimeError('file %s already exists!' % target_fn)
+
+    cwd = os.getcwd()
+    os.chdir(os.path.join(os.environ['CMSSW_BASE'], 'src'))
+
+    os.system('touch %s' % target_fn)
+    s = lambda x: os.system('%s >> %s' % (x, target_fn))
+    s('date')
+    s('echo "showtags:"')
+    s('showtags')
+    s('echo')
+    s('echo "cvs diff"')
+    s(cvs_cmd + ' diff')
+    s('echo')
+    s('echo "cvs status"')
+    s(cvs_cmd + ' status')
+
+    os.system('gzip %s' % target_fn)
+    os.chdir(cwd)
+
 def files_from_argv(process):
     files = []
     for f in sys.argv:

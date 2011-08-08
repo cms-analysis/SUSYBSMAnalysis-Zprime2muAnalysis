@@ -5,12 +5,11 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName, AOD
 from tuple_common import cms, process, crab_cfg
 
 AODOnly(process)
-
-process.source.fileNames = ['file:/uscms/home/tucker/scratch/FE434AF5-D188-E011-BDE0-0017A4771000.root']
-process.maxEvents.input = 100
-process.GlobalTag.globaltag = 'START42_V11::All'
-
 #switchHLTProcessName(process, 'REDIGI311X')
+
+process.source.fileNames = ['/store/mc/Summer11/TTJets_TuneZ2_7TeV-madgraph-tauola/AODSIM/PU_S4_START42_V11-v1/0000/123FFA56-9298-E011-9BBE-002618943856.root']
+process.maxEvents.input = 1000
+process.GlobalTag.globaltag = 'START42_V11::All'
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     job_control = '''
@@ -20,10 +19,9 @@ events_per_job = 150000
 
     just_testing = 'testing' in sys.argv
     create_only = 'create_only' in sys.argv
+
     from samples import samples
     for sample in samples:
-        if 'Summer11' not in sample.dataset:
-            continue
         print sample.name
 
         new_py = open('tuple_mc.py').read()

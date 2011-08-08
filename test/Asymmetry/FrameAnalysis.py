@@ -11,4 +11,4 @@ process.AsymmetryFrameAnalysis = cms.EDAnalyzer('AsymmetryFrameAnalysis',
                                                 debug = cms.untracked.bool(True),
                                                 )
 
-process.p = cms.Path(process.hltFilter * process.Zprime2muAnalysisSequence * process.AsymmetryFrameAnalysis)
+process.p = cms.Path(process.Zprime2muAnalysisSequence * process.AsymmetryFrameAnalysis)

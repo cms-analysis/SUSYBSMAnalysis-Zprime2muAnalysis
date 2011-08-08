@@ -20,12 +20,6 @@ process.countPatMuons.minNumber = 0
 process.countPatLeptons.electronSource = cms.InputTag('heepPatElectrons')
 process.countPatLeptons.minNumber = 2
 
-# Save a few bytes -- don't need taus right now.
-process.out.outputCommands += ['drop *_patTrigger_*_*',
-                               'drop *_patTriggerEvent_*_*',
-                               'drop patTaus_cleanPatTaus__PAT',
-                               ]
-
 crab_cfg = '''
 [CRAB]
 jobtype = cmssw

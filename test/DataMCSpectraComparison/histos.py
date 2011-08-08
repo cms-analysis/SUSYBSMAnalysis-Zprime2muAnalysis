@@ -1,33 +1,23 @@
 #!/usr/bin/env python
 
-import sys, os, glob, FWCore.ParameterSet.Config as cms
-from pprint import pprint
+import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
-process.maxEvents.input = 5000
-process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/datamc_zmumu/5222c20b53e3c47b6c8353d464ee954c/pat_42_3_74A.root']
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, offline_pt_threshold, trigger_paths, prescaled_trigger_paths, prescaled_trigger_match, prescaled_offline_pt_threshold, overall_prescale
 
-# This is needed for random numbers when doing the extra prescaling
-# for the Mu15 path.
-process.RandomNumberGeneratorService = cms.Service('RandomNumberGeneratorService', PrescaleToCommon = cms.PSet(initialSeed = cms.untracked.uint32(1219)))
-Mu15s = ['HLT_Mu15_v1', 'HLT_Mu15_v2', 'HLT_Mu15_v3', 'HLT_Mu15_v4', 'HLT_Mu15_v5', 'HLT_Mu15_v6']
+# Since the prescaled trigger comes with different prescales in
+# different runs/lumis, this filter prescales it to a common factor to
+# make things simpler.
+process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrescaleToCommon_cff')
+process.PrescaleToCommon.trigger_paths = prescaled_trigger_paths
+process.PrescaleToCommon.overall_prescale = overall_prescale
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match
-mu15_trigger_match = ' || '.join('!triggerObjectMatchesByPath("%s").empty()' % p for p in Mu15s)
-
-# Since Mu15 comes with different prescales in different runs/lumis,
-# this filter prescales it to a common factor to make things simpler.
-process.PrescaleToCommon = cms.EDFilter('PrescaleToCommon',
-                                        hlt_process_name = cms.string('HLT'),
-                                        trigger_paths = cms.vstring(*Mu15s),
-                                        overall_prescale = cms.int32(350),
-                                        assume_simulation_has_prescale_1 = cms.bool(True) # Current PAT tuples of MC samples don't have both L1 branches :-(
-                                        )
-
+# The histogramming module that will be cloned multiple times below
+# for making histograms with different cut/dilepton combinations.
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi import dy_gen_mass_cut
-process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi')
-
+# These modules define the basic selection cuts. For the monitoring
+# sets below, we don't need to define a whole new module, since they
+# just change one or two cuts -- see below.
 import SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff as VBTFSelection
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionOld_cff as OurSelectionOld
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff as OurSelectionNew
@@ -35,7 +25,6 @@ import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff as OurSelectionNew
 # CandCombiner includes charge-conjugate decays with no way to turn it
 # off. To get e.g. mu+mu+ separate from mu-mu-, cut on the sum of the
 # pdgIds (= -26 for mu+mu+).
-common_dil_cut = ''
 dils = [
     ('MuonsPlusMuonsMinus',          '%(leptons_name)s:muons@+ %(leptons_name)s:muons@-',         'daughter(0).pdgId() + daughter(1).pdgId() == 0'),
     ('MuonsPlusMuonsPlus',           '%(leptons_name)s:muons@+ %(leptons_name)s:muons@+',         'daughter(0).pdgId() + daughter(1).pdgId() == -26'),
@@ -51,31 +40,38 @@ dils = [
     ('MuonsElectronsAllSigns',       '%(leptons_name)s:muons@+ %(leptons_name)s:electrons@+',     ''),
     ]
 
-# Define groups of cuts for which to make plots. If using a selection
-# that doesn't have a trigger match, need to re-add hltFilter
-# somewhere below.
+# Define sets of cuts for which to make plots. If using a selection
+# that doesn't have a trigger match, need to re-add a hltHighLevel
+# filter somewhere below.
 cuts = {
     'VBTF'     : VBTFSelection,
     'OurOld'   : OurSelectionOld,
     'OurNew'   : OurSelectionNew,
     'OurNoIso' : OurSelectionNew,
     'EmuVeto'  : OurSelectionNew,
-    'Simple'   : OurSelectionNew, # the selection cuts in the module listed here are ignored below
+    'Simple'   : OurSelectionNew, # The selection cuts in the module listed here are ignored below.
     'VBTFMu15' : VBTFSelection,
     'OurMu15'  : OurSelectionNew,
     }
 
+# Loop over all the cut sets defined and make the lepton, allDilepton
+# (combinatorics only), and dilepton (apply cuts) modules for them.
 for cut_name, Selection in cuts.iteritems():
     # Keep track of modules to put in the path for this set of cuts.
     path_list = []
 
     # Clone the LeptonProducer to make leptons with the set of cuts
-    # we're doing here flagged.
+    # we're doing here flagged.  I.e., muon_cuts in LeptonProducer
+    # just marks each muon with a userInt "cutFor" that is 0 if it
+    # passes the cuts, and non-0 otherwise; it does not actually drop
+    # any of the muons. The cutFor flag actually gets ignored by the
+    # LooseTightPairSelector in use for all the cuts above, at
+    # present.
     leptons_name = cut_name + 'Leptons'
     if cut_name == 'Simple':
         muon_cuts = ''
     elif 'Mu15' in cut_name:
-        muon_cuts = Selection.loose_cut.replace('pt > 35', 'pt > 20')
+        muon_cuts = Selection.loose_cut.replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
     else:
         muon_cuts = Selection.loose_cut
     leptons = process.leptons.clone(muon_cuts = muon_cuts)
@@ -93,19 +89,21 @@ for cut_name, Selection in cuts.iteritems():
         # For the Mu15 paths, we don't care about e-mu events.
         if 'Mu15' in cut_name and 'Electron' in dil_name:
             continue
-        
+
+        # Unique names for the modules: allname for the allDileptons,
+        # and name for dileptons.
         name = cut_name + dil_name
         allname = 'all' + name
 
-        if common_dil_cut and dil_cut:
-            dil_cut = common_dil_cut + ' && (%s)' % dil_cut
-            
         alldil = Selection.allDimuons.clone(decay = dil_decay % locals(), cut = dil_cut)
         if 'AllSigns' in dil_name:
             alldil.checkCharge = cms.bool(False)
         dil = Selection.dimuons.clone(src = cms.InputTag(allname))
 
-        # Implement the differences to the selections.
+        # Implement the differences to the selections; currently, as
+        # in LooseTightPairSelector, the cuts in loose_cut and
+        # tight_cut are the ones actually used to drop leptons, and
+        # not the ones in the LeptonProducer above.
         if cut_name == 'Simple':
             alldil.loose_cut = 'isGlobalMuon && pt > 20.'
             alldil.tight_cut = ''
@@ -116,9 +114,9 @@ for cut_name, Selection in cuts.iteritems():
         elif cut_name == 'OurNoIso':
             alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', '')
         elif 'Mu15' in cut_name:
-            alldil.loose_cut = alldil.loose_cut.value().replace('pt > 35', 'pt > 20')
+            alldil.loose_cut = alldil.loose_cut.value().replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
             assert alldil.tight_cut == trigger_match
-            alldil.tight_cut = mu15_trigger_match
+            alldil.tight_cut = prescaled_trigger_match
 
         # Histos now just needs to know which leptons and dileptons to use.
         histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
@@ -129,9 +127,7 @@ for cut_name, Selection in cuts.iteritems():
         setattr(process, name + 'Histos', histos)
         path_list.append(alldil * dil * histos)
 
-    # Finally, make the path for this set of cuts. Don't use hltFilter
-    # here, but rely on the selection to take care of it -- easy way
-    # to handle the changing trigger names.
+    # Finally, make the path for this set of cuts.
     pathname = 'path' + cut_name
     pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
     if 'VBTF' not in cut_name and cut_name != 'Simple':
@@ -236,7 +232,7 @@ return_data = 1
             new_py = open('histos.py').read()
             new_py += "\nntuplify(process)\n"
             new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_42_V13::All'\n"
-            new_py += "\ncheck_prescale(process, ['HLT_Mu30_v1', 'HLT_Mu30_v2', 'HLT_Mu30_v3', 'HLT_Mu30_v4', 'HLT_Mu30_v5'])\n"
+            new_py += "\ncheck_prescale(process, trigger_paths)\n"
             open('histos_crab.py', 'wt').write(new_py)
 
             new_crab_cfg = crab_cfg % locals()
@@ -280,8 +276,6 @@ events_per_job = 100000
             print sample.name
 
             new_py = open('histos.py').read()
-            new_py += "\nprocess.hltFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', '%(hlt_process_name)s')\n" % sample
-
             sample.fill_gen_info = sample.name in ['zmumu', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'zssm1000']
             new_py += "\nntuplify(process, hlt_process_name='%(hlt_process_name)s', fill_gen_info=%(fill_gen_info)s)\n" % sample
 
@@ -296,8 +290,15 @@ events_per_job = 100000
                     }
                 lo,hi = mass_limits[sample.name]
                 new_cut = dy_gen_mass_cut % locals()
-                new_py += '\nprocess.DYGenMassFilter.cut = "%(new_cut)s"\n' % locals()
-                new_py += '\nfor pn,p in process.paths.items():\n  setattr(process, pn, cms.Path(process.DYGenMassFilter*p._seq))\n'
+
+                new_py += '''
+from SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi import dy_gen_mass_cut
+process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi')
+
+process.DYGenMassFilter.cut = "%(new_cut)s"
+for pn,p in process.paths.items():
+    setattr(process, pn, cms.Path(process.DYGenMassFilter*p._seq))
+''' % locals()
 
             open('histos_crab.py', 'wt').write(new_py)
 

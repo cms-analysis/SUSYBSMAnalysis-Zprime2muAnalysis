@@ -174,19 +174,18 @@ std::ostream& operator<<(std::ostream& out, const pat::Electron& el) {
     out << "\nMC match: " << *el.genParticle();
   return out;
 }
-  
+
 std::ostream& operator<<(std::ostream& out, const reco::CandidateBaseRef& cbr) {
   const pat::Muon* mu = dynamic_cast<const pat::Muon*>(&*cbr);
   if (mu)
-    out << "pat::Muon: " << *mu;
+    ::operator<<((out << "pat::Muon: "), *mu); // *vomits uncontrollably* curse you rwolf and your precious PFTopProjectors
   else {
     const pat::Electron* el = dynamic_cast<const pat::Electron*>(&*cbr);
     if (el)
-      out << "pat::Electron: " << *el;
+      ::operator<<((out << "pat::Electron: "), *el); // *more uncontrollable vomiting*
     else
       out << "dunno!";
   }
-
   return out;
 }
 

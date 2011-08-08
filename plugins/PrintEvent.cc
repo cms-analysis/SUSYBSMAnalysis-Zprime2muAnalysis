@@ -78,9 +78,8 @@ void PrintEvent::analyze(const edm::Event& event, const edm::EventSetup& setup) 
     edm::Handle<pat::MuonCollection> muons;
     event.getByLabel(muon_src, muons);
     out << "muons (size: " << muons->size() << "):\n";
-    BOOST_FOREACH(const pat::Muon& mu, *muons) {
-      out << mu << "\n";
-    }
+    BOOST_FOREACH(const pat::Muon& mu, *muons)
+      ::operator<<(out, mu) << "\n"; // *vomits uncontrollably*
     out << "\n";
     edm::LogInfo("PrintEvent") << out.str();
   }

@@ -2,7 +2,7 @@
 
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
-from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, offline_pt_threshold, trigger_paths, prescaled_trigger_paths, prescaled_trigger_match, prescaled_offline_pt_threshold, overall_prescale
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, offline_pt_threshold, trigger_paths, mc_trigger_paths, prescaled_trigger_paths, prescaled_trigger_match, prescaled_offline_pt_threshold, overall_prescale
 process.source.fileNames = ['/store/user/tucker/SingleMu/datamc_SingleMu2011A_prompt_165071_167913_20110705115318/e0e58cf0dbd55d2562f61b8061f4c446/pat_158_1_Qyd.root']
 
 # Since the prescaled trigger comes with different prescales in
@@ -139,11 +139,13 @@ for cut_name, Selection in cuts.iteritems():
     setattr(process, pathname, path)
 
 def ntuplify(process, hlt_process_name='HLT', fill_gen_info=False):
+    paths = list(reversed(trigger_paths)) + list(reversed(mc_trigger_paths))
     process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler',
                                            hlt_src = cms.InputTag('TriggerResults', '', hlt_process_name),
                                            dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
                                            beamspot_src = cms.InputTag('offlineBeamSpot'),
-                                           vertices_src = cms.InputTag('offlinePrimaryVertices')
+                                           vertices_src = cms.InputTag('offlinePrimaryVertices'),
+                                           single_mu_path_names = cms.vstring(*paths)
                                            )
     process.SimpleNtuplerEmu = process.SimpleNtupler.clone(dimu_src = cms.InputTag('SimpleMuonsElectronsAllSigns'))
 

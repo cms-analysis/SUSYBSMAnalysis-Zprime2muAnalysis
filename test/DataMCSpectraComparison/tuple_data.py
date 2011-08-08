@@ -63,9 +63,7 @@ lumis_per_job = %(lumis_per_job)s
         name = 'SingleMu2011A_prompt_%i_%i_%s' % (run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
         print name
 
-        if run1 >= 170053 and run2 <= 172619:
-            dataset = '/SingleMu/Run2011A-PromptReco-v5/AOD'
-        elif run1 >= 172620:
+        if run1 >= 172620:
             dataset = '/SingleMu/Run2011A-PromptReco-v6/AOD'
         else:
             raise ValueError("don't know how to do a run_limits production for run range [%i,%i]" % run_limits)
@@ -76,6 +74,7 @@ lumis_per_job = %(lumis_per_job)s
         x = [
             ('SingleMuRun2011A_May10',   '/SingleMu/Run2011A-May10ReReco-v1/AOD', 'FT_R_42_V13A'),
             ('SingleMuRun2011A_Prompt4', '/SingleMu/Run2011A-PromptReco-v4/AOD',  'FT_R_42_V13A'),
+            ('SingleMuRun2011A_Prompt5', '/SingleMu/Run2011A-PromptReco-v5/AOD',  'FT_R_42_V13A'),
             ]
         for name, dataset, tag in x:
             submit(locals())

@@ -3,8 +3,8 @@
 import sys, os, datetime
 from tuple_common import process, crab_cfg
 
-process.source.fileNames = ['file:/uscms/home/tucker/scratch/165548.root']
-process.maxEvents.input = 2000
+process.source.fileNames = ['/store/data/Run2011A/SingleMu/AOD/PromptReco-v5/000/172/163/A6E5AC06-18BC-E011-A9F4-003048D374F2.root']
+process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange('172163:115-172163:115')
 process.GlobalTag.globaltag = 'GR_R_42_V13::All'
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import removeMCUse
@@ -23,7 +23,6 @@ lumis_per_job = %(lumis_per_job)s
     create_only = 'create_only' in sys.argv
     just_testing = 'testing' in sys.argv
     scheduler = 'condor' if 'condor' in sys.argv else 'glite'
-    use_reco = 'use_reco' in sys.argv
 
     def submit(d):
         new_py = open('tuple_data.py').read()
@@ -64,22 +63,19 @@ lumis_per_job = %(lumis_per_job)s
         name = 'SingleMu2011A_prompt_%i_%i_%s' % (run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
         print name
 
-        if run1 >= 165071:
-            dataset = '/SingleMu/Run2011A-PromptReco-v4/AOD'
+        if run1 >= 170053 and run2 <= 172619:
+            dataset = '/SingleMu/Run2011A-PromptReco-v5/AOD'
+        elif run1 >= 172620:
+            dataset = '/SingleMu/Run2011A-PromptReco-v6/AOD'
         else:
             raise ValueError("don't know how to do a run_limits production for run range [%i,%i]" % run_limits)
-
-        if use_reco:
-            dataset = dataset.replace('AOD', 'RECO')
-            name = name + '_fromRECO'
         
         tag = 'GR_R_42_V13'
         submit(locals())
     else:
         x = [
-            ('MuRun2010A_Apr21',       '/Mu/Run2010A-Apr21ReReco-v1/AOD',       'FT_R_42_V10A'),
-            ('MuRun2010B_Apr21',       '/Mu/Run2010B-Apr21ReReco-v1/AOD',       'FT_R_42_V10A'),
-            ('SingleMuRun2011A_May10', '/SingleMu/Run2011A-May10ReReco-v1/AOD', 'FT_R_42_V13A'),
+            ('SingleMuRun2011A_May10',   '/SingleMu/Run2011A-May10ReReco-v1/AOD', 'FT_R_42_V13A'),
+            ('SingleMuRun2011A_Prompt4', '/SingleMu/Run2011A-PromptReco-v4/AOD',  'FT_R_42_V13A'),
             ]
         for name, dataset, tag in x:
             submit(locals())

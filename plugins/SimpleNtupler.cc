@@ -139,11 +139,11 @@ private:
   tree_t t;
   TTree* tree;
 
-  edm::InputTag hlt_src;
-  edm::InputTag dimu_src;
-  edm::InputTag beamspot_src;
-  edm::InputTag vertices_src;
-
+  const edm::InputTag hlt_src;
+  const edm::InputTag dimu_src;
+  const edm::InputTag beamspot_src;
+  const edm::InputTag vertices_src;
+  const std::vector<std::string> single_mu_path_names;
   const bool fill_gen_info;
   HardInteraction* hardInteraction;
 };
@@ -159,6 +159,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
     dimu_src(cfg.getParameter<edm::InputTag>("dimu_src")),
     beamspot_src(cfg.getParameter<edm::InputTag>("beamspot_src")),
     vertices_src(cfg.getParameter<edm::InputTag>("vertices_src")),
+    single_mu_path_names(cfg.getParameter<std::vector<std::string> >("single_mu_path_names")),
     fill_gen_info(cfg.existsAs<edm::ParameterSet>("hardInteraction")),
     hardInteraction(fill_gen_info ? new HardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction")) : 0)
 {
@@ -278,8 +279,8 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->SetAlias("Dimu",     "abs(lep_id[0]*lep_id[1]) == 169");
   tree->SetAlias("Emu",      "abs(lep_id[0]*lep_id[1]) == 143");
 
-#define offlineMinPt "35"
-#define triggerMatchMinPt "30"
+#define offlineMinPt "45"
+#define triggerMatchMinPt "40"
 
   tree->SetAlias("trigger_match_0", "lep_triggerMatchPt[0] > " triggerMatchMinPt);
   tree->SetAlias("trigger_match_1", "lep_triggerMatchPt[1] > " triggerMatchMinPt);
@@ -615,12 +616,10 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	  t.lep_cocktail_choice[w] = short(patmuon::whichTrack(*mu, cocktail));
 	}
 
-	static const size_t n_single_mu_path_names = 10;
-	static const char* single_mu_path_names[n_single_mu_path_names] = {"HLT_Mu30_v5", "HLT_Mu30_v4", "HLT_Mu30_v3", "HLT_Mu30_v2", "HLT_Mu30_v1", "HLT_Mu24_v2", "HLT_Mu24_v1", "HLT_Mu15_v2", "HLT_Mu15_v1", "HLT_Mu9"};
 	t.lep_triggerMatchPt[w] = -999;
-	for (size_t j = 0; j < n_single_mu_path_names; ++j) {
-	  if (!mu->triggerObjectMatchesByPath(single_mu_path_names[j]).empty()) { 
-	    t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath(single_mu_path_names[j]).at(0).pt();
+	BOOST_FOREACH(const std::string& single_mu_path, single_mu_path_names) {
+	  if (!mu->triggerObjectMatchesByPath(single_mu_path).empty()) { 
+	    t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath(single_mu_path).at(0).pt();
 	    break;
 	  }
 	}

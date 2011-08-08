@@ -3,6 +3,7 @@ import FWCore.ParameterSet.Config as cms
 # A filter for post-tuple filtering on the goodData results as stored
 # in a TriggerResults object instead of filtering at tuple-making
 # time.
+import HLTrigger.HLTfilters.hltHighLevel_cfi
 goodDataFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
 goodDataFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', 'PAT')
 goodDataFilter.HLTPaths = ['goodDataAll'] # can set to just 'goodDataPrimaryVertexFilter', for example

@@ -3,8 +3,7 @@
 import sys, os, datetime, FWCore.ParameterSet.Config as cms
 from tuple_common import process, crab_cfg
 
-process.source.fileNames = ['/store/data/Run2011A/SingleMu/AOD/PromptReco-v5/000/172/163/A6E5AC06-18BC-E011-A9F4-003048D374F2.root']
-#process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange('172163:115-172163:115')
+process.source.fileNames = ['/store/data/Run2011A/SingleMu/AOD/PromptReco-v5/000/170/249/0CEE42BB-AFB1-E011-A0D1-0030487CAEAC.root']
 process.GlobalTag.globaltag = 'GR_R_42_V13::All'
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import removeMCUse
@@ -17,7 +16,7 @@ lumis_per_job = %(lumis_per_job)s
 %(lumi_mask)s
 '''
 
-    lumis_per_job = 200
+    lumis_per_job = 300
     lumi_mask = ''
 
     create_only = 'create_only' in sys.argv
@@ -60,7 +59,7 @@ lumis_per_job = %(lumis_per_job)s
         open('tmp.json', 'wt').write('{' + ', '.join(json) + '}')
         lumi_mask = 'lumi_mask = tmp.json'
 
-        name = 'SingleMu2011A_prompt_%i_%i_%s' % (run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
+        name = 'SingleMuRun2011A_Prompt_%i_%i_%s' % (run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
         print name
 
         if run1 >= 172620:

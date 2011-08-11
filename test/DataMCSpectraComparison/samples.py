@@ -72,6 +72,10 @@ for sample in samples:
     if sample.name == 'zmumu' or sample.name.startswith('dy'):
         sample.scheduler = 'glite'
 
+    sample.ana_dataset = '/%s/tucker-datamc_%s-63d1d6939e347ca07d791ce376ea82b6/USER' % (sample.dataset.split('/')[1], sample.name)
+
+ttbar.ana_dataset = '/TTJets_TuneZ2_7TeV-madgraph-tauola/tucker-datamc_ttbar-63f596b10afb6e62e7eae4ec96901d55/USER'
+
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import big_warn
 big_warn("it's gettin' real in the whole foods parking lot")
 
@@ -138,7 +142,14 @@ if __name__ == '__main__':
 
     if False:
         for s in samples:
-            try:
-                print '    %(name)s.ana_dataset_ = "%(ana_dataset)s"' % s
-            except IOError:
-                pass
+            if s.ana_dataset is None:
+                continue
+            c = []
+            for line in os.popen('dbss ana02 find file.numevents where dataset=%s' % s.ana_dataset):
+                try:
+                    n = int(line)
+                except ValueError:
+                    continue
+                c.append(n)
+            c.sort()
+            print s.name, c

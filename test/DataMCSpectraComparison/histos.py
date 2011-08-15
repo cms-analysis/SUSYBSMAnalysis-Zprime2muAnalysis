@@ -3,7 +3,7 @@
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import *
-process.source.fileNames = ['/store/user/tucker/SingleMu/datamc_SingleMu2011A_prompt_165071_167913_20110705115318/e0e58cf0dbd55d2562f61b8061f4c446/pat_158_1_Qyd.root']
+process.source.fileNames = ['/store/user/tucker/SingleMu/datamc_SingleMuRun2011A_Prompt4/eba28a5fa2039ce6bf110cf12d7587cb/pat_1_1_4F6.root']
 
 # Since the prescaled trigger comes with different prescales in
 # different runs/lumis, this filter prescales it to a common factor to
@@ -183,6 +183,7 @@ if 'gogo' in sys.argv:
     ntuplify(process) #, fill_gen_info=True)
     #printify(process)
     process.GlobalTag.globaltag = 'GR_R_42_V13::All'
+    check_prescale(process, trigger_paths + old_trigger_paths)
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
@@ -209,14 +210,16 @@ return_data = 1
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
 
         dataset_details = [
-            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMu2011A_May10-3c88448713b4112b83eb5e163e8441f1/USER'),
-            ('SingleMu2011A_Prompt_165071_167913', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_167913_20110705115318-e0e58cf0dbd55d2562f61b8061f4c446/USER'),
+            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10-eba28a5fa2039ce6bf110cf12d7587cb/USER'),
+            ('SingleMu2011A_Prompt4',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt4-eba28a5fa2039ce6bf110cf12d7587cb/USER'),
+            ('SingleMu2011A_Prompt5',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt5-eba28a5fa2039ce6bf110cf12d7587cb/USER'),
+            ('SingleMu2011A_Prompt_172620_172821', '/SingleMu/tucker-datamc_SingleMu2011A_Prompt_172620_172821_20110810045357-29bdc8029e2a75421950362f8ecef2a4/USER'),
             ]
 
         lumi_lists = [
-            'Run2011A',
-            'Run2011AMuonsOnly',
-            #'Run2011APlusDCSOnlyMuonsOnly',
+            #'Run2011A',
+            #'Run2011AMuonsOnly',
+            'Run2011APlusDCSOnlyMuonsOnly',
             ]
 
         jobs = []

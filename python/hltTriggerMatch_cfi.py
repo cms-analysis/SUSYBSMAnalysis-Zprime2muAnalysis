@@ -31,6 +31,6 @@ trigger_match = '(' + ' || '.join(trigger_match) + ')'
 prescaled_trigger_pt_threshold = 15
 prescaled_offline_pt_threshold = 20
 prescaled_trigger_paths = ['HLT_Mu15_v1', 'HLT_Mu15_v2', 'HLT_Mu15_v3', 'HLT_Mu15_v4', 'HLT_Mu15_v5', 'HLT_Mu15_v6', 'HLT_Mu15_v7', 'HLT_Mu15_v8']
-overall_prescale = 720
+overall_prescale = 1080
 
 prescaled_trigger_match = ' || '.join('!triggerObjectMatchesByPath("%s").empty()' % n for n in prescaled_trigger_paths)

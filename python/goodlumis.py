@@ -7,8 +7,12 @@ def for_cmssw(ll):
 # These numbers dictate how the rereco, prompt, DCS-only jsons are
 # combined below.
 last_rereco_run = 163869
-last_prompt_run = 167913
+last_prompt_run = 172802
 assert last_prompt_run > last_rereco_run
+
+# Sometimes the same run-range json gets made in other versions.
+prompt_version = ''
+prompt_version = '_v3'
 
 # Lumis to manually throw out.
 to_remove = {
@@ -22,7 +26,6 @@ to_remove = LumiList(compactList=to_remove)
 # don't drop them from the DCS-only list when combining later.
 holes = []
 
-
 runs_to_remove_from_dcsonly = range(160404, last_prompt_run+1)
 for hole in holes:
     print 'goodlumis warning: re-adding "hole" run %i from DCS-only list' % hole
@@ -32,8 +35,8 @@ DCSOnly_ll           = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certifica
 DCSOnlyForNewRuns_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/DCSOnly/json_DCSONLY.txt')
 DCSOnlyForNewRuns_ll.removeRuns(runs_to_remove_from_dcsonly)
 
-Prompt_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Prompt/Cert_160404-%i_7TeV_PromptReco_Collisions11_JSON.txt'          % last_prompt_run)
-PromptMuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Prompt/Cert_160404-%i_7TeV_PromptReco_Collisions11_JSON_MuonPhys.txt' % last_prompt_run)
+Prompt_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Prompt/Cert_160404-%i_7TeV_PromptReco_Collisions11_JSON%s.txt'          % (last_prompt_run, prompt_version))
+PromptMuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Prompt/Cert_160404-%i_7TeV_PromptReco_Collisions11_JSON_MuonPhys%s.txt' % (last_prompt_run, prompt_version))
 
 May10_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Reprocessing/Cert_160404-%i_7TeV_May10ReReco_Collisions11_JSON_v2.txt'          % last_rereco_run)
 May10MuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Reprocessing/Cert_160404-%i_7TeV_May10ReReco_Collisions11_JSON_MuonPhys_v2.txt' % last_rereco_run)

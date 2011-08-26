@@ -69,7 +69,8 @@ std::ostream& operator<<(std::ostream& out, const reco::Track& tk) {
 
 std::ostream& operator<<(std::ostream& out, const pat::Muon& mu) {
   out << "pt: " << mu.pt() << " eta: " << mu.eta() << " phi: " << mu.phi() << " p: " << mu.p() << " dB: " << mu.dB() << "\nisGlobal: " << mu.isGlobalMuon() << " isTracker: " << mu.isTrackerMuon() << " isStandAlone: " << mu.isStandAloneMuon();
-  
+  out << "\nisolationR03: sumPt: " << mu.isolationR03().sumPt << " emEt: " << mu.isolationR03().emEt << " hadEt: " << mu.isolationR03().hadEt << " hoEt: " << mu.isolationR03().hoEt;
+
   if (mu.genParticle())
     out << "\nMC match: " << *mu.genParticle();
 
@@ -113,10 +114,10 @@ std::ostream& operator<<(std::ostream& out, const pat::Muon& mu) {
   int itosa = 0;
   BOOST_FOREACH(const pat::TriggerObjectStandAlone& tosa, mu.triggerObjectMatches()) {
     out << "\nTriggerObjectStandAlone #" << itosa++ << "\npaths:";
-    BOOST_FOREACH(const std::string& s, tosa.pathNames()) {
-      out << "\n" << s << "  # matches: " << mu.triggerObjectMatchesByPath(s).size();
-      for (size_t trg_i = 0; trg_i < mu.triggerObjectMatchesByPath(s).size(); ++trg_i)
-	out << "  pt of match " << trg_i << ": " << mu.triggerObjectMatchesByPath(s).at(trg_i).pt();
+    BOOST_FOREACH(const std::string& s, tosa.pathNames(true,false)) {
+      out << "\n" << s << "  # matches: " << mu.triggerObjectMatchesByPath(s,true,false).size();
+      for (size_t trg_i = 0; trg_i < mu.triggerObjectMatchesByPath(s,true,false).size(); ++trg_i)
+	out << "  pt of match " << trg_i << ": " << mu.triggerObjectMatchesByPath(s,true,false).at(trg_i).pt();
     }
     out << "\nfilters:";
     BOOST_FOREACH(const std::string& s, tosa.filterLabels())

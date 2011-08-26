@@ -58,14 +58,14 @@ elif cmd == 'hadd':
         if n == 0:
             big_warn('no files matching %s' % pattern)
         elif n == 1:
-            do('cp %s %s' % (pattern, fn))
+            do('cp %s mc/%s' % (pattern, fn))
         else:
-            do('hadd ana_datamc_%(name)s.root crab/crab_ana%(extra)s_datamc_%(name)s/res/zp2mu_histos*root' % locals())
+            do('hadd mc/ana_datamc_%(name)s.root crab/crab_ana%(extra)s_datamc_%(name)s/res/zp2mu_histos*root' % locals())
 
 elif cmd == 'gatherhistos':
     extra = (extra[0] + '_') if extra else ''
 
-    for which in ['Run2011AMuonsOnly', 'Run2011A']:
+    for which in ['Run2011APlusDCSOnlyMuonsOnly']:
         print which
         dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMu2011A_*' % which)
         files_glob = ' '.join([os.path.join(x, 'res/*.root') for x in dirs])
@@ -89,7 +89,7 @@ elif cmd == 'gatherhistos':
                 print cl
                                         
         reduce(lambda x,y: x|y, (LumiList(j) for j in jsons)).writeJSON('%(wdir)s/ana_datamc_data.forlumi.json' % locals())
-        do('lumiCalc.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())
+        do('lumiCalc2.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())
         print 'done with', which, '\n'
 
 elif cmd == 'mclinks':

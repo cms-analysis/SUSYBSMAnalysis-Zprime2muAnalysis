@@ -72,9 +72,7 @@ for sample in samples:
     if sample.name == 'zmumu' or sample.name.startswith('dy'):
         sample.scheduler = 'glite'
 
-    sample.ana_dataset = '/%s/tucker-datamc_%s-63d1d6939e347ca07d791ce376ea82b6/USER' % (sample.dataset.split('/')[1], sample.name)
-
-ttbar.ana_dataset = '/TTJets_TuneZ2_7TeV-madgraph-tauola/tucker-datamc_ttbar-63f596b10afb6e62e7eae4ec96901d55/USER'
+    sample.ana_dataset = '/%s/tucker-datamc_%s-NOPE/USER' % (sample.dataset.split('/')[1], sample.name)
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import big_warn
 big_warn("it's gettin' real in the whole foods parking lot")

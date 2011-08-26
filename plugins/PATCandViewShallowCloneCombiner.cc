@@ -32,8 +32,9 @@ struct LeptonPairSelector {
 struct LooseTightPairSelector {
   StringCutObjectSelector<reco::Candidate, true> loose;
   StringCutObjectSelector<reco::Candidate, true> tight;
-  
-  LooseTightPairSelector(const std::string& loose_cut, const std::string& tight_cut) : loose(loose_cut), tight(tight_cut) {}
+  const std::string module_label;
+
+  LooseTightPairSelector(const std::string& loose_cut, const std::string& tight_cut, const std::string& label) : loose(loose_cut), tight(tight_cut), module_label(label) {}
 
   bool electron_ok(const reco::Candidate& cel) const {
     const pat::Electron& el = static_cast<const pat::Electron&>(cel);
@@ -54,6 +55,7 @@ struct LooseTightPairSelector {
     else if (e2)
       return electron_ok(c2) && loose(c1) && tight(c1);
 
+    //printf("in mumu LooseTightPairSelector %s with c1 pt %f c2 pt %f  loose1 %i loose2 %i tight1 %i tight2 %i\n", module_label.c_str(), c1.pt(), c2.pt(), loose(c1), loose(c2), tight(c1), tight(c2));
     return loose(c1) && loose(c2) && (tight(c1) || tight(c2));
   }
 };
@@ -77,7 +79,7 @@ namespace reco {
     template<>
     struct ParameterAdapter<LooseTightPairSelector> {
       static LooseTightPairSelector make(const edm::ParameterSet& cfg) {
-	return LooseTightPairSelector(cfg.getParameter<std::string>("loose_cut"), cfg.getParameter<std::string>("tight_cut"));
+	return LooseTightPairSelector(cfg.getParameter<std::string>("loose_cut"), cfg.getParameter<std::string>("tight_cut"), cfg.getParameter<std::string>("@module_label"));
       }
     };
 

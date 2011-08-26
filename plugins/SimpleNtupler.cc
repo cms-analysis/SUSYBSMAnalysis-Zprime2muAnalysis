@@ -618,8 +618,8 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 
 	t.lep_triggerMatchPt[w] = -999;
 	BOOST_FOREACH(const std::string& single_mu_path, single_mu_path_names) {
-	  if (!mu->triggerObjectMatchesByPath(single_mu_path).empty()) { 
-	    t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath(single_mu_path).at(0).pt();
+	  if (!mu->triggerObjectMatchesByPath(single_mu_path, true,false).empty()) { 
+	    t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath(single_mu_path, true,false).at(0).pt();
 	    break;
 	  }
 	}

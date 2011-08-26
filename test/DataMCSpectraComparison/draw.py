@@ -64,10 +64,11 @@ def parse_lumi_from_log(fn):
     this = False
     for line in open(fn):
         if this:
-            x = float(line.split()[-2])/1e6
+            x = float(line.split()[-2])*1e3
+            print x
             print fn, x
             return x
-        if line == '-------------------------------------------------------------------\n':
+        if line == '---------------------------------------------------------------\n':
             this = True
 
 int_lumi = parse_lumi_from_log(data_fn.replace('.root', '.lumi'))
@@ -75,7 +76,7 @@ lumi_syst_frac = 0.06
 
 print '"joins" are:'
 pprint(joins)
-print 'total lumi from data: %.1f/pb' % int_lumi
+print 'total lumi from data: %.f/pb' % int_lumi
 print 'rescaling mumu MC histograms by these cut-dependent factors:'
 pprint(global_rescale)
 print 'comparing', to_compare
@@ -117,7 +118,7 @@ yaxis = {
 use_yaxis = True
 
 dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
-cutss = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso'] #, 'OurMu15', 'VBTFMu15']
+cutss = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso', 'OurMu15', 'VBTFMu15']
 #cutss = ['OurNew']
 mass_ranges_for_table = [(60,120), (120,), (120,200), (200,), (200,400), (400,), (600,)]
 

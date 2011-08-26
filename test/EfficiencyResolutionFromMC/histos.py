@@ -94,7 +94,7 @@ if use_prescaled_mu:
 
     l1,hlt = 'L1_SingleMu10', 'HLT_Mu15_v2'
     from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match
-    new_trigger_match = '!triggerObjectMatchesByPath("%s").empty()' % hlt
+    new_trigger_match = '!triggerObjectMatchesByPath("%s",1,0).empty()' % hlt
 
     for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
         eff.triggerDecision.l1Paths = [l1]

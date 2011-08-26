@@ -3,7 +3,7 @@
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import *
-process.source.fileNames = ['/store/user/tucker/SingleMu/datamc_SingleMuRun2011A_Prompt4/eba28a5fa2039ce6bf110cf12d7587cb/pat_1_1_4F6.root']
+#process.source.fileNames = ['/store/user/tucker/TTJets_TuneZ2_7TeV-madgraph-tauola/datamc_ttbar/63f596b10afb6e62e7eae4ec96901d55/pat_9_1_TuU.root']
 
 # Since the prescaled trigger comes with different prescales in
 # different runs/lumis, this filter prescales it to a common factor to
@@ -169,7 +169,7 @@ def printify(process, hlt_process_name='HLT'):
     process.PrintEventVBTF = process.PrintEvent.clone(dilepton_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
     process.pathVBTF *= process.PrintEventVBTF
 
-    process.PrintEventSimple = process.PrintEvent.clone(dilepton_src = cms.InputTag('SimpleMuonsPlusMuonsMinus'))
+    process.PrintEventSimple = process.PrintEvent.clone(muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'), dilepton_src = cms.InputTag('SimpleMuonsPlusMuonsMinus'))
     process.pathSimple *= process.triggerSummaryAnalyzerAOD * process.PrintEventSimple
 
 def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
@@ -181,9 +181,9 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
 
 if 'gogo' in sys.argv:
     ntuplify(process) #, fill_gen_info=True)
-    #printify(process)
-    process.GlobalTag.globaltag = 'GR_R_42_V13::All'
-    check_prescale(process, trigger_paths + old_trigger_paths)
+    printify(process)
+    #process.GlobalTag.globaltag = 'GR_R_42_V13::All'
+    #check_prescale(process, trigger_paths + old_trigger_paths)
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''

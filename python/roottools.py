@@ -145,6 +145,15 @@ def cumulative_histogram(h, type='ge'):
         hc.SetBinError(i, c**0.5)
     return hc
 
+def draw_in_order(hists, draw_cmds=''):
+    hists = [(h, h.GetMaximum()) for h in hists]
+    hists.sort(key=lambda x: x[1], reverse=True)
+    for h,m in hists:
+        print draw_cmds
+        h.Draw(draw_cmds)
+        if 'same' not in draw_cmds:
+            draw_cmds += ' same'
+
 def fit_gaussian(hist, factor=None, draw=False, cache=[]):
     """Fit a Gaussian to the histogram, and return a dict with fitted
     parameters and errors. If factor is supplied, fit only to range in
@@ -331,7 +340,10 @@ class plot_saver:
 
     def __del__(self):
         self.write_index()
-        
+
+    def anchor_name(self, fn):
+        return fn.replace('.', '_').replace('/', '_')
+    
     def write_index(self):
         if not self.saved or not self.html:
             return
@@ -339,7 +351,7 @@ class plot_saver:
         html.write('<html><body><pre>\n')
         for i, (fn, log, root, pdf, pdf_log, C, C_log) in enumerate(self.saved):
             bn = os.path.basename(fn)
-            html.write('%10i ' % i)
+            html.write('<a href="#%s">%10i</a> ' % (self.anchor_name(fn), i))
             if log:
                 html.write(' <a href="%s">log</a>' % os.path.basename(log))
             else:
@@ -369,7 +381,7 @@ class plot_saver:
         html.write('<br><br>')
         for i, (fn, log, root, pdf, pdf_log, C, C_log) in enumerate(self.saved):
             bn = os.path.basename(fn)
-            html.write('%s<br>\n' % bn.replace('.png', ''))
+            html.write('<h4 id="%s">%s</h4><br>\n' % (self.anchor_name(fn), bn.replace('.png', '')))
             if log:
                 html.write('<img src="%s"><img src="%s"><br><br>\n' % (bn, os.path.basename(log)))
             else:
@@ -521,7 +533,7 @@ def ttree_iterator(tree, return_tree=True):
             yield jentry, tree
         else:
             yield jentry
-
+            
 __all__ = [
     'apply_hist_commands',
     'binomial_divide',
@@ -529,6 +541,7 @@ __all__ = [
     'clopper_pearson_poisson_means',
     'core_gaussian',
     'cumulative_histogram',
+    'draw_in_order',
     'fit_gaussian',
     'get_bin_content_error',
     'get_integral',

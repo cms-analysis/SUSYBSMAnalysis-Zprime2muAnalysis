@@ -225,15 +225,20 @@ return_data = 1
 
         jobs = []
         for lumi_name in lumi_lists:
+            if lumi_name == 'NoLumiMask':
+                continue
             ll = eval(lumi_name + '_ll')
             for dd in dataset_details:
                 jobs.append(dd + (lumi_name, ll))
                 
         for dataset_name, ana_dataset, lumi_name, lumi_list in jobs:
-            json_fn = 'tmp.json'
-            lumi_list.writeJSON(json_fn)
-            lumi_mask = '' if lumi_name == 'NoLumiMask' else 'lumi_mask = %s' % json_fn
-                
+            if lumi_name == 'NoLumiMask':
+                lumi_mask = ''
+            else:
+                json_fn = 'tmp.json'
+                lumi_list.writeJSON(json_fn)
+                lumi_mask = 'lumi_mask = %s' % json_fn
+
             name = '%s_%s' % (lumi_name, dataset_name)
             print name
 

@@ -7,12 +7,11 @@ def for_cmssw(ll):
 # These numbers dictate how the rereco, prompt, DCS-only jsons are
 # combined below.
 last_rereco_run = 163869
-last_prompt_run = 172802
+last_prompt_run = 173664
 assert last_prompt_run > last_rereco_run
 
 # Sometimes the same run-range json gets made in other versions.
 prompt_version = ''
-prompt_version = '_v3'
 
 # Lumis to manually throw out.
 to_remove = {
@@ -38,8 +37,8 @@ DCSOnlyForNewRuns_ll.removeRuns(runs_to_remove_from_dcsonly)
 Prompt_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Prompt/Cert_160404-%i_7TeV_PromptReco_Collisions11_JSON%s.txt'          % (last_prompt_run, prompt_version))
 PromptMuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Prompt/Cert_160404-%i_7TeV_PromptReco_Collisions11_JSON_MuonPhys%s.txt' % (last_prompt_run, prompt_version))
 
-May10_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Reprocessing/Cert_160404-%i_7TeV_May10ReReco_Collisions11_JSON_v2.txt'          % last_rereco_run)
-May10MuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Reprocessing/Cert_160404-%i_7TeV_May10ReReco_Collisions11_JSON_MuonPhys_v2.txt' % last_rereco_run)
+May10_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Reprocessing/Cert_160404-%i_7TeV_May10ReReco_Collisions11_JSON_v3.txt'          % last_rereco_run)
+May10MuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Reprocessing/Cert_160404-%i_7TeV_May10ReReco_Collisions11_JSON_MuonPhys_v3.txt' % last_rereco_run)
 
 def combine(may10_ll, prompt_ll, dcsonly_ll=None):
     prompt_ll = copy.deepcopy(prompt_ll)

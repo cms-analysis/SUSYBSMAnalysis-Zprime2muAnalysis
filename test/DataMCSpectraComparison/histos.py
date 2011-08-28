@@ -210,16 +210,17 @@ return_data = 1
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
 
         dataset_details = [
-            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10-eba28a5fa2039ce6bf110cf12d7587cb/USER'),
-            ('SingleMu2011A_Prompt4',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt4-eba28a5fa2039ce6bf110cf12d7587cb/USER'),
-            ('SingleMu2011A_Prompt5',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt5-eba28a5fa2039ce6bf110cf12d7587cb/USER'),
-            ('SingleMu2011A_Prompt_172620_172821', '/SingleMu/tucker-datamc_SingleMu2011A_Prompt_172620_172821_20110810045357-29bdc8029e2a75421950362f8ecef2a4/USER'),
+            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10-27b0e568312792116de9a2db293fbae8/USER'),
+            ('SingleMu2011A_Prompt4',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt4-27b0e568312792116de9a2db293fbae8/USER'),
+            ('SingleMu2011A_Prompt5',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt5-27b0e568312792116de9a2db293fbae8/USER'),
+            ('SingleMu2011A_Prompt_172620_173688', '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt_172620_173688_20110825232848-f53fd3142c38799e6c3f9dbb941efc6f/USER'),
             ]
 
         lumi_lists = [
             #'Run2011A',
             #'Run2011AMuonsOnly',
             'Run2011APlusDCSOnlyMuonsOnly',
+            'NoLumiMask',
             ]
 
         jobs = []
@@ -231,7 +232,7 @@ return_data = 1
         for dataset_name, ana_dataset, lumi_name, lumi_list in jobs:
             json_fn = 'tmp.json'
             lumi_list.writeJSON(json_fn)
-            lumi_mask = 'lumi_mask = %s' % json_fn
+            lumi_mask = '' if lumi_name == 'NoLumiMask' else 'lumi_mask = %s' % json_fn
                 
             name = '%s_%s' % (lumi_name, dataset_name)
             print name

@@ -225,9 +225,7 @@ return_data = 1
 
         jobs = []
         for lumi_name in lumi_lists:
-            if lumi_name == 'NoLumiMask':
-                continue
-            ll = eval(lumi_name + '_ll')
+            ll = eval(lumi_name + '_ll') if lumi_name != 'NoLumiMask' else None
             for dd in dataset_details:
                 jobs.append(dd + (lumi_name, ll))
                 

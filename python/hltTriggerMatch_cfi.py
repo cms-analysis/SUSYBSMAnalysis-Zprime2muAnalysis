@@ -21,7 +21,7 @@ muonTriggerMatchHLTMuons = cms.EDProducer('PATTriggerMatcherDRDPtLessByR',
 trigger_pt_threshold = 40
 offline_pt_threshold = 45
 mc_trigger_paths = ['HLT_Mu15_v1', 'HLT_Mu15_v2']
-trigger_paths = ['HLT_Mu40_v1', 'HLT_Mu40_v2', 'HLT_Mu40_v3', 'HLT_Mu40_v4', 'HLT_Mu40_v5']
+trigger_paths = ['HLT_Mu40_v1', 'HLT_Mu40_v2', 'HLT_Mu40_v3', 'HLT_Mu40_v4', 'HLT_Mu40_v5', 'HLT_Mu40_v6']
 old_trigger_paths = ['HLT_Mu30_v1', 'HLT_Mu30_v2'] # In runs 160329-163869, there was no HLT_Mu40 in the trigger menu. The next run with data, 165071, uses a trigger menu with HLT_Mu30_v3 and HLT_Mu40_v1. CheckPrescales downstream should behave correctly because of this configuration.
 
 trigger_match =  ['(!triggerObjectMatchesByPath("%s",1,0).empty() && triggerObjectMatchesByPath("%s",1,0).at(0).pt() > %i)' % (n,n, trigger_pt_threshold) for n in mc_trigger_paths + old_trigger_paths]
@@ -31,6 +31,6 @@ trigger_match = '(' + ' || '.join(trigger_match) + ')'
 prescaled_trigger_pt_threshold = 15
 prescaled_offline_pt_threshold = 20
 prescaled_trigger_paths = ['HLT_Mu15_v1', 'HLT_Mu15_v2', 'HLT_Mu15_v3', 'HLT_Mu15_v4', 'HLT_Mu15_v5', 'HLT_Mu15_v6', 'HLT_Mu15_v7', 'HLT_Mu15_v8', 'HLT_Mu15_v9']
-overall_prescale = 1080
+overall_prescale = 1090
 
 prescaled_trigger_match = ' || '.join('!triggerObjectMatchesByPath("%s",1,0).empty()' % n for n in prescaled_trigger_paths)

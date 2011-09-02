@@ -75,6 +75,8 @@ for sample in samples:
     sample.ana_dataset = '/%s/tucker-datamc_%s-e5275934e6f4238b636d1bf2848643b3/USER' % (sample.dataset.split('/')[1], sample.name)
 
 ttbar.ana_dataset = '/TTJets_TuneZ2_7TeV-madgraph-tauola/tucker-datamc_ttbar-a972f07199dd1bd57caa708c2dcf050c/USER'
+wjets.ana_dataset = '/WJetsToLNu_TuneZ2_7TeV-madgraph-tauola/tucker-merge_20110829085858_wjets-a3691da421b8c16b08067510400469a1/USER'
+inclmu15.ana_dataset = '/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/tucker-merge_20110829085858_inclmu15-a3691da421b8c16b08067510400469a1/USER'
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import big_warn
 big_warn("it's gettin' real in the whole foods parking lot")

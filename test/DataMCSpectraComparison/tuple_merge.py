@@ -28,7 +28,7 @@ datasetpath = %(ana_dataset)s
 dbs_url = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
 pset = tuple_merge.py
 get_edm_output = 1
-number_of_jobs = 40
+number_of_jobs = 10
 %(job_control)s
 
 [USER]
@@ -45,13 +45,13 @@ dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02
     uniq = datetime.datetime.today().strftime('%Y%m%d%H%M%S')
 
     cfgs = []
-    if False:
+    if True:
         from samples import wjets, inclmu15
         to_merge = [wjets, inclmu15]
         for sample in to_merge:
             sample.uniq = uniq
             sample.job_control = 'total_number_of_events = -1'
-        cfgs.append(crab_cfg % sample)
+            cfgs.append(crab_cfg % sample)
     else:
         to_merge = [
 #            ('prompt165071165558', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_165558_20110526195544-8788f1b70631d1fb57e97a89f5e8007c/USER'),

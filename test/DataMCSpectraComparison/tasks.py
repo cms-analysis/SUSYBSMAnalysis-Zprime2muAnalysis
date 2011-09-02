@@ -65,7 +65,7 @@ elif cmd == 'hadd':
 elif cmd == 'gatherhistos':
     extra = (extra[0] + '_') if extra else ''
 
-    for which in ['Run2011APlusDCSOnlyMuonsOnly']:
+    for which in ['Run2011APlusDCSOnlyMuonsOnly', 'NoLumiMask']:
         print which
         dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMu2011A_*' % which)
         files_glob = ' '.join([os.path.join(x, 'res/*.root') for x in dirs])

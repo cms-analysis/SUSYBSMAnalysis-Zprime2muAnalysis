@@ -47,8 +47,8 @@ overflow_bin = True
 do_joins = True
 joins = [(s.name, 'jets') for s in samples if 'qcd' in s.name]
 joins += [(x, 'jets') for x in ['inclmu15', 'wmunu', 'wjets']]
-#joins += [(x, 'other prompt leptons') for x in ['singletop_tW', 'ztautau', 'ww', 'wz', 'zz']]
-joins += [(x, 't#bar{t} + other prompt leptons') for x in ['ttbar', 'singletop_tW', 'ztautau', 'ww', 'wz', 'zz']]
+#joins += [(x, 'other prompt leptons') for x in ['tW', 'tbarW', 'ztautau', 'ww', 'wz', 'zz']]
+joins += [(x, 't#bar{t} + other prompt leptons') for x in ['ttbar', 'tW', 'tbarW', 'ztautau', 'ww', 'wz', 'zz']]
 joins += [(s.name, '#gamma/Z #rightarrow #mu^{+}#mu^{-}') for s in samples if 'dy' in s.name]
 joins += [('zmumu', '#gamma/Z #rightarrow #mu^{+}#mu^{-}')]
 joins = dict(joins)
@@ -141,7 +141,7 @@ ps = plot_saver(pdir, size=(900,600), pdf_log=True, pdf=True)
 save_plots = 'no_plots' not in sys.argv
 
 # Can redefine which samples get included.
-#samples = [s for s in samples if not s.name in ['wjets', 'zz', 'singletop_tW']]
+#samples = [s for s in samples if not s.name in ['wjets', 'zz']]
 
 for cuts in cutss:
     if not hasattr(fdata, dir_name(cuts, 'MuonsPlusMuonsMinus')):

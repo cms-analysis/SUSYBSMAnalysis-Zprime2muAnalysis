@@ -22,6 +22,7 @@ class EfficiencyFromMC : public edm::EDAnalyzer {
   const edm::InputTag dimuon_src;
   const edm::InputTag hlt_obj_src;
   const double hlt_single_min_pt;  
+  const double hlt_single_max_eta;
   const double acceptance_max_eta;
   const double acceptance_min_pt;
   TriggerDecision triggerDecision;
@@ -67,6 +68,7 @@ EfficiencyFromMC::EfficiencyFromMC(const edm::ParameterSet& cfg)
     dimuon_src(cfg.getParameter<edm::InputTag>("dimuon_src")),
     hlt_obj_src(cfg.getParameter<edm::InputTag>("hlt_obj_src")),
     hlt_single_min_pt(cfg.getParameter<double>("hlt_single_min_pt")),
+    hlt_single_max_eta(cfg.getParameter<double>("hlt_single_max_eta")),
     acceptance_max_eta(cfg.getParameter<double>("acceptance_max_eta")),
     acceptance_min_pt(cfg.getParameter<double>("acceptance_min_pt")),
     hardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction"))    
@@ -148,7 +150,7 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
     event.getByLabel(hlt_obj_src, hlt_objs);
     bool pass = false;
     for (std::vector<reco::RecoChargedCandidate>::const_iterator hlt_obj = hlt_objs->begin(), hoe = hlt_objs->end(); hlt_obj != hoe; ++hlt_obj) {
-      if (hlt_obj->pt() > hlt_single_min_pt) {
+      if (hlt_obj->pt() > hlt_single_min_pt && fabs(hlt_obj->eta()) < hlt_single_max_eta) {
 	pass = true;
 	break;
       }

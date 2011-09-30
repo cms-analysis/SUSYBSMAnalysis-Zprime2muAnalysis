@@ -8,8 +8,8 @@ restrict_mass_window = True
 # intime_bin numbering: bin 0 = 0-5, bin 1 = 6-11, bin 2 = 12-26
 # late_bin numbering: bin 0 = 0-9, bin 2 = 10-26
 intime_bin, late_bin = -1, -1 
-use_old_vbtf_selection = False
 use_prescaled_mu = False
+simple_trigger_decision = False
 
 ################################################################################
 
@@ -25,7 +25,11 @@ ex = ''
 if use_old_selection:
     ex += 'oldsel'
     from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_to_old_selection
-    switch_to_old_selection(process)   
+    switch_to_old_selection(process)
+
+if simple_trigger_decision:
+    ex += 'simpletrig'
+    process.allDimuons.tight_cut = ''
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import rec_levels, rec_level_module
 tracks = ['global', 'inner', 'tpfms', 'picky', 'pmc', 'tmr', 'sigmaswitch']
@@ -44,7 +48,8 @@ process.HLTSingleObjects = cms.EDProducer('HLTLeptonsFromTriggerEvent',
                                           leptons = cms.VInputTag(cms.InputTag('hltL3MuonCandidates', '', 'HLT'))
                                           )
 process.EfficiencyFromMC.hlt_obj_src = 'HLTSingleObjects'
-process.EfficiencyFromMC.hlt_single_min_pt = 30
+process.EfficiencyFromMC.hlt_single_min_pt = 40
+process.EfficiencyFromMC.hlt_single_max_eta = 2.1
 
 # Since LooseTightPairSelector ignores the cutFor that
 # Zprime2muLeptonProducer sets, don't need to redo leptons for the
@@ -53,21 +58,7 @@ import SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff as VBTFSelection
 process.allDimuonsVBTF = VBTFSelection.allDimuons.clone()
 process.dimuonsVBTF = VBTFSelection.dimuons.clone(src = 'allDimuonsVBTF')
 process.VBTFEfficiencyFromMC = process.EfficiencyFromMC.clone(dimuon_src = 'dimuonsVBTF', acceptance_max_eta = 2.1)
-
-if use_old_vbtf_selection:
-    ex += 'oldvbtf'
-    process.allDimuonsVBTF.loose_cut = 'isGlobalMuon && ' \
-                                       'isTrackerMuon && ' \
-                                       'innerTrack.pt > 35. && ' \
-                                       'abs(innerTrack.eta) < 2.1 && ' \
-                                       'abs(dB) < 0.2 && ' \
-                                       '(isolationR03.sumPt + isolationR03.emEt + isolationR03.hadEt) / innerTrack.pt < 0.15 && ' \
-                                       'globalTrack.hitPattern.numberOfValidTrackerHits > 10 && ' \
-                                       'globalTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \
-                                       'globalTrack.hitPattern.numberOfValidMuonHits > 0 && ' \
-                                       'numberOfMatches >= 2'
-
-    
+  
 p2 = process.HardInteractionFilter * process.Zprime2muAnalysisSequencePlain * process.HLTSingleObjects * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC
 p  = process.HardInteractionFilterRes * process.Zprime2muAnalysisSequence # this will get all the Histospmc, Histospicky, Histosglobal, etc. below.
 
@@ -87,7 +78,6 @@ if intime_bin in range(0,3) and late_bin in range(0,2):
     p2 = process.GenPileupFilter * p2
     p  = process.GenPileupFilter * p
 
-
 if use_prescaled_mu:
     min_hlt_pt, min_offline_pt = 15, 20
     ex += 'mu' + str(min_hlt_pt)
@@ -105,8 +95,8 @@ if use_prescaled_mu:
     process.leptons.muon_cuts = 'isGlobalMuon && pt > %i' % min_offline_pt  # Overridden in dimuon construction anyway.
 
     for d in [process.allDimuonsVBTF, process.allDimuons]:
-        assert 'pt > 35' in d.loose_cut.value()
-        d.loose_cut = d.loose_cut.value().replace('pt > 35', 'pt > %i' % min_offline_pt)
+        assert 'pt > 45' in d.loose_cut.value()
+        d.loose_cut = d.loose_cut.value().replace('pt > 45', 'pt > %i' % min_offline_pt)
         assert d.tight_cut == trigger_match
         d.tight_cut = new_trigger_match
 
@@ -151,7 +141,7 @@ datasetpath = %(dataset)s
 dbs_url = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
 pset = histos_crab.py
 total_number_of_events = -1
-events_per_job = 60000
+events_per_job = 200000
 
 [USER]
 ui_working_dir = %(base_dir)s/crab_ana_effres_%(name)s

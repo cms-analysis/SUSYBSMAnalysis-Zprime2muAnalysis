@@ -23,9 +23,9 @@ muonTriggerMatchHLTMuons = cms.EDProducer('PATTriggerMatcherDRDPtLessByR',
 trigger_pt_threshold = 40
 offline_pt_threshold = 45
 
-mc_trigger_paths = ['HLT_Mu15_v*']
-trigger_paths = ['HLT_Mu40_eta2p1_v*']
-old_trigger_paths = ['HLT_Mu40_v*', 'HLT_Mu30_v*'] # In runs 160329-163869, there was no HLT_Mu40 in the trigger menu. The next run with data, 165071, uses a trigger menu with HLT_Mu30_v3 and HLT_Mu40_v1. CheckPrescales downstream should behave correctly because of this configuration.
+mc_trigger_paths = ['HLT_Mu15_v1', 'HLT_Mu15_v2']
+trigger_paths = ['HLT_Mu40_eta2p1_v%i' % i for i in (1,4,5)]
+old_trigger_paths = ['HLT_Mu40_v%i' % i for i in (1,2,3,5)] + ['HLT_Mu30_v1', 'HLT_Mu30_v2']
 
 trigger_match =  ['(!triggerObjectMatchesByPath("%(path)s",1,0).empty() && triggerObjectMatchesByPath("%(path)s",1,0).at(0).pt() > %(trigger_pt_threshold)i && abs(triggerObjectMatchesByPath("%(path)s",1,0).at(0).eta()) < 2.1)' % locals() for path in mc_trigger_paths + old_trigger_paths]
 trigger_match += ['!triggerObjectMatchesByPath("%s",1,0).empty()' % n for n in trigger_paths]
@@ -33,7 +33,7 @@ trigger_match = '(' + ' || '.join(trigger_match) + ')'
 
 prescaled_trigger_pt_threshold = 15
 prescaled_offline_pt_threshold = 20
-prescaled_trigger_paths = ['HLT_Mu15_v*']
-overall_prescale = 1090
+prescaled_trigger_paths = ['HLT_Mu15_v%i' % i for i in (2,3,4,5,6,8,9,12,13)]
+overall_prescale = 2000
 
 prescaled_trigger_match = ' || '.join('(!triggerObjectMatchesByPath("%(path)s",1,0).empty() && abs(triggerObjectMatchesByPath("%(path)s",1,0).at(0).eta()) < 2.1)' % locals() for path in prescaled_trigger_paths)

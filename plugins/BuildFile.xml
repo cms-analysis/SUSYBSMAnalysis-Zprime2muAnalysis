@@ -63,7 +63,6 @@
 <library file="Zprime2muAnalysisPlots.cc" name="Zprime2muAnalysisPlots">
   <use name="CommonTools/Utils"/>
   <use name="DataFormats/PatCandidates"/>
-  <use name="MuonAnalysis/Examples"/>
   <use name="PhysicsTools/UtilAlgos"/>
 </library>
 

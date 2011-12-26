@@ -20,7 +20,6 @@
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
-#include "MuonAnalysis/Examples/interface/muonStations.h"
 
 // for "luminosity"
 #include "DataFormats/Common/interface/MergeableCounter.h"
@@ -295,20 +294,20 @@ void Zprime2muAnalysisPlots::analyze(const edm::Event & event, const edm::EventS
                  ( mu->outerTrack()->recHitsSize() > 0       ) &&
                  ( mu->outerTrack()->recHit(0).isAvailable() )     ) {
 	        plots[role]["muonBadHits"]->Fill(mu->outerTrack()->recHitsSize() - mu->outerTrack()->numberOfValidHits());
-	        plots[role]["muonStationsValid"]->Fill(muon::muonStations(mu->outerTrack(), 0, true));
-                plots[role]["muonStationsAny"  ]->Fill(muon::muonStations(mu->outerTrack(), 0, false));
+	        plots[role]["muonStationsValid"]->Fill(mu->outerTrack()->hitPattern().muonStationsWithValidHits());
+                plots[role]["muonStationsAny"  ]->Fill(mu->outerTrack()->hitPattern().muonStationsWithAnyHits());
                 float abseta = std::abs(mu->outerTrack()->eta());
                 if (abseta <= 1.2) {
-                    plots[role]["muonStationsDTValid"]->Fill(muon::muonStations(mu->outerTrack(),MuonSubdetId::DT, true));
-                    plots[role]["muonStationsDTAny"  ]->Fill(muon::muonStations(mu->outerTrack(),MuonSubdetId::DT, false));
+		    plots[role]["muonStationsDTValid"]->Fill(mu->outerTrack()->hitPattern().dtStationsWithValidHits());
+		    plots[role]["muonStationsDTAny"  ]->Fill(mu->outerTrack()->hitPattern().dtStationsWithAnyHits());
                 } 
                 if (abseta <= 1.6) {
-                    plots[role]["muonStationsRPCValid"]->Fill(muon::muonStations(mu->outerTrack(),MuonSubdetId::RPC, true));
-                    plots[role]["muonStationsRPCAny"  ]->Fill(muon::muonStations(mu->outerTrack(),MuonSubdetId::RPC, false));
+		    plots[role]["muonStationsRPCValid"]->Fill(mu->outerTrack()->hitPattern().rpcStationsWithValidHits());
+		    plots[role]["muonStationsRPCAny"  ]->Fill(mu->outerTrack()->hitPattern().rpcStationsWithAnyHits());
                 } 
                 if (abseta >= 0.8) {
-                    plots[role]["muonStationsCSCValid"]->Fill(muon::muonStations(mu->outerTrack(),MuonSubdetId::CSC, true));
-                    plots[role]["muonStationsCSCAny"  ]->Fill(muon::muonStations(mu->outerTrack(),MuonSubdetId::CSC, false));
+		    plots[role]["muonStationsCSCValid"]->Fill(mu->outerTrack()->hitPattern().cscStationsWithValidHits());
+		    plots[role]["muonStationsCSCAny"  ]->Fill(mu->outerTrack()->hitPattern().cscStationsWithAnyHits());
                 }
             }
         }

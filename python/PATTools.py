@@ -35,21 +35,6 @@ def addMuonMCClassification(process):
     addClassByHits(process.patMuons, extraInfo=True)
     process.patDefaultSequence = cms.Sequence(process.muonClassificationByHits * process.patDefaultSequence._seq)
 
-def addMuonStations(process):
-    # Embed the muon station counts. This should be obsolete in 37X
-    # with the addition to reco::HitPattern -- needs checking.
-    process.load('MuonAnalysis.Examples.muonStations_cfi')
-    from MuonAnalysis.Examples.muonStations_cfi import addUserData as addStations
-    addStations(process.patMuons)
-    process.patDefaultSequence.replace(process.patCandidates, process.muonStations * process.patCandidates)
-
-def addMuonHitCount(process):
-    # Embed the muon hit counts. Redundant with reco::HitPattern?
-    process.load('UserCode.Examples.muonHitCount_cfi')
-    from UserCode.Examples.muonHitCount_cfi import addUserData as addHitCount
-    addHitCount(process.patMuons)
-    process.patDefaultSequence.replace(process.patCandidates, process.muonHitCounts * process.patCandidates)
-
 def removeMuonMCClassification(process):
     # Some magic to undo the use of MC added above in
     # addMuonMCClassification.

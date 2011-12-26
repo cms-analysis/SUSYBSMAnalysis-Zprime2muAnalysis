@@ -66,11 +66,9 @@ process.outpath = cms.EndPath(process.out)
 # do it in this order rather than adding things for MC use later.)
 process.load('PhysicsTools.PatAlgos.patSequences_cff')
 
-from PATTools import pruneMCLeptons, addMuonMCClassification, addMuonStations, addMuonHitCount, addHEEPId
+from PATTools import pruneMCLeptons, addMuonMCClassification, addHEEPId
 pruneMCLeptons(process, use_sim=True) # need to decide whether to move AODOnly() call in here, if so use_sim should just be set False
 addMuonMCClassification(process)
-addMuonStations(process)
-addMuonHitCount(process)
 addHEEPId(process)
 
 from PhysicsTools.PatAlgos.tools.trigTools import switchOnTrigger, switchOnTriggerMatchEmbedding

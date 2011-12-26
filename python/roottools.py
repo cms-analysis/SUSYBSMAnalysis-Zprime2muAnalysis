@@ -145,6 +145,18 @@ def cumulative_histogram(h, type='ge'):
         hc.SetBinError(i, c**0.5)
     return hc
 
+def detree(t, branches='run:lumi:event', cut=''):
+    """Dump specified branches from tree into a list of tuples, via an
+    ascii file. Currently only (unsigned) int branches are supported."""
+    
+    tmp_fn = os.tmpnam()
+    t.GetPlayer().SetScanRedirect(True)
+    t.GetPlayer().SetScanFileName(tmp_fn)
+    t.Scan(branches, cut, 'colsize=50')
+    t.GetPlayer().SetScanRedirect(False)
+    l = len(branches.split(':')) + 2
+    return [tuple(int(x) for x in line.split('*')[2:l]) for line in open(tmp_fn) if ' * ' in line and 'Row' not in line]
+
 def draw_in_order(hists, draw_cmds=''):
     hists = [(h, h.GetMaximum()) for h in hists]
     hists.sort(key=lambda x: x[1], reverse=True)
@@ -541,6 +553,7 @@ __all__ = [
     'clopper_pearson_poisson_means',
     'core_gaussian',
     'cumulative_histogram',
+    'detree',
     'draw_in_order',
     'fit_gaussian',
     'get_bin_content_error',

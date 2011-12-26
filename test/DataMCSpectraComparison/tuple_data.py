@@ -21,7 +21,7 @@ lumis_per_job = %(lumis_per_job)s
 
     create_only = 'create_only' in sys.argv
     just_testing = 'testing' in sys.argv
-    scheduler = 'condor' if 'condor' in sys.argv else 'glite'
+    scheduler = 'condor' if 'grid' not in sys.argv else 'glite'
 
     def submit(d):
         new_py = open('tuple_data.py').read()
@@ -59,21 +59,23 @@ lumis_per_job = %(lumis_per_job)s
         open('tmp.json', 'wt').write('{' + ', '.join(json) + '}')
         lumi_mask = 'lumi_mask = tmp.json'
 
-        name = 'SingleMuRun2011A_Prompt_%i_%i_%s' % (run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
+        name = 'SingleMuRun2011B_Prompt_%i_%i_%s' % (run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
         print name
 
-        if run1 >= 172620:
-            dataset = '/SingleMu/Run2011A-PromptReco-v6/AOD'
+        if run1 >= 175832:
+            dataset = '/SingleMu/Run2011B-PromptReco-v1/AOD'
         else:
             raise ValueError("don't know how to do a run_limits production for run range [%i,%i]" % run_limits)
         
-        tag = 'GR_R_42_V13'
+        tag = 'GR_R_42_V21'
         submit(locals())
     else:
         x = [
-            ('SingleMuRun2011A_May10',   '/SingleMu/Run2011A-May10ReReco-v1/AOD', 'FT_R_42_V13A'),
-            ('SingleMuRun2011A_Prompt4', '/SingleMu/Run2011A-PromptReco-v4/AOD',  'FT_R_42_V13A'),
-            ('SingleMuRun2011A_Prompt5', '/SingleMu/Run2011A-PromptReco-v5/AOD',  'FT_R_42_V13A'),
+            ('SingleMuRun2011A_May10',   '/SingleMu/Run2011A-May10ReReco-v1/AOD', 'GR_R_42_V21'),
+            ('SingleMuRun2011A_Prompt4', '/SingleMu/Run2011A-PromptReco-v4/AOD',  'GR_R_42_V21'),
+            ('SingleMuRun2011A_Prompt5', '/SingleMu/Run2011A-PromptReco-v5/AOD',  'GR_R_42_V21'),
+            ('SingleMuRun2011A_Prompt6', '/SingleMu/Run2011A-PromptReco-v6/AOD',  'GR_R_42_V21'),
+            ('SingleMuRun2011B_Prompt1', '/SingleMu/Run2011B-PromptReco-v1/AOD',  'GR_R_42_V21'),
             ]
         for name, dataset, tag in x:
             submit(locals())

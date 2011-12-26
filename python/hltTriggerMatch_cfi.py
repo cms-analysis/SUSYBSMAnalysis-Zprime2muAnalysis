@@ -11,26 +11,29 @@ muonTriggerMatchHLTMuons = cms.EDProducer('PATTriggerMatcherDRDPtLessByR',
     resolveByMatchQuality = cms.bool(False)
 )
 
-# For the trigger match, currently HLT_Mu40_v5 is the lowest-pT
-# unprescaled single muon path. Neither Spring11 nor Summer11 MC has
-# such a path; emulate with Mu15, which is common to both. (This would
-# not work if the MC paths ever have prescales...)
+# For the trigger match, currently HLT_Mu40_eta2p1_v1 is the lowest-pT
+# unprescaled single muon path, albeit with coverage in |eta| only up
+# to 2.1. Neither Spring11 nor Summer11 MC has such a path; emulate
+# with Mu15, which is common to both. (This would not work if the MC
+# paths ever have prescales...)
 #
 # Obviously, these values must be changed or at least checked when new
 # trigger menus are implemented and used, in either MC or data.
+
 trigger_pt_threshold = 40
 offline_pt_threshold = 45
-mc_trigger_paths = ['HLT_Mu15_v1', 'HLT_Mu15_v2']
-trigger_paths = ['HLT_Mu40_v1', 'HLT_Mu40_v2', 'HLT_Mu40_v3', 'HLT_Mu40_v4', 'HLT_Mu40_v5', 'HLT_Mu40_v6']
-old_trigger_paths = ['HLT_Mu30_v1', 'HLT_Mu30_v2'] # In runs 160329-163869, there was no HLT_Mu40 in the trigger menu. The next run with data, 165071, uses a trigger menu with HLT_Mu30_v3 and HLT_Mu40_v1. CheckPrescales downstream should behave correctly because of this configuration.
 
-trigger_match =  ['(!triggerObjectMatchesByPath("%s",1,0).empty() && triggerObjectMatchesByPath("%s",1,0).at(0).pt() > %i)' % (n,n, trigger_pt_threshold) for n in mc_trigger_paths + old_trigger_paths]
+mc_trigger_paths = ['HLT_Mu15_v*']
+trigger_paths = ['HLT_Mu40_eta2p1_v*']
+old_trigger_paths = ['HLT_Mu40_v*', 'HLT_Mu30_v*'] # In runs 160329-163869, there was no HLT_Mu40 in the trigger menu. The next run with data, 165071, uses a trigger menu with HLT_Mu30_v3 and HLT_Mu40_v1. CheckPrescales downstream should behave correctly because of this configuration.
+
+trigger_match =  ['(!triggerObjectMatchesByPath("%(path)s",1,0).empty() && triggerObjectMatchesByPath("%(path)s",1,0).at(0).pt() > %(trigger_pt_threshold)i && abs(triggerObjectMatchesByPath("%(path)s",1,0).at(0).eta()) < 2.1)' % locals() for path in mc_trigger_paths + old_trigger_paths]
 trigger_match += ['!triggerObjectMatchesByPath("%s",1,0).empty()' % n for n in trigger_paths]
 trigger_match = '(' + ' || '.join(trigger_match) + ')'
 
 prescaled_trigger_pt_threshold = 15
 prescaled_offline_pt_threshold = 20
-prescaled_trigger_paths = ['HLT_Mu15_v1', 'HLT_Mu15_v2', 'HLT_Mu15_v3', 'HLT_Mu15_v4', 'HLT_Mu15_v5', 'HLT_Mu15_v6', 'HLT_Mu15_v7', 'HLT_Mu15_v8', 'HLT_Mu15_v9']
+prescaled_trigger_paths = ['HLT_Mu15_v*']
 overall_prescale = 1090
 
-prescaled_trigger_match = ' || '.join('!triggerObjectMatchesByPath("%s",1,0).empty()' % n for n in prescaled_trigger_paths)
+prescaled_trigger_match = ' || '.join('(!triggerObjectMatchesByPath("%(path)s",1,0).empty() && abs(triggerObjectMatchesByPath("%(path)s",1,0).at(0).eta()) < 2.1)' % locals() for path in prescaled_trigger_paths)

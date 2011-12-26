@@ -92,6 +92,7 @@ private:
     float lep_cocktail_ndf[2];
     short lep_cocktail_choice[2];
     float lep_triggerMatchPt[2];
+    float lep_triggerMatchEta[2];
     float lep_chi2dof[2];
     float lep_dB[2];
     float lep_sumPt[2];
@@ -229,6 +230,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->Branch("lep_cocktail_ndf", t.lep_cocktail_ndf, "lep_cocktail_ndf[2]/F");
   tree->Branch("lep_cocktail_choice", t.lep_cocktail_choice, "lep_cocktail_choice[2]/S");
   tree->Branch("lep_triggerMatchPt", t.lep_triggerMatchPt, "lep_triggerMatchPt[2]/F");
+  tree->Branch("lep_triggerMatchEta", t.lep_triggerMatchEta, "lep_triggerMatchEta[2]/F");
   tree->Branch("lep_chi2dof", t.lep_chi2dof, "lep_chi2dof[2]/F");
   tree->Branch("lep_dB", t.lep_dB, "lep_dB[2]/F");
   tree->Branch("lep_sumPt", t.lep_sumPt, "lep_sumPt[2]/F");
@@ -281,9 +283,10 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 
 #define offlineMinPt "45"
 #define triggerMatchMinPt "40"
+#define triggerMatchMaxEta "2.1"
 
-  tree->SetAlias("trigger_match_0", "lep_triggerMatchPt[0] > " triggerMatchMinPt);
-  tree->SetAlias("trigger_match_1", "lep_triggerMatchPt[1] > " triggerMatchMinPt);
+  tree->SetAlias("trigger_match_0", "lep_triggerMatchPt[0] > " triggerMatchMinPt " && lep_triggerMatchEta[0] > " triggerMatchMaxEta);
+  tree->SetAlias("trigger_match_1", "lep_triggerMatchPt[1] > " triggerMatchMinPt " && lep_triggerMatchEta[1] > " triggerMatchMaxEta);
   tree->SetAlias("triggerMatched", "trigger_match_0 || trigger_match_1");
 
   tree->SetAlias("GoodData", "GoodDataRan && HLTPhysicsDeclared && NoScraping && GoodVtx");
@@ -619,7 +622,8 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	t.lep_triggerMatchPt[w] = -999;
 	BOOST_FOREACH(const std::string& single_mu_path, single_mu_path_names) {
 	  if (!mu->triggerObjectMatchesByPath(single_mu_path, true,false).empty()) { 
-	    t.lep_triggerMatchPt[w] = mu->triggerObjectMatchesByPath(single_mu_path, true,false).at(0).pt();
+	    t.lep_triggerMatchPt[w]  = mu->triggerObjectMatchesByPath(single_mu_path, true,false).at(0).pt();
+	    t.lep_triggerMatchEta[w] = mu->triggerObjectMatchesByPath(single_mu_path, true,false).at(0).eta();
 	    break;
 	  }
 	}

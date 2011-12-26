@@ -41,7 +41,7 @@ publish_data_name = datamc_%(name)s
 dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
 
 [GRID]
-ce_white_list = T2_EE_Estonia
+#ce_white_list = T2_EE_Estonia
 '''
 
 os.system('mkdir -p psets')

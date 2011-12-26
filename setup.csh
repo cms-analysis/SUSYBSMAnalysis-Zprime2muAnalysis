@@ -2,7 +2,7 @@
 
 pushd $CMSSW_BASE/src
 
-cvs co -r V03-00-00 RecoLuminosity/LumiDB
+cvs co -r V03-03-12 RecoLuminosity/LumiDB
 cvs co -r V00-05-00 MuonAnalysis/Examples
 cvs co -r V01-13-00 MuonAnalysis/MuonAssociators
 cvs co -r V00-03-00 -d UserCode/Examples UserCode/AEverett/Examples

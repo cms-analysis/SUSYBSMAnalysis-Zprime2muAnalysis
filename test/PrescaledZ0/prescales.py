@@ -9,11 +9,13 @@ from collections import defaultdict
 from RecoLuminosity.LumiDB import lumiQueryAPI
 from FWCore.PythonUtilities.LumiList import LumiList
 
-# Bomb if an input JSON is not specified.
-if len(sys.argv) < 2 or not os.path.isfile(sys.argv[1]):
-    print 'usage: prescales.py lumis.json'
+# Bomb if args not specified.
+if len(sys.argv) < 3 or not os.path.isfile(sys.argv[1]):
+    print 'usage: prescales.py lumis.json pathsubstr'
     sys.exit(1)
 json = sys.argv[1]
+path = sys.argv[2]
+
 ll = LumiList(json)
 
 # Why doesn't LumiList have a getRunsAndLumis method? It can be
@@ -27,7 +29,6 @@ runs.sort()
 
 # The path to look for: e.g. HLT_Mu30_v*. Should only find one per
 # run, i.e. v4 and v5 do not exist simultaneously.
-path = 'Mu15'
 path_re = re.compile(r'HLT_%s_v\d+' % path)
 
 # Magic.
@@ -94,3 +95,15 @@ del svc
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import to_pickle
 to_pickle((l1_prescales, hlt_prescales), path + '.gzpickle')
+
+'''
+from SUSYBSMAnalysis.Zprime2muAnalysis.tools import from_pickle
+l1, hlt = from_pickle('Mu15.gzpickle')
+rls = sorted(set(l1.keys()) & set(hlt.keys()))
+max_seen = 0
+for rl in rls:
+    prescale = l1[rl]*hlt[rl]
+    if prescale > max_seen:
+        print 'new max prescale seen for', rl, ':', prescale
+        max_seen = prescale
+'''

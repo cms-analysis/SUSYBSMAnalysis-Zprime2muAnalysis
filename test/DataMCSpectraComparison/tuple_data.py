@@ -3,8 +3,8 @@
 import sys, os, datetime, FWCore.ParameterSet.Config as cms
 from tuple_common import process, crab_cfg
 
-process.source.fileNames = ['/store/data/Run2011A/SingleMu/AOD/PromptReco-v5/000/170/249/0CEE42BB-AFB1-E011-A0D1-0030487CAEAC.root']
-process.GlobalTag.globaltag = 'GR_R_42_V13::All'
+process.source.fileNames = ['/store/data/Run2011A/SingleMu/AOD/08Nov2011-v1/0003/FC923030-7413-E111-9584-1CC1DE1CEDB2.root']
+process.GlobalTag.globaltag = 'FT_R_44_V11::All'
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import removeMCUse
 removeMCUse(process)
@@ -48,6 +48,8 @@ lumis_per_job = %(lumis_per_job)s
             pass
 
     if run_limits:
+        raise NotImplementedError('no run_limits in 44X')
+    
         run1, run2 = run_limits
         if len(run_limits) != 2 or run1 > run2:
             raise RuntimeError('if any, must specify exactly two numeric arguments   min_run max_run  with max_run >= min_run')
@@ -62,20 +64,17 @@ lumis_per_job = %(lumis_per_job)s
         name = 'SingleMuRun2011B_Prompt_%i_%i_%s' % (run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
         print name
 
-        if run1 >= 175832:
-            dataset = '/SingleMu/Run2011B-PromptReco-v1/AOD'
+        if run1 >= 999999:
+            dataset = '/Nope/NoDataset/NO'
         else:
             raise ValueError("don't know how to do a run_limits production for run range [%i,%i]" % run_limits)
         
-        tag = 'GR_R_42_V21'
+        tag = 'FT_R_44_V9'
         submit(locals())
     else:
         x = [
-            ('SingleMuRun2011A_May10',   '/SingleMu/Run2011A-May10ReReco-v1/AOD', 'GR_R_42_V21'),
-            ('SingleMuRun2011A_Prompt4', '/SingleMu/Run2011A-PromptReco-v4/AOD',  'GR_R_42_V21'),
-            ('SingleMuRun2011A_Prompt5', '/SingleMu/Run2011A-PromptReco-v5/AOD',  'GR_R_42_V21'),
-            ('SingleMuRun2011A_Prompt6', '/SingleMu/Run2011A-PromptReco-v6/AOD',  'GR_R_42_V21'),
-            ('SingleMuRun2011B_Prompt1', '/SingleMu/Run2011B-PromptReco-v1/AOD',  'GR_R_42_V21'),
+            ('SingleMuRun2011A_Nov08', '/SingleMu/Run2011A-08Nov2011-v1/AOD', 'FT_R_44_V9'),
+            ('SingleMuRun2011B_Nov19', '/SingleMu/Run2011B-19Nov2011-v1/AOD', 'FT_R_44_V11'),
             ]
         for name, dataset, tag in x:
             submit(locals())

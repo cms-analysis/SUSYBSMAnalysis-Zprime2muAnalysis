@@ -27,7 +27,7 @@ def do(cmd):
         ret = ret[0]
     return ret
 
-latest_dataset = '/SingleMu/Run2011A-PromptReco-v6/AOD'
+latest_dataset = '/SingleMu/Run2011B-PromptReco-v1/AOD'
 
 if cmd == 'setdirs':
     do('''
@@ -127,13 +127,7 @@ elif cmd == 'checkavail':
     dcs_ll.removeRuns(xrange(dcs_runrange[0], runrange[0]))
     dcs_ll.removeRuns(xrange(runrange[-1]+1, dcs_runrange[-1]))
 
-    ok = LumiList(compactList={"172630": [[161, 167]],
-                               "172791": [[570, 570], [1646, 1648], [1659, 1664]],
-                               "172798": [[32, 35]],
-                               "172799": [[368, 372]],
-                               "172801": [[680, 680], [751, 752], [767, 767], [816, 818], [838, 838], [862, 862], [910, 910], [1140, 1144]],
-                               "172819": [[255, 259]],
-                               })
+    ok = LumiList(compactList={})
 
     print 'run range for', latest_dataset, ':', runrange[0], runrange[-1]
     print 'these lumis are in the DCS-only JSON but not (yet) in', latest_dataset
@@ -146,6 +140,7 @@ elif cmd == 'drawall':
             sys.exit(r)
     do('mv out.draw.* plots/')
     do('tlock ~/asdf/plots.tgz plots/datamc_* plots/out.draw.*')
+
 else:
     raise ValueError('command %s not recognized!' % cmd)
 

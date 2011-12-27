@@ -3,7 +3,7 @@
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import *
-#process.source.fileNames = ['/store/user/tucker/TTJets_TuneZ2_7TeV-madgraph-tauola/datamc_ttbar/63f596b10afb6e62e7eae4ec96901d55/pat_9_1_TuU.root']
+#process.source.fileNames = ['/store/user/tucker/TTJets_TuneZ2_7TeV-madgraph-tauola/datamc_ttbar/a972f07199dd1bd57caa708c2dcf050c/pat_1_1_PHF.root']
 
 # Since the prescaled trigger comes with different prescales in
 # different runs/lumis, this filter prescales it to a common factor to
@@ -213,13 +213,13 @@ return_data = 1
             ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10-27b0e568312792116de9a2db293fbae8/USER'),
             ('SingleMu2011A_Prompt4',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt4-27b0e568312792116de9a2db293fbae8/USER'),
             ('SingleMu2011A_Prompt5',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt5-27b0e568312792116de9a2db293fbae8/USER'),
-            ('SingleMu2011A_Prompt_172620_173688', '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt_172620_173688_20110825232848-f53fd3142c38799e6c3f9dbb941efc6f/USER'),
+            ('SingleMu2011A_Prompt6',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt6-d196cf8328025d6b0cf4c50be8764787/USER'),
+            ('SingleMu2011B_Prompt1',              '/SingleMu/tucker-datamc_SingleMuRun2011B_Prompt1-d196cf8328025d6b0cf4c50be8764787/USER'),
             ]
 
         lumi_lists = [
-            #'Run2011A',
-            #'Run2011AMuonsOnly',
-            'Run2011APlusDCSOnlyMuonsOnly',
+            'Run2011',
+            'Run2011MuonsOnly',
             'NoLumiMask',
             ]
 

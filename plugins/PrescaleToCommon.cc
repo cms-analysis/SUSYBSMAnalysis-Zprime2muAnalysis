@@ -81,9 +81,6 @@ bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
   else
     prescales = std::make_pair(1,1);
 
-  if (prescales.first != 1)
-    throw cms::Exception("PrescaleToCommon") << "being run on path where L1 seed is prescaled by " << prescales.first << "; not supported!\n";
-
   const int total_prescale_already = prescales.second * prescales.first;
 
   if (total_prescale_already > overall_prescale)

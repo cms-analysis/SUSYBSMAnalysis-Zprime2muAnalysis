@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# (py draw.py ana_datamc_Run2011AMuonsOnly >! plots/out.draw.ana_datamc_Run2011AMuonsOnly) && (py draw.py ana_datamc_Run2011AMuonsOnly compare=DimuonMassVertexConstrained >! plots/out.draw.ana_datamc_Run2011AMuonsOnly_DimuonMassVertexConstrained) && (py draw.py ana_datamc_Run2011A >! plots/out.draw.ana_datamc_Run2011A) && tlp plots/datamc* plots/out.draw.*
+# (py draw.py data/ana_datamc_Run2011MuonsOnly >! plots/out.draw.Run2011MuonsOnly) && (py draw.py data/ana_datamc_Run2011MuonsOnly compare=DimuonMassVertexConstrained >! plots/out.draw.Run2011MuonsOnly_DimuonMassVertexConstrained) && (py draw.py data/ana_datamc_Run2011 >! plots/out.draw.Run2011) && (py draw.py data/ana_datamc_NoLumiMask >! plots/out.draw.NoLumiMask) && tlp plots/datamc* plots/out.draw.*
 
 import sys, os, glob
 from pprint import pprint
@@ -14,8 +14,8 @@ ROOT.gStyle.SetPadRightMargin(0.07)
 from samples import *
 
 rebin_factor = 5
-x_axis_limits = 70, 1300
-x_axis_limits2 = 70, 1300
+x_axis_limits = 70, 1400
+x_axis_limits2 = 70, 1400
 
 to_compare = 'DileptonMass'
 for x in sys.argv:
@@ -24,10 +24,10 @@ for x in sys.argv:
         break
 
 global_rescale = {
-    'VBTF': 236163/202178.739663,
-    'OurNew': 275060/237045.128578,
-    'OurOld': 284999/245756.305310,
-    'OurNoIso': 279681/240450.139476,
+    'VBTF': 111466/99248.457457,
+    'OurNew': 124075/110781.593932,
+    'OurOld': 128905/114502.540631,
+    'OurNoIso': 125822/111914.608088,
     }
 if 'norescale' in sys.argv:
     global_rescale = {}
@@ -55,7 +55,8 @@ joins = dict(joins)
 joins_colors = {'jets': 4, 't#bar{t} + other prompt leptons': 2, 'other prompt leptons': 2, '#gamma/Z #rightarrow #mu^{+}#mu^{-}': 7}
 
 histo_dir = [x for x in sys.argv if os.path.isdir(x)][0]
-
+if 'NoLumiMask' in histo_dir:
+    global_rescale = {}
 data_fn = os.path.join(histo_dir, 'ana_datamc_data.root')
 fdata = ROOT.TFile(data_fn)
 

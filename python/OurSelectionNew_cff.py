@@ -19,7 +19,7 @@ import FWCore.ParameterSet.Config as cms
 # - |dxy wrt beamspot| < 0.2 cm (abs(dB) < 0.2)
 # - muon global track chi2/ndof < 10 (globalTrack.normalizedChi2 < 10)
 # - relative tracker isolation less than 10% (isolationR03.sumPt / innerTrack.pt < 0.10)
-# - number of tracker hits > 10 (globalTrack.hitPattern.numberOfValidTrackerHits > 10)
+# - number of tracker layers with hits > 8 (globalTrack.hitPattern.trackerLayersWithMeasurement > 8)
 # - at least one pixel hit (globalTrack.hitPattern.numberOfValidPixelHits >= 1)
 # - at least two muon stations in the fit; this implies trackerMuon (numberOfMatchedStations > 1)
 #
@@ -40,7 +40,7 @@ loose_cut = 'isGlobalMuon && ' \
             'pt > %s && ' \
             'abs(dB) < 0.2 && ' \
             'isolationR03.sumPt / innerTrack.pt < 0.10 && ' \
-            'globalTrack.hitPattern.numberOfValidTrackerHits > 10 && ' \
+            'globalTrack.hitPattern.trackerLayersWithMeasurement > 8 && ' \
             'globalTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \
             'globalTrack.hitPattern.numberOfValidMuonHits > 0 && ' \
             'numberOfMatchedStations > 1'

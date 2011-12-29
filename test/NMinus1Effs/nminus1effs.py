@@ -19,8 +19,8 @@ process.maxEvents.input = 1000
 # besides the N of the below.)
 
 try:
-    assert hash(loose_cut) == -7903716600785592168
-    assert hash(tight_cut) == 2504961902963065197
+    assert hash(loose_cut) == 6657462604732829576
+    assert hash(tight_cut) == 5989297785355745396
 except AssertionError:
     print 'hashes wrong:'
     print hash(loose_cut)
@@ -28,10 +28,10 @@ except AssertionError:
     raise
 
 cuts = [
-    ('Pt',      'pt > 35.'),
+    ('Pt',      'pt > 45'),
     ('DB',      'abs(dB) < 0.2'),
     ('Iso',     'isolationR03.sumPt / innerTrack.pt < 0.10'),
-    ('TkHits',  'globalTrack.hitPattern.numberOfValidTrackerHits > 10'),
+    ('TkLayers','globalTrack.hitPattern.trackerLayersWithMeasurement > 8'),
     ('PxHits',  'globalTrack.hitPattern.numberOfValidPixelHits >= 1'),
     ('MuHits',  'globalTrack.hitPattern.numberOfValidMuonHits > 0'),
     ('MuMatch', ('numberOfMatchedStations > 1', 'isTrackerMuon')),
@@ -115,12 +115,15 @@ return_data = 1
 
     just_testing = 'testing' in sys.argv
     if not 'no_data' in sys.argv:
-        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2011AMuonsOnly_ll
-        Run2011AMuonsOnly_ll.writeJSON('tmp.json')
+        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2011MuonsOnly_ll
+        Run2011MuonsOnly_ll.writeJSON('tmp.json')
 
         dataset_details = [
-            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMu2011A_May10-3c88448713b4112b83eb5e163e8441f1/USER'),
-            ('SingleMu2011A_Prompt_165071_167150', '/SingleMu/tucker-datamc_SingleMu2011A_prompt_165071_167150_20110620045014-e0e58cf0dbd55d2562f61b8061f4c446/USER'),
+            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10-27b0e568312792116de9a2db293fbae8/USER'),
+            ('SingleMu2011A_Prompt4',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt4-27b0e568312792116de9a2db293fbae8/USER'),
+            ('SingleMu2011A_Prompt5',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt5-27b0e568312792116de9a2db293fbae8/USER'),
+            ('SingleMu2011A_Prompt6',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt6-d196cf8328025d6b0cf4c50be8764787/USER'),
+            ('SingleMu2011B_Prompt1',              '/SingleMu/tucker-datamc_SingleMuRun2011B_Prompt1-d196cf8328025d6b0cf4c50be8764787/USER'),
             ]
 
         for name, ana_dataset in dataset_details:
@@ -150,19 +153,11 @@ total_number_of_events = -1
 events_per_job = 50000
 ''')
 
-        dataset_details = [
-            ('zmumu',    '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-datamc_zmumu-5222c20b53e3c47b6c8353d464ee954c/USER'),
-            ('ttbar',    '/TT_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_ttbar-5222c20b53e3c47b6c8353d464ee954c/USER'),
-            ('dy120',    '/DYToMuMu_M-120_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy120-5222c20b53e3c47b6c8353d464ee954c/USER'),
-            ('dy200',    '/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy200-5222c20b53e3c47b6c8353d464ee954c/USER'),
-            ('dy500',    '/DYToMuMu_M-500_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy500-5222c20b53e3c47b6c8353d464ee954c/USER'),
-            ('dy1000',   '/DYToMuMu_M-1000_TuneZ2_7TeV-pythia6-tauola/tucker-datamc_dy1000-5222c20b53e3c47b6c8353d464ee954c/USER'),
-            ('inclmu15', '/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/tucker-datamc_inclmu15-5222c20b53e3c47b6c8353d464ee954c/USER'),
-            ]
-
-        for name, ana_dataset in dataset_details:
-            print name
-            open('crab.cfg', 'wt').write(crab_cfg % locals())
+        from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import *
+        samples = [zmumu, ttbar, dy120, dy200, dy500, dy1000, inclmu15]
+        for sample in samples:
+            print sample.name
+            open('crab.cfg', 'wt').write(crab_cfg % sample)
             if not just_testing:
                 os.system('crab -create -submit all')
 

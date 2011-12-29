@@ -6,12 +6,11 @@ import sys, os, glob
 from pprint import pprint
 from collections import defaultdict
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import cumulative_histogram, get_integral, move_above_into_bin, plot_saver, poisson_intervalize, real_hist_max, real_hist_min, set_zp2mu_style, ROOT
+from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
 
 set_zp2mu_style()
 ROOT.gStyle.SetPadLeftMargin(0.13)
 ROOT.gStyle.SetPadRightMargin(0.07)
-
-from samples import *
 
 rebin_factor = 5
 x_axis_limits = 70, 1400
@@ -343,7 +342,7 @@ for cuts in cutss:
             hdata.Draw(data_draw_cmd)
 
             if draw_zssm and not cumulative and dilepton == 'MuonsPlusMuonsMinus':
-                from samples import zssm1000
+                from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import zssm1000
                 zp = zssm1000.mass
                 zp.SetTitle('')
                 zp.SetLineWidth(2)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os
-from SUSYBSMAnalysis.Zprime2muAnalysis.tools import files_from_dbs
+from SUSYBSMAnalysis.Zprime2muAnalysis.tools import big_warn, files_from_dbs
 from SUSYBSMAnalysis.Zprime2muAnalysis.crabtools import dataset_from_publish_log
 
 class sample:
@@ -78,8 +78,10 @@ ttbar.ana_dataset = '/TTJets_TuneZ2_7TeV-madgraph-tauola/tucker-datamc_ttbar-a97
 wjets.ana_dataset = '/WJetsToLNu_TuneZ2_7TeV-madgraph-tauola/tucker-merge_20110829085858_wjets-a3691da421b8c16b08067510400469a1/USER'
 inclmu15.ana_dataset = '/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/tucker-merge_20110829085858_inclmu15-a3691da421b8c16b08067510400469a1/USER'
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.tools import big_warn
-big_warn("it's gettin' real in the whole foods parking lot")
+#big_warn('nothing')
+
+__all__ = ['samples'] + [s.name for s in samples]
+
 
 if __name__ == '__main__':
     if False:

@@ -37,18 +37,18 @@ ln -s `pwd`/psets crab/psets
 ''')
 
 elif cmd == 'checkevents':
-    from samples import samples
+    from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
     for sample in samples:
         print sample.name
         do('grep TrigReport crab/crab_datamc_%s/res/*stdout | grep \' p$\' | sed -e "s/ +/ /g" | awk \'{ s += $4; t += $5; u += $6; } END { print "summary: total: ", s, "passed: ", t, "failed: ", u }\'' % sample.name)
 
 elif cmd == 'publishmc':
-    from samples import samples
+    from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
     for sample in samples:
         do('crab -c crab/crab_datamc_${x} -publish >&! crab/publish_logs/publish.${x} &')
 
 elif cmd == 'hadd':
-    from samples import samples
+    from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
     extra = '_' + extra[0] if extra else ''
     for sample in samples:
         name = sample.name

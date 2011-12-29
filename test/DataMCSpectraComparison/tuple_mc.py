@@ -20,7 +20,7 @@ events_per_job = 150000
     just_testing = 'testing' in sys.argv
     create_only = 'create_only' in sys.argv
 
-    from samples import samples
+    from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
     for sample in samples:
         print sample.name
 

@@ -46,7 +46,7 @@ dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02
 
     cfgs = []
     if True:
-        from samples import wjets, inclmu15
+        from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import wjets, inclmu15
         to_merge = [wjets, inclmu15]
         for sample in to_merge:
             sample.uniq = uniq

@@ -18,7 +18,7 @@ bins = array('d', [120, 200, 400, 600])
 total_mumu = ROOT.TH1F('mumu', '', len(bins)-1, bins)
 total_emu  = ROOT.TH1F('emu',  '', len(bins)-1, bins)
 
-from samples import *
+from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import ttbar, ww, singletop_tW, ztautau, wz, zz
 samples = [ttbar, ww, singletop_tW, ztautau, wz, zz]
 cut = 'OurNew'
 

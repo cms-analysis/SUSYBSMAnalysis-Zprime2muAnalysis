@@ -5,7 +5,7 @@
 
 import sys
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import ROOT, cumulative_histogram
-from samples import *
+from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import *
 
 ROOT.TH1.AddDirectory(False)
 

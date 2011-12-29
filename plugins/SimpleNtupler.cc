@@ -106,8 +106,10 @@ private:
     float lep_timeOutInErr[2];
     float lep_min_muon_dR[2];
     short lep_tk_numberOfValidTrackerHits[2]; 
+    short lep_tk_numberOfValidTrackerLayers[2];
     short lep_tk_numberOfValidPixelHits[2];
     short lep_glb_numberOfValidTrackerHits[2]; 
+    short lep_glb_numberOfValidTrackerLayers[2]; 
     short lep_glb_numberOfValidPixelHits[2];
     short lep_glb_numberOfValidMuonHits[2];
     short lep_glb_muonStationsWithValidHits[2];
@@ -244,8 +246,10 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->Branch("lep_timeOutInErr", t.lep_timeOutInErr, "lep_timeOutInErr[2]/F");
   tree->Branch("lep_min_muon_dR", t.lep_min_muon_dR, "lep_min_muon_dR[2]/F");
   tree->Branch("lep_tk_numberOfValidTrackerHits", t.lep_tk_numberOfValidTrackerHits, "lep_tk_numberOfValidTrackerHits[2]/S");
+  tree->Branch("lep_tk_numberOfValidTrackerLayers", t.lep_tk_numberOfValidTrackerLayers, "lep_tk_numberOfValidTrackerLayers[2]/S");
   tree->Branch("lep_tk_numberOfValidPixelHits", t.lep_tk_numberOfValidPixelHits, "lep_tk_numberOfValidPixelHits[2]/S");
   tree->Branch("lep_glb_numberOfValidTrackerHits", t.lep_glb_numberOfValidTrackerHits, "lep_glb_numberOfValidTrackerHits[2]/S");
+  tree->Branch("lep_glb_numberOfValidTrackerLayers", t.lep_glb_numberOfValidTrackerLayers, "lep_glb_numberOfValidTrackerLayers[2]/S");
   tree->Branch("lep_glb_numberOfValidPixelHits", t.lep_glb_numberOfValidPixelHits, "lep_glb_numberOfValidPixelHits[2]/S");
   tree->Branch("lep_glb_numberOfValidMuonHits", t.lep_glb_numberOfValidMuonHits, "lep_glb_numberOfValidMuonHits[2]/S");
   tree->Branch("lep_glb_muonStationsWithValidHits", t.lep_glb_muonStationsWithValidHits, "lep_glb_muonStationsWithValidHits[2]/S");
@@ -285,21 +289,21 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 #define triggerMatchMinPt "40"
 #define triggerMatchMaxEta "2.1"
 
-  tree->SetAlias("trigger_match_0", "lep_triggerMatchPt[0] > " triggerMatchMinPt " && lep_triggerMatchEta[0] > " triggerMatchMaxEta);
-  tree->SetAlias("trigger_match_1", "lep_triggerMatchPt[1] > " triggerMatchMinPt " && lep_triggerMatchEta[1] > " triggerMatchMaxEta);
+  tree->SetAlias("trigger_match_0", "lep_triggerMatchPt[0] > " triggerMatchMinPt " && abs(lep_triggerMatchEta[0]) < " triggerMatchMaxEta);
+  tree->SetAlias("trigger_match_1", "lep_triggerMatchPt[1] > " triggerMatchMinPt " && abs(lep_triggerMatchEta[1]) < " triggerMatchMaxEta);
   tree->SetAlias("triggerMatched", "trigger_match_0 || trigger_match_1");
 
   tree->SetAlias("GoodData", "GoodDataRan && HLTPhysicsDeclared && NoScraping && GoodVtx");
 
   tree->SetAlias("extraDimuonCuts", "cos_angle > -0.9998 && vertex_chi2 < 10");
 
-  TString loose_old =
+  TString loose_2010 =
     "lep_isGlobalMuon[X] && "						\
     "lep_pt[X] > " offlineMinPt " && "					\
     "lep_tk_numberOfValidTrackerHits[X] >= 10 && "			\
     "lep_sumPt[X] / lep_tk_pt[X] < 0.1";
 
-  TString tight_old =
+  TString tight_2010 =
     "abs(lep_dB[X]) < 0.2 && "						\
     "lep_chi2dof[X] < 10 && "						\
     "lep_tk_numberOfValidPixelHits[X] >= 1 && "				\
@@ -324,27 +328,33 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
     "lep_isTrackerMuon[X] && "						\
     "lep_pt[X] > " offlineMinPt " && "					\
     "abs(lep_dB[X]) < 0.2 && "						\
-    "lep_glb_numberOfValidTrackerHits[X] > 10 && "			\
+    "lep_glb_numberOfValidTrackerLayers[X] > 10 && "			\
     "lep_glb_numberOfValidPixelHits[X] >= 1 && "			\
     "lep_glb_numberOfValidMuonHits[X] > 0 && "				\
     "lep_numberOfMatchedStations[X] > 1";
 
   TString loose_new = loose_no_iso + " && lep_sumPt[X] / lep_tk_pt[X] < 0.1";
 
-  tree->SetAlias("loose_old_0",    replace_all(loose_old,    "[X]", "[0]"));
-  tree->SetAlias("loose_old_1",    replace_all(loose_old,    "[X]", "[1]"));
-  tree->SetAlias("tight_old_0",    replace_all(tight_old,    "[X]", "[0]"));
-  tree->SetAlias("tight_old_1",    replace_all(tight_old,    "[X]", "[1]"));
-  tree->SetAlias("vbtf_0",         replace_all(vbtf,         "[X]", "[0]"));
-  tree->SetAlias("vbtf_1",         replace_all(vbtf,         "[X]", "[1]"));
-  tree->SetAlias("loose_no_iso_0", replace_all(loose_no_iso, "[X]", "[0]"));
-  tree->SetAlias("loose_no_iso_1", replace_all(loose_no_iso, "[X]", "[1]"));
-  tree->SetAlias("loose_new_0",    replace_all(loose_new,    "[X]", "[0]"));
-  tree->SetAlias("loose_new_1",    replace_all(loose_new,    "[X]", "[1]"));
+  TString loose_2011eps(loose_new);
+  loose_2011eps.ReplaceAll("lep_glb_numberOfValidTrackerLayers", 
+			   "lep_glb_numberOfValidTrackerHits");
 
-  tree->SetAlias("OurSelOld",
-		 "loose_old_0 && loose_old_1 && "			\
-		 "(tight_old_0 || tight_old_1) && "			\
+  tree->SetAlias("loose_2010_0",    replace_all(loose_2010,    "[X]", "[0]"));
+  tree->SetAlias("loose_2010_1",    replace_all(loose_2010,    "[X]", "[1]"));
+  tree->SetAlias("tight_2010_0",    replace_all(tight_2010,    "[X]", "[0]"));
+  tree->SetAlias("tight_2010_1",    replace_all(tight_2010,    "[X]", "[1]"));
+  tree->SetAlias("vbtf_0",          replace_all(vbtf,          "[X]", "[0]"));
+  tree->SetAlias("vbtf_1",          replace_all(vbtf,          "[X]", "[1]"));
+  tree->SetAlias("loose_no_iso_0",  replace_all(loose_no_iso,  "[X]", "[0]"));
+  tree->SetAlias("loose_no_iso_1",  replace_all(loose_no_iso,  "[X]", "[1]"));
+  tree->SetAlias("loose_new_0",     replace_all(loose_new,     "[X]", "[0]"));
+  tree->SetAlias("loose_new_1",     replace_all(loose_new,     "[X]", "[1]"));
+  tree->SetAlias("loose_2011eps_0", replace_all(loose_2011eps, "[X]", "[0]"));
+  tree->SetAlias("loose_2011eps_1", replace_all(loose_2011eps, "[X]", "[1]"));
+
+  tree->SetAlias("OurSel2010",
+		 "loose_2010_0 && loose_2010_1 && "			\
+		 "(tight_2010_0 || tight_2010_1) && "			\
 		 "OppSign && "						\
 		 "extraDimuonCuts && "					\
 		 "GoodData");
@@ -353,6 +363,13 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "vbtf_0 && vbtf_1 && "					\
 		 "triggerMatched && "					\
 		 "OppSign");
+
+  tree->SetAlias("OurSel2011EPS",
+		 "loose_2011eps_0 && loose_2011eps_1 && "		\
+		 "triggerMatched && "					\
+		 "OppSign && "						\
+		 "extraDimuonCuts && "					\
+		 "GoodData");
 	 
   tree->SetAlias("OurSelNewNoSign",
 		 "loose_new_0 && loose_new_1 && "			\
@@ -528,8 +545,10 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	t.lep_timeInOutErr[w] = -999;
 	t.lep_timeOutInErr[w] = -999;
 	t.lep_tk_numberOfValidTrackerHits[w] = -999; 
+	t.lep_tk_numberOfValidTrackerLayers[w] = -999; 
 	t.lep_tk_numberOfValidPixelHits[w] = -999;
 	t.lep_glb_numberOfValidTrackerHits[w] = -999; 
+	t.lep_glb_numberOfValidTrackerLayers[w] = -999; 
 	t.lep_glb_numberOfValidPixelHits[w] = -999;
 	t.lep_glb_numberOfValidMuonHits[w] = -999;
 	t.lep_glb_muonStationsWithValidHits[w] = -999;
@@ -650,8 +669,10 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	}
 	    
 	t.lep_tk_numberOfValidTrackerHits[w] = mu->innerTrack()->hitPattern().numberOfValidTrackerHits();
+	t.lep_tk_numberOfValidTrackerLayers[w] = mu->innerTrack()->hitPattern().trackerLayersWithMeasurement();
 	t.lep_tk_numberOfValidPixelHits[w] = mu->innerTrack()->hitPattern().numberOfValidPixelHits();
 	t.lep_glb_numberOfValidTrackerHits[w] = mu->globalTrack()->hitPattern().numberOfValidTrackerHits();
+	t.lep_glb_numberOfValidTrackerLayers[w] = mu->globalTrack()->hitPattern().trackerLayersWithMeasurement();
 	t.lep_glb_numberOfValidPixelHits[w] = mu->globalTrack()->hitPattern().numberOfValidPixelHits();
 	t.lep_glb_numberOfValidMuonHits[w] = mu->globalTrack()->hitPattern().numberOfValidMuonHits();
 	t.lep_glb_muonStationsWithValidHits[w] = mu->globalTrack()->hitPattern().muonStationsWithValidHits();

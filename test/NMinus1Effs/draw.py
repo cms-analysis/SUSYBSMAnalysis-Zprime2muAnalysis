@@ -22,7 +22,7 @@ if do_tight:
         'TiDB',
         'TiGlbChi2',
         'TiIso',
-        'TiTkHits',
+        'TiTkLayers',
         'TiPxHits',
         'TiMuHits',
         'TiMuMatch',
@@ -32,7 +32,7 @@ else:
         'NoPt',
         'NoDB',
         'NoIso',
-        'NoTkHits',
+        'NoTkLayers',
         'NoPxHits',
         'NoMuHits',
         'NoMuMatch',
@@ -57,8 +57,8 @@ to_use = {
     }
 
 pretty = {
-    'NoPt': 'p_{T} > 35 GeV',
-    'NoTkHits': '# tk hits > 10',
+    'NoPt': 'p_{T} > 45 GeV',
+    'NoTkLayers': '# tk lay > 8',
     'NoPxHits': '# px hits > 0',
     'NoMuStns': '# mu segs > 1',
     'NoDB': '|dB| < 0.2',
@@ -71,7 +71,7 @@ pretty = {
     'NoB2B': 'back-to-back',
     'NoVtxProb': '#chi^{2} #mu#mu vtx < 10',
     'NoIso': 'rel. tk. iso.',
-    'ana_nminus1_data.root': 'Data, 746 pb^{-1}',
+    'ana_nminus1_data.root': 'Data, 4.9 fb^{-1}',
     'ana_nminus1_zmumu.root': 'Z#rightarrow#mu#mu, 60 < M < 120 GeV',
     'ana_nminus1_dy120.root': 'DY#rightarrow#mu#mu, M > 120 GeV',
     'ana_nminus1_dy200.root': 'DY#rightarrow#mu#mu, M > 200 GeV',

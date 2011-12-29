@@ -21,6 +21,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
 # just change one or two cuts -- see below.
 import SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff as VBTFSelection
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionOld_cff as OurSelectionOld
+import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2011EPS_cff as OurSelection2011EPS
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff as OurSelectionNew
 
 # CandCombiner includes charge-conjugate decays with no way to turn it
@@ -47,6 +48,7 @@ dils = [
 cuts = {
     'VBTF'     : VBTFSelection,
     'OurOld'   : OurSelectionOld,
+    'OurEPS'   : OurSelection2011EPS,
     'OurNew'   : OurSelectionNew,
     'OurNoIso' : OurSelectionNew,
     'EmuVeto'  : OurSelectionNew,
@@ -275,11 +277,11 @@ total_number_of_events = -1
 events_per_job = 100000
     ''')
 
-        import samples
+        from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
+
         combine_dy_samples = len([x for x in samples.samples if x.name in ['dy200', 'dy500', 'dy800', 'dy1000']]) > 0
         print 'combine_dy_samples:', combine_dy_samples
 
-        from samples import samples
         for sample in reversed(samples):
             if 'Summer11' not in sample.dataset:
                 continue

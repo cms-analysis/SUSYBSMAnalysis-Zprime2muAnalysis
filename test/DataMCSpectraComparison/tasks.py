@@ -65,12 +65,12 @@ elif cmd == 'hadd':
 elif cmd == 'gatherhistos':
     extra = (extra[0] + '_') if extra else ''
 
-    for which in ['Run2011APlusDCSOnlyMuonsOnly', 'NoLumiMask']:
+    for which in ['Run2011', 'Run2011MuonsOnly', 'NoLumiMask']:
         print which
-        dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMu2011A_*' % which)
+        dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMu2011*' % which)
         files_glob = ' '.join([os.path.join(x, 'res/*.root') for x in dirs])
 
-        wdir = 'ana_datamc_%(extra)s%(which)s' % locals()
+        wdir = 'data/ana_datamc_%(extra)s%(which)s' % locals()
         os.mkdir(wdir)
         do('ln -s /uscms_data/d2/tucker/zp2mu_ana_datamc_mc/latest %(wdir)s/mc' % locals())
         do('hadd %(wdir)s/ana_datamc_data.root %(files_glob)s' % locals())
@@ -134,8 +134,9 @@ elif cmd == 'checkavail':
     print str(dcs_ll - ll - ok)
 
 elif cmd == 'drawall':
-    for x in glob.glob('ana_datamc_*'):
-        r = do('python draw.py %s > out.draw.%s' % (x,x))
+    extra = extra[0] if extra else ''
+    for which in ['Run2011', 'Run2011MuonsOnly', 'NoLumiMask']:
+        r = do('python draw.py data/ana_datamc_%s %s > out.draw.%s' % (which,extra,which))
         if r != 0:
             sys.exit(r)
     do('mv out.draw.* plots/')

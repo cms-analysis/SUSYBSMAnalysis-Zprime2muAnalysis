@@ -36,6 +36,16 @@ mkdir -p psets
 ln -s `pwd`/psets crab/psets
 ''')
 
+elif cmd == 'maketagdirs':
+    extra = extra[0]
+    do('rm data mc plots')
+    for which in ['data', 'mc', 'plots']:
+        d = '~/nobackup/zp2mu_ana_datamc_%s/%s' % (which,extra)
+        do('mkdir -p %s' % d)
+        do('ln -s %s %s' % (d, which))
+    do('rm ~/nobackup/zp2mu_ana_datamc_mc/latest')
+    do('ln -s ~/nobackup/zp2mu_ana_datamc_mc/%s ~/nobackup/zp2mu_ana_datamc_mc/latest' % extra)
+
 elif cmd == 'checkevents':
     from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
     for sample in samples:

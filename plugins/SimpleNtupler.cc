@@ -328,7 +328,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
     "lep_isTrackerMuon[X] && "						\
     "lep_pt[X] > " offlineMinPt " && "					\
     "abs(lep_dB[X]) < 0.2 && "						\
-    "lep_glb_numberOfValidTrackerLayers[X] > 10 && "			\
+    "lep_glb_numberOfValidTrackerLayers[X] > 8 && "			\
     "lep_glb_numberOfValidPixelHits[X] >= 1 && "			\
     "lep_glb_numberOfValidMuonHits[X] > 0 && "				\
     "lep_numberOfMatchedStations[X] > 1";

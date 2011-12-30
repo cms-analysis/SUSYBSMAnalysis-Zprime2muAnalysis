@@ -3,7 +3,7 @@
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import *
-process.source.fileNames = ['/store/user/tucker/TTJets_TuneZ2_7TeV-madgraph-tauola/datamc_ttbar/a972f07199dd1bd57caa708c2dcf050c/pat_1_1_PHF.root']
+process.source.fileNames = ['/store/user/tucker/SingleMu/datamc_SingleMuRun2011A_Prompt4/27b0e568312792116de9a2db293fbae8/pat_164_1_4uJ.root']
 
 # Since the prescaled trigger comes with different prescales in
 # different runs/lumis, this filter prescales it to a common factor to
@@ -141,7 +141,7 @@ for cut_name, Selection in cuts.iteritems():
     setattr(process, pathname, path)
 
 def ntuplify(process, hlt_process_name='HLT', fill_gen_info=False):
-    paths = list(reversed(trigger_paths)) + list(reversed(mc_trigger_paths))
+    paths = trigger_paths + old_trigger_paths + mc_trigger_paths
     process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler',
                                            hlt_src = cms.InputTag('TriggerResults', '', hlt_process_name),
                                            dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
@@ -184,8 +184,8 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
 if 'gogo' in sys.argv:
     ntuplify(process) #, fill_gen_info=True)
     printify(process)
-    #process.GlobalTag.globaltag = 'GR_R_42_V13::All'
-    #check_prescale(process, trigger_paths + old_trigger_paths)
+    process.GlobalTag.globaltag = 'GR_R_42_V13::All'
+    check_prescale(process, trigger_paths + old_trigger_paths)
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''

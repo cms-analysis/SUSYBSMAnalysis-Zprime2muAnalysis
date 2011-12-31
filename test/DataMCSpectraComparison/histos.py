@@ -280,7 +280,7 @@ events_per_job = 100000
 
         from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
 
-        combine_dy_samples = len([x for x in samples.samples if x.name in ['dy200', 'dy500', 'dy800', 'dy1000']]) > 0
+        combine_dy_samples = len([x for x in samples if x.name in ['dy200', 'dy500', 'dy800', 'dy1000']]) > 0
         print 'combine_dy_samples:', combine_dy_samples
 
         for sample in reversed(samples):

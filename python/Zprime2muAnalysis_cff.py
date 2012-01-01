@@ -13,13 +13,15 @@ from MuonPhotonMatch_cff import muonPhotonMatch
 from OurSelectionNew_cff import allDimuons, dimuons, loose_cut
 
 leptons = cms.EDProducer('Zprime2muLeptonProducer',
-                         muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'),
+                         muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'), #JMTBAD changeme after new PAT tuples
                          electron_src = cms.InputTag('cleanPatElectrons'),
                          muon_cuts = cms.string(loose_cut),
                          electron_cuts = cms.string('userInt("HEEPId") == 0'),
                          muon_track_for_momentum = cms.string('pmc'),
                          muon_photon_match_src = cms.InputTag('muonPhotonMatch'),
                          electron_muon_veto_dR = cms.double(-1),
+                         trigger_match_max_dR = cms.double(0.2),
+                         trigger_summary_src = cms.InputTag('hltTriggerSummaryAOD', '', 'HLT'),
                          )
 
 Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)
@@ -59,3 +61,7 @@ def switch_to_old_selection(process):
     process.leptons.muon_cuts = OurSelectionOld_cff.loose_cut
     process.allDimuons = OurSelectionOld_cff.allDimuons
     process.dimuons = OurSelectionOld_cff.dimuons
+
+def switch_hlt_process_name(process, name):
+    # JMTBAD better integrate for things like SimpleNtupler/etc.
+    process.leptons.trigger_summary_src.processName = name

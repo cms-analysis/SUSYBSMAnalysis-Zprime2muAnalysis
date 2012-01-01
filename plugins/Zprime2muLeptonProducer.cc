@@ -208,8 +208,8 @@ std::pair<pat::Muon*,int> Zprime2muLeptonProducer::doLepton(const edm::Event& ev
 
   // Do our own trigger matching and embed the results. After the next
   // pair of function calls, there will be new user floats:
-  // {triggerMatch, prescaledTriggerMatch} x {Pt, Eta, Phi,
-  // Charge}. (Maybe embed candidates later.)
+  // {TriggerMatch, prescaledTriggerMatch} x {Pt, Eta, Phi,
+  // Charge}. (Maybe embed whole candidates later.)
   embedTriggerMatch(new_mu, "",          L3_muons,           L3_muons_matched);
   embedTriggerMatch(new_mu, "prescaled", prescaled_L3_muons, prescaled_L3_muons_matched);
 

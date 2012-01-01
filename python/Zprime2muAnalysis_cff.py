@@ -63,5 +63,10 @@ def switch_to_old_selection(process):
     process.dimuons = OurSelectionOld_cff.dimuons
 
 def switch_hlt_process_name(process, name):
-    # JMTBAD better integrate for things like SimpleNtupler/etc.
-    process.leptons.trigger_summary_src.processName = name
+    # JMTBAD better place for this fcn
+    from PhysicsTools.PatAlgos.tools.helpers import massSearchReplaceAnyInputTag
+    for path_name, path in process.paths.iteritems(): # why does values() throw an exception?
+        for label in ['TriggerResults', 'hltL1GtObjectMap', 'hltTriggerSummaryAOD']:
+            old = cms.InputTag(label, '', 'HLT')
+            new = cms.InputTag(label, '', name)
+            massSearchReplaceAnyInputTag(path, old, new, verbose=True)

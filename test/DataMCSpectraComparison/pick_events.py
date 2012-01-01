@@ -39,9 +39,18 @@ jobtype = cmssw
     uniq = datetime.datetime.today().strftime('%Y%m%d%H%M%S')
 
     def get_dataset(run):
-        if run >= 165071:
+        if 165071 <= run <= 168437:
             return '/SingleMu/Run2011A-PromptReco-v4/AOD'
-        return '/SingleMu/Run2011A-May10ReReco-v1/AOD'
+        elif 170053 <= run <= 172619:
+            return '/SingleMu/Run2011A-PromptReco-v5/AOD'
+        elif 172620 <= run <= 175770:
+            return '/SingleMu/Run2011A-PromptReco-v6/AOD'
+        elif 175832 <= run <= 180296:
+            return '/SingleMu/Run2011B-PromptReco-v1/AOD'
+        elif 160329 <= run <= 163869:
+            return '/SingleMu/Run2011A-May10ReReco-v1/AOD'
+        else:
+            raise ValueError('dunno how to do run %i' % run)
 
     def name_for_dataset(dataset):
         return dataset.replace('/', '').replace('-', '')

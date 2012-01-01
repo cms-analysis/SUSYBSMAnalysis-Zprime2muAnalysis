@@ -131,6 +131,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
     beamspot_src(cfg.getParameter<edm::InputTag>("beamspot_src")),
     vertex_src(cfg.getParameter<edm::InputTag>("vertex_src")),
     use_bs_and_pv(cfg.getParameter<bool>("use_bs_and_pv")),
+    dbg_tree(0),
     beamspot(0),
     vertex(0)
 {
@@ -141,8 +142,10 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
 
   edm::Service<TFileService> fs;
 
-  dbg_tree = fs->make<TTree>("t", "");
-  dbg_tree->Branch("tt", &dbg_t, "run/i:lumi:event:mass/F:id/S");
+  if (cfg.getUntrackedParameter<bool>("debug", false)) {
+    dbg_tree = fs->make<TTree>("t", "");
+    dbg_tree->Branch("tt", &dbg_t, "run/i:lumi:event:mass/F:id/S");
+  }
  
   // Whole-event things.
 
@@ -374,9 +377,11 @@ void Zprime2muHistosFromPAT::fillLeptonHistosFromDileptons(const pat::CompositeC
 }
 
 void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& dil) {
-  dbg_t.mass = dil.mass();
-  dbg_t.id = dil.daughter(0)->pdgId() + dil.daughter(1)->pdgId();
-  dbg_tree->Fill();
+  if (dbg_tree) {
+    dbg_t.mass = dil.mass();
+    dbg_t.id = dil.daughter(0)->pdgId() + dil.daughter(1)->pdgId();
+    dbg_tree->Fill();
+  }
   
   DileptonEta->Fill(dil.eta());
   DileptonRap->Fill(dil.rapidity());
@@ -433,10 +438,12 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidateCol
 }
 
 void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSetup& setup) {
-  memset(&dbg_t, 0, sizeof(debug_tree_t));
-  dbg_t.run = event.id().run();
-  dbg_t.lumi = event.luminosityBlock();
-  dbg_t.event = event.id().event();
+  if (dbg_tree) {
+    memset(&dbg_t, 0, sizeof(debug_tree_t));
+    dbg_t.run = event.id().run();
+    dbg_t.lumi = event.luminosityBlock();
+    dbg_t.event = event.id().event();
+  }
 
   if (use_bs_and_pv)
     getBSandPV(event);

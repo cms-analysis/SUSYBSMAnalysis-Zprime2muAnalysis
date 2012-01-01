@@ -43,7 +43,7 @@ draw_zssm = True
 use_poisson_intervals = True
 overflow_bin = True
 
-do_joins = True
+do_joins = 'nojoins' not in sys.argv
 joins = [(s.name, 'jets') for s in samples if 'qcd' in s.name]
 joins += [(x, 'jets') for x in ['inclmu15', 'wmunu', 'wjets']]
 #joins += [(x, 'other prompt leptons') for x in ['tW', 'tbarW', 'ztautau', 'ww', 'wz', 'zz']]
@@ -129,6 +129,11 @@ if 'forscale' in sys.argv:
     cutss.remove('Simple')
     cutss.remove('EmuVeto')
 
+if 'gogo' in sys.argv:
+    dileptons = ['MuonsPlusMuonsMinus','MuonsSameSign']
+    cutss = ['OurNew']
+    mass_ranges_for_table = [(60,120),(120,200)]
+    
 ROOT.TH1.AddDirectory(False)
 
 def dir_name(c, d):

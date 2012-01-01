@@ -146,7 +146,6 @@ private:
   const edm::InputTag dimu_src;
   const edm::InputTag beamspot_src;
   const edm::InputTag vertices_src;
-  const std::vector<std::string> single_mu_path_names;
   const bool fill_gen_info;
   HardInteraction* hardInteraction;
 };
@@ -162,7 +161,6 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
     dimu_src(cfg.getParameter<edm::InputTag>("dimu_src")),
     beamspot_src(cfg.getParameter<edm::InputTag>("beamspot_src")),
     vertices_src(cfg.getParameter<edm::InputTag>("vertices_src")),
-    single_mu_path_names(cfg.getParameter<std::vector<std::string> >("single_mu_path_names")),
     fill_gen_info(cfg.existsAs<edm::ParameterSet>("hardInteraction")),
     hardInteraction(fill_gen_info ? new HardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction")) : 0)
 {
@@ -533,6 +531,7 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	t.lep_cocktail_chi2[w] = -999;
 	t.lep_cocktail_ndf[w] = -999;
 	t.lep_triggerMatchPt[w] = -999;
+	t.lep_triggerMatchEta[w] = -999;
 	t.lep_chi2dof[w] = -999;
 	t.lep_dB[w] = -999;
 	t.lep_sumPt[w] = -999;
@@ -638,14 +637,8 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	  t.lep_cocktail_choice[w] = short(patmuon::whichTrack(*mu, cocktail));
 	}
 
-	t.lep_triggerMatchPt[w] = -999;
-	BOOST_FOREACH(const std::string& single_mu_path, single_mu_path_names) {
-	  if (!mu->triggerObjectMatchesByPath(single_mu_path, true,false).empty()) { 
-	    t.lep_triggerMatchPt[w]  = mu->triggerObjectMatchesByPath(single_mu_path, true,false).at(0).pt();
-	    t.lep_triggerMatchEta[w] = mu->triggerObjectMatchesByPath(single_mu_path, true,false).at(0).eta();
-	    break;
-	  }
-	}
+	t.lep_triggerMatchPt[w]  = userFloat(*mu, "TriggerMatchPt",  -999);
+	t.lep_triggerMatchEta[w] = userFloat(*mu, "TriggerMatchEta", -999);
 
 	t.lep_chi2dof[w] = mu->globalTrack()->normalizedChi2();
 	t.lep_dB[w] = mu->dB();

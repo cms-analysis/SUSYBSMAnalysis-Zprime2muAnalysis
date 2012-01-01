@@ -145,9 +145,11 @@ def cumulative_histogram(h, type='ge'):
         hc.SetBinError(i, c**0.5)
     return hc
 
-def detree(t, branches='run:lumi:event', cut=''):
+def detree(t, branches='run:lumi:event', cut='', xform=lambda x: tuple(int(y) for y in x)):
     """Dump specified branches from tree into a list of tuples, via an
-    ascii file. Currently only (unsigned) int branches are supported."""
+    ascii file. By default all vars are converted into integers. The
+    xform parameter specifies the function transforming the tuple of
+    strings into the desired format."""
     
     tmp_fn = os.tmpnam()
     t.GetPlayer().SetScanRedirect(True)
@@ -155,7 +157,11 @@ def detree(t, branches='run:lumi:event', cut=''):
     t.Scan(branches, cut, 'colsize=50')
     t.GetPlayer().SetScanRedirect(False)
     l = len(branches.split(':')) + 2
-    return [tuple(int(x) for x in line.split('*')[2:l]) for line in open(tmp_fn) if ' * ' in line and 'Row' not in line]
+    ret = []
+    for line in open(tmp_fn):
+        if ' * ' in line and 'Row' not in line:
+            ret.append(xform(line.split('*')[2:l]))
+    return ret
 
 def draw_in_order(hists, draw_cmds=''):
     hists = [(h, h.GetMaximum()) for h in hists]

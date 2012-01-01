@@ -183,6 +183,11 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
                                            )
     process.pCheckPrescale = cms.Path(process.CheckPrescale)
 
+def for_data(process):
+    process.GlobalTag.globaltag = 'GR_R_42_V13::All'
+    ntuplify(process)
+    check_prescale(process, trigger_paths)
+                    
 if 'gogo' in sys.argv:
     fn, run_evt = '/store/user/tucker/SingleMu/datamc_SingleMuRun2011A_May10/27b0e568312792116de9a2db293fbae8/pat_60_1_86e.root', (161119,25237286)
     fn, run_evt = '/store/user/tucker/SingleMu/datamc_SingleMuRun2011A_Prompt4/27b0e568312792116de9a2db293fbae8/pat_89_1_5TE.root', (166554,755792265)
@@ -190,11 +195,8 @@ if 'gogo' in sys.argv:
     process.source.fileNames = [fn]
     from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import set_events_to_process
     set_events_to_process(process, [run_evt])
-    
-    ntuplify(process) #, fill_gen_info=True)
+
     printify(process)
-    process.GlobalTag.globaltag = 'GR_R_42_V13::All'
-    check_prescale(process, trigger_paths)
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
@@ -252,9 +254,7 @@ return_data = 1
             print name
 
             new_py = open('histos.py').read()
-            new_py += "\nntuplify(process)\n"
-            new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_42_V13::All'\n"
-            new_py += "\ncheck_prescale(process, trigger_paths + old_trigger_paths)\n"
+            new_py += "\nfor_data(process)\n"
             open('histos_crab.py', 'wt').write(new_py)
 
             new_crab_cfg = crab_cfg % locals()

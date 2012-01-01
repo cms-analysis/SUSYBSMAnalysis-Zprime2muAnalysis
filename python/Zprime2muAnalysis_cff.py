@@ -69,4 +69,4 @@ def switch_hlt_process_name(process, name):
         for label in ['TriggerResults', 'hltL1GtObjectMap', 'hltTriggerSummaryAOD']:
             old = cms.InputTag(label, '', 'HLT')
             new = cms.InputTag(label, '', name)
-            massSearchReplaceAnyInputTag(path, old, new, verbose=True)
+            massSearchReplaceAnyInputTag(path, old, new, verbose=False)

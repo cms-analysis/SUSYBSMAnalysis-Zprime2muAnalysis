@@ -3,7 +3,6 @@
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import *
-process.source.fileNames = ['/store/user/tucker/SingleMu/datamc_SingleMuRun2011A_Prompt4/27b0e568312792116de9a2db293fbae8/pat_164_1_4uJ.root']
 
 # Since the prescaled trigger comes with different prescales in
 # different runs/lumis, this filter prescales it to a common factor to
@@ -162,17 +161,21 @@ def printify(process, hlt_process_name='HLT'):
 
     process.load('HLTrigger.HLTcore.triggerSummaryAnalyzerAOD_cfi')
     process.triggerSummaryAnalyzerAOD.inputTag = cms.InputTag('hltTriggerSummaryAOD', '', hlt_process_name)
+    process.pathSimple *= process.triggerSummaryAnalyzerAOD
 
-    process.PrintEvent = cms.EDAnalyzer('PrintEvent', dilepton_src = cms.InputTag('OurNewMuonsPlusMuonsMinus'))
-    process.PrintEventSS = process.PrintEvent.clone(dilepton_src = cms.InputTag('OurNewMuonsSameSign'))
-    process.PrintEventEmu = process.PrintEvent.clone(dilepton_src = cms.InputTag('OurNewMuonsElectronsOppSign'))
-    process.pathOurNew *= process.PrintEvent * process.PrintEventSS * process.PrintEventEmu
+    process.PrintOriginalMuons = cms.EDAnalyzer('PrintEvent', muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'), trigger_results_src = cms.InputTag('TriggerResults','',hlt_process_name))
+    process.pathSimple *= process.PrintOriginalMuons
 
-    process.PrintEventVBTF = process.PrintEvent.clone(dilepton_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
+    pe = process.PrintEventSimple = cms.EDAnalyzer('PrintEvent', dilepton_src = cms.InputTag('SimpleMuonsPlusMuonsMinus'))
+    process.pathSimple *= process.PrintEventSimple
+
+    process.PrintEventOurNew = pe.clone(dilepton_src = cms.InputTag('OurNewMuonsPlusMuonsMinus'))
+    process.PrintEventOurNewSS = pe.clone(dilepton_src = cms.InputTag('OurNewMuonsSameSign'))
+    process.PrintEventOurNewEmu = pe.clone(dilepton_src = cms.InputTag('OurNewMuonsElectronsOppSign'))
+    process.pathOurNew *= process.PrintEventOurNew * process.PrintEventOurNewSS * process.PrintEventOurNewEmu
+
+    process.PrintEventVBTF = pe.clone(dilepton_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
     process.pathVBTF *= process.PrintEventVBTF
-
-    process.PrintEventSimple = process.PrintEvent.clone(muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'), dilepton_src = cms.InputTag('SimpleMuonsPlusMuonsMinus'))
-    process.pathSimple *= process.triggerSummaryAnalyzerAOD * process.PrintEventSimple
 
 def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.CheckPrescale = cms.EDAnalyzer('CheckPrescale',
@@ -182,6 +185,12 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.pCheckPrescale = cms.Path(process.CheckPrescale)
 
 if 'gogo' in sys.argv:
+    fn, run_evt = '/store/user/tucker/SingleMu/datamc_SingleMuRun2011A_May10/27b0e568312792116de9a2db293fbae8/pat_60_1_86e.root', (161119,25237286)
+
+    process.source.fileNames = [fn]
+    from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import set_events_to_process
+    set_events_to_process(process, [run_evt])
+    
     ntuplify(process) #, fill_gen_info=True)
     printify(process)
     process.GlobalTag.globaltag = 'GR_R_42_V13::All'

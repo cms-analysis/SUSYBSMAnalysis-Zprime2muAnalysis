@@ -23,7 +23,7 @@ private:
 };
 
 PrescaleToCommon::PrescaleToCommon(const edm::ParameterSet& cfg)
-  : hlt_process_name(cfg.getParameter<std::string>("hlt_process_name")),
+  : hlt_process_name(cfg.getParameter<edm::InputTag>("hlt_src").process()),
     trigger_paths(cfg.getParameter<std::vector<std::string> >("trigger_paths")),
     overall_prescale(cfg.getParameter<int>("overall_prescale")),
     assume_simulation_has_prescale_1(cfg.getParameter<bool>("assume_simulation_has_prescale_1"))

@@ -34,7 +34,7 @@ private:
 };
 
 CheckPrescale::CheckPrescale(const edm::ParameterSet& cfg)
-  : hlt_process_name(cfg.getParameter<std::string>("hlt_process_name")),
+  : hlt_process_name(cfg.getParameter<edm::InputTag>("hlt_src").process()),
     trigger_paths(cfg.getParameter<std::vector<std::string> >("trigger_paths")),
     dump_prescales(cfg.getUntrackedParameter<bool>("dump_prescales", false)),
     throw_on_prescale(cfg.getUntrackedParameter<bool>("throw_on_prescale", !dump_prescales))

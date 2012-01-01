@@ -5,7 +5,7 @@ RandomNumberGeneratorService = cms.Service('RandomNumberGeneratorService',
                                            )
 
 PrescaleToCommon = cms.EDFilter('PrescaleToCommon',
-                                hlt_process_name = cms.string('HLT'),
+                                hlt_src = cms.InputTag('TriggerResults','','HLT'),
                                 trigger_paths = cms.vstring(),
                                 overall_prescale = cms.int32(1),
                                 assume_simulation_has_prescale_1 = cms.bool(True) # Current PAT tuples of MC samples don't have both L1 branches :-(

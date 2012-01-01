@@ -2,13 +2,15 @@
 
 # (py draw.py >! plots/nminus1effs/out.draw) && tlp plots/nminus1effs
 
-import sys, os, glob
+from pprint import pprint
+import sys, os
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import *
 set_zp2mu_style()
 ROOT.gStyle.SetPadTopMargin(0.02)
 ROOT.gStyle.SetPadRightMargin(0.02)
 ROOT.gStyle.SetTitleX(0.12)
 #ROOT.gStyle.SetTitleH(0.07)
+ROOT.TH1.AddDirectory(0)
 
 do_tight = 'tight' in sys.argv
 psn = 'plots/nminus1effs'
@@ -36,25 +38,10 @@ else:
         'NoPxHits',
         'NoMuHits',
         'NoMuMatch',
-        'NoTrgMtch',
-        'NoB2B',
         'NoVtxProb',
+        'NoB2B',
         'NoCosm',
         ]
-
-mass_ranges = [
-    ('60m120',  '60 < m < 120 GeV',  ( 60, 120)),
-    ('120m200', '120 < m < 200 GeV', (120, 200)),
-    ('200m400', '200 < m < 400 GeV', (200, 400)),
-    ('400m',    'm > 400 GeV',       (400, 1e9)),
-    ]
-
-to_use = {
-    '60m120':  ['ana_nminus1_data.root', 'ana_nminus1_zmumu.root', 'ana_nminus1_ttbar.root'],  #, 'ana_nminus1_inclmu15.root'],
-    '120m200': ['ana_nminus1_data.root', 'ana_nminus1_dy120.root', 'ana_nminus1_ttbar.root'],
-    '200m400': ['ana_nminus1_data.root', 'ana_nminus1_dy200.root', 'ana_nminus1_ttbar.root'],
-    '400m':    ['ana_nminus1_data.root', 'ana_nminus1_dy500.root', 'ana_nminus1_dy1000.root', 'ana_nminus1_ttbar.root'],
-    }
 
 pretty = {
     'NoPt': 'p_{T} > 45 GeV',
@@ -71,26 +58,90 @@ pretty = {
     'NoB2B': 'back-to-back',
     'NoVtxProb': '#chi^{2} #mu#mu vtx < 10',
     'NoIso': 'rel. tk. iso.',
-    'ana_nminus1_data.root': 'Data, 4.9 fb^{-1}',
-    'ana_nminus1_zmumu.root': 'Z#rightarrow#mu#mu, 60 < M < 120 GeV',
-    'ana_nminus1_dy120.root': 'DY#rightarrow#mu#mu, M > 120 GeV',
-    'ana_nminus1_dy200.root': 'DY#rightarrow#mu#mu, M > 200 GeV',
-    'ana_nminus1_dy500.root': 'DY#rightarrow#mu#mu, M > 500 GeV',
-    'ana_nminus1_dy1000.root': 'DY#rightarrow#mu#mu, M > 1000 GeV',
-    'ana_nminus1_ttbar.root': 't#bar{t}',
-    'ana_nminus1_inclmu15.root': 'QCD',
-    'ana_nminus1_zssm1000.root': 'Z\' SSM, M=1000 GeV',
+    'data': 'Data, %.1f fb^{-1}',
+    'zmumu': 'Z#rightarrow#mu#mu, 60 < M < 120 GeV',
+    'dy120': 'DY#rightarrow#mu#mu, M > 120 GeV',
+    'dy200': 'DY#rightarrow#mu#mu, M > 200 GeV',
+    'dy500': 'DY#rightarrow#mu#mu, M > 500 GeV',
+    'dy1000': 'DY#rightarrow#mu#mu, M > 1000 GeV',
+    'ttbar': 't#bar{t}',
+    'inclmu15': 'QCD',
+    'zssm1000': 'Z\' SSM, M=1000 GeV',
+    '60m120': '60 < m < 120 GeV',  
+    '120m200': '120 < m < 200 GeV', 
+    '200m400': '200 < m < 400 GeV',
+    '400m': 'm > 400 GeV',
+    }
+
+class nm1entry:
+    def __init__(self, sample, is_data=False):
+        if type(sample) == str:
+            self.name = sample
+            self.fn = self.make_fn(sample) if is_data else None
+        else:
+            self.name = sample.name
+            self.fn = self.make_fn(self.name)
+        self.prepare_histos()
+            
+    def make_fn(self, name):
+        return 'ana_nminus1_%s.root' % name
+    
+    def prepare_histos(self):
+        self.histos = {}
+        if self.fn is not None:
+            f = ROOT.TFile(self.fn)
+            for nminus1 in nminus1s + ['NoNo']:
+                self.histos[nminus1] = f.Get(nminus1).Get('DileptonMass').Clone()
+
+    def prepare_histos_sum(self, samples, lumi):
+        self.histos = {}
+        for nminus1 in nminus1s + ['NoNo']:
+            hs = []
+            for sample in samples:
+                f = ROOT.TFile(self.make_fn(sample.name))
+                h = f.Get(nminus1).Get('DileptonMass').Clone()
+                print nminus1, sample.name, h
+                h.Scale(sample.partial_weight * lumi)
+                hs.append(h)
+            hsum = hs[0].Clone()
+            for h in hs[1:]:
+                hsum.Add(h)
+            self.histos[nminus1] = hsum
+
+data, lumi = nm1entry('data', True), 4910.
+mcsum = nm1entry('mcsum')
+
+from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import zmumu, dy120, dy200, dy500, dy1000, ttbar, inclmu15
+raw_samples = [zmumu, dy120, dy200, dy500, dy1000, ttbar, inclmu15]
+mcsum.prepare_histos_sum(raw_samples, lumi)
+mc_samples = [nm1entry(sample) for sample in raw_samples]
+for mc_sample in mc_samples:
+    exec '%s = mc_sample' % mc_sample.name
+
+mass_ranges = [
+    ('60m120',  ( 60, 120)),
+    ('120m200', (120, 200)),
+    ('200m400', (200, 400)),
+    ('400m',    (400, 1e9)),
+    ]
+
+to_use = {
+    '60m120':  [data, mcsum], #, zmumu, ttbar],
+    '120m200': [data, mcsum], #, dy120, ttbar],
+    '200m400': [data, mcsum], #, dy200, ttbar],
+    '400m':    [data, mcsum], #, dy500, dy1000, ttbar],
     }
 
 styles = {
-    'ana_nminus1_data.root':      (ROOT.kBlack,     -1),
-    'ana_nminus1_zmumu.root':     (ROOT.kRed,     1001),
-    'ana_nminus1_dy120.root':     (ROOT.kRed,     1001),
-    'ana_nminus1_dy200.root':     (ROOT.kRed,     1001),
-    'ana_nminus1_dy500.root':     (ROOT.kRed,     1001),
-    'ana_nminus1_dy1000.root':    (ROOT.kBlue,    1001),
-    'ana_nminus1_ttbar.root':     (ROOT.kGreen+2, 3005),
-    'ana_nminus1_inclmu15.root':  (28,            3002),
+    'data':      (ROOT.kBlack,     -1),
+    'mcsum':     (ROOT.kMagenta, 1001),
+    'zmumu':     (ROOT.kRed,     1001),
+    'dy120':     (ROOT.kRed,     1001),
+    'dy200':     (ROOT.kRed,     1001),
+    'dy500':     (ROOT.kRed,     1001),
+    'dy1000':    (ROOT.kBlue,    1001),
+    'ttbar':     (ROOT.kGreen+2, 3005),
+    'inclmu15':  (28,            3002),
     }
 
 ymin = {
@@ -101,15 +152,16 @@ ymin = {
     }
 global_ymin = 0.58
 
-def table(f, mass_range):
-    hnum = f.Get('NoNo').Get('DileptonMass')
+def table(entry, mass_range):
+    print entry.name
+    hnum = entry.histos['NoNo']
     mlo, mhi = mass_range
     num = get_integral(hnum, mlo, mhi, integral_only=True, include_last_bin=False)
     print 'mass range %5i-%5i:' % mass_range
     print 'numerator:', num
     print '%20s%20s%20s%30s' % ('cut', 'denominator', 'efficiency', '68% CL')
     for nminus1 in nminus1s:
-        hden = f.Get(nminus1).Get('DileptonMass')
+        hden = entry.histos[nminus1]
         den = get_integral(hden, mlo, mhi, integral_only=True, include_last_bin=False)
         e,l,h = clopper_pearson(num, den)
         print '%20s%20f%20f%15f%15f' % (nminus1, den, e, l, h)
@@ -117,7 +169,8 @@ def table(f, mass_range):
 ROOT.gStyle.SetTitleX(0.25)
 ROOT.gStyle.SetTitleY(0.40)
 
-for name, pretty_name, mass_range in mass_ranges:
+for name, mass_range in mass_ranges:
+    pretty_name = pretty[name]
     print name, pretty_name
 
     lg = ROOT.TLegend(0.25, 0.13, 0.81, 0.33)
@@ -127,21 +180,18 @@ for name, pretty_name, mass_range in mass_ranges:
     same = 'A'
     effs = []
     
-    for fn in to_use[name]:
-        print fn
-        f = ROOT.TFile(fn)
-        table(f, mass_range)
-
-        color, fill = styles[fn]
+    for entry in to_use[name]:
+        table(entry, mass_range)
+        color, fill = styles[entry.name]
 
         l = len(nminus1s)
         nminus1_num = ROOT.TH1F('num', '', l, 0, l)
         nminus1_den = ROOT.TH1F('den', '', l, 0, l)
 
-        hnum = f.Get('NoNo').Get('DileptonMass')
+        hnum = entry.histos['NoNo']
         num = get_integral(hnum, *mass_range, integral_only=True, include_last_bin=False)
         for i,nminus1 in enumerate(nminus1s):
-            hden = f.Get(nminus1).Get('DileptonMass')
+            hden = entry.histos[nminus1]
             den = get_integral(hden, *mass_range, integral_only=True, include_last_bin=False)
             nminus1_num.SetBinContent(i+1, num)
             nminus1_den.SetBinContent(i+1, den)
@@ -152,26 +202,26 @@ for name, pretty_name, mass_range in mass_ranges:
         eff.GetXaxis().SetTitle('cut')
         eff.GetYaxis().SetLabelSize(0.027)
         eff.GetYaxis().SetTitle('n-1 efficiency')
-        if 'data' in fn:
+        if 'data' in entry.name:
             draw = 'P'
             eff.SetLineColor(color)
             eff.SetMarkerStyle(20)
             eff.SetMarkerSize(1.05)
-            lg.AddEntry(eff, pretty.get(fn, fn), 'LP')
+            lg.AddEntry(eff, pretty.get(entry.name, entry.name), 'LP')
         else:
             draw = '2'
             eff.SetLineColor(color)
             eff.SetFillColor(color)
             eff.SetFillStyle(fill)
-            lg.AddEntry(eff, pretty.get(fn, fn), 'F')
+            lg.AddEntry(eff, pretty.get(entry.name, entry.name), 'F')
         draw += same
         eff.Draw(draw)
         effs.append(eff)
         same = ' same'
-        bnr = (eff.GetXaxis().GetNbins()-3)/float(eff.GetN())
-        for i in xrange(1,l+1):
-            eff.GetXaxis().SetBinLabel(int((i-1)*bnr)+1+4, pretty.get(nminus1s[i-1], nminus1s[i-1]))
-        eff.GetXaxis().LabelsOption('u')
+        bnr = (eff.GetXaxis().GetNbins()-4)/float(eff.GetN())
+        for i, n in enumerate(nminus1s):
+            eff.GetXaxis().SetBinLabel(int((i+0.5)*bnr), pretty.get(n,n))
+        eff.GetXaxis().LabelsOption('v')
 
     lg.Draw()
     ps.save(name)

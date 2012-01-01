@@ -2,16 +2,14 @@
 
 from collections import defaultdict
 from FWCore.PythonUtilities.LumiList import LumiList
-from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import ROOT, ttree_iterator
+from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import ROOT, detree
 
-def doit(fn, tn='SimpleNtupler'):
-    me = defaultdict(list)
+def doit(fn, mass_name, dir_name, tree_name, cut):
     f = ROOT.TFile(fn)
-    for j,t in ttree_iterator(f.Get(tn).Get('t')):
-        r,l,e,m = t.run, t.lumi, t.event, t.dil_mass
-        r = int(r)
-        l = int(l)
-        e = int(e)
+    t = f.Get(dir_name).Get(tree_name)
+    rlem = detree(t, 'run:lumi:event:' + mass_name, cut, lambda x: (int(x[0]), int(x[1]), int(x[2]), float(x[3])))
+    me = defaultdict(list)
+    for r,l,e,m in rlem:
         me[(r,l,e)].append(m)
     return me
 
@@ -20,13 +18,12 @@ def m2s(l):
         l = [l]
     return ' * '.join('%.1f' % m for m in l)
 
-def doit2(b1, b2, tn='SimpleNtupler', skip_understood_events=False, max_mass_diff=0.1):
-    print 'comparing tree %s in %s to the one in %s' % (tn, b1, b2)
-    old = doit('%s/ana_datamc_data.root' % b1, tn)
-    new = doit('%s/ana_datamc_data.root' % b2, tn)
+def doit2(skip_understood_events=False, max_mass_diff=0.1):
+    old = doit('data/ana_datamc_Run2011MuonsOnly/ana_datamc_data.root', 'dil_mass', 'SimpleNtupler', 't', 'OurSelNew')  #NoSign && SameSign
+    new = doit('m10t_ntuple_SingleMuRun2011.root',                      'mass',     'ntuple',        't', 'sign == 0')
 
-    old_json = LumiList('%s/ana_datamc_data.forlumi.json' % b1)
-    new_json = LumiList('%s/ana_datamc_data.forlumi.json' % b2)
+    old_json = LumiList('data/ana_datamc_Run2011MuonsOnly/ana_datamc_data.forlumi.json')
+    new_json = LumiList('m10t_ntuple_SingleMuRun2011.report.json')
 
     oldk = set(old.keys())
     newk = set(new.keys())
@@ -67,32 +64,12 @@ def doit2(b1, b2, tn='SimpleNtupler', skip_understood_events=False, max_mass_dif
     print '%6s%6s%14s%14s%14s%25s%25s' % ('ojs','njs','run','lumi','event','old','new')
     for rle in sorted(oldk.symmetric_difference(newk)):
         r,l,e = rle
+        mold = max(old[rle] + [0])
+        mnew = max(new[rle] + [0])
+        #if not (mold > 300 or mnew > 300):
+        #    continue
         if skip_understood_events and not old_json.contains((r,l)) and new_json.contains((r,l)):
             continue # skip events where it's just because we didn't run on it before
         print '%6s%6s%14s%14s%14s%25s%25s' % (old_json.contains((r,l)), new_json.contains((r,l)), r,l,e, m2s(old[rle]), m2s(new[rle]))
 
-
-import sys
-if 'simple' in sys.argv:
-    n = sys.argv.index('simple')
-    doit2(sys.argv[n+1], sys.argv[n+2], sys.argv[n+3] if len(sys.argv) > n+3 else 'SimpleNtupler')
-    sys.exit(0)
-
-doit2('ana_datamc_current/muonsonly', 'ana_datamc_nov4/muonsonly')
-print '\n************************************************\n'
-doit2('ana_datamc_current/muonsonly', 'ana_datamc_nov4/muonsonly', 'SimpleNtuplerSS')
-print '\n************************************************\n'
-doit2('ana_datamc_current/muonsonly', 'ana_datamc_nov4/muonsonly', 'SimpleNtuplerVBTF')
-print '\n************************************************\n'
-raise 'done'
-
-doit2('old/ana_datamc_34ipb', 'ana_datamc_allgood')
-print '\n************************************************\n'
-doit2('old/ana_datamc_40ipb', 'ana_datamc_muonsonly', 'SimpleNtuplerSS')
-print '\n************************************************\n'
-doit2('old/ana_datamc_34ipb', 'ana_datamc_allgood', 'SimpleNtuplerSS')
-print '\n************************************************\n'
-doit2('old/ana_datamc_34ipb', 'ana_datamc_allgood', 'SimpleNtuplerEmu')
-print '\n************************************************\n'
-
-
+doit2()

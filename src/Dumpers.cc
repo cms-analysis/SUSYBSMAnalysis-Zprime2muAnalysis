@@ -115,6 +115,7 @@ std::ostream& operator<<(std::ostream& out, const pat::Muon& mu) {
     out << "none";
   else
     out << "charge/pt/eta/phi: " << mu.userFloat("TriggerMatchCharge") << " / " << mu.userFloat("TriggerMatchPt") << " / " << mu.userFloat("TriggerMatchEta") << " / " << mu.userFloat("TriggerMatchPhi");
+  out << "\nprescaled path: ";
   if (!mu.hasUserFloat("prescaledTriggerMatchPt"))
     out << "none";
   else

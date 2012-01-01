@@ -7,11 +7,8 @@ process.maxEvents.input = 5000
 process.options.wantSummary = True
 process.MessageLogger.cerr.FwkReport.reportEvery = 100000
 
-CheckPrescale = cms.EDAnalyzer('CheckPrescale',
-                               hlt_process_name = cms.string('HLT'),
-                               trigger_paths = cms.vstring(),
-                               dump_prescales = cms.untracked.bool(True),
-                               )
+process.load('SUSYBSMAnalysis.Zprime2muAnalysis.CheckPrescale_cfi')
+process.CheckPrescale.dump_prescales = True
 
 x = [
     (3,  (3,7)),

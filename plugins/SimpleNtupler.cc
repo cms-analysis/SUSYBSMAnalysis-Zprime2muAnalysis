@@ -142,7 +142,6 @@ private:
   tree_t t;
   TTree* tree;
 
-  const edm::InputTag hlt_src;
   const edm::InputTag dimu_src;
   const edm::InputTag beamspot_src;
   const edm::InputTag vertices_src;
@@ -157,8 +156,7 @@ TString replace_all(const TString& a, const TString& b, const TString& c) {
 }
 
 SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
-  : hlt_src(cfg.getParameter<edm::InputTag>("hlt_src")),
-    dimu_src(cfg.getParameter<edm::InputTag>("dimu_src")),
+  : dimu_src(cfg.getParameter<edm::InputTag>("dimu_src")),
     beamspot_src(cfg.getParameter<edm::InputTag>("beamspot_src")),
     vertices_src(cfg.getParameter<edm::InputTag>("vertices_src")),
     fill_gen_info(cfg.existsAs<edm::ParameterSet>("hardInteraction")),

@@ -154,7 +154,7 @@ events_per_job = 50000
 ''')
 
         from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import *
-        samples = [zmumu, ttbar, dy120, dy200, dy500, dy1000, inclmu15]
+        samples = [zmumu, ttbar, dy120, dy200, dy500, dy800, dy1000, inclmu15]
         for sample in samples:
             print sample.name
             open('crab.cfg', 'wt').write(crab_cfg % sample)

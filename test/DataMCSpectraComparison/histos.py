@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 import sys, os, FWCore.ParameterSet.Config as cms
+from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
-from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import *
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold
 
 # Since the prescaled trigger comes with different prescales in
 # different runs/lumis, this filter prescales it to a common factor to
@@ -140,13 +141,11 @@ for cut_name, Selection in cuts.iteritems():
     setattr(process, pathname, path)
 
 def ntuplify(process, hlt_process_name='HLT', fill_gen_info=False):
-    paths = trigger_paths + old_trigger_paths + mc_trigger_paths
     process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler',
                                            hlt_src = cms.InputTag('TriggerResults', '', hlt_process_name),
                                            dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
                                            beamspot_src = cms.InputTag('offlineBeamSpot'),
                                            vertices_src = cms.InputTag('offlinePrimaryVertices'),
-                                           single_mu_path_names = cms.vstring(*paths)
                                            )
     process.SimpleNtuplerEmu = process.SimpleNtupler.clone(dimu_src = cms.InputTag('SimpleMuonsElectronsAllSigns'))
 
@@ -186,6 +185,7 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
 
 if 'gogo' in sys.argv:
     fn, run_evt = '/store/user/tucker/SingleMu/datamc_SingleMuRun2011A_May10/27b0e568312792116de9a2db293fbae8/pat_60_1_86e.root', (161119,25237286)
+    fn, run_evt = '/store/user/tucker/SingleMu/datamc_SingleMuRun2011A_Prompt4/27b0e568312792116de9a2db293fbae8/pat_89_1_5TE.root', (166554,755792265)
 
     process.source.fileNames = [fn]
     from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import set_events_to_process
@@ -194,7 +194,7 @@ if 'gogo' in sys.argv:
     ntuplify(process) #, fill_gen_info=True)
     printify(process)
     process.GlobalTag.globaltag = 'GR_R_42_V13::All'
-    check_prescale(process, trigger_paths + old_trigger_paths)
+    check_prescale(process, trigger_paths)
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
@@ -299,6 +299,7 @@ events_per_job = 100000
 
             new_py = open('histos.py').read()
             sample.fill_gen_info = sample.name in ['zmumu', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'zssm1000']
+            new_py += "\nset_hlt_process_name(process, name='%(hlt_process_name)s)'\n" % sample
             new_py += "\nntuplify(process, hlt_process_name='%(hlt_process_name)s', fill_gen_info=%(fill_gen_info)s)\n" % sample
 
             if combine_dy_samples and (sample.name == 'zmumu' or 'dy' in sample.name):

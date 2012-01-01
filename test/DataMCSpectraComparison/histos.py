@@ -3,7 +3,6 @@
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import *
-#process.source.fileNames = ['/store/user/tucker/SingleMu/datamc_SingleMuRun2011B_Nov19/220ecb6e6d210913d6b2a9cef9c920af/pat_76_1_l2U.root', '/store/user/tucker/SingleMu/datamc_SingleMuRun2011B_Nov19/220ecb6e6d210913d6b2a9cef9c920af/pat_77_1_toF.root','/store/user/tucker/SingleMu/datamc_SingleMuRun2011B_Nov19/220ecb6e6d210913d6b2a9cef9c920af/pat_79_1_NqO.root']
 
 # Since the prescaled trigger comes with different prescales in
 # different runs/lumis, this filter prescales it to a common factor to
@@ -141,7 +140,7 @@ for cut_name, Selection in cuts.iteritems():
     setattr(process, pathname, path)
 
 def ntuplify(process, hlt_process_name='HLT', fill_gen_info=False):
-    paths = list(reversed(trigger_paths)) + list(reversed(mc_trigger_paths))
+    paths = trigger_paths + old_trigger_paths + mc_trigger_paths
     process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler',
                                            hlt_src = cms.InputTag('TriggerResults', '', hlt_process_name),
                                            dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
@@ -162,17 +161,21 @@ def printify(process, hlt_process_name='HLT'):
 
     process.load('HLTrigger.HLTcore.triggerSummaryAnalyzerAOD_cfi')
     process.triggerSummaryAnalyzerAOD.inputTag = cms.InputTag('hltTriggerSummaryAOD', '', hlt_process_name)
+    process.pathSimple *= process.triggerSummaryAnalyzerAOD
 
-    process.PrintEvent = cms.EDAnalyzer('PrintEvent', dilepton_src = cms.InputTag('OurNewMuonsPlusMuonsMinus'))
-    process.PrintEventSS = process.PrintEvent.clone(dilepton_src = cms.InputTag('OurNewMuonsSameSign'))
-    process.PrintEventEmu = process.PrintEvent.clone(dilepton_src = cms.InputTag('OurNewMuonsElectronsOppSign'))
-    process.pathOurNew *= process.PrintEvent * process.PrintEventSS * process.PrintEventEmu
+    process.PrintOriginalMuons = cms.EDAnalyzer('PrintEvent', muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'), trigger_results_src = cms.InputTag('TriggerResults','',hlt_process_name))
+    process.pathSimple *= process.PrintOriginalMuons
 
-    process.PrintEventVBTF = process.PrintEvent.clone(dilepton_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
+    pe = process.PrintEventSimple = cms.EDAnalyzer('PrintEvent', dilepton_src = cms.InputTag('SimpleMuonsPlusMuonsMinus'))
+    process.pathSimple *= process.PrintEventSimple
+
+    process.PrintEventOurNew = pe.clone(dilepton_src = cms.InputTag('OurNewMuonsPlusMuonsMinus'))
+    process.PrintEventOurNewSS = pe.clone(dilepton_src = cms.InputTag('OurNewMuonsSameSign'))
+    process.PrintEventOurNewEmu = pe.clone(dilepton_src = cms.InputTag('OurNewMuonsElectronsOppSign'))
+    process.pathOurNew *= process.PrintEventOurNew * process.PrintEventOurNewSS * process.PrintEventOurNewEmu
+
+    process.PrintEventVBTF = pe.clone(dilepton_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
     process.pathVBTF *= process.PrintEventVBTF
-
-    process.PrintEventSimple = process.PrintEvent.clone(dilepton_src = cms.InputTag('SimpleMuonsPlusMuonsMinus'))
-    process.pathSimple *= process.triggerSummaryAnalyzerAOD * process.PrintEventSimple
 
 def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.CheckPrescale = cms.EDAnalyzer('CheckPrescale',
@@ -182,9 +185,15 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.pCheckPrescale = cms.Path(process.CheckPrescale)
 
 if 'gogo' in sys.argv:
+    fn, run_evt = '/store/user/tucker/SingleMu/datamc_SingleMuRun2011A_May10/27b0e568312792116de9a2db293fbae8/pat_60_1_86e.root', (161119,25237286)
+
+    process.source.fileNames = [fn]
+    from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import set_events_to_process
+    set_events_to_process(process, [run_evt])
+    
     ntuplify(process) #, fill_gen_info=True)
     printify(process)
-    process.GlobalTag.globaltag = 'FT_R_44_V11::All'
+    process.GlobalTag.globaltag = 'GR_R_42_V13::All'
     check_prescale(process, trigger_paths + old_trigger_paths)
 
 if __name__ == '__main__' and 'submit' in sys.argv:
@@ -212,8 +221,11 @@ return_data = 1
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
 
         dataset_details = [
-            ('SingleMu2011A_Nov08', '/SingleMu/tucker-datamc_SingleMuRun2011A_Nov08-414b5fe0560a0d020583711f1400af1a/USER'),
-            ('SingleMu2011B_Nov19', '/SingleMu/tucker-datamc_SingleMuRun2011B_Nov19-220ecb6e6d210913d6b2a9cef9c920af/USER'),
+            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10-27b0e568312792116de9a2db293fbae8/USER'),
+            ('SingleMu2011A_Prompt4',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt4-27b0e568312792116de9a2db293fbae8/USER'),
+            ('SingleMu2011A_Prompt5',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt5-27b0e568312792116de9a2db293fbae8/USER'),
+            ('SingleMu2011A_Prompt6',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt6-d196cf8328025d6b0cf4c50be8764787/USER'),
+            ('SingleMu2011B_Prompt1',              '/SingleMu/tucker-datamc_SingleMuRun2011B_Prompt1-d196cf8328025d6b0cf4c50be8764787/USER'),
             ]
 
         lumi_lists = [
@@ -241,7 +253,7 @@ return_data = 1
 
             new_py = open('histos.py').read()
             new_py += "\nntuplify(process)\n"
-            new_py += "\nprocess.GlobalTag.globaltag = 'FT_R_44_V11::All'\n"
+            new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_42_V13::All'\n"
             new_py += "\ncheck_prescale(process, trigger_paths + old_trigger_paths)\n"
             open('histos_crab.py', 'wt').write(new_py)
 
@@ -268,9 +280,7 @@ lumis_per_job = 500
         if not just_testing:
             os.system('rm crab.cfg histos_crab.py histos_crab.pyc tmp.json')
 
-    if True:
-        print 'not running over MC in 44X!'
-    elif 'no_mc' not in sys.argv:
+    if 'no_mc' not in sys.argv:
         # Set crab_cfg for MC.
         crab_cfg = crab_cfg.replace('job_control','''
 total_number_of_events = -1
@@ -279,7 +289,7 @@ events_per_job = 100000
 
         from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
 
-        combine_dy_samples = len([x for x in samples.samples if x.name in ['dy200', 'dy500', 'dy800', 'dy1000']]) > 0
+        combine_dy_samples = len([x for x in samples if x.name in ['dy200', 'dy500', 'dy800', 'dy1000']]) > 0
         print 'combine_dy_samples:', combine_dy_samples
 
         for sample in reversed(samples):

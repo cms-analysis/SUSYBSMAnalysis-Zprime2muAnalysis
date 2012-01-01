@@ -4,6 +4,7 @@
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TProfile.h"
+#include "TTree.h"
 
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
@@ -49,6 +50,17 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   edm::InputTag beamspot_src;
   edm::InputTag vertex_src;
   const bool use_bs_and_pv;
+
+  struct debug_tree_t {
+    unsigned run;
+    unsigned lumi;
+    unsigned event;
+    float mass;
+    short id;
+  };
+
+  debug_tree_t dbg_t;
+  TTree* dbg_tree;
 
   // mmm bare ptrs
   const reco::BeamSpot* beamspot;
@@ -129,6 +141,9 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
 
   edm::Service<TFileService> fs;
 
+  dbg_tree = fs->make<TTree>("t", "");
+  dbg_tree->Branch("tt", &dbg_t, "run/i:lumi:event:mass/F:id/S");
+ 
   // Whole-event things.
 
   NBeamSpot = fs->make<TH1F>("NBeamSpot", titlePrefix + "# beamspots/event",  2, 0,  2);
@@ -359,6 +374,10 @@ void Zprime2muHistosFromPAT::fillLeptonHistosFromDileptons(const pat::CompositeC
 }
 
 void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& dil) {
+  dbg_t.mass = dil.mass();
+  dbg_t.id = dil.daughter(0)->pdgId() + dil.daughter(1)->pdgId();
+  dbg_tree->Fill();
+  
   DileptonEta->Fill(dil.eta());
   DileptonRap->Fill(dil.rapidity());
   DileptonPhi->Fill(dil.phi());
@@ -414,6 +433,11 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidateCol
 }
 
 void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSetup& setup) {
+  memset(&dbg_t, 0, sizeof(debug_tree_t));
+  dbg_t.run = event.id().run();
+  dbg_t.lumi = event.luminosityBlock();
+  dbg_t.event = event.id().event();
+
   if (use_bs_and_pv)
     getBSandPV(event);
 

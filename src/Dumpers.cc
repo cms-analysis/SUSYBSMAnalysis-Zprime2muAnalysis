@@ -110,7 +110,17 @@ std::ostream& operator<<(std::ostream& out, const pat::Muon& mu) {
   else
     out << "\nGlobal track:\n" << *mu.globalTrack();
   
-  out << "\nTrigger match info: # trig obj matches: " << mu.triggerObjectMatches().size();
+  out << "\nTrigger match info:\nmain path: ";
+  if (!mu.hasUserFloat("TriggerMatchPt"))
+    out << "none";
+  else
+    out << "charge/pt/eta/phi: " << mu.userFloat("TriggerMatchCharge") << " / " << mu.userFloat("TriggerMatchPt") << " / " << mu.userFloat("TriggerMatchEta") << " / " << mu.userFloat("TriggerMatchPhi");
+  if (!mu.hasUserFloat("prescaledTriggerMatchPt"))
+    out << "none";
+  else
+    out << "charge/pt/eta/phi: " << mu.userFloat("prescaledTriggerMatchCharge") << " / " << mu.userFloat("prescaledTriggerMatchPt") << " / " << mu.userFloat("prescaledTriggerMatchEta") << " / " << mu.userFloat("prescaledTriggerMatchPhi");
+
+  out << "\nOLD Trigger match info: # trig obj matches: " << mu.triggerObjectMatches().size();
   int itosa = 0;
   BOOST_FOREACH(const pat::TriggerObjectStandAlone& tosa, mu.triggerObjectMatches()) {
     out << "\nTriggerObjectStandAlone #" << itosa++ << "\npaths:";

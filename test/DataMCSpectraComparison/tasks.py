@@ -43,8 +43,6 @@ elif cmd == 'maketagdirs':
         d = '~/nobackup/zp2mu_ana_datamc_%s/%s' % (which,extra)
         do('mkdir -p %s' % d)
         do('ln -s %s %s' % (d, which))
-    do('rm ~/nobackup/zp2mu_ana_datamc_mc/latest')
-    do('ln -s ~/nobackup/zp2mu_ana_datamc_mc/%s ~/nobackup/zp2mu_ana_datamc_mc/latest' % extra)
 
 elif cmd == 'checkevents':
     from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
@@ -80,9 +78,9 @@ elif cmd == 'gatherhistos':
         dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMu2011*' % which)
         files_glob = ' '.join([os.path.join(x, 'res/*.root') for x in dirs])
 
-        wdir = 'data/ana_datamc_%(extra)s%(which)s' % locals()
+        wdir = 'data/%(which)s' % locals()
         os.mkdir(wdir)
-        do('ln -s /uscms_data/d2/tucker/zp2mu_ana_datamc_mc/latest %(wdir)s/mc' % locals())
+        do('ln -s /uscms_data/d2/tucker/zp2mu_ana_datamc_mc/%(extra)s %(wdir)s/mc' % locals())
         do('hadd %(wdir)s/ana_datamc_data.root %(files_glob)s' % locals())
 
         for dir in dirs:

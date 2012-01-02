@@ -181,7 +181,7 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.pCheckPrescale = cms.Path(process.CheckPrescale)
 
 def for_data(process):
-    process.GlobalTag.globaltag = 'FT_R_44_V11::All'
+    process.GlobalTag.globaltag = 'GR_R_42_V13::All'
     ntuplify(process)
     check_prescale(process, trigger_paths)
 
@@ -227,8 +227,11 @@ return_data = 1
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
 
         dataset_details = [
-            ('SingleMu2011A_Nov08', '/SingleMu/tucker-datamc_SingleMuRun2011A_Nov08-414b5fe0560a0d020583711f1400af1a/USER'),
-            ('SingleMu2011B_Nov19', '/SingleMu/tucker-datamc_SingleMuRun2011B_Nov19-220ecb6e6d210913d6b2a9cef9c920af/USER'),
+            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10-27b0e568312792116de9a2db293fbae8/USER'),
+            ('SingleMu2011A_Prompt4',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt4-27b0e568312792116de9a2db293fbae8/USER'),
+            ('SingleMu2011A_Prompt5',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt5-27b0e568312792116de9a2db293fbae8/USER'),
+            ('SingleMu2011A_Prompt6',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt6-d196cf8328025d6b0cf4c50be8764787/USER'),
+            ('SingleMu2011B_Prompt1',              '/SingleMu/tucker-datamc_SingleMuRun2011B_Prompt1-d196cf8328025d6b0cf4c50be8764787/USER'),
             ]
 
         lumi_lists = [
@@ -281,9 +284,7 @@ lumis_per_job = 500
         if not just_testing:
             os.system('rm crab.cfg histos_crab.py histos_crab.pyc tmp.json')
 
-    if True:
-        print 'not running over MC in 44X!'
-    elif 'no_mc' not in sys.argv:
+    if 'no_mc' not in sys.argv:
         # Set crab_cfg for MC.
         crab_cfg = crab_cfg.replace('job_control','''
 total_number_of_events = -1

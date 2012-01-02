@@ -271,9 +271,11 @@ void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& 
   // PATTrigger matcher previously, so why not.) We do this for both
   // the main path and the prescaled path.
   Zprime2muTriggerPathsAndFilters pandf(event);
-  L3_muons = get_L3_muons(event, pandf.filter, trigger_summary_src);
-  L3_muons_matched.resize(L3_muons.size(), 0);
+  L3_muons           = get_L3_muons(event, pandf.filter,           trigger_summary_src);
   prescaled_L3_muons = get_L3_muons(event, pandf.prescaled_filter, trigger_summary_src);
+  L3_muons_matched.clear();
+  L3_muons_matched.resize(L3_muons.size(), 0);
+  prescaled_L3_muons_matched.clear();
   prescaled_L3_muons_matched.resize(prescaled_L3_muons.size(), 0);
 
   // Using the main choice for momentum assignment, make the primary
@@ -297,6 +299,12 @@ void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& 
   // assignments specified. They will come out as e.g. leptons:tpfms,
   // leptons:picky, ...
   for (size_t i = 0; i < muon_tracks_for_momentum.size(); ++i) {
+    // Reset the flags so the matching can be redone.
+    L3_muons_matched.clear();
+    L3_muons_matched.resize(L3_muons.size(), 0);
+    prescaled_L3_muons_matched.clear();
+    prescaled_L3_muons_matched.resize(prescaled_L3_muons.size(), 0);
+
     muon_track_for_momentum = muon_tracks_for_momentum[i];
     doLeptons<pat::Muon>(event, muon_src, muon_track_for_momentum);
   }

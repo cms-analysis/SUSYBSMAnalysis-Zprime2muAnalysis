@@ -28,13 +28,12 @@ def do(cmd):
     return ret
 
 latest_dataset = '/SingleMu/Run2011B-PromptReco-v1/AOD'
+lumi_masks = ['NoLumiMask', 'Run2011', 'Run2011MuonsOnly']
 
 if cmd == 'setdirs':
-    do('''
-ln -s /uscms/home/tucker/nobackup/crab_dirs crab
-mkdir -p psets
-ln -s `pwd`/psets crab/psets
-''')
+    crab_dirs_location = extra[0]
+    do('mkdir -p ' + os.path.join(crab_dirs_location, 'psets')
+    do('ln -s %s crab' % crab_dirs_location)
 
 elif cmd == 'maketagdirs':
     extra = extra[0]
@@ -55,7 +54,7 @@ elif cmd == 'publishmc':
     for sample in samples:
         do('crab -c crab/crab_datamc_${x} -publish >&! crab/publish_logs/publish.${x} &')
 
-elif cmd == 'hadd':
+elif cmd == 'gathermc':
     from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
     extra = '_' + extra[0] if extra else ''
     for sample in samples:
@@ -70,17 +69,16 @@ elif cmd == 'hadd':
         else:
             do('hadd mc/ana_datamc_%(name)s.root crab/crab_ana%(extra)s_datamc_%(name)s/res/zp2mu_histos*root' % locals())
 
-elif cmd == 'gatherhistos':
+elif cmd == 'gatherdata':
     extra = (extra[0] + '_') if extra else ''
 
-    for which in ['Run2011', 'Run2011MuonsOnly', 'NoLumiMask']:
-        print which
-        dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMu2011*' % which)
+    for lumi_mask in lumi_masks:
+        print lumi_mask
+        dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMu2011*' % lumi_mask)
         files_glob = ' '.join([os.path.join(x, 'res/*.root') for x in dirs])
 
-        wdir = 'data/%(which)s' % locals()
+        wdir = 'data/%(lumi_mask)s' % locals()
         os.mkdir(wdir)
-        do('ln -s /uscms_data/d2/tucker/zp2mu_ana_datamc_mc/%(extra)s %(wdir)s/mc' % locals())
         do('hadd %(wdir)s/ana_datamc_data.root %(files_glob)s' % locals())
 
         for dir in dirs:
@@ -98,12 +96,7 @@ elif cmd == 'gatherhistos':
                                         
         reduce(lambda x,y: x|y, (LumiList(j) for j in jsons)).writeJSON('%(wdir)s/ana_datamc_data.forlumi.json' % locals())
         do('lumiCalc2.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())
-        print 'done with', which, '\n'
-
-elif cmd == 'mclinks':
-    extra = extra[0] if extra else 'renameme'
-    for x in ['muonsonly', 'allgood']:
-        print('ln -s ~/nobackup/ana_datamc_mc/%s %s' % (extra, x))
+        print 'done with', lumi_mask, '\n'
 
 elif cmd == 'runrange':
     cmd = 'dbs search --query="find min(run),max(run) where dataset=%s"' % latest_dataset
@@ -143,8 +136,8 @@ elif cmd == 'checkavail':
 
 elif cmd == 'drawall':
     extra = extra[0] if extra else ''
-    for which in ['Run2011', 'Run2011MuonsOnly', 'NoLumiMask']:
-        r = do('python draw.py data/ana_datamc_%s %s > out.draw.%s' % (which,extra,which))
+    for lumi_mask in lumi_masks
+        r = do('python draw.py data/ana_datamc_%s %s > out.draw.%s' % (lumi_mask,extra,lumi_mask))
         if r != 0:
             sys.exit(r)
     do('mv out.draw.* plots/')
@@ -152,4 +145,3 @@ elif cmd == 'drawall':
 
 else:
     raise ValueError('command %s not recognized!' % cmd)
-

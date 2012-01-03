@@ -40,15 +40,15 @@ jobtype = cmssw
 
     def get_dataset(run):
         if 165071 <= run <= 168437:
-            return '/SingleMu/Run2011A-PromptReco-v4/AOD'
+            return '/SingleMu/Run2011A-PromptReco-v4/RECO'
         elif 170053 <= run <= 172619:
-            return '/SingleMu/Run2011A-PromptReco-v5/AOD'
+            return '/SingleMu/Run2011A-PromptReco-v5/RECO'
         elif 172620 <= run <= 175770:
-            return '/SingleMu/Run2011A-PromptReco-v6/AOD'
+            return '/SingleMu/Run2011A-PromptReco-v6/RECO'
         elif 175832 <= run <= 180296:
-            return '/SingleMu/Run2011B-PromptReco-v1/AOD'
+            return '/SingleMu/Run2011B-PromptReco-v1/RECO'
         elif 160329 <= run <= 163869:
-            return '/SingleMu/Run2011A-May10ReReco-v1/AOD'
+            return '/SingleMu/Run2011A-May10ReReco-v1/RECO'
         else:
             raise ValueError('dunno how to do run %i' % run)
 

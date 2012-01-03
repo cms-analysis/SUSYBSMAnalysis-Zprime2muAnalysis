@@ -44,5 +44,4 @@ dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02
 #ce_white_list = T2_EE_Estonia
 '''
 
-os.system('mkdir -p psets')
-os.system('mkdir -p crab')
+os.system('mkdir -p crab/psets')

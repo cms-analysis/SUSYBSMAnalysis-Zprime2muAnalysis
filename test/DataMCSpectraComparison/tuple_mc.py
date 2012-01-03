@@ -33,7 +33,7 @@ events_per_job = 150000
             # tree, don't really even need the MC truth at all for now...)
             new_py += '\nprocess.prunedMCLeptons.select = ["drop *", "keep abs(pdgId) == 13 && (status == 1 || status == 8)", "keep abs(pdgId) == 11 && status == 1"]\n'
 
-        sample.pset = 'psets/tuple_mc_crab_%(name)s.py' % sample.__dict__
+        sample.pset = 'crab/psets/tuple_mc_crab_%(name)s.py' % sample.__dict__
         open(sample.pset,'wt').write(new_py)
 
         sample.job_control = job_control % sample.__dict__

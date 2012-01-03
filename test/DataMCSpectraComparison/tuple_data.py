@@ -26,7 +26,7 @@ lumis_per_job = %(lumis_per_job)s
     def submit(d):
         new_py = open('tuple_data.py').read()
         new_py += '\n\nprocess.GlobalTag.globaltag = "%(tag)s::All"\n' % d
-        pset = 'psets/tuple_data_crab_%(name)s.py' % d
+        pset = 'crab/psets/tuple_data_crab_%(name)s.py' % d
         open(pset, 'wt').write(new_py)
 
         job_control = job_control_ex % d

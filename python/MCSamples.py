@@ -43,6 +43,10 @@ class sample:
             if redump_existing or not os.path.isfile(os.path.join(dst, os.path.basename(fn))):
                 os.system('dccp ~%s %s/' % (fn,dst))
 
+class tupleonlysample(sample):
+    def __init__(self, name, dataset, scheduler='condor', hlt_process_name='HLT'):
+        sample.__init__(self, name, 'dummy', dataset, 1, 1, 1, 1, scheduler=scheduler, hlt_process_name=hlt_process_name)
+
 # https://twiki.cern.ch/twiki/bin/view/CMS/CrossSections_3XSeries for
 # xsecs (all below in pb), except for t(bar)W from
 # https://twiki.cern.ch/twiki/bin/view/CMS/SingleTopSigma

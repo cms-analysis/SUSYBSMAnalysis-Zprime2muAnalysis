@@ -15,6 +15,7 @@ process.PrescaleToCommon.overall_prescale = overall_prescale
 # The histogramming module that will be cloned multiple times below
 # for making histograms with different cut/dilepton combinations.
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
+HistosFromPAT.leptonsFromDileptons = True
 
 # These modules define the basic selection cuts. For the monitoring
 # sets below, we don't need to define a whole new module, since they

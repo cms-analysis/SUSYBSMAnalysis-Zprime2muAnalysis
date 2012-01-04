@@ -162,6 +162,7 @@ class Drawer:
         if options.plot_dir_tag is not None:
             base += '_' + options.plot_dir_tag
         self.plot_dir_base = os.path.join(base, os.path.basename(self.histo_dir))
+        os.system('mkdir -p %s' % self.plot_dir_base)
         self.ps = plot_saver(self.plot_dir_base, size=(900,600), pdf_log=True, pdf=True)
 
     def setup_root(self):
@@ -372,13 +373,14 @@ class Drawer:
             if overflow_integral > 0:
                 raise ValueError('WARNING: in %s, data histogram has points in overflow (mass bins above %.f GeV)! integral = %f' % (cutset + dilepton, range[1], overflow_integral))
 
-    def make_table(self, cutset, dilepton):
-        # Print a nicely formatted ASCII table of event counts in the
+    def make_table(self, table_f, cutset, dilepton):
+        # Make a nicely formatted ASCII table of event counts in the
         # specified mass ranges, along with uncertainties.
         # JMTBAD htmlize
+
         for mass_range in self.mass_ranges_for_table:
-            print '*'*(50+20*9), '\n'
-            print 'cuts: %s  dilepton: %s  mass range: %s' % (cutset, dilepton, mass_range)
+            table_f.write('*'*(50+20*9) + '\n\n')
+            table_f.write('cuts: %s  dilepton: %s  mass range: %s\n' % (cutset, dilepton, mass_range))
 
             # For all the MC samples, calculate the integrals over the
             # current mass range and store it in the sample object.
@@ -386,14 +388,14 @@ class Drawer:
                 sample.integral = get_integral(sample.histogram, *mass_range, integral_only=True, include_last_bin=False)
                 sample.raw_integral = sample.integral / sample.scaled_by
 
-            # Header. (I hope you have a widescreen monitor, and good eyes.)
-            print '%50s%20s%20s%20s%20s%20s%20s%20s%20s%20s' % ('sample', 'weight', 'raw integral', 'integral', 'stat error', 'limit if int=0', 'syst error', 'syst(+)stat', 'lumi error', 'total')
+            # Header. (I hope you have a widescreen monitor, a small font, and good eyes.)
+            table_f.write('%50s%20s%20s%20s%20s%20s%20s%20s%20s%20s\n' % ('sample', 'weight', 'raw integral', 'integral', 'stat error', 'limit if int=0', 'syst error', 'syst(+)stat', 'lumi error', 'total'))
 
             # Print the row for the event count from the data (only
             # the integral and statistical uncertainty columns will be
             # filled).
             data_integral = get_integral(self.hdata, *mass_range, integral_only=True, include_last_bin=False)
-            print '%50s%20s%20i%20.6f%20.6f' % ('data', '-', int(data_integral), data_integral, data_integral**0.5)
+            table_f.write('%50s%20s%20i%20.6f%20.6f\n' % ('data', '-', int(data_integral), data_integral, data_integral**0.5))
 
             # As we loop over the MC samples, keep some running sums
             # of integrals and variances. Do one such set including
@@ -446,9 +448,9 @@ class Drawer:
                 tot_err = (var + syst_var + lumi_err**2)**0.5
 
                 # Print this row of the table.
-                print '%50s%20.6f%20f%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f' % (sample.nice_name, w, sample.raw_integral, sample.integral, var**0.5, limit, syst_var**0.5, syst_plus_stat, lumi_err, tot_err)
+                table_f.write('%50s%20.6f%20f%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f\n' % (sample.nice_name, w, sample.raw_integral, sample.integral, var**0.5, limit, syst_var**0.5, syst_plus_stat, lumi_err, tot_err))
 
-            print '-'*(50+20*9)
+            table_f.write('-'*(50+20*9) + '\n')
             
             # Determine the uncertainties and print the rows for each
             # of the join groups. Sort this section by decreasing integral.
@@ -458,9 +460,9 @@ class Drawer:
                 lumi_err = self.lumi_syst_frac * sums[join_name]
                 syst_plus_stat = (var_sums[join_name] + syst_var_sums[join_name])**0.5
                 tot_err = (var_sums[join_name] + syst_var_sums[join_name] + lumi_err**2)**0.5
-                print '%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f' % (join_name, '-', '-', sums[join_name], var_sums[join_name]**0.5, '-', syst_var_sums[join_name]**0.5, syst_plus_stat, lumi_err, tot_err)
+                table_f.write('%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f\n' % (join_name, '-', '-', sums[join_name], var_sums[join_name]**0.5, '-', syst_var_sums[join_name]**0.5, syst_plus_stat, lumi_err, tot_err))
 
-            print '-'*(50+20*9)
+            table_f.write('-'*(50+20*9) + '\n')
 
             # For the sum of all MC, determine the combined
             # statistical+systematic uncertainty, the uncertainty due
@@ -469,10 +471,10 @@ class Drawer:
             syst_plus_stat = (var_sum_mc + syst_var_sum_mc)**0.5
             lumi_err = self.lumi_syst_frac * sum_mc
             tot_err = (var_sum_mc + syst_var_sum_mc + lumi_err**2)**0.5
-            print '%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f' % ('sum MC (not including Z\')', '-', '-', sum_mc, var_sum_mc**0.5, '-', syst_var_sum_mc**0.5, syst_plus_stat, lumi_err, tot_err)
+            table_f.write('%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f\n' % ('sum MC (not including Z\')', '-', '-', sum_mc, var_sum_mc**0.5, '-', syst_var_sum_mc**0.5, syst_plus_stat, lumi_err, tot_err))
 
-            print
-        print
+            table_f.write('\n')
+        table_f.write('\n')
 
     def should_draw_zprime(self, dilepton):
         return self.draw_zprime and dilepton == 'MuonsPlusMuonsMinus'
@@ -620,6 +622,9 @@ class Drawer:
         self.ps.save(plot_fn)
 
     def go(self):
+        table_fn = os.path.join(self.plot_dir_base, 'mass_counts.txt')
+        table_f = open(table_fn, 'wt')
+
         for quantity_to_compare in self.quantities_to_compare:
             print quantity_to_compare
             
@@ -627,7 +632,7 @@ class Drawer:
                 cutsets = ['OurNew']
             else:
                 cutsets = self.cutsets
-                
+            
             for cutset in cutsets:
                 print cutset
                 
@@ -668,7 +673,7 @@ class Drawer:
                         # cutset+dilepton. Could extend this to support counts for
                         # ranges that aren't mass.
                         if not cumulative and 'Mass' in quantity_to_compare and self.print_table:
-                            self.make_table(cutset, dilepton)
+                            self.make_table(table_f, cutset, dilepton)
 
                         if self.save_plots:
                             self.draw_data_on_mc(cutset, dilepton, quantity_to_compare, cumulative)

@@ -4,7 +4,7 @@ import os
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import big_warn, files_from_dbs
 from SUSYBSMAnalysis.Zprime2muAnalysis.crabtools import dataset_from_publish_log
 
-class sample:
+class sample(object):
     def __init__(self, name, nice_name, dataset, nevents, color, syst_frac, cross_section, k_factor=1, filenames=None, scheduler='condor', hlt_process_name='HLT', ana_dataset=None, is_zprime=False):
         self.name = name
         self.nice_name = nice_name
@@ -45,7 +45,7 @@ class sample:
 
 class tupleonlysample(sample):
     def __init__(self, name, dataset, scheduler='condor', hlt_process_name='HLT'):
-        sample.__init__(self, name, 'dummy', dataset, 1, 1, 1, 1, scheduler=scheduler, hlt_process_name=hlt_process_name)
+        super(tupleonlysample, self).__init__(name, 'dummy', dataset, 1, 1, 1, 1, scheduler=scheduler, hlt_process_name=hlt_process_name)
 
 # https://twiki.cern.ch/twiki/bin/view/CMS/CrossSections_3XSeries for
 # xsecs (all below in pb), except for t(bar)W from

@@ -19,8 +19,8 @@ def m2s(l):
     return ' * '.join('%.1f' % m for m in l)
 
 def doit2(skip_understood_events=False, max_mass_diff=0.1):
-    old = doit('data/Run2011MuonsOnly/ana_datamc_data.root', 'dil_mass', 'SimpleNtupler', 't', 'OurSelNew')  #NoSign && SameSign
-    new = doit('m10t_ntuple_SingleMuRun2011.root',           'mass',     'ntuple',        't', 'sign == 0')
+    old = doit('data/Run2011MuonsOnly/ana_datamc_data.root', 'dil_mass', 'SimpleNtupler', 't', 'OurSelNew')
+    new = doit('m10t_ntuple_SingleMuRun2011.root',           'mass',     'OppSign',       't', '')
 
     old_json = LumiList('data/Run2011MuonsOnly/ana_datamc_data.forlumi.json')
     new_json = LumiList('m10t_ntuple_SingleMuRun2011.report.json')

@@ -32,7 +32,7 @@ lumi_masks = ['NoLumiMask', 'Run2011', 'Run2011MuonsOnly']
 
 if cmd == 'setdirs':
     crab_dirs_location = extra[0]
-    do('mkdir -p ' + os.path.join(crab_dirs_location, 'psets')
+    do('mkdir -p ' + os.path.join(crab_dirs_location, 'psets'))
     do('ln -s %s crab' % crab_dirs_location)
 
 elif cmd == 'maketagdirs':
@@ -136,7 +136,7 @@ elif cmd == 'checkavail':
 
 elif cmd == 'drawall':
     extra = extra[0] if extra else ''
-    for lumi_mask in lumi_masks
+    for lumi_mask in lumi_masks:
         r = do('python draw.py data/ana_datamc_%s %s > out.draw.%s' % (lumi_mask,extra,lumi_mask))
         if r != 0:
             sys.exit(r)

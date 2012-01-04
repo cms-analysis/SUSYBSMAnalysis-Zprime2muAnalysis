@@ -1,377 +1,678 @@
 #!/usr/bin/env python
 
-# (py draw.py data/ana_datamc_Run2011MuonsOnly >! plots/out.draw.Run2011MuonsOnly) && (py draw.py data/ana_datamc_Run2011MuonsOnly compare=DimuonMassVertexConstrained >! plots/out.draw.Run2011MuonsOnly_DimuonMassVertexConstrained) && (py draw.py data/ana_datamc_Run2011 >! plots/out.draw.Run2011) && (py draw.py data/ana_datamc_NoLumiMask >! plots/out.draw.NoLumiMask) && tlp plots/datamc* plots/out.draw.*
-
 import sys, os, glob
-from pprint import pprint
 from collections import defaultdict
-from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import cumulative_histogram, get_integral, move_above_into_bin, plot_saver, poisson_intervalize, real_hist_max, real_hist_min, set_zp2mu_style, ROOT
-from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
+from pprint import pprint
+from optparse import OptionParser
 
-set_zp2mu_style()
-ROOT.gStyle.SetPadLeftMargin(0.13)
-ROOT.gStyle.SetPadRightMargin(0.07)
+# We have to optparse before ROOT does, or else it will eat our
+# options (at least -h/--help gets eaten). So don't move this!
+parser = OptionParser()
+parser.add_option('-d', '--histo-dir', dest='histo_dir', default='data/Run2011MuonsOnly',
+                  help='Directory containing the input files for the data. Default is %default. The files expected to be in this directory are ana_datamc_data.root, the ROOT file containing the input histograms, and ana_datamc_data.lumi, the log file from the output of LumiCalc. Optionally the directory can contain a link to a directory for MC histogram ROOT files; the link/directory must be named "mc".')
+parser.add_option('--no-print-table', action='store_false', dest='print_table', default=True,
+                  help='Do not print out the ASCII table of event counts in specified mass ranges.')
+parser.add_option('--no-save-plots', action='store_false', dest='save_plots', default=True,
+                  help='Do not save the plots drawn.')
+parser.add_option('--luminosity', dest='override_int_lumi', type='float',
+                  help='Set the integrated luminosity manually (in 1/pb) rather than attempting to get it from the LumiCalc log file.')
+parser.add_option('--no-lumi-rescale', action='store_false', dest='rescale_lumi', default=True,
+                  help='Do not rescale the luminosity.')
+parser.add_option('--for-rescale-factors', action='store_true', dest='for_rescale_factors', default=False,
+                  help='Just print the tables for the Z peak counts to determine the luminosity rescaling factors (implies --no-lumi-rescale and --no-save-plots).')
+parser.add_option('--lumi_syst_frac', dest='lumi_syst_frac', type='float', default=0.06,
+                  help='Set the systematic uncertainty for the luminosity (as a relative value). Default is %default.')
+parser.add_option('--no-draw-zprime', action='store_false', dest='draw_zprime', default=True,
+                  help='Do not draw the Z\' curve.')
+parser.add_option('--no-poisson-intervals', action='store_false', dest='use_poisson_intervals', default=True,
+                  help='Do not use Poisson 68% CL intervals for the error bars on the data points.')
+parser.add_option('--no-overflow-in-last-bin', action='store_false', dest='put_overflow_in_last_bin', default=True,
+                  help='Do not add the overflow amount to the last bin.')
+parser.add_option('--no-joins', action='store_false', dest='do_joins', default=True,
+                  help='Do not lump together the MC contributions from different samples.')
+parser.add_option('--no-join-ttbar', action='store_false', dest='join_ttbar_and_other_prompt_leptons', default=True,
+                  help='Do not lump ttbar and other prompt leptons contributions together.')
+parser.add_option('--exclude-sample', action='append', dest='exclude_samples',
+                  help='Specify a sample not to use (by name, e.g. wjets). To exclude more than one sample, give this option more than once.')
+parser.add_option('--include-quantity', action='append', dest='include_quantities',
+                  help='If specified, will override the default list of quantities to compare in favor of the specified one. Specify this option more than once to use multiple quantities to compare.')
+parser.add_option('--include-dilepton', action='append', dest='include_dileptons',
+                  help='If specified, will override the default list of dileptons in favor of the specified one. Specify this option more than once to use multiple dileptons.')
+parser.add_option('--include-cutset', action='append', dest='include_cutsets',
+                  help='If specified, will override the default list of cutsets in favor of the specified one. Specify this option more than once to use multiple cutsets.')
+parser.add_option('--include-massrange', action='append', dest='include_mass_ranges_for_table',
+                  help='If specified, will override the default list of mass ranges for the ASCII table in favor of the specified one. Specify this option more than once to use multiple mass ranges.')
+parser.add_option('--plot-dir-tag', action='store',
+                  help='Adds argument to plot_dir path, useful for tagging the current version.')
+options, args = parser.parse_args()
+#pprint(options) ; raise 1
 
-rebin_factor = 5
-x_axis_limits = 70, 1400
-x_axis_limits2 = 70, 1400
+# Done with option parsing, now can import things that import ROOT.
 
-to_compare = 'DileptonMass'
-for x in sys.argv:
-    if x.startswith('compare='):
-        to_compare = x.replace('compare=', '')
-        break
+import SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples as MCSamples
+from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import cumulative_histogram, get_integral, move_below_into_bin, move_above_into_bin, plot_saver, poisson_intervalize, real_hist_max, real_hist_min, set_zp2mu_style, ROOT
 
-global_rescale = {
-    'VBTF': 111466/99248.457457,
-    'OurNew': 124075/110781.593932,
-    'OurOld': 128905/114502.540631,
-    'OurNoIso': 125822/111914.608088,
-    }
-if 'norescale' in sys.argv:
-    global_rescale = {}
-def get_rescale_factor(cuts, dilepton):
-    # Don't rescale e-mu plots. Otherwise, try to get the rescale
-    # factor from the global_rescale dict; if the requested one does
-    # not exist, don't rescale.
-    if 'Electron' in dilepton:
+class Drawer:
+    # Terminology:
+    #
+    # "cut set": the label for the set of cuts applied on the input
+    # data. These correspond to substrings of the folder names in the
+    # input file. E.g. "OurNewMuonsPlusMuonsMinus" folder -> "OurNew"
+    # cut set.
+    #
+    # "join group": a set of MC samples that will be lumped together
+    # in the plotted histograms (by color and in the legend) and in
+    # the ASCII table.
+    #
+    # "nice-name": the string used for e.g. legend captions, usually
+    # TLatex-ified. E.g. t#bar{t}.
+    #
+    # "sample name": the short name for the MC sample. For the sample
+    # objects in MCSamples imported above, this is just
+    # sample.name. E.g. zmumu.
+    #
+    # JMTBAD rest of it
+
+    def __init__(self, options):
+        self.histo_dir = options.histo_dir
+        self.print_table = options.print_table
+        self.save_plots = options.save_plots
+        self.rescale_lumi = options.rescale_lumi
+        self.lumi_syst_frac = options.lumi_syst_frac
+        self.draw_zprime = options.draw_zprime
+        self.use_poisson_intervals = options.use_poisson_intervals
+        self.put_overflow_in_last_bin = options.put_overflow_in_last_bin
+        self.do_joins = options.do_joins
+        self.join_ttbar_and_other_prompt_leptons = options.join_ttbar_and_other_prompt_leptons
+
+        if not os.path.isdir(self.histo_dir):
+            raise ValueError('histo_dir %s is not a directory' % self.histo_dir)
+
+        self.data_fn = os.path.join(self.histo_dir, 'ana_datamc_data.root')
+        if not os.path.isfile(self.data_fn):
+            raise ValueError('data_fn %s is not a file' % self.data_fn)
+        self.data_f = ROOT.TFile(self.data_fn)
+        if not self.data_f.IsOpen() or self.data_f.IsZombie():
+            raise ValueError('data_fn %s is not a ROOT file' % self.data_fn)
+        
+        # We look for a separate mc dir in our histo_dir first, for
+        # the case where we want to use a specific set of MC files for
+        # a given histo_dir. If none there, check if there is one
+        # specified in options.  Else, use the general mc dir from the
+        # current directory.
+        self.mc_dir = os.path.join(self.histo_dir, 'mc')
+        if not os.path.isdir(self.mc_dir):
+            if hasattr(options, 'mc_dir'):
+                self.mc_dir = options.mc_dir
+            else:
+                self.mc_dir = 'mc'
+        if not os.path.isdir(self.mc_dir):
+            raise ValueError('mc_dir %s is not a directory' % self.mc_dir)
+
+        # If the options override the int_lumi, take that; otherwise
+        # try to get the int_lumi from the file corresponding to
+        # data_fn.
+        if type(options.override_int_lumi) == float:
+            self.int_lumi = options.override_int_lumi
+        else:
+            lumi_fn = self.data_fn.replace('.root', '.lumi')
+            self.int_lumi = self.parse_lumi_from_log(lumi_fn)
+            if self.int_lumi is None:
+                raise ValueError('int_lumi could not be parsed from file %s' % lumi_fn)
+        if self.int_lumi < 0:
+            raise ValueError('int_lumi %f makes no sense' % self.int_lumi)
+
+        # Use all samples specified in MCSamples that are not
+        # requested to be dropped in the options. The sample objects
+        # already-set values (like color, partial_weight) we won't
+        # change, but the objects themselves may be modified. In
+        # particular, we will use them as storage containers for
+        # things like ROOT histograms and calculated things like scale
+        # factors and event counts.
+        self.samples = [s for s in MCSamples.samples if options.exclude_samples is None or s.name not in options.exclude_samples]
+        self.hdata = None
+
+        # Defaults for the dileptons, cutsets, and mass ranges for the
+        # ASCII table.
+        self.quantities_to_compare = ['DileptonMass', 'DimuonMassVertexConstrained']
+        self.dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
+        self.cutsets = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso', 'OurMu15', 'VBTFMu15']
+        self.mass_ranges_for_table = [(60,120), (120,200), (200,400), (400,600), (120,), (200,), (400,), (600,)]
+
+        if options.include_quantities is not None:
+            self.quantities_to_compare = options.include_quantities
+        if options.include_dileptons is not None:
+            self.dileptons = options.include_dileptons
+        if options.include_cutsets is not None:
+            self.cutsets = options.include_cutsets
+        if options.include_mass_ranges_for_table is not None:
+            self.mass_ranges_for_table = options.include_mass_ranges_for_table
+        
+        if options.for_rescale_factors:
+            self.save_plots = False
+            self.rescale_lumi = False
+            self.mass_ranges_for_table = [(60,120)]
+            self.dileptons = ['MuonsPlusMuonsMinus']
+
+        #JMTBAD options
+        self.use_yaxis_overrides = True
+
+        self.setup_root()
+        base = 'plots/datamc'
+        if options.plot_dir_tag is not None:
+            base += '_' + options.plot_dir_tag
+        self.plot_dir_base = os.path.join(base, os.path.basename(self.histo_dir))
+        self.ps = plot_saver(self.plot_dir_base, size=(900,600), pdf_log=True, pdf=True)
+
+    def setup_root(self):
+        set_zp2mu_style()
+        ROOT.gStyle.SetPadLeftMargin(0.13)
+        ROOT.gStyle.SetPadRightMargin(0.07)
+        ROOT.TH1.AddDirectory(False)
+        
+    def get_join(self, sample_name):
+        # If we're to merge the sample given with other histograms,
+        # return a new nice-name and color for the sum. Otherwise,
+        # return None.
+
+        if self.do_joins:
+            if 'qcd' in sample_name or sample_name in ('inclmu15', 'wmunu', 'wjets'):
+                return 'jets', 4
+            elif self.join_ttbar_and_other_prompt_leptons and sample_name in ('ttbar', 'tW', 'tbarW', 'ztautau', 'ww', 'wz', 'zz'):
+                return 't#bar{t} + other prompt leptons', 2
+            elif not self.join_ttbar_and_other_prompt_leptons and sample_name in ('tW', 'tbarW', 'ztautau', 'ww', 'wz', 'zz'):
+                return 'other prompt leptons', 2
+            elif 'dy' in sample_name or sample_name == 'zmumu':
+                return '#gamma/Z #rightarrow #mu^{+}#mu^{-}', 7
+
+        return None, None
+
+    def is_join(self, sample_name):
+        return self.get_join(sample_name)[0] is not None
+    
+    def get_join_name(self, sample_name):
+        return self.get_join(sample_name)[0]
+
+    def get_join_color(self, sample_name):
+        return self.get_join(sample_name)[1]
+
+    def get_color(self, sample):
+        color = self.get_join_color(sample.name)
+        return sample.color if color is None else color
+
+    def get_rebin_factor(self, quantity_to_compare):
+        # For the combination of the arguments, figure out by which
+        # factor to rebin the input histograms. E.g. for DileptonMass
+        # the input is currently 1-GeV bins; here we change this to
+        # 5-GeV bins. 
+        if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained', 'DileptonPt']:
+            return 5
+        return 1
+        
+    def rebin_histogram(self, h, cutset, dilepton, quantity_to_compare):
+        # JMTBAD Make this more flexible to do arbitrary binning, e.g. by
+        # mass resolution.
+        h.Rebin(self.get_rebin_factor(quantity_to_compare))
+
+    def get_x_axis_range(self, cutset, dilepton, quantity_to_compare):
+        # For the given combination of the arguments, return the
+        # desired restriction on the viewable x-axis range, if
+        # any. E.g. for DileptonMass, only show from 70-1400 GeV on
+        # the displayed plot.
+        if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained']:
+            return 70,1400
+        elif quantity_to_compare == 'DileptonPt':
+            return 0, 1000
+        return None
+
+    def parse_lumi_from_log(self, log_fn):
+        # JMTBAD magic, fragile parsing
+        this = False
+        for line in open(log_fn):
+            if this:
+                x = float(line.split()[-2])*1e3 # JMTBAD assumes output is in 1/fb
+                return x
+            if line == '---------------------------------------------------------------\n':
+                this = True
+
+    def get_lumi_rescale_factor(self, cutset, dilepton):
+        # Get the cut set dependent factor by which we rescale the
+        # luminosity.
+
+        # If we're instructed not to rescale at all, don't.
+        if not self.rescale_lumi:
+            return 1.
+
+        # Don't rescale e-mu plots. 
+        if 'Electron' in dilepton:
+            return 1.
+
+        # These numbers are specified manually here, transcribing from
+        # the 60-120 GeV tables (whether from the prescaled path) that
+        # are produced when running this script with rescaling turned
+        # off, rather than trying to be smart and getting them from
+        # the histogram files.
+        if cutset == 'VBTF':
+            return 111466/99248.457457
+        elif cutset == 'OurNew':
+            return 124075/110781.593932
+        elif cutset == 'OurOld':
+            return 128905/114502.540631
+        elif cutset == 'OurNoIso':
+            return 125822/111914.608088
+
+        # If the cutset is not one of the above, don't rescale.
         return 1.
-    else:
-        return global_rescale.get(cuts, 1.)
-    
-draw_zssm = True 
-use_poisson_intervals = True
-overflow_bin = True
 
-do_joins = 'nojoins' not in sys.argv
-joins = [(s.name, 'jets') for s in samples if 'qcd' in s.name]
-joins += [(x, 'jets') for x in ['inclmu15', 'wmunu', 'wjets']]
-#joins += [(x, 'other prompt leptons') for x in ['tW', 'tbarW', 'ztautau', 'ww', 'wz', 'zz']]
-joins += [(x, 't#bar{t} + other prompt leptons') for x in ['ttbar', 'tW', 'tbarW', 'ztautau', 'ww', 'wz', 'zz']]
-joins += [(s.name, '#gamma/Z #rightarrow #mu^{+}#mu^{-}') for s in samples if 'dy' in s.name]
-joins += [('zmumu', '#gamma/Z #rightarrow #mu^{+}#mu^{-}')]
-joins = dict(joins)
-joins_colors = {'jets': 4, 't#bar{t} + other prompt leptons': 2, 'other prompt leptons': 2, '#gamma/Z #rightarrow #mu^{+}#mu^{-}': 7}
+    def advertise(self):
+        # JMTBAD
+        return
+        print '"joins" are:'
+        pprint(joins)
+        print 'total lumi from data: %.f/pb' % int_lumi
+        print 'rescaling mumu MC histograms by these cut-dependent factors:'
+        pprint(global_rescale)
+        print 'comparing', quantity_to_compare
+        print 'using poisson error bars on plots:', use_poisson_intervals
+        print 'last bin contains overflow:', put_overflow_in_last_bin
 
-histo_dir = [x for x in sys.argv if os.path.isdir(x)][0]
-if 'NoLumiMask' in histo_dir:
-    global_rescale = {}
-data_fn = os.path.join(histo_dir, 'ana_datamc_data.root')
-fdata = ROOT.TFile(data_fn)
+    def subtitleize(self, dilepton):
+        return {
+            'MuonsPlusMuonsMinus': '#mu^{+}#mu^{-}',
+            'MuonsPlusMuonsPlus':  '#mu^{+}#mu^{+}',
+            'MuonsMinusMuonsMinus': '#mu^{-}#mu^{-}',
+            'MuonsSameSign': '#mu^{#pm}#mu^{#pm}',
+            'MuonsAllSigns': '#mu#mu',
+            'ElectronsPlusElectronsMinus': 'e^{+}e^{-}',
+            'ElectronsPlusElectronsPlus': 'e^{+}e^{+}',
+            'ElectronsMinusElectronsMinus': 'e^{-}e^{-}',
+            'ElectronsSameSign': 'e^{#pm}e^{#pm}',
+            'ElectronsAllSigns': 'ee',
+            'MuonsPlusElectronsMinus': '#mu^{+}e^{-}',
+            'MuonsMinusElectronsPlus': '#mu^{-}e^{+}',
+            'MuonsPlusElectronsPlus': '#mu^{+}e^{+}',
+            'MuonsMinusElectronsMinus': '#mu^{-}e^{-}',
+            'MuonsElectronsOppSign': '#mu^{+}e^{-}/#mu^{-}e^{+}',
+            'MuonsElectronsSameSign': '#mu^{#pm}e^{#pm}',
+            'MuonsElectronsAllSigns': 'e#mu',
+            }[dilepton]
 
-def parse_lumi_from_log(fn):
-    # Yay for fragile parsing!
-    this = False
-    for line in open(fn):
-        if this:
-            x = float(line.split()[-2])*1e3
-            print x
-            print fn, x
-            return x
-        if line == '---------------------------------------------------------------\n':
-            this = True
+    def titleize(self, quantity_to_compare):
+        return {
+            'DileptonMass': 'm(%s)%s',
+            'DimuonMassVertexConstrained': 'm(%s)%s',
+            'DileptonPt': '%s p_{T}%s',
+            'LeptonPt': "%s leptons' p_{T}%s",
+            'LeptonEta': "%s leptons' #eta%s",
+            }.get(quantity_to_compare, quantity_to_compare + ', %s, %s')
 
-int_lumi = parse_lumi_from_log(data_fn.replace('.root', '.lumi'))
-lumi_syst_frac = 0.06
+    def unitize(self, quantity_to_compare):
+        return {
+            'DileptonMass': ' [GeV]',
+            'DimuonMassVertexConstrained': ' [GeV]',
+            'DileptonPt': ' [GeV]',
+            'LeptonPt': ' [GeV]',
+            'LeptonEta': '',
+            }.get(quantity_to_compare, ' [XXX]')
 
-print '"joins" are:'
-pprint(joins)
-print 'total lumi from data: %.f/pb' % int_lumi
-print 'rescaling mumu MC histograms by these cut-dependent factors:'
-pprint(global_rescale)
-print 'comparing', to_compare
-print 'using poisson error bars on plots:', use_poisson_intervals
-print 'last bin contains overflow:', overflow_bin
+    def get_dir_name(self, cutset, dilepton):
+        return cutset + dilepton + 'Histos'
 
-subtitleize = {
-    'MuonsPlusMuonsMinus': '#mu^{+}#mu^{-}',
-    'MuonsPlusMuonsPlus':  '#mu^{+}#mu^{+}',
-    'MuonsMinusMuonsMinus': '#mu^{-}#mu^{-}',
-    'MuonsSameSign': '#mu^{#pm}#mu^{#pm}',
-    'MuonsAllSigns': '#mu#mu',
-    'ElectronsPlusElectronsMinus': 'e^{+}e^{-}',
-    'ElectronsPlusElectronsPlus': 'e^{+}e^{+}',
-    'ElectronsMinusElectronsMinus': 'e^{-}e^{-}',
-    'ElectronsSameSign': 'e^{#pm}e^{#pm}',
-    'ElectronsAllSigns': 'ee',
-    'MuonsPlusElectronsMinus': '#mu^{+}e^{-}',
-    'MuonsMinusElectronsPlus': '#mu^{-}e^{+}',
-    'MuonsPlusElectronsPlus': '#mu^{+}e^{+}',
-    'MuonsMinusElectronsMinus': '#mu^{-}e^{-}',
-    'MuonsElectronsOppSign': '#mu^{+}e^{-}/#mu^{-}e^{+}',
-    'MuonsElectronsSameSign': '#mu^{#pm}e^{#pm}',
-    'MuonsElectronsAllSigns': 'e#mu',
-    }
-titleize = {
-    'DileptonMass': 'm(%s)%s',
-    'DimuonMassVertexConstrained': 'm(%s)%s',
-    'DileptonPt': '%s p_{T}%s',
-    }
-unitize = {
-    'DileptonMass': ' [GeV]',
-    'DimuonMassVertexConstrained': ' [GeV]',
-    'DileptonPt': ' [GeV]',
-    }
-yaxis = {
-    #('MuonsSameSign', False): (1e-4, 5),
-    }
-use_yaxis = True
+    def get_y_axis_range(self, dilepton, cumulative):
+        return None
 
-dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
-cutss = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso', 'OurMu15', 'VBTFMu15']
-#cutss = ['OurNew']
-mass_ranges_for_table = [(60,120), (120,), (120,200), (200,), (200,400), (400,), (600,)]
+    def handle_overflows(self, h, range):
+        if not self.put_overflow_in_last_bin:
+            return
+        if range is None:
+            range = h.GetBinLowEdge(1), h.GetBinLowEdge(h.GetNbinsX()+1)
+        move_above_into_bin(h, range[1])
 
-if 'forscale' in sys.argv:
-    global_rescale = {}
-    mass_ranges_for_table = [(60,120)]
-    dileptons = ['MuonsPlusMuonsMinus']
-    cutss.remove('Simple')
-    cutss.remove('EmuVeto')
+    def prepare_mc_histograms(self, cutset, dilepton, quantity_to_compare, cumulative):
+        # For each sample in the list of MC samples, we get the
+        # specified histogram from the appropriate input file, clone
+        # it, rebin/scale/otherwise manipulate it as necessary, and
+        # store the result as The Histogram in the sample object.
+        for sample in self.samples:
+            mc_fn = os.path.join(self.mc_dir, 'ana_datamc_%s.root' % sample.name)
+            f = ROOT.TFile(mc_fn)
+            sample.histogram = getattr(f, self.get_dir_name(cutset, dilepton)).Get(quantity_to_compare).Clone()
 
-if 'gogo' in sys.argv:
-    dileptons = ['MuonsPlusMuonsMinus','MuonsSameSign']
-    cutss = ['OurNew']
-    mass_ranges_for_table = [(60,120),(120,200)]
-    
-ROOT.TH1.AddDirectory(False)
+            self.rebin_histogram(sample.histogram, cutset, dilepton, quantity_to_compare)
 
-def dir_name(c, d):
-    return c + d + 'Histos'
+            sample.scaled_by = self.int_lumi * self.get_lumi_rescale_factor(cutset, dilepton) * sample.partial_weight
+            sample.histogram.Scale(sample.scaled_by)
 
-pdir = 'plots/datamc'
-if histo_dir != 'ana_datamc':
-    pdir += '_' + histo_dir.replace('ana_datamc_', '')
-ps = plot_saver(pdir, size=(900,600), pdf_log=True, pdf=True)
-save_plots = 'no_plots' not in sys.argv
-
-# Can redefine which samples get included.
-#samples = [s for s in samples if not s.name in ['wjets', 'zz']]
-
-for cuts in cutss:
-    if not hasattr(fdata, dir_name(cuts, 'MuonsPlusMuonsMinus')):
-        continue
-    plot_dir = pdir + '/%s/%s' % (to_compare, cuts)
-    ps.set_plot_dir(plot_dir)
-
-    # Depending on the cut set, skip certain dileptons.
-    if cuts == 'EmuVeto':
-        dils = [x for x in dileptons if 'Electron' in x]
-    elif 'Mu15' in cuts:
-        dils = [x for x in dileptons if 'Electron' not in x]
-    else:
-        dils = dileptons
-
-    # Also depending on the histogram to be compared, skip certain
-    # dileptons.
-    if 'Dimuon' in to_compare:
-        dils = [x for x in dils if 'Electron' not in x]
-
-    for cumulative in (False, True):
-        data = dict((d, getattr(fdata, dir_name(cuts, d)).Get(to_compare).Clone()) for d in dils)
-
-        for dilepton in dils:
-            xax = x_axis_limits if (dilepton == 'MuonsPlusMuonsMinus' and not cumulative) else x_axis_limits2
-
-            for sample in samples:
-                # It would be more efficient to have the sample loop be
-                # the outer one thanks to the file opening/closing, but
-                # the code is cleaner this way.
-                f = ROOT.TFile(os.path.join(histo_dir, 'mc', 'ana_datamc_%s.root' % sample.name))
-                sample.mass = getattr(f, dir_name(cuts, dilepton)).Get(to_compare).Clone()
-                sample.mass.Rebin(rebin_factor)
-                sample.scaled_by = get_rescale_factor(cuts, dilepton) * sample.partial_weight * int_lumi
-                sample.mass.Scale(sample.scaled_by)
-                if cumulative:
-                    sample.mass_not_cumulative = sample.mass
-                    sample.mass = cumulative_histogram(sample.mass)
-                elif overflow_bin:
-                    move_above_into_bin(sample.mass, xax[1])
-
-            ## Sort by increasing integral.
-            #if not cumulative:
-            #    samples.sort(key=lambda x: x.mass.Integral(x.mass.FindBin(150), x.mass.FindBin(1e9)))
-            #    print dilepton, [x.name for x in samples]
-
-            hdata = data[dilepton]
-
-            # Print a pretty table.
-            if not cumulative:
-                for mass_range in mass_ranges_for_table:
-                    if mass_range == (586,914) and (cuts != 'Our' or dilepton != 'MuonsPlusMuonsMinus'):
-                        continue
-                    print 'cuts: %s  dilepton: %s  mass range: %s' % (cuts, dilepton, mass_range)
-                    for sample in samples:
-                        sample.integral = get_integral(sample.mass, *mass_range, integral_only=True, include_last_bin=False)
-                        sample.raw_integral = sample.integral / sample.scaled_by
-                    hdata_integral = get_integral(hdata, *mass_range, integral_only=True, include_last_bin=False)
-                    print '%50s%20s%20s%20s%20s%20s%20s%20s%20s%20s' % ('sample', 'weight for %.1f/pb' % int_lumi, 'raw integral', 'integral', 'stat error', 'limit if int=0', 'syst error', 'syst(+)stat', 'lumi error', 'total')
-                    print '%50s%20s%20i%20.6f%20.6f' % ('data', '-', int(hdata_integral), hdata_integral, hdata_integral**0.5)
-                    sum_mc = 0.
-                    var_sum_mc = 0.
-                    syst_var_sum_mc = 0.
-                    sums = defaultdict(float)
-                    var_sums = defaultdict(float)
-                    syst_var_sums = defaultdict(float)
-                    for sample in sorted(samples, key=lambda x: x.integral, reverse=True):
-                        w = sample.scaled_by
-                        var = w * sample.integral # not w**2 * sample.integral because sample.integral is already I*w
-                        syst_var = (sample.syst_frac * sample.integral)**2
-
-                        if 'zssm' not in sample.name:
-                            sum_mc += sample.integral
-                            var_sum_mc += var
-                            syst_var_sum_mc += syst_var
-
-                        if joins.has_key(sample.name):
-                            join_name = joins[sample.name]
-                            sums[join_name] += sample.integral
-                            var_sums[join_name] += var
-                            syst_var_sums[join_name] += syst_var
-
-                        limit = '%.6f' % (3*w) if sample.integral == 0 else '-'
-
-                        lumi_err = lumi_syst_frac * sample.integral
-                        syst_plus_stat = (var + syst_var)**0.5
-                        tot_err = (var + syst_var + lumi_err**2)**0.5
-                        print '%50s%20.6f%20f%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f' % (sample.nice_name, w, sample.raw_integral, sample.integral, var**0.5, limit, syst_var**0.5, syst_plus_stat, lumi_err, tot_err)
-
-                    lumi_err = lumi_syst_frac * sum_mc
-                    syst_plus_stat = (var_sum_mc + syst_var_sum_mc)**0.5
-                    tot_err = (var_sum_mc + syst_var_sum_mc + lumi_err**2)**0.5
-                        
-                    print '%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f' % ('sum MC (not including Z\')', '-', '-', sum_mc, var_sum_mc**0.5, '-', syst_var_sum_mc**0.5, syst_plus_stat, lumi_err, tot_err)
-                    for join_name in sorted(sums.keys()):
-                        lumi_err = lumi_syst_frac * sums[join_name]
-                        syst_plus_stat = (var_sums[join_name] + syst_var_sums[join_name])**0.5
-                        tot_err = (var_sums[join_name] + syst_var_sums[join_name] + lumi_err**2)**0.5
-                        print '%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f' % (join_name, '-', '-', sums[join_name], var_sums[join_name]**0.5, '-', syst_var_sums[join_name]**0.5, syst_plus_stat, lumi_err, tot_err)
-                    print
-                print
-
-            # Stack 'em.
-            s = ROOT.THStack('s', '')
-
-            last_mc = None
-            for sample in samples:
-                h = sample.mass
-                color = joins_colors[joins[sample.name]] if do_joins and joins.has_key(sample.name) else sample.color
-                h.SetLineColor(color)
-                h.SetMarkerStyle(0)
-                if 'zssm' not in sample.name:
-                    h.SetFillColor(color)
-                    s.Add(h)
-                last_mc = h
-
-            if draw_zssm and (dilepton == 'MuonsPlusMuonsMinus' and not cumulative):
-                l = ROOT.TLegend(0.47, 0.55, 0.88, 0.88)
-            elif dilepton == 'MuonsPlusMuonsMinus' and cumulative:
-                l = ROOT.TLegend(0.47, 0.55, 0.88, 0.88)
+            if cumulative:
+                sample.histogram = cumulative_histogram(sample.histogram)
             else:
-                l = ROOT.TLegend(0.50, 0.69, 0.76, 0.88)
-            l.SetFillColor(0)
-            l.SetBorderSize(0)
+                self.handle_overflows(sample.histogram, self.get_x_axis_range(cutset, dilepton, quantity_to_compare))
 
-            m = ROOT.TMarker()
-            m.SetMarkerStyle(20)
-            m.SetMarkerSize(0.8)
-            m.SetMarkerColor(ROOT.kBlack)
-            l.AddEntry(m, 'DATA', 'EP')
+            sample.histogram.SetMarkerStyle(0)
+            color = self.get_color(sample)
+            sample.histogram.SetLineColor(color)
+            if not sample.is_zprime:
+                sample.histogram.SetFillColor(color)
 
-            legend_already = set()
-            for sample in reversed(samples):
-                nice_name = sample.nice_name
-                if do_joins and joins.has_key(sample.name):
-                    join_nice_name = joins[sample.name]
-                    if join_nice_name in legend_already:
-                        continue
-                    else:
-                        legend_already.add(join_nice_name)
-                        nice_name = join_nice_name
-                if 'zssm' in sample.name and (not draw_zssm or dilepton != 'MuonsPlusMuonsMinus' or cumulative):
+    def prepare_data_histogram(self, cutset, dilepton, quantity_to_compare, cumulative):
+        self.hdata = getattr(self.data_f, self.get_dir_name(cutset, dilepton)).Get(quantity_to_compare).Clone()
+        self.rebin_histogram(self.hdata, cutset, dilepton, quantity_to_compare)
+        range = self.get_x_axis_range(cutset, dilepton, quantity_to_compare)
+
+        if cumulative:
+            self.hdata = cumulative_histogram(self.hdata)
+        else:
+            self.handle_overflows(self.hdata, range)
+            
+        if not self.put_overflow_in_last_bin:
+            # Not so important if the MC histograms have entries past
+            # the view range that isn't shown, but not so for
+            # data. Check that there's no data off screen.
+            overflow_integral = get_integral(self.hdata, range[1], integral_only=True)
+            if overflow_integral > 0:
+                raise ValueError('WARNING: in %s, data histogram has points in overflow (mass bins above %.f GeV)! integral = %f' % (cutset + dilepton, range[1], overflow_integral))
+
+    def make_table(self, cutset, dilepton):
+        # Print a nicely formatted ASCII table of event counts in the
+        # specified mass ranges, along with uncertainties.
+        # JMTBAD htmlize
+        for mass_range in self.mass_ranges_for_table:
+            print '*'*(50+20*9), '\n'
+            print 'cuts: %s  dilepton: %s  mass range: %s' % (cutset, dilepton, mass_range)
+
+            # For all the MC samples, calculate the integrals over the
+            # current mass range and store it in the sample object.
+            for sample in self.samples:
+                sample.integral = get_integral(sample.histogram, *mass_range, integral_only=True, include_last_bin=False)
+                sample.raw_integral = sample.integral / sample.scaled_by
+
+            # Header. (I hope you have a widescreen monitor, and good eyes.)
+            print '%50s%20s%20s%20s%20s%20s%20s%20s%20s%20s' % ('sample', 'weight', 'raw integral', 'integral', 'stat error', 'limit if int=0', 'syst error', 'syst(+)stat', 'lumi error', 'total')
+
+            # Print the row for the event count from the data (only
+            # the integral and statistical uncertainty columns will be
+            # filled).
+            data_integral = get_integral(self.hdata, *mass_range, integral_only=True, include_last_bin=False)
+            print '%50s%20s%20i%20.6f%20.6f' % ('data', '-', int(data_integral), data_integral, data_integral**0.5)
+
+            # As we loop over the MC samples, keep some running sums
+            # of integrals and variances. Do one such set including
+            # the whole MC, and a set for each join group.
+            sum_mc = 0.
+            var_sum_mc = 0.
+            syst_var_sum_mc = 0.
+            sums = defaultdict(float) # will initialize to 0. on first lookup
+            var_sums = defaultdict(float)
+            syst_var_sums = defaultdict(float)
+
+            # Loop over the MC samples in order of decreasing
+            # integral.
+            for sample in sorted(self.samples, key=lambda x: x.integral, reverse=True):
+                # Calculate the contributions to the variances for the
+                # statistical and systematic uncertainties for this
+                # sample.
+                w = sample.scaled_by
+                var = w * sample.integral # not w**2 * sample.integral because sample.integral is already I*w
+                syst_var = (sample.syst_frac * sample.integral)**2
+
+                # Add the integral and the variances to the whole-MC
+                # values, if it is to be included (i.e. don't include
+                # Z' samples).
+                if not sample.is_zprime:
+                    sum_mc += sample.integral
+                    var_sum_mc += var
+                    syst_var_sum_mc += syst_var
+
+                # If this sample belongs to a join group, add the
+                # integral and the variances to the values for the
+                # join group.
+                
+                join_name = self.get_join_name(sample.name)
+                if join_name is not None:
+                    sums[join_name] += sample.integral
+                    var_sums[join_name] += var
+                    syst_var_sums[join_name] += syst_var
+
+                # For integrals that turn out to be zero due to not
+                # enough statistics, we will give also the 95% CL
+                # upper limit.
+                limit = '%.6f' % (3*w) if sample.integral == 0 else '-'
+
+                # For this sample alone, determine the combined
+                # statistical+systematic uncertainty, the uncertainty
+                # due to luminosity, and the total of all three.
+                syst_plus_stat = (var + syst_var)**0.5
+                lumi_err = self.lumi_syst_frac * sample.integral
+                tot_err = (var + syst_var + lumi_err**2)**0.5
+
+                # Print this row of the table.
+                print '%50s%20.6f%20f%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f' % (sample.nice_name, w, sample.raw_integral, sample.integral, var**0.5, limit, syst_var**0.5, syst_plus_stat, lumi_err, tot_err)
+
+            print '-'*(50+20*9)
+            
+            # Determine the uncertainties and print the rows for each
+            # of the join groups. Sort this section by decreasing integral.
+            join_integrals = sums.items()
+            join_integrals.sort(key=lambda x: x[1])
+            for join_name, join_integral in join_integrals:
+                lumi_err = self.lumi_syst_frac * sums[join_name]
+                syst_plus_stat = (var_sums[join_name] + syst_var_sums[join_name])**0.5
+                tot_err = (var_sums[join_name] + syst_var_sums[join_name] + lumi_err**2)**0.5
+                print '%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f' % (join_name, '-', '-', sums[join_name], var_sums[join_name]**0.5, '-', syst_var_sums[join_name]**0.5, syst_plus_stat, lumi_err, tot_err)
+
+            print '-'*(50+20*9)
+
+            # For the sum of all MC, determine the combined
+            # statistical+systematic uncertainty, the uncertainty due
+            # to luminosity, and the total of all three. Then print
+            # the whole-MC row.
+            syst_plus_stat = (var_sum_mc + syst_var_sum_mc)**0.5
+            lumi_err = self.lumi_syst_frac * sum_mc
+            tot_err = (var_sum_mc + syst_var_sum_mc + lumi_err**2)**0.5
+            print '%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f' % ('sum MC (not including Z\')', '-', '-', sum_mc, var_sum_mc**0.5, '-', syst_var_sum_mc**0.5, syst_plus_stat, lumi_err, tot_err)
+
+            print
+        print
+
+    def should_draw_zprime(self, dilepton):
+        return self.draw_zprime and dilepton == 'MuonsPlusMuonsMinus'
+
+    def draw_legend(self, dilepton, cumulative):
+        # Legend placement coordinates and sizes depend on factors set
+        # elsewhere, too, so this is fragile.
+        if dilepton == 'MuonsPlusMuonsMinus' and cumulative:
+            legend = ROOT.TLegend(0.47, 0.55, 0.88, 0.88)
+        else:
+            legend = ROOT.TLegend(0.50, 0.69, 0.76, 0.88)
+
+        legend.SetFillColor(0)
+        legend.SetBorderSize(0)
+
+        # Add an entry for the data points.
+        m = ROOT.TMarker()
+        m.SetMarkerStyle(20)
+        m.SetMarkerSize(0.8)
+        m.SetMarkerColor(ROOT.kBlack)
+        legend.AddEntry(m, 'DATA', 'EP')
+
+        # Add entries for the MC samples to the legend, respecting
+        # join groups (i.e. don't add the same nice-name twice).
+        legend_already = set()
+        for sample in reversed(self.samples):
+            if sample.is_zprime and not self.should_draw_zprime(dilepton):
+                continue
+
+            nice_name = sample.nice_name
+
+            join_name = self.get_join_name(sample.name)
+            if join_name is not None:
+                if join_name in legend_already:
                     continue
-                l.AddEntry(sample.mass, nice_name, 'F')
+                else:
+                    legend_already.add(join_name)
+                    nice_name = join_name
+            legend.AddEntry(sample.histogram, nice_name, 'F') # Gets the color and fill style from the histogram.
 
-            xtitle = titleize[to_compare] % (subtitleize[dilepton], unitize[to_compare])
-            if cumulative:
-                ytitle = 'Events #geq %s' % (titleize[to_compare] % (subtitleize[dilepton], ''))
-            else:
-                ytitle = 'Events / %i%s' % (rebin_factor, unitize[to_compare].translate(None, '()[]'))
+        legend.SetTextSize(0.03)
+        legend.Draw('same')
+        ## "EP" in TLegend::AddEntry doesn't seem to work
+        #ll = ROOT.TLine()
+        #ll.DrawLineNDC(0.532, 0.82, 0.532, 0.875)
+                                
+        return legend
 
-            s.SetTitle(';%s;%s' % (xtitle, ytitle))
-            s.Draw('hist')
-            # must call Draw first or the THStack doesn't have a histogram/axis
-            s.GetXaxis().SetRangeUser(*xax)
-            s.GetXaxis().SetTitleOffset(0.9)
-            s.GetXaxis().SetTitleSize(0.047)
-            s.GetYaxis().SetTitleOffset(1.2)
-            s.GetYaxis().SetTitleSize(0.047)
+    def draw_data_on_mc(self, cutset, dilepton, quantity_to_compare, cumulative):
+        # Make a Stack for the MC histograms. We draw it first so the
+        # data points will be drawn on top later.  We assume that in
+        # the list of samples, the join groups are contiguous already
+        # so that like-colored histograms will be next to each other.
+        
+        s = ROOT.THStack('s', '')
+        for sample in self.samples:
+            # Don't stack the Z' samples.
+            if sample.is_zprime:
+                continue
+            s.Add(sample.histogram) # Assumes they've already been prepared.
 
-            hdata.Rebin(rebin_factor)
-            if cumulative:
-                hdata = cumulative_histogram(hdata)
-            elif overflow_bin:
-                move_above_into_bin(hdata, xax[1])
-            else:
-                overflow_integral = get_integral(hdata, xax[1], integral_only=True)
-                if overflow_integral > 0:
-                    print 'WARNING: in %s, data histogram has points in overflow (mass bins above %.f GeV)! integral = %f' % (cuts + ' ' + dilepton,  xax[1], overflow_integral)
+        # Figure out its titles.
+        xtitle = self.titleize(quantity_to_compare) % (self.subtitleize(dilepton), self.unitize(quantity_to_compare))
+        if cumulative:
+            # E.g. Events >= m(mu+mu-).
+            ytitle = 'Events #geq %s' % (self.titleize(quantity_to_compare) % (self.subtitleize(dilepton), ''))
+        else:
+            # E.g. Events/5 GeV.
+            ytitle = 'Events / %i%s' % (self.get_rebin_factor(quantity_to_compare), self.unitize(quantity_to_compare).translate(None, '()[]')) # Events/5 GeV. JMTBAD assumes original histogram had 1 GeV bins and was rebinned simply -- ignores rebin_histogram ability to have arb. bins
+        s.SetTitle(';%s;%s' % (xtitle, ytitle))
 
-            mymin = real_hist_min(s.GetStack().Last(), user_range=xax) * 0.7
-            #mymin = real_hist_min(last_mc, user_range=xax) * 0.7
-            mymax = real_hist_max(s.GetStack().Last(), user_range=xax, use_error_bars=False) * 1.05
-            if hdata.GetEntries() > 0:
-                rhm = real_hist_max(hdata, user_range=xax)
+        s.Draw('hist')
+
+        # Must call Draw first or the THStack doesn't have a histogram/axes.
+        s.GetXaxis().SetTitleOffset(0.9)
+        s.GetXaxis().SetTitleSize(0.047)
+        s.GetYaxis().SetTitleOffset(1.2)
+        s.GetYaxis().SetTitleSize(0.047)
+
+        # Set the x-axis range as specified. Then determine what
+        # the real extrema of the data histogram and the MC stack are
+        # over the xrange specified.
+        xrange = self.get_x_axis_range(cutset, dilepton, quantity_to_compare)
+        mymin, mymax = None, None
+        if xrange is not None:
+            s.GetXaxis().SetRangeUser(*xrange)
+            self.hdata.GetXaxis().SetRangeUser(*xrange)
+            mymin = real_hist_min(s.GetStack().Last(), user_range=xrange) * 0.7
+            mymax = real_hist_max(s.GetStack().Last(), user_range=xrange, use_error_bars=False) * 1.05
+            if self.hdata.GetEntries() > 0:
+                rhm = real_hist_max(self.hdata, user_range=xrange)
                 mymax = max(mymax, rhm)
 
-            if use_yaxis and yaxis.has_key((dilepton,cumulative)):
-                yaxismin, yaxismax = yaxis[(dilepton,cumulative)]
-                if yaxismin is not None:
-                    mymin = yaxismin
-                if yaxismax is not None:
-                    mymax = yaxismax
+        # Can override the above fussing.
+        yrange = self.get_y_axis_range(dilepton, cumulative)
+        if self.use_yaxis_overrides and yrange is not None:
+            if yrange[0] is not None:
+                mymin = yrange[0]
+            if yrange[1] is not None:
+                mymax = yrange[1]
 
-            s.SetMinimum(mymin)
-            s.SetMaximum(mymax)
+        if mymin is not None: s.SetMinimum(mymin)
+        if mymax is not None: s.SetMaximum(mymax)
 
-            hdata.SetStats(0)
-            data_draw_cmd = 'same p e'
-            if use_poisson_intervals:
-                hdata = poisson_intervalize(hdata, True)
-                data_draw_cmd += ' z'
-            hdata.GetXaxis().SetRangeUser(*xax)
-            hdata.SetMinimum(mymin)
-            hdata.SetMaximum(mymax)
-            hdata.SetMarkerStyle(20)
-            hdata.SetMarkerSize(0.8)
-            hdata.Draw(data_draw_cmd)
+        # Now draw the data on top of the stack.
+        self.hdata.SetStats(0)
+        data_draw_cmd = 'same p e'
+        if self.use_poisson_intervals:
+            self.hdata = poisson_intervalize(self.hdata, True)
+            data_draw_cmd += ' z'
+        if mymin is not None: self.hdata.SetMinimum(mymin)
+        if mymax is not None: self.hdata.SetMaximum(mymax)
+        self.hdata.SetMarkerStyle(20)
+        self.hdata.SetMarkerSize(0.8)
+        self.hdata.Draw(data_draw_cmd)
 
-            if draw_zssm and not cumulative and dilepton == 'MuonsPlusMuonsMinus':
-                from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import zssm1000
-                zp = zssm1000.mass
-                zp.SetTitle('')
-                zp.SetLineWidth(2)
-                zp.GetXaxis().SetRangeUser(*xax)
+        # Draw the Z' curve separately. It is overlaid, not stacked
+        # with the rest of the MC expectation.
+        if self.should_draw_zprime(dilepton):
+            # JMTBAD Extend to the rest of the Z' samples when there are any.
+            from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import zssm1000
+            zp = zssm1000.histogram # Loaded/scaled already in prepare_mc_histograms since the loop over the samples list modified the original object that zssm1000 points to.
+            zp.SetTitle('')
+            zp.SetLineWidth(2)
+            if xrange is not None:
+                zp.GetXaxis().SetRangeUser(*xrange)
                 zp.SetMinimum(mymin)
                 zp.SetMaximum(mymax)
-                zp.SetStats(0)
-                zp.Draw('hist same')
+            zp.SetStats(0)
+            zp.Draw('hist same')
 
-            t = ROOT.TPaveLabel(0.20, 0.89, 0.86, 0.99, 'CMS 2011 preliminary   #sqrt{s} = 7 TeV    #int L dt = %.f pb^{-1}' % round(int_lumi), 'brNDC')
-            t.SetTextSize(0.35)
-            t.SetBorderSize(0)
-            t.SetFillColor(0)
-            t.SetFillStyle(0)
-            t.Draw()
+        # Adorn the plot with legend and labels.
+        l = self.draw_legend(dilepton, cumulative)
+        t = ROOT.TPaveLabel(0.20, 0.89, 0.86, 0.99, 'CMS 2011 preliminary   #sqrt{s} = 7 TeV    #int L dt = %.f pb^{-1}' % round(self.int_lumi), 'brNDC')
+        t.SetTextSize(0.35)
+        t.SetBorderSize(0)
+        t.SetFillColor(0)
+        t.SetFillStyle(0)
+        t.Draw()
 
-            l.SetTextSize(0.03)
-            l.Draw('same')
-            ## huge crappy hack for "EP" in TLegend::AddEntry not working
-            #ll = ROOT.TLine()
-            #ll.DrawLineNDC(0.532, 0.82, 0.532, 0.875)
+        # Done; save it!
+        plot_fn = dilepton
+        if cumulative:
+            plot_fn += '_cumulative'
+        self.ps.save(plot_fn)
 
-            n = dilepton
-            if cumulative:
-                n += '_cumulative'
-            if save_plots:
-                ps.save(n)
+    def go(self):
+        for quantity_to_compare in self.quantities_to_compare:
+            print quantity_to_compare
+            
+            if quantity_to_compare != 'DileptonMass':
+                cutsets = ['OurNew']
+            else:
+                cutsets = self.cutsets
+                
+            for cutset in cutsets:
+                print cutset
+                
+                # If the cut set doesn't exist in the input file, silently skip it.
+                if not hasattr(self.data_f, self.get_dir_name(cutset, 'MuonsPlusMuonsMinus')):
+                    continue
+
+                # Directory structure example:
+                # plots/datamc/lumi_mask_name/quantity_to_compare/cut_set/.
+                if self.save_plots:
+                    plot_dir = self.plot_dir_base + '/%s/%s' % (quantity_to_compare, cutset)
+                    self.ps.set_plot_dir(plot_dir)
+
+                # Depending on the quantity to compare and cut set, skip certain dileptons.
+                if cutset == 'EmuVeto': # Only care about e-mu dileptons here.
+                    dileptons = [x for x in self.dileptons if 'Electron' in x]
+                elif 'Mu15' in cutset: # Don't care about e-mu dileptons here.
+                    dileptons = [x for x in self.dileptons if 'Electron' not in x]
+                else:
+                    dileptons = self.dileptons
+
+                # Also depending on the quantity to be compared, skip certain
+                # dileptons.
+                if 'Dimuon' in quantity_to_compare: # Only defined for mumu.
+                    dileptons = [x for x in dils if 'Electron' not in x]
+
+                for dilepton in dileptons:
+                    print dilepton
+                    
+                    for cumulative in (False, True):
+                        # Prepare the histograms. The MC histograms are stored in
+                        # their respective sample objects, and the data histogram is
+                        # kept in self.hdata.
+                        self.prepare_mc_histograms(cutset, dilepton, quantity_to_compare, cumulative)
+                        self.prepare_data_histogram(cutset, dilepton, quantity_to_compare, cumulative)
+
+                        # Print the entries for the ASCII table for the current
+                        # cutset+dilepton. Could extend this to support counts for
+                        # ranges that aren't mass.
+                        if not cumulative and 'Mass' in quantity_to_compare and self.print_table:
+                            self.make_table(cutset, dilepton)
+
+                        if self.save_plots:
+                            self.draw_data_on_mc(cutset, dilepton, quantity_to_compare, cumulative)
+
+d = Drawer(options)
+d.advertise()
+d.go()

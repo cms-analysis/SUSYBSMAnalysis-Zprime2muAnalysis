@@ -271,6 +271,8 @@ void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& 
   // PATTrigger matcher previously, so why not.) We do this for both
   // the main path and the prescaled path.
   Zprime2muTriggerPathsAndFilters pandf(event);
+  if (!pandf.valid)
+    throw cms::Exception("Zprime2muLeptonProducer") << "could not determine the HLT path and filter names for this event\n";
   L3_muons           = get_L3_muons(event, pandf.filter,           trigger_summary_src);
   prescaled_L3_muons = get_L3_muons(event, pandf.prescaled_filter, trigger_summary_src);
   L3_muons_matched.clear();

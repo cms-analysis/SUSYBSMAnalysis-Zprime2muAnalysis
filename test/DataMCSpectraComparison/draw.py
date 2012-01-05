@@ -165,6 +165,9 @@ class Drawer:
         os.system('mkdir -p %s' % self.plot_dir_base)
         self.ps = plot_saver(self.plot_dir_base, size=(900,600), pdf_log=True, pdf=True)
 
+        self.table_sections = []
+        self.table_rows = []
+        
     def setup_root(self):
         set_zp2mu_style()
         ROOT.gStyle.SetPadLeftMargin(0.13)
@@ -373,14 +376,14 @@ class Drawer:
             if overflow_integral > 0:
                 raise ValueError('WARNING: in %s, data histogram has points in overflow (mass bins above %.f GeV)! integral = %f' % (cutset + dilepton, range[1], overflow_integral))
 
-    def make_table(self, table_f, cutset, dilepton):
+    def make_table(self, cutset, dilepton):
         # Make a nicely formatted ASCII table of event counts in the
         # specified mass ranges, along with uncertainties.
-        # JMTBAD htmlize
-
         for mass_range in self.mass_ranges_for_table:
-            table_f.write('*'*(50+20*9) + '\n\n')
-            table_f.write('cuts: %s  dilepton: %s  mass range: %s\n' % (cutset, dilepton, mass_range))
+            self.table_sections.append((cutset, dilepton, mass_range))
+            
+            self.table_rows.append('*'*(50+20*9) + '\n\n')
+            self.table_rows.append('ANCHORMEcuts: %s  dilepton: %s  mass range: %s\n' % (cutset, dilepton, mass_range))
 
             # For all the MC samples, calculate the integrals over the
             # current mass range and store it in the sample object.
@@ -389,13 +392,13 @@ class Drawer:
                 sample.raw_integral = sample.integral / sample.scaled_by
 
             # Header. (I hope you have a widescreen monitor, a small font, and good eyes.)
-            table_f.write('%50s%20s%20s%20s%20s%20s%20s%20s%20s%20s\n' % ('sample', 'weight', 'raw integral', 'integral', 'stat error', 'limit if int=0', 'syst error', 'syst(+)stat', 'lumi error', 'total'))
+            self.table_rows.append('%50s%20s%20s%20s%20s%20s%20s%20s%20s%20s\n' % ('sample', 'weight', 'raw integral', 'integral', 'stat error', 'limit if int=0', 'syst error', 'syst(+)stat', 'lumi error', 'total'))
 
             # Print the row for the event count from the data (only
             # the integral and statistical uncertainty columns will be
             # filled).
             data_integral = get_integral(self.hdata, *mass_range, integral_only=True, include_last_bin=False)
-            table_f.write('%50s%20s%20i%20.6f%20.6f\n' % ('data', '-', int(data_integral), data_integral, data_integral**0.5))
+            self.table_rows.append('%50s%20s%20i%20.6f%20.6f\n' % ('data', '-', int(data_integral), data_integral, data_integral**0.5))
 
             # As we loop over the MC samples, keep some running sums
             # of integrals and variances. Do one such set including
@@ -448,9 +451,9 @@ class Drawer:
                 tot_err = (var + syst_var + lumi_err**2)**0.5
 
                 # Print this row of the table.
-                table_f.write('%50s%20.6f%20f%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f\n' % (sample.nice_name, w, sample.raw_integral, sample.integral, var**0.5, limit, syst_var**0.5, syst_plus_stat, lumi_err, tot_err))
+                self.table_rows.append('%50s%20.6f%20f%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f\n' % (sample.nice_name, w, sample.raw_integral, sample.integral, var**0.5, limit, syst_var**0.5, syst_plus_stat, lumi_err, tot_err))
 
-            table_f.write('-'*(50+20*9) + '\n')
+            self.table_rows.append('-'*(50+20*9) + '\n')
             
             # Determine the uncertainties and print the rows for each
             # of the join groups. Sort this section by decreasing integral.
@@ -460,9 +463,9 @@ class Drawer:
                 lumi_err = self.lumi_syst_frac * sums[join_name]
                 syst_plus_stat = (var_sums[join_name] + syst_var_sums[join_name])**0.5
                 tot_err = (var_sums[join_name] + syst_var_sums[join_name] + lumi_err**2)**0.5
-                table_f.write('%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f\n' % (join_name, '-', '-', sums[join_name], var_sums[join_name]**0.5, '-', syst_var_sums[join_name]**0.5, syst_plus_stat, lumi_err, tot_err))
+                self.table_rows.append('%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f\n' % (join_name, '-', '-', sums[join_name], var_sums[join_name]**0.5, '-', syst_var_sums[join_name]**0.5, syst_plus_stat, lumi_err, tot_err))
 
-            table_f.write('-'*(50+20*9) + '\n')
+            self.table_rows.append('-'*(50+20*9) + '\n')
 
             # For the sum of all MC, determine the combined
             # statistical+systematic uncertainty, the uncertainty due
@@ -471,10 +474,10 @@ class Drawer:
             syst_plus_stat = (var_sum_mc + syst_var_sum_mc)**0.5
             lumi_err = self.lumi_syst_frac * sum_mc
             tot_err = (var_sum_mc + syst_var_sum_mc + lumi_err**2)**0.5
-            table_f.write('%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f\n' % ('sum MC (not including Z\')', '-', '-', sum_mc, var_sum_mc**0.5, '-', syst_var_sum_mc**0.5, syst_plus_stat, lumi_err, tot_err))
+            self.table_rows.append('%50s%20s%20s%20.6f%20.6f%20s%20.6f%20.6f%20.6f%20.6f\n' % ('sum MC (not including Z\')', '-', '-', sum_mc, var_sum_mc**0.5, '-', syst_var_sum_mc**0.5, syst_plus_stat, lumi_err, tot_err))
 
-            table_f.write('\n')
-        table_f.write('\n')
+            self.table_rows.append('\n')
+        self.table_rows.append('\n')
 
     def should_draw_zprime(self, dilepton):
         return self.draw_zprime and dilepton == 'MuonsPlusMuonsMinus'
@@ -622,9 +625,6 @@ class Drawer:
         self.ps.save(plot_fn)
 
     def go(self):
-        table_fn = os.path.join(self.plot_dir_base, 'mass_counts.txt')
-        table_f = open(table_fn, 'wt')
-
         for quantity_to_compare in self.quantities_to_compare:
             print quantity_to_compare
             
@@ -657,7 +657,7 @@ class Drawer:
                 # Also depending on the quantity to be compared, skip certain
                 # dileptons.
                 if 'Dimuon' in quantity_to_compare: # Only defined for mumu.
-                    dileptons = [x for x in dils if 'Electron' not in x]
+                    dileptons = [x for x in dileptons if 'Electron' not in x]
 
                 for dilepton in dileptons:
                     print dilepton
@@ -672,11 +672,51 @@ class Drawer:
                         # Print the entries for the ASCII table for the current
                         # cutset+dilepton. Could extend this to support counts for
                         # ranges that aren't mass.
-                        if not cumulative and 'Mass' in quantity_to_compare and self.print_table:
-                            self.make_table(table_f, cutset, dilepton)
+                        if not cumulative and 'DileptonMass' == quantity_to_compare and self.print_table:
+                            self.make_table(cutset, dilepton)
 
                         if self.save_plots:
                             self.draw_data_on_mc(cutset, dilepton, quantity_to_compare, cumulative)
+
+        # Finalize the table
+        table_fn = os.path.join(self.plot_dir_base, 'mass_counts.html')
+        table_f = open(table_fn, 'wt')
+        table_f.write('<html><body><pre>\n')
+        last_cutset = None
+        last_dilepton = None
+        anchors = []
+        for cutset, dilepton, mass_range in self.table_sections:
+            anchor = cutset+dilepton+str(mass_range[0])
+            if len(mass_range) > 1:
+                anchor += str(mass_range[1])
+            anchors.append(anchor)
+                
+            cutset = '%12s' % cutset
+            dilepton = '%25s' % dilepton
+            mass_range = '%15s' % repr(mass_range)
+
+            text = ''
+            if cutset != last_cutset:
+                text += cutset
+                last_cutset = cutset
+            else:
+                text += ' '*12
+            if dilepton != last_dilepton:
+                text += dilepton
+                last_dilepton = dilepton
+            else:
+                text += ' '*20
+            text += mass_range
+            
+            table_f.write('<a href="#%s">%s</a>\n'% (anchor, text))
+
+        for row in self.table_rows:
+            if 'ANCHORME' in row:
+                row = '<h4 id="%s">%s</h4>' % (anchors.pop(0), row.replace('ANCHORME', ''))
+            table_f.write(row)
+
+        table_f.write('</pre></body></html>\n')
+        table_f.close()
 
 d = Drawer(options)
 d.advertise()

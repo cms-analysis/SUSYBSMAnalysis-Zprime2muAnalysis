@@ -208,9 +208,9 @@ class Drawer:
         # For the combination of the arguments, figure out by which
         # factor to rebin the input histograms. E.g. for DileptonMass
         # the input is currently 1-GeV bins; here we change this to
-        # 5-GeV bins. 
+        # 10-GeV bins. 
         if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained', 'DileptonPt', 'LeptonPt']:
-            return 5
+            return 10
         if quantity_to_compare == 'LeptonEta':
             return 4
         return 1
@@ -259,28 +259,31 @@ class Drawer:
         # off, rather than trying to be smart and getting them from
         # the histogram files.
         if cutset == 'VBTF':
-            return 111466/99248.457457
+            return 109967/99329.338571
         elif cutset == 'OurNew':
-            return 124075/110781.593932
+            return 119652/109079.396042
         elif cutset == 'OurOld':
-            return 128905/114502.540631
+            return 127566/114573.382587
         elif cutset == 'OurNoIso':
-            return 125822/111914.608088
+            return 121391/110162.691504
+        elif cutset == 'OurMu15':
+            return 679/542.998509
+        elif cutset == 'VBTFMu15':
+            return 619/528.461070
 
         # If the cutset is not one of the above, don't rescale.
         return 1.
 
-    def advertise(self):
-        # JMTBAD
-        return
-        print '"joins" are:'
-        pprint(joins)
-        print 'total lumi from data: %.f/pb' % int_lumi
-        print 'rescaling mumu MC histograms by these cut-dependent factors:'
-        pprint(global_rescale)
-        print 'comparing', quantity_to_compare
-        print 'using poisson error bars on plots:', use_poisson_intervals
-        print 'last bin contains overflow:', put_overflow_in_last_bin
+    def advertise_lines(self):
+        s = []
+        s.append('total lumi from data: %.f/pb' % self.int_lumi)
+        s.append('rescaling mumu MC histograms by these cut-dependent factors:')
+        for cutset in self.cutsets:
+            s.append('%15s:%.10f' % (cutset, self.get_lumi_rescale_factor(cutset, '')))
+        s.append('"joins" are:')
+        for sample in self.samples:
+            s.append('%10s -> %s' % (sample.name, self.get_join_name(sample.name)))
+        return s
 
     def subtitleize(self, dilepton):
         return {
@@ -680,10 +683,11 @@ class Drawer:
                         if self.save_plots:
                             self.draw_data_on_mc(cutset, dilepton, quantity_to_compare, cumulative)
 
-        # Finalize the table
+        # Finalize the table.
         table_fn = os.path.join(self.plot_dir_base, 'mass_counts.html')
         table_f = open(table_fn, 'wt')
         table_f.write('<html><body><pre>\n')
+        table_f.write('\n'.join(self.advertise_lines()) + '\n')
         last_cutset = None
         last_dilepton = None
         anchors = []
@@ -721,5 +725,5 @@ class Drawer:
         table_f.close()
 
 d = Drawer(options)
-d.advertise()
+print '\n'.join(d.advertise_lines())
 d.go()

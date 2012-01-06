@@ -209,8 +209,10 @@ class Drawer:
         # factor to rebin the input histograms. E.g. for DileptonMass
         # the input is currently 1-GeV bins; here we change this to
         # 5-GeV bins. 
-        if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained', 'DileptonPt']:
+        if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained', 'DileptonPt', 'LeptonPt']:
             return 5
+        if quantity_to_compare == 'LeptonEta':
+            return 4
         return 1
         
     def rebin_histogram(self, h, cutset, dilepton, quantity_to_compare):
@@ -225,8 +227,8 @@ class Drawer:
         # the displayed plot.
         if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained']:
             return 70,1400
-        elif quantity_to_compare == 'DileptonPt':
-            return 0, 1000
+        elif quantity_to_compare in ['DileptonPt', 'LeptonPt']:
+            return 0, 700
         return None
 
     def parse_lumi_from_log(self, log_fn):

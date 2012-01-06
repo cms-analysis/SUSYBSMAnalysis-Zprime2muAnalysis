@@ -3,3 +3,6 @@ out.*
 plots
 zprime.C
 pick.txt
+*json
+*lumibyls.csv.gz
+*slots.gzpickle

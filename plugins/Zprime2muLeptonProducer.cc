@@ -189,7 +189,7 @@ std::pair<pat::Electron*,int> Zprime2muLeptonProducer::doLepton(const edm::Event
     const unsigned CUT_ISOLHADDEPTH2 = 0x0400;
     HEEPId = HEEPId & (~CUT_ISOLHADDEPTH2);
   }
-  cutFor = HEEPId == 0;
+  cutFor = HEEPId != 0;
   if (new_el->et() > (is_barrel ? 35 : 40)) // new_el->et() is already calo-energy corrected
     cutFor = 1;
   if (fabs(new_el->deltaPhiSuperClusterTrackAtVtx()) > 0.06)

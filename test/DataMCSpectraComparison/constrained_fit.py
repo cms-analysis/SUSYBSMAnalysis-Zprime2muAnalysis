@@ -6,7 +6,7 @@ ROOT.gStyle.SetPadRightMargin(0.02)
 
 ps = plot_saver('plots/constrained_fit', log=False, size=(600,600))
 
-f = ROOT.TFile('ana_datamc_Run2011AMuonsOnly/ana_datamc_data.root')
+f = ROOT.TFile('data/Run2011MuonsOnly/ana_datamc_data.root')
 t = f.SimpleNtupler.Get('t')
 
 n = t.Draw('vertex_m:dil_mass:vertex_m_err', 'OurSelNew && dil_mass > 200')

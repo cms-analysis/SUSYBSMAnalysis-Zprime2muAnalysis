@@ -15,6 +15,7 @@ process.PrescaleToCommon.overall_prescale = overall_prescale
 # The histogramming module that will be cloned multiple times below
 # for making histograms with different cut/dilepton combinations.
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
+HistosFromPAT.leptonsFromDileptons = True
 
 # These modules define the basic selection cuts. For the monitoring
 # sets below, we don't need to define a whole new module, since they
@@ -188,19 +189,40 @@ def for_data(process):
 def for_mc(process, hlt_process_name, fill_gen_info):
     ntuplify(process, fill_gen_info)
     switch_hlt_process_name(process, hlt_process_name) # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
-    
-    
-    
+
+def get_dataset(run):
+    #JMTBAD common with dataset_details in submit below, make a DataSamples.py?
+    run = int(run)
+    if 165071 <= run <= 175770:
+        return '/SingleMu/tucker-datamc_SingleMuRun2011A_Nov08-414b5fe0560a0d020583711f1400af1a/USER'
+    elif 175832 <= run <= 180296:
+        return '/SingleMu/tucker-datamc_SingleMuRun2011B_Nov19-220ecb6e6d210913d6b2a9cef9c920af/USER'
+    else:
+        raise ValueError('dunno how to do run %i' % run)
+
 if 'gogo' in sys.argv:
-    fn, run_evt = '/store/user/tucker/SingleMu/datamc_SingleMuRun2011A_May10/27b0e568312792116de9a2db293fbae8/pat_60_1_86e.root', (161119,25237286)
-    fn, run_evt = '/store/user/tucker/SingleMu/datamc_SingleMuRun2011A_Prompt4/27b0e568312792116de9a2db293fbae8/pat_89_1_5TE.root', (166554,755792265)
-
-    process.source.fileNames = [fn]
-    from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import set_events_to_process
-    set_events_to_process(process, [run_evt])
-
     for_data(process)
     printify(process)
+    
+    n = sys.argv.index('gogo')
+    run, lumi, event = sys.argv[n+1], sys.argv[n+2], sys.argv[n+3]
+    print run, lumi, event
+    run = int(run)
+    lumi = int(lumi)
+    event = int(event)
+    filename = [x for x in sys.argv if x.endswith('.root')]
+    if filename:
+        filename = filename[0]
+    else:
+        dataset = get_dataset(run)
+        print dataset
+        output = os.popen('dbs search --url https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet --query="find file where dataset=%s and run=%s and lumi=%s"' % (dataset, run, lumi)).read()
+        print repr(output)
+        filename = [x for x in output.split('\n') if x.endswith('.root')][0]
+    print filename
+    process.source.fileNames = [filename]
+    from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import set_events_to_process
+    set_events_to_process(process, [(run, event)])
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''

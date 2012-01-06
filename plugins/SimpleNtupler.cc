@@ -373,7 +373,8 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "extraDimuonCuts && "					\
 		 "GoodData");
 
-  tree->SetAlias("OurSelNew", "OurSelNewNoSign && OppSign");
+  tree->SetAlias("OurSelNew",   "OurSelNewNoSign && OppSign");
+  tree->SetAlias("OurSelNewSS", "OurSelNewNoSign && SameSign");
 
   // For e-mu dileptons, below we always put the muon in [0] and the
   // electron in [1], so don't have to check the other combination.

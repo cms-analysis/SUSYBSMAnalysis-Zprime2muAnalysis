@@ -191,18 +191,18 @@ def for_mc(process, hlt_process_name, fill_gen_info):
     switch_hlt_process_name(process, hlt_process_name) # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
 
 def get_dataset(run):
-    #JMTBAD common with pick_events.py
+    #JMTBAD common with dataset_details in submit below, make a DataSamples.py?
     run = int(run)
     if 165071 <= run <= 168437:
-        return '/SingleMu/Run2011A-PromptReco-v4/AOD'
+        return '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt4-27b0e568312792116de9a2db293fbae8/USER'
     elif 170053 <= run <= 172619:
-        return '/SingleMu/Run2011A-PromptReco-v5/AOD'
+        return '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt5-27b0e568312792116de9a2db293fbae8/USER'
     elif 172620 <= run <= 175770:
-        return '/SingleMu/Run2011A-PromptReco-v6/AOD'
+        return '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt6-d196cf8328025d6b0cf4c50be8764787/USER'
     elif 175832 <= run <= 180296:
-        return '/SingleMu/Run2011B-PromptReco-v1/AOD'
+        return '/SingleMu/tucker-datamc_SingleMuRun2011B_Prompt1-d196cf8328025d6b0cf4c50be8764787/USER'
     elif 160329 <= run <= 163869:
-        return '/SingleMu/Run2011A-May10ReReco-v1/AOD'
+        return '/SingleMu/tucker-datamc_SingleMuRun2011A_May10-27b0e568312792116de9a2db293fbae8/USER'
     else:
         raise ValueError('dunno how to do run %i' % run)
 
@@ -222,11 +222,12 @@ if 'gogo' in sys.argv:
     else:
         dataset = get_dataset(run)
         print dataset
-        output = os.popen('dbs search --query="find file where dataset=%s and run=%s and lumi=%s"' % (dataset, run, lumi)).read()
+        output = os.popen('dbs search --url https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet --query="find file where dataset=%s and run=%s and lumi=%s"' % (dataset, run, lumi)).read()
         print repr(output)
         filename = [x for x in output.split('\n') if x.endswith('.root')][0]
     print filename
     process.source.fileNames = [filename]
+    from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import set_events_to_process
     set_events_to_process(process, [(run, event)])
 
 if __name__ == '__main__' and 'submit' in sys.argv:

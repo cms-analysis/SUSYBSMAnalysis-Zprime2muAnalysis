@@ -8,6 +8,7 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TriggerDecision.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TriggerUtilities.h"
 
 class EfficiencyFromMC : public edm::EDAnalyzer {
  public:
@@ -20,10 +21,12 @@ class EfficiencyFromMC : public edm::EDAnalyzer {
   const bool use_resonance_mass;
   const bool use_resonance_mass_denom;
   const edm::InputTag dimuon_src;
-  const edm::InputTag hlt_obj_src;
+  const edm::InputTag trigger_summary_src;
   const double hlt_single_min_pt;  
   const double hlt_single_max_eta;
-  const double acceptance_max_eta;
+  const double checking_prescaled_path;
+  const double acceptance_max_eta_1;
+  const double acceptance_max_eta_2;
   const double acceptance_min_pt;
   TriggerDecision triggerDecision;
   HardInteraction hardInteraction;
@@ -66,10 +69,12 @@ EfficiencyFromMC::EfficiencyFromMC(const edm::ParameterSet& cfg)
     use_resonance_mass(cfg.getParameter<bool>("use_resonance_mass")),
     use_resonance_mass_denom(cfg.getParameter<bool>("use_resonance_mass_denom")),
     dimuon_src(cfg.getParameter<edm::InputTag>("dimuon_src")),
-    hlt_obj_src(cfg.getParameter<edm::InputTag>("hlt_obj_src")),
+    trigger_summary_src(cfg.getParameter<edm::InputTag>("trigger_summary_src")),
     hlt_single_min_pt(cfg.getParameter<double>("hlt_single_min_pt")),
     hlt_single_max_eta(cfg.getParameter<double>("hlt_single_max_eta")),
-    acceptance_max_eta(cfg.getParameter<double>("acceptance_max_eta")),
+    checking_prescaled_path(cfg.getParameter<bool>("checking_prescaled_path")),
+    acceptance_max_eta_1(cfg.getParameter<double>("acceptance_max_eta_1")),
+    acceptance_max_eta_2(cfg.getParameter<double>("acceptance_max_eta_2")),
     acceptance_min_pt(cfg.getParameter<double>("acceptance_min_pt")),
     hardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction"))    
 {
@@ -109,13 +114,19 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
   acceptance.second->Fill(m_denom);
   totalreco.second->Fill(m_denom);
 
-  if (fabs(hardInteraction.lepMinus->eta()) < acceptance_max_eta &&
-      fabs(hardInteraction.lepPlus ->eta()) < acceptance_max_eta)
+  // both gen leptons in acceptance?
+
+  const double aeta_minus = fabs(hardInteraction.lepMinus->eta());
+  const double aeta_plus  = fabs(hardInteraction.lepPlus ->eta());
+  const double smaller_aeta = aeta_minus < aeta_plus ? aeta_minus : aeta_plus;
+  const double larger_aeta  = aeta_minus > aeta_plus ? aeta_minus : aeta_plus;
+
+  const bool in_acceptance_no_pt = smaller_aeta < acceptance_max_eta_1 && larger_aeta < acceptance_max_eta_2;
+
+  if (in_acceptance_no_pt)
     accnopt.first->Fill(m);
 
-  // both gen leptons in acceptance?
-  if (fabs(hardInteraction.lepMinus->eta()) < acceptance_max_eta &&
-      fabs(hardInteraction.lepPlus ->eta()) < acceptance_max_eta &&
+  if (in_acceptance_no_pt &&
       hardInteraction.lepMinus->pt() > acceptance_min_pt &&
       hardInteraction.lepPlus ->pt() > acceptance_min_pt)
     acceptance.first->Fill(m);
@@ -144,23 +155,25 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
     }
   }
 
-  bool hlt_pass_overridden_pt = true;
-  if (hlt_single_min_pt > 0) {
-    edm::Handle<std::vector<reco::RecoChargedCandidate> > hlt_objs;
-    event.getByLabel(hlt_obj_src, hlt_objs);
+  bool hlt_pass_overridden = true;
+
+  if (hlt_single_min_pt > 0 || hlt_single_max_eta > 0) {
+    Zprime2muTriggerPathsAndFilters pandf(event);
+    if (!pandf.valid) throw cms::Exception("Zprime2muTriggerPathsAndFilters") << "could not determine the HLT path and filter names for this event\n";
+    trigger::TriggerObjectCollection l3_mus = get_L3_muons(event, checking_prescaled_path ? pandf.prescaled_filter : pandf.filter, trigger_summary_src);
     bool pass = false;
-    for (std::vector<reco::RecoChargedCandidate>::const_iterator hlt_obj = hlt_objs->begin(), hoe = hlt_objs->end(); hlt_obj != hoe; ++hlt_obj) {
-      if (hlt_obj->pt() > hlt_single_min_pt && fabs(hlt_obj->eta()) < hlt_single_max_eta) {
+    for (trigger::TriggerObjectCollection::const_iterator l3_mu = l3_mus.begin(), hoe = l3_mus.end(); l3_mu != hoe; ++l3_mu) {
+      if (l3_mu->pt() > hlt_single_min_pt && fabs(l3_mu->eta()) < hlt_single_max_eta) {
 	pass = true;
 	break;
       }
     }
-    if (!pass) hlt_pass_overridden_pt = false;
+    if (!pass) hlt_pass_overridden = false;
   }
 
   for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i) {
     if (triggerDecision.hlt_path_pass(i)) {
-      if (i == 0 && !hlt_pass_overridden_pt)
+      if (i == 0 && !hlt_pass_overridden)
 	continue;
       hlt_path_effs[i].first->Fill(m);
       hlt_or = true;

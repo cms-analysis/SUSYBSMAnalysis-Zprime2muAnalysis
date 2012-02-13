@@ -9,19 +9,17 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import *
 
 ROOT.TH1.AddDirectory(False)
 
-data_fn_base = '/uscms/home/tucker/nobackup/ana_datamc_V00-10-26'
-mc_fn_base = '/uscms/home/tucker/nobackup/zp2mu_ana_datamc_mc/V00-10-26'
-mumu_mc_fn_base = os.path.join(mc_fn_base, 'ana_datamc_%s.root')
-mumu_data_fn = os.path.join(data_fn_base, 'ana_datamc_Run2011AMuonsOnly/ana_datamc_data.root')
+mumu_mc_fn_base = 'mc/ana_datamc_%s.root'
+mumu_data_fn = 'data/Run2011MuonsOnly/ana_datamc_data.root'
 mumu_rebin_factor = 5
 mumu_histogram = 'DimuonMassVertexConstrained'
-mumu_scale = 1125.74317154*1.1603697643990654
-emu_mc_fn_base = os.path.join(mc_fn_base, 'ana_datamc_%s.root')
-emu_data_fn = os.path.join(data_fn_base, 'ana_datamc_Run2011A/ana_datamc_data.root')
+mumu_scale = 4914*1.0969257655
+emu_mc_fn_base = 'mc/ana_datamc_%s.root'
+emu_data_fn = 'data/Run2011/ana_datamc_data.root'
 emu_rebin_factor = 20
 emu_histogram = 'DileptonMass'
-emu_scale = 1083.5
-add_heep = True
+emu_scale = 4641
+add_heep = False
 heep_fn = 'massHist1100pb.root'
 
 #*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
@@ -50,7 +48,8 @@ for cumulative in (False, True):
     jetsHist.Add(histos['wjets'])
 
     promptHist = histos['ttbar'].Clone('promptHist')
-    promptHist.Add(histos['singletop_tW'])
+    promptHist.Add(histos['tW'])
+    promptHist.Add(histos['tbarW'])
     promptHist.Add(histos['ww'])
     promptHist.Add(histos['wz'])
     promptHist.Add(histos['zz'])
@@ -101,7 +100,7 @@ jetsHist = histos['inclmu15'].Clone('jetsHist')
 jetsHist.Add(histos['wjets'])
 
 promptHist = histos['ttbar'].Clone('promptHist')
-for x in ['singletop_tW', 'ww', 'wz', 'zz', 'ztautau', 'zmumu', 'dy120', 'dy200', 'dy500', 'dy800']:
+for x in ['tW', 'tbarW', 'ww', 'wz', 'zz', 'ztautau', 'zmumu', 'dy120', 'dy200', 'dy500', 'dy800']:
     promptHist.Add(histos[x])
 
 # Simulate stack.

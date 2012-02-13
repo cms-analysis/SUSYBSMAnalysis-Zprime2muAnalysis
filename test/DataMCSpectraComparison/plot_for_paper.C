@@ -1,4 +1,5 @@
 // root -q -x -b plot_for_paper.C ; root -q -x -b plot_for_paper.C --muons ; root -q -x -b plot_for_paper.C --cumulative ; root -q -x -b plot_for_paper.C --muons --cumulative
+// root -q -x -b plot_for_paper.C --muons ; root -q -x -b plot_for_paper.C --muons --cumulative
 
 #include <cassert>
 #include <cstdlib>
@@ -15,8 +16,8 @@
 #include "TROOT.h"
 #include "TStyle.h"
 
-//#define DRAW_ZPRIME
-#ifdef DRAW_ZPRIME
+#define DRAW_ZPRIME
+#ifdef DRAW_ZPRIME_NO
 #include "zprime.C"
 #endif
 
@@ -46,7 +47,7 @@ TGraphAsymmErrors* poisson_intervalize(TH1* h, bool zero_x) {
   return tgae;
 }
 
-#define EMU
+//#define EMU
 
 #ifdef EMU
 void plot_for_paper() {
@@ -96,7 +97,7 @@ void plot_for_paper2() {
   promptHist->GetYaxis()->SetTitleOffset(1.2);
 
   promptHist->GetXaxis()->SetRangeUser(120,  900);
-  promptHist->GetYaxis()->SetRangeUser(0.01, 500);
+  promptHist->GetYaxis()->SetRangeUser(0.01, 2000);
 
   TLegend *leg = new TLegend(0.429, 0.668, 0.944, 0.885, NULL, "brNDC");
   leg->SetBorderSize(0);
@@ -113,7 +114,7 @@ void plot_for_paper2() {
   leg->SetFillStyle(0);
   leg->Draw();
 
-  TPaveLabel *pl = new TPaveLabel(0.350, 0.858, 0.810, 0.958, "CMS preliminary   #sqrt{s} = 7 TeV    #int L dt = 1.1 fb^{-1}", "brNDC");
+  TPaveLabel *pl = new TPaveLabel(0.350, 0.858, 0.810, 0.958, "CMS preliminary   #sqrt{s} = 7 TeV    #int L dt = 4.7 fb^{-1}", "brNDC");
   pl->SetBorderSize(0);
   pl->SetFillColor(0);
   pl->SetFillStyle(0);
@@ -212,7 +213,7 @@ void plot_for_paper2() {
   c1->SetTickx();
   c1->SetTicky();
   c1->SetLeftMargin(0.13);
-  c1->SetRightMargin(0.02);
+  c1->SetRightMargin(0.04);
   c1->SetTopMargin(0.02);
   c1->SetFrameBorderMode(0);
 
@@ -248,12 +249,12 @@ void plot_for_paper2() {
   zdyHist->GetYaxis()->SetTitleOffset(1.2);
 
   if (!isCHist) {
-    zdyHist->GetYaxis()->SetRangeUser(1e-3, 3e5);
-    zdyHist->GetXaxis()->SetRangeUser(60, 1300);
+    zdyHist->GetYaxis()->SetRangeUser(1e-3, 4.5e5);
+    zdyHist->GetXaxis()->SetRangeUser(50, 1400);
   }
   else {
-    zdyHist->GetYaxis()->SetRangeUser(1e-2, 5e5);
-    zdyHist->GetXaxis()->SetRangeUser(60, 1300);
+    zdyHist->GetYaxis()->SetRangeUser(1e-2, 1e6);
+    zdyHist->GetXaxis()->SetRangeUser(50, 1400);
   }
 
   TLegend *leg = new TLegend(0.46, 0.56, 0.92, 0.87, NULL, "brNDC");
@@ -274,7 +275,7 @@ void plot_for_paper2() {
   leg->SetFillStyle(0);
   leg->Draw();
 
-  TPaveLabel *pl = new TPaveLabel(0.35, 0.85, 0.81, 0.95, "CMS preliminary   #sqrt{s} = 7 TeV    #int L dt = 1.1 fb^{-1}", "brNDC");
+  TPaveLabel *pl = new TPaveLabel(0.35, 0.85, 0.81, 0.95, "CMS preliminary   #sqrt{s} = 7 TeV    #int L dt = 4.9 fb^{-1}", "brNDC");
   pl->SetBorderSize(0);
   pl->SetFillColor(0);
   pl->SetFillStyle(0);
@@ -283,7 +284,7 @@ void plot_for_paper2() {
 
   // huge crappy hack for "EP" in TLegend::AddEntry not working
   TLine ll;
-  ll.DrawLineNDC(0.518, 0.794, 0.518, 0.865);
+  ll.DrawLineNDC(0.518, draw_zprime ? 0.811 : 0.794, 0.518, draw_zprime ? 0.859 : 0.865);
 
   c1->RedrawAxis();
   c1->SetLogy(1);

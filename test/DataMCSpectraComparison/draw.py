@@ -225,6 +225,10 @@ class Drawer:
         # desired restriction on the viewable x-axis range, if
         # any. E.g. for DileptonMass, only show from 70-1400 GeV on
         # the displayed plot.
+        if 'Electron' in dilepton:
+            return 100, 1000
+        if 'MuonsSameSign' in dilepton:
+            return 50, 700
         if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained']:
             return 70,1400
         elif quantity_to_compare in ['DileptonPt', 'LeptonPt']:
@@ -629,62 +633,8 @@ class Drawer:
             plot_fn += '_cumulative'
         self.ps.save(plot_fn)
 
-    def go(self):
-        for quantity_to_compare in self.quantities_to_compare:
-            print quantity_to_compare
-            
-            if quantity_to_compare != 'DileptonMass':
-                cutsets = ['OurNew']
-            else:
-                cutsets = self.cutsets
-            
-            for cutset in cutsets:
-                print cutset
-                
-                # If the cut set doesn't exist in the input file, silently skip it.
-                if not hasattr(self.data_f, self.get_dir_name(cutset, 'MuonsPlusMuonsMinus')):
-                    continue
-
-                # Directory structure example:
-                # plots/datamc/lumi_mask_name/quantity_to_compare/cut_set/.
-                if self.save_plots:
-                    plot_dir = self.plot_dir_base + '/%s/%s' % (quantity_to_compare, cutset)
-                    self.ps.set_plot_dir(plot_dir)
-
-                # Depending on the quantity to compare and cut set, skip certain dileptons.
-                if cutset == 'EmuVeto': # Only care about e-mu dileptons here.
-                    dileptons = [x for x in self.dileptons if 'Electron' in x]
-                elif 'Mu15' in cutset: # Don't care about e-mu dileptons here.
-                    dileptons = [x for x in self.dileptons if 'Electron' not in x]
-                else:
-                    dileptons = self.dileptons
-
-                # Also depending on the quantity to be compared, skip certain
-                # dileptons.
-                if 'Dimuon' in quantity_to_compare: # Only defined for mumu.
-                    dileptons = [x for x in dileptons if 'Electron' not in x]
-
-                for dilepton in dileptons:
-                    print dilepton
-                    
-                    for cumulative in (False, True):
-                        # Prepare the histograms. The MC histograms are stored in
-                        # their respective sample objects, and the data histogram is
-                        # kept in self.hdata.
-                        self.prepare_mc_histograms(cutset, dilepton, quantity_to_compare, cumulative)
-                        self.prepare_data_histogram(cutset, dilepton, quantity_to_compare, cumulative)
-
-                        # Print the entries for the ASCII table for the current
-                        # cutset+dilepton. Could extend this to support counts for
-                        # ranges that aren't mass.
-                        if not cumulative and 'DileptonMass' == quantity_to_compare and self.print_table:
-                            self.make_table(cutset, dilepton)
-
-                        if self.save_plots:
-                            self.draw_data_on_mc(cutset, dilepton, quantity_to_compare, cumulative)
-
-        # Finalize the table.
-        table_fn = os.path.join(self.plot_dir_base, 'mass_counts.html')
+    def finalize_table(self, dir_base):
+        table_fn = os.path.join(dir_base, 'mass_counts.html')
         table_f = open(table_fn, 'wt')
         table_f.write('<html><body><pre>\n')
         table_f.write('\n'.join(self.advertise_lines()) + '\n')
@@ -723,6 +673,66 @@ class Drawer:
 
         table_f.write('</pre></body></html>\n')
         table_f.close()
+        self.table_sections = []
+        self.table_rows = []
+        
+    def go(self):
+        for quantity_to_compare in self.quantities_to_compare:
+            print quantity_to_compare
+            
+            if quantity_to_compare != 'DileptonMass':
+                cutsets = ['OurNew']
+            else:
+                cutsets = self.cutsets
+            
+            for cutset in cutsets:
+                print cutset
+                
+                # If the cut set doesn't exist in the input file, silently skip it.
+                if not hasattr(self.data_f, self.get_dir_name(cutset, 'MuonsPlusMuonsMinus')):
+                    continue
+
+                # Directory structure example:
+                # plots/datamc/lumi_mask_name/quantity_to_compare/cut_set/.
+                plot_dir = self.plot_dir_base + '/%s/%s' % (quantity_to_compare, cutset)
+                self.ps.set_plot_dir(plot_dir)
+
+                # Depending on the quantity to compare and cut set, skip certain dileptons.
+                if cutset == 'EmuVeto': # Only care about e-mu dileptons here.
+                    dileptons = [x for x in self.dileptons if 'Electron' in x]
+                elif 'Mu15' in cutset: # Don't care about e-mu dileptons here.
+                    dileptons = [x for x in self.dileptons if 'Electron' not in x]
+                else:
+                    dileptons = self.dileptons
+
+                # Also depending on the quantity to be compared, skip certain
+                # dileptons.
+                if 'Dimuon' in quantity_to_compare: # Only defined for mumu.
+                    dileptons = [x for x in dileptons if 'Electron' not in x]
+
+                self.ps.save_dir('mass_counts.html')
+
+                for dilepton in dileptons:
+                    print dilepton
+                    
+                    for cumulative in (False, True):
+                        # Prepare the histograms. The MC histograms are stored in
+                        # their respective sample objects, and the data histogram is
+                        # kept in self.hdata.
+                        self.prepare_mc_histograms(cutset, dilepton, quantity_to_compare, cumulative)
+                        self.prepare_data_histogram(cutset, dilepton, quantity_to_compare, cumulative)
+
+                        # Print the entries for the ASCII table for the current
+                        # cutset+dilepton. Could extend this to support counts for
+                        # ranges that aren't mass.
+                        if not cumulative and 'Mass' in quantity_to_compare:
+                            self.make_table(cutset, dilepton)
+
+                        if self.save_plots:
+                            self.draw_data_on_mc(cutset, dilepton, quantity_to_compare, cumulative)
+
+                self.finalize_table(plot_dir)
+
 
 d = Drawer(options)
 print '\n'.join(d.advertise_lines())

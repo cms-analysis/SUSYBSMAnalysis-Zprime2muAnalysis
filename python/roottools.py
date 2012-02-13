@@ -382,7 +382,15 @@ class plot_saver:
             return
         html = open(os.path.join(self.plot_dir, 'index.html'), 'wt')
         html.write('<html><body><pre>\n')
-        for i, (fn, log, root, pdf, pdf_log, C, C_log) in enumerate(self.saved):
+        html.write('<a href="..">.. (parent directory)</a>\n')
+        for i, save in enumerate(self.saved):
+            if type(save) == str:
+                # this is just a directory link
+                html.write('<a href="%s">%10i%32s%s</a>\n' % (save, i, 'change directory: ', save))
+                continue
+
+            fn, log, root, pdf, pdf_log, C, C_log = save
+
             bn = os.path.basename(fn)
             html.write('<a href="#%s">%10i</a> ' % (self.anchor_name(fn), i))
             if log:
@@ -412,7 +420,10 @@ class plot_saver:
             html.write('  <a href="%s">%s</a>' % (bn, bn))
             html.write('\n')
         html.write('<br><br>')
-        for i, (fn, log, root, pdf, pdf_log, C, C_log) in enumerate(self.saved):
+        for i, save in enumerate(self.saved):
+            if type(save) == str:
+                continue # skip dir entries
+            fn, log, root, pdf, pdf_log, C, C_log = save
             bn = os.path.basename(fn)
             html.write('<h4 id="%s">%s</h4><br>\n' % (self.anchor_name(fn), bn.replace('.png', '')))
             if log:
@@ -429,6 +440,11 @@ class plot_saver:
         self.plot_dir = plot_dir
         if plot_dir is not None:
             os.system('mkdir -p %s' % self.plot_dir)
+
+    def save_dir(self, n):
+        if self.plot_dir is None:
+            raise ValueError('save_dir called before plot_dir set!')
+        self.saved.append(n)
 
     def save(self, n, log=None, root=None, pdf=None, pdf_log=None, C=None, C_log=None):
         log = self.log if log is None else log

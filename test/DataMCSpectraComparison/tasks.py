@@ -28,7 +28,7 @@ def do(cmd):
     return ret
 
 latest_dataset = '/SingleMu/Run2011B-PromptReco-v1/AOD'
-lumi_masks = ['NoLumiMask', 'Run2011', 'Run2011MuonsOnly']
+lumi_masks = ['Run2011MuonsOnly', 'NoLumiMask', 'Run2011']
 
 if cmd == 'setdirs':
     crab_dirs_location = extra[0]

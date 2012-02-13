@@ -65,7 +65,7 @@ samples = [
     sample('zz',           'ZZ',                                                 '/ZZ_TuneZ2_7TeV_pythia6_tauola/Summer11-PU_S4_START42_V11-v1/AODSIM',                       4187885,   6, 0.025,  5.9),
     sample('ztautau',      'Z #rightarrow #tau^{+}#tau^{-}',                     '/DYToTauTau_M-20_TuneZ2_7TeV-pythia6-tauola/Summer11-PU_S3_START42_V11-v2/AODSIM',          2032536,  46, 0.05, 1631),
     sample('wjets',        'W+jets',                                             '/WJetsToLNu_TuneZ2_7TeV-madgraph-tauola/Summer11-PU_S4_START42_V11-v1/AODSIM',             81352581,   3, 0.05, 3.1e4),
-    sample('inclmu15',     'QCD (MuRich, muon p_{T} > 15 GeV)',                  '/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM',      25080241, 801, 0.1,   2.855e-4 * 2.966e8),
+    sample('inclmu15',     'QCD',                                                '/QCD_Pt-20_MuEnrichedPt-15_TuneZ2_7TeV-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM',      25080241, 801, 0.1,   2.855e-4 * 2.966e8),
     sample('zssm1000',     'Z\'_{SSM} (1 TeV) #rightarrow #mu^{+}#mu^{-}',       '/ZprimeSSMToMuMu_M-1000_TuneZ2_7TeV-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM',            20328,  38, 0.05,  0.089, k_factor=1.3, is_zprime=True),
     sample('zpsi1000',     'Z\'_{#psi} (1 TeV) #rightarrow #mu^{+}#mu^{-}',      '/ZprimePSIToMuMu_M-1000_TuneZ2_7TeV-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM',            21020,  48, 0.05,  0.089, k_factor=1.3, is_zprime=True),
 ]

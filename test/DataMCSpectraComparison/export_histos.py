@@ -21,6 +21,7 @@ emu_histogram = 'DileptonMass'
 emu_scale = 4641
 add_heep = True
 heep_fn = 'heep_massHists2011Jan9.root'
+heep_rebin_factor = None
 
 #*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
 
@@ -136,6 +137,10 @@ for cumulative in (False, True):
 
     dataHist = f.Get('dataHistEBEB').Clone('dataHist')
     dataHist.Add(f.Get('dataHistEBEE'))
+
+    if heep_rebin_factor > 1:
+       for h in (jetsHist, promptHist, zdyHist, dataHist):
+           h.Rebin(heep_rebin_factor)
     
     if cumulative:
         jetsHist   = cumulative_histogram(jetsHist)

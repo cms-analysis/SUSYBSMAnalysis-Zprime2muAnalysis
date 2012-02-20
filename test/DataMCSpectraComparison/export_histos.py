@@ -19,8 +19,8 @@ emu_data_fn = 'data/Run2011/ana_datamc_data.root'
 emu_rebin_factor = 20
 emu_histogram = 'DileptonMass'
 emu_scale = 4641
-add_heep = False
-heep_fn = 'massHist1100pb.root'
+add_heep = True
+heep_fn = 'heep_massHists2011Jan9.root'
 
 #*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
 

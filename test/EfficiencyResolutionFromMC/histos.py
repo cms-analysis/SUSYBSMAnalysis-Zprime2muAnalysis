@@ -9,6 +9,7 @@ restrict_mass_window = True
 # late_bin numbering: bin 0 = 0-9, bin 2 = 10-26
 intime_bin, late_bin = -1, -1 
 check_prescaled_path = False
+acc_both_24 = True
 
 ################################################################################
 
@@ -45,7 +46,15 @@ import SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff as VBTFSelection
 process.allDimuonsVBTF = VBTFSelection.allDimuons.clone()
 process.dimuonsVBTF = VBTFSelection.dimuons.clone(src = 'allDimuonsVBTF')
 process.VBTFEfficiencyFromMC = process.EfficiencyFromMC.clone(dimuon_src = 'dimuonsVBTF', acceptance_max_eta_2 = 2.1)
-  
+
+if acc_both_24:
+    for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
+        eff.acceptance_max_eta_1 = 2.4
+    from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match
+    for d in [process.allDimuonsVBTF, process.allDimuons]:
+        d.tight_cut = trigger_match.replace(' && abs(userFloat("TriggerMatchEta")) < 2.1', '')
+    ex += 'accboth24'
+
 p2 = process.HardInteractionFilter * process.Zprime2muAnalysisSequencePlain * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC
 p  = process.HardInteractionFilterRes * process.Zprime2muAnalysisSequence # this will get all the Histospmc, Histospicky, Histosglobal, etc. below.
 
@@ -77,14 +86,15 @@ if check_prescaled_path:
         eff.triggerDecision.hltPaths = [hlt]
         eff.hlt_single_min_pt = min_hlt_pt
         eff.acceptance_min_pt = min_offline_pt
-        eff.check_prescaled_path = True
+        eff.checking_prescaled_path = True
 
     process.leptons.muon_cuts = 'isGlobalMuon && pt > %i' % min_offline_pt  # Overridden in dimuon construction anyway.
 
     for d in [process.allDimuonsVBTF, process.allDimuons]:
         assert 'pt > 45' in d.loose_cut.value()
         d.loose_cut = d.loose_cut.value().replace('pt > 45', 'pt > %i' % min_offline_pt)
-        assert d.tight_cut == trigger_match
+        if acc_both_24:
+            prescaled_trigger_match = prescaled_trigger_match.replace(' && abs(userFloat("TriggerMatchEta")) < 2.1', '')
         d.tight_cut = prescaled_trigger_match
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi')
@@ -122,22 +132,22 @@ total_number_of_events = -1
 events_per_job = 200000
 
 [USER]
-ui_working_dir = %(base_dir)s/crab_ana_effres_%(name)s
+ui_working_dir = crab/crab_ana_effres_%(ex)s%(name)s
 return_data = 1
 '''
         
     samples = [
-        ('dy60',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-dd2126535e23ba03e5a28af2e68bf29c/USER',              60,   120),
-        ('dy120',  '/DYToMuMu_M-120_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy120-dd2126535e23ba03e5a28af2e68bf29c/USER',    120,   200),
-        ('dy200',  '/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy200-dd2126535e23ba03e5a28af2e68bf29c/USER',    200,   500),
-        ('dy500',  '/DYToMuMu_M-500_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy500-dd2126535e23ba03e5a28af2e68bf29c/USER',    500,   800),
-        ('dy800',  '/DYToMuMu_M-800_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy800-dd2126535e23ba03e5a28af2e68bf29c/USER',    800,  1000),
-        ('dy1000', '/DYToMuMu_M-1000_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy1000-dd2126535e23ba03e5a28af2e68bf29c/USER', 1000, 20000),
-        ('zp750',  '/ZprimeSSMToMuMu_M-750_TuneZ2_7TeV-pythia6/tucker-effres_zp750-dd2126535e23ba03e5a28af2e68bf29c/USER',   -1, 20000),
-        ('zp1000', '/ZprimeSSMToMuMu_M-1000_TuneZ2_7TeV-pythia6/tucker-effres_zp1000-dd2126535e23ba03e5a28af2e68bf29c/USER', -1, 20000),
-        ('zp1250', '/ZprimeSSMToMuMu_M-1250_TuneZ2_7TeV-pythia6/tucker-effres_zp1250-dd2126535e23ba03e5a28af2e68bf29c/USER', -1, 20000),
-        ('zp1500', '/ZprimeSSMToMuMu_M-1500_TuneZ2_7TeV-pythia6/tucker-effres_zp1500-dd2126535e23ba03e5a28af2e68bf29c/USER', -1, 20000),
-        ('zp1750', '/ZprimeSSMToMuMu_M-1750_TuneZ2_7TeV-pythia6/tucker-effres_zp1750-dd2126535e23ba03e5a28af2e68bf29c/USER', -1, 20000),
+        ('dy60',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-5a92c9dde349d191a78d4eb40ec67d3b/USER',              60,   120),
+        ('dy120',  '/DYToMuMu_M-120_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy120-5a92c9dde349d191a78d4eb40ec67d3b/USER',    120,   200),
+        ('dy200',  '/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy200-5a92c9dde349d191a78d4eb40ec67d3b/USER',    200,   500),
+        ('dy500',  '/DYToMuMu_M-500_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy500-5a92c9dde349d191a78d4eb40ec67d3b/USER',    500,   800),
+        ('dy800',  '/DYToMuMu_M-800_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy800-5a92c9dde349d191a78d4eb40ec67d3b/USER',    800,  1000),
+        ('dy1000', '/DYToMuMu_M-1000_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy1000-5a92c9dde349d191a78d4eb40ec67d3b/USER', 1000, 20000),
+        ('zp750',  '/ZprimeSSMToMuMu_M-750_TuneZ2_7TeV-pythia6/tucker-effres_zp750-5a92c9dde349d191a78d4eb40ec67d3b/USER',   -1, 20000),
+        ('zp1000', '/ZprimeSSMToMuMu_M-1000_TuneZ2_7TeV-pythia6/tucker-effres_zp1000-5a92c9dde349d191a78d4eb40ec67d3b/USER', -1, 20000),
+        ('zp1250', '/ZprimeSSMToMuMu_M-1250_TuneZ2_7TeV-pythia6/tucker-effres_zp1250-5a92c9dde349d191a78d4eb40ec67d3b/USER', -1, 20000),
+        ('zp1500', '/ZprimeSSMToMuMu_M-1500_TuneZ2_7TeV-pythia6/tucker-effres_zp1500-5a92c9dde349d191a78d4eb40ec67d3b/USER', -1, 20000),
+        ('zp1750', '/ZprimeSSMToMuMu_M-1750_TuneZ2_7TeV-pythia6/tucker-effres_zp1750-5a92c9dde349d191a78d4eb40ec67d3b/USER', -1, 20000),
         ]
 
     resolutions = {
@@ -154,10 +164,8 @@ return_data = 1
     if not restrict_mass_window:
         ex += 'nomasswin'
 
-    base_dir = 'crab/ana_effres'
     if ex:
-        base_dir = os.path.join(base_dir, ex)
-    os.system('mkdir -p %s' % base_dir)
+        ex += '_'
     
     for name, dataset, lo, hi in samples:
         open('crab.cfg', 'wt').write(crab_cfg % locals())

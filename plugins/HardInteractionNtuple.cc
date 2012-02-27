@@ -73,7 +73,6 @@ bool passes(const reco::Muon& mu) {
   return
     mu.isGlobalMuon() &&
     mu.isTrackerMuon() &&
-    fabs(mu.innerTrack()->dxy()) < 0.2 &&
     mu.isolationR03().sumPt / mu.innerTrack()->pt() < 0.1 &&
     mu.globalTrack()->hitPattern().trackerLayersWithMeasurement() > 8 &&
     mu.globalTrack()->hitPattern().numberOfValidPixelHits() >= 1 &&
@@ -118,43 +117,44 @@ void HardInteractionNtuple::analyze(const edm::Event& event, const edm::EventSet
   t.lep_noib_eta[1] = hi.lepPlusNoIB->eta();
   t.lep_noib_phi[1] = hi.lepPlusNoIB->phi();
 
-  if (!fill_reco)
-    return;
+  if (fill_reco) {
+    edm::Handle<reco::MuonCollection> muons;
+    event.getByLabel(muon_src, muons);
 
-  edm::Handle<reco::MuonCollection> muons;
-  event.getByLabel(muon_src, muons);
+    edm::Handle<reco::TrackToTrackMap> picky;
+    event.getByLabel(picky_src, picky);
 
-  edm::Handle<reco::TrackToTrackMap> picky;
-  event.getByLabel(picky_src, picky);
+    double min_dR[2] = {1e99, 1e99};
 
-  double min_dR[2] = {1e99, 1e99};
+    t.reco_lep_q[0] = t.reco_lep_q[1] = 0; // Indicates no reco muon found (e.g. out of acceptance).
 
-  t.reco_lep_q[0] = t.reco_lep_q[1] = 0; // Indicates no reco muon found (e.g. out of acceptance).
+    // For each muon of the generated pair, try to find a reconstructed
+    // muon within deltaR < 0.2 that is the best match to it. Don't try
+    // to arbitrate.
+    for (int i = 0; i < 2; ++i) {
+      BOOST_FOREACH(const reco::Muon& mu, *muons) {
+	if (!mu.isGlobalMuon())
+	  continue;
 
-  // For each muon of the generated pair, try to find a reconstructed
-  // muon within deltaR < 0.2 that is the best match to it. Don't try
-  // to arbitrate.
-  for (int i = 0; i < 2; ++i) {
-    BOOST_FOREACH(const reco::Muon& mu, *muons) {
-      if (!mu.isGlobalMuon())
-	continue;
+	reco::TrackRef pk;
+	reco::TrackToTrackMap::const_iterator it = picky->find(mu.globalTrack());
+	if (it != picky->end()) pk = it->val;
+	if (pk.isNull())
+	  continue;
 
-      reco::TrackRef pk;
-      reco::TrackToTrackMap::const_iterator it = picky->find(mu.globalTrack());
-      if (it != picky->end()) pk = it->val;
-
-      double dR = reco::deltaR(pk->eta(), pk->phi(), t.lep_eta[i], t.lep_phi[i]);
-      if (dR > 0.2 || dR > min_dR[i])
-	continue;
+	double dR = reco::deltaR(pk->eta(), pk->phi(), t.lep_eta[i], t.lep_phi[i]);
+	if (dR > 0.2 || dR > min_dR[i])
+	  continue;
       
-      min_dR[i] = dR;
+	min_dR[i] = dR;
       
-      t.reco_lep_q[i] = pk->charge();
-      t.reco_lep_pt[i] = pk->pt();
-      t.reco_lep_pt_err[i] = pk->ptError();
-      t.reco_lep_eta[i] = pk->eta();
-      t.reco_lep_phi[i] = pk->phi();
-      t.reco_lep_passes[i] = passes(mu);
+	t.reco_lep_q[i] = pk->charge();
+	t.reco_lep_pt[i] = pk->pt();
+	t.reco_lep_pt_err[i] = pk->ptError();
+	t.reco_lep_eta[i] = pk->eta();
+	t.reco_lep_phi[i] = pk->phi();
+	t.reco_lep_passes[i] = passes(mu);
+      }
     }
   }
 

@@ -64,9 +64,18 @@ def switch_to_old_selection(process):
 
 def switch_hlt_process_name(process, name):
     # JMTBAD better place for this fcn
+    class warn_hlt_visitor(object):
+        def enter(self, visitee):
+            for attr in dir(visitee):
+                if getattr(visitee, attr) == 'HLT':
+                    print 'warning: visitee %s, attribute %s has value HLT' % (visitee, attr)
+        def leave(self, visitee):
+            pass
     from PhysicsTools.PatAlgos.tools.helpers import massSearchReplaceAnyInputTag
     for path_name, path in process.paths.iteritems(): # why does values() throw an exception?
         for label in ['TriggerResults', 'hltL1GtObjectMap', 'hltTriggerSummaryAOD']:
             old = cms.InputTag(label, '', 'HLT')
             new = cms.InputTag(label, '', name)
             massSearchReplaceAnyInputTag(path, old, new, verbose=False)
+        path.visit(warn_hlt_visitor())
+                                        

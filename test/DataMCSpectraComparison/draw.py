@@ -44,6 +44,10 @@ parser.add_option('--include-massrange', action='append', dest='include_mass_ran
                   help='If specified, will override the default list of mass ranges for the ASCII table in favor of the specified one. Specify this option more than once to use multiple mass ranges.')
 parser.add_option('--plot-dir-tag', action='store',
                   help='Adds argument to plot_dir path, useful for tagging the current version.')
+parser.add_option('--plot-size', default='900,600',
+                  help='The canvas size for drawing the plots.')
+parser.add_option('--no-guess-yrange', action='store_false', dest='guess_yrange', default=True,
+                  help='Don't try to guess out the y-axis range for plots, using instead the fixed values in the script.')
 options, args = parser.parse_args()
 #pprint(options) ; raise 1
 
@@ -84,6 +88,7 @@ class Drawer:
         self.put_overflow_in_last_bin = options.put_overflow_in_last_bin
         self.do_joins = options.do_joins
         self.join_ttbar_and_other_prompt_leptons = options.join_ttbar_and_other_prompt_leptons
+        self.guess_yrange = options.guess_yrange
 
         if not os.path.isdir(self.histo_dir):
             raise ValueError('histo_dir %s is not a directory' % self.histo_dir)
@@ -163,7 +168,8 @@ class Drawer:
             base += '_' + options.plot_dir_tag
         self.plot_dir_base = os.path.join(base, os.path.basename(self.histo_dir))
         os.system('mkdir -p %s' % self.plot_dir_base)
-        self.ps = plot_saver(self.plot_dir_base, size=(900,600), pdf_log=True, pdf=True)
+        width,height = options.plot_size.split(',')
+        self.ps = plot_saver(self.plot_dir_base, size=(int(width), int(height)), pdf_log=True, pdf=True)
 
         self.table_sections = []
         self.table_rows = []
@@ -204,27 +210,45 @@ class Drawer:
         color = self.get_join_color(sample.name)
         return sample.color if color is None else color
 
-    def get_rebin_factor(self, quantity_to_compare):
+    def get_rebin_factor(self, dilepton, quantity_to_compare):
         # For the combination of the arguments, figure out by which
         # factor to rebin the input histograms. E.g. for DileptonMass
         # the input is currently 1-GeV bins; here we change this to
-        # 10-GeV bins. 
+        # 10-GeV bins.
+        if dilepton == 'MuonsSameSign':
+            if quantity_to_compare == 'DileptonMass':
+                return 20
         if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained', 'DileptonPt', 'LeptonPt']:
             return 10
-        if quantity_to_compare == 'LeptonEta':
-            return 4
+#        if quantity_to_compare in ['RelCombIso', 'RelIsoSumPt']:
+#            return 5
+        if quantity_to_compare in ['DileptonPhi', 'DileptonRap', 'LeptonPhi', 'LeptonEta']:
+            return 5
         return 1
         
     def rebin_histogram(self, h, cutset, dilepton, quantity_to_compare):
         # JMTBAD Make this more flexible to do arbitrary binning, e.g. by
         # mass resolution.
-        h.Rebin(self.get_rebin_factor(quantity_to_compare))
+        h.Rebin(self.get_rebin_factor(dilepton, quantity_to_compare))
 
     def get_x_axis_range(self, cutset, dilepton, quantity_to_compare):
         # For the given combination of the arguments, return the
         # desired restriction on the viewable x-axis range, if
         # any. E.g. for DileptonMass, only show from 70-1400 GeV on
         # the displayed plot.
+        if dilepton == 'MuonsSameSign':
+            if quantity_to_compare == 'DileptonMass':
+                return 0,450
+            if quantity_to_compare == 'DileptonPt':
+                return 0,350
+            if quantity_to_compare == 'DileptonRap':
+                return -3,3
+            if quantity_to_compare == 'LeptonPt':
+                return 0,300
+        if quantity_to_compare == 'RelCombIso':
+            return 0,0.55
+        if quantity_to_compare == 'RelIsoSumPt':
+            return 0,0.1
         if 'Electron' in dilepton:
             return 100, 1000
         if 'MuonsSameSign' in dilepton:
@@ -233,6 +257,8 @@ class Drawer:
             return 70,1400
         elif quantity_to_compare in ['DileptonPt', 'LeptonPt']:
             return 0, 700
+        elif quantity_to_compare == 'LeptonEta':
+            return -3,3
         return None
 
     def parse_lumi_from_log(self, log_fn):
@@ -315,8 +341,11 @@ class Drawer:
             'DileptonMass': 'm(%s)%s',
             'DimuonMassVertexConstrained': 'm(%s)%s',
             'DileptonPt': '%s p_{T}%s',
+            'DileptonRap': '%s rapidity%s',
             'LeptonPt': "%s leptons' p_{T}%s",
             'LeptonEta': "%s leptons' #eta%s",
+            'RelIsoSumPt': "%s leptons' relative tk. iso.%s",
+            'RelCombIso': "%s leptons' relative comb. iso.%s",
             }.get(quantity_to_compare, quantity_to_compare + ', %s, %s')
 
     def unitize(self, quantity_to_compare):
@@ -326,6 +355,11 @@ class Drawer:
             'DileptonPt': ' [GeV]',
             'LeptonPt': ' [GeV]',
             'LeptonEta': '',
+            'LeptonPhi': ' [rad]',
+            'DileptonPhi': ' [rad]',
+            'DileptonRap': '',
+            'RelCombIso': '',
+            'RelIsoSumPt': '',
             }.get(quantity_to_compare, ' [XXX]')
 
     def get_dir_name(self, cutset, dilepton):
@@ -496,6 +530,8 @@ class Drawer:
         # elsewhere, too, so this is fragile.
         if dilepton == 'MuonsPlusMuonsMinus' and cumulative:
             legend = ROOT.TLegend(0.47, 0.55, 0.88, 0.88)
+        elif dilepton == 'MuonsSameSign':
+            legend = ROOT.TLegend(0.78, 0.61, 0.92, 0.88)
         else:
             legend = ROOT.TLegend(0.50, 0.69, 0.76, 0.88)
 
@@ -555,7 +591,13 @@ class Drawer:
             ytitle = 'Events #geq %s' % (self.titleize(quantity_to_compare) % (self.subtitleize(dilepton), ''))
         else:
             # E.g. Events/5 GeV.
-            ytitle = 'Events / %i%s' % (self.get_rebin_factor(quantity_to_compare), self.unitize(quantity_to_compare).translate(None, '()[]')) # Events/5 GeV. JMTBAD assumes original histogram had 1 GeV bins and was rebinned simply -- ignores rebin_histogram ability to have arb. bins
+            ytitle = 'Events / %i%s' % (self.get_rebin_factor(dilepton, quantity_to_compare), self.unitize(quantity_to_compare).translate(None, '()[]')) # Events/5 GeV. JMTBAD assumes original histogram had 1 GeV bins and was rebinned simply -- ignores rebin_histogram ability to have arb. bins
+            if quantity_to_compare == 'DileptonRap':
+                ytitle = 'Events / 0.5'
+            elif quantity_to_compare == 'RelIsoSumPt':
+                ytitle = 'Events / 0.02'
+            elif quantity_to_compare == 'RelCombIso':
+                ytitle = 'Events / 0.05'
         s.SetTitle(';%s;%s' % (xtitle, ytitle))
 
         s.Draw('hist')
@@ -580,6 +622,10 @@ class Drawer:
                 rhm = real_hist_max(self.hdata, user_range=xrange)
                 mymax = max(mymax, rhm)
 
+        if not self.guess_yrange:
+            mymin = 0
+            mymax = real_hist_max(self.hdata, user_range=xrange)
+            
         # Can override the above fussing.
         yrange = self.get_y_axis_range(dilepton, cumulative)
         if self.use_yaxis_overrides and yrange is not None:
@@ -588,6 +634,8 @@ class Drawer:
             if yrange[1] is not None:
                 mymax = yrange[1]
 
+        mymin = 0.00001
+    
         if mymin is not None: s.SetMinimum(mymin)
         if mymax is not None: s.SetMaximum(mymax)
 
@@ -725,7 +773,7 @@ class Drawer:
                         # Print the entries for the ASCII table for the current
                         # cutset+dilepton. Could extend this to support counts for
                         # ranges that aren't mass.
-                        if not cumulative and 'Mass' in quantity_to_compare:
+                        if not cumulative and quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained'] and self.print_table:
                             self.make_table(cutset, dilepton)
 
                         if self.save_plots:

@@ -18,8 +18,8 @@ bins = array('d', [120, 200, 400, 600])
 total_mumu = ROOT.TH1F('mumu', '', len(bins)-1, bins)
 total_emu  = ROOT.TH1F('emu',  '', len(bins)-1, bins)
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import ttbar, ww, singletop_tW, ztautau, wz, zz
-samples = [ttbar, ww, singletop_tW, ztautau, wz, zz]
+from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import ttbar, ww, tW, tbarW, ztautau, wz, zz
+samples = [ttbar, ww, tW, tbarW, ztautau, wz, zz]
 cut = 'OurNew'
 
 def draw(sample):
@@ -53,7 +53,7 @@ def draw(sample):
     ps.save('%s_div' % sample.name, log=False)
 
 for sample in samples:
-    f = ROOT.TFile('/uscms/home/tucker/nobackup/zp2mu_ana_datamc_mc/latest/ana_datamc_%s.root' % sample.name)
+    f = ROOT.TFile('mc/ana_datamc_%s.root' % sample.name)
 
     h = f.Get(cut + 'MuonsPlusMuonsMinusHistos').Get('DileptonMass')
     sample.mumu = h.Rebin(len(bins)-1, '%s_mumu' % sample.name, bins)

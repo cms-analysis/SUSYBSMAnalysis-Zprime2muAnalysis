@@ -6,17 +6,17 @@ process = cms.Process('Zprime2muAnalysis')
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 process.source = cms.Source('PoolSource', fileNames = cms.untracked.vstring('file:pat.root'))
 process.load('FWCore.MessageLogger.MessageLogger_cfi')
-process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+process.MessageLogger.cerr.FwkReport.reportEvery = 1
+process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
+process.GlobalTag.globaltag = 'GR_R_42_V13::All'
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import files_from_argv
 files_from_argv(process)
 
-hlt = 'HLT'
-
+process.load('HLTrigger.HLTcore.hltEventAnalyzerAOD_cfi')
 process.load('HLTrigger.HLTcore.triggerSummaryAnalyzerAOD_cfi')
-process.triggerSummaryAnalyzerAOD.inputTag = cms.InputTag('hltTriggerSummaryAOD', '', hlt)
 
-process.printEvent = cms.EDAnalyzer('PrintEvent', trigger_results_src = cms.InputTag('TriggerResults', '', hlt))
-process.MessageLogger.categories.append('PrintEvent')
+process.p = cms.Path(process.hltEventAnalyzerAOD * process.triggerSummaryAnalyzerAOD)
 
-process.p = cms.Path(process.printEvent * process.triggerSummaryAnalyzerAOD)
+#from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
+#switch_hlt_process_name(process, 'duh')

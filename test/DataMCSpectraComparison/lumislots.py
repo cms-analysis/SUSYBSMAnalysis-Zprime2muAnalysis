@@ -55,27 +55,29 @@ def build_slots(lumi_per_slot):
             slots.append((tot_lumi_in_slot, curr_slot))
             curr_slot = defaultdict(list)
             tot_lumi_in_slot = 0
-
+        
+    slots.append((tot_lumi_in_slot, curr_slot))
+    print 'last slot has lumi', tot_lumi_in_slot
     return slots, lookup
 
-slots, lookup = build_slots(50)
-to_pickle((slots, lookup), 'Run2011MuonsOnly.slots.gzpickle')
-#slots, lookup = from_pickle('Run2011MuonsOnly.slots.gzpickle')
+lumi_per_slot = 491.7
+slots, lookup = build_slots(lumi_per_slot)
+to_pickle((slots, lookup), 'Run2011MuonsOnly.slots.%iipb.gzpickle' % lumi_per_slot)
+#slots, lookup = from_pickle('Run2011MuonsOnly.slots.%iipb.gzpickle' % lumi_per_slot)
 num_slots = len(slots)
 
 mass_ranges = [
     ( 60,120),
     (120,200),
-    (200,400)
+    (200,400),
+    (120,600),
     ]
 
 histos = [ROOT.TH1F('%s_%s' % m, 'event count for mass range %s-%s GeV' % m, num_slots, 0, num_slots) for m in mass_ranges]
     
-f = ROOT.TFile('data/ana_datamc_Run2011MuonsOnly/ana_datamc_data.root')
+f = ROOT.TFile('data/Run2011MuonsOnly/ana_datamc_data.root')
 t = f.SimpleNtupler.Get('t')
-t.SetAlias('loose_new_0', t.GetAlias('loose_new_0').replace('Layers[0] > 10', 'Layers[0] > 8'))
-t.SetAlias('loose_new_1', t.GetAlias('loose_new_1').replace('Layers[1] > 10', 'Layers[1] > 8'))
-
+#cut = ROOT.TTreeFormula('cut', 'OurSelNewNoSign && SameSign', t)
 cut = ROOT.TTreeFormula('cut', 'OurSelNew', t)
 
 for jentry, tt in ttree_iterator(t):
@@ -85,8 +87,7 @@ for jentry, tt in ttree_iterator(t):
     slot = lookup[(t.run, t.lumi)]
     for i,(l,h) in enumerate(mass_ranges):
         if l <= t.dil_mass < h:
-            break
-    histos[i].Fill(slot)
+            histos[i].Fill(slot)
 
 ROOT.gStyle.SetOptStat(10)
 ps = plot_saver('plots/lumislots', log=False)
@@ -94,5 +95,14 @@ for h in histos:
     h.SetMarkerSize(1)
     h.SetMarkerStyle(0)
     h.SetMinimum(0)
+    h.GetXaxis().SetTitle('lumi slot #')
+    h.GetYaxis().SetTitle('events/%i pb^{-1}' % lumi_per_slot)
     h.Draw('hist e1 text90')
+    ps.c.Update()
+    s = h.GetListOfFunctions().FindObject('stats')
+    s.SetX1NDC(0.73)
+    s.SetY1NDC(0.92)
+    s.SetX2NDC(0.98)
+    s.SetY2NDC(0.99)
+                    
     ps.save(h.GetName())

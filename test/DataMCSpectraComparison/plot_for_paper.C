@@ -16,7 +16,7 @@
 #include "TROOT.h"
 #include "TStyle.h"
 
-#define DRAW_ZPRIME
+//#define DRAW_ZPRIME
 #ifdef DRAW_ZPRIME_NO
 #include "zprime.C"
 #endif
@@ -223,11 +223,11 @@ void plot_for_paper2() {
     zdyHist->SetTitle(TString::Format(";m(%s) [GeV]; Events #geq m(%s)", dil_string, dil_string));
 
   zdyHist->SetFillColor(7);
-  zdyHist->SetLineColor(7);
+  zdyHist->SetLineColor(1);
   promptHist->SetFillColor(2);
-  promptHist->SetLineColor(2);
+  promptHist->SetLineColor(1);
   jetsHist->SetFillColor(5);
-  jetsHist->SetLineColor(5);
+  jetsHist->SetLineColor(1);
   if (draw_zprime) {
     zprime->SetLineColor(38);
     zprime->SetLineWidth(2);
@@ -275,7 +275,7 @@ void plot_for_paper2() {
   leg->SetFillStyle(0);
   leg->Draw();
 
-  TPaveLabel *pl = new TPaveLabel(0.35, 0.85, 0.81, 0.95, "CMS preliminary   #sqrt{s} = 7 TeV    #int L dt = 4.9 fb^{-1}", "brNDC");
+  TPaveLabel *pl = new TPaveLabel(0.35, 0.85, 0.81, 0.95, TString::Format("CMS preliminary   #sqrt{s} = 7 TeV    #int L dt = 4.%i fb^{-1}", isElectron ? 6 : 9), "brNDC");
   pl->SetBorderSize(0);
   pl->SetFillColor(0);
   pl->SetFillStyle(0);
@@ -291,9 +291,9 @@ void plot_for_paper2() {
   system("mkdir -p plots/for_zprime_paper");
   TString fn;
   if (isCHist)
-    fn = isElectron ? "cMassHist1100pb" : "MuonsPlusMuonsMinus_cumulative_log";
+    fn = isElectron ? "cMassHist4600pb" : "MuonsPlusMuonsMinus_cumulative_log";
   else
-    fn = isElectron ? "massHist1100pb" : "MuonsPlusMuonsMinus_log";
+    fn = isElectron ? "massHist4600pb" : "MuonsPlusMuonsMinus_log";
   fn = "plots/for_zprime_paper/" + fn;
   c1->SaveAs(fn + ".pdf");
   c1->SaveAs(fn + ".root");

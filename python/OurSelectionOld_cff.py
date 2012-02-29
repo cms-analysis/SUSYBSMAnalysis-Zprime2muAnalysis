@@ -33,7 +33,7 @@ import FWCore.ParameterSet.Config as cms
 # evolves with luminosity; the details are kept in another file for
 # multiple uses.)
 #
-# So we have a LooseTightCandViewShallowCloneCombiner that requires
+# So we have a combiner that requires
 # both muons to pass the loose cut, and at least one must pass the
 # tight cut.
 
@@ -52,7 +52,7 @@ tight_cut = 'abs(dB) < 0.2 && ' \
             'globalTrack.hitPattern.muonStationsWithValidHits >= 2 && ' \
             'isTrackerMuon && ' + trigger_match
 
-allDimuons = cms.EDProducer('LooseTightCandViewShallowCloneCombiner',
+allDimuons = cms.EDProducer('Zprime2muCombiner',
                             decay = cms.string('leptons:muons@+ leptons:muons@-'),
                             cut = cms.string(''),
                             loose_cut = cms.string(loose_cut),

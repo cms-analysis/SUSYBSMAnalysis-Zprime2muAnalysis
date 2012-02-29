@@ -28,7 +28,7 @@ import FWCore.ParameterSet.Config as cms
 # menu evolves with luminosity, so the details are kept in a single
 # file as they get used multiple places.)
 #
-# So we have a LooseTightCandViewShallowCloneCombiner that requires
+# So we have a loose-tight combiner that requires
 # both muons to pass the above cuts ("loose" is then a misnomer), and
 # at least one must pass the trigger match requirement (the only
 # "tight" cut).
@@ -49,7 +49,7 @@ loose_cut = loose_cut % offline_pt_threshold
 
 tight_cut = trigger_match
 
-allDimuons = cms.EDProducer('LooseTightCandViewShallowCloneCombiner',
+allDimuons = cms.EDProducer('Zprime2muCombiner',
                             decay = cms.string('leptons:muons@+ leptons:muons@-'),
                             cut = cms.string(''),
                             loose_cut = cms.string(loose_cut),

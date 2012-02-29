@@ -37,7 +37,7 @@
   <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
 </library>
 
-<library file="PATCandViewShallowCloneCombiner.cc" name="PATCandViewShallowCloneCombiner">
+<library file="Zprime2muCombiner.cc" name="Zprime2muCombiner">
   <use name="DataFormats/PatCandidates"/>
   <use name="CommonTools/CandAlgos"/>
   <use name="CommonTools/CandUtils"/>

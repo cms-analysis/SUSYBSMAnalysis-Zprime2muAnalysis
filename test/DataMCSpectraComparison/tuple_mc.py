@@ -11,7 +11,7 @@ process.source.fileNames = ['/store/mc/Summer11/TTJets_TuneZ2_7TeV-madgraph-tauo
 process.maxEvents.input = 1000
 process.GlobalTag.globaltag = 'START42_V11::All'
 
-if __name__ == '__main__' and 'submit' in sys.argv:
+if __name__ == '__main__' and hasattr(sys, 'argv') and 'submit' in sys.argv:
     job_control = '''
 total_number_of_events = -1
 events_per_job = 150000

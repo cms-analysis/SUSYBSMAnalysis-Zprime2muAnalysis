@@ -9,7 +9,7 @@ process.GlobalTag.globaltag = 'FT_R_44_V11::All'
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import removeMCUse
 removeMCUse(process)
 
-if __name__ == '__main__' and 'submit' in sys.argv:
+if __name__ == '__main__' and hasattr(sys, 'argv') and 'submit' in sys.argv:
     job_control_ex = '''
 total_number_of_lumis = -1
 lumis_per_job = %(lumis_per_job)s

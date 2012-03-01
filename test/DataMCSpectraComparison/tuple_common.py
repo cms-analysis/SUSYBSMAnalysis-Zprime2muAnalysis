@@ -15,7 +15,7 @@ process.heepPatElectrons = cms.EDFilter('PATElectronSelector',
                                         src = cms.InputTag('patElectrons'),
                                         cut = cms.string('userInt("HEEPId") == 0')
                                         )
-process.patDefaultSequence.replace(process.patCandidates, process.patCandidates * process.heepPatElectrons)
+process.patDefaultSequence.replace(process.selectedPatElectrons, process.selectedPatElectrons * process.heepPatElectrons)
 process.countPatMuons.minNumber = 0
 process.countPatLeptons.electronSource = cms.InputTag('heepPatElectrons')
 process.countPatLeptons.minNumber = 2

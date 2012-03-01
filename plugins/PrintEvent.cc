@@ -2,6 +2,8 @@
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
+#include "DataFormats/PatCandidates/interface/Jet.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "FWCore/Common/interface/TriggerNames.h"
@@ -22,6 +24,10 @@ class PrintEvent : public edm::EDAnalyzer {
   edm::InputTag muon_src;
   bool dump_dileptons;
   edm::InputTag dilepton_src;
+  bool dump_met;
+  std::vector<edm::InputTag> met_srcs;
+  bool dump_jets;
+  edm::InputTag jet_src;
 };
 
 PrintEvent::PrintEvent(const edm::ParameterSet& cfg) {
@@ -52,6 +58,23 @@ PrintEvent::PrintEvent(const edm::ParameterSet& cfg) {
   }
   out << "\n";
 
+  dump_met = cfg.existsAs<std::vector<edm::InputTag> >("met_srcs");
+  out << "dump_met: " << dump_met << " ";
+  if (dump_met) {
+    met_srcs = cfg.getParameter<std::vector<edm::InputTag> >("met_srcs");
+    BOOST_FOREACH(const edm::InputTag& met_src, met_srcs)
+      out << met_src.encode() << " ";
+  }
+  out << "\n";
+
+  dump_jets = cfg.existsAs<edm::InputTag>("jet_src");
+  out << "dump_jets: " << dump_jets << " ";
+  if (dump_jets) {
+    jet_src = cfg.getParameter<edm::InputTag>("jet_src");
+    out << jet_src;
+  }
+  out << "\n";
+
   edm::LogInfo("PrintEvent") << out.str();
 }
 
@@ -65,6 +88,27 @@ void PrintEvent::analyze(const edm::Event& event, const edm::EventSetup& setup) 
     for (size_t i = 0; i < res->size(); ++i)
       out << "path #" << i << " name " << names.triggerName(i) << " fired? " << res->accept(i) << "\n";
     out << "\n";
+    edm::LogInfo("PrintEvent") << out.str();
+  }
+
+  if (dump_met) {
+    std::ostringstream out;
+    out << "mets:\n";
+    BOOST_FOREACH(const edm::InputTag& met_src, met_srcs) {
+      edm::Handle<pat::METCollection> met;
+      event.getByLabel(met_src, met);
+      out << met_src.encode() << ": et: " << met->front().et() << " phi: " << met->front().phi() << "\n";
+    }
+    edm::LogInfo("PrintEvent") << out.str();
+  }
+
+  if (dump_jets) {
+    std::ostringstream out;
+    edm::Handle<pat::JetCollection> jets;
+    event.getByLabel(jet_src, jets);
+    out << "jets (size: " << jets->size() << "):\n";
+    BOOST_FOREACH(const pat::Jet& jet, *jets)
+      out << "p4: " << jet.p4() << "\n";
     edm::LogInfo("PrintEvent") << out.str();
   }
 

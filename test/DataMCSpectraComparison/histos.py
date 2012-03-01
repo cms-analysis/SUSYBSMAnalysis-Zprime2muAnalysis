@@ -105,10 +105,11 @@ for cut_name, Selection in cuts.iteritems():
         dil = Selection.dimuons.clone(src = cms.InputTag(allname))
 
         # Implement the differences to the selections; currently, as
-        # in LooseTightPairSelector, the cuts in loose_cut and
+        # in Zprime2muCombiner, the cuts in loose_cut and
         # tight_cut are the ones actually used to drop leptons, and
-        # not the ones in the LeptonProducer above.
+        # not the ones passed into the LeptonProducer to set cutFor above.
         if cut_name == 'Simple':
+            alldil.electron_cut_mask = cms.uint32(0)
             alldil.loose_cut = 'isGlobalMuon && pt > 20.'
             alldil.tight_cut = ''
             dil.max_candidates = 100

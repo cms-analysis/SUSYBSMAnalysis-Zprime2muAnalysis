@@ -27,35 +27,35 @@ process.MessageLogger.cerr.PATSummaryTables = cms.untracked.PSet(limit = cms.unt
 
 # Define the output file with the output commands defining the
 # branches we want to have in our PAT tuple.
-from PhysicsTools.PatAlgos.patEventContent_cff import patEventContent
-ourEventContent = patEventContent + [
-    'keep recoGenParticles_prunedMCLeptons_*_*',
-    'keep GenEventInfoProduct_*_*_*',
-    'keep GenRunInfoProduct_*_*_*',
-    'keep *_offlineBeamSpot_*_*',
-    'keep *_offlinePrimaryVertices_*_*',
-    'keep edmTriggerResults_TriggerResults__HLT*',
-    'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__HLT*',
-    'keep L1GlobalTriggerReadoutRecord_gtDigis__*',
-    'keep *_hltTriggerSummaryAOD__HLT*',
-    'keep edmTriggerResults_TriggerResults__REDIGI*',
-    'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__REDIGI*',
-    'keep *_hltTriggerSummaryAOD__REDIGI*',
-    'keep edmTriggerResults_TriggerResults__PAT', # for post-tuple filtering on the goodData paths
-    'drop *_cleanPatJets_*_*',
-    'drop *_selectedPatJets_*_*',
-    'drop *_cleanPatTaus_*_*',
-    'drop *_patMETs_*_*',
-    ]
-
 process.out = cms.OutputModule('PoolOutputModule',
                                fileName = cms.untracked.string('pat.root'),
                                # If your path in your top-level config is not called 'p', you'll need
                                # to change the next line. In test/PATTuple.py, 'p' is used.
                                SelectEvents   = cms.untracked.PSet(SelectEvents = cms.vstring('p')),
-                               outputCommands = cms.untracked.vstring('drop *', *ourEventContent)
+                               outputCommands = cms.untracked.vstring(
+                                   'drop *',
+                                   'keep patElectrons_cleanPatElectrons__*',
+                                   'keep patMuons_cleanPatMuons__*',
+                                   'keep patJets_cleanPatJets__*',
+                                   'keep patPhotons_cleanPatPhotons__*',
+                                   'keep patMETs_patMETs*__PAT',
+                                   'keep recoGenParticles_prunedMCLeptons_*_*',
+                                   'keep recoGenJets_selectedPatJets_genJets_*',
+                                   'keep recoBaseTagInfosOwned_selectedPatJets_tagInfos_*',
+                                   'keep GenEventInfoProduct_*_*_*',
+                                   'keep GenRunInfoProduct_*_*_*',
+                                   'keep *_offlineBeamSpot_*_*',
+                                   'keep *_offlinePrimaryVertices_*_*',
+                                   'keep edmTriggerResults_TriggerResults__HLT*',
+                                   'keep edmTriggerResults_TriggerResults__REDIGI*',
+                                   'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__HLT*',
+                                   'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__REDIGI*',
+                                   'keep L1GlobalTriggerReadoutRecord_gtDigis__RECO',
+                                   'keep *_hltTriggerSummaryAOD__HLT*',
+                                   'keep *_hltTriggerSummaryAOD__REDIGI*',
+                                   'keep edmTriggerResults_TriggerResults__PAT', # for post-tuple filtering on the goodData paths
+                                   )
                                )
-
 process.outpath = cms.EndPath(process.out)
 
 # Load the PAT modules and sequences, and configure them as we
@@ -121,3 +121,31 @@ process.goodDataHLTPhysicsDeclared = cms.Path(process.hltPhysicsDeclared)
 process.goodDataPrimaryVertexFilter = cms.Path(process.primaryVertexFilter)
 process.goodDataNoScraping = cms.Path(process.noscraping)
 process.goodDataAll = cms.Path(process.hltPhysicsDeclared * process.primaryVertexFilter * process.noscraping)
+
+# Add MET and jets. Configuration to be revisited later.
+from PhysicsTools.PatAlgos.tools.metTools import addPfMET, addTcMET
+addPfMET(process)
+addTcMET(process)
+
+from PhysicsTools.PatAlgos.tools.jetTools import switchJetCollection
+switchJetCollection(process, 
+                    cms.InputTag('ak5PFJets'),   
+                    doJTA            = True,            
+                    doBTagging       = True,            
+                    jetCorrLabel     = ('AK5PF', ['L2Relative', 'L3Absolute']),  
+                    doType1MET       = False,            
+                    genJetCollection = cms.InputTag("ak5GenJets"),
+                    doJetID      = False,
+                    jetIdLabel   = "ak5"
+                    )
+
+# Make a collection of muons with our final selection applied so that
+# the muon-jet cleaning will use only muons passing those cuts. This
+# muon collection is not saved in the output.
+from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff import loose_cut
+process.muonsForJetCleaning = process.selectedPatMuons.clone(cut = loose_cut.replace('pt > 45', 'pt > 30'))
+process.patDefaultSequence.replace(process.selectedPatMuons, process.selectedPatMuons * process.muonsForJetCleaning)
+process.cleanPatJets.checkOverlaps.muons.src = 'muonsForJetCleaning'
+process.cleanPatJets.checkOverlaps.muons.deltaR = 0.2
+process.cleanPatJets.checkOverlaps.muons.requireNoOverlaps = True
+process.cleanPatJets.finalCut = 'pt > 30.0'

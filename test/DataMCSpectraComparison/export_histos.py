@@ -11,7 +11,7 @@ ROOT.TH1.AddDirectory(False)
 
 mumu_mc_fn_base = 'mc/ana_datamc_%s.root'
 mumu_data_fn = 'data/Run2011MuonsOnly/ana_datamc_data.root'
-mumu_rebin_factor = 5
+mumu_rebin_factor = 10
 mumu_histogram = 'DimuonMassVertexConstrained'
 mumu_scale = 4914*1.0969257655
 emu_mc_fn_base = 'mc/ana_datamc_%s.root'
@@ -20,8 +20,8 @@ emu_rebin_factor = 20
 emu_histogram = 'DileptonMass'
 emu_scale = 4641
 add_heep = True
-heep_fn = 'heep_massHists2011Jan9.root'
-heep_rebin_factor = None
+heep_fn = 'heep_massHists2011March1.root'
+heep_rebin_factor = 2
 
 #*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
 

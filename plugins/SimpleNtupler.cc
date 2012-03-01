@@ -104,6 +104,7 @@ private:
     float lep_timeOutIn[2];
     float lep_timeInOutErr[2];
     float lep_timeOutInErr[2];
+    int lep_heep_id[2];
     float lep_min_muon_dR[2];
     short lep_tk_numberOfValidTrackerHits[2]; 
     short lep_tk_numberOfValidTrackerLayers[2];
@@ -192,6 +193,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->Branch("vertex_z", &t.vertex_z, "vertex_z/F");
   tree->Branch("vertex_z_err", &t.vertex_z_err, "vertex_z_err/F");
   tree->Branch("lep_id", t.lep_id, "lep_id[2]/I");
+  tree->Branch("lep_heep_id", t.lep_heep_id, "lep_heep_id[2]/I");
   tree->Branch("lep_pt", t.lep_pt, "lep_pt[2]/F");
   tree->Branch("lep_pt_err", t.lep_pt_err, "lep_pt_err[2]/F");
   tree->Branch("lep_eta", t.lep_eta, "lep_eta[2]/F");
@@ -380,6 +382,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   // electron in [1], so don't have to check the other combination.
   tree->SetAlias("EmuSelNoSign",
 		 "abs(lep_id[1]) == 11 && "				\
+		 "lep_heep_id[1] == 0 && "				\
 		 "loose_new_0 && "					\
 		 "trigger_match_0 && "					\
 		 "GoodData");
@@ -558,11 +561,13 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	if (abs(t.lep_id[w]) == 11) {
 	  const pat::Electron* el = toConcretePtr<pat::Electron>(dileptonDaughter(dil, i));
 	  assert(el);
-	  
+
+	  t.lep_heep_id[w] = userInt(*el, "HEEPId", 999);
 	  t.lep_min_muon_dR[w] = userFloat(*el, "min_muon_dR", 999);
 	}
       }
       else {
+	t.lep_heep_id[w] = 999;
 	t.lep_min_muon_dR[w] = 999;
 
 	const pat::Muon* mu = toConcretePtr<pat::Muon>(dileptonDaughter(dil, i));

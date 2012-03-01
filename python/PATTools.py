@@ -72,6 +72,8 @@ def removeMCUse(process):
     # Remove anything that requires MC truth.
     from PhysicsTools.PatAlgos.tools.coreTools import removeMCMatching
     removeMCMatching(process, ['All'])
+    removeMCMatching(process, ['METs'], postfix='TC')
+    removeMCMatching(process, ['METs'], postfix='PF')
     removeMuonMCClassification(process)
     removeSimLeptons(process)
     removePrunedMCLeptons(process)

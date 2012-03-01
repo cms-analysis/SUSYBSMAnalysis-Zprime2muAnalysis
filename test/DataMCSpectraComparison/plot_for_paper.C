@@ -205,6 +205,7 @@ void plot_for_paper2() {
   TCanvas *c1 = new TCanvas("c1", "c1",5,24,600,600);
   gStyle->SetOptFit(1);
   gStyle->SetOptStat(0);
+  //gStyle->SetLineWidth(2);
   c1->Range(-112.5,-3.952308,1137.5,5.117294);
   c1->SetFillColor(0);
   c1->SetBorderMode(0);
@@ -218,7 +219,7 @@ void plot_for_paper2() {
   c1->SetFrameBorderMode(0);
 
   if (!isCHist)
-    zdyHist->SetTitle(TString::Format(";m(%s) [GeV]; Events / 5 GeV", dil_string));
+    zdyHist->SetTitle(TString::Format(";m(%s) [GeV]; Events / 10 GeV", dil_string));
   else
     zdyHist->SetTitle(TString::Format(";m(%s) [GeV]; Events #geq m(%s)", dil_string, dil_string));
 
@@ -239,25 +240,32 @@ void plot_for_paper2() {
   if (draw_zprime && !isCHist) zprime->Draw("SAME HIST");
 
   TGraphAsymmErrors* dataHistPI = poisson_intervalize(dataHist, true);
+  if (isCHist) {
+    // too crowded
+    for (int i = 55; i < dataHistPI->GetN(); i += 2)
+      dataHistPI->SetPoint(i, -5,-5);
+  }
   dataHistPI->SetMarkerSize(0.6);
   dataHistPI->SetMarkerStyle(20);
   dataHistPI->Draw("EPZ SAME"); 
 
+  zdyHist->GetXaxis()->SetMoreLogLabels();
   zdyHist->GetXaxis()->SetTitleSize(0.047);
-  zdyHist->GetXaxis()->SetTitleOffset(0.9);
+  zdyHist->GetXaxis()->SetLabelOffset(0.001);
+  zdyHist->GetXaxis()->SetTitleOffset(0.99);
   zdyHist->GetYaxis()->SetTitleSize(0.047);
   zdyHist->GetYaxis()->SetTitleOffset(1.2);
 
   if (!isCHist) {
-    zdyHist->GetYaxis()->SetRangeUser(1e-3, 4.5e5);
-    zdyHist->GetXaxis()->SetRangeUser(50, 1400);
+    zdyHist->GetYaxis()->SetRangeUser(1e-4, 8e5);
+    zdyHist->GetXaxis()->SetRangeUser(60, 2500);
   }
   else {
-    zdyHist->GetYaxis()->SetRangeUser(1e-2, 1e6);
-    zdyHist->GetXaxis()->SetRangeUser(50, 1400);
+    zdyHist->GetYaxis()->SetRangeUser(4e-3, 3e6);
+    zdyHist->GetXaxis()->SetRangeUser(60, 2500);
   }
 
-  TLegend *leg = new TLegend(0.46, 0.56, 0.92, 0.87, NULL, "brNDC");
+  TLegend *leg = new TLegend(0.478, 0.667, 0.919, 0.881, NULL, "brNDC");
   leg->SetBorderSize(0);
   leg->SetTextFont(62);
   leg->SetLineColor(1);
@@ -275,7 +283,7 @@ void plot_for_paper2() {
   leg->SetFillStyle(0);
   leg->Draw();
 
-  TPaveLabel *pl = new TPaveLabel(0.35, 0.85, 0.81, 0.95, TString::Format("CMS preliminary   #sqrt{s} = 7 TeV    #int L dt = 4.%i fb^{-1}", isElectron ? 6 : 9), "brNDC");
+  TPaveLabel *pl = new TPaveLabel(0.44, 0.85, 0.90, 0.95, TString::Format("CMS   #sqrt{s} = 7 TeV    #int L dt = 4.%i fb^{-1}", isElectron ? 6 : 9), "brNDC");
   pl->SetBorderSize(0);
   pl->SetFillColor(0);
   pl->SetFillStyle(0);
@@ -284,9 +292,10 @@ void plot_for_paper2() {
 
   // huge crappy hack for "EP" in TLegend::AddEntry not working
   TLine ll;
-  ll.DrawLineNDC(0.518, draw_zprime ? 0.811 : 0.794, 0.518, draw_zprime ? 0.859 : 0.865);
+  ll.DrawLineNDC(0.533, draw_zprime ? 0.811 : 0.836, 0.533, draw_zprime ? 0.859 : 0.872);
 
   c1->RedrawAxis();
+  c1->SetLogx(1);
   c1->SetLogy(1);
   system("mkdir -p plots/for_zprime_paper");
   TString fn;

@@ -164,6 +164,9 @@ void plot_for_paper2() {
 #endif
   bool isCHist = false; // true for cumulative hist
   bool isElectron = true;
+  int binning = 10;
+  bool preliminary = false;
+  bool logx = true;
 
   int argc = gApplication->Argc();
   char** argv = gApplication->Argv();
@@ -182,6 +185,7 @@ void plot_for_paper2() {
     in_fn = isElectron ? "histos_export_heep_cumulative.root" : "histos_export_cumulative.root";
   else
     in_fn = isElectron ? "histos_export_heep.root" : "histos_export.root";
+  in_fn = TString::Format("export_%igev/", binning) + in_fn;
   TFile fff(in_fn);
  
   TH1* dataHist = (TH1*)fff.Get("dataHist");
@@ -219,7 +223,7 @@ void plot_for_paper2() {
   c1->SetFrameBorderMode(0);
 
   if (!isCHist)
-    zdyHist->SetTitle(TString::Format(";m(%s) [GeV]; Events / 10 GeV", dil_string));
+    zdyHist->SetTitle(TString::Format(";m(%s) [GeV]; Events / %i GeV", dil_string, binning));
   else
     zdyHist->SetTitle(TString::Format(";m(%s) [GeV]; Events #geq m(%s)", dil_string, dil_string));
 
@@ -240,7 +244,7 @@ void plot_for_paper2() {
   if (draw_zprime && !isCHist) zprime->Draw("SAME HIST");
 
   TGraphAsymmErrors* dataHistPI = poisson_intervalize(dataHist, true);
-  if (isCHist) {
+  if (logx && isCHist) {
     // too crowded
     for (int i = 55; i < dataHistPI->GetN(); i += 2)
       dataHistPI->SetPoint(i, -5,-5);
@@ -249,7 +253,7 @@ void plot_for_paper2() {
   dataHistPI->SetMarkerStyle(20);
   dataHistPI->Draw("EPZ SAME"); 
 
-  zdyHist->GetXaxis()->SetMoreLogLabels();
+  if (logx) zdyHist->GetXaxis()->SetMoreLogLabels();
   zdyHist->GetXaxis()->SetTitleSize(0.047);
   zdyHist->GetXaxis()->SetLabelOffset(0.001);
   zdyHist->GetXaxis()->SetTitleOffset(0.99);
@@ -284,7 +288,7 @@ void plot_for_paper2() {
   leg->Draw();
 
   TPaveLabel *pl = 0;
-  if (1)
+  if (!preliminary)
     pl = new TPaveLabel(0.44, 0.85, 0.90, 0.95, TString::Format("CMS   #sqrt{s} = 7 TeV    #int L dt = 4.%i fb^{-1}", isElectron ? 7 : 9), "brNDC");
   else
     pl = new TPaveLabel(0.39, 0.85, 0.85, 0.95, TString::Format("#splitline{CMS}{preliminary}   #sqrt{s} = 7 TeV    #int L dt = 4.%i fb^{-1}", isElectron ? 7 : 9), "brNDC");
@@ -299,7 +303,7 @@ void plot_for_paper2() {
   ll.DrawLineNDC(0.533, draw_zprime ? 0.811 : 0.836, 0.533, draw_zprime ? 0.859 : 0.872);
 
   c1->RedrawAxis();
-  c1->SetLogx(1);
+  if (logx) c1->SetLogx(1);
   c1->SetLogy(1);
   system("mkdir -p plots/for_zprime_paper");
   TString fn;

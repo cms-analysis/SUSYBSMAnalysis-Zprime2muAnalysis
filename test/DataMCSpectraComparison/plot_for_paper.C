@@ -283,7 +283,11 @@ void plot_for_paper2() {
   leg->SetFillStyle(0);
   leg->Draw();
 
-  TPaveLabel *pl = new TPaveLabel(0.44, 0.85, 0.90, 0.95, TString::Format("CMS   #sqrt{s} = 7 TeV    #int L dt = 4.%i fb^{-1}", isElectron ? 6 : 9), "brNDC");
+  TPaveLabel *pl = 0;
+  if (1)
+    pl = new TPaveLabel(0.44, 0.85, 0.90, 0.95, TString::Format("CMS   #sqrt{s} = 7 TeV    #int L dt = 4.%i fb^{-1}", isElectron ? 7 : 9), "brNDC");
+  else
+    pl = new TPaveLabel(0.39, 0.85, 0.85, 0.95, TString::Format("#splitline{CMS}{preliminary}   #sqrt{s} = 7 TeV    #int L dt = 4.%i fb^{-1}", isElectron ? 7 : 9), "brNDC");
   pl->SetBorderSize(0);
   pl->SetFillColor(0);
   pl->SetFillStyle(0);

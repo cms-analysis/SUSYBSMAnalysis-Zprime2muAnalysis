@@ -164,9 +164,10 @@ void plot_for_paper2() {
 #endif
   bool isCHist = false; // true for cumulative hist
   bool isElectron = true;
-  int binning = 10;
+  int binning = 5;
   bool preliminary = false;
   bool logx = true;
+  bool varbin = true;
 
   int argc = gApplication->Argc();
   char** argv = gApplication->Argv();
@@ -185,7 +186,7 @@ void plot_for_paper2() {
     in_fn = isElectron ? "histos_export_heep_cumulative.root" : "histos_export_cumulative.root";
   else
     in_fn = isElectron ? "histos_export_heep.root" : "histos_export.root";
-  in_fn = TString::Format("export_%igev/", binning) + in_fn;
+  in_fn = TString::Format("export_%s%igev/", (varbin ? "varbinround" : ""), binning) + in_fn;
   TFile fff(in_fn);
  
   TH1* dataHist = (TH1*)fff.Get("dataHist");

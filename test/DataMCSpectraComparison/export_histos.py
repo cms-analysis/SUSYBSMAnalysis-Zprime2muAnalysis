@@ -23,6 +23,23 @@ add_heep = True
 heep_fn = 'heep_massHists2011March1.root'
 heep_rebin_factor = 2
 
+mumu_rebin_roundto = 5
+# resolution = lambda x: 0.009332*x + 5.71e-5*x*x - 1.171e-9*x*x*x
+mumu_rebin_variable = [i for i in xrange(60, 255, 5)] + [260, 270, 280, 290, 300, 310, 320, 330, 340, 350, 365, 380, 395, 410, 425, 440, 460, 480, 500, 520, 545, 570, 595, 625, 655, 690, 725, 765, 810, 855, 905, 960, 1025, 1095, 1175, 1265, 1370, 1490, 1630, 1795, 1990, 2230, 2500]
+# resolution 2x above
+mumu_rebin_variable = [i for i in xrange(60, 145, 5)] + [155, 165, 175, 185, 195, 205, 215, 225, 235, 250, 265, 280, 295, 315, 335, 355, 380, 405, 435, 465, 500, 540, 585, 635, 695, 765, 850, 950, 1070, 1220, 1410, 1660, 1995, 2500]
+mumu_rebin_variable = None
+
+from array import array
+def variable_rebin_and_normalize(h, bins, roundto):
+    bins = array('d', bins)
+    h = h.Rebin(len(bins)-1, h.GetName() + '_rebin', bins)
+    for i in xrange(1, h.GetNbinsX()+1):
+        width = h.GetBinWidth(i)
+        if width > roundto:
+            h.SetBinContent(i, h.GetBinContent(i) * roundto / width)
+    return h
+    
 #*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#
 
 # First mu+mu-, differential and cumulative.
@@ -31,7 +48,10 @@ for cumulative in (False, True):
     for sample in samples:
         f = ROOT.TFile(mumu_mc_fn_base % sample.name)
         h = f.OurNewMuonsPlusMuonsMinusHistos.Get(mumu_histogram).Clone()
-        h.Rebin(mumu_rebin_factor)
+        if mumu_rebin_variable and not cumulative:
+            h = variable_rebin_and_normalize(h, mumu_rebin_variable, mumu_rebin_roundto)
+        else:
+            h.Rebin(mumu_rebin_factor)
         h.Scale(sample.partial_weight * mumu_scale)
         if cumulative:
             h = cumulative_histogram(h)
@@ -40,7 +60,12 @@ for cumulative in (False, True):
 
     f = ROOT.TFile(mumu_data_fn)
     dataHist = f.OurNewMuonsPlusMuonsMinusHistos.Get(mumu_histogram).Clone('dataHist')
-    dataHist.Rebin(mumu_rebin_factor)
+    if mumu_rebin_variable and not cumulative:
+        dataHist = variable_rebin_and_normalize(dataHist, mumu_rebin_variable, mumu_rebin_roundto)
+        dataHist.SetName('dataHist')
+    else:
+        dataHist.Rebin(mumu_rebin_factor)
+        
     if cumulative:
         dataHist = cumulative_histogram(dataHist)
         dataHist.SetName('dataHist')

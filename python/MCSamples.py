@@ -74,10 +74,6 @@ samples.reverse()
 
 for sample in samples:
     exec '%s = sample' % sample.name
-
-    if sample.name == 'zmumu' or sample.name.startswith('dy'):
-        sample.scheduler = 'glite'
-
     sample.ana_dataset = '/%s/tucker-datamc_%s-e5275934e6f4238b636d1bf2848643b3/USER' % (sample.dataset.split('/')[1], sample.name)
 
 ttbar.ana_dataset = '/TTJets_TuneZ2_7TeV-madgraph-tauola/tucker-datamc_ttbar-a972f07199dd1bd57caa708c2dcf050c/USER'

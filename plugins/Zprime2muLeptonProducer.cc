@@ -178,27 +178,6 @@ std::pair<pat::Electron*,int> Zprime2muLeptonProducer::doLepton(const edm::Event
   // minimum muon dR above).
   int cutFor = electron_selector(*new_el) ? 0 : 1;
 
-  // Implement differences between HEEP id v3.2 (V00-07-00 of
-  // HEEPAnalyzer) and 3.0 (V00-05-00) here rather than re-tupling.
-  // electron_selector by default checks just this:
-  // 'userInt("HEEPId") == 0'. Ignore cutFor and recalculate.
-  int HEEPId = new_el->userInt("HEEPId");
-  bool is_barrel = new_el->isEB();
-  if (!is_barrel) {
-    // This cut removed in 3.2 for endcap.
-    const unsigned CUT_ISOLHADDEPTH2 = 0x0400;
-    HEEPId = HEEPId & (~CUT_ISOLHADDEPTH2);
-  }
-  cutFor = HEEPId != 0;
-  if (new_el->et() < (is_barrel ? 35 : 40)) // new_el->et() is already calo-energy corrected
-    cutFor = 1;
-  if (fabs(new_el->deltaPhiSuperClusterTrackAtVtx()) > 0.06)
-    cutFor = 1;
-  if (new_el->dr03TkSumPt() > 5.) // grad term = 0
-    cutFor = 1;
-  if (new_el->gsfTrack()->trackerExpectedHitsInner().numberOfLostHits() > 0)
-    cutFor = 1;
-
   return std::make_pair(new_el, cutFor);
 }
 

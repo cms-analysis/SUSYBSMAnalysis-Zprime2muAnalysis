@@ -5,12 +5,9 @@
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 
 namespace patmuon {
-  enum TrackType { TkGlobal, TkInner, TkOuter, TkTPFMS, TkPicky, TkPMC, TkTMR, TkSigmaSwitch, nTrackTypes };
-  const std::string track_names[nTrackTypes+1] = { "global", "inner", "outer", "tpfms", "picky", "pmc", "tmr", "sigmaswitch", "invaild" };
+  enum TrackType { TkGlobal, TkInner, TkOuter, TkTPFMS, TkPicky, TkTuneP, TkTMR, TkSigmaSwitch, nTrackTypes };
+  const std::string track_names[nTrackTypes+1] = { "global", "inner", "outer", "tpfms", "picky", "tunep", "tmr", "sigmaswitch", "invaild" };
 
-  reco::TrackRef pmcTrack(const pat::Muon& mu);
-  reco::TrackRef tmrTrack(const pat::Muon& mu);
-  reco::TrackRef sigmaSwitchTrack(const pat::Muon& mu);
   TrackType trackNameToType(std::string name);
   reco::TrackRef trackByType(const pat::Muon& mu, TrackType t);
   reco::TrackRef trackByName(const pat::Muon& mu, const std::string& name);

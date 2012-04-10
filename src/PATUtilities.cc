@@ -1,21 +1,9 @@
 #include <algorithm>
 
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/MuonCocktails.h"
+#include "DataFormats/MuonReco/interface/MuonCocktails.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
 
 namespace patmuon {
-  reco::TrackRef pmcTrack(const pat::Muon& mu) {
-    return tevOptimized(mu.innerTrack(), mu.globalTrack(), mu.tpfmsMuon(), mu.pickyMuon());
-  }
-
-  reco::TrackRef tmrTrack(const pat::Muon& mu) {
-    return TMR(mu.innerTrack(), mu.tpfmsMuon());
-  }
-
-  reco::TrackRef sigmaSwitchTrack(const pat::Muon& mu) {
-    return sigmaSwitch(mu.globalTrack(), mu.innerTrack());
-  }
-
   TrackType trackNameToType(std::string name) {
     std::transform(name.begin(), name.end(), name.begin(), tolower);
     if (name == std::string("tkonly"))
@@ -33,9 +21,9 @@ namespace patmuon {
     case TkOuter: return mu.outerTrack();
     case TkTPFMS: return mu.tpfmsMuon();
     case TkPicky: return mu.pickyMuon();
-    case TkPMC: return pmcTrack(mu);
-    case TkTMR: return tmrTrack(mu);
-    case TkSigmaSwitch: return sigmaSwitchTrack(mu);
+    case TkTuneP: return muon::tevOptimized(mu).first;
+    case TkTMR: return muon::TMR(mu.innerTrack(), mu.tpfmsMuon()).first;
+    case TkSigmaSwitch: return muon::sigmaSwitch(mu).first;
     case nTrackTypes: default: return reco::TrackRef();
     }
   }
@@ -62,7 +50,7 @@ namespace patmuon {
   }
   
   bool wasCocktailUsed(const TrackType type) {
-    return type == TkPMC || type == TkTMR || type == TkSigmaSwitch;
+    return type == TkTuneP || type == TkTMR || type == TkSigmaSwitch;
   }
 
   bool wasCocktailUsed(const pat::Muon& mu) {

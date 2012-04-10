@@ -3,6 +3,7 @@
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/MuonReco/interface/MuonCocktails.h"
 #include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
@@ -621,7 +622,7 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	  t.lep_picky_ndf[w] = mu->pickyMuon()->ndof();
 	}
 
-	reco::TrackRef cocktail = patmuon::pmcTrack(*mu);
+	reco::TrackRef cocktail = muon::tevOptimized(*mu).first;
 	if (cocktail.isNull()) {
 	  t.lep_cocktail_pt[w] = -999;
 	  t.lep_cocktail_pt_err[w] = -999;

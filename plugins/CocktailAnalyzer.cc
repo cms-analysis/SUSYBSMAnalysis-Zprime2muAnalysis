@@ -9,7 +9,6 @@
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
 #include "DataFormats/MuonReco/interface/MuonCocktails.h"
-#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/MuonCocktails.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
 
 struct tmr_datum {
@@ -53,7 +52,7 @@ class CocktailAnalyzer : public edm::EDAnalyzer {
   }
 
   TH1F* TMRCocktailChoice;
-  TH1F* PMCCocktailChoice;
+  TH1F* TunePCocktailChoice;
   TH1F* SigmaSwitchCocktailChoice;
   TH2F* TrackLnChi2TailProb[num_pairs];
   TH1F* TMRSelectedTPFMSResolution;
@@ -73,7 +72,7 @@ CocktailAnalyzer::CocktailAnalyzer(const edm::ParameterSet& cfg)
 
   int ni = int(num_ingredients);
   TMRCocktailChoice         = choice_labels(fs->make<TH1F>("TMRCocktailChoice",         "TMR cocktail choice",          ni, 0, ni));
-  PMCCocktailChoice         = choice_labels(fs->make<TH1F>("PMCCocktailChoice",         "PMC cocktail choice",          ni, 0, ni));
+  TunePCocktailChoice       = choice_labels(fs->make<TH1F>("TunePCocktailChoice",       "Tune P cocktail choice",       ni, 0, ni));
   SigmaSwitchCocktailChoice = choice_labels(fs->make<TH1F>("SigmaSwitchCocktailChoice", "Sigma-switch cocktail choice", ni, 0, ni));
 
   TrackLnChi2TailProb[global_tkonly] = fs->make<TH2F>("TrackLnChi2TailProbGlobalVsTkOnly", "-ln(P), tracker-only vs. global", 500, 0, 100, 500, 0, 100);
@@ -105,17 +104,17 @@ void CocktailAnalyzer::analyze(const edm::Event& event, const edm::EventSetup&) 
       mu->pickyMuon()
     };
 
-    const reco::TrackRef& tmr = patmuon::tmrTrack(*mu);
+    const reco::TrackRef& tmr = muon::TMR(mu->innerTrack(), mu->tpfmsMuon()).first;
 
     // Histogram the chosen track type for each cocktail (e.g. for
     // TMR, the number of times TPFMS or tracker-only are chosen).
     fill_choice(TMRCocktailChoice,         tks, tmr);
-    fill_choice(PMCCocktailChoice,         tks, patmuon::pmcTrack(*mu));
-    fill_choice(SigmaSwitchCocktailChoice, tks, patmuon::sigmaSwitchTrack(*mu));
+    fill_choice(TunePCocktailChoice,       tks, muon::tevOptimized(*mu).first);
+    fill_choice(SigmaSwitchCocktailChoice, tks, muon::sigmaSwitch(*mu).first);
 
     // For each unique pair of cocktail ingredients, scatterplot the
     // -log(chi2 tail probability) of each (the figure of merit for
-    // the TMR and PMC cocktails).
+    // the TMR and Tune P cocktails).
     double probs[num_ingredients] = {0.};
     for (size_t i = 0; i < num_ingredients; ++i)
       probs[i] = muon::trackProbability(tks[i]);

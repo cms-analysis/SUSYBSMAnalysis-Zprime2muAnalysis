@@ -37,7 +37,7 @@ HardInteraction::~HardInteraction() {
 
 bool HardInteraction::IsResonance(int id) const {
   if (resonanceIds.size() > 0) {
-    for (std::vector<int>::const_iterator p = resonanceIds.begin(), pe = resonanceIds.end(); p != resonanceIds.end(); p++)
+    for (std::vector<int>::const_iterator p = resonanceIds.begin(), pe = resonanceIds.end(); p != pe; p++)
       if (*p == id)
 	return true;
     return false;

@@ -90,10 +90,15 @@ def addHEEPId(process):
     # time and cannot be done later unless some modifications are done
     # the GsfElectron/GsfElectronCore classes.
     from SHarper.HEEPAnalyzer.HEEPSelectionCuts_cfi import heepBarrelCuts, heepEndcapCuts
+    from SHarper.HEEPAnalyzer.HEEPEventParameters_cfi import heepEventPara
     process.HEEPId = cms.EDProducer('HEEPIdValueMapProducer',
                                     eleLabel = cms.InputTag('gsfElectrons'),
                                     barrelCuts = heepBarrelCuts,
-                                    endcapCuts = heepEndcapCuts
+                                    endcapCuts = heepEndcapCuts,
+                                    eleIsolEffectiveAreas = heepEventPara.eleIsolEffectiveAreas,
+                                    applyRhoCorrToEleIsol = heepEventPara.eleIsolapplyRhoCorrToEleIsol,
+                                    eleRhoCorrLabel = heepEventPara.eleRhoCorrTag,
+                                    writeIdAsInt = cms.bool(True),
                                     )
 
     # Embed the HEEP cut bitwords into the userData of the

@@ -46,7 +46,7 @@ if False:
     doit(0.73,  500, 0.048  *  500)
 
 print '%8s%8s%8s%8s' % ('M', 'm-M', 's/M', 'swm/M')
-for which, blammo in [('tkonly', 0.56), ('pmc', 0.73)]:
+for which, blammo in [('tkonly', 0.56), ('tunep', 0.73)]:
     print which
     fn = 'plots/resfromzp/%s.root' % which
     f = ROOT.TFile(fn)

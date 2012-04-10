@@ -11,7 +11,7 @@ ROOT.gStyle.SetPadRightMargin(0.02)
 ps = plot_saver('plots/resfromdy')
 
 f = ROOT.TFile('dyall.root')
-d = f.Resolutionpmc
+d = f.Resolutiontunep
 h = d.Get('DileptonMassResVMass')
 h = make_rms_hist(h)
 

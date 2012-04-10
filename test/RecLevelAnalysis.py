@@ -6,7 +6,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
 from SUSYBSMAnalysis.Zprime2muAnalysis.ResolutionUsingMC_cfi import ResolutionUsingMC
 
-levels = ['Global', 'TkOnly', 'TPFMS', 'Picky', 'TMR', 'PMC', 'SigmaSwitch']
+levels = ['Global', 'TkOnly', 'TPFMS', 'Picky', 'TMR', 'TuneP', 'SigmaSwitch']
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import rec_levels
 rec_levels(process, levels)

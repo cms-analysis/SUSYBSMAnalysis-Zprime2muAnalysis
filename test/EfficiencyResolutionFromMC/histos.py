@@ -28,7 +28,7 @@ if use_old_selection:
     switch_to_old_selection(process)
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import rec_levels, rec_level_module
-tracks = ['global', 'inner', 'tpfms', 'picky', 'pmc', 'tmr', 'sigmaswitch']
+tracks = ['global', 'inner', 'tpfms', 'picky', 'tunep', 'tmr', 'sigmaswitch']
 rec_levels(process, tracks)
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HardInteractionFilter_cfi')
@@ -56,7 +56,7 @@ if acc_both_24:
     ex += 'accboth24'
 
 p2 = process.HardInteractionFilter * process.Zprime2muAnalysisSequencePlain * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC
-p  = process.HardInteractionFilterRes * process.Zprime2muAnalysisSequence # this will get all the Histospmc, Histospicky, Histosglobal, etc. below.
+p  = process.HardInteractionFilterRes * process.Zprime2muAnalysisSequence # this will get all the Histostunep, Histospicky, Histosglobal, etc. below.
 
 if intime_bin in range(0,3) and late_bin in range(0,2):
     # Able to filter on the number of (in-time, late) simulated pileup

@@ -16,7 +16,7 @@ nice_name = {
     'inner': 'Tracker-only',
     'tpfms': 'TPFMS',
     'picky': 'Picky',
-    'pmc': 'Tune P',
+    'tunep': 'Tune P',
     'tmr': 'TMR',
     'global': 'Global',
     'sigmaswitch': 'Sigma-switch',
@@ -30,7 +30,7 @@ def f(which_plot, xtitle, ytitle, m=1000, no_stats=True, errors_in_table=True):
     print r'\multicolumn{6}{|l|}{%s} \\' % nice_name[which_plot]
     f = ROOT.TFile('ana_effres_zp%i.root' % m)
     cache = []
-    tracks = ['inner', 'tpfms', 'picky', 'pmc', 'tmr', 'sigmaswitch', 'global']
+    tracks = ['inner', 'tpfms', 'picky', 'tunep', 'tmr', 'sigmaswitch', 'global']
     histos = {}
     print r'\hline'
     print r'%20s & %15s & %25s & %25s & %15s & %15s \\' % ('Fit/selector', 'Entries', r'Fitted $\sigma$, \%', r'RMS, \%', r'$\# < -0.5$', r'$\# > 0.5$')

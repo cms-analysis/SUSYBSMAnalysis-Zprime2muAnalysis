@@ -29,7 +29,7 @@ for x in ['All', 'Barrel', 'Overlap', 'Endcap']:
     c.cd(1)
     do('TMRCocktailChoice')
     c.cd(2)
-    do('PMCCocktailChoice')
+    do('TunePCocktailChoice')
     c.cd(3)
     do('SigmaSwitchCocktailChoice')
     c.Print('cocktail.ps')

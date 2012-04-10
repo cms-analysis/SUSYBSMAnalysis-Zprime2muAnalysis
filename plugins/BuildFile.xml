@@ -60,12 +60,6 @@
   <use name="DataFormats/HepMCCandidate"/>
 </library>
 
-<library file="Zprime2muAnalysisPlots.cc" name="Zprime2muAnalysisPlots">
-  <use name="CommonTools/Utils"/>
-  <use name="DataFormats/PatCandidates"/>
-  <use name="PhysicsTools/UtilAlgos"/>
-</library>
-
 <library file="AsymmetryFrameAnalysis.cc,AsymmetryParametrizer.cc,CocktailAnalyzer.cc,EfficiencyFromMC.cc,HardInteractionFilter.cc,HardInteractionNtuple.cc,HistosFromPAT.cc,MuonsFromDimuons.cc,PrintEvent.cc,QCDBackground.cc,ResolutionUsingMC.cc,SimpleNtupler.cc,Zprime2muAsymmetry.cc,Zprime2muMassReach.cc" name="Zprime2muAnalyzers">
   <use name="rootgraphics"/>
   <use name="CommonTools/UtilAlgos"/>

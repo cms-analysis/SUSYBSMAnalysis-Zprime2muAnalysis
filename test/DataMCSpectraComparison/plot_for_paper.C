@@ -23,7 +23,7 @@
 
 using namespace std;
 
-TGraphAsymmErrors* poisson_intervalize(TH1* h, bool zero_x) {
+TGraphAsymmErrors* poisson_intervalize(TH1* h, bool zero_x, int width_normalized) {
   static const double CL = 0.6827;
   static const double alpha = (1 - CL)/2;
   static const double beta  = (1 - CL)/2;
@@ -33,8 +33,16 @@ TGraphAsymmErrors* poisson_intervalize(TH1* h, bool zero_x) {
     double nobs = h->GetBinContent(i);
     if (nobs == 0)
       continue;
+    double norm_fact = h->GetBinWidth(i)/width_normalized;
+    if (width_normalized)
+      nobs *= norm_fact;
     double lower = 0.5*ROOT::Math::chisquared_quantile_c(1-alpha, 2*nobs);
     double upper = 0.5*ROOT::Math::chisquared_quantile_c(beta, 2*(nobs+1));
+    if (width_normalized) {
+      nobs /= norm_fact;
+      lower /= norm_fact;
+      upper /= norm_fact;
+    }
     if (zero_x) {
       tgae->SetPointEXlow(i-1, 0);
       tgae->SetPointEXhigh(i-1, 0);
@@ -86,7 +94,7 @@ void plot_for_paper2() {
   promptHist->Draw("HIST");
   jetsHist->Draw("SAME HIST");
 
-  TGraphAsymmErrors* dataHistPI = poisson_intervalize(dataHist, true);
+  TGraphAsymmErrors* dataHistPI = poisson_intervalize(dataHist, true, 0);
   dataHistPI->SetMarkerSize(0.8);
   dataHistPI->SetMarkerStyle(20);
   dataHistPI->Draw("EPZ SAME"); 
@@ -164,7 +172,7 @@ void plot_for_paper2() {
 #endif
   bool isCHist = false; // true for cumulative hist
   bool isElectron = true;
-  int binning = 5;
+  int binning = 1;
   bool preliminary = false;
   bool logx = true;
   bool varbin = true;
@@ -223,8 +231,16 @@ void plot_for_paper2() {
   c1->SetTopMargin(0.02);
   c1->SetFrameBorderMode(0);
 
-  if (!isCHist)
-    zdyHist->SetTitle(TString::Format(";m(%s) [GeV]; Events / %i GeV", dil_string, binning));
+  if (!isCHist) {
+    TString binninglabel = "";
+    if (binning > 0) {
+      if (binning > 1)
+	binninglabel = TString::Format(" / %i GeV", binning);
+      else
+	binninglabel = " / GeV";
+    }
+    zdyHist->SetTitle(TString::Format(";m(%s) [GeV]; Events%s", dil_string, binninglabel.Data()));
+  }
   else
     zdyHist->SetTitle(TString::Format(";m(%s) [GeV]; Events #geq m(%s)", dil_string, dil_string));
 
@@ -244,7 +260,7 @@ void plot_for_paper2() {
   jetsHist->Draw("SAME HIST");
   if (draw_zprime && !isCHist) zprime->Draw("SAME HIST");
 
-  TGraphAsymmErrors* dataHistPI = poisson_intervalize(dataHist, true);
+  TGraphAsymmErrors* dataHistPI = poisson_intervalize(dataHist, true, varbin ? binning : 0);
   if (logx && isCHist) {
     // too crowded
     for (int i = 55; i < dataHistPI->GetN(); i += 2)
@@ -255,14 +271,15 @@ void plot_for_paper2() {
   dataHistPI->Draw("EPZ SAME"); 
 
   if (logx) zdyHist->GetXaxis()->SetMoreLogLabels();
+  if (logx) zdyHist->GetXaxis()->SetNoExponent();
   zdyHist->GetXaxis()->SetTitleSize(0.047);
-  zdyHist->GetXaxis()->SetLabelOffset(0.001);
-  zdyHist->GetXaxis()->SetTitleOffset(0.99);
+  zdyHist->GetXaxis()->SetLabelOffset(0.004);
+  zdyHist->GetXaxis()->SetTitleOffset(0.95);
   zdyHist->GetYaxis()->SetTitleSize(0.047);
   zdyHist->GetYaxis()->SetTitleOffset(1.2);
 
   if (!isCHist) {
-    zdyHist->GetYaxis()->SetRangeUser(1e-4, 8e5);
+    zdyHist->GetYaxis()->SetRangeUser(2e-5, 1.5e5);
     zdyHist->GetXaxis()->SetRangeUser(60, 2500);
   }
   else {
@@ -298,6 +315,13 @@ void plot_for_paper2() {
   pl->SetFillStyle(0);
   pl->SetTextSize(0.35);
   pl->Draw();
+
+  TPaveLabel *pl2 = new TPaveLabel(0.520, 0.552, 0.979, 0.652, "#splitline{bin size}{#approx 2x detector res}", "brNDC");
+  pl2->SetBorderSize(0);
+  pl2->SetFillColor(0);
+  pl2->SetFillStyle(0);
+  pl2->SetTextSize(0.35);
+  pl2->Draw();
 
   // huge crappy hack for "EP" in TLegend::AddEntry not working
   TLine ll;

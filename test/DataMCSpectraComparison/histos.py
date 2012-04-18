@@ -183,7 +183,7 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.pCheckPrescale = cms.Path(process.CheckPrescale)
 
 def for_data(process):
-    process.GlobalTag.globaltag = 'FT_R_44_V11::All'
+    process.GlobalTag.globaltag = 'GR_R_52_V7::All'
     ntuplify(process)
     check_prescale(process, trigger_paths)
 
@@ -201,6 +201,14 @@ def get_dataset(run):
     else:
         raise ValueError('dunno how to do run %i' % run)
 
+if 'int_data' in sys.argv:
+    for_data(process)
+    printify(process)
+    
+if 'int_mc' in sys.argv:
+    for_mc(process, 'HLT', False)
+    printify(process)
+    
 if 'gogo' in sys.argv:
     for_data(process)
     printify(process)

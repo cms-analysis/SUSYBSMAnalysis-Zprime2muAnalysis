@@ -66,6 +66,16 @@ process.outpath = cms.EndPath(process.out)
 # do it in this order rather than adding things for MC use later.)
 process.load('PhysicsTools.PatAlgos.patSequences_cff')
 
+# PAT taus broken in 523p3. Probably fixed in a later version but just
+# drop for now. Calling removePATObjects(taus) breaks the cleaning
+# that would have to be re-added by hand, so just break taus (not kept
+# in output module anyway). This may break jet-tau cleaning, but not
+# using the jets yet anyway. This should all be fixed with a
+# consistent set of 52 samples, as this only occurs for 51 MC input.
+del process.patTaus.tauIDSources.againstElectronMVA
+del process.patTaus.tauIDSources.againstMuonMedium
+process.cleanPatTaus.preselection = process.cleanPatTaus.preselection.value().replace('againstMuonMedium', 'againstMuonTight')
+
 from PATTools import pruneMCLeptons, addMuonMCClassification, addHEEPId
 pruneMCLeptons(process, use_sim=True) # need to decide whether to move AODOnly() call in here, if so use_sim should just be set False
 addMuonMCClassification(process)

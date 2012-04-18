@@ -67,7 +67,7 @@ def switch_hlt_process_name(process, name):
     class warn_hlt_visitor(object):
         def enter(self, visitee):
             for attr in dir(visitee):
-                if getattr(visitee, attr) == 'HLT':
+                if str(getattr(visitee, attr)) == 'HLT':
                     print 'warning: visitee %s, attribute %s has value HLT' % (visitee, attr)
         def leave(self, visitee):
             pass

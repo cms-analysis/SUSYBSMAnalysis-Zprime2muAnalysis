@@ -53,9 +53,9 @@ struct Zprime2muPairSelector {
 namespace reco {
   namespace modules {
     template<>
-    struct ParameterAdapter<PATStringCutObjectSelector> {
-      static PATStringCutObjectSelector make(const edm::ParameterSet& cfg) {
-	return PATStringCutObjectSelector(cfg.getParameter<std::string>("cut"));
+    struct ParameterAdapter<StringCutObjectSelector<reco::Candidate, true> > {
+      static StringCutObjectSelector<reco::Candidate, true> make(const edm::ParameterSet& cfg) {
+	return StringCutObjectSelector<reco::Candidate, true>(cfg.getParameter<std::string>("cut"));
       }
     };
 
@@ -70,7 +70,7 @@ namespace reco {
     };
 
     typedef CandCombiner<
-      PATStringCutObjectSelector,
+      StringCutObjectSelector<reco::Candidate, true>,
       Zprime2muPairSelector,
       combiner::helpers::ShallowClone,
       pat::CompositeCandidateCollection

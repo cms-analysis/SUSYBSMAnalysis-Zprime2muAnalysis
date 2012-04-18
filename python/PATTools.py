@@ -107,7 +107,7 @@ def addHEEPId(process):
     # or cleanPatElectrons steps.
     process.patElectrons.userData.userInts.src.append('HEEPId')
     
-    process.patDefaultSequence.replace(process.patCandidates, process.HEEPId * process.patCandidates)
+    process.patDefaultSequence.replace(process.patElectrons, process.HEEPId * process.patElectrons)
 
 def AODOnly(process):
     from PhysicsTools.PatAlgos.tools.coreTools import restrictInputToAOD

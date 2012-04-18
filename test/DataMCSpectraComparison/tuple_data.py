@@ -3,8 +3,8 @@
 import sys, os, datetime, FWCore.ParameterSet.Config as cms
 from tuple_common import process, crab_cfg
 
-process.source.fileNames = ['/store/data/Run2011A/SingleMu/AOD/08Nov2011-v1/0003/FC923030-7413-E111-9584-1CC1DE1CEDB2.root']
-process.GlobalTag.globaltag = 'FT_R_44_V11::All'
+process.source.fileNames = ['/store/data/Run2012A/SingleMu/AOD/PromptReco-v1/000/190/539/288ACFA2-BC81-E111-99E3-001D09F2527B.root']
+process.GlobalTag.globaltag = 'GR_R_52_V7::All'
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import removeMCUse
 removeMCUse(process)
@@ -48,8 +48,6 @@ lumis_per_job = %(lumis_per_job)s
             pass
 
     if run_limits:
-        raise NotImplementedError('no run_limits in 44X')
-    
         run1, run2 = run_limits
         if len(run_limits) != 2 or run1 > run2:
             raise RuntimeError('if any, must specify exactly two numeric arguments   min_run max_run  with max_run >= min_run')
@@ -61,20 +59,19 @@ lumis_per_job = %(lumis_per_job)s
         open('tmp.json', 'wt').write('{' + ', '.join(json) + '}')
         lumi_mask = 'lumi_mask = tmp.json'
 
-        name = 'SingleMuRun2011B_Prompt_%i_%i_%s' % (run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
+        name = 'SingleMuRun2012A_Prompt_%i_%i_%s' % (run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
         print name
 
-        if run1 >= 999999:
-            dataset = '/Nope/NoDataset/NO'
+        if run1 >= 190450:
+            dataset = '/SingleMu/Run2012A-PromptReco-v1/AOD'
         else:
             raise ValueError("don't know how to do a run_limits production for run range [%i,%i]" % run_limits)
         
         tag = 'FT_R_44_V9'
         submit(locals())
     else:
+        raise ValueError('must do a run-limits production until one dataset is closed')
         x = [
-            ('SingleMuRun2011A_Nov08', '/SingleMu/Run2011A-08Nov2011-v1/AOD', 'FT_R_44_V9'),
-            ('SingleMuRun2011B_Nov19', '/SingleMu/Run2011B-19Nov2011-v1/AOD', 'FT_R_44_V11'),
             ]
         for name, dataset, tag in x:
             submit(locals())

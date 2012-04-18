@@ -21,7 +21,7 @@ namespace patmuon {
     case TkOuter: return mu.outerTrack();
     case TkTPFMS: return mu.tpfmsMuon();
     case TkPicky: return mu.pickyMuon();
-    case TkTuneP: return muon::tevOptimized(mu).first;
+    case TkTuneP: return muon::tevOptimized(mu, 200, 4, 6).first;
     case TkTMR: return muon::TMR(mu.innerTrack(), mu.tpfmsMuon()).first;
     case TkSigmaSwitch: return muon::sigmaSwitch(mu).first;
     case nTrackTypes: default: return reco::TrackRef();

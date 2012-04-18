@@ -27,8 +27,8 @@ def do(cmd):
         ret = ret[0]
     return ret
 
-latest_dataset = '/SingleMu/Run2011B-PromptReco-v1/AOD'
-lumi_masks = ['Run2011MuonsOnly', 'NoLumiMask', 'Run2011']
+latest_dataset = '/SingleMu/Run2012A-PromptReco-v1/AOD'
+lumi_masks = ['Run2011MuonsOnly'] #, 'NoLumiMask', 'Run2011']
 
 if cmd == 'setdirs':
     crab_dirs_location = extra[0]
@@ -123,7 +123,7 @@ elif cmd == 'checkavail':
     ll = LumiList(lumis=lumis)
     runrange = sorted(int(x) for x in ll.getCompactList().keys())
 
-    dcs_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/DCSOnly/json_DCSONLY.txt')
+    dcs_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/DCSOnly/json_DCSONLY.txt') # JMTBAD import from goodlumis
     dcs_runrange = sorted(int(x) for x in dcs_ll.getCompactList().keys())
 
     dcs_ll.removeRuns(xrange(dcs_runrange[0], runrange[0]))

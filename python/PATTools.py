@@ -96,7 +96,7 @@ def addHEEPId(process):
                                     barrelCuts = heepBarrelCuts,
                                     endcapCuts = heepEndcapCuts,
                                     eleIsolEffectiveAreas = heepEventPara.eleIsolEffectiveAreas,
-                                    applyRhoCorrToEleIsol = heepEventPara.eleIsolapplyRhoCorrToEleIsol,
+                                    applyRhoCorrToEleIsol = heepEventPara.applyRhoCorrToEleIsol,
                                     eleRhoCorrLabel = heepEventPara.eleRhoCorrTag,
                                     writeIdAsInt = cms.bool(True),
                                     )

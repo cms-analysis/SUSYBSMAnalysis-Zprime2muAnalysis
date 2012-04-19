@@ -27,12 +27,6 @@ events_per_job = 150000
         new_py = open('tuple_mc.py').read()
         new_py += '\nswitchHLTProcessName(process, "%(hlt_process_name)s")\n' % sample.__dict__
 
-        if sample.name == 'ttbar':
-            # Avoid infinite recursion in GenParticlePruner on ~5
-            # events of the ttbar sample. (Certainly don't need full
-            # tree, don't really even need the MC truth at all for now...)
-            new_py += '\nprocess.prunedMCLeptons.select = ["drop *", "keep abs(pdgId) == 13 && (status == 1 || status == 8)", "keep abs(pdgId) == 11 && status == 1"]\n'
-
         sample.pset = 'crab/psets/tuple_mc_crab_%(name)s.py' % sample.__dict__
         open(sample.pset,'wt').write(new_py)
 

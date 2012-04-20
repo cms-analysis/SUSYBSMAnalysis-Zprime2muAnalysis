@@ -1,8 +1,8 @@
 import sys, os
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import cms, process
 
-process.source.fileNames = ['/store/data/Run2011A/SingleMu/AOD/May10ReReco-v1/0000/E6E8249F-9E7D-E011-B106-002481A8A782.root']
-process.GlobalTag.globaltag = 'GR_R_42_V13::All'
+process.source.fileNames = ['/store/data/Run2012A/SingleMu/AOD/PromptReco-v1/000/190/539/288ACFA2-BC81-E111-99E3-001D09F2527B.root']
+process.GlobalTag.globaltag = 'GR_R_52_V7::All'
 process.maxEvents.input = 5000
 process.options.wantSummary = True
 process.MessageLogger.cerr.FwkReport.reportEvery = 100000
@@ -11,15 +11,14 @@ process.load('SUSYBSMAnalysis.Zprime2muAnalysis.CheckPrescale_cfi')
 process.CheckPrescale.dump_prescales = True
 
 x = [
-    (3,  (3,7)),
-    (8,  (1,5)),
-    (15, (2,6)),
+    (15, (3,4)),
+    (24, (3,4)),
     ]
 
 objs = []
 names = []
 for pt, (v0, v1) in x:
-    obj = CheckPrescale.clone(trigger_paths=cms.vstring(*['HLT_Mu%i_v%i' % (pt, ver) for ver in xrange(v0, v1+1)]))
+    obj = process.CheckPrescale.clone(trigger_paths=cms.vstring(*['HLT_Mu%i_eta2p1_v%i' % (pt, ver) for ver in xrange(v0, v1+1)]))
     name = 'Mu%i' % pt
     names.append(name)
     setattr(process, name, obj)
@@ -33,32 +32,25 @@ if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
 [CRAB]
 jobtype = cmssw
-scheduler = glite
+scheduler = condor
 
 [CMSSW]
 datasetpath = %(dataset)s
 pset = GetPrescales.py
 total_number_of_lumis = -1
 number_of_jobs = 50
-lumi_mask = tmp.json
+lumi_mask = /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-191276_8TeV_PromptReco_Collisions12_JSON_MuonPhys.txt
 
 [USER]
 ui_working_dir = crab/crab_getprescales_%(name)s
 return_data = 1
-
-[GRID]
-ce_white_list = T2_EE_Estonia,T2_CH_CSCS,T2_BR_UERJ,T2_BR_SPRACE
 '''
 
     just_testing = 'testing' in sys.argv
 
     dataset_details = [
-        ('SingleMu2011A_May10',  '/SingleMu/Run2011A-May10ReReco-v1/AOD'),
-        ('SingleMu2011A_Prompt', '/SingleMu/Run2011A-PromptReco-v4/AOD'),
+        ('SingleMu2012A_Prompt', '/SingleMu/Run2012A-PromptReco-v1/AOD'),
         ]
-
-    json = ['"%i": [[1,26296]]' % r for r in xrange(160431, 167913+1)]
-    open('tmp.json', 'wt').write('{' + ', '.join(json) + '}')
 
     for name, dataset in dataset_details:
         print name
@@ -67,4 +59,4 @@ ce_white_list = T2_EE_Estonia,T2_CH_CSCS,T2_BR_UERJ,T2_BR_SPRACE
             os.system('crab -create -submit all')
 
     if not just_testing:
-        os.system('rm crab.cfg tmp.json')
+        os.system('rm -f crab.cfg tmp.json')

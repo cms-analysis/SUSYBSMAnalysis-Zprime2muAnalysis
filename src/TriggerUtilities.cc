@@ -19,7 +19,10 @@ Zprime2muTriggerPathsAndFilters::Zprime2muTriggerPathsAndFilters(const edm::Even
   valid = true; // assume until proven otherwise
   const unsigned run = event.id().run();
 
-  if (!event.isRealData())                 { path = "HLT_Mu15_v2",        filter = "hltL3Muon15",                                prescaled_path = "HLT_Mu15_v2",        prescaled_filter = "hltL3Muon15"; }
+  // JMTBAD if there are different HLT menus used for different
+  // samples (e.g. 51X/52X), the next line may not be sufficient, and
+  // we will have to think of a better way to handle this.
+  if (!event.isRealData())                 { path = "HLT_Mu40_eta2p1_v6", filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered40",  prescaled_path = "HLT_Mu15_v14",       prescaled_filter = "hltSingleMu15L3Filtered15"; }
   else if (run >= 160404 && run <= 163261) { path = "HLT_Mu30_v1",        filter = "hltSingleMu30L3Filtered30",                  prescaled_path = "HLT_Mu15_v2",        prescaled_filter = "hltL3Muon15"; }
   else if (run >= 163269 && run <= 163869) { path = "HLT_Mu30_v2",        filter = "hltSingleMu30L3Filtered30",                  prescaled_path = "HLT_Mu15_v3",        prescaled_filter = "hltSingleMu15L3Filtered15"; }
   else if (run >= 165088 && run <= 167043) { path = "HLT_Mu40_v1",        filter = "hltSingleMu40L3Filtered40",                  prescaled_path = "HLT_Mu15_v4",        prescaled_filter = "hltSingleMu15L3Filtered15"; }

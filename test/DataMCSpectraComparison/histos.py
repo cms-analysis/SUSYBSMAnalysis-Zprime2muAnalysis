@@ -194,10 +194,8 @@ def for_mc(process, hlt_process_name, fill_gen_info):
 def get_dataset(run):
     #JMTBAD common with dataset_details in submit below, make a DataSamples.py?
     run = int(run)
-    if 165071 <= run <= 175770:
-        return '/SingleMu/tucker-datamc_SingleMuRun2011A_Nov08-414b5fe0560a0d020583711f1400af1a/USER'
-    elif 175832 <= run <= 180296:
-        return '/SingleMu/tucker-datamc_SingleMuRun2011B_Nov19-220ecb6e6d210913d6b2a9cef9c920af/USER'
+    if 190450 <= run <= 191284:
+        return '/SingleMu/tucker-datamc_SingleMuRun2012A_Prompt_190450_191284_20120418134612-57b19813ab8f2ab142c4566dc6738156/USER'
     else:
         raise ValueError('dunno how to do run %i' % run)
 
@@ -258,8 +256,7 @@ return_data = 1
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
 
         dataset_details = [
-            ('SingleMu2011A_Nov08', '/SingleMu/tucker-datamc_SingleMuRun2011A_Nov08-414b5fe0560a0d020583711f1400af1a/USER'),
-            ('SingleMu2011B_Nov19', '/SingleMu/tucker-datamc_SingleMuRun2011B_Nov19-220ecb6e6d210913d6b2a9cef9c920af/USER'),
+            ('SingleMuRun2012A_Prompt_190450_191284', '/SingleMu/tucker-datamc_SingleMuRun2012A_Prompt_190450_191284_20120418134612-57b19813ab8f2ab142c4566dc6738156/USER'),
             ]
 
         lumi_lists = [

@@ -157,11 +157,9 @@ def detree(t, branches='run:lumi:event', cut='', xform=lambda x: tuple(int(y) fo
     t.Scan(branches, cut, 'colsize=50')
     t.GetPlayer().SetScanRedirect(False)
     l = len(branches.split(':')) + 2
-    ret = []
     for line in open(tmp_fn):
         if ' * ' in line and 'Row' not in line:
-            ret.append(xform(line.split('*')[2:l]))
-    return ret
+            yield xform(line.split('*')[2:l])
 
 def draw_in_order(hists, draw_cmds=''):
     hists = [(h, h.GetMaximum()) for h in hists]

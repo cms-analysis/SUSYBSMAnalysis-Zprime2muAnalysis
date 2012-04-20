@@ -260,9 +260,10 @@ return_data = 1
             ]
 
         lumi_lists = [
-            'Run2011',
-            'Run2011MuonsOnly',
             'NoLumiMask',
+            'Run2012PlusDCSOnlyMuonsOnly',
+            'Run2012MuonsOnly',
+            'Run2012',
             ]
 
         jobs = []

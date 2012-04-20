@@ -73,7 +73,7 @@ samples.reverse()
 
 for sample in samples:
     exec '%s = sample' % sample.name
-    sample.ana_dataset = '/%s/tucker-datamc_%s-NONEYET/USER' % (sample.dataset.split('/')[1], sample.name)
+    sample.ana_dataset = '/%s/tucker-datamc_%s-caca636ea661546409f4073c061b3e20/USER' % (sample.dataset.split('/')[1], sample.name)
 
 #big_warn('nothing')
 

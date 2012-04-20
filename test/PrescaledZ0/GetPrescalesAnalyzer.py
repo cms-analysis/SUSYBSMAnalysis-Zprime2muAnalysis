@@ -3,20 +3,20 @@
 import os, sys
 from collections import defaultdict
 from pprint import pprint
-from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import ROOT, ttree_iterator
+from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import ROOT, detree
+
+print sys.argv
 
 f = ROOT.TFile(sys.argv[1])
-t = f.Mu15.Get('t')
+t = f.Get('%s/t' % sys.argv[2])
 print t.GetEntriesFast(), 'entries in tree'
 
 de = defaultdict(list)
 dp = defaultdict(list)
-for jentry, tt in ttree_iterator(t):
-    if jentry % 2000000 == 0:
-        print jentry
-    k = (t.run, t.lumi)
-    de[k].append(t.event)
-    dp[k].append((t.l1,t.hlt))
+
+for (run, lumi, event, l1, hlt) in detree(t, 'run:lumi:event:l1:hlt'):
+    de[(run, lumi)].append(event)
+    dp[(run, lumi)].append((l1,hlt))
 
 for k,v in de.iteritems():
     assert len(v) == len(set(v))

@@ -310,9 +310,7 @@ lumis_per_job = 500
         if not just_testing:
             os.system('rm crab.cfg histos_crab.py histos_crab.pyc tmp.json')
 
-    if True:
-        print 'not running over MC in 44X!'
-    elif 'no_mc' not in sys.argv:
+    if 'no_mc' not in sys.argv:
         # Set crab_cfg for MC.
         crab_cfg = crab_cfg.replace('job_control','''
 total_number_of_events = -1
@@ -325,8 +323,6 @@ events_per_job = 100000
         print 'combine_dy_samples:', combine_dy_samples
 
         for sample in reversed(samples):
-            if 'Summer11' not in sample.dataset:
-                continue
             print sample.name
 
             new_py = open('histos.py').read()

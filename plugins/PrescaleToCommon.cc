@@ -1,4 +1,5 @@
 #include "CLHEP/Random/RandFlat.h"
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
 #include "FWCore/Framework/interface/EDFilter.h"
 #include "FWCore/Framework/interface/Event.h"
@@ -20,6 +21,7 @@ private:
   const int overall_prescale;
   const bool assume_simulation_has_prescale_1;
   HLTConfigProvider hlt_cfg;
+  TH1F* randoms;
 };
 
 PrescaleToCommon::PrescaleToCommon(const edm::ParameterSet& cfg)
@@ -28,6 +30,8 @@ PrescaleToCommon::PrescaleToCommon(const edm::ParameterSet& cfg)
     overall_prescale(cfg.getParameter<int>("overall_prescale")),
     assume_simulation_has_prescale_1(cfg.getParameter<bool>("assume_simulation_has_prescale_1"))
 {
+  edm::Service<TFileService> fs;
+  randoms = fs->make<TH1F>("randoms", "", 100, 0, 1);
 }
 
 bool PrescaleToCommon::beginRun(edm::Run& run, const edm::EventSetup& setup) {
@@ -96,7 +100,9 @@ bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
   edm::Service<edm::RandomNumberGenerator> rng;
   if (!rng.isAvailable()) throw cms::Exception("PrescaleToCommon") << "RandomNumberGeneratorService not available!\n";
   CLHEP::RandFlat rand(rng->getEngine());
-  return rand.fire() < double(total_prescale_already)/overall_prescale;
+  const double rnd = rand.fire();
+  randoms->Fill(rnd);
+  return rnd < double(total_prescale_already)/overall_prescale;
 }
 
 DEFINE_FWK_MODULE(PrescaleToCommon);

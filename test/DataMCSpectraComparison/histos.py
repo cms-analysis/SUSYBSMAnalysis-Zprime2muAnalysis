@@ -54,8 +54,8 @@ cuts = {
     'OurNoIso' : OurSelectionNew,
     'EmuVeto'  : OurSelectionNew,
     'Simple'   : OurSelectionNew, # The selection cuts in the module listed here are ignored below.
-    'VBTFMu15' : VBTFSelection,
-    'OurMu15'  : OurSelectionNew,
+    'VBTFMuPrescaled' : VBTFSelection,
+    'OurMuPrescaled'  : OurSelectionNew,
     }
 
 # Loop over all the cut sets defined and make the lepton, allDilepton
@@ -74,7 +74,7 @@ for cut_name, Selection in cuts.iteritems():
     leptons_name = cut_name + 'Leptons'
     if cut_name == 'Simple':
         muon_cuts = ''
-    elif 'Mu15' in cut_name:
+    elif 'MuPrescaled' in cut_name:
         muon_cuts = Selection.loose_cut.replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
     else:
         muon_cuts = Selection.loose_cut
@@ -90,8 +90,8 @@ for cut_name, Selection in cuts.iteritems():
         if cut_name == 'EmuVeto' and 'Electron' not in dil_name:
             continue
 
-        # For the Mu15 paths, we don't care about e-mu events.
-        if 'Mu15' in cut_name and 'Electron' in dil_name:
+        # For the MuPrescaled paths, we don't care about e-mu events.
+        if 'MuPrescaled' in cut_name and 'Electron' in dil_name:
             continue
 
         # Unique names for the modules: allname for the allDileptons,
@@ -118,7 +118,7 @@ for cut_name, Selection in cuts.iteritems():
             delattr(dil, 'vertex_chi2_max')
         elif cut_name == 'OurNoIso':
             alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', '')
-        elif 'Mu15' in cut_name:
+        elif 'MuPrescaled' in cut_name:
             alldil.loose_cut = alldil.loose_cut.value().replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
             assert alldil.tight_cut == trigger_match
             alldil.tight_cut = prescaled_trigger_match
@@ -137,7 +137,7 @@ for cut_name, Selection in cuts.iteritems():
     pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
     if 'VBTF' not in cut_name and cut_name != 'Simple':
         pobj = process.goodDataFilter * pobj
-    if 'Mu15' in cut_name:
+    if 'MuPrescaled' in cut_name:
         pobj = process.PrescaleToCommon * pobj
     path = cms.Path(pobj)
     setattr(process, pathname, path)

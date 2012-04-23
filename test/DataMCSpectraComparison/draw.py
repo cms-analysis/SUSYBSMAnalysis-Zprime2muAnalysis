@@ -141,7 +141,7 @@ class Drawer:
         # ASCII table.
         self.quantities_to_compare = ['DileptonMass', 'DimuonMassVertexConstrained']
         self.dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
-        self.cutsets = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso', 'OurMu15', 'VBTFMu15']
+        self.cutsets = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso', 'OurMuPrescaled', 'VBTFMuPrescaled']
         self.mass_ranges_for_table = [(60,120), (120,200), (200,400), (400,600), (120,), (200,), (400,), (600,)]
 
         if options.include_quantities is not None:
@@ -296,9 +296,9 @@ class Drawer:
             return 9913/10671.8
         elif cutset == 'OurNoIso':
             return 8946/10093.7
-        elif cutset == 'OurMu15':
+        elif cutset == 'OurMuPrescaled':
             return 1. # JMTBAD
-        elif cutset == 'VBTFMu15':
+        elif cutset == 'VBTFMuPrescaled':
             return 1. # JMTBAD
 
         # If the cutset is not one of the above, don't rescale.
@@ -755,7 +755,7 @@ class Drawer:
                 # Depending on the quantity to compare and cut set, skip certain dileptons.
                 if cutset == 'EmuVeto': # Only care about e-mu dileptons here.
                     dileptons = [x for x in self.dileptons if 'Electron' in x]
-                elif 'Mu15' in cutset: # Don't care about e-mu dileptons here.
+                elif 'MuPrescaled' in cutset: # Don't care about e-mu dileptons here.
                     dileptons = [x for x in self.dileptons if 'Electron' not in x]
                 else:
                     dileptons = self.dileptons

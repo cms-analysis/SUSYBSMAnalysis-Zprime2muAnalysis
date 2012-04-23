@@ -28,7 +28,7 @@ def do(cmd):
     return ret
 
 latest_dataset = '/SingleMu/Run2012A-PromptReco-v1/AOD'
-lumi_masks = ['Run2011MuonsOnly'] #, 'NoLumiMask', 'Run2011']
+lumi_masks = ['Run2012PlusDCSOnlyMuonsOnly'] #, 'DCSOnly', 'Run2012MuonsOnly', 'Run2012']
 
 if cmd == 'setdirs':
     crab_dirs_location = extra[0]
@@ -74,7 +74,7 @@ elif cmd == 'gatherdata':
 
     for lumi_mask in lumi_masks:
         print lumi_mask
-        dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMu2011*' % lumi_mask)
+        dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMuRun2012*' % lumi_mask)
         files_glob = ' '.join([os.path.join(x, 'res/*.root') for x in dirs])
 
         wdir = 'data/%(lumi_mask)s' % locals()

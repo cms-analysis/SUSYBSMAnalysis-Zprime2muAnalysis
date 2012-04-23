@@ -289,17 +289,17 @@ class Drawer:
         # off, rather than trying to be smart and getting them from
         # the histogram files.
         if cutset == 'VBTF':
-            return 109967/99329.338571
+            return 8380/9119.5
         elif cutset == 'OurNew':
-            return 119652/109079.396042
+            return 8817/9976.7
         elif cutset == 'OurOld':
-            return 127566/114573.382587
+            return 9913/10671.8
         elif cutset == 'OurNoIso':
-            return 121391/110162.691504
+            return 8946/10093.7
         elif cutset == 'OurMu15':
-            return 679/542.998509
+            return 1. # JMTBAD
         elif cutset == 'VBTFMu15':
-            return 619/528.461070
+            return 1. # JMTBAD
 
         # If the cutset is not one of the above, don't rescale.
         return 1.
@@ -661,9 +661,9 @@ class Drawer:
 
         # Draw the Z' curve separately. It is overlaid, not stacked
         # with the rest of the MC expectation.
-        if self.should_draw_zprime(dilepton):
+        zp = self.get_zprime_histogram()
+        if self.should_draw_zprime(dilepton) and zp:
             # JMTBAD Extend to the rest of the Z' samples when there are any.
-            zp = self.get_zprime_histogram()
             zp.SetTitle('')
             zp.SetLineWidth(2)
             if xrange is not None:

@@ -8,7 +8,7 @@ from optparse import OptionParser
 # We have to optparse before ROOT does, or else it will eat our
 # options (at least -h/--help gets eaten). So don't move this!
 parser = OptionParser()
-parser.add_option('-d', '--histo-dir', dest='histo_dir', default='data/Run2011MuonsOnly',
+parser.add_option('-d', '--histo-dir', dest='histo_dir', default='data/Run2012PlusDCSOnlyMuonsOnly',
                   help='Directory containing the input files for the data. Default is %default. The files expected to be in this directory are ana_datamc_data.root, the ROOT file containing the input histograms, and ana_datamc_data.lumi, the log file from the output of LumiCalc. Optionally the directory can contain a link to a directory for MC histogram ROOT files; the link/directory must be named "mc".')
 parser.add_option('--no-print-table', action='store_false', dest='print_table', default=True,
                   help='Do not print out the ASCII table of event counts in specified mass ranges.')
@@ -47,7 +47,7 @@ parser.add_option('--plot-dir-tag', action='store',
 parser.add_option('--plot-size', default='900,600',
                   help='The canvas size for drawing the plots.')
 parser.add_option('--no-guess-yrange', action='store_false', dest='guess_yrange', default=True,
-                  help='Don't try to guess out the y-axis range for plots, using instead the fixed values in the script.')
+                  help='Do not try to guess out the y-axis range for plots, using instead the fixed values in the script.')
 options, args = parser.parse_args()
 #pprint(options) ; raise 1
 
@@ -266,7 +266,7 @@ class Drawer:
         this = False
         for line in open(log_fn):
             if this:
-                x = float(line.split()[-2])*1e3 # JMTBAD assumes output is in 1/fb
+                x = float(line.split()[-2]) # JMTBAD assumes output is in 1/pb, need to determine from log file
                 return x
             if line == '---------------------------------------------------------------\n':
                 this = True
@@ -525,6 +525,14 @@ class Drawer:
     def should_draw_zprime(self, dilepton):
         return self.draw_zprime and dilepton == 'MuonsPlusMuonsMinus'
 
+    def get_zprime_histogram(self):
+        # JMTBAD Extend to the rest of the Z' samples when there are any.
+        try:
+            from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import zssm1000
+            return zssm1000.histogram        # Loaded/scaled already in prepare_mc_histograms since the loop over the samples list modified the original object that zssm1000 points to.
+        except ImportError:
+            pass
+
     def draw_legend(self, dilepton, cumulative):
         # Legend placement coordinates and sizes depend on factors set
         # elsewhere, too, so this is fragile.
@@ -655,8 +663,7 @@ class Drawer:
         # with the rest of the MC expectation.
         if self.should_draw_zprime(dilepton):
             # JMTBAD Extend to the rest of the Z' samples when there are any.
-            from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import zssm1000
-            zp = zssm1000.histogram # Loaded/scaled already in prepare_mc_histograms since the loop over the samples list modified the original object that zssm1000 points to.
+            zp = self.get_zprime_histogram()
             zp.SetTitle('')
             zp.SetLineWidth(2)
             if xrange is not None:
@@ -668,7 +675,7 @@ class Drawer:
 
         # Adorn the plot with legend and labels.
         l = self.draw_legend(dilepton, cumulative)
-        t = ROOT.TPaveLabel(0.20, 0.89, 0.86, 0.99, 'CMS 2011 preliminary   #sqrt{s} = 7 TeV    #int L dt = %.f pb^{-1}' % round(self.int_lumi), 'brNDC')
+        t = ROOT.TPaveLabel(0.20, 0.89, 0.86, 0.99, 'CMS 2012 preliminary   #sqrt{s} = 8 TeV    #int L dt = %.f pb^{-1}' % round(self.int_lumi), 'brNDC')
         t.SetTextSize(0.35)
         t.SetBorderSize(0)
         t.SetFillColor(0)

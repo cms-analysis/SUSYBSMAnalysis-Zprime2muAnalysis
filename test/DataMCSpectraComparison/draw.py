@@ -297,9 +297,9 @@ class Drawer:
         elif cutset == 'OurNoIso':
             return 8946/10093.7
         elif cutset == 'OurMuPrescaled':
-            return 1. # JMTBAD
+            return 412/500.9
         elif cutset == 'VBTFMuPrescaled':
-            return 1. # JMTBAD
+            return 393/458.7
 
         # If the cutset is not one of the above, don't rescale.
         return 1.

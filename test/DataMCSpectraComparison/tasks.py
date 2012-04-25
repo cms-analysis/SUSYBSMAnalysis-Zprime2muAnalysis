@@ -34,6 +34,8 @@ if cmd == 'setdirs':
     crab_dirs_location = extra[0]
     do('mkdir -p ' + os.path.join(crab_dirs_location, 'psets'))
     do('ln -s %s crab' % crab_dirs_location)
+    do('ln -s . crab/crab') # this is so crab -publish won't complain about being unable to find the pset if you launch it from crab/
+    do('mkdir crab/publish_logs')
 
 elif cmd == 'maketagdirs':
     extra = extra[0]
@@ -53,6 +55,21 @@ elif cmd == 'publishmc':
     from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
     for sample in samples:
         do('crab -c crab/crab_datamc_${x} -publish >&! crab/publish_logs/publish.${x} &')
+
+elif cmd == 'anadatasets':
+    print 'paste this into python/MCSamples.py:\n'
+    from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
+    for sample in samples:
+        ana_dataset = None
+        fn = 'crab/publish_logs/publish.crab_datamc_%s' % sample.name
+        # yay fragile parsing
+        for line in open(fn):
+            if line.startswith(' total events'):
+                ana_dataset = line.split(' ')[-1].strip()
+                break
+        if ana_dataset is None:
+            raise ValueError('could not find ana_dataset from %s' % fn)
+        print '%s.ana_dataset = "%s"' % (sample.name, sample.ana_dataset)
 
 elif cmd == 'gathermc':
     from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples

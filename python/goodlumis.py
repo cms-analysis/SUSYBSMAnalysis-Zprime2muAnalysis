@@ -15,6 +15,7 @@ prompt_version = ''
 
 # Lumis to manually throw out.
 to_remove = {'190949': [[82,1149]], '191090': [[56,339]]} # These are 20/pb of "low pileup" runs in which they enabled only Mu15 and disabled Mu40 (set prescale to 0).
+to_remove.update({'191367': [[1,289]], '191391': [[1,14]]}) # Runs with < 0.2/pb data where triggers were switched off (prescale set to 0). Probably won't end up in real JSONs anyway, just in DCS-only JSON.
 to_remove = LumiList(compactList=to_remove)
 
 # These runs are <= last_prompt_run, but they were not actually

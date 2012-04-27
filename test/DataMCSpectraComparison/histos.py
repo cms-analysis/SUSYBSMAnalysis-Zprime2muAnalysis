@@ -256,7 +256,7 @@ return_data = 1
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
 
         dataset_details = [
-            ('SingleMuRun2012A_Prompt_190450_191284', '/SingleMu/tucker-datamc_SingleMuRun2012A_Prompt_190450_191284_20120418134612-57b19813ab8f2ab142c4566dc6738156/USER'),
+            ('SingleMuRun2012A_Prompt_190450_192257', '/SingleMu/tucker-datamc_SingleMuRun2012A_Prompt_190450_192257_20120425100802-f1c162e9ac6a53572830a92e8730d513/USER'),
             ]
 
         lumi_lists = [

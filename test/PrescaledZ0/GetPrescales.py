@@ -10,23 +10,13 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 100000
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.CheckPrescale_cfi')
 process.CheckPrescale.dump_prescales = True
 
-x = [
-    (15, (3,4)),
-    (24, (3,4)),
-    ]
+process.Mu17       = process.CheckPrescale.clone(trigger_paths=cms.vstring('HLT_Mu17_v3'))
+process.Mu15eta2p1 = process.CheckPrescale.clone(trigger_paths=cms.vstring('HLT_Mu15_eta2p1_v3', 'HLT_Mu15_eta2p1_v4'))
+process.Mu24eta2p1 = process.CheckPrescale.clone(trigger_paths=cms.vstring('HLT_Mu24_eta2p1_v3', 'HLT_Mu24_eta2p1_v4'))
+ 
+process.MessageLogger.suppressWarning = cms.untracked.vstring('Mu17', 'Mu15eta2p1', 'Mu24eta2p1')
 
-objs = []
-names = []
-for pt, (v0, v1) in x:
-    obj = process.CheckPrescale.clone(trigger_paths=cms.vstring(*['HLT_Mu%i_eta2p1_v%i' % (pt, ver) for ver in xrange(v0, v1+1)]))
-    name = 'Mu%i' % pt
-    names.append(name)
-    setattr(process, name, obj)
-    objs.append(obj)
-
-process.MessageLogger.suppressWarning = cms.untracked.vstring(*names)
-
-process.p = cms.Path(reduce(lambda x,y: x*y, objs))
+process.p = cms.Path(process.Mu17 * process.Mu15eta2p1 * process.Mu24eta2p1)
     
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''

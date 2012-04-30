@@ -54,7 +54,7 @@ elif cmd == 'checkevents':
 elif cmd == 'publishmc':
     from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
     for sample in samples:
-        do('crab -c crab/crab_datamc_${x} -publish >&! crab/publish_logs/publish.${x} &')
+        do('crab -c crab/crab_datamc_%(name)s -publish >&! crab/publish_logs/publish.crab_datamc_%(name)s &' % sample)
 
 elif cmd == 'anadatasets':
     print 'paste this into python/MCSamples.py:\n'

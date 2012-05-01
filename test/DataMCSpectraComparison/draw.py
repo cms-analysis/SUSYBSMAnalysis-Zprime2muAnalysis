@@ -289,17 +289,17 @@ class Drawer:
         # off, rather than trying to be smart and getting them from
         # the histogram files.
         if cutset == 'VBTF':
-            return 8380/9119.5
+            return 15140./15293.7
         elif cutset == 'OurNew':
-            return 8817/9976.7
+            return 15892./16730.6
         elif cutset == 'OurOld':
-            return 9913/10671.8
+            return 17848./17896.1
         elif cutset == 'OurNoIso':
-            return 8946/10093.7
+            return 16119./16927.2
         elif cutset == 'OurMuPrescaled':
-            return 412/500.9
+            return 747./841.3
         elif cutset == 'VBTFMuPrescaled':
-            return 393/458.7
+            return 718./790.7
 
         # If the cutset is not one of the above, don't rescale.
         return 1.

@@ -3,6 +3,7 @@
 import sys, os, glob
 from itertools import combinations
 from FWCore.PythonUtilities.LumiList import LumiList
+from SUSYBSMAnalysis.Zprime2muAnalysis.hadd import hadd
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import big_warn
 
 just_testing = 'testing' in sys.argv
@@ -81,10 +82,9 @@ elif cmd == 'gathermc':
         n = len(glob.glob(pattern))
         if n == 0:
             big_warn('no files matching %s' % pattern)
-        elif n == 1:
-            do('cp %s mc/%s' % (pattern, fn))
         else:
-            do('hadd mc/ana_datamc_%(name)s.root crab/crab_ana%(extra)s_datamc_%(name)s/res/zp2mu_histos*root' % locals())
+            files = glob.glob('crab/crab_ana%(extra)s_datamc_%(name)s/res/zp2mu_histos*root' % locals())
+            hadd('mc/ana_datamc_%s.root' % name, files)
 
 elif cmd == 'gatherdata':
     extra = (extra[0] + '_') if extra else ''
@@ -92,11 +92,13 @@ elif cmd == 'gatherdata':
     for lumi_mask in lumi_masks:
         print lumi_mask
         dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMuRun2012*' % lumi_mask)
-        files_glob = ' '.join([os.path.join(x, 'res/*.root') for x in dirs])
+        files = []
+        for d in dirs:
+            files += glob.glob(os.path.join(d, 'res/*.root'))
 
-        wdir = 'data/%(lumi_mask)s' % locals()
+        wdir = os.path.join('data', lumi_mask)
         os.mkdir(wdir)
-        do('hadd %(wdir)s/ana_datamc_data.root %(files_glob)s' % locals())
+        hadd(os.path.join(wdir, 'ana_datamc_data.root'), files)
 
         for dir in dirs:
             do('crab -c %(dir)s -status ; crab -c %(dir)s -report' % locals())

@@ -14,6 +14,12 @@ def hadd_ex(new_name, files):
     """
     
     l = len(files)
+    if l == 1:
+        print 'only one file specified, copying %s to %s' % (files[0], new_name)
+        assert os.system('cp -p %s %s' % (files[0], new_name)) == 0 # JMTBAD check return code
+        print '1 file copied to %s' % new_name
+        return True
+        
     print 'hadding %i files to %s' % (l, new_name)
     args = ['hadd', new_name] + files
 

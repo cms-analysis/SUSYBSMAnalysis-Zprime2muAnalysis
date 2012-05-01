@@ -70,7 +70,7 @@ elif cmd == 'anadatasets':
                 break
         if ana_dataset is None:
             raise ValueError('could not find ana_dataset from %s' % fn)
-        print '%s.ana_dataset = "%s"' % (sample.name, sample.ana_dataset)
+        print '%s.ana_dataset = "%s"' % (sample.name, ana_dataset)
 
 elif cmd == 'gathermc':
     from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples

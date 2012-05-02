@@ -261,6 +261,9 @@ class Drawer:
             return -3,3
         return None
 
+    def get_log_x(self, cutset, dilepton, quantity_to_compare):
+        return quantity_to_compare in ['DimuonMassVtxConstrainedLog']
+            
     def parse_lumi_from_log(self, log_fn):
         # JMTBAD magic, fragile parsing
         this = False
@@ -682,11 +685,18 @@ class Drawer:
         t.SetFillStyle(0)
         t.Draw()
 
+        log_x = self.get_log_x(cutset, dilepton, quantity_to_compare)
+        if log_x:
+            self.ps.c.SetLogx()
+            
         # Done; save it!
         plot_fn = dilepton
         if cumulative:
             plot_fn += '_cumulative'
         self.ps.save(plot_fn)
+
+        if log_x:
+            self.ps.c.SetLogx(0)
 
     def finalize_table(self, dir_base):
         table_fn = os.path.join(dir_base, 'mass_counts.html')

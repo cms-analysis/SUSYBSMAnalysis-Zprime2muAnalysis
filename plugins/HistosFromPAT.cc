@@ -120,6 +120,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TH1F* DileptonDaughterDeltaR;
   TH1F* DileptonDaughterDeltaPhi;
   TH1F* DimuonMassVertexConstrained;
+  TH1F* DimuonMassVtxConstrainedLog;
   TH2F* DimuonMassConstrainedVsUn;
   TH2F* DimuonMassVertexConstrainedError;
 };
@@ -150,7 +151,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   // Whole-event things.
 
   NBeamSpot = fs->make<TH1F>("NBeamSpot", titlePrefix + "# beamspots/event",  2, 0,  2);
-  NVertices = fs->make<TH1F>("NVertices", titlePrefix + "# vertices/event",  20, 0, 20);
+  NVertices = fs->make<TH1F>("NVertices", titlePrefix + "# vertices/event",  40, 0, 40);
 
   // Basic kinematics.
 
@@ -205,18 +206,18 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
 
   // Other track variables.
   Chi2dof = fs->make<TH1F>("Chi2dof", titlePrefix + "#chi^{2}/dof", 100, 0, 10);
-  TrackD0BS = fs->make<TH1F>("TrackD0BS", titlePrefix + "|d0 wrt BS|",         100, 0, 0.2);
-  TrackDZBS = fs->make<TH1F>("TrackDZBS", titlePrefix + "|dz wrt BS|",         100, 0, 5);
-  TrackD0PV = fs->make<TH1F>("TrackD0PV", titlePrefix + "|d0 wrt PV|",         100, 0, 0.2);
-  TrackDZPV = fs->make<TH1F>("TrackDZPV", titlePrefix + "|dz wrt PV|",         100, 0, 5);
+  TrackD0BS = fs->make<TH1F>("TrackD0BS", titlePrefix + "|d0 wrt BS|", 100, 0, 0.2);
+  TrackDZBS = fs->make<TH1F>("TrackDZBS", titlePrefix + "|dz wrt BS|", 100, 0, 20);
+  TrackD0PV = fs->make<TH1F>("TrackD0PV", titlePrefix + "|d0 wrt PV|", 100, 0, 0.2);
+  TrackDZPV = fs->make<TH1F>("TrackDZPV", titlePrefix + "|dz wrt PV|", 100, 0, 20);
 
   // Electron specific histos (none yet).
 
   // Dilepton quantities.
 
   // Dilepton multiplicity.
-  NDileptons = fs->make<TH1F>("NDileptons",  "# dileptons/event, " + titlePrefix, 10, 0, 10);
-  
+  NDileptons = fs->make<TH1F>("NDileptons", "# dileptons/event" + titlePrefix, 10, 0, 10);
+
   // Dilepton eta, y, phi.
   DileptonEta = fs->make<TH1F>("DileptonEta", titlePrefix + "dil. #eta", 100, -5,  5);
   DileptonRap = fs->make<TH1F>("DileptonRap", titlePrefix + "dil. y",    100, -5,  5);
@@ -247,6 +248,13 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
 
   // Dimuons have a vertex-constrained fit: some associated histograms.
   DimuonMassVertexConstrained = fs->make<TH1F>("DimuonMassVertexConstrained", titlePrefix + "dimu. vertex-constrained mass", 3000, 0, 3000);
+  // Mass plot in bins of log(mass)
+  const int    NMBINS = 100;
+  const double MMIN = 50., MMAX = 2000.;
+  double logMbins[NMBINS+1];
+  for (int ibin = 0; ibin <= NMBINS; ibin++)
+    logMbins[ibin] = exp(log(MMIN) + (log(MMAX)-log(MMIN))*ibin/NMBINS);
+  DimuonMassVtxConstrainedLog = fs->make<TH1F>("DimuonMassVtxConstrainedLog", titlePrefix + "dimu vtx-constrained mass in log bins", NMBINS, logMbins);
   DimuonMassConstrainedVsUn = fs->make<TH2F>("DimuonMassConstrainedVsUn", titlePrefix + "dimu. vertex-constrained vs. non-constrained mass", 200, 0, 3000, 200, 0, 3000);
   DimuonMassVertexConstrainedError = fs->make<TH2F>("DimuonMassVertexConstrainedError", titlePrefix + "dimu. vertex-constrained mass error vs. mass", 100, 0, 3000, 100, 0, 400);
 }
@@ -424,6 +432,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
     float vertex_mass_err = dil.userFloat("vertexMError");
 
     DimuonMassVertexConstrained->Fill(vertex_mass);
+    DimuonMassVtxConstrainedLog->Fill(vertex_mass);
     DimuonMassConstrainedVsUn->Fill(dil.mass(), vertex_mass);
     DimuonMassVertexConstrainedError->Fill(vertex_mass, vertex_mass_err);
   }

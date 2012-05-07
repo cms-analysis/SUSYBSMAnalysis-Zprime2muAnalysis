@@ -65,6 +65,8 @@ private:
     float lep_tk_pt_err[2];
     float lep_tk_eta[2];
     float lep_tk_phi[2];
+    float lep_tk_dz[2];
+    float lep_tk_vz[2];
     float lep_tk_chi2[2];
     float lep_tk_ndf[2];
     float lep_glb_pt[2];
@@ -203,6 +205,8 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->Branch("lep_tk_pt_err", t.lep_tk_pt_err, "lep_tk_pt_err[2]/F");
   tree->Branch("lep_tk_eta", t.lep_tk_eta, "lep_tk_eta[2]/F");
   tree->Branch("lep_tk_phi", t.lep_tk_phi, "lep_tk_phi[2]/F");
+  tree->Branch("lep_tk_dz", t.lep_tk_dz, "lep_tk_dz[2]/F");
+  tree->Branch("lep_tk_vz", t.lep_tk_vz, "lep_tk_vz[2]/F");
   tree->Branch("lep_tk_chi2", t.lep_tk_chi2, "lep_tk_chi2[2]/F");
   tree->Branch("lep_tk_ndf", t.lep_tk_ndf, "lep_tk_ndf[2]/F");
   tree->Branch("lep_glb_pt", t.lep_glb_pt, "lep_glb_pt[2]/F");
@@ -507,6 +511,8 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	t.lep_tk_pt_err[w] = -999;
 	t.lep_tk_eta[w] = -999;
 	t.lep_tk_phi[w] = -999;
+	t.lep_tk_vz[w] = -999;
+	t.lep_tk_dz[w] = -999;
 	t.lep_tk_chi2[w] = -999;
 	t.lep_tk_ndf[w] = -999;
 	t.lep_glb_pt[w] = -999;
@@ -581,6 +587,8 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	t.lep_tk_pt_err[w] = mu->innerTrack()->ptError();
 	t.lep_tk_eta[w] = mu->innerTrack()->eta();
 	t.lep_tk_phi[w] = mu->innerTrack()->phi();
+	t.lep_tk_vz[w] = mu->innerTrack()->vz();
+	t.lep_tk_dz[w] = mu->innerTrack()->dz();
 	t.lep_tk_chi2[w] = mu->innerTrack()->chi2();
 	t.lep_tk_ndf[w] = mu->innerTrack()->ndof();
 	t.lep_glb_pt[w] = mu->globalTrack()->pt();

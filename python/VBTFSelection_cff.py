@@ -1,5 +1,4 @@
 import FWCore.ParameterSet.Config as cms
-#test change
 
 # This attempts to implement exactly the VBTF selection, for which the
 # twiki is out of date. The most up-to-date info comes from AN-10-395 and

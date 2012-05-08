@@ -343,6 +343,7 @@ class Drawer:
         return {
             'DileptonMass': 'm(%s)%s',
             'DimuonMassVertexConstrained': 'm(%s)%s',
+            'DimuonMassVtxConstrainedLog': 'm(%s)%s',
             'DileptonPt': '%s p_{T}%s',
             'DileptonRap': '%s rapidity%s',
             'LeptonPt': "%s leptons' p_{T}%s",
@@ -355,6 +356,7 @@ class Drawer:
         return {
             'DileptonMass': ' [GeV]',
             'DimuonMassVertexConstrained': ' [GeV]',
+            'DimuonMassVtxConstrainedLog': ' [GeV]',
             'DileptonPt': ' [GeV]',
             'LeptonPt': ' [GeV]',
             'LeptonEta': '',
@@ -536,13 +538,15 @@ class Drawer:
         except ImportError:
             pass
 
-    def draw_legend(self, dilepton, cumulative):
+    def draw_legend(self, dilepton, cumulative, log_x):
         # Legend placement coordinates and sizes depend on factors set
         # elsewhere, too, so this is fragile.
         if dilepton == 'MuonsPlusMuonsMinus' and cumulative:
             legend = ROOT.TLegend(0.47, 0.55, 0.88, 0.88)
         elif dilepton == 'MuonsSameSign':
             legend = ROOT.TLegend(0.78, 0.61, 0.92, 0.88)
+        elif log_x:
+            legend = ROOT.TLegend(0.60, 0.72, 0.86, 0.88)
         else:
             legend = ROOT.TLegend(0.50, 0.69, 0.76, 0.88)
 
@@ -550,11 +554,10 @@ class Drawer:
         legend.SetBorderSize(0)
 
         # Add an entry for the data points.
-        m = ROOT.TMarker()
-        m.SetMarkerStyle(20)
-        m.SetMarkerSize(0.8)
-        m.SetMarkerColor(ROOT.kBlack)
-        legend.AddEntry(m, 'DATA', 'EP')
+        entry = legend.AddEntry('data_marker', 'Data', 'EP')
+        entry.SetMarkerStyle(20)
+        entry.SetMarkerSize(0.8)
+        entry.SetMarkerColor(ROOT.kBlack)
 
         # Add entries for the MC samples to the legend, respecting
         # join groups (i.e. don't add the same nice-name twice).
@@ -576,10 +579,13 @@ class Drawer:
 
         legend.SetTextSize(0.03)
         legend.Draw('same')
-        ## "EP" in TLegend::AddEntry doesn't seem to work
-        #ll = ROOT.TLine()
-        #ll.DrawLineNDC(0.532, 0.82, 0.532, 0.875)
-                                
+        ## "EP" in TLegend::AddEntry doesn't seem to work, so draw the error bar by hand
+        ll = ROOT.TLine()
+        if log_x:
+            ll.DrawLineNDC(0.632, 0.835, 0.632, 0.87)
+        else:
+            ll.DrawLineNDC(0.532, 0.82, 0.532, 0.875)
+
         return legend
 
     def draw_data_on_mc(self, cutset, dilepton, quantity_to_compare, cumulative):
@@ -609,6 +615,8 @@ class Drawer:
                 ytitle = 'Events / 0.02'
             elif quantity_to_compare == 'RelCombIso':
                 ytitle = 'Events / 0.05'
+            elif quantity_to_compare == 'DimuonMassVtxConstrainedLog':
+                ytitle = 'Events / bin'
         s.SetTitle(';%s;%s' % (xtitle, ytitle))
 
         s.Draw('hist')
@@ -676,18 +684,19 @@ class Drawer:
             zp.SetStats(0)
             zp.Draw('hist same')
 
+        # Use log(x) whenever needed
+        log_x = self.get_log_x(cutset, dilepton, quantity_to_compare)
+        if log_x:
+            self.ps.c.SetLogx()
+
         # Adorn the plot with legend and labels.
-        l = self.draw_legend(dilepton, cumulative)
+        l = self.draw_legend(dilepton, cumulative, log_x)
         t = ROOT.TPaveLabel(0.20, 0.89, 0.86, 0.99, 'CMS 2012 preliminary   #sqrt{s} = 8 TeV    #int L dt = %.f pb^{-1}' % round(self.int_lumi), 'brNDC')
         t.SetTextSize(0.35)
         t.SetBorderSize(0)
         t.SetFillColor(0)
         t.SetFillStyle(0)
         t.Draw()
-
-        log_x = self.get_log_x(cutset, dilepton, quantity_to_compare)
-        if log_x:
-            self.ps.c.SetLogx()
             
         # Done; save it!
         plot_fn = dilepton

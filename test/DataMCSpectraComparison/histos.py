@@ -256,7 +256,7 @@ return_data = 1
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
 
         dataset_details = [
-            ('SingleMuRun2012A_Prompt_190450_192257', '/SingleMu/tucker-datamc_SingleMuRun2012A_Prompt_190450_192257_20120425100802-f1c162e9ac6a53572830a92e8730d513/USER'),
+            ('SingleMuRun2012A_Prompt_190450_192257', '/SingleMu/slava-datamc_SingleMuRun2012A_Prompt_190450_192257_20120427043655-f1c162e9ac6a53572830a92e8730d513/USER'),
             ]
 
         lumi_lists = [
@@ -316,14 +316,14 @@ events_per_job = 100000
 
         from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
 
-        combine_dy_samples = len([x for x in samples if x.name in ['dy200', 'dy500', 'dy800', 'dy1000']]) > 0
+        combine_dy_samples = len([x for x in samples if x.name in ['zmumu', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'dy1300', 'dy1600']]) > 0
         print 'combine_dy_samples:', combine_dy_samples
 
         for sample in reversed(samples):
             print sample.name
 
             new_py = open('histos.py').read()
-            sample.fill_gen_info = sample.name in ['zmumu', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'zssm1000']
+            sample.fill_gen_info = sample.name in ['zmumu', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'dy1300', 'dy1600', 'zssm1000']
             new_py += "\nfor_mc(process, hlt_process_name='%(hlt_process_name)s', fill_gen_info=%(fill_gen_info)s)\n" % sample
 
             if combine_dy_samples and (sample.name == 'zmumu' or 'dy' in sample.name):
@@ -332,8 +332,10 @@ events_per_job = 100000
                     'dy120' : ( 120,    200),
                     'dy200' : ( 200,    500),
                     'dy500' : ( 500,    800),
-                    'dy800' : ( 800,   1000),
-                    'dy1000': (1000, 100000),
+                    'dy800' : ( 800,   1300),  ##  To be updated once dy1000 becomes available!!!!
+                    'dy1000': (1000,   1300),
+                    'dy1300': (1300,   1600),
+                    'dy1600': (1600, 100000),
                     }
                 lo,hi = mass_limits[sample.name]
                 from SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi import dy_gen_mass_cut

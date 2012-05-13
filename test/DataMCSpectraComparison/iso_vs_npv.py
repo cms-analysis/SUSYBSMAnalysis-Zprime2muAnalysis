@@ -7,7 +7,7 @@ ROOT.gStyle.SetOptStat(110010)
 
 ps = plot_saver('plots/iso_vs_npv', pdf=True)
 
-f = ROOT.TFile('data/Run2011MuonsOnly/ana_datamc_data.root')
+f = ROOT.TFile('data/Run2012MuonsOnly/ana_datamc_data.root')
 t = f.SimpleNtupler.Get('t')
 
 max_npv = 25

@@ -7,7 +7,7 @@ ROOT.gStyle.SetOptStat(110010)
 
 ps = plot_saver('plots/iso_vs_npv', pdf=True)
 
-f = ROOT.TFile('data/Run2012MuonsOnly/ana_datamc_data.root')
+#f = ROOT.TFile('data/Run2012MuonsOnly/ana_datamc_data.root')
 f = ROOT.TFile('data/Run2012PlusDCSOnlyMuonsOnly/ana_datamc_data.root')
 t = f.SimpleNtupler.Get('t')
 
@@ -25,6 +25,7 @@ ROOT.hnvertices2.Draw('histo text00')
 ps.save('nvertices_rebin')
 
 for tkonly in [0, 1]:
+    print "apples"
     if tkonly:
         t.SetAlias('iso', 'lep_sumPt/lep_tk_pt')
         cut = 0.1
@@ -42,8 +43,8 @@ for tkonly in [0, 1]:
     h.Draw('box')
     ps.save('scatter_%s' % which)
 
-    habove = ROOT.TH1F('habove%i' % tkonly, '', nbins, 0, nbins)
-    htotal = ROOT.TH1F('htotal%i' % tkonly, '', nbins, 0, nbins)
+    habove = ROOT.TH1F('habove%i' % tkonly, '', nbins, 0, max_npv)
+    htotal = ROOT.TH1F('htotal%i' % tkonly, '', nbins, 0, max_npv)
     for i in xrange(nbins):
         proj = h.ProjectionY('hproj%i' % i, i+1, i+1)
         habove.SetBinContent(i+1, proj.Integral(proj.FindBin(cut), proj.GetNbinsX()+2))

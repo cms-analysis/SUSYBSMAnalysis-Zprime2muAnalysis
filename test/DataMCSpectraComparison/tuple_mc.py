@@ -9,7 +9,7 @@ AODOnly(process)
 
 process.source.fileNames = ['/store/mc/Summer12/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/AODSIM/PU_S7_START50_V15-v1/0000/0C89A194-7D6F-E111-93C9-003048678FF8.root'] #/store/mc/Summer12/TTJets_TuneZ2star_8TeV-madgraph-tauola/AODSIM/PU_S7_START52_V5-v1/0000/42C81A37-4E81-E111-A53F-002618FDA210.root']
 process.maxEvents.input = 1000
-process.GlobalTag.globaltag = 'START52_V5::All'
+process.GlobalTag.globaltag = 'START52_V9::All'
 
 if __name__ == '__main__' and hasattr(sys, 'argv') and 'submit' in sys.argv:
     job_control = '''

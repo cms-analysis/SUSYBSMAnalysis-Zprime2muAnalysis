@@ -86,6 +86,8 @@ for sample in samples:
     exec '%s = sample' % sample.name
     sample.ana_dataset = '/%s/slava-datamc_%s-caca636ea661546409f4073c061b3e20/USER' % (sample.dataset.split('/')[1], sample.name)
 
+ttbar.ana_dataset = '/TTJets_TuneZ2star_8TeV-madgraph-tauola/slava-datamc_ttbar-2e54d35c5572bb8d0ce3ffc532e82068/USER'
+
 #big_warn('nothing')
 
 __all__ = ['samples'] + [s.name for s in samples]

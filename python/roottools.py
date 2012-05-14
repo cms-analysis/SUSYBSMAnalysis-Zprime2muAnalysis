@@ -462,7 +462,7 @@ class plot_saver:
             self.c.SaveAs(root)
         if log:
             self.c.SetLogy(1)
-            log = os.path.join(self.plot_dir, n + '.log.png')
+            log = os.path.join(self.plot_dir, n + '_log.png')
             self.c.SaveAs(log)
             self.c.SetLogy(0)
         if pdf:
@@ -470,7 +470,7 @@ class plot_saver:
             self.c.SaveAs(pdf)
         if pdf_log:
             self.c.SetLogy(1)
-            pdf_log = os.path.join(self.plot_dir, n + '.log.pdf')
+            pdf_log = os.path.join(self.plot_dir, n + '_log.pdf')
             self.c.SaveAs(pdf_log)
             self.c.SetLogy(0)
         if C:
@@ -478,7 +478,7 @@ class plot_saver:
             self.c.SaveAs(C_fn)
         if C_log:
             self.c.SetLogy(1)
-            C_log = os.path.join(self.plot_dir, n + '.log.C')
+            C_log = os.path.join(self.plot_dir, n + '_log.C')
             self.c.SaveAs(C_log)
             self.c.SetLogy(0)
         self.saved.append((fn, log, root, pdf, pdf_log, C, C_log))

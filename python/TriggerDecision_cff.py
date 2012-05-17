@@ -3,7 +3,8 @@ import FWCore.ParameterSet.Config as cms
 triggerDecision = cms.PSet(doingElectrons = cms.bool(False),
                            useTrigger = cms.bool(True),
                            l1GtObjectMap = cms.InputTag('hltL1GtObjectMap'),
-                           hltResults = cms.InputTag('TriggerResults', '', 'HLT'),
+#                           hltResults = cms.InputTag('TriggerResults', '', 'HLT'),
+                           hltResults = cms.InputTag('TriggerResults', '', 'PAT'),
                            # Note: these next two paths should not be
                            # changed just because the trigger menu for
                            # data-taking changes. This module is meant

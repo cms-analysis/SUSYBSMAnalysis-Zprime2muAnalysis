@@ -55,15 +55,17 @@ samples = [
     sample('dy200',     'DY200',                                            '/DYToMuMu_M_200_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',               50400, 434, 0.05, 1.176   - 0.03557,  k_factor=1.3),
     sample('dy500',     'DY500',                                            '/DYToMuMu_M_500_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',               50560, 435, 0.05, 0.03557 - 0.00451,  k_factor=1.3),
     sample('dy800',     'DY800',                                            '/DYToMuMu_M_800_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',               50400,   3, 0.05, 0.00451 - 3.55E-4,  k_factor=1.3), # skip 1 TeV
-##    sample('dy1000',    'DY1000',                                          '/DYToMuMu_M-1000_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',               XXXXX, 437, 0.05, 0.00149 - 3.55E-4,  k_factor=1.3),
+##    sample('dy1000',    'DY1000',                                           '/DYToMuMu_M-1000_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',               XXXXX, 437, 0.05, 0.00149 - 3.55E-4,  k_factor=1.3),
     sample('dy1300',    'DY1300',                                           '/DYToMuMu_M-1300_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',              50560,   8, 0.05, 3.55E-4 - 9.28E-5,  k_factor=1.3),
     sample('dy1600',    'DY1600',                                           '/DYToMuMu_M-1600_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',              50112,  37, 0.05, 9.28E-5 - 0,        k_factor=1.3),
     sample('ttbar',     't#bar{t}',                                         '/TTJets_TuneZ2star_8TeV-madgraph-tauola/Summer12-PU_S7_START52_V9-v1/AODSIM',             6736135,   2, 0.15, 225.2),
     sample('tW',        'tW',                                               '/T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola/Summer12-PU_S7_START52_V9-v1/AODSIM',       497658,   1, 0.03, 11.2),
     sample('tbarW',     'tbarW',                                            '/Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola/Summer12-PU_S7_START52_V9-v1/AODSIM',    493460,  12, 0.03, 11.2),
     sample('ww',        'WW',                                               '/WW_TuneZ2star_8TeV_pythia6_tauola/Summer12-PU_S7_START50_V15-v1/AODSIM',                10000431,   4, 0.035, 57),
-    sample('wz',        'WZ',                                               '/WZ_TuneZ2star_8TeV_pythia6_tauola/Summer12-PU_S7_START50_V15-v1/AODSIM',                10000283,  30, 0.038, 32),
+#    sample('ww',        'WW',                                               '/WW_TuneZ2star_8TeV_pythia6_tauola/Summer12-PU_S7_START52_V9-v1/AODSIM',                 10000431,   4, 0.035, 57.1),
+    sample('wz',        'WZ',                                               '/WZ_TuneZ2star_8TeV_pythia6_tauola/Summer12-PU_S7_START52_V9-v1/AODSIM',                  9996622,  30, 0.038, 32.3),
     sample('zz',        'ZZ',                                               '/ZZ_TuneZ2star_8TeV_pythia6_tauola/Summer12-PU_S7_START50_V15-v1/AODSIM',                 9799908,   6, 0.025,  8),
+#    sample('zz',        'ZZ',                                               '/ZZ_TuneZ2star_8TeV_pythia6_tauola/Summer12-PU_S7_START52_V9-v1/AODSIM',                  9799908,   6, 0.025,  8.3),
     sample('ztautau',   'Z #rightarrow #tau^{+}#tau^{-}',                   '/DYToTauTau_M_20_TuneZ2star_8TeV_pythia6_tauola/Summer12-PU_S7_START52_V9-v1/AODSIM',     1987776,  46, 0.05, 1915.),
     sample('wjets',     'W+jets',                                           '/WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball/Summer12-PU_S7_START52_V9-v1/AODSIM',       18393090,   3, 0.05, 36257.),
     sample('inclmu15',  'QCD',                                              '/QCD_Pt_20_MuEnrichedPt_15_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',  7529312, 801, 0.1,  3.64E8 * 3.7E-4),
@@ -87,6 +89,7 @@ for sample in samples:
     sample.ana_dataset = '/%s/slava-datamc_%s-caca636ea661546409f4073c061b3e20/USER' % (sample.dataset.split('/')[1], sample.name)
 
 ttbar.ana_dataset = '/TTJets_TuneZ2star_8TeV-madgraph-tauola/slava-datamc_ttbar-2e54d35c5572bb8d0ce3ffc532e82068/USER'
+wz.ana_dataset     = '/WZ_TuneZ2star_8TeV_pythia6_tauola/slava-datamc_wz-2e54d35c5572bb8d0ce3ffc532e82068/USER'
 
 #big_warn('nothing')
 

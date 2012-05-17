@@ -291,19 +291,20 @@ class Drawer:
         # are produced when running this script with rescaling turned
         # off, rather than trying to be smart and getting them from
         # the histogram files.
+        # Factors below were calculated for the MuonPhys JSON for 2012A
+        # released on May 11 and corresponding to 810/pb.
         if cutset == 'VBTF':
-            return 15140./15293.7
+            return 17924./17841.5
         elif cutset == 'OurNew':
-            return 15892./16730.6
+            return 18819./19512.8
         elif cutset == 'OurOld':
-            return 17848./17896.1
+            return 21097./20886.6
         elif cutset == 'OurNoIso':
-            return 16119./16927.2
+            return 19101./19790.3
         elif cutset == 'OurMuPrescaled':
-            return 747./841.3
+            return 896./974.2
         elif cutset == 'VBTFMuPrescaled':
-            return 718./790.7
-
+            return 860./904.1
         # If the cutset is not one of the above, don't rescale.
         return 1.
 

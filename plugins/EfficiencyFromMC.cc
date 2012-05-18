@@ -98,7 +98,9 @@ EfficiencyFromMC::EfficiencyFromMC(const edm::ParameterSet& cfg)
 
   total_trig_eff = make_eff_pair("TotalTrigEff", TString::Format("#varepsilon((%s) && (%s)) vs. mass", join(triggerDecision.l1_paths(), std::string(" || ")).c_str(), join(triggerDecision.hlt_paths(), std::string(" || ")).c_str()));
 }
-
+//
+//
+//
 void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   hardInteraction.Fill(event);
   triggerDecision.initEvent(event);
@@ -141,6 +143,7 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
 //    std::cout<<"store hlt decision"<<std::endl;
 //    triggerDecision.storeHLTDecision(event);
 
+//    triggerDecision.dumpPaths(event); 
 
   for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i)
     hlt_path_effs[i].second->Fill(m);
@@ -158,8 +161,32 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
       hlt_or = true;
     }
   }
-  if (hlt_or) hlt_or_eff.first->Fill(m);
-  if (l1_or && hlt_or) total_trig_eff.first->Fill(m);
+
+  // Look for an offline reconstructed dimuon while we're here to
+  // measure the total reco efficiency. Loose match in dR for the two
+  // muons to the gen two muons before we count it.
+  edm::Handle<pat::CompositeCandidateCollection> dimuons;
+  event.getByLabel(dimuon_src, dimuons);
+  static const double dRmax = 0.5;
+  for (pat::CompositeCandidateCollection::const_iterator di = dimuons->begin(), die = dimuons->end(); di != die; ++di) {
+    reco::CandidateBaseRef dau0 = dileptonDaughter(*di, 0);
+    reco::CandidateBaseRef dau1 = dileptonDaughter(*di, 1);
+    if ((reco::deltaR(*dau0, *hardInteraction.lepPlus)  < dRmax || reco::deltaR(*dau1, *hardInteraction.lepPlus)  < dRmax) &&
+	(reco::deltaR(*dau0, *hardInteraction.lepMinus) < dRmax || reco::deltaR(*dau1, *hardInteraction.lepMinus) < dRmax)) {
+      recowrtacc.first->Fill(m);
+      if (hlt_or) {
+	    recowrtacctrig.first->Fill(m);
+	    totalreco.first->Fill(m);
+      }
+      break;
+    }
+  }
+
+  if (hlt_or) {
+        hlt_or_eff.first->Fill(m);
+        recowrtacctrig.second->Fill(m);
+        total_trig_eff.first->Fill(m);
+    }
 /*
   for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i)
     hlt_path_effs[i].second->Fill(m);
@@ -233,9 +260,10 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
 //  if (hlt_or) hlt_or_eff.first->Fill(m);
 //  if (l1_or && hlt_or) total_trig_eff.first->Fill(m);
   
+      
+/*
   if (l1_or && hlt_or)
     recowrtacctrig.second->Fill(m);
-      
   // Look for an offline reconstructed dimuon while we're here to
   // measure the total reco efficiency. Loose match in dR for the two
   // muons to the gen two muons before we count it.
@@ -249,12 +277,13 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
 	(reco::deltaR(*dau0, *hardInteraction.lepMinus) < dRmax || reco::deltaR(*dau1, *hardInteraction.lepMinus) < dRmax)) {
       recowrtacc.first->Fill(m);
       if (l1_or && hlt_or) {
-	recowrtacctrig.first->Fill(m);
-	totalreco.first->Fill(m);
+	    recowrtacctrig.first->Fill(m);
+	    totalreco.first->Fill(m);
       }
       break;
     }
   }
+*/
 }
 
 DEFINE_FWK_MODULE(EfficiencyFromMC);

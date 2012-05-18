@@ -85,7 +85,10 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
   const TString titlePrefix(title_prefix.c_str());
 
   edm::Service<TFileService> fs;
-  
+ 
+    double massmax = 5000;
+    int nbinsmass=250;
+ 
   LeptonEtaDiff = fs->make<TH1F>("LeptonEtaDiff", titlePrefix + "#eta - gen #eta", 100, -0.002, 0.002);
   LeptonPhiDiff = fs->make<TH1F>("LeptonPhiDiff", titlePrefix + "#phi - gen #phi", 100, -0.002, 0.002);
   LeptonPtDiff  = fs->make<TH1F>("LeptonPtDiff",  titlePrefix + "pT - gen pT", 100, -20, 20);
@@ -123,9 +126,9 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
   DileptonResMassRes = fs->make<TH1F>("DileptonResMassRes", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", 100, -0.5, 0.5);
   ResonanceMassRes   = fs->make<TH1F>("ResonanceMassRes",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", 100, -0.5, 0.5);
   
-  DileptonMassResVMass    = fs->make<TProfile>("DileptonMassResVMass",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 100, 0, 2000, -0.5, 0.5);
-  DileptonResMassResVMass = fs->make<TProfile>("DileptonResMassResVMass", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", 100, 0, 2000, -0.5, 0.5);
-  ResonanceMassResVMass   = fs->make<TProfile>("ResonanceMassResVMass",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", 100, 0, 2000, -0.5, 0.5);
+  DileptonMassResVMass    = fs->make<TProfile>("DileptonMassResVMass",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 100, nbinsmass, massmax, -0.5, 0.5);
+  DileptonResMassResVMass = fs->make<TProfile>("DileptonResMassResVMass", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", 100, nbinsmass, massmax, -0.5, 0.5);
+  ResonanceMassResVMass   = fs->make<TProfile>("ResonanceMassResVMass",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", 100, nbinsmass, massmax, -0.5, 0.5);
 
   static const TString dilepton_where_names[W_D_MAX] = {"BB", "BO", "BE", "BU", "OO", "OE", "OU", "EE", "EU", "UU"};
   for (size_t i = 0; i < W_D_MAX; ++i) {

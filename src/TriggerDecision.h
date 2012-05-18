@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "TString.h" 
 
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
@@ -50,6 +51,7 @@ class TriggerDecision {
   bool hlt_path_pass(size_t ipath) const { assert(ipath < hltPaths.size()); return bool(trigWord[3] & (1 << ipath)); }
 
     bool pass_hlt_path(edm::Event const& event,std::string shltpath);
+    void const dumpPaths(edm::Event const& event) const;
 
  private:
   bool debug;

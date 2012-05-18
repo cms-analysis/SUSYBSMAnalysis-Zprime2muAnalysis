@@ -44,6 +44,23 @@ bool TriggerDecision::pass_hlt_path(edm::Event const& event,std::string shltpath
     bool retval = false;
     edm::Handle<edm::TriggerResults> hltRes;
     event.getByLabel(hltResults, hltRes);
+    const edm::TriggerNames& hltTrigNames = event.triggerNames(*hltRes);
+
+  // Get the map between path names and indices.
+    int paths_defined = hltRes->size();
+    int ndx = hltTrigNames.triggerIndex(shltpath);
+//    std::cout<<hltPaths[i]<<"\t"<<ndx<<std::endl;
+    if (ndx >= paths_defined) return retval; 
+    else retval = hltRes->accept(ndx);
+
+    return retval;
+} 
+/*
+bool TriggerDecision::pass_hlt_path_like(edm::Event const& event,std::string shltpath){
+
+    bool retval = false;
+    edm::Handle<edm::TriggerResults> hltRes;
+    event.getByLabel(hltResults, hltRes);
 
   // Get the map between path names and indices.
     const edm::TriggerNames& hltTrigNames = event.triggerNames(*hltRes);
@@ -55,6 +72,7 @@ bool TriggerDecision::pass_hlt_path(edm::Event const& event,std::string shltpath
 
     return retval;
 } 
+*/
 void TriggerDecision::storeL1Decision(const edm::Event& event) {
   // Get Level-1 decisions for trigger paths we are interested in.
   edm::Handle<L1GlobalTriggerObjectMapRecord> l1Map;
@@ -88,7 +106,9 @@ void TriggerDecision::storeL1Decision(const edm::Event& event) {
   trigWord[lL1] = trigbits;
   passTrig[lL1] = trigbits != 0;
 }
-
+//
+// store the HLT decisions
+//
 void TriggerDecision::storeHLTDecision(const edm::Event& event) {
   // Get the HLT TriggerResults object, from which the official HLT
   // path decisions can be extracted.
@@ -116,6 +136,7 @@ void TriggerDecision::storeHLTDecision(const edm::Event& event) {
       bool fired = hltRes->accept(ndx);
       if (debug||true)
 	out << "  " << hltPaths[i] << " (index " << ndx << "): " 
+//	std::cout << "  " << hltPaths[i] << " (index " << ndx << "): " 
 	    << " decision " << fired << endl;
       if (fired) hlt_trigbits |= 1 << i;
     }
@@ -172,4 +193,47 @@ bool TriggerDecision::pass() const {
 bool TriggerDecision::pass_all(const int irec) const {
   if (irec <= lL3) return pass(irec);
   else return pass();
+}
+//
+// dump available paths
+//
+void const TriggerDecision::dumpPaths(edm::Event const& event) const {
+        std::cout<<"---- dumping the trigger names"<<std::endl;
+
+    edm::Handle<edm::TriggerResults> hltRes;
+    event.getByLabel(hltResults, hltRes);
+    const edm::TriggerNames& hltTrigNames = event.triggerNames(*hltRes);
+
+    std::vector<std::string>  hlNames_;  // name of each HLT algorithm
+    hlNames_=hltTrigNames.triggerNames();
+    std::cout<<"\t num Triggers: "<<hlNames_.size()<<std::endl;
+/*
+  unsigned int hlt_trigbits = 0;
+  int paths_defined = hltRes->size();
+  for (unsigned int i = 0; i < hltPaths.size(); i++) {
+    int ndx = hltTrigNames.triggerIndex(hltPaths[i]);
+    std::cout<<hltPaths[i]<<"\t"<<ndx<<std::endl;
+*/
+/*
+    edm::Handle<edm::TriggerResults> triggerEventHandle_;
+    event.getByLabel(hltResults, triggerEventHandle_);
+    edm::Handle<edm::TriggerResults> triggerResultsHandle_;
+  // Get the map between path names and indices.
+//    if (!triggerEventHandle_.isValid()) {
+        const edm::TriggerNames & triggerNames = event.triggerNames(*triggerResultsHandle_);
+        std::vector<std::string>  hlNames_;  // name of each HLT algorithm
+        hlNames_=triggerNames.triggerNames();
+        std::cout<<"\t num Triggers: "<<hlNames_.size()<<std::endl;
+        for (unsigned int i=0; i!=hlNames_.size(); ++i) {
+            TString _s = hlNames_[i];
+            if (!_s.Contains("Mu")) continue;
+            std::cout<<i<<"\t"<<_s.Data()<<std::endl;
+        }
+        std::cout<<"---- done looping on triggers"<<std::endl;
+
+        return;
+    } else {
+        std::cout<<"The triggerEvent is broken, dude."<<std::endl;
+    }
+*/
 }

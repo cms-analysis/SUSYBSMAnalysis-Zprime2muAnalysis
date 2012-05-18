@@ -138,6 +138,41 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
 
   recowrtacc.second->Fill(m);
 
+//    std::cout<<"store hlt decision"<<std::endl;
+//    triggerDecision.storeHLTDecision(event);
+
+
+  for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i)
+    hlt_path_effs[i].second->Fill(m);
+
+
+  l1_or_eff.second->Fill(m);
+  hlt_or_eff.second->Fill(m);
+  total_trig_eff.second->Fill(m);
+
+  bool l1_or = false, hlt_or = false;
+
+  for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i) {
+    if (triggerDecision.hlt_path_pass(i)) {
+      hlt_path_effs[i].first->Fill(m);
+      hlt_or = true;
+    }
+  }
+  if (hlt_or) hlt_or_eff.first->Fill(m);
+  if (l1_or && hlt_or) total_trig_eff.first->Fill(m);
+/*
+  for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i)
+    hlt_path_effs[i].second->Fill(m);
+*/
+/*
+    for (std::vector<std::string>::const_iterator st = triggerDecision.hlt_paths().begin(); st != triggerDecision.hlt_paths().end(); ++st){
+        std::cout<<*st
+        <<"\t"<<triggerDecision.pass_hlt_path(event,std::string(*st))//?"passed!":"failed :("
+        <<std::endl;
+    }
+*/
+    return;
+
   for (size_t i = 0; i < triggerDecision.l1_paths().size(); ++i)
     l1_path_effs[i].second->Fill(m);
   for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i)
@@ -145,9 +180,23 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
   l1_or_eff.second->Fill(m);
   hlt_or_eff.second->Fill(m);
   total_trig_eff.second->Fill(m);
-  
-  bool l1_or = false, hlt_or = false;
-  
+
+
+
+
+//    std::cout<<triggerDecision.getWord("HLT_Mu40_eta2p1_v6")<<std::endl; 
+
+//    int trigIndex =triggerNames.triggerIndex("HLT_Mu40_eta2p1_v6"); 
+//    _HLT_Mu40_eta2p1_v6 =triggerResultsHandle_->accept(trigIndex); 
+
+
+
+ 
+ 
+
+    // start where it loops over triggers
+    std::cout<<"start looping over triggers"<<std::endl;
+ 
   for (size_t i = 0; i < triggerDecision.l1_paths().size(); ++i) {
     if (triggerDecision.l1_path_pass(i)) {
       l1_path_effs[i].first->Fill(m);
@@ -155,7 +204,7 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
     }
   }
 
-  bool hlt_pass_overridden = true;
+  bool hlt_pass_overridden = false;
 
   if (hlt_single_min_pt > 0 || hlt_single_max_eta > 0) {
     Zprime2muTriggerPathsAndFilters pandf(event);
@@ -181,8 +230,8 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
   }
   
   if (l1_or) l1_or_eff.first->Fill(m);
-  if (hlt_or) hlt_or_eff.first->Fill(m);
-  if (l1_or && hlt_or) total_trig_eff.first->Fill(m);
+//  if (hlt_or) hlt_or_eff.first->Fill(m);
+//  if (l1_or && hlt_or) total_trig_eff.first->Fill(m);
   
   if (l1_or && hlt_or)
     recowrtacctrig.second->Fill(m);

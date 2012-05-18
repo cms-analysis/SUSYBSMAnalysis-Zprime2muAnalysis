@@ -39,6 +39,22 @@ void TriggerDecision::initEvent(const edm::Event& event) {
   }
 }
 
+bool TriggerDecision::pass_hlt_path(edm::Event const& event,std::string shltpath){
+
+    bool retval = false;
+    edm::Handle<edm::TriggerResults> hltRes;
+    event.getByLabel(hltResults, hltRes);
+
+  // Get the map between path names and indices.
+    const edm::TriggerNames& hltTrigNames = event.triggerNames(*hltRes);
+    int paths_defined = hltRes->size();
+    int ndx = hltTrigNames.triggerIndex(shltpath);
+//    std::cout<<hltPaths[i]<<"\t"<<ndx<<std::endl;
+    if (ndx >= paths_defined) return retval; 
+    else retval = hltRes->accept(ndx);
+
+    return retval;
+} 
 void TriggerDecision::storeL1Decision(const edm::Event& event) {
   // Get Level-1 decisions for trigger paths we are interested in.
   edm::Handle<L1GlobalTriggerObjectMapRecord> l1Map;
@@ -90,6 +106,7 @@ void TriggerDecision::storeHLTDecision(const edm::Event& event) {
   int paths_defined = hltRes->size();
   for (unsigned int i = 0; i < hltPaths.size(); i++) {
     int ndx = hltTrigNames.triggerIndex(hltPaths[i]);
+//    std::cout<<hltPaths[i]<<"\t"<<ndx<<std::endl;
     if (ndx >= paths_defined) {
       edm::LogWarning("storeHLTDecision")
 	<< "+++ HLT path " << hltPaths[i]
@@ -97,7 +114,7 @@ void TriggerDecision::storeHLTDecision(const edm::Event& event) {
     }
     else {
       bool fired = hltRes->accept(ndx);
-      if (debug)
+      if (debug||true)
 	out << "  " << hltPaths[i] << " (index " << ndx << "): " 
 	    << " decision " << fired << endl;
       if (fired) hlt_trigbits |= 1 << i;

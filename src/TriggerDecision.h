@@ -49,6 +49,8 @@ class TriggerDecision {
   bool l1_path_pass(size_t ipath)  const { assert(ipath < l1Paths.size());  return bool(trigWord[1] & (1 << ipath)); }
   bool hlt_path_pass(size_t ipath) const { assert(ipath < hltPaths.size()); return bool(trigWord[3] & (1 << ipath)); }
 
+    bool pass_hlt_path(edm::Event const& event,std::string shltpath);
+
  private:
   bool debug;
 

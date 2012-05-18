@@ -9,15 +9,18 @@ restrict_mass_window = True
 # late_bin numbering: bin 0 = 0-9, bin 2 = 10-26
 intime_bin, late_bin = -1, -1 
 check_prescaled_path = False
-acc_both_24 = True
+acc_both_24 = False 
 
 ################################################################################
 
 import sys, os
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import cms, process
 
-process.maxEvents.input = 5000
-process.source.fileNames = ['/store/user/tucker/ZprimeSSMToMuMu_M-2250_TuneZ2_7TeV-pythia6/effres_zp2250/dd2126535e23ba03e5a28af2e68bf29c/pat_1_1_nHf.root']
+process.maxEvents.input = -1 
+#process.source.fileNames = ['/store/user/tucker/ZprimeSSMToMuMu_M-2250_TuneZ2_7TeV-pythia6/effres_zp2250/dd2126535e23ba03e5a28af2e68bf29c/pat_1_1_nHf.root']
+process.source.fileNames = ['file:pat_1_2_Rn8.root']
+process.source.fileNames = ['file:crab1/crab_effres_zp1000/res/pat_2_1_375.root']
+process.source.fileNames = ['/store/user/kypreos/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/effres_zp1000//8b5d6229465512f48440fe43a9f490d5/pat_3_1_Di9.root']
 process.options.wantSummary = True
 
 ex = ''
@@ -137,17 +140,25 @@ return_data = 1
 '''
         
     samples = [
-        ('dy60',   '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/tucker-effres_dy20-5a92c9dde349d191a78d4eb40ec67d3b/USER',              60,   120),
-        ('dy120',  '/DYToMuMu_M-120_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy120-5a92c9dde349d191a78d4eb40ec67d3b/USER',    120,   200),
-        ('dy200',  '/DYToMuMu_M-200_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy200-5a92c9dde349d191a78d4eb40ec67d3b/USER',    200,   500),
-        ('dy500',  '/DYToMuMu_M-500_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy500-5a92c9dde349d191a78d4eb40ec67d3b/USER',    500,   800),
-        ('dy800',  '/DYToMuMu_M-800_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy800-5a92c9dde349d191a78d4eb40ec67d3b/USER',    800,  1000),
-        ('dy1000', '/DYToMuMu_M-1000_TuneZ2_7TeV-pythia6-tauola/tucker-effres_dy1000-5a92c9dde349d191a78d4eb40ec67d3b/USER', 1000, 20000),
-        ('zp750',  '/ZprimeSSMToMuMu_M-750_TuneZ2_7TeV-pythia6/tucker-effres_zp750-5a92c9dde349d191a78d4eb40ec67d3b/USER',   -1, 20000),
-        ('zp1000', '/ZprimeSSMToMuMu_M-1000_TuneZ2_7TeV-pythia6/tucker-effres_zp1000-5a92c9dde349d191a78d4eb40ec67d3b/USER', -1, 20000),
-        ('zp1250', '/ZprimeSSMToMuMu_M-1250_TuneZ2_7TeV-pythia6/tucker-effres_zp1250-5a92c9dde349d191a78d4eb40ec67d3b/USER', -1, 20000),
-        ('zp1500', '/ZprimeSSMToMuMu_M-1500_TuneZ2_7TeV-pythia6/tucker-effres_zp1500-5a92c9dde349d191a78d4eb40ec67d3b/USER', -1, 20000),
-        ('zp1750', '/ZprimeSSMToMuMu_M-1750_TuneZ2_7TeV-pythia6/tucker-effres_zp1750-5a92c9dde349d191a78d4eb40ec67d3b/USER', -1, 20000),
+        ('dy60',   '/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/kypreos-effres_dy20-8b5d6229465512f48440fe43a9f490d5/USER',60,   120),
+        ('dy120',  '/DYToMuMu_M_120_TuneZ2star_8TeV_pythia6/kypreos-effres_dy120-8b5d6229465512f48440fe43a9f490d5/USER',    120,   200),
+        ('dy200',  '/DYToMuMu_M_200_TuneZ2star_8TeV_pythia6/kypreos-effres_dy200-8b5d6229465512f48440fe43a9f490d5/USER',    200,   500),
+        ('dy500',  '/DYToMuMu_M_500_TuneZ2star_8TeV_pythia6/kypreos-effres_dy500-8b5d6229465512f48440fe43a9f490d5/USER',    500,   800),
+        ('dy800',  '/DYToMuMu_M_500_TuneZ2star_8TeV_pythia6/slava-effres_dy500-20941d9c676d6826327c8223aa3d20e0/USER',    800,  1300),
+        ('dy1000', '', 1000, 20000),
+        ('dy1300', '/DYToMuMu_M-1300_TuneZ2star_8TeV-pythia6/slava-effres_dy1300-20941d9c676d6826327c8223aa3d20e0/USER', 1300, 1600),
+        ('dy1600', '/DYToMuMu_M-1600_TuneZ2star_8TeV-pythia6/slava-effres_dy1600-20941d9c676d6826327c8223aa3d20e0/USER', 1600, 20000),
+        ('zp750',  '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/kypreos-effres_zp750-8b5d6229465512f48440fe43a9f490d5/USER',   -1, 20000),
+        ('zp1000', '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/kypreos-effres_zp1000-8b5d6229465512f48440fe43a9f490d5/USER', -1, 20000),
+        ('zp1250', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/kypreos-effres_zp1250-8b5d6229465512f48440fe43a9f490d5/USER', -1, 20000),
+        ('zp1500', '/ZprimePSIToMuMu_M-1500_TuneZ2star_8TeV-pythia6/slava-effres_zp1500-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
+        ('zp1750', '/ZprimePSIToMuMu_M-1750_TuneZ2star_8TeV-pythia6/slava-effres_zp1750-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
+        ('zp2000', '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/slava-effres_zp2000-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
+        ('zp2000', '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/slava-effres_zp2000-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
+        ('zp2250', '/ZprimePSIToMuMu_M-2250_TuneZ2star_8TeV-pythia6/slava-effres_zp2250-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
+        ('zp2500', '/ZprimePSIToMuMu_M-2500_TuneZ2star_8TeV-pythia6/slava-effres_zp2500-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
+        ('zp2750', '/ZprimePSIToMuMu_M-2750_TuneZ2star_8TeV-pythia6/slava-effres_zp2750-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
+        ('zp3000', '/ZprimePSIToMuMu_M-3000_TuneZ2star_8TeV-pythia6/slava-effres_zp3000-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
         ]
 
     resolutions = {
@@ -157,6 +168,11 @@ return_data = 1
         1250: 0.080,
         1500: 0.086,
         1750: 0.089,
+        2000: 0.089,
+        2250: 0.2,
+        2500: 0.2,
+        2750: 0.2,
+        3000: 0.2,
         }
     
     just_testing = 'testing' in sys.argv
@@ -183,7 +199,6 @@ return_data = 1
         new_py += '\nprocess.HardInteractionFilterRes.min_mass = "%i"\n' % lo
         new_py += '\nprocess.HardInteractionFilterRes.max_mass = "%i"\n' % hi
         open('histos_crab.py', 'wt').write(new_py)
-
         if not just_testing:
             os.system('crab -create -submit all')
             os.system('rm crab.cfg histos_crab.py histos_crab.pyc')

@@ -64,6 +64,8 @@ lumis_per_job = %(lumis_per_job)s
 
         if run1 >= 190450:
             dataset = '/SingleMu/Run2012A-PromptReco-v1/AOD'
+        if run1 >= 193752:
+            dataset = '/SingleMu/Run2012B-PromptReco-v1/AOD'
         else:
             raise ValueError("don't know how to do a run_limits production for run range [%i,%i]" % run_limits)
         

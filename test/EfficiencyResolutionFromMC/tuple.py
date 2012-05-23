@@ -61,12 +61,12 @@ dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02
     just_testing = 'testing' in sys.argv
     
     samples = [
-#        ('dy20',   '/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START50_V15-v1/AODSIM'),
+        ('dy20',   '/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
         ('dy120',  '/DYToMuMu_M_120_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
         ('dy200',  '/DYToMuMu_M_200_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
         ('dy500',  '/DYToMuMu_M_500_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
         ('dy800',  '/DYToMuMu_M_800_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-##        ('dy1000', '/DYToMuMu_M-1000_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
+        ('dy1000', '/DYToMuMu_M_1000_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
         ('dy1300', '/DYToMuMu_M-1300_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
         ('dy1600', '/DYToMuMu_M-1600_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
         ('zp750',  '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),

@@ -22,7 +22,7 @@ Zprime2muTriggerPathsAndFilters::Zprime2muTriggerPathsAndFilters(const edm::Even
   // JMTBAD if there are different HLT menus used for different
   // samples (e.g. 51X/52X), the next line may not be sufficient, and
   // we will have to think of a better way to handle this.
-  if (!event.isRealData())                 { path = "HLT_Mu40_eta2p1_v6", filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered40",  prescaled_path = "HLT_Mu24_v13",       prescaled_filter = "hltSingleMu24L2QualL3Filtered24"; }
+  if (!event.isRealData())                 { path = "HLT_Mu40_eta2p1_v9", filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered40",  prescaled_path = "HLT_Mu24_eta2p1_v3", prescaled_filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered24Q"; }
   else if (run >= 190456)                  { path = "HLT_Mu40_eta2p1_v9", filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered40Q", prescaled_path = "HLT_Mu24_eta2p1_v3", prescaled_filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered24Q"; }
   else
     valid = false;

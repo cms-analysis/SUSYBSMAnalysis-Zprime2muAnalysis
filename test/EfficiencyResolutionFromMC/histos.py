@@ -16,11 +16,10 @@ acc_both_24 = False
 import sys, os
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import cms, process
 
-process.maxEvents.input = -1 
-#process.source.fileNames = ['/store/user/tucker/ZprimeSSMToMuMu_M-2250_TuneZ2_7TeV-pythia6/effres_zp2250/dd2126535e23ba03e5a28af2e68bf29c/pat_1_1_nHf.root']
-process.source.fileNames = ['file:pat_1_2_Rn8.root']
-process.source.fileNames = ['file:crab1/crab_effres_zp1000/res/pat_2_1_375.root']
-process.source.fileNames = ['/store/user/kypreos/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/effres_zp1000//8b5d6229465512f48440fe43a9f490d5/pat_3_1_Di9.root']
+process.maxEvents.input = -1
+#process.source.fileNames = ['file:crab1/crab_effres_zp1000/res/pat_2_1_375.root']
+#process.source.fileNames = ['/store/user/kypreos/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/effres_zp1000//8b5d6229465512f48440fe43a9f490d5/pat_3_1_Di9.root']
+process.source.fileNames = ['/store/user/slava/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/effres_dy20/20941d9c676d6826327c8223aa3d20e0/pat_9_1_5zY.root']
 process.options.wantSummary = True
 
 ex = ''
@@ -78,10 +77,10 @@ if intime_bin in range(0,3) and late_bin in range(0,2):
     p  = process.GenPileupFilter * p
 
 if check_prescaled_path:
-    min_hlt_pt, min_offline_pt = 15, 20
+    min_hlt_pt, min_offline_pt = 24, 24
     ex += 'mu' + str(min_hlt_pt)
 
-    l1,hlt = 'L1_SingleMu10', 'HLT_Mu15_v2'
+    l1,hlt = 'L1_SingleMu10', 'HLT_Mu24_eta2p1_v3'
     from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match
 
     for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
@@ -107,7 +106,7 @@ process.HistosFromPAT.leptonsFromDileptons = True
 process.ResolutionUsingMC.leptonsFromDileptons = True
 process.ResolutionUsingMC.doQoverP = True
 
-# Don't care about resolution/etc. when checking the Mu15 path.
+# Don't care about resolution/etc. when checking the prescaled path.
 if not check_prescaled_path:
     process.p  = cms.Path(p)
 
@@ -140,20 +139,19 @@ return_data = 1
 '''
         
     samples = [
-        ('dy60',   '/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/kypreos-effres_dy20-8b5d6229465512f48440fe43a9f490d5/USER',60,   120),
-        ('dy120',  '/DYToMuMu_M_120_TuneZ2star_8TeV_pythia6/kypreos-effres_dy120-8b5d6229465512f48440fe43a9f490d5/USER',    120,   200),
-        ('dy200',  '/DYToMuMu_M_200_TuneZ2star_8TeV_pythia6/kypreos-effres_dy200-8b5d6229465512f48440fe43a9f490d5/USER',    200,   500),
-        ('dy500',  '/DYToMuMu_M_500_TuneZ2star_8TeV_pythia6/kypreos-effres_dy500-8b5d6229465512f48440fe43a9f490d5/USER',    500,   800),
-        ('dy800',  '/DYToMuMu_M_500_TuneZ2star_8TeV_pythia6/slava-effres_dy500-20941d9c676d6826327c8223aa3d20e0/USER',    800,  1300),
-        ('dy1000', '', 1000, 20000),
+        ('dy60',   '/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/slava-effres_dy20-20941d9c676d6826327c8223aa3d20e0/USER',       60,   120),
+        ('dy120',  '/DYToMuMu_M_120_TuneZ2star_8TeV_pythia6/slava-effres_dy120-20941d9c676d6826327c8223aa3d20e0/USER',    120,   200),
+        ('dy200',  '/DYToMuMu_M_200_TuneZ2star_8TeV_pythia6/slava-effres_dy200-20941d9c676d6826327c8223aa3d20e0/USER',    200,   500),
+        ('dy500',  '/DYToMuMu_M_500_TuneZ2star_8TeV_pythia6/slava-effres_dy500-20941d9c676d6826327c8223aa3d20e0/USER',    500,   800),
+        ('dy800',  '/DYToMuMu_M_500_TuneZ2star_8TeV_pythia6/slava-effres_dy500-20941d9c676d6826327c8223aa3d20e0/USER',    800,  1000),
+        ('dy1000', '/DYToMuMu_M_1000_TuneZ2star_8TeV_pythia6/slava-effres_dy1000-20941d9c676d6826327c8223aa3d20e0/USER', 1000,  1300),
         ('dy1300', '/DYToMuMu_M-1300_TuneZ2star_8TeV-pythia6/slava-effres_dy1300-20941d9c676d6826327c8223aa3d20e0/USER', 1300, 1600),
         ('dy1600', '/DYToMuMu_M-1600_TuneZ2star_8TeV-pythia6/slava-effres_dy1600-20941d9c676d6826327c8223aa3d20e0/USER', 1600, 20000),
-        ('zp750',  '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/kypreos-effres_zp750-8b5d6229465512f48440fe43a9f490d5/USER',   -1, 20000),
-        ('zp1000', '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/kypreos-effres_zp1000-8b5d6229465512f48440fe43a9f490d5/USER', -1, 20000),
-        ('zp1250', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/kypreos-effres_zp1250-8b5d6229465512f48440fe43a9f490d5/USER', -1, 20000),
+        ('zp750',  '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/slava-effres_zp750-20941d9c676d6826327c8223aa3d20e0/USER',   -1, 20000),
+        ('zp1000', '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/slava-effres_zp1000-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
+        ('zp1250', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/slava-effres_zp1250-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
         ('zp1500', '/ZprimePSIToMuMu_M-1500_TuneZ2star_8TeV-pythia6/slava-effres_zp1500-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
         ('zp1750', '/ZprimePSIToMuMu_M-1750_TuneZ2star_8TeV-pythia6/slava-effres_zp1750-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
-        ('zp2000', '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/slava-effres_zp2000-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
         ('zp2000', '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/slava-effres_zp2000-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
         ('zp2250', '/ZprimePSIToMuMu_M-2250_TuneZ2star_8TeV-pythia6/slava-effres_zp2250-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
         ('zp2500', '/ZprimePSIToMuMu_M-2500_TuneZ2star_8TeV-pythia6/slava-effres_zp2500-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
@@ -199,6 +197,7 @@ return_data = 1
         new_py += '\nprocess.HardInteractionFilterRes.min_mass = "%i"\n' % lo
         new_py += '\nprocess.HardInteractionFilterRes.max_mass = "%i"\n' % hi
         open('histos_crab.py', 'wt').write(new_py)
+        
         if not just_testing:
             os.system('crab -create -submit all')
             os.system('rm crab.cfg histos_crab.py histos_crab.pyc')

@@ -18,6 +18,7 @@ class EfficiencyFromMC : public edm::EDAnalyzer {
   const unsigned nbins;
   const double min_mass;
   const double max_mass;
+  const bool check_l1;
   const bool use_resonance_mass;
   const bool use_resonance_mass_denom;
   const edm::InputTag dimuon_src;
@@ -66,6 +67,7 @@ EfficiencyFromMC::EfficiencyFromMC(const edm::ParameterSet& cfg)
   : nbins(cfg.getParameter<unsigned>("nbins")),
     min_mass(cfg.getParameter<double>("min_mass")),
     max_mass(cfg.getParameter<double>("max_mass")),
+    check_l1(cfg.getParameter<bool>("check_l1")),
     use_resonance_mass(cfg.getParameter<bool>("use_resonance_mass")),
     use_resonance_mass_denom(cfg.getParameter<bool>("use_resonance_mass_denom")),
     dimuon_src(cfg.getParameter<edm::InputTag>("dimuon_src")),
@@ -98,9 +100,7 @@ EfficiencyFromMC::EfficiencyFromMC(const edm::ParameterSet& cfg)
 
   total_trig_eff = make_eff_pair("TotalTrigEff", TString::Format("#varepsilon((%s) && (%s)) vs. mass", join(triggerDecision.l1_paths(), std::string(" || ")).c_str(), join(triggerDecision.hlt_paths(), std::string(" || ")).c_str()));
 }
-//
-//
-//
+
 void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   hardInteraction.Fill(event);
   triggerDecision.initEvent(event);
@@ -140,66 +140,6 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
 
   recowrtacc.second->Fill(m);
 
-//    std::cout<<"store hlt decision"<<std::endl;
-//    triggerDecision.storeHLTDecision(event);
-
-//    triggerDecision.dumpPaths(event); 
-
-  for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i)
-    hlt_path_effs[i].second->Fill(m);
-
-
-  l1_or_eff.second->Fill(m);
-  hlt_or_eff.second->Fill(m);
-  total_trig_eff.second->Fill(m);
-
-  bool l1_or = false, hlt_or = false;
-
-  for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i) {
-    if (triggerDecision.hlt_path_pass(i)) {
-      hlt_path_effs[i].first->Fill(m);
-      hlt_or = true;
-    }
-  }
-
-  // Look for an offline reconstructed dimuon while we're here to
-  // measure the total reco efficiency. Loose match in dR for the two
-  // muons to the gen two muons before we count it.
-  edm::Handle<pat::CompositeCandidateCollection> dimuons;
-  event.getByLabel(dimuon_src, dimuons);
-  static const double dRmax = 0.5;
-  for (pat::CompositeCandidateCollection::const_iterator di = dimuons->begin(), die = dimuons->end(); di != die; ++di) {
-    reco::CandidateBaseRef dau0 = dileptonDaughter(*di, 0);
-    reco::CandidateBaseRef dau1 = dileptonDaughter(*di, 1);
-    if ((reco::deltaR(*dau0, *hardInteraction.lepPlus)  < dRmax || reco::deltaR(*dau1, *hardInteraction.lepPlus)  < dRmax) &&
-	(reco::deltaR(*dau0, *hardInteraction.lepMinus) < dRmax || reco::deltaR(*dau1, *hardInteraction.lepMinus) < dRmax)) {
-      recowrtacc.first->Fill(m);
-      if (hlt_or) {
-	    recowrtacctrig.first->Fill(m);
-	    totalreco.first->Fill(m);
-      }
-      break;
-    }
-  }
-
-  if (hlt_or) {
-        hlt_or_eff.first->Fill(m);
-        recowrtacctrig.second->Fill(m);
-        total_trig_eff.first->Fill(m);
-    }
-/*
-  for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i)
-    hlt_path_effs[i].second->Fill(m);
-*/
-/*
-    for (std::vector<std::string>::const_iterator st = triggerDecision.hlt_paths().begin(); st != triggerDecision.hlt_paths().end(); ++st){
-        std::cout<<*st
-        <<"\t"<<triggerDecision.pass_hlt_path(event,std::string(*st))//?"passed!":"failed :("
-        <<std::endl;
-    }
-*/
-    return;
-
   for (size_t i = 0; i < triggerDecision.l1_paths().size(); ++i)
     l1_path_effs[i].second->Fill(m);
   for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i)
@@ -207,29 +147,21 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
   l1_or_eff.second->Fill(m);
   hlt_or_eff.second->Fill(m);
   total_trig_eff.second->Fill(m);
+  
+  bool l1_or = false, hlt_or = false;
 
-
-
-
-//    std::cout<<triggerDecision.getWord("HLT_Mu40_eta2p1_v6")<<std::endl; 
-
-//    int trigIndex =triggerNames.triggerIndex("HLT_Mu40_eta2p1_v6"); 
-//    _HLT_Mu40_eta2p1_v6 =triggerResultsHandle_->accept(trigIndex); 
-
-
-
- 
- 
-
-    // start where it loops over triggers
-    std::cout<<"start looping over triggers"<<std::endl;
- 
-  for (size_t i = 0; i < triggerDecision.l1_paths().size(); ++i) {
-    if (triggerDecision.l1_path_pass(i)) {
-      l1_path_effs[i].first->Fill(m);
-      l1_or = true;
+  if (check_l1) {
+    for (size_t i = 0; i < triggerDecision.l1_paths().size(); ++i) {
+      if (triggerDecision.l1_path_pass(i)) {
+	l1_path_effs[i].first->Fill(m);
+	l1_or = true;
+      }
     }
   }
+  else
+    // If check_l1 is not set, rely on HLT decision without explicitly
+    // checking L1 decision.
+    l1_or = true;
 
   bool hlt_pass_overridden = false;
 
@@ -244,26 +176,27 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
 	break;
       }
     }
-    if (!pass) hlt_pass_overridden = false;
+    if (!pass) hlt_pass_overridden = true;
   }
 
   for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i) {
     if (triggerDecision.hlt_path_pass(i)) {
-      if (i == 0 && !hlt_pass_overridden)
+      if (hlt_pass_overridden) edm::LogWarning("EfficiencyFromMC")
+	<< "Trigger decision overruled by cuts on Level-3 muon!\n";
+      if (i == 0 && hlt_pass_overridden)
 	continue;
       hlt_path_effs[i].first->Fill(m);
       hlt_or = true;
     }
   }
-  
+
   if (l1_or) l1_or_eff.first->Fill(m);
-//  if (hlt_or) hlt_or_eff.first->Fill(m);
-//  if (l1_or && hlt_or) total_trig_eff.first->Fill(m);
+  if (hlt_or) hlt_or_eff.first->Fill(m);
+  if (l1_or && hlt_or) total_trig_eff.first->Fill(m);
   
-      
-/*
   if (l1_or && hlt_or)
     recowrtacctrig.second->Fill(m);
+      
   // Look for an offline reconstructed dimuon while we're here to
   // measure the total reco efficiency. Loose match in dR for the two
   // muons to the gen two muons before we count it.
@@ -277,13 +210,12 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
 	(reco::deltaR(*dau0, *hardInteraction.lepMinus) < dRmax || reco::deltaR(*dau1, *hardInteraction.lepMinus) < dRmax)) {
       recowrtacc.first->Fill(m);
       if (l1_or && hlt_or) {
-	    recowrtacctrig.first->Fill(m);
-	    totalreco.first->Fill(m);
+	recowrtacctrig.first->Fill(m);
+	totalreco.first->Fill(m);
       }
       break;
     }
   }
-*/
 }
 
 DEFINE_FWK_MODULE(EfficiencyFromMC);

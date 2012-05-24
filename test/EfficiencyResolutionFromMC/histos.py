@@ -7,7 +7,7 @@ use_old_selection = False
 restrict_mass_window = True
 # intime_bin numbering: bin 0 = 0-5, bin 1 = 6-11, bin 2 = 12-26
 # late_bin numbering: bin 0 = 0-9, bin 2 = 10-26
-intime_bin, late_bin = -1, -1 
+intime_bin, late_bin = -1, -1
 check_prescaled_path = False
 acc_both_24 = False 
 
@@ -49,6 +49,11 @@ process.allDimuonsVBTF = VBTFSelection.allDimuons.clone()
 process.dimuonsVBTF = VBTFSelection.dimuons.clone(src = 'allDimuonsVBTF')
 process.VBTFEfficiencyFromMC = process.EfficiencyFromMC.clone(dimuon_src = 'dimuonsVBTF', acceptance_max_eta_2 = 2.1)
 
+# Temporarily disable explicit checks on Level-1 decision until we
+# figure out which branch to use.
+for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
+    eff.check_l1 = False
+    
 if acc_both_24:
     for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
         eff.acceptance_max_eta_1 = 2.4

@@ -39,53 +39,26 @@ void TriggerDecision::initEvent(const edm::Event& event) {
   }
 }
 
-bool TriggerDecision::pass_hlt_path(edm::Event const& event,std::string shltpath){
-
-    bool retval = false;
-    edm::Handle<edm::TriggerResults> hltRes;
-    event.getByLabel(hltResults, hltRes);
-    const edm::TriggerNames& hltTrigNames = event.triggerNames(*hltRes);
-
-  // Get the map between path names and indices.
-    int paths_defined = hltRes->size();
-    int ndx = hltTrigNames.triggerIndex(shltpath);
-//    std::cout<<hltPaths[i]<<"\t"<<ndx<<std::endl;
-    if (ndx >= paths_defined) return retval; 
-    else retval = hltRes->accept(ndx);
-
-    return retval;
-} 
-/*
-bool TriggerDecision::pass_hlt_path_like(edm::Event const& event,std::string shltpath){
-
-    bool retval = false;
-    edm::Handle<edm::TriggerResults> hltRes;
-    event.getByLabel(hltResults, hltRes);
-
-  // Get the map between path names and indices.
-    const edm::TriggerNames& hltTrigNames = event.triggerNames(*hltRes);
-    int paths_defined = hltRes->size();
-    int ndx = hltTrigNames.triggerIndex(shltpath);
-//    std::cout<<hltPaths[i]<<"\t"<<ndx<<std::endl;
-    if (ndx >= paths_defined) return retval; 
-    else retval = hltRes->accept(ndx);
-
-    return retval;
-} 
-*/
 void TriggerDecision::storeL1Decision(const edm::Event& event) {
   // Get Level-1 decisions for trigger paths we are interested in.
   edm::Handle<L1GlobalTriggerObjectMapRecord> l1Map;
   event.getByLabel(l1GtObjectMap, l1Map);
+
+  static int ifois = 0;
   if (!l1Map.isValid()) {
-    edm::LogWarning("storeL1Decision")
-      << "L1GlobalTriggerObjectMapRecord with label "
-      << l1GtObjectMap.encode() << " not found!";
+    if (ifois == 0) {    
+      edm::LogWarning("storeL1Decision")
+	<< "  ++ This warning will be printed only once ++\n"
+	<< "L1GlobalTriggerObjectMapRecord with label "
+	<< l1GtObjectMap.encode() << " not found!";
+      ifois = 1;
+    }
     return;
   }
 
   ostringstream out;
-  if (debug) out << "storeL1Decision:\n";
+  if (debug) out << "storeL1Decision for run # " << event.id().run()
+		 << " event # " << event.id().event() << ":\n";
 
   // Loop over chosen paths, check trigger decisions, and pack them
   // into trigbbits.
@@ -100,15 +73,13 @@ void TriggerDecision::storeL1Decision(const edm::Event& event) {
 
   if (debug) {
     out << " L1 official trigbits: " << trigbits;
-    edm::LogVerbatim("storeL1Decision") << out.str();
+    cout << out.str();
   }
 
   trigWord[lL1] = trigbits;
   passTrig[lL1] = trigbits != 0;
 }
-//
-// store the HLT decisions
-//
+
 void TriggerDecision::storeHLTDecision(const edm::Event& event) {
   // Get the HLT TriggerResults object, from which the official HLT
   // path decisions can be extracted.
@@ -119,14 +90,25 @@ void TriggerDecision::storeHLTDecision(const edm::Event& event) {
   const edm::TriggerNames& hltTrigNames = event.triggerNames(*hltRes);
 
   ostringstream out;
-  if (debug) out << "storeHLTDecision:\n";
+
+  // Dump the full list of trigger paths if needed.
+  static int ifois = 0;
+  if (debug && ifois == 0) {
+    cout << "Full list of available trigger paths:" << endl;
+    for (unsigned int i=0; i<hltTrigNames.size(); i++)
+      cout << "trigger path " << i << ": "
+           << hltTrigNames.triggerName(i) << endl;
+    ifois = 1;
+  }
+
+  if (debug) out << "storeHLTDecision for run # " << event.id().run()
+		 << " event # " << event.id().event() << ":\n";
 
   // Get the official HLT results, and pack them.
   unsigned int hlt_trigbits = 0;
   int paths_defined = hltRes->size();
   for (unsigned int i = 0; i < hltPaths.size(); i++) {
     int ndx = hltTrigNames.triggerIndex(hltPaths[i]);
-//    std::cout<<hltPaths[i]<<"\t"<<ndx<<std::endl;
     if (ndx >= paths_defined) {
       edm::LogWarning("storeHLTDecision")
 	<< "+++ HLT path " << hltPaths[i]
@@ -134,9 +116,8 @@ void TriggerDecision::storeHLTDecision(const edm::Event& event) {
     }
     else {
       bool fired = hltRes->accept(ndx);
-      if (debug||true)
+      if (debug)
 	out << "  " << hltPaths[i] << " (index " << ndx << "): " 
-//	std::cout << "  " << hltPaths[i] << " (index " << ndx << "): " 
 	    << " decision " << fired << endl;
       if (fired) hlt_trigbits |= 1 << i;
     }
@@ -156,7 +137,7 @@ void TriggerDecision::storeHLTDecision(const edm::Event& event) {
   for (int l = lL2; l <= lL3; l++) 
     out << "  trigWord[l" << l << "]: " << trigWord[l] << endl;
 
-  if (debug) edm::LogVerbatim("storeHLTDecision") << out.str();
+  if (debug) cout << out.str();
 }
 
 unsigned TriggerDecision::getWord(const int irec) const {
@@ -193,47 +174,4 @@ bool TriggerDecision::pass() const {
 bool TriggerDecision::pass_all(const int irec) const {
   if (irec <= lL3) return pass(irec);
   else return pass();
-}
-//
-// dump available paths
-//
-void const TriggerDecision::dumpPaths(edm::Event const& event) const {
-        std::cout<<"---- dumping the trigger names"<<std::endl;
-
-    edm::Handle<edm::TriggerResults> hltRes;
-    event.getByLabel(hltResults, hltRes);
-    const edm::TriggerNames& hltTrigNames = event.triggerNames(*hltRes);
-
-    std::vector<std::string>  hlNames_;  // name of each HLT algorithm
-    hlNames_=hltTrigNames.triggerNames();
-    std::cout<<"\t num Triggers: "<<hlNames_.size()<<std::endl;
-/*
-  unsigned int hlt_trigbits = 0;
-  int paths_defined = hltRes->size();
-  for (unsigned int i = 0; i < hltPaths.size(); i++) {
-    int ndx = hltTrigNames.triggerIndex(hltPaths[i]);
-    std::cout<<hltPaths[i]<<"\t"<<ndx<<std::endl;
-*/
-/*
-    edm::Handle<edm::TriggerResults> triggerEventHandle_;
-    event.getByLabel(hltResults, triggerEventHandle_);
-    edm::Handle<edm::TriggerResults> triggerResultsHandle_;
-  // Get the map between path names and indices.
-//    if (!triggerEventHandle_.isValid()) {
-        const edm::TriggerNames & triggerNames = event.triggerNames(*triggerResultsHandle_);
-        std::vector<std::string>  hlNames_;  // name of each HLT algorithm
-        hlNames_=triggerNames.triggerNames();
-        std::cout<<"\t num Triggers: "<<hlNames_.size()<<std::endl;
-        for (unsigned int i=0; i!=hlNames_.size(); ++i) {
-            TString _s = hlNames_[i];
-            if (!_s.Contains("Mu")) continue;
-            std::cout<<i<<"\t"<<_s.Data()<<std::endl;
-        }
-        std::cout<<"---- done looping on triggers"<<std::endl;
-
-        return;
-    } else {
-        std::cout<<"The triggerEvent is broken, dude."<<std::endl;
-    }
-*/
 }

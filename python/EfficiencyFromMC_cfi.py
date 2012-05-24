@@ -6,6 +6,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.TriggerDecision_cff import triggerDecisio
 EfficiencyFromMC = cms.EDAnalyzer('EfficiencyFromMC',
                                   hardInteraction = hardInteraction,
                                   triggerDecision = triggerDecision,
+                                  check_l1 = cms.bool(True),
                                   trigger_summary_src = cms.InputTag('hltTriggerSummaryAOD', '', 'HLT'),
                                   nbins = cms.uint32(2500),
                                   min_mass = cms.double(0),

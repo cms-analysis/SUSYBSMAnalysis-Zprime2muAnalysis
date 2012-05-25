@@ -11,7 +11,7 @@ ROOT.gStyle.SetPadRightMargin(0.02)
 
 ps = plot_saver('plots/resfromzp')
 
-masses = [750, 1000, 1250, 1500, 1750]
+masses = [750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000]
 chnam, val, err, xlolim, xhilim, iuint = ROOT.TString(''), ROOT.Double(1), ROOT.Double(1), ROOT.Double(1), ROOT.Double(1), ROOT.Long(1)
 
 for basein, baseout in [('Resolutioninner', 'tkonly'), ('Resolutiontunep', 'tunep')]:
@@ -19,7 +19,7 @@ for basein, baseout in [('Resolutioninner', 'tkonly'), ('Resolutiontunep', 'tune
     esigma = []
 
     for m in masses:
-        f = ROOT.TFile('ana_effres_zp%i.root' % m)
+        f = ROOT.TFile('crab/effres_histos/ana_effres_zp%i.root' % m)
         h = f.Get(basein).Get('DileptonMassRes')
         fcn = ROOT.TF1('mg', 'gaus', h.GetMean() - 1.5*h.GetRMS() , h.GetMean() + 1.5*h.GetRMS() )
         h.Fit(fcn, 'ILVR')
@@ -36,8 +36,13 @@ for basein, baseout in [('Resolutioninner', 'tkonly'), ('Resolutiontunep', 'tune
     sigma = array('d', sigma)
     esigma = array('d', esigma)
 
+    print 'Fitting resolution-vs-mass curve:'
     g = ROOT.TGraphErrors(l, masses, sigma, emasses, esigma)
-    g.Fit("pol2")
+    # Define pol2 explicitly instead of using "pol2" to constrain one of
+    # its parameters and prevent fit from exploding.
+    poly2 = ROOT.TF1('poly2', '[0] + x*[1] + x*x*[2]')
+    poly2.SetParLimits(0, 0., 1.);
+    g.Fit(poly2)
     g.GetXaxis().SetTitle('dilepton mass (GeV)')
     g.GetYaxis().SetTitle('dilepton relative mass resolution')
     g.GetYaxis().SetLabelSize(0.02)

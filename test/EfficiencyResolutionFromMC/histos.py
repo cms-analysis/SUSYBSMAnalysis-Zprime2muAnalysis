@@ -144,7 +144,7 @@ return_data = 1
 '''
         
     samples = [
-        ('dy20',   '/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/slava-effres_dy20-20941d9c676d6826327c8223aa3d20e0/USER',       20,   120),
+        ('dy60',   '/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/slava-effres_dy20-20941d9c676d6826327c8223aa3d20e0/USER',       60,   120),
         ('dy120',  '/DYToMuMu_M_120_TuneZ2star_8TeV_pythia6/slava-effres_dy120-20941d9c676d6826327c8223aa3d20e0/USER',    120,   200),
         ('dy200',  '/DYToMuMu_M_200_TuneZ2star_8TeV_pythia6/slava-effres_dy200-20941d9c676d6826327c8223aa3d20e0/USER',    200,   500),
         ('dy500',  '/DYToMuMu_M_500_TuneZ2star_8TeV_pythia6/slava-effres_dy500-20941d9c676d6826327c8223aa3d20e0/USER',    500,   800),

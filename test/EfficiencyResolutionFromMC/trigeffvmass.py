@@ -5,7 +5,7 @@
 import sys, os
 from array import array
 
-samples = ['dy20', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'dy1300', 'dy1600', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750'] #, 'zp2000', 'zp2250', 'zp2500', 'zp2750', 'zp3000']
+samples = ['dy60', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'dy1300', 'dy1600', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750'] #, 'zp2000', 'zp2250', 'zp2500', 'zp2750', 'zp3000']
 
 kind = [x for x in sys.argv[1:] if os.path.isdir(x)]
 

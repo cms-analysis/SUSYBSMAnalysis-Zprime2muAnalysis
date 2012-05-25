@@ -5,7 +5,7 @@
 import sys, os
 from array import array
 
-samples = ['dy60', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750'] #, 'zp2000', 'zp2250']
+samples = ['dy20', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'dy1300', 'dy1600', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750'] #, 'zp2000', 'zp2250', 'zp2500', 'zp2750', 'zp3000']
 
 kind = [x for x in sys.argv[1:] if os.path.isdir(x)]
 
@@ -84,7 +84,7 @@ for sample in samples:
         nb = num.GetNbinsX()
         cnum = num.Integral(0, nb+1)
         cden = den.Integral(0, nb+1)
-        
+
         print '%30s%30s%30f%30f%30f' % (sample, t, cnum, cden, cnum/cden)
         samples_totals.append((sample, t, cnum, cden))
         sys.stdout.flush()
@@ -291,9 +291,9 @@ s.SetX2NDC(0.54)
 s.SetY2NDC(0.31)
 ps.save('totalreco_fit_residuals', log=False)
 
-# Dump the values of the total reconstruction curve (but take the
-# 60-120 and 120-200 from the total counts).
-print '\nTotal efficienies (acceptance times trigger+reconstruction+selection efficiencies)'
+# Dump the values of the total reconstruction curve.  Also print effs.
+# for 60-120 and 120-200 GeV bins from the total counts.
+print '\nTotal efficiencies (acceptance times trigger+reconstruction+selection efficiencies)'
 print '%20s%10s%20s' % ('mass range', 'eff', '68%CL interval')
 x,y = ROOT.Double(), ROOT.Double()
 g = totals_histos['TotalReco_eff']
@@ -309,7 +309,4 @@ for i in xrange(n):
     exh = g.GetErrorXhigh(i)
     eyl = g.GetErrorYlow(i)
     eyh = g.GetErrorYhigh(i)
-    if x-exl < 200:
-        continue
     print '%20s%10.4f%20s' % ('%.f-%.f' % (x-exl, x+exh), y, '[%5.4f, %5.4f]' % (y-eyl, y+eyh))
-    

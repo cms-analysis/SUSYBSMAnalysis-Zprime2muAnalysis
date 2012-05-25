@@ -53,7 +53,7 @@ process.VBTFEfficiencyFromMC = process.EfficiencyFromMC.clone(dimuon_src = 'dimu
 # figure out which branch to use.
 for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
     eff.check_l1 = False
-    
+
 if acc_both_24:
     for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
         eff.acceptance_max_eta_1 = 2.4
@@ -144,11 +144,11 @@ return_data = 1
 '''
         
     samples = [
-        ('dy60',   '/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/slava-effres_dy20-20941d9c676d6826327c8223aa3d20e0/USER',       60,   120),
+        ('dy20',   '/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/slava-effres_dy20-20941d9c676d6826327c8223aa3d20e0/USER',       20,   120),
         ('dy120',  '/DYToMuMu_M_120_TuneZ2star_8TeV_pythia6/slava-effres_dy120-20941d9c676d6826327c8223aa3d20e0/USER',    120,   200),
         ('dy200',  '/DYToMuMu_M_200_TuneZ2star_8TeV_pythia6/slava-effres_dy200-20941d9c676d6826327c8223aa3d20e0/USER',    200,   500),
         ('dy500',  '/DYToMuMu_M_500_TuneZ2star_8TeV_pythia6/slava-effres_dy500-20941d9c676d6826327c8223aa3d20e0/USER',    500,   800),
-        ('dy800',  '/DYToMuMu_M_500_TuneZ2star_8TeV_pythia6/slava-effres_dy500-20941d9c676d6826327c8223aa3d20e0/USER',    800,  1000),
+        ('dy800',  '/DYToMuMu_M_800_TuneZ2star_8TeV_pythia6/slava-effres_dy800-20941d9c676d6826327c8223aa3d20e0/USER',    800,  1000),
         ('dy1000', '/DYToMuMu_M_1000_TuneZ2star_8TeV_pythia6/slava-effres_dy1000-20941d9c676d6826327c8223aa3d20e0/USER', 1000,  1300),
         ('dy1300', '/DYToMuMu_M-1300_TuneZ2star_8TeV-pythia6/slava-effres_dy1300-20941d9c676d6826327c8223aa3d20e0/USER', 1300, 1600),
         ('dy1600', '/DYToMuMu_M-1600_TuneZ2star_8TeV-pythia6/slava-effres_dy1600-20941d9c676d6826327c8223aa3d20e0/USER', 1600, 20000),

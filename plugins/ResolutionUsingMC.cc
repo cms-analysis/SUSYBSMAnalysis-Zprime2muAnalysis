@@ -62,10 +62,12 @@ class ResolutionUsingMC : public edm::EDAnalyzer {
   TH1F* DileptonMassRes;
   TH1F* DileptonResMassRes;
   TH1F* ResonanceMassRes;
+  TH1F* DileptonMassInvRes;
 
   TProfile* DileptonMassResVMass;
   TProfile* DileptonResMassResVMass;
   TProfile* ResonanceMassResVMass;
+  TProfile* DileptonInvMassResVMass;
 
   TH1F* DileptonMassResBy[W_D_MAX];
   TH1F* DileptonResMassResBy[W_D_MAX];
@@ -125,10 +127,12 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
   DileptonMassRes    = fs->make<TH1F>("DileptonMassRes",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 100, -0.5, 0.5);
   DileptonResMassRes = fs->make<TH1F>("DileptonResMassRes", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", 100, -0.5, 0.5);
   ResonanceMassRes   = fs->make<TH1F>("ResonanceMassRes",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", 100, -0.5, 0.5);
+  DileptonMassInvRes    = fs->make<TH1F>("DileptonMassInvRes",    titlePrefix + "(1/dil. mass - 1/gen dil. mass)/(1/gen dil. mass)", 100, -0.5, 0.5);
   
   DileptonMassResVMass    = fs->make<TProfile>("DileptonMassResVMass",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", nbinsmass,0, massmax, -1, 1);
   DileptonResMassResVMass = fs->make<TProfile>("DileptonResMassResVMass", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", nbinsmass,0, massmax, -1, 1);
   ResonanceMassResVMass   = fs->make<TProfile>("ResonanceMassResVMass",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", nbinsmass,0, massmax, -1, 1);
+  DileptonInvMassResVMass    = fs->make<TProfile>("DileptonInvMassResVMass",    titlePrefix + "(./dil. mass - 1/gen dil. mass)/(1/gen dil. mass)", nbinsmass,0, massmax, -1, 1);
 
   static const TString dilepton_where_names[W_D_MAX] = {"BB", "BO", "BE", "BU", "OO", "OE", "OU", "EE", "EU", "UU"};
   for (size_t i = 0; i < W_D_MAX; ++i) {
@@ -247,14 +251,17 @@ void ResolutionUsingMC::fillDileptonMassResolution(const reco::CompositeCandidat
   const double rdil    = mass    /gen_mass     - 1;
   const double rdilres = mass    /gen_res_mass - 1;
   const double rres    = res_mass/gen_res_mass - 1;
-  
+    double invmres = (1./mass-1./gen_mass)/(1./gen_mass);
+ 
   DileptonMassRes   ->Fill(rdil);
   DileptonResMassRes->Fill(rdilres);
   ResonanceMassRes  ->Fill(rres);
+  DileptonMassInvRes   ->Fill(invmres);
 
   DileptonMassResVMass   ->Fill(gen_mass,     rdil*rdil);
   DileptonResMassResVMass->Fill(gen_res_mass, rdilres*rdilres);
   ResonanceMassResVMass  ->Fill(gen_res_mass, rres*rres);
+  DileptonInvMassResVMass   ->Fill(gen_mass,  invmres);
 
   size_t w = whereIsDilepton(dil);
   DileptonMassResBy   [w]->Fill(rdil);

@@ -261,7 +261,7 @@ void ResolutionUsingMC::fillDileptonMassResolution(const reco::CompositeCandidat
   DileptonMassResVMass   ->Fill(gen_mass,     rdil*rdil);
   DileptonResMassResVMass->Fill(gen_res_mass, rdilres*rdilres);
   ResonanceMassResVMass  ->Fill(gen_res_mass, rres*rres);
-  DileptonInvMassResVMass   ->Fill(gen_mass,  invmres);
+  DileptonInvMassResVMass   ->Fill(gen_mass,  invmres*invmres);
 
   size_t w = whereIsDilepton(dil);
   DileptonMassResBy   [w]->Fill(rdil);

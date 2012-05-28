@@ -266,13 +266,23 @@ class Drawer:
             
     def parse_lumi_from_log(self, log_fn):
         # JMTBAD magic, fragile parsing
+        lumi_scale = -1
         this = False
         for line in open(log_fn):
             if this:
-                x = float(line.split()[-2]) # JMTBAD assumes output is in 1/pb, need to determine from log file
-                return x
+                x = float(line.split()[-2])
+                if lumi_scale == -1:
+                    print 'Could not determine lumi units from log file... assume /pb'
+                    lumi_scale = 1
+                return x*lumi_scale
             if line == '---------------------------------------------------------------\n':
                 this = True
+            # lumi returned is expected to be in /pb; try to determine units from log file
+            if line.find('Recorded') != -1 and line.find('Run') == -1:
+                if line.find('/fb') != 1:
+                    lumi_scale = 1000.
+                elif line.find('/pb') != 1:
+                    lumi_scale = 1.
 
     def get_lumi_rescale_factor(self, cutset, dilepton):
         # Get the cut set dependent factor by which we rescale the
@@ -291,16 +301,19 @@ class Drawer:
         # are produced when running this script with rescaling turned
         # off, rather than trying to be smart and getting them from
         # the histogram files.
-        # Factors below were calculated for the MuonPhys JSON for 2012A
-        # released on May 11 and corresponding to 810/pb.
+        # Factors below were calculated for the MuonPhys JSON for 2012A+B
+        # released on May 25 and corresponding to 1.9/fb (actually, we only
+        # have 1.7/fb now).
         if cutset == 'VBTF':
-            return 17924./17841.5
+            return 38517/36960.2
         elif cutset == 'OurNew':
-            return 18819./19512.8
+            return 40435./39510.4
         elif cutset == 'OurOld':
-            return 21097./20886.6
+            return 45294./43815.9
         elif cutset == 'OurNoIso':
-            return 19101./19790.3
+            return 41062./40033.8
+        # These two were calculated for the MuonPhys JSON for 2012A
+        # released on May 11 and corresponding to 810/pb -- to be updated.
         elif cutset == 'OurMuPrescaled':
             return 896./974.2
         elif cutset == 'VBTFMuPrescaled':

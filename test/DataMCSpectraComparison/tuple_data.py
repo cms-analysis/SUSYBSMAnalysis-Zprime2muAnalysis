@@ -59,17 +59,17 @@ lumis_per_job = %(lumis_per_job)s
         open('tmp.json', 'wt').write('{' + ', '.join(json) + '}')
         lumi_mask = 'lumi_mask = tmp.json'
 
-        name = 'SingleMuRun2012A_Prompt_%i_%i_%s' % (run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
+        name = 'SingleMuRun2012B_Prompt_%i_%i_%s' % (run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
         print name
 
-        if run1 >= 190450:
+        if run1 >= 190450 and run1 < 193752:
             dataset = '/SingleMu/Run2012A-PromptReco-v1/AOD'
-        if run1 >= 193752:
+        elif run1 >= 193752:
             dataset = '/SingleMu/Run2012B-PromptReco-v1/AOD'
         else:
             raise ValueError("don't know how to do a run_limits production for run range [%i,%i]" % run_limits)
         
-        tag = 'FT_R_44_V9'
+        tag = 'GR_R_52_V7'
         submit(locals())
     else:
         raise ValueError('must do a run-limits production until one dataset is closed')

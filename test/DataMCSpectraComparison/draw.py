@@ -266,14 +266,11 @@ class Drawer:
             
     def parse_lumi_from_log(self, log_fn):
         # JMTBAD magic, fragile parsing
-        lumi_scale = -1
+        lumi_scale = 1 # assume /pb
         this = False
         for line in open(log_fn):
             if this:
                 x = float(line.split()[-2])
-                if lumi_scale == -1:
-                    print 'Could not determine lumi units from log file... assume /pb'
-                    lumi_scale = 1
                 return x*lumi_scale
             if line == '---------------------------------------------------------------\n':
                 this = True
@@ -281,9 +278,8 @@ class Drawer:
             if 'Recorded' in line and 'Run' not in line:
                 if '/fb' in line:
                     lumi_scale = 1000
-                else:
-                    if '/pb' not in line:
-                        raise ValueError('cannot determine units from lumi log file: neither /fb nor /pb strings found')
+                elif '/pb' not in line:
+                    raise ValueError('cannot determine units from lumi log file: neither /fb nor /pb strings found')
 
     def get_lumi_rescale_factor(self, cutset, dilepton):
         # Get the cut set dependent factor by which we rescale the

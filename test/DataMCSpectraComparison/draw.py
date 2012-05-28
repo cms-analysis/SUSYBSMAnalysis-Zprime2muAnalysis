@@ -278,11 +278,12 @@ class Drawer:
             if line == '---------------------------------------------------------------\n':
                 this = True
             # lumi returned is expected to be in /pb; try to determine units from log file
-            if line.find('Recorded') != -1 and line.find('Run') == -1:
-                if line.find('/fb') != 1:
-                    lumi_scale = 1000.
-                elif line.find('/pb') != 1:
-                    lumi_scale = 1.
+            if 'Recorded' in line and 'Run' not in line:
+                if '/fb' in line:
+                    lumi_scale = 1000
+                else:
+                    if '/pb' not in line:
+                        raise ValueError('cannot determine units from lumi log file: neither /fb nor /pb strings found')
 
     def get_lumi_rescale_factor(self, cutset, dilepton):
         # Get the cut set dependent factor by which we rescale the

@@ -257,7 +257,7 @@ return_data = 1
 
         dataset_details = [
             ('SingleMuRun2012A_Prompt_190450_193686', '/SingleMu/slava-datamc_SingleMuRun2012A_Prompt_190450_193686_20120515044043-f1c162e9ac6a53572830a92e8730d513/USER'),
-            ('SingleMuRun2012B_Prompt_190450_193686', '/SingleMu/kypreos-datamc_SingleMuRun2012A_Prompt_193752_194500_20120522150431-f1c162e9ac6a53572830a92e8730d513/USER'),
+            ('SingleMuRun2012B_Prompt_193752_194500', '/SingleMu/kypreos-datamc_SingleMuRun2012A_Prompt_193752_194500_20120522150431-f1c162e9ac6a53572830a92e8730d513/USER'),
             ]
 
         lumi_lists = [

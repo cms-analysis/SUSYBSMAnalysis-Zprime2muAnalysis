@@ -12,7 +12,7 @@ ROOT.gStyle.SetPadRightMargin(0.02)
 ps = plot_saver('plots/resfromzp')
 
 
-def drawMassReso(basein='Resolutioninner',refit='tkonly',space='DileptonMassRes'):
+def drawMassReso(basein='Resolutioninner',refit='tkonly',space='DileptonMassRes',nrms=1.5):
     sigma = []
     esigma = []
 
@@ -24,7 +24,7 @@ def drawMassReso(basein='Resolutioninner',refit='tkonly',space='DileptonMassRes'
 #        f = ROOT.TFile('crab/effres_histos/ana_effres_zp%i.root' % m)
         f = ROOT.TFile('root/crab_ana_effres_zp%i.root' % m)
         h = f.Get(basein).Get(space)
-        fcn = ROOT.TF1('mg', 'gaus', h.GetMean() - 1.5*h.GetRMS() , h.GetMean() + 1.5*h.GetRMS() )
+        fcn = ROOT.TF1('mg', 'gaus', h.GetMean() - nrms*h.GetRMS() , h.GetMean() + nrms*h.GetRMS() )
         h.Fit(fcn, 'ILVR')
         ps.save('%s_%i' % (baseout, m))
         ROOT.gMinuit.mnpout(2, chnam, val, err, xlolim, xhilim, iuint)
@@ -63,5 +63,6 @@ def drawMassReso(basein='Resolutioninner',refit='tkonly',space='DileptonMassRes'
 
 for basein, baseout in [('Resolutioninner', 'tkonly'), ('Resolutiontunep', 'tunep')]:
     for histname in ['DileptonMassRes','DileptonMassInvRes']:
-        drawMassReso(basein,baseout,histname)
+        if 'Inv' in histname: drawMassReso(basein,baseout,histname,3.0)
+        else: drawMassReso(basein,baseout,histname)
 

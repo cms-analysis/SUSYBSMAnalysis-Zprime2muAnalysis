@@ -11,16 +11,19 @@ ROOT.gStyle.SetPadRightMargin(0.02)
 
 ps = plot_saver('plots/resfromzp')
 
-masses = [750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000]
-chnam, val, err, xlolim, xhilim, iuint = ROOT.TString(''), ROOT.Double(1), ROOT.Double(1), ROOT.Double(1), ROOT.Double(1), ROOT.Long(1)
 
-for basein, baseout in [('Resolutioninner', 'tkonly'), ('Resolutiontunep', 'tunep')]:
+def drawMassReso(basein='Resolutioninner',refit='tkonly',space='DileptonMassRes'):
     sigma = []
     esigma = []
 
+
+    masses = [750, 1000, 1250, 1500, 1750, 2000, 2250, 2500, 2750, 3000]
+    chnam, val, err, xlolim, xhilim, iuint = ROOT.TString(''), ROOT.Double(1), ROOT.Double(1), ROOT.Double(1), ROOT.Double(1), ROOT.Long(1)
+    baseout = "%s_%s"%(refit,space)
     for m in masses:
-        f = ROOT.TFile('crab/effres_histos/ana_effres_zp%i.root' % m)
-        h = f.Get(basein).Get('DileptonMassRes')
+#        f = ROOT.TFile('crab/effres_histos/ana_effres_zp%i.root' % m)
+        f = ROOT.TFile('root/crab_ana_effres_zp%i.root' % m)
+        h = f.Get(basein).Get(space)
         fcn = ROOT.TF1('mg', 'gaus', h.GetMean() - 1.5*h.GetRMS() , h.GetMean() + 1.5*h.GetRMS() )
         h.Fit(fcn, 'ILVR')
         ps.save('%s_%i' % (baseout, m))
@@ -57,3 +60,8 @@ for basein, baseout in [('Resolutioninner', 'tkonly'), ('Resolutiontunep', 'tune
     s.SetX2NDC(0.95)
     ps.c.Update()
     ps.save(baseout, log=False)
+
+for basein, baseout in [('Resolutioninner', 'tkonly'), ('Resolutiontunep', 'tunep')]:
+    for histname in ['DileptonMassRes','DileptonMassInvRes']:
+        drawMassReso(basein,baseout,histname)
+

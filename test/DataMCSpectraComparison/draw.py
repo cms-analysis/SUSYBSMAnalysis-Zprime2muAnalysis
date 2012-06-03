@@ -487,7 +487,6 @@ class Drawer:
                 # If this sample belongs to a join group, add the
                 # integral and the variances to the values for the
                 # join group.
-                
                 join_name = self.get_join_name(sample.name)
                 if join_name is not None:
                     sums[join_name] += sample.integral
@@ -550,13 +549,11 @@ class Drawer:
         # Legend placement coordinates and sizes depend on factors set
         # elsewhere, too, so this is fragile.
         if dilepton == 'MuonsPlusMuonsMinus' and cumulative:
-            legend = ROOT.TLegend(0.47, 0.55, 0.88, 0.88)
-        elif dilepton == 'MuonsSameSign':
-            legend = ROOT.TLegend(0.78, 0.61, 0.92, 0.88)
+            legend = ROOT.TLegend(0.60, 0.69, 0.86, 0.88)
         elif log_x:
-            legend = ROOT.TLegend(0.60, 0.72, 0.86, 0.88)
+            legend = ROOT.TLegend(0.60, 0.55, 0.86, 0.88)
         else:
-            legend = ROOT.TLegend(0.50, 0.69, 0.76, 0.88)
+            legend = ROOT.TLegend(0.60, 0.69, 0.86, 0.88)
 
         legend.SetFillColor(0)
         legend.SetBorderSize(0)
@@ -590,9 +587,9 @@ class Drawer:
         ## "EP" in TLegend::AddEntry doesn't seem to work, so draw the error bar by hand
         ll = ROOT.TLine()
         if log_x:
-            ll.DrawLineNDC(0.632, 0.835, 0.632, 0.87)
+            ll.DrawLineNDC(0.632, 0.845, 0.632, 0.875)
         else:
-            ll.DrawLineNDC(0.532, 0.82, 0.532, 0.875)
+            ll.DrawLineNDC(0.632, 0.835, 0.632, 0.875)
 
         return legend
 
@@ -661,7 +658,7 @@ class Drawer:
             if yrange[1] is not None:
                 mymax = yrange[1]
 
-        mymin = 0.00001
+        mymin = 0.05
     
         if mymin is not None: s.SetMinimum(mymin)
         if mymax is not None: s.SetMaximum(mymax)

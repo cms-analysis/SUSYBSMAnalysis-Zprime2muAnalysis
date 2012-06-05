@@ -9,7 +9,7 @@ restrict_mass_window = True
 # late_bin numbering: bin 0 = 0-9, bin 2 = 10-26
 intime_bin, late_bin = -1, -1
 check_prescaled_path = False
-acc_both_24 = False 
+acc_both_24 = False
 
 ################################################################################
 
@@ -82,7 +82,10 @@ if intime_bin in range(0,3) and late_bin in range(0,2):
     p  = process.GenPileupFilter * p
 
 if check_prescaled_path:
-    min_hlt_pt, min_offline_pt = 24, 24
+    #- Calculate efficiency for the thresholds used to count Z events
+    from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import prescaled_trigger_pt_threshold, prescaled_offline_pt_threshold
+    min_hlt_pt     = prescaled_trigger_pt_threshold
+    min_offline_pt = prescaled_offline_pt_threshold
     ex += 'mu' + str(min_hlt_pt)
 
     l1,hlt = 'L1_SingleMu10', 'HLT_Mu24_eta2p1_v3'

@@ -79,3 +79,13 @@
   <use name="CommonTools/UtilAlgos"/>
   <use name="SimDataFormats/PileupSummaryInfo"/>
 </library>
+<library file="GetPrescaleL1HLT.cc" name="GetPrescaleL1HLT">
+    <use name="FWCore/Framework"/>
+    <use name="FWCore/PluginManager"/>
+    <use name="FWCore/ParameterSet"/>
+    <use name="FWCore/Common"/>
+    <use name="HLTrigger/HLTcore"/>
+    <use name="FWCore/ServiceRegistry"/>
+    <use name="DataFormats/Common"/>
+    <use name="CommonTools/UtilAlgos"/>
+</library>

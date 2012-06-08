@@ -22,7 +22,7 @@ private:
   const bool assume_simulation_has_prescale_1;
   HLTConfigProvider hlt_cfg;
   TH1F* randoms;
-    bool _disable;
+  bool _disable;
 };
 
 PrescaleToCommon::PrescaleToCommon(const edm::ParameterSet& cfg)
@@ -46,7 +46,7 @@ bool PrescaleToCommon::beginRun(edm::Run& run, const edm::EventSetup& setup) {
 
 bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
   // JMTBAD move this into common code with CheckPrescale!
-    if (_disable) return true;
+  if (_disable) return true;
  
   // The idea behind having trigger_paths be a vector is to handle
   // cases like HLT_Mu24_v1, v2, etc. In that case we expect exactly
@@ -88,7 +88,7 @@ bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
   else
     prescales = std::make_pair(1,1);
 
-    std::cout<<"------PRESCALES: "<<overall_prescale<<"\t"<<prescales.first<<"\t"<<prescales.second<<std::endl;
+  //std::cout<<"------PRESCALES: "<<overall_prescale<<"\t"<<prescales.first<<"\t"<<prescales.second<<std::endl;
 
   const int total_prescale_already = prescales.second * prescales.first;
 

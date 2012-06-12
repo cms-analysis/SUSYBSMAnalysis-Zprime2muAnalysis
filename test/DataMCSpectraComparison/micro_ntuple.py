@@ -3,7 +3,7 @@
 import os
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import ROOT
 
-path = 'data/Run2011MuonsOnly/ana_datamc_data.root'
+path = 'data/Run2012MuonsOnly/ana_datamc_data.root'
 tmp_fn = 'micro_ntuple.temp.txt'
 branch_spec = 'vertex_m'
 cut = 'OurSelNew'

@@ -20,5 +20,5 @@ trigger_match = 'userFloat("TriggerMatchPt") > %(trigger_pt_threshold)i && abs(u
 overall_prescale = 200
 prescaled_trigger_pt_threshold = 24
 prescaled_offline_pt_threshold = 27
-prescaled_trigger_paths = ['HLT_Mu24_eta2p1_v3', 'HLT_Mu24_v13']
-prescaled_trigger_match = trigger_match.replace('Trigger', 'prescaledTrigger')
+prescaled_trigger_paths = ['HLT_Mu24_eta2p1_v3']
+prescaled_trigger_match = trigger_match.replace('Trigger', 'prescaledTrigger').replace('%i' % trigger_pt_threshold, '%i' % prescaled_trigger_pt_threshold)

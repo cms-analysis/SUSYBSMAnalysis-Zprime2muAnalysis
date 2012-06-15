@@ -259,7 +259,7 @@ return_data = 1
             ('SingleMuRun2012A_Prompt_190450_193686', '/SingleMu/slava-datamc_SingleMuRun2012A_Prompt_190450_193686_20120515044043-f1c162e9ac6a53572830a92e8730d513/USER'),
             ('SingleMuRun2012B_Prompt_193752_194500', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_193752_194500_20120528075253-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
             ('SingleMuRun2012B_Prompt_194501_195520', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_194501_195520_20120611022947-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
-#            ('SingleMuRun2012B_Prompt_195501_195552', '/SingleMu/kypreos-datamc_SingleMuRun2012B_Prompt_195501_195552_20120613105052-7c597bb00be1176600a40617c385b74d/USER'),
+            ('SingleMuRun2012B_Prompt_195501_195552', '/SingleMu/kypreos-datamc_SingleMuRun2012B_Prompt_195501_195552_20120613105052-7c597bb00be1176600a40617c385b74d/USER'),
             ('SingleMuRun2012B_Prompt_195553_195635', '/SingleMu/kypreos-datamc_SingleMuRun2012B_Prompt_195553_195635_20120613105321-7c597bb00be1176600a40617c385b74d/USER'),
             ('SingleMuRun2012B_Prompt_195636_195650', '/SingleMu/kypreos-datamc_SingleMuRun2012B_Prompt_195636_195650_20120613105529-7c597bb00be1176600a40617c385b74d/USER'),
             ('SingleMuRun2012B_Prompt_195661_195775', '/SingleMu/kypreos-datamc_SingleMuRun2012B_Prompt_195661_195775_20120613110006-7c597bb00be1176600a40617c385b74d/USER'),

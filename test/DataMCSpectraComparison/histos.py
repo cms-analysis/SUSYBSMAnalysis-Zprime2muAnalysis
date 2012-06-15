@@ -262,6 +262,7 @@ return_data = 1
             ('SingleMuRun2012B_Prompt_195501_195552', '/SingleMu/kypreos-datamc_SingleMuRun2012B_Prompt_195501_195552_20120613105052-7c597bb00be1176600a40617c385b74d/USER'),
             ('SingleMuRun2012B_Prompt_195553_195635', '/SingleMu/kypreos-datamc_SingleMuRun2012B_Prompt_195553_195635_20120613105321-7c597bb00be1176600a40617c385b74d/USER'),
             ('SingleMuRun2012B_Prompt_195636_195650', '/SingleMu/kypreos-datamc_SingleMuRun2012B_Prompt_195636_195650_20120613105529-7c597bb00be1176600a40617c385b74d/USER'),
+            ('SingleMuRun2012B_Prompt_195651_195660', '/SingleMu/kypreos-datamc_SingleMuRun2012B_Prompt_195651_195660_20120613105830-7c597bb00be1176600a40617c385b74d/USER'),
             ('SingleMuRun2012B_Prompt_195661_195775', '/SingleMu/kypreos-datamc_SingleMuRun2012B_Prompt_195661_195775_20120613110006-7c597bb00be1176600a40617c385b74d/USER'),
             ]
 

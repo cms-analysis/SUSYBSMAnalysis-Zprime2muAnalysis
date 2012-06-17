@@ -29,7 +29,7 @@ datasetpath = %(dataset)s
 pset = GetPrescales.py
 total_number_of_lumis = -1
 number_of_jobs = 50
-lumi_mask = /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-191276_8TeV_PromptReco_Collisions12_JSON_MuonPhys.txt
+lumi_mask = /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-195775_8TeV_PromptReco_Collisions12_JSON_MuonPhys.txt
 
 [USER]
 ui_working_dir = crab/crab_getprescales_%(name)s
@@ -39,7 +39,8 @@ return_data = 1
     just_testing = 'testing' in sys.argv
 
     dataset_details = [
-        ('SingleMu2012A_Prompt', '/SingleMu/Run2012A-PromptReco-v1/AOD'),
+        # ('SingleMu2012A_Prompt', '/SingleMu/Run2012A-PromptReco-v1/AOD'),
+        ('SingleMu2012B_Prompt', '/SingleMu/Run2012B-PromptReco-v1/AOD'),
         ]
 
     for name, dataset in dataset_details:

@@ -41,6 +41,7 @@ for ll in (DCSOnly_ll, DCSOnlyForNewRuns_ll):
 
 Prompt_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_%i-%i_8TeV_PromptReco_Collisions12_JSON%s.txt'          % (first_run, last_prompt_run, prompt_version))
 PromptMuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_%i-%i_8TeV_PromptReco_Collisions12_JSON_MuonPhys%s.txt' % (first_run, last_prompt_run, prompt_version))
+PromptMuonsOnlyTmp_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_195378-195379_8TeV_PromptReco_Collisions12_JSON_MuonPhys_NoL1T.txt')
 
 def combine(prompt_ll, dcsonly_ll=None):
     ll = copy.deepcopy(prompt_ll)
@@ -52,9 +53,11 @@ def combine(prompt_ll, dcsonly_ll=None):
 
 Run2012_ll          = combine(Prompt_ll)
 Run2012MuonsOnly_ll = combine(PromptMuonsOnly_ll)
+Run2012MuonsOnly_ll = Run2012MuonsOnly_ll | copy.deepcopy(PromptMuonsOnlyTmp_ll)
 
 Run2012PlusDCSOnly_ll          = combine(Prompt_ll,          DCSOnly_ll)
 Run2012PlusDCSOnlyMuonsOnly_ll = combine(PromptMuonsOnly_ll, DCSOnly_ll)
+Run2012PlusDCSOnlyMuonsOnly_ll = Run2012PlusDCSOnlyMuonsOnly_ll | copy.deepcopy(PromptMuonsOnlyTmp_ll)
 
 all_ll_names = ['DCSOnly', 'DCSOnlyForNewRuns', 'Prompt', 'PromptMuonsOnly', 'Run2012', 'Run2012MuonsOnly', 'Run2012PlusDCSOnly', 'Run2012PlusDCSOnlyMuonsOnly']
 

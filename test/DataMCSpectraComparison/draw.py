@@ -234,7 +234,7 @@ class Drawer:
     def get_x_axis_range(self, cutset, dilepton, quantity_to_compare):
         # For the given combination of the arguments, return the
         # desired restriction on the viewable x-axis range, if
-        # any. E.g. for DileptonMass, only show from 70-1400 GeV on
+        # any. E.g. for DileptonMass, only show from 60-1500 GeV on
         # the displayed plot.
         if dilepton == 'MuonsSameSign':
             if quantity_to_compare == 'DileptonMass':
@@ -254,7 +254,7 @@ class Drawer:
         if 'MuonsSameSign' in dilepton:
             return 50, 700
         if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained']:
-            return 70,1400
+            return 60,1500
         elif quantity_to_compare in ['DileptonPt', 'LeptonPt']:
             return 0, 700
         elif quantity_to_compare == 'LeptonEta':

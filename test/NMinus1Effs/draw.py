@@ -12,6 +12,8 @@ ROOT.gStyle.SetTitleX(0.12)
 #ROOT.gStyle.SetTitleH(0.07)
 ROOT.TH1.AddDirectory(0)
 
+outfile = ROOT.TFile("whargl.root","recreate")
+iarp=0
 do_tight = 'tight' in sys.argv
 psn = 'plots/nminus1effs'
 if do_tight:
@@ -222,6 +224,9 @@ for name, mass_range in mass_ranges:
         for i, n in enumerate(nminus1s):
             eff.GetXaxis().SetBinLabel(int((i+0.5)*bnr), pretty.get(n,n))
         eff.GetXaxis().LabelsOption('v')
+        outfile.cd()
+        eff.Write("arp%d"%iarp)
+        iarp+=1
 
     lg.Draw()
     ps.save(name)

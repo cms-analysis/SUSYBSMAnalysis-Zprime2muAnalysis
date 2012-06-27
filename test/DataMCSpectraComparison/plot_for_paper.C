@@ -33,9 +33,11 @@ TGraphAsymmErrors* poisson_intervalize(TH1* h, bool zero_x, int width_normalized
     double nobs = h->GetBinContent(i);
     if (nobs == 0)
       continue;
-    double norm_fact = h->GetBinWidth(i)/width_normalized;
-    if (width_normalized)
+    double norm_fact = 1;
+    if (width_normalized) {
+      norm_fact = h->GetBinWidth(i)/width_normalized;
       nobs *= norm_fact;
+    }
     double lower = 0.5*ROOT::Math::chisquared_quantile_c(1-alpha, 2*nobs);
     double upper = 0.5*ROOT::Math::chisquared_quantile_c(beta, 2*(nobs+1));
     if (width_normalized) {
@@ -260,7 +262,7 @@ void plot_for_paper2() {
   jetsHist->Draw("SAME HIST");
   if (draw_zprime && !isCHist) zprime->Draw("SAME HIST");
 
-  TGraphAsymmErrors* dataHistPI = poisson_intervalize(dataHist, true, varbin ? binning : 0);
+  TGraphAsymmErrors* dataHistPI = poisson_intervalize(dataHist, true, ((varbin && !isCHist) ? binning : 0));
   if (logx && isCHist) {
     // too crowded
     for (int i = 55; i < dataHistPI->GetN(); i += 2)
@@ -307,7 +309,7 @@ void plot_for_paper2() {
 
   TPaveLabel *pl = 0;
   if (!preliminary)
-    pl = new TPaveLabel(0.44, 0.85, 0.90, 0.95, TString::Format("CMS   #sqrt{s} = 7 TeV    #int L dt = 4.%i fb^{-1}", isElectron ? 7 : 9), "brNDC");
+    pl = new TPaveLabel(0.44, 0.85, 0.90, 0.95, TString::Format("CMS   #sqrt{s} = 7 TeV    #int L dt = 5.%i fb^{-1}", isElectron ? 0 : 3), "brNDC");
   else
     pl = new TPaveLabel(0.39, 0.85, 0.85, 0.95, TString::Format("#splitline{CMS}{preliminary}   #sqrt{s} = 7 TeV    #int L dt = 4.%i fb^{-1}", isElectron ? 7 : 9), "brNDC");
   pl->SetBorderSize(0);
@@ -321,7 +323,8 @@ void plot_for_paper2() {
   pl2->SetFillColor(0);
   pl2->SetFillStyle(0);
   pl2->SetTextSize(0.35);
-  pl2->Draw();
+  if (varbin && !isCHist)
+    pl2->Draw();
 
   // huge crappy hack for "EP" in TLegend::AddEntry not working
   TLine ll;

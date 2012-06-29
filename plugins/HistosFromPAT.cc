@@ -65,8 +65,6 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   // mmm bare ptrs
   const reco::BeamSpot* beamspot;
   const reco::Vertex*   vertex;
-    bool _usePrescaleWeight;
-    int  _prescaleWeight;
 
   TH1F* NBeamSpot;
   TH1F* NVertices;
@@ -114,7 +112,6 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TProfile* DileptonPVsEta;
   TProfile* DileptonPtVsEta;
   TH1F* DileptonMass;
-  TH1F* DileptonMassWeight;
   TH1F* DileptonWithPhotonsMass;
   TH1F* DileptonDeltaPt;
   TH1F* DileptonDeltaP;
@@ -123,9 +120,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TH1F* DileptonDaughterDeltaR;
   TH1F* DileptonDaughterDeltaPhi;
   TH1F* DimuonMassVertexConstrained;
-  TH1F* DimuonMassVertexConstrainedWeight;
   TH1F* DimuonMassVtxConstrainedLog;
-  TH1F* DimuonMassVtxConstrainedLogWeight;
   TH2F* DimuonMassConstrainedVsUn;
   TH2F* DimuonMassVertexConstrainedError;
 };
@@ -139,9 +134,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
     use_bs_and_pv(cfg.getParameter<bool>("use_bs_and_pv")),
     dbg_tree(0),
     beamspot(0),
-    vertex(0),
-    _usePrescaleWeight(cfg.getUntrackedParameter<bool>("usePrescaleWeight",false)),
-    _prescaleWeight(1)
+    vertex(0)
 {
   std::string title_prefix = cfg.getUntrackedParameter<std::string>("titlePrefix", "");
   if (title_prefix.size() && title_prefix[title_prefix.size()-1] != ' ')
@@ -241,8 +234,6 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   
   // Dilepton invariant mass.
   DileptonMass            = fs->make<TH1F>("DileptonMass",            titlePrefix + "dil. mass", 3000, 0, 3000);
-  DileptonMassWeight            = fs->make<TH1F>("DileptonMassWeight",            titlePrefix + "dil. mass", 3000, 0, 3000);
-    DileptonMassWeight->Sumw2();
   DileptonWithPhotonsMass = fs->make<TH1F>("DileptonWithPhotonsMass", titlePrefix + "res. mass", 3000, 0, 3000);
   
   // Plots comparing the daughter lepton momenta.
@@ -257,8 +248,6 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
 
   // Dimuons have a vertex-constrained fit: some associated histograms.
   DimuonMassVertexConstrained = fs->make<TH1F>("DimuonMassVertexConstrained", titlePrefix + "dimu. vertex-constrained mass", 3000, 0, 3000);
-  DimuonMassVertexConstrainedWeight = fs->make<TH1F>("DimuonMassVertexConstrainedWeight", titlePrefix + "dimu. vertex-constrained mass", 3000, 0, 3000);
-    DimuonMassVertexConstrainedWeight->Sumw2();
   // Mass plot in bins of log(mass)
   const int    NMBINS = 100;
   const double MMIN = 50., MMAX = 2000.;
@@ -266,8 +255,6 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   for (int ibin = 0; ibin <= NMBINS; ibin++)
     logMbins[ibin] = exp(log(MMIN) + (log(MMAX)-log(MMIN))*ibin/NMBINS);
   DimuonMassVtxConstrainedLog = fs->make<TH1F>("DimuonMassVtxConstrainedLog", titlePrefix + "dimu vtx-constrained mass in log bins", NMBINS, logMbins);
-  DimuonMassVtxConstrainedLogWeight = fs->make<TH1F>("DimuonMassVtxConstrainedLogWeight", titlePrefix + "dimu vtx-constrained mass in log bins", NMBINS, logMbins);
-    DimuonMassVtxConstrainedLogWeight->Sumw2();
   DimuonMassConstrainedVsUn = fs->make<TH2F>("DimuonMassConstrainedVsUn", titlePrefix + "dimu. vertex-constrained vs. non-constrained mass", 200, 0, 3000, 200, 0, 3000);
   DimuonMassVertexConstrainedError = fs->make<TH2F>("DimuonMassVertexConstrainedError", titlePrefix + "dimu. vertex-constrained mass error vs. mass", 100, 0, 3000, 100, 0, 400);
 }
@@ -416,7 +403,6 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
   DileptonPVsEta ->Fill(dil.eta(), dil.p());
 
   DileptonMass->Fill(dil.mass());
-  DileptonMassWeight->Fill(dil.mass(),_prescaleWeight);
   DileptonWithPhotonsMass->Fill(resonanceP4(dil).mass());
 
   const reco::CandidateBaseRef& lep_minus = dileptonDaughterByCharge(dil, -1);
@@ -449,8 +435,6 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
     DimuonMassVtxConstrainedLog->Fill(vertex_mass);
     DimuonMassConstrainedVsUn->Fill(dil.mass(), vertex_mass);
     DimuonMassVertexConstrainedError->Fill(vertex_mass, vertex_mass_err);
-    DimuonMassVertexConstrainedWeight->Fill(vertex_mass,_prescaleWeight);
-    DimuonMassVtxConstrainedLogWeight->Fill(vertex_mass,_prescaleWeight);
   }
 }
 
@@ -469,22 +453,6 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
     dbg_t.lumi = event.luminosityBlock();
     dbg_t.event = event.id().event();
   }
-
-
-//  edm::Handle<int> hltPrescale;
-//  edm::Handle<int> l1Prescale;
-
-//  event.getByLabel(edm::InputTag("getPrescales","HLTPrescale","Zprime2muAnalysis"), hltPrescale);
-//  event.getByLabel(edm::InputTag("getPrescales","L1Prescale","Zprime2muAnalysis"), l1Prescale);
-    if (_usePrescaleWeight) {
-        edm::Handle<int> totalPrescale;
-        event.getByLabel(edm::InputTag("getPrescales","TotalPrescale","Zprime2muAnalysis"), totalPrescale);
-        _prescaleWeight = *totalPrescale;
-    }
-//    std::cout<<*hltPrescale<<std::endl;
-//    std::cout<<l1Prescale<<std::endl;
-//    std::cout<<totalPrescale<<std::endl;
-
 
   if (use_bs_and_pv)
     getBSandPV(event);

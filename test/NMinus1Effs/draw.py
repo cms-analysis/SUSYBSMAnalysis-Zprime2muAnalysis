@@ -19,6 +19,7 @@ psn = 'plots/nminus1effs'
 if do_tight:
     psn += '_tight'
 ps = plot_saver(psn, size=(600,600), log=False, pdf=True)
+ps.c.SetBottomMargin(0.2)
 
 if do_tight:
     nminus1s = [
@@ -61,6 +62,7 @@ pretty = {
     'NoVtxProb': '#chi^{2} #mu#mu vtx < 10',
     'NoIso': 'rel. tk. iso.',
     'data': 'Data, %.1f fb^{-1}',
+    'mcsum': 'Simulation',
     'zmumu': 'Z#rightarrow#mu#mu, 60 < M < 120 GeV',
     'dy120': 'DY#rightarrow#mu#mu, M > 120 GeV',
     'dy200': 'DY#rightarrow#mu#mu, M > 200 GeV',
@@ -110,7 +112,7 @@ class nm1entry:
                 hsum.Add(h)
             self.histos[nminus1] = hsum
 
-data, lumi = nm1entry('data', True), 4910.
+data, lumi = nm1entry('data', True), 1900. # lumi in pb
 mcsum = nm1entry('mcsum')
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import zmumu, dy120, dy200, dy500, dy1000, ttbar, inclmu15
@@ -161,7 +163,7 @@ def table(entry, mass_range):
     num = get_integral(hnum, mlo, mhi, integral_only=True, include_last_bin=False)
     print 'mass range %5i-%5i:' % mass_range
     print 'numerator:', num
-    print '%20s%20s%20s%30s' % ('cut', 'denominator', 'efficiency', '68% CL')
+    print '%20s%20s%21s%21s' % ('cut', 'denominator', 'efficiency', '68% CL')
     for nminus1 in nminus1s:
         hden = entry.histos[nminus1]
         den = get_integral(hden, mlo, mhi, integral_only=True, include_last_bin=False)
@@ -169,13 +171,14 @@ def table(entry, mass_range):
         print '%20s%20f%20f%15f%15f' % (nminus1, den, e, l, h)
 
 ROOT.gStyle.SetTitleX(0.25)
-ROOT.gStyle.SetTitleY(0.40)
+ROOT.gStyle.SetTitleY(0.50)
 
 for name, mass_range in mass_ranges:
     pretty_name = pretty[name]
     print name, pretty_name
 
-    lg = ROOT.TLegend(0.25, 0.13, 0.81, 0.33)
+    lg = ROOT.TLegend(0.25, 0.23, 0.81, 0.43)
+    lg.SetTextSize(0.05)
     lg.SetFillColor(0)
     lg.SetBorderSize(1)
     
@@ -209,18 +212,18 @@ for name, mass_range in mass_ranges:
             eff.SetLineColor(color)
             eff.SetMarkerStyle(20)
             eff.SetMarkerSize(1.05)
-            lg.AddEntry(eff, pretty.get(entry.name, entry.name), 'LP')
+            lg.AddEntry(eff, pretty.get(entry.name, entry.name) % (lumi/1000.), 'LP')
         else:
             draw = '2'
             eff.SetLineColor(color)
             eff.SetFillColor(color)
             eff.SetFillStyle(fill)
-            lg.AddEntry(eff, pretty.get(entry.name, entry.name), 'F')
+            lg.AddEntry(eff, pretty.get(entry.name, entry.name), 'L')
         draw += same
         eff.Draw(draw)
         effs.append(eff)
         same = ' same'
-        bnr = (eff.GetXaxis().GetNbins()-4)/float(eff.GetN())
+        bnr = eff.GetXaxis().GetNbins()/float(eff.GetN()+1)
         for i, n in enumerate(nminus1s):
             eff.GetXaxis().SetBinLabel(int((i+0.5)*bnr), pretty.get(n,n))
         eff.GetXaxis().LabelsOption('v')

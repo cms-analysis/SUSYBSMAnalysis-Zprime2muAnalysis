@@ -14,18 +14,7 @@ process.maxEvents.input = 1000
 # to the tight_cut (meaning only one muon instead of two has to pass
 # the cut).  "NoNo" means remove nothing (i.e. the numerator). This
 # will break if loose_, tight_cut strings are changed upstream, so we
-# try to check those with a silly hash next. (Don't want to check full
-# string equality since then we have one more string to maintain
-# besides the N of the below.)
-
-try:
-    assert hash(loose_cut) == 6657462604732829576
-    assert hash(tight_cut) == 5989297785355745396
-except AssertionError:
-    print 'hashes wrong:'
-    print hash(loose_cut)
-    print hash(tight_cut)
-    raise
+# try to check those with a simple string test below.
 
 cuts = [
     ('Pt',      'pt > 45'),
@@ -43,6 +32,8 @@ for name, cut in cuts:
 
     lc = loose_cut
     for c in cut:
+        if c not in lc:
+            raise ValueError('cut "%s" not in cut string "%s"' % (c, lc))
         lc = lc.replace(' && ' + c, '') # Relies on none of the cuts above being first in the list.
 
     obj_no = allDimuons.clone(loose_cut = lc)
@@ -115,22 +106,22 @@ return_data = 1
 
     just_testing = 'testing' in sys.argv
     if not 'no_data' in sys.argv:
-        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2011MuonsOnly_ll
-        Run2011MuonsOnly_ll.writeJSON('tmp.json')
+        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2012MuonsOnly_ll
+        Run2012MuonsOnly_ll.writeJSON('tmp.json')
 
         dataset_details = [
-            ('SingleMu2011A_May10',                '/SingleMu/tucker-datamc_SingleMuRun2011A_May10-27b0e568312792116de9a2db293fbae8/USER'),
-            ('SingleMu2011A_Prompt4',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt4-27b0e568312792116de9a2db293fbae8/USER'),
-            ('SingleMu2011A_Prompt5',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt5-27b0e568312792116de9a2db293fbae8/USER'),
-            ('SingleMu2011A_Prompt6',              '/SingleMu/tucker-datamc_SingleMuRun2011A_Prompt6-d196cf8328025d6b0cf4c50be8764787/USER'),
-            ('SingleMu2011B_Prompt1',              '/SingleMu/tucker-datamc_SingleMuRun2011B_Prompt1-d196cf8328025d6b0cf4c50be8764787/USER'),
+            ('SingleMuRun2012A_Prompt_190450_193686', '/SingleMu/slava-datamc_SingleMuRun2012A_Prompt_190450_193686_20120515044043-f1c162e9ac6a53572830a92e8730d513/USER'),
+            ('SingleMuRun2012B_Prompt_193752_194500', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_193752_194500_20120528075253-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
+            ('SingleMuRun2012B_Prompt_194501_195520', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_194501_195520_20120611022947-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
+            ('SingleMuRun2012B_Prompt_195521_195775', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_195521_195775_20120615114641-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
+#            ('SingleMuRun2012B_Prompt_195776_195947', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_195776_195947_20120617080738-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
             ]
 
         for name, ana_dataset in dataset_details:
             print name
 
             new_py = open('nminus1effs.py').read()
-            new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_42_V13::All'\n"
+            new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_52_V7::All'\n"
             open('nminus1effs_crab.py', 'wt').write(new_py)
 
             new_crab_cfg = crab_cfg % locals()
@@ -154,7 +145,7 @@ events_per_job = 50000
 ''')
 
         from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import *
-        samples = [zmumu, ttbar, dy120, dy200, dy500, dy800, dy1000, inclmu15]
+        samples = [zmumu, ttbar, dy120, dy200, dy500, dy800, dy1000, dy1300, dy1600, inclmu15]
         for sample in samples:
             print sample.name
             open('crab.cfg', 'wt').write(crab_cfg % sample)

@@ -260,7 +260,8 @@ return_data = 1
             ('SingleMuRun2012B_Prompt_193752_194500', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_193752_194500_20120528075253-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
             ('SingleMuRun2012B_Prompt_194501_195520', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_194501_195520_20120611022947-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
             ('SingleMuRun2012B_Prompt_195521_195775', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_195521_195775_20120615114641-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
-#            ('SingleMuRun2012B_Prompt_195776_195947', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_195776_195947_20120617080738-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
+            ('SingleMuRun2012B_Prompt_195776_195947', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_195776_195947_20120617080738-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
+            ('SingleMuRun2012B_Prompt_195948_196531', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_195948_196531_20120706114240-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
             ]
 
         lumi_lists = [

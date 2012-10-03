@@ -101,13 +101,18 @@ def addHEEPId(process):
                                     writeIdAsInt = cms.bool(True),
                                     )
 
+    # For isolation correction
+    from RecoJets.JetProducers.kt4PFJets_cfi import kt4PFJets
+    process.kt6PFJetsForIsolation = kt4PFJets.clone( rParam = 0.6, doRhoFastjet = True )
+    process.kt6PFJetsForIsolation.Rho_EtaMax = cms.double(2.5)
+    
     # Embed the HEEP cut bitwords into the userData of the
     # patElectrons so we can use it to cut on at dilepton-making time
     # instead of necessarily dropping them in the selectedPatElectrons
     # or cleanPatElectrons steps.
     process.patElectrons.userData.userInts.src.append('HEEPId')
     
-    process.patDefaultSequence.replace(process.patElectrons, process.HEEPId * process.patElectrons)
+    process.patDefaultSequence.replace(process.patElectrons, process.kt6PFJetsForIsolation * process.HEEPId * process.patElectrons)
 
 def AODOnly(process):
     from PhysicsTools.PatAlgos.tools.coreTools import restrictInputToAOD

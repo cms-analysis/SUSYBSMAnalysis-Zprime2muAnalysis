@@ -1,15 +1,14 @@
 import FWCore.ParameterSet.Config as cms
 
 # JMTBAD to drop
-muonTriggerMatchHLTMuons = cms.EDProducer('PATTriggerMatcherDRDPtLessByR',
+muonTriggerMatchHLTMuons = cms.EDProducer('PATTriggerMatcherDRLessByR',
     src                   = cms.InputTag('cleanPatMuons'),
     matched               = cms.InputTag('patTrigger'),
     matchedCuts           = cms.string('type("TriggerMuon") && (path("HLT_Mu9*",1,0) || path("HLT_Mu15*",1,0) || path("HLT_Mu24*",1,0) || path("HLT_Mu30*",1,0) || path("HLT_Mu40*",1,0))'),
-    # Follow VBTF's matching criteria.
     maxDPtRel             = cms.double(1),
     maxDeltaR             = cms.double(0.2),
     resolveAmbiguities    = cms.bool(True),
-    resolveByMatchQuality = cms.bool(False)
+    resolveByMatchQuality = cms.bool(True)
 )
 
 trigger_pt_threshold = 40

@@ -3,8 +3,8 @@
 import sys, os, datetime, FWCore.ParameterSet.Config as cms
 from tuple_common import process, crab_cfg
 
-process.source.fileNames = ['/store/data/Run2012A/SingleMu/AOD/PromptReco-v1/000/190/539/288ACFA2-BC81-E111-99E3-001D09F2527B.root']
-process.GlobalTag.globaltag = 'GR_R_52_V7::All'
+process.source.fileNames = ['/store/data/Run2012A/SingleMu/AOD/13Jul2012-v1/00000/009C369E-85D0-E111-BD58-1CC1DE046FC0.root']
+process.GlobalTag.globaltag = 'FT_53_V10_AN2::All'
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import removeMCUse
 removeMCUse(process)
@@ -59,19 +59,37 @@ lumis_per_job = %(lumis_per_job)s
         open('tmp.json', 'wt').write('{' + ', '.join(json) + '}')
         lumi_mask = 'lumi_mask = tmp.json'
 
-        name = 'SingleMuRun2012B_Prompt_%i_%i_%s' % (run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
-        print name
-
-        if run1 >= 190450 and run1 < 193752:
-            dataset = '/SingleMu/Run2012A-PromptReco-v1/AOD'
-        elif run1 >= 193752 and run1 <= 196531:
-            dataset = '/SingleMu/Run2012B-PromptReco-v1/AOD'
-        elif run1 >= 198022:
-            dataset = '/SingleMu/Run2012C-PromptReco-v1/AOD'
+        if run1 == 190782 and run2 == 190949:
+            # Special settings for 6-Aug reprocessing of 5 runs
+            dataset = '/SingleMu/Run2012A-recover-06Aug2012-v1/AOD'
+            name    = 'SingleMuRun2012A-recover-06Aug2012'
+            tag     = 'FT_53_V10_AN2'
+        elif run1 >= 190450 and run1 < 193752:
+            dataset = '/SingleMu/Run2012A-13Jul2012-v1/AOD'
+            name    = 'SingleMuRun2012A-13Jul2012'
+            tag     = 'FT_53_V10_AN2'
+        elif run1 >= 193752 and run1 < 196532:
+            dataset = '/SingleMu/Run2012B-13Jul2012-v1/AOD'
+            name    = 'SingleMuRun2012B-13Jul2012'
+            tag     = 'FT_53_V10_AN2'
+        elif run1 >= 197556 and run1 < 198914:
+            dataset = '/SingleMu/Run2012C-24Aug2012-v1/AOD'
+            name    = 'SingleMuRun2012C-24Aug2012'
+            tag     = 'FT_53_V10_AN2'
+        elif run1 >= 198934 and run1 < 203773:
+            dataset = '/SingleMu/Run2012C-PromptReco-v2/AOD'
+            name    = 'SingleMuRun2012C-Prompt'
+            tag     = 'GR_P_V42_AN2'
+        elif run1 >= 203773:
+            dataset = '/SingleMu/Run2012D-PromptReco-v1/AOD'
+            name    = 'SingleMuRun2012D-Prompt'
+            tag     = 'GR_P_V42_AN2'
         else:
             raise ValueError("don't know how to do a run_limits production for run range [%i,%i]" % run_limits)
-        
-        tag = 'GR_R_52_V7'
+
+        name = '%s_%i_%i_%s' % (name, run_limits[0], run_limits[1], datetime.datetime.today().strftime('%Y%m%d%H%M%S'))
+        print name, tag
+
         submit(locals())
     else:
         raise ValueError('must do a run-limits production until one dataset is closed')

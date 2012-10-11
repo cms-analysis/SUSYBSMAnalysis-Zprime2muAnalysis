@@ -11,7 +11,7 @@ process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True))
 process.source = cms.Source('PoolSource', fileNames = cms.untracked.vstring('file:PlaceHolder.root'))
 
 # Load services needed to run the PAT.
-process.load('Configuration.StandardSequences.Geometry_cff')
+process.load('Configuration.Geometry.GeometryIdeal_cff')
 process.load('Configuration.StandardSequences.MagneticField_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.GlobalTag.globaltag = cms.string('PlaceHolder::All')
@@ -48,12 +48,12 @@ process.out = cms.OutputModule('PoolOutputModule',
                                    'keep *_offlinePrimaryVertices_*_*',
                                    'keep edmTriggerResults_TriggerResults__HLT*',
                                    'keep edmTriggerResults_TriggerResults__REDIGI*',
-                                   'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__HLT*',
-                                   'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__REDIGI*',
+                                   'keep L1GlobalTriggerObjectMaps_l1L1GtObjectMap_*_*', # drop later if embedding of L1 into PAT works fine
                                    'keep L1GlobalTriggerReadoutRecord_gtDigis__RECO',
                                    'keep *_hltTriggerSummaryAOD__HLT*',
                                    'keep *_hltTriggerSummaryAOD__REDIGI*',
                                    'keep edmTriggerResults_TriggerResults__PAT', # for post-tuple filtering on the goodData paths
+                                   'keep PileupSummaryInfos_addPileupInfo_*_*'   # may be needed for pile-up reweighting
                                    )
                                )
 process.outpath = cms.EndPath(process.out)
@@ -85,11 +85,14 @@ from PhysicsTools.PatAlgos.tools.trigTools import switchOnTrigger, switchOnTrigg
 switchOnTrigger(process)
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi')
 switchOnTriggerMatchEmbedding(process, triggerMatchers=['muonTriggerMatchHLTMuons'])
+# add L1 algorithms' collection
+process.patTrigger.addL1Algos = cms.bool( True ) # default: 'False'
+# call once more to update the event content according to the changed parameters (?)
+switchOnTrigger(process)
 process.out.outputCommands += [
     'keep *_cleanPatMuonsTriggerMatch_*_*',
-    'drop *_cleanPatMuons_*_*',
-    'drop *_patTrigger_*_*',
-    'drop *_patTriggerEvent_*_*',
+    'keep *_patTrigger_*_*', # keep these two for now, for Level-1 decisions
+    'keep *_patTriggerEvent_*_*',
 ]
 
 # Some extra configuration of the PAT.
@@ -142,7 +145,7 @@ switchJetCollection(process,
                     cms.InputTag('ak5PFJets'),   
                     doJTA            = True,            
                     doBTagging       = True,            
-                    jetCorrLabel     = ('AK5PF', ['L2Relative', 'L3Absolute']),  
+                    jetCorrLabel     = ('AK5PF', ['L1FastJet', 'L2Relative', 'L3Absolute']),  
                     doType1MET       = False,            
                     genJetCollection = cms.InputTag("ak5GenJets"),
                     doJetID      = False,

@@ -50,52 +50,48 @@ class tupleonlysample(sample):
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat8TeV for xsecs (all below in pb)
 # commented out samples are not available for Summer12/8 TeV
 samples = [
-    sample('zmumu',     '#gamma/Z #rightarrow #mu^{+}#mu^{-}',              '/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',              2000016, 432, 0.05, 1915.   - 9.414), # The subtraction here and below is because we drop the events with generated M in ranges in the other datasets, e.g. drop here M > 120.
-    sample('dy120',     'DY120',                                            '/DYToMuMu_M_120_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',               49454, 433, 0.05, 9.414   - 1.176,    k_factor=1.3),
-    sample('dy200',     'DY200',                                            '/DYToMuMu_M_200_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',               50400, 434, 0.05, 1.176   - 0.03557,  k_factor=1.3),
-    sample('dy500',     'DY500',                                            '/DYToMuMu_M_500_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',               50560, 435, 0.05, 0.03557 - 0.00451,  k_factor=1.3),
-    sample('dy800',     'DY800',                                            '/DYToMuMu_M_800_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',               50400,   3, 0.05, 0.00451 - 0.00149,  k_factor=1.3),
-    sample('dy1000',    'DY1000',                                           '/DYToMuMu_M_1000_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',              50005,  36, 0.05, 0.00149 - 3.55E-4,  k_factor=1.3),
-    sample('dy1300',    'DY1300',                                           '/DYToMuMu_M-1300_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',              50560,   8, 0.05, 3.55E-4 - 9.28E-5,  k_factor=1.3),
-    sample('dy1600',    'DY1600',                                           '/DYToMuMu_M-1600_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',              50112,  37, 0.05, 9.28E-5 - 0,        k_factor=1.3),
-    sample('ttbar',     't#bar{t}',                                         '/TTJets_TuneZ2star_8TeV-madgraph-tauola/Summer12-PU_S7_START52_V9-v1/AODSIM',             6736135,   2, 0.15, 225.2),
-    sample('tW',        'tW',                                               '/T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola/Summer12-PU_S7_START52_V9-v1/AODSIM',       497658,   1, 0.03,  11.2),
-    sample('tbarW',     'tbarW',                                            '/Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola/Summer12-PU_S7_START52_V9-v1/AODSIM',    493460,  12, 0.03,  11.2),
-    sample('ww',        'WW',                                               '/WW_TuneZ2star_8TeV_pythia6_tauola/Summer12-PU_S7_START52_V9-v1/AODSIM',                 10000431,   4, 0.035, 57.1),
-    sample('wz',        'WZ',                                               '/WZ_TuneZ2star_8TeV_pythia6_tauola/Summer12-PU_S7_START52_V9-v1/AODSIM',                  9996622,  30, 0.038, 32.3),
-    sample('zz',        'ZZ',                                               '/ZZ_TuneZ2star_8TeV_pythia6_tauola/Summer12-PU_S7_START52_V9-v1/AODSIM',                  9799908,   6, 0.025,  8.3),
-    sample('ztautau',   'Z #rightarrow #tau^{+}#tau^{-}',                   '/DYToTauTau_M_20_TuneZ2star_8TeV_pythia6_tauola/Summer12-PU_S7_START52_V9-v1/AODSIM',     1987776,  46, 0.05, 1915.),
-    sample('wjets',     'W+jets',                                           '/WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball/Summer12-PU_S7_START52_V9-v1/AODSIM',       18393090,   3, 0.05, 36257.),
-    sample('inclmu15',  'QCD',                                              '/QCD_Pt_20_MuEnrichedPt_15_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',  7529312, 801, 0.1,  3.64E8 * 3.7E-4),
-##    sample('zssm1000',  'Z\'_{SSM} (1 TeV) #rightarrow #mu^{+}#mu^{-}',     '/ZprimeSSMToMuMu_M-1000_TuneZ2_7TeV-pythia6/Summer11-PU_S4_START42_V11-v1/AODSIM',          20328,  38, 0.05,  0.089,   k_factor=1.3, is_zprime=True),
-#    sample('zpsi750',   'Z\'_{#psi} (0.75 TeV) #rightarrow #mu^{+}#mu^{-}', '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',        25040,  48, 0.05,  0.14,    k_factor=1.3, is_zprime=True),
-#    sample('zpsi1000',  'Z\'_{#psi} (1 TeV) #rightarrow #mu^{+}#mu^{-}',    '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',       25040,  48, 0.05,  0.0369,  k_factor=1.3, is_zprime=True),
-#    sample('zpsi1250',  'Z\'_{#psi} (1.25 TeV) #rightarrow #mu^{+}#mu^{-}', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',       25344,  48, 0.05,  0.0129,  k_factor=1.3, is_zprime=True),
-#    sample('zpsi1500',  'Z\'_{#psi} (1.5 TeV) #rightarrow #mu^{+}#mu^{-}',  '/ZprimePSIToMuMu_M-1500_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',       25344,  48, 0.05,  0.00433, k_factor=1.3, is_zprime=True),
-#    sample('zpsi1750',  'Z\'_{#psi} (1.75 TeV) #rightarrow #mu^{+}#mu^{-}', '/ZprimePSIToMuMu_M-1750_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',       25272,  48, 0.05,  0.00172, k_factor=1.3, is_zprime=True),
-#    sample('zpsi2000',  'Z\'_{#psi} (2 TeV) #rightarrow #mu^{+}#mu^{-}',    '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',       25092,  48, 0.05,  6.88E-4, k_factor=1.3, is_zprime=True),
-#    sample('zpsi2250',  'Z\'_{#psi} (2.25 TeV) #rightarrow #mu^{+}#mu^{-}', '/ZprimePSIToMuMu_M-2250_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',       25104,  48, 0.05,  2.93E-4, k_factor=1.3, is_zprime=True),
-#    sample('zpsi2500',  'Z\'_{#psi} (2.5 TeV) #rightarrow #mu^{+}#mu^{-}',  '/ZprimePSIToMuMu_M-2500_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',       25344,  48, 0.05,  1.27E-4, k_factor=1.3, is_zprime=True),
-#    sample('zpsi2750',  'Z\'_{#psi} (2.75 TeV) #rightarrow #mu^{+}#mu^{-}', '/ZprimePSIToMuMu_M-2750_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',       25376,  48, 0.05,  5.55E-5, k_factor=1.3, is_zprime=True),
-#    sample('zpsi3000',  'Z\'_{#psi} (3 TeV) #rightarrow #mu^{+}#mu^{-}',    '/ZprimePSIToMuMu_M-3000_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM',       25040,  48, 0.05,  2.5E-5,  k_factor=1.3, is_zprime=True),
+    sample('zmumu',     '#gamma/Z #rightarrow #mu^{+}#mu^{-}',              '/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',      3293740, 432, 0.05, 1915.   - 12.2), # The subtraction here and below is because we drop the events with generated M in ranges in the other datasets, e.g. drop here M > 120.
+    sample('dy120',     'DY120',                                            '/DYToMuMu_M-120_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',        99984, 433, 0.05, 9.414   - 1.176,    k_factor=1.3),
+    sample('dy200',     'DY200',                                            '/DYToMuMu_M-200_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',       99990, 434, 0.05, 1.176   - 0.03557,  k_factor=1.3),
+    sample('dy500',     'DY500',                                            '/DYToMuMu_M-500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',       99992, 435, 0.05, 0.03557 - 0.00451,  k_factor=1.3),
+    sample('dy800',     'DY800',                                            '/DYToMuMu_M-800_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',       99984,   3, 0.05, 0.00451 - 0.00149,  k_factor=1.3),
+    sample('dy1000',    'DY1000',                                           '/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',      99989,  36, 0.05, 0.00149 - 1.705E-4/1.3, k_factor=1.3),
+##    sample('dy1300',    'DY1300',                                           '/DYToMuMu_M-1300_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',                  50560,   8, 0.05, 3.55E-4 - 9.28E-5,  k_factor=1.3),
+    sample('dy1500',    'DY1500',                                           '/DYToMuMu_M-1500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',      99992,   8, 0.05, 1.705E-4 - 2.208E-5, k_factor=1.),
+##    sample('dy1600',    'DY1600',                                           '/DYToMuMu_M-1600_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',                  50112,  37, 0.05, 9.28E-5 - 2.208E-5/1.3, k_factor=1.3),
+    sample('dy2000',    'DY2000',                                           '/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',      99974,  37, 0.05, 2.208E-5 - 0,       k_factor=1.),
+    sample('ttbar',     't#bar{t}',                                         '/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM', 6923750,   2, 0.15, 225.2),
+    sample('tW',        'tW',                                               '/T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           497658,   1, 0.03,  11.2),
+    sample('tbarW',     'tbarW',                                            '/Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',        493460,  12, 0.03,  11.2),
+    sample('ww',        'WW',                                               '/WW_TuneZ2star_8TeV_pythia6_tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',                     10000431,   4, 0.035, 54.8),
+    sample('wz',        'WZ',                                               '/WZ_TuneZ2star_8TeV_pythia6_tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',                     10000283,  30, 0.038, 33.2),
+    sample('zz',        'ZZ',                                               '/ZZ_TuneZ2star_8TeV_pythia6_tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',                      9799908,   6, 0.025,  8.1),
+    sample('ztautau',   'Z #rightarrow #tau^{+}#tau^{-}',                   '/DYToTauTau_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',    3295238,  46, 0.05, 1915.),
+    sample('wjets',     'W+jets',                                           '/WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           18393090,   3, 0.05, 36257.),
+    sample('inclmu15',  'QCD',                                              '/QCD_Pt_20_MuEnrichedPt_15_TuneZ2star_8TeV_pythia6/Summer12_DR53X-PU_S10_START53_V7A-v3/AODSIM',     21484602, 801, 0.1,  3.64E8 * 3.7E-4),
+#    sample('zpsi750',   'Z\'_{#psi} (0.75 TeV) #rightarrow #mu^{+}#mu^{-}', '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',            25040,  48, 0.05,  0.14,    k_factor=1.3, is_zprime=True),
+#    sample('zpsi1000',  'Z\'_{#psi} (1 TeV) #rightarrow #mu^{+}#mu^{-}',    '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           25040,  48, 0.05,  0.0369,  k_factor=1.3, is_zprime=True),
+#    sample('zpsi1250',  'Z\'_{#psi} (1.25 TeV) #rightarrow #mu^{+}#mu^{-}', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           25344,  48, 0.05,  0.0129,  k_factor=1.3, is_zprime=True),
+#    sample('zpsi1500',  'Z\'_{#psi} (1.5 TeV) #rightarrow #mu^{+}#mu^{-}',  '/ZprimePSIToMuMu_M-1500_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           25344,  48, 0.05,  0.00433, k_factor=1.3, is_zprime=True),
+#    sample('zpsi1750',  'Z\'_{#psi} (1.75 TeV) #rightarrow #mu^{+}#mu^{-}', '/ZprimePSIToMuMu_M-1750_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           25272,  48, 0.05,  0.00172, k_factor=1.3, is_zprime=True),
+#    sample('zpsi2000',  'Z\'_{#psi} (2 TeV) #rightarrow #mu^{+}#mu^{-}',    '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           25092,  48, 0.05,  6.88E-4, k_factor=1.3, is_zprime=True),
+#    sample('zpsi2250',  'Z\'_{#psi} (2.25 TeV) #rightarrow #mu^{+}#mu^{-}', '/ZprimePSIToMuMu_M-2250_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           25104,  48, 0.05,  2.93E-4, k_factor=1.3, is_zprime=True),
+#    sample('zpsi2500',  'Z\'_{#psi} (2.5 TeV) #rightarrow #mu^{+}#mu^{-}',  '/ZprimePSIToMuMu_M-2500_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           25344,  48, 0.05,  1.27E-4, k_factor=1.3, is_zprime=True),
+#    sample('zpsi2750',  'Z\'_{#psi} (2.75 TeV) #rightarrow #mu^{+}#mu^{-}', '/ZprimePSIToMuMu_M-2750_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           25376,  48, 0.05,  5.55E-5, k_factor=1.3, is_zprime=True),
+#    sample('zpsi3000',  'Z\'_{#psi} (3 TeV) #rightarrow #mu^{+}#mu^{-}',    '/ZprimePSIToMuMu_M-3000_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           25040,  48, 0.05,  2.5E-5,  k_factor=1.3, is_zprime=True),
 ]
 
 samples.reverse()
 
 for sample in samples:
     exec '%s = sample' % sample.name
-    sample.ana_dataset = '/%s/slava-datamc_%s-caca636ea661546409f4073c061b3e20/USER' % (sample.dataset.split('/')[1], sample.name)
+    sample.ana_dataset = '/%s/slava-datamc_%s-ecac376f8fa7ccc229aaa06d757d785a/USER' % (sample.dataset.split('/')[1], sample.name)
 
-zmumu.ana_dataset  = '/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/slava-datamc_zmumu-2e54d35c5572bb8d0ce3ffc532e82068/USER'
-dy1000.ana_dataset = '/DYToMuMu_M_1000_TuneZ2star_8TeV_pythia6/slava-datamc_dy1000-2e54d35c5572bb8d0ce3ffc532e82068/USER'
-ttbar.ana_dataset  = '/TTJets_TuneZ2star_8TeV-madgraph-tauola/slava-datamc_ttbar-2e54d35c5572bb8d0ce3ffc532e82068/USER'
-ww.ana_dataset     = '/WW_TuneZ2star_8TeV_pythia6_tauola/slava-datamc_ww-2e54d35c5572bb8d0ce3ffc532e82068/USER'
-wz.ana_dataset     = '/WZ_TuneZ2star_8TeV_pythia6_tauola/slava-datamc_wz-2e54d35c5572bb8d0ce3ffc532e82068/USER'
-zz.ana_dataset     = '/ZZ_TuneZ2star_8TeV_pythia6_tauola/slava-datamc_zz-2e54d35c5572bb8d0ce3ffc532e82068/USER'
+#zmumu.ana_dataset  = '/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/slava-datamc_zmumu-2e54d35c5572bb8d0ce3ffc532e82068/USER'
 
-#big_warn('nothing')
-big_warn('subtracting 232314 from ww.nevents because 3 tupling jobs got stuck')
-ww.nevents -= 232314
+big_warn('nothing')
+#big_warn('subtracting 232314 from ww.nevents because 3 tupling jobs got stuck')
+#ww.nevents -= 232314
 
 __all__ = ['samples'] + [s.name for s in samples]
 

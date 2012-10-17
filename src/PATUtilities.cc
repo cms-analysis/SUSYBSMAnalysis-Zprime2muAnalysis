@@ -21,9 +21,9 @@ namespace patmuon {
     case TkOuter: return mu.outerTrack();
     case TkTPFMS: return mu.tpfmsMuon();
     case TkPicky: return mu.pickyMuon();
-    case TkTuneP: return muon::tevOptimized(mu, 200, 4, 6).first;
+    case TkTuneP: return muon::tevOptimized(mu, 200, 4, 6, -1).first;
     case TkTMR: return muon::TMR(mu.innerTrack(), mu.tpfmsMuon()).first;
-    case TkSigmaSwitch: return muon::sigmaSwitch(mu).first;
+    case TkTunePNew: return muon::tevOptimized(mu, 200, 17, 40, 0.25).first;
     case nTrackTypes: default: return reco::TrackRef();
     }
   }
@@ -50,7 +50,7 @@ namespace patmuon {
   }
   
   bool wasCocktailUsed(const TrackType type) {
-    return type == TkTuneP || type == TkTMR || type == TkSigmaSwitch;
+    return type == TkTuneP || type == TkTMR || type == TkTunePNew;
   }
 
   bool wasCocktailUsed(const pat::Muon& mu) {

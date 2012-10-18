@@ -183,7 +183,7 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.pCheckPrescale = cms.Path(process.CheckPrescale)
 
 def for_data(process):
-    process.GlobalTag.globaltag = 'GR_R_52_V7::All'
+    process.GlobalTag.globaltag = 'GR_P_V42_AN2::All'
     ntuplify(process)
     check_prescale(process, trigger_paths)
 
@@ -256,12 +256,10 @@ return_data = 1
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
 
         dataset_details = [
-            ('SingleMuRun2012A_Prompt_190450_193686', '/SingleMu/slava-datamc_SingleMuRun2012A_Prompt_190450_193686_20120515044043-f1c162e9ac6a53572830a92e8730d513/USER'),
-            ('SingleMuRun2012B_Prompt_193752_194500', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_193752_194500_20120528075253-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
-            ('SingleMuRun2012B_Prompt_194501_195520', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_194501_195520_20120611022947-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
-            ('SingleMuRun2012B_Prompt_195521_195775', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_195521_195775_20120615114641-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
-            ('SingleMuRun2012B_Prompt_195776_195947', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_195776_195947_20120617080738-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
-            ('SingleMuRun2012B_Prompt_195948_196531', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_195948_196531_20120706114240-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
+            ('SingleMuRun2012A_13Jul2012_190450_193751', '/SingleMu/slava-datamc_SingleMuRun2012A-13Jul2012_190450_193751_20121011073628-426a2d966f78bce6bde85f3ed41c07ba/USER'),
+            ('SingleMuRun2012A_06Aug2012_190782_190949', '/SingleMu/slava-datamc_SingleMuRun2012A-recover-06Aug2012_190782_190949_20121011120430-426a2d966f78bce6bde85f3ed41c07ba/USER'),
+            ('SingleMuRun2012B_13Jul2012_193752_196531', '/SingleMu/slava-datamc_SingleMuRun2012B-13Jul2012_193752_196531_20121012044921-426a2d966f78bce6bde85f3ed41c07ba/USER'),
+            ('SingleMuRun2012C_24Aug2012_197556_198913', '/SingleMu/slava-datamc_SingleMuRun2012C-24Aug2012_197556_198913_20121012113325-426a2d966f78bce6bde85f3ed41c07ba/USER'),
             ]
 
         lumi_lists = [
@@ -321,14 +319,14 @@ events_per_job = 100000
 
         from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
 
-        combine_dy_samples = len([x for x in samples if x.name in ['zmumu', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'dy1300', 'dy1600']]) > 0
+        combine_dy_samples = len([x for x in samples if x.name in ['zmumu', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'dy1500', 'dy2000']]) > 0
         print 'combine_dy_samples:', combine_dy_samples
 
         for sample in reversed(samples):
             print sample.name
 
             new_py = open('histos.py').read()
-            sample.fill_gen_info = sample.name in ['zmumu', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'dy1300', 'dy1600', 'zssm1000']
+            sample.fill_gen_info = sample.name in ['zmumu', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'dy1500', 'dy2000', 'zssm1000']
             new_py += "\nfor_mc(process, hlt_process_name='%(hlt_process_name)s', fill_gen_info=%(fill_gen_info)s)\n" % sample
 
             if combine_dy_samples and (sample.name == 'zmumu' or 'dy' in sample.name):
@@ -338,9 +336,9 @@ events_per_job = 100000
                     'dy200' : ( 200,    500),
                     'dy500' : ( 500,    800),
                     'dy800' : ( 800,   1000),
-                    'dy1000': (1000,   1300),
-                    'dy1300': (1300,   1600),
-                    'dy1600': (1600, 100000),
+                    'dy1000': (1000,   1500),
+                    'dy1500': (1500,   2000),
+                    'dy2000': (2000, 100000),
                     }
                 lo,hi = mass_limits[sample.name]
                 from SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi import dy_gen_mass_cut

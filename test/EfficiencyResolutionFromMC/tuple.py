@@ -4,8 +4,8 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.PATTuple_cfg import cms, process
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName, AODOnly
 
 process.maxEvents.input = 50
-process.GlobalTag.globaltag = 'START52_V9::All'
-process.source.fileNames = ['file:/uscms/home/tucker/nobackup/store/mc/Summer11/ZprimeSSMToMuMu_M-2250_TuneZ2_7TeV-pythia6/AODSIM/PU_S4_START42_V11-v1/0000/7032435D-1A93-E011-94D5-0017A4770008.root']
+process.GlobalTag.globaltag = 'START53_V11::All'
+process.source.fileNames = ['/store/mc/Summer12_DR53X/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S10_START53_V7A-v1/0000/FA95BB52-98F4-E111-BFEA-003048FFD7BE.root']
 process.p = cms.Path(process.patDefaultSequence)
 
 AODOnly(process)
@@ -19,8 +19,7 @@ process.out.outputCommands = [
     'keep *_offlinePrimaryVertices_*_*',
     'keep *_addPileupInfo_*_*',
     'keep patMuons_cleanPatMuonsTriggerMatch__PAT',
-    'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__HLT*',
-    'keep L1GlobalTriggerObjectMapRecord_hltL1GtObjectMap__REDIGI*',
+    'keep L1GlobalTriggerObjectMaps_l1L1GtObjectMap_*_*',
     'keep L1GlobalTriggerReadoutRecord_gtDigis__RECO',
     'keep triggerTriggerEvent_hltTriggerSummaryAOD__HLT*',
     'keep triggerTriggerEvent_hltTriggerSummaryAOD__REDIGI*',
@@ -30,6 +29,8 @@ process.out.outputCommands = [
     'keep edmTriggerResults_TriggerResults__REDIGI*',
     'keep GenEventInfoProduct_generator__HLT',
     'keep edmTriggerResults_TriggerResults__PAT',
+    'keep *_patTrigger_*_*', # keep these two for now, for Level-1 decisions
+    'keep *_patTriggerEvent_*_*',
     ]
 
 import sys, os
@@ -61,25 +62,24 @@ dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02
     just_testing = 'testing' in sys.argv
     
     samples = [
-        ('dy20',   '/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('dy120',  '/DYToMuMu_M_120_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('dy200',  '/DYToMuMu_M_200_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('dy500',  '/DYToMuMu_M_500_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('dy800',  '/DYToMuMu_M_800_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('dy1000', '/DYToMuMu_M_1000_TuneZ2star_8TeV_pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('dy1300', '/DYToMuMu_M-1300_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('dy1600', '/DYToMuMu_M-1600_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('zp750',  '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('zp1000', '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('zp1250', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('zp1500', '/ZprimePSIToMuMu_M-1500_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('zp1750', '/ZprimePSIToMuMu_M-1750_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('zp2000', '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('zp2250', '/ZprimePSIToMuMu_M-2250_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('zp2500', '/ZprimePSIToMuMu_M-2500_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('zp2750', '/ZprimePSIToMuMu_M-2750_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        ('zp3000', '/ZprimePSIToMuMu_M-3000_TuneZ2star_8TeV-pythia6/Summer12-PU_S7_START52_V9-v1/AODSIM'),
-        # RSG samples...
+        ('dy20',   '/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('dy120',  '/DYToMuMu_M-120_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('dy200',  '/DYToMuMu_M-200_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('dy500',  '/DYToMuMu_M-500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('dy800',  '/DYToMuMu_M-800_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('dy1000', '/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('dy1500', '/DYToMuMu_M-1500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('dy2000', '/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('zp750',  '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('zp1000', '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('zp1250', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('zp1500', '/ZprimePSIToMuMu_M-1500_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('zp1750', '/ZprimePSIToMuMu_M-1750_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('zp2000', '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('zp2250', '/ZprimePSIToMuMu_M-2250_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('zp2500', '/ZprimePSIToMuMu_M-2500_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('zp2750', '/ZprimePSIToMuMu_M-2750_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
+        ('zp3000', '/ZprimePSIToMuMu_M-3000_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
     ]
 
     for name, dataset in samples:

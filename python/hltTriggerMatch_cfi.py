@@ -20,5 +20,4 @@ overall_prescale = 250
 prescaled_trigger_pt_threshold = 24
 prescaled_offline_pt_threshold = 27
 prescaled_trigger_paths = ['HLT_Mu24_eta2p1_v%i' % i for i in (3,4,5)]
-print trigger_paths, prescaled_trigger_paths
 prescaled_trigger_match = trigger_match.replace('Trigger', 'prescaledTrigger').replace('%i' % trigger_pt_threshold, '%i' % prescaled_trigger_pt_threshold)

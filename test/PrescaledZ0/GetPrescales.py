@@ -30,6 +30,7 @@ datasetpath = %(dataset)s
 pset = GetPrescales.py
 total_number_of_lumis = -1
 number_of_jobs = 50
+#lumi_mask = /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-196531_8TeV_13Jul2012ReReco_Collisions12_JSON_MuonPhys_v3.txt
 lumi_mask = /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-204601_8TeV_PromptReco_Collisions12_JSON_MuonPhys.txt
 
 [USER]
@@ -40,8 +41,8 @@ return_data = 1
     just_testing = 'testing' in sys.argv
 
     dataset_details = [
-        # ('SingleMu2012A_Prompt', '/SingleMu/Run2012A-PromptReco-v1/AOD'),
-        # ('SingleMu2012B_Prompt', '/SingleMu/Run2012B-PromptReco-v1/AOD'),
+        ('SingleMu2012A-13Jul2012', '/SingleMu/Run2012A-13Jul2012-v1/AOD'),
+        ('SingleMu2012B-13Jul2012', '/SingleMu/Run2012B-13Jul2012-v1/AOD'),
         ('SingleMu2012C_24Aug2012', '/SingleMu/Run2012C-24Aug2012-v1/AOD'),
         ('SingleMu2012C_Prompt',    '/SingleMu/Run2012C-PromptReco-v2/AOD'),
         ('SingleMu2012D_Prompt',    '/SingleMu/Run2012D-PromptReco-v1/AOD'),

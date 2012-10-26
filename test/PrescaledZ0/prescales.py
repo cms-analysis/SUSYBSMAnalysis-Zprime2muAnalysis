@@ -71,6 +71,9 @@ for run in runs:
     q = schema.newQuery()
     hlt_info = lumiQueryAPI.hltBypathByrun(q, run, hlt_path)
     del q
+    if not hlt_info:
+        print 'Run %i: warning, no hlt_info available for path %s!' % (run, hlt_path)
+        continue
     hlt_prescales_seen = set()
     for ls, (input, accept, prescale) in hlt_info.iteritems():
         if ls in lumis:

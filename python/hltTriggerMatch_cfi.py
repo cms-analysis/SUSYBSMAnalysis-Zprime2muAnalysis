@@ -16,7 +16,7 @@ offline_pt_threshold = 45
 trigger_paths = ['HLT_Mu40_eta2p1_v%i' % i for i in (9,10,11)]
 trigger_match = 'userFloat("TriggerMatchPt") > %(trigger_pt_threshold)i && abs(userFloat("TriggerMatchEta")) < 2.1' % locals()
 
-overall_prescale = 250
+overall_prescale = 300
 prescaled_trigger_pt_threshold = 24
 prescaled_offline_pt_threshold = 27
 prescaled_trigger_paths = ['HLT_Mu24_eta2p1_v%i' % i for i in (3,4,5)]

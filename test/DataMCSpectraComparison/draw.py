@@ -234,7 +234,7 @@ class Drawer:
     def get_x_axis_range(self, cutset, dilepton, quantity_to_compare):
         # For the given combination of the arguments, return the
         # desired restriction on the viewable x-axis range, if
-        # any. E.g. for DileptonMass, only show from 60-1500 GeV on
+        # any. E.g. for DileptonMass, only show from 60-2000 GeV on
         # the displayed plot.
         if dilepton == 'MuonsSameSign':
             if quantity_to_compare == 'DileptonMass':
@@ -254,7 +254,7 @@ class Drawer:
         if 'MuonsSameSign' in dilepton:
             return 50, 700
         if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained']:
-            return 60,1500
+            return 60,2000
         elif quantity_to_compare in ['DileptonPt', 'LeptonPt']:
             return 0, 700
         elif quantity_to_compare == 'LeptonEta':
@@ -298,20 +298,20 @@ class Drawer:
         # are produced when running this script with rescaling turned
         # off, rather than trying to be smart and getting them from
         # the histogram files.
-        # Factors below were calculated for the MuonPhys JSON for 2012A+B
-        # released on June 13 and correspond to 4.076/fb.
+        # Factors below were calculated for the MuonPhys JSON for 2012
+        # released on October 19 and correspond to 13.895/fb.
         if cutset == 'VBTF':
-            return 91574./86314.3
+            return 311934./300233.5
         elif cutset == 'OurNew':
-            return 95690./92165.0
+            return 327269./318030.3
         elif cutset == 'OurOld':
-            return 107857./102138.0
+            return 370191./352201.8
         elif cutset == 'OurNoIso':
-            return 97194./93313.4
+            return 332474./322007.0
         elif cutset == 'OurMuPrescaled':
-            return 5253./4819.8
+            return 14770./14956.2
         elif cutset == 'VBTFMuPrescaled':
-            return 4928./4348.3
+            return 13760./13773.5
         # If the cutset is not one of the above, don't rescale.
         return 1.
 

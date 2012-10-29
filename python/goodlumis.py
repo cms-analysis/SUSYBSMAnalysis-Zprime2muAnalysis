@@ -8,7 +8,7 @@ def for_cmssw(ll):
 # JSONs.
 first_run = 190456
 last_rereco_run = 198523
-last_prompt_run = 204601
+last_prompt_run = 205618
 last_run = 210000
 
 # Sometimes the same run-range json gets made in other versions.

@@ -18,7 +18,6 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import cms, process
 
 process.maxEvents.input = -1
 #process.source.fileNames = ['file:crab1/crab_effres_zp1000/res/pat_2_1_375.root']
-#process.source.fileNames = ['/store/user/kypreos/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/effres_zp1000//8b5d6229465512f48440fe43a9f490d5/pat_3_1_Di9.root']
 process.source.fileNames = ['/store/user/slava/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/effres_dy20/20941d9c676d6826327c8223aa3d20e0/pat_9_1_5zY.root']
 process.options.wantSummary = True
 
@@ -30,7 +29,7 @@ if use_old_selection:
     switch_to_old_selection(process)
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import rec_levels, rec_level_module
-tracks = ['global', 'inner', 'tpfms', 'picky', 'tunep', 'tmr', 'sigmaswitch']
+tracks = ['global', 'inner', 'tpfms', 'picky', 'tunep', 'tmr', 'tunepnew']
 rec_levels(process, tracks)
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HardInteractionFilter_cfi')
@@ -88,7 +87,7 @@ if check_prescaled_path:
     min_offline_pt = prescaled_offline_pt_threshold
     ex += 'mu' + str(min_hlt_pt)
 
-    l1,hlt = 'L1_SingleMu10', 'HLT_Mu24_eta2p1_v3'
+    l1,hlt = 'L1_SingleMu16er', 'HLT_Mu24_eta2p1_v3'
     from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match
 
     for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
@@ -147,24 +146,24 @@ return_data = 1
 '''
         
     samples = [
-        ('dy60',   '/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/slava-effres_dy20-20941d9c676d6826327c8223aa3d20e0/USER',       60,   120),
-        ('dy120',  '/DYToMuMu_M_120_TuneZ2star_8TeV_pythia6/slava-effres_dy120-20941d9c676d6826327c8223aa3d20e0/USER',    120,   200),
-        ('dy200',  '/DYToMuMu_M_200_TuneZ2star_8TeV_pythia6/slava-effres_dy200-20941d9c676d6826327c8223aa3d20e0/USER',    200,   500),
-        ('dy500',  '/DYToMuMu_M_500_TuneZ2star_8TeV_pythia6/slava-effres_dy500-20941d9c676d6826327c8223aa3d20e0/USER',    500,   800),
-        ('dy800',  '/DYToMuMu_M_800_TuneZ2star_8TeV_pythia6/slava-effres_dy800-20941d9c676d6826327c8223aa3d20e0/USER',    800,  1000),
-        ('dy1000', '/DYToMuMu_M_1000_TuneZ2star_8TeV_pythia6/slava-effres_dy1000-20941d9c676d6826327c8223aa3d20e0/USER', 1000,  1300),
-        ('dy1300', '/DYToMuMu_M-1300_TuneZ2star_8TeV-pythia6/slava-effres_dy1300-20941d9c676d6826327c8223aa3d20e0/USER', 1300, 1600),
-        ('dy1600', '/DYToMuMu_M-1600_TuneZ2star_8TeV-pythia6/slava-effres_dy1600-20941d9c676d6826327c8223aa3d20e0/USER', 1600, 20000),
-        ('zp750',  '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/slava-effres_zp750-20941d9c676d6826327c8223aa3d20e0/USER',   -1, 20000),
-        ('zp1000', '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/slava-effres_zp1000-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
-        ('zp1250', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/slava-effres_zp1250-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
-        ('zp1500', '/ZprimePSIToMuMu_M-1500_TuneZ2star_8TeV-pythia6/slava-effres_zp1500-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
-        ('zp1750', '/ZprimePSIToMuMu_M-1750_TuneZ2star_8TeV-pythia6/slava-effres_zp1750-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
-        ('zp2000', '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/slava-effres_zp2000-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
-        ('zp2250', '/ZprimePSIToMuMu_M-2250_TuneZ2star_8TeV-pythia6/slava-effres_zp2250-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
-        ('zp2500', '/ZprimePSIToMuMu_M-2500_TuneZ2star_8TeV-pythia6/slava-effres_zp2500-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
-        ('zp2750', '/ZprimePSIToMuMu_M-2750_TuneZ2star_8TeV-pythia6/slava-effres_zp2750-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
-        ('zp3000', '/ZprimePSIToMuMu_M-3000_TuneZ2star_8TeV-pythia6/slava-effres_zp3000-20941d9c676d6826327c8223aa3d20e0/USER', -1, 20000),
+        ('dy60',   '/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy20-a1a20649af8af2c0422279f30cb5b6c7/USER',       60,   120),
+        ('dy120',  '/DYToMuMu_M-120_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy120-a1a20649af8af2c0422279f30cb5b6c7/USER',    120,   200),
+        ('dy200',  '/DYToMuMu_M-200_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy200-a1a20649af8af2c0422279f30cb5b6c7/USER',    200,   500),
+        ('dy500',  '/DYToMuMu_M-500_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy500-a1a20649af8af2c0422279f30cb5b6c7/USER',    500,   800),
+        ('dy800',  '/DYToMuMu_M-800_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy800-a1a20649af8af2c0422279f30cb5b6c7/USER',    800,  1000),
+        ('dy1000', '/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy1000-a1a20649af8af2c0422279f30cb5b6c7/USER', 1000,  1500),
+        ('dy1500', '/DYToMuMu_M-1500_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy1500-a1a20649af8af2c0422279f30cb5b6c7/USER', 1500,  2000),
+        ('dy2000', '/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy2000-a1a20649af8af2c0422279f30cb5b6c7/USER', 2000, 20000),
+        ('zp750',  '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/slava-effres_zp750-a1a20649af8af2c0422279f30cb5b6c7/USER',          -1, 20000),
+        ('zp1000', '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/slava-effres_zp1000-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+        ('zp1250', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/slava-effres_zp1250-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+        ('zp1500', '/ZprimePSIToMuMu_M-1500_TuneZ2star_8TeV-pythia6/slava-effres_zp1500-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+        ('zp1750', '/ZprimePSIToMuMu_M-1750_TuneZ2star_8TeV-pythia6/slava-effres_zp1750-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+        ('zp2000', '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/slava-effres_zp2000-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+        ('zp2250', '/ZprimePSIToMuMu_M-2250_TuneZ2star_8TeV-pythia6/slava-effres_zp2250-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+        ('zp2500', '/ZprimePSIToMuMu_M-2500_TuneZ2star_8TeV-pythia6/slava-effres_zp2500-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+        ('zp2750', '/ZprimePSIToMuMu_M-2750_TuneZ2star_8TeV-pythia6/slava-effres_zp2750-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+        ('zp3000', '/ZprimePSIToMuMu_M-3000_TuneZ2star_8TeV-pythia6/slava-effres_zp3000-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
         ]
 
     resolutions = {

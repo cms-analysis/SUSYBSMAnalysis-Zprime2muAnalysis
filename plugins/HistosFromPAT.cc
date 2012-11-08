@@ -118,7 +118,10 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TH1F* DileptonWithPhotonsMass;
   TH1F* DileptonDeltaPt;
   TH1F* DileptonDeltaP;
-  TH2F* DileptonPtErrors;
+  TH2F* DimuonMuonPtErrors;
+  TH1F* DimuonMuonPtErrOverPt;
+  TH1F* DimuonMuonPtErrOverPtM200;
+  TH1F* DimuonMuonPtErrOverPtM500;
   TH2F* DileptonDaughterIds;
   TH1F* DileptonDaughterDeltaR;
   TH1F* DileptonDaughterDeltaPhi;
@@ -156,29 +159,28 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   }
  
   // Whole-event things.
-
-  NBeamSpot = fs->make<TH1F>("NBeamSpot", titlePrefix + "# beamspots/event",  2, 0,  2);
-  NVertices = fs->make<TH1F>("NVertices", titlePrefix + "# vertices/event",  40, 0, 40);
+  NBeamSpot = fs->make<TH1F>("NBeamSpot", titlePrefix + "# beamspots/event",  2, 0,  2);  NBeamSpot->Sumw2();
+  NVertices = fs->make<TH1F>("NVertices", titlePrefix + "# vertices/event",  40, 0, 40);  NVertices->Sumw2();
 
   // Basic kinematics.
 
   // Lepton multiplicity.
-  NLeptons = fs->make<TH1F>("NLeptons", titlePrefix + "# leptons/event", 10, 0, 10);
+  NLeptons = fs->make<TH1F>("NLeptons", titlePrefix + "# leptons/event", 10, 0, 10);  NLeptons->Sumw2();
 
   // Opposite/like-sign counts.
-  LeptonSigns = fs->make<TH2F>("LeptonSigns", titlePrefix + "lepton sign combinations", 6, 0, 6, 13, -6, 7);
+  LeptonSigns = fs->make<TH2F>("LeptonSigns", titlePrefix + "lepton sign combinations", 6, 0, 6, 13, -6, 7);  LeptonSigns->Sumw2();
   LeptonSigns->GetXaxis()->SetTitle("# leptons");
   LeptonSigns->GetYaxis()->SetTitle("total charge");
 
   // Lepton eta, y, phi.
-  LeptonEta = fs->make<TH1F>("LeptonEta", titlePrefix + "#eta", 100, -5, 5);
-  LeptonRap = fs->make<TH1F>("LeptonRap", titlePrefix + "y",    100, -5, 5);
-  LeptonPhi = fs->make<TH1F>("LeptonPhi", titlePrefix + "#phi", 100, -TMath::Pi(), TMath::Pi());
-    
+  LeptonEta = fs->make<TH1F>("LeptonEta", titlePrefix + "#eta", 100, -5, 5);  LeptonEta->Sumw2();
+  LeptonRap = fs->make<TH1F>("LeptonRap", titlePrefix + "y",    100, -5, 5);  LeptonRap->Sumw2();
+  LeptonPhi = fs->make<TH1F>("LeptonPhi", titlePrefix + "#phi", 100, -TMath::Pi(), TMath::Pi());  LeptonPhi->Sumw2();
+
   // Lepton momenta: p, p_T, p_z.
-  LeptonPt = fs->make<TH1F>("LeptonPt", titlePrefix + "pT", 2000, 0, 2000);
-  LeptonPz = fs->make<TH1F>("LeptonPz", titlePrefix + "pz", 2000, 0, 2000);
-  LeptonP  = fs->make<TH1F>("LeptonP",  titlePrefix + "p",  2000, 0, 2000);
+  LeptonPt = fs->make<TH1F>("LeptonPt", titlePrefix + "pT", 2000, 0, 2000);  LeptonPt->Sumw2();
+  LeptonPz = fs->make<TH1F>("LeptonPz", titlePrefix + "pz", 2000, 0, 2000);  LeptonPz->Sumw2();
+  LeptonP  = fs->make<TH1F>("LeptonP",  titlePrefix + "p",  2000, 0, 2000);  LeptonP->Sumw2();
 
   // Lepton momenta versus pseudorapidity.
   LeptonPVsEta  = fs->make<TProfile>("LeptonPVsEta",   titlePrefix + "p vs. #eta",  100, -6, 6);
@@ -187,87 +189,89 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   // Muon specific histos.
 
   // Delta R < 0.3 isolation variables.
-  IsoSumPt         = fs->make<TH1F>("IsoSumPt",         titlePrefix + "Iso. (#Delta R < 0.3) #Sigma pT",           50, 0, 50);
-  RelIsoSumPt      = fs->make<TH1F>("RelIsoSumPt",      titlePrefix + "Iso. (#Delta R < 0.3) #Sigma pT / tk. pT",  50, 0, 1);
-  IsoEcal          = fs->make<TH1F>("IsoEcal",          titlePrefix + "Iso. (#Delta R < 0.3) ECAL",                50, 0, 50);
-  IsoHcal          = fs->make<TH1F>("IsoHcal",          titlePrefix + "Iso. (#Delta R < 0.3) HCAL",                50, 0, 50);
-  CombIso          = fs->make<TH1F>("CombIso",          titlePrefix + "Iso. (#Delta R < 0.3), combined",           50, 0, 50);
-  RelCombIso       = fs->make<TH1F>("RelCombIso",       titlePrefix + "Iso. (#Delta R < 0.3), combined / tk. pT",  50, 0, 1);
-  CombIsoNoECAL    = fs->make<TH1F>("CombIsoNoECAL",    titlePrefix + "Iso. (#Delta R < 0.3), combined (no ECAL)", 50, 0, 50);
-  RelCombIsoNoECAL = fs->make<TH1F>("RelCombIsoNoECAL", titlePrefix + "Iso. (#Delta R < 0.3), combined (no ECAL), relative", 50, 0, 50);
-  IsoNTracks       = fs->make<TH1F>("IsoNTracks",       titlePrefix + "Iso. (#Delta R < 0.3) nTracks",             10, 0, 10);
-  IsoNJets         = fs->make<TH1F>("IsoNJets",         titlePrefix + "Iso. (#Delta R < 0.3) nJets",               10, 0, 10);
-    
+  IsoSumPt         = fs->make<TH1F>("IsoSumPt",         titlePrefix + "Iso. (#Delta R < 0.3) #Sigma pT",           50, 0, 50);  IsoSumPt->Sumw2();
+  RelIsoSumPt      = fs->make<TH1F>("RelIsoSumPt",      titlePrefix + "Iso. (#Delta R < 0.3) #Sigma pT / tk. pT",  50, 0, 1);   RelIsoSumPt->Sumw2();
+  IsoEcal          = fs->make<TH1F>("IsoEcal",          titlePrefix + "Iso. (#Delta R < 0.3) ECAL",                50, 0, 50);  IsoEcal->Sumw2();
+  IsoHcal          = fs->make<TH1F>("IsoHcal",          titlePrefix + "Iso. (#Delta R < 0.3) HCAL",                50, 0, 50);  IsoHcal->Sumw2();
+  CombIso          = fs->make<TH1F>("CombIso",          titlePrefix + "Iso. (#Delta R < 0.3), combined",           50, 0, 50);  CombIso->Sumw2();
+  RelCombIso       = fs->make<TH1F>("RelCombIso",       titlePrefix + "Iso. (#Delta R < 0.3), combined / tk. pT",  50, 0, 1);   RelCombIso->Sumw2();
+  CombIsoNoECAL    = fs->make<TH1F>("CombIsoNoECAL",    titlePrefix + "Iso. (#Delta R < 0.3), combined (no ECAL)", 50, 0, 50);  CombIsoNoECAL->Sumw2();
+  RelCombIsoNoECAL = fs->make<TH1F>("RelCombIsoNoECAL", titlePrefix + "Iso. (#Delta R < 0.3), combined (no ECAL), relative", 50, 0, 50);  RelCombIsoNoECAL->Sumw2();
+  IsoNTracks       = fs->make<TH1F>("IsoNTracks",       titlePrefix + "Iso. (#Delta R < 0.3) nTracks",             10, 0, 10);  IsoNTracks->Sumw2();
+  IsoNJets         = fs->make<TH1F>("IsoNJets",         titlePrefix + "Iso. (#Delta R < 0.3) nJets",               10, 0, 10);  IsoNJets->Sumw2();
+
   // Track hit counts.
-  NPxHits = fs->make<TH1F>("NPxHits", titlePrefix + "# pixel hits",    8, 0,  8);
-  NStHits = fs->make<TH1F>("NStHits", titlePrefix + "# strip hits",   30, 0, 30);
-  NTkHits = fs->make<TH1F>("NTkHits", titlePrefix + "# tracker hits", 40, 0, 40);
-  NMuHits = fs->make<TH1F>("NMuHits", titlePrefix + "# muon hits",    55, 0, 55);
+  NPxHits = fs->make<TH1F>("NPxHits", titlePrefix + "# pixel hits",    8, 0,  8);  NPxHits->Sumw2();
+  NStHits = fs->make<TH1F>("NStHits", titlePrefix + "# strip hits",   30, 0, 30);  NStHits->Sumw2();
+  NTkHits = fs->make<TH1F>("NTkHits", titlePrefix + "# tracker hits", 40, 0, 40);  NTkHits->Sumw2();
+  NMuHits = fs->make<TH1F>("NMuHits", titlePrefix + "# muon hits",    55, 0, 55);  NMuHits->Sumw2();
 
-  NHits        = fs->make<TH1F>("NHits",        titlePrefix + "# hits",         78, 0, 78);
-  NInvalidHits = fs->make<TH1F>("NInvalidHits", titlePrefix + "# invalid hits", 78, 0, 78);
+  NHits        = fs->make<TH1F>("NHits",        titlePrefix + "# hits",         78, 0, 78);  NHits->Sumw2();
+  NInvalidHits = fs->make<TH1F>("NInvalidHits", titlePrefix + "# invalid hits", 78, 0, 78);  NInvalidHits->Sumw2();
 
-  NPxLayers = fs->make<TH1F>("NPxLayers", titlePrefix + "# pixel layers",    8, 0,  8);
-  NStLayers = fs->make<TH1F>("NStLayers", titlePrefix + "# strip layers",   15, 0, 15);
-  NTkLayers = fs->make<TH1F>("NTkLayers", titlePrefix + "# tracker layers", 20, 0, 20);
+  NPxLayers = fs->make<TH1F>("NPxLayers", titlePrefix + "# pixel layers",    8, 0,  8);  NPxLayers->Sumw2();
+  NStLayers = fs->make<TH1F>("NStLayers", titlePrefix + "# strip layers",   15, 0, 15);  NStLayers->Sumw2();
+  NTkLayers = fs->make<TH1F>("NTkLayers", titlePrefix + "# tracker layers", 20, 0, 20);  NTkLayers->Sumw2();
 
   // Other track variables.
-  Chi2dof = fs->make<TH1F>("Chi2dof", titlePrefix + "#chi^{2}/dof", 100, 0, 10);
-  TrackD0BS = fs->make<TH1F>("TrackD0BS", titlePrefix + "|d0 wrt BS|", 100, 0, 0.2);
-  TrackDZBS = fs->make<TH1F>("TrackDZBS", titlePrefix + "|dz wrt BS|", 100, 0, 20);
-  TrackD0PV = fs->make<TH1F>("TrackD0PV", titlePrefix + "|d0 wrt PV|", 100, 0, 0.2);
-  TrackDZPV = fs->make<TH1F>("TrackDZPV", titlePrefix + "|dz wrt PV|", 100, 0, 20);
+  Chi2dof = fs->make<TH1F>("Chi2dof", titlePrefix + "#chi^{2}/dof", 100, 0, 10);      Chi2dof->Sumw2();
+  TrackD0BS = fs->make<TH1F>("TrackD0BS", titlePrefix + "|d0 wrt BS|", 100, 0, 0.2);  TrackD0BS->Sumw2();
+  TrackDZBS = fs->make<TH1F>("TrackDZBS", titlePrefix + "|dz wrt BS|", 100, 0, 20);   TrackDZBS->Sumw2();
+  TrackD0PV = fs->make<TH1F>("TrackD0PV", titlePrefix + "|d0 wrt PV|", 100, 0, 0.2);  TrackD0PV->Sumw2();
+  TrackDZPV = fs->make<TH1F>("TrackDZPV", titlePrefix + "|dz wrt PV|", 100, 0, 20);   TrackDZPV->Sumw2();
 
   // Electron specific histos (none yet).
 
   // Dilepton quantities.
 
   // Dilepton multiplicity.
-  NDileptons = fs->make<TH1F>("NDileptons", "# dileptons/event" + titlePrefix, 10, 0, 10);
+  NDileptons = fs->make<TH1F>("NDileptons", "# dileptons/event" + titlePrefix, 10, 0, 10);  NDileptons->Sumw2();
 
   // Dilepton eta, y, phi.
-  DileptonEta = fs->make<TH1F>("DileptonEta", titlePrefix + "dil. #eta", 100, -5,  5);
-  DileptonRap = fs->make<TH1F>("DileptonRap", titlePrefix + "dil. y",    100, -5,  5);
-  DileptonPhi = fs->make<TH1F>("DileptonPhi", titlePrefix + "dil. #phi", 100, -TMath::Pi(), TMath::Pi());
-  
+  DileptonEta = fs->make<TH1F>("DileptonEta", titlePrefix + "dil. #eta", 100, -5,  5);  DileptonEta->Sumw2();
+  DileptonRap = fs->make<TH1F>("DileptonRap", titlePrefix + "dil. y",    100, -5,  5);  DileptonRap->Sumw2();
+  DileptonPhi = fs->make<TH1F>("DileptonPhi", titlePrefix + "dil. #phi", 100, -TMath::Pi(), TMath::Pi());  DileptonPhi->Sumw2();
+
   // Dilepton momenta: p, p_T, p_z.
-  DileptonPt = fs->make<TH1F>("DileptonPt", titlePrefix + "dil. pT", 2000, 0, 2000);
-  DileptonPz = fs->make<TH1F>("DileptonPz", titlePrefix + "dil. pz", 2000, 0, 2000);
-  DileptonP  = fs->make<TH1F>("DileptonP",  titlePrefix + "dil. p",  2000, 0, 2000);
+  DileptonPt = fs->make<TH1F>("DileptonPt", titlePrefix + "dil. pT", 2000, 0, 2000);  DileptonPt->Sumw2();
+  DileptonPz = fs->make<TH1F>("DileptonPz", titlePrefix + "dil. pz", 2000, 0, 2000);  DileptonPz->Sumw2();
+  DileptonP  = fs->make<TH1F>("DileptonP",  titlePrefix + "dil. p",  2000, 0, 2000);  DileptonP->Sumw2();
   
   // Dilepton momenta versus pseudorapidity.
   DileptonPVsEta  = fs->make<TProfile>("DileptonPVsEta",  titlePrefix + "dil. p vs. #eta",  100, -6, 6);
   DileptonPtVsEta = fs->make<TProfile>("DileptonPtVsEta", titlePrefix + "dil. pT vs. #eta", 100, -6, 6);
   
   // Dilepton invariant mass.
-  DileptonMass            = fs->make<TH1F>("DileptonMass",            titlePrefix + "dil. mass", 3000, 0, 3000);
-  DileptonMassWeight            = fs->make<TH1F>("DileptonMassWeight",            titlePrefix + "dil. mass", 3000, 0, 3000);
-    DileptonMassWeight->Sumw2();
-  DileptonWithPhotonsMass = fs->make<TH1F>("DileptonWithPhotonsMass", titlePrefix + "res. mass", 3000, 0, 3000);
+  DileptonMass            = fs->make<TH1F>("DileptonMass",            titlePrefix + "dil. mass", 3000, 0, 3000);  DileptonMass->Sumw2();
+  DileptonMassWeight      = fs->make<TH1F>("DileptonMassWeight",      titlePrefix + "dil. mass", 3000, 0, 3000);  DileptonMassWeight->Sumw2();
+  DileptonWithPhotonsMass = fs->make<TH1F>("DileptonWithPhotonsMass", titlePrefix + "res. mass", 3000, 0, 3000);  DileptonWithPhotonsMass->Sumw2();
   
   // Plots comparing the daughter lepton momenta.
-  DileptonDeltaPt  = fs->make<TH1F>("DileptonDeltaPt",  titlePrefix + "dil. |pT^{1}| - |pT^{2}|",                100, -100, 100);
-  DileptonDeltaP   = fs->make<TH1F>("DileptonDeltaP",   titlePrefix + "dil. |p^{1}| - |p^{2}|",                  100, -500, 500);
-  DileptonPtErrors = fs->make<TH2F>("DileptonPtErrors", titlePrefix + "dil. #sigma_{pT}^{1} v. #sigma_{pT}^{2}", 100, 0, 100, 100, 0, 100);
+  DileptonDeltaPt = fs->make<TH1F>("DileptonDeltaPt",  titlePrefix + "dil. |pT^{1}| - |pT^{2}|", 100, -100, 100);  DileptonDeltaPt->Sumw2();
+  DileptonDeltaP  = fs->make<TH1F>("DileptonDeltaP",   titlePrefix + "dil. |p^{1}| - |p^{2}|",   100, -500, 500);  DileptonDeltaP->Sumw2();
+
+  // pT errors of daughter muons
+  DimuonMuonPtErrors        = fs->make<TH2F>("DimuonMuonPtErrors",        titlePrefix + "dil. #sigma_{pT}^{1} v. #sigma_{pT}^{2}", 100, 0, 100, 100, 0, 100);
+  DimuonMuonPtErrOverPt     = fs->make<TH1F>("DimuonMuonPtErrOverPt",     titlePrefix + "muon #sigma_{pT}/pT",              200, 0., 1.);  DimuonMuonPtErrOverPt->Sumw2();
+  DimuonMuonPtErrOverPtM200 = fs->make<TH1F>("DimuonMuonPtErrOverPtM200", titlePrefix + "muon #sigma_{pT}/pT, M > 200 GeV", 200, 0., 1.);  DimuonMuonPtErrOverPtM200->Sumw2();
+  DimuonMuonPtErrOverPtM500 = fs->make<TH1F>("DimuonMuonPtErrOverPtM500", titlePrefix + "muon #sigma_{pT}/pT, M > 500 GeV", 200, 0., 1.);  DimuonMuonPtErrOverPtM500->Sumw2();
 
   // More daughter-related info.
   DileptonDaughterIds = fs->make<TH2F>("DileptonDaughterIds", "", 27, -13, 14, 27, -13, 14);
-  DileptonDaughterDeltaR = fs->make<TH1F>("DileptonDaughterDeltaR", "", 100, 0, 5);
-  DileptonDaughterDeltaPhi = fs->make<TH1F>("DileptonDaughterDeltaPhi", "", 100, 0, 3.15);
+  DileptonDaughterDeltaR = fs->make<TH1F>("DileptonDaughterDeltaR", "", 100, 0, 5);         DileptonDaughterDeltaR->Sumw2();
+  DileptonDaughterDeltaPhi = fs->make<TH1F>("DileptonDaughterDeltaPhi", "", 100, 0, 3.15);  DileptonDaughterDeltaPhi->Sumw2();
 
   // Dimuons have a vertex-constrained fit: some associated histograms.
-  DimuonMassVertexConstrained = fs->make<TH1F>("DimuonMassVertexConstrained", titlePrefix + "dimu. vertex-constrained mass", 3000, 0, 3000);
-  DimuonMassVertexConstrainedWeight = fs->make<TH1F>("DimuonMassVertexConstrainedWeight", titlePrefix + "dimu. vertex-constrained mass", 3000, 0, 3000);
-    DimuonMassVertexConstrainedWeight->Sumw2();
+  DimuonMassVertexConstrained = fs->make<TH1F>("DimuonMassVertexConstrained", titlePrefix + "dimu. vertex-constrained mass", 3000, 0, 3000);              DimuonMassVertexConstrained->Sumw2();
+  DimuonMassVertexConstrainedWeight = fs->make<TH1F>("DimuonMassVertexConstrainedWeight", titlePrefix + "dimu. vertex-constrained mass", 3000, 0, 3000);  DimuonMassVertexConstrainedWeight->Sumw2();
   // Mass plot in bins of log(mass)
   const int    NMBINS = 100;
   const double MMIN = 50., MMAX = 2000.;
   double logMbins[NMBINS+1];
   for (int ibin = 0; ibin <= NMBINS; ibin++)
     logMbins[ibin] = exp(log(MMIN) + (log(MMAX)-log(MMIN))*ibin/NMBINS);
-  DimuonMassVtxConstrainedLog = fs->make<TH1F>("DimuonMassVtxConstrainedLog", titlePrefix + "dimu vtx-constrained mass in log bins", NMBINS, logMbins);
-  DimuonMassVtxConstrainedLogWeight = fs->make<TH1F>("DimuonMassVtxConstrainedLogWeight", titlePrefix + "dimu vtx-constrained mass in log bins", NMBINS, logMbins);
-    DimuonMassVtxConstrainedLogWeight->Sumw2();
+  DimuonMassVtxConstrainedLog = fs->make<TH1F>("DimuonMassVtxConstrainedLog", titlePrefix + "dimu vtx-constrained mass in log bins", NMBINS, logMbins);  DimuonMassVtxConstrainedLog->Sumw2();
+  DimuonMassVtxConstrainedLogWeight = fs->make<TH1F>("DimuonMassVtxConstrainedLogWeight", titlePrefix + "dimu vtx-constrained mass in log bins", NMBINS, logMbins);  DimuonMassVtxConstrainedLogWeight->Sumw2();
   DimuonMassConstrainedVsUn = fs->make<TH2F>("DimuonMassConstrainedVsUn", titlePrefix + "dimu. vertex-constrained vs. non-constrained mass", 200, 0, 3000, 200, 0, 3000);
   DimuonMassVertexConstrainedError = fs->make<TH2F>("DimuonMassVertexConstrainedError", titlePrefix + "dimu. vertex-constrained mass error vs. mass", 100, 0, 3000, 100, 0, 400);
 }
@@ -419,20 +423,37 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
   DileptonMassWeight->Fill(dil.mass(),_prescaleWeight);
   DileptonWithPhotonsMass->Fill(resonanceP4(dil).mass());
 
-  const reco::CandidateBaseRef& lep_minus = dileptonDaughterByCharge(dil, -1);
-  const reco::CandidateBaseRef& lep_plus  = dileptonDaughterByCharge(dil, +1);
+  const reco::CandidateBaseRef& lep0 = dileptonDaughter(dil, 0);
+  const reco::CandidateBaseRef& lep1 = dileptonDaughter(dil, 1);
 
-  if (lep_plus.isNonnull() && lep_minus.isNonnull()) {
-    DileptonDeltaPt->Fill(fabs(lep_minus->pt()) - fabs(lep_plus->pt()));
-    DileptonDeltaP ->Fill(fabs(lep_minus->p())  - fabs(lep_plus->p()));
+  if (lep0.isNonnull() && lep1.isNonnull()) {
+    DileptonDeltaPt->Fill(fabs(lep0->pt()) - fabs(lep1->pt()));
+    DileptonDeltaP ->Fill(fabs(lep0->p())  - fabs(lep1->p()));
 
-    const pat::Muon* mu_minus = toConcretePtr<pat::Muon>(lep_minus);
-    const pat::Muon* mu_plus  = toConcretePtr<pat::Muon>(lep_plus);
-    if (mu_minus && mu_plus) {
-      const reco::Track* tk_minus = patmuon::getPickedTrack(*mu_minus).get();
-      const reco::Track* tk_plus  = patmuon::getPickedTrack(*mu_plus).get();
-      if (tk_minus && tk_plus)
-	DileptonPtErrors->Fill(ptError(tk_minus), ptError(tk_plus));
+    const pat::Muon* mu0 = toConcretePtr<pat::Muon>(lep0);
+    const pat::Muon* mu1 = toConcretePtr<pat::Muon>(lep1);
+    if (mu0 && mu1) {
+      const reco::Track* tk0 = patmuon::getPickedTrack(*mu0).get();
+      const reco::Track* tk1 = patmuon::getPickedTrack(*mu1).get();
+      if (tk0 && tk1) {
+	DimuonMuonPtErrors->Fill(ptError(tk0), ptError(tk1));
+	DimuonMuonPtErrOverPt->Fill(ptError(tk0)/tk0->pt());
+	DimuonMuonPtErrOverPt->Fill(ptError(tk1)/tk1->pt());
+	float mass = -999.;
+	// Use mass calculated with the vertex constraint when available
+	if (dil.hasUserFloat("vertexM"))
+	  mass = dil.userFloat("vertexM");
+	else
+	  mass = dil.mass();
+	if (mass > 200.) {
+	  DimuonMuonPtErrOverPtM200->Fill(ptError(tk0)/tk0->pt());
+	  DimuonMuonPtErrOverPtM200->Fill(ptError(tk1)/tk1->pt());
+	}
+	if (mass > 500.) {
+	  DimuonMuonPtErrOverPtM500->Fill(ptError(tk0)/tk0->pt());
+	  DimuonMuonPtErrOverPtM500->Fill(ptError(tk1)/tk1->pt());
+	}
+      }
     }
   }
 

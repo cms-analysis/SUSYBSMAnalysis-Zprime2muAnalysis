@@ -5,7 +5,7 @@
 import sys, os
 from array import array
 
-samples = ['dy60', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'dy1300', 'dy1600', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750'] #, 'zp2000', 'zp2250', 'zp2500', 'zp2750', 'zp3000']
+samples = ['dy60', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'dy1500', 'dy2000', 'zp750', 'zp1000', 'zp1250', 'zp1500', 'zp1750', 'zp2000', 'zp2250', 'zp2500', 'zp2750', 'zp3000']
 
 kind = [x for x in sys.argv[1:] if os.path.isdir(x)]
 
@@ -96,7 +96,7 @@ for sample, t, cnum, cden in samples_totals:
     if 'zp' not in sample and sample != 'dy60':
         continue
     if not totals_histos.has_key(t):
-        totals_histos[t] = ROOT.TH1F(t + '_totals_num', '', 2000, 0, 2000), ROOT.TH1F(t + '_totals_den', '', 2000, 0, 2000)
+        totals_histos[t] = ROOT.TH1F(t + '_totals_num', '', 2600, 0, 2600), ROOT.TH1F(t + '_totals_den', '', 2600, 0, 2600)
     hnum, hden = totals_histos[t]
     if 'zp' in sample:
         mass = int(sample.replace('zp', ''))
@@ -128,7 +128,7 @@ def do_overlay(name, samples, which):
         g = plots[(sample, which)][-1]
         g.SetLineColor(color)
         g.Draw(x)
-        g.GetXaxis().SetLimits(40, 2000)
+        g.GetXaxis().SetLimits(40, 2500)
         if which not in ['AccNoPt', 'Acceptance']:
             g.GetYaxis().SetRangeUser(0.85, 1.05)
         else:
@@ -169,9 +169,9 @@ def do_replace_or_add(name, samples, which, add=False):
 
     eff = binomial_divide(num, den)
     eff.Draw('AP')
-    eff.GetXaxis().SetLimits(40, 2000)
+    eff.GetXaxis().SetLimits(40, 2500)
     if which.startswith('Acc'):
-        eff.GetYaxis().SetRangeUser(0.4, 1.01)
+        eff.GetYaxis().SetRangeUser(0.2, 1.01)
     elif 'Reco' in which:
         eff.GetYaxis().SetRangeUser(0., 1.01)
     else:
@@ -228,7 +228,7 @@ lg = ROOT.TLegend(0.13, 0.13, 0.44, 0.30)
 lg.AddEntry(L1Or, 'L1', 'LPE')
 lg.AddEntry(HLTOr, 'HLT', 'LPE')
 lg.AddEntry(Total, 'L1+HLT', 'LPE')
-L1Or.GetXaxis().SetRangeUser(100, 2000)
+L1Or.GetXaxis().SetRangeUser(100, 2500)
 L1Or.GetYaxis().SetRangeUser(0.93, 1.005)
 L1Or.Draw('AP')
 HLTOr.Draw('P same')
@@ -245,16 +245,16 @@ lg = ROOT.TLegend(0.20, 0.13, 0.92, 0.33)
 lg.AddEntry(RecoWrtAccTrig, 'wrt triggered events in acceptance', 'LPE')
 lg.AddEntry(RecoWrtAcc, 'wrt events in acceptance', 'LPE')
 lg.AddEntry(TotalReco, 'total', 'LPE')
-RecoWrtAccTrig.GetXaxis().SetRangeUser(0, 2000)
+RecoWrtAccTrig.GetXaxis().SetRangeUser(0, 2500)
 RecoWrtAccTrig.GetYaxis().SetRangeUser(0.1, 1.01)
 RecoWrtAccTrig.Draw('AP')
 RecoWrtAcc.Draw('P same')
 TotalReco.Draw('P same')
-fitwindow = 200,2000
+fitwindow = 200,2500
 fcn = ROOT.TF1('fcn', '[0] + [1]/(x + [2])**3', *fitwindow)
 fcn.SetParNames("a", "b", "c")
 fcn.SetLineColor(TotalReco.GetLineColor())
-lg.AddEntry(fcn, 'fit to a + b/pow(m+c, 3) for m in (200,2000)', 'L')
+lg.AddEntry(fcn, 'fit to a + b/pow(m+c, 3) for m in (200,2500)', 'L')
 lg.Draw()
 ROOT.gStyle.SetOptFit(1111)
 TotalReco.Fit(fcn, 'VR')
@@ -299,8 +299,6 @@ x,y = ROOT.Double(), ROOT.Double()
 g = totals_histos['TotalReco_eff']
 g.GetPoint(0, x, y)
 print '%20s%10.4f%20s' % ( '60-120', y, '[%5.4f, %5.4f]' % (y-g.GetErrorYlow(0), y+g.GetErrorYhigh(0)))
-g.GetPoint(1, x, y)
-print '%20s%10.4f%20s' % ('120-200', y, '[%5.4f, %5.4f]' % (y-g.GetErrorYlow(1), y+g.GetErrorYhigh(1)))
 g = TotalReco
 n = g.GetN()
 for i in xrange(n):

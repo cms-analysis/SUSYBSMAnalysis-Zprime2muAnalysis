@@ -96,7 +96,7 @@ for sample, t, cnum, cden in samples_totals:
     if 'zp' not in sample and sample != 'dy60':
         continue
     if not totals_histos.has_key(t):
-        totals_histos[t] = ROOT.TH1F(t + '_totals_num', '', 2600, 0, 2600), ROOT.TH1F(t + '_totals_den', '', 2600, 0, 2600)
+        totals_histos[t] = ROOT.TH1F(t + '_totals_num', '', 3100, 0, 3100), ROOT.TH1F(t + '_totals_den', '', 3100, 0, 3100)
     hnum, hden = totals_histos[t]
     if 'zp' in sample:
         mass = int(sample.replace('zp', ''))
@@ -163,8 +163,8 @@ def do_replace_or_add(name, samples, which, add=False):
 
     num.SetLineColor(ROOT.kRed)
     den.SetLineColor(ROOT.kBlack)
-    den.Draw()
-    num.Draw('same')
+    den.Draw('hist')
+    num.Draw('hist same')
     ps.save('%s_%s_%s_both' % (name, which, 'add' if add else 'replace'))
 
     eff = binomial_divide(num, den)
@@ -273,6 +273,7 @@ for i in xrange(TotalReco.GetN()):
     TotalReco.GetPoint(i, x, y)
     f = fcn.Eval(x)
     residuals.SetPoint(i, x, f/y-1)
+residuals.GetXaxis().SetRangeUser(0, 2500)
 residuals.SetTitle(';dimuon invariant mass (GeV);relative residual f/h-1')
 residuals.Draw('AP')
 residuals.Fit('pol1', 'VR', '', *fitwindow)

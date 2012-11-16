@@ -8,7 +8,7 @@ def for_cmssw(ll):
 # JSONs.
 first_run = 190456
 last_rereco_run = 198523
-last_prompt_run = 205618
+last_prompt_run = 206098
 last_run = 210000
 
 # Sometimes the same run-range json gets made in other versions.
@@ -77,13 +77,13 @@ def combine(prompt_ll, rereco1_ll, rereco2_ll, rereco3_ll, dcsonly_ll=None):
 # Combine all lists
 Run2012_ll          = combine(Prompt_ll,          Jul13_ll,          Aug06_ll,          Aug24_ll)
 Run2012MuonsOnly_ll = combine(PromptMuonsOnly_ll, Jul13MuonsOnly_ll, Aug06MuonsOnly_ll, Aug24MuonsOnly_ll)
-for x in NoL1TMuonsOnly_ll:
-    Run2012MuonsOnly_ll = Run2012MuonsOnly_ll | x
+#for x in NoL1TMuonsOnly_ll:
+#    Run2012MuonsOnly_ll = Run2012MuonsOnly_ll | x
 
 Run2012PlusDCSOnly_ll          = combine(Prompt_ll,          Jul13_ll,          Aug06_ll,          Aug24_ll,          DCSOnly_ll)
 Run2012PlusDCSOnlyMuonsOnly_ll = combine(PromptMuonsOnly_ll, Jul13MuonsOnly_ll, Aug06MuonsOnly_ll, Aug24MuonsOnly_ll, DCSOnly_ll)
-for x in NoL1TMuonsOnly_ll:
-    Run2012PlusDCSOnlyMuonsOnly_ll = Run2012PlusDCSOnlyMuonsOnly_ll | x
+#for x in NoL1TMuonsOnly_ll:
+#    Run2012PlusDCSOnlyMuonsOnly_ll = Run2012PlusDCSOnlyMuonsOnly_ll | x
 
 all_ll_names = ['DCSOnly', 'DCSOnlyForNewRuns', 'Jul13', 'Jul13MuonsOnly', 'Prompt', 'PromptMuonsOnly', 'Run2012', 'Run2012MuonsOnly', 'Run2012PlusDCSOnly', 'Run2012PlusDCSOnlyMuonsOnly']
 

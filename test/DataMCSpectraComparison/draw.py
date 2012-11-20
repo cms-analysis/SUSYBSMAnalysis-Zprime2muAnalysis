@@ -252,8 +252,9 @@ class Drawer:
             return 0,0.1
         if 'Electron' in dilepton:
             return 100, 1000
-#        if 'MuonsSameSign' in dilepton:
-#            return 50, 700
+        if 'MuonsSameSign' in dilepton:
+            if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained']:
+                return 50, 900
         if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained']:
             return 60,2000
         elif quantity_to_compare in ['DileptonPt', 'LeptonPt']:
@@ -300,19 +301,19 @@ class Drawer:
         # off, rather than trying to be smart and getting them from
         # the histogram files.
         # Factors below were calculated for the MuonPhys JSON for 2012
-        # released on November 2 and correspond to 15.640/fb.
+        # released on November 2 and correspond to 15.774/fb.
         if cutset == 'VBTF':
-            return 350613./337938.2
+            return 353657./340833.6
         elif cutset == 'OurNew':
-            return 367659./357970.1
+            return 370843/361037.1
         elif cutset == 'OurOld':
-            return 416016./396433.0
+            return 419607./399829.6
         elif cutset == 'OurNoIso':
-            return 373475./362446.1
+            return 376714./365551.5
         elif cutset == 'OurMuPrescaled':
-            return 16644./16460.2
+            return 16717./16305.6
         elif cutset == 'VBTFMuPrescaled':
-            return 15522./15001.
+            return 15613./15105.4
         # If the cutset is not one of the above, don't rescale.
         return 1.
 

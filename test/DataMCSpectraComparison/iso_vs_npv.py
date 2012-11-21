@@ -7,12 +7,11 @@ ROOT.gStyle.SetOptStat(110010)
 
 ps = plot_saver('plots/iso_vs_npv', pdf=True)
 
-#f = ROOT.TFile('data/Run2012MuonsOnly/ana_datamc_data.root')
-f = ROOT.TFile('data/Run2012PlusDCSOnlyMuonsOnly/ana_datamc_data.root')
+f = ROOT.TFile('data/Run2012MuonsOnly/ana_datamc_data.root')
 t = f.SimpleNtupler.Get('t')
 
-max_npv = 25
-nbins = 5
+max_npv = 30
+nbins = 6
 per = max_npv/nbins
 
 hs = []
@@ -20,7 +19,7 @@ hs = []
 t.SetAlias('OurSelNewNoIso', 'loose_no_iso_0 && loose_no_iso_1 && triggerMatched && extraDimuonCuts && GoodData && OppSign')
 t.Draw('nvertices>>hnvertices(30, 0, 30)', 'OurSelNewNoIso && dil_mass > 60 && dil_mass < 120')
 ps.save('nvertices')
-t.Draw('nvertices>>hnvertices2(5, 0, 25)', 'OurSelNewNoIso && dil_mass > 60 && dil_mass < 120')
+t.Draw('nvertices>>hnvertices2(6, 0, 30)', 'OurSelNewNoIso && dil_mass > 60 && dil_mass < 120')
 ROOT.hnvertices2.Draw('histo text00')
 ps.save('nvertices_rebin')
 
@@ -74,7 +73,7 @@ tkpcal.SetMarkerSize(1.1)
 tkonly.SetMarkerSize(1.2)
 tkpcal.Draw('APEZ')
 tkpcal.GetYaxis().SetTitle('fraction of events failing the rel. iso. cut')
-tkpcal.GetYaxis().SetRangeUser(0.006, 0.04)
+tkpcal.GetYaxis().SetRangeUser(0.005, 0.05)
 tkonly.Draw('PEZ')
 l = ROOT.TLegend(0.15, 0.74, 0.70, 0.86)
 l.AddEntry(tkpcal, 'tracker-plus-calorimeters, cut = 0.15', 'LPE')

@@ -110,18 +110,21 @@ return_data = 1
         Run2012MuonsOnly_ll.writeJSON('tmp.json')
 
         dataset_details = [
-            ('SingleMuRun2012A_Prompt_190450_193686', '/SingleMu/slava-datamc_SingleMuRun2012A_Prompt_190450_193686_20120515044043-f1c162e9ac6a53572830a92e8730d513/USER'),
-            ('SingleMuRun2012B_Prompt_193752_194500', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_193752_194500_20120528075253-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
-            ('SingleMuRun2012B_Prompt_194501_195520', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_194501_195520_20120611022947-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
-            ('SingleMuRun2012B_Prompt_195521_195775', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_195521_195775_20120615114641-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
-#            ('SingleMuRun2012B_Prompt_195776_195947', '/SingleMu/slava-datamc_SingleMuRun2012B_Prompt_195776_195947_20120617080738-d6e8741107b6d0f570b2cfba8ae4760b/USER'),
+            ('SingleMuRun2012A_13Jul2012_190450_193751', '/SingleMu/slava-datamc_SingleMuRun2012A-13Jul2012_190450_193751_20121011073628-426a2d966f78bce6bde85f3ed41c07ba/USER'),
+            ('SingleMuRun2012A_06Aug2012_190782_190949', '/SingleMu/slava-datamc_SingleMuRun2012A-recover-06Aug2012_190782_190949_20121011120430-426a2d966f78bce6bde85f3ed41c07ba/USER'),
+            ('SingleMuRun2012B_13Jul2012_193752_196531', '/SingleMu/slava-datamc_SingleMuRun2012B-13Jul2012_193752_196531_20121012044921-426a2d966f78bce6bde85f3ed41c07ba/USER'),
+            ('SingleMuRun2012C_24Aug2012_197556_198913', '/SingleMu/slava-datamc_SingleMuRun2012C-24Aug2012_197556_198913_20121012113325-426a2d966f78bce6bde85f3ed41c07ba/USER'),
+            ('SingleMuRun2012C_Prompt_198934_203772',    '/SingleMu/slava-datamc_SingleMuRun2012C-Prompt_198934_203772_20121015023300-8627c6a48d2426dec4aa557620a039a0/USER'),
+            ('SingleMuRun2012D_Prompt_203773_204563',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_203773_204563_20121016104501-8627c6a48d2426dec4aa557620a039a0/USER'),
+            ('SingleMuRun2012D_Prompt_204564_206087',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_204564_206087_20121029121943-8627c6a48d2426dec4aa557620a039a0/USER'),
+            ('SingleMuRun2012D-Prompt_206088_206539',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_206088_206539_20121112085341-8627c6a48d2426dec4aa557620a039a0/USER'),
             ]
 
         for name, ana_dataset in dataset_details:
             print name
 
             new_py = open('nminus1effs.py').read()
-            new_py += "\nprocess.GlobalTag.globaltag = 'GR_R_52_V7::All'\n"
+            new_py += "\nprocess.GlobalTag.globaltag = 'GR_P_V42_AN2::All'\n"
             open('nminus1effs_crab.py', 'wt').write(new_py)
 
             new_crab_cfg = crab_cfg % locals()
@@ -145,7 +148,7 @@ events_per_job = 50000
 ''')
 
         from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import *
-        samples = [zmumu, ttbar, dy120, dy200, dy500, dy800, dy1000, dy1300, dy1600, inclmu15]
+        samples = [zmumu, ttbar, dy120, dy200, dy500, dy800, dy1000, dy1500, dy2000, inclmu15]
         for sample in samples:
             print sample.name
             open('crab.cfg', 'wt').write(crab_cfg % sample)

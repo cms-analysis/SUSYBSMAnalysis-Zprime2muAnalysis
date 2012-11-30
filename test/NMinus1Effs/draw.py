@@ -44,6 +44,7 @@ else:
         'NoVtxProb',
         'NoB2B',
         'NoCosm',
+        'NoTrgMtch',
         ]
 
 pretty = {
@@ -74,7 +75,8 @@ pretty = {
     '60m120': '60 < m < 120 GeV',  
     '120m200': '120 < m < 200 GeV', 
     '200m400': '200 < m < 400 GeV',
-    '400m': 'm > 400 GeV',
+    '400m600': '400 < m < 600 GeV',
+    '600m': 'm > 600 GeV',
     }
 
 class nm1entry:
@@ -104,7 +106,7 @@ class nm1entry:
             for sample in samples:
                 f = ROOT.TFile(self.make_fn(sample.name))
                 h = f.Get(nminus1).Get('DileptonMass').Clone()
-                print nminus1, sample.name, h
+                print nminus1, sample.name, sample.partial_weight*lumi
                 h.Scale(sample.partial_weight * lumi)
                 hs.append(h)
             hsum = hs[0].Clone()
@@ -112,7 +114,7 @@ class nm1entry:
                 hsum.Add(h)
             self.histos[nminus1] = hsum
 
-data, lumi = nm1entry('data', True), 1900. # lumi in pb
+data, lumi = nm1entry('data', True), 15796. # lumi in pb
 mcsum = nm1entry('mcsum')
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import zmumu, dy120, dy200, dy500, dy1000, ttbar, inclmu15
@@ -126,14 +128,16 @@ mass_ranges = [
     ('60m120',  ( 60, 120)),
     ('120m200', (120, 200)),
     ('200m400', (200, 400)),
-    ('400m',    (400, 1e9)),
+    ('400m600', (400, 600)),
+    ('600m',    (600, 1e9)),
     ]
 
 to_use = {
     '60m120':  [data, mcsum], #, zmumu, ttbar],
     '120m200': [data, mcsum], #, dy120, ttbar],
     '200m400': [data, mcsum], #, dy200, ttbar],
-    '400m':    [data, mcsum], #, dy500, dy1000, ttbar],
+    '400m600': [data, mcsum], #, dy200, ttbar],
+    '600m':    [data, mcsum], #, dy500, dy1000, ttbar],
     }
 
 styles = {
@@ -152,7 +156,7 @@ ymin = {
     '60m120':  0.95,
     '120m200': 0.87,
     '200m400': 0.85,
-    '400m':    0.81,
+    '600m':    0.81,
     }
 global_ymin = 0.58
 

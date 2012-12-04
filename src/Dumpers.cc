@@ -12,6 +12,7 @@
 #include "FWCore/Common/interface/TriggerNames.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/Dumpers.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TrackUtilities.h"
 
 int mlprintf(const char* category, const char* fmt, ...) {
   static const size_t bufsize = 10240; // big enough?
@@ -86,10 +87,10 @@ std::ostream& operator<<(std::ostream& out, const pat::Muon& mu) {
     out << "\nWARNING muon did not have trackUsedForMomentum userInt!";
 
   out << "\nTeV refit values:";
-  osprintf(out, "\n%20s%20s%20s%20s%20s", "refit", "pt", "eta", "phi", "chi2/dof");
+  osprintf(out, "\n%20s%20s%20s%20s%20s%20s", "refit", "pt", "sigma(pt)/pt", "eta", "phi", "chi2/dof");
   for (size_t i = 0; i < patmuon::nTrackTypes; ++i) {
     reco::TrackRef tk = patmuon::trackByType(mu, patmuon::TrackType(i));
-    osprintf(out, "\n%20s%20.1f%20.1f%20.3f%20.3f", patmuon::track_names[i].c_str(), tk->pt(), tk->eta(), tk->phi(), tk->normalizedChi2());
+    osprintf(out, "\n%20s%20.1f%20.5f%20.1f%20.3f%20.3f", patmuon::track_names[i].c_str(), tk->pt(), ptError(tk.get())/tk->pt(), tk->eta(), tk->phi(), tk->normalizedChi2());
   }
     
   if (mu.isTrackerMuon())

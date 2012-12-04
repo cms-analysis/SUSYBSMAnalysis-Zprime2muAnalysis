@@ -155,7 +155,7 @@ switchJetCollection(process,
 # Make a collection of muons with our final selection applied so that
 # the muon-jet cleaning will use only muons passing those cuts. This
 # muon collection is not saved in the output.
-from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff import loose_cut
+from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionDec2012_cff import loose_cut
 process.muonsForJetCleaning = process.selectedPatMuons.clone(cut = loose_cut.replace('pt > 45', 'pt > 30'))
 process.patDefaultSequence.replace(process.selectedPatMuons, process.selectedPatMuons * process.muonsForJetCleaning)
 process.cleanPatJets.checkOverlaps.muons.src = 'muonsForJetCleaning'

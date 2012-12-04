@@ -10,14 +10,14 @@ goodDataFilter.HLTPaths = ['goodDataAll'] # can set to just 'goodDataPrimaryVert
 goodDataFilter.andOr = False # = AND
 
 from MuonPhotonMatch_cff import muonPhotonMatch
-from OurSelectionNew_cff import allDimuons, dimuons, loose_cut
+from OurSelectionDec2012_cff import allDimuons, dimuons, loose_cut
 
 leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'), #JMTBAD changeme after new PAT tuples
                          electron_src = cms.InputTag('cleanPatElectrons'),
                          muon_cuts = cms.string(loose_cut),
                          electron_cuts = cms.string('userInt("HEEPId") == 0'),
-                         muon_track_for_momentum = cms.string('TuneP'),
+                         muon_track_for_momentum = cms.string('TunePNew'),
                          muon_photon_match_src = cms.InputTag('muonPhotonMatch'),
                          electron_muon_veto_dR = cms.double(-1),
                          trigger_match_max_dR = cms.double(0.2),
@@ -57,10 +57,11 @@ def rec_level_module(process, module, name, tracks):
     return reduce(lambda x,y: x*y, p)
 
 def switch_to_old_selection(process):
-    import OurSelectionOld_cff
-    process.leptons.muon_cuts = OurSelectionOld_cff.loose_cut
-    process.allDimuons = OurSelectionOld_cff.allDimuons
-    process.dimuons = OurSelectionOld_cff.dimuons
+    # Unfortunate names: what used to be New is now old
+    import OurSelectionNew_cff
+    process.leptons.muon_cuts = OurSelectionNew_cff.loose_cut
+    process.allDimuons = OurSelectionNew_cff.allDimuons
+    process.dimuons = OurSelectionNew_cff.dimuons
 
 def switch_hlt_process_name(process, name):
     # JMTBAD better place for this fcn

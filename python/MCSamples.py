@@ -48,21 +48,19 @@ class tupleonlysample(sample):
         super(tupleonlysample, self).__init__(name, 'dummy', dataset, 1, 1, 1, 1, scheduler=scheduler, hlt_process_name=hlt_process_name)
 
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat8TeV for xsecs (all below in pb)
-# commented out samples are not available for Summer12/8 TeV
+# Single-top cross sections are from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SingleTopSigma8TeV
 samples = [
-    sample('zmumu',     '#gamma/Z #rightarrow #mu^{+}#mu^{-}',              '/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',      3293740, 432, 0.05, 1915.   - 12.2), # The subtraction here and below is because we drop the events with generated M in ranges in the other datasets, e.g. drop here M > 120.
-    sample('dy120',     'DY120',                                            '/DYToMuMu_M-120_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',        99984, 433, 0.05, 9.414   - 1.176,    k_factor=1.3),
-    sample('dy200',     'DY200',                                            '/DYToMuMu_M-200_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',       99990, 434, 0.05, 1.176   - 0.03557,  k_factor=1.3),
-    sample('dy500',     'DY500',                                            '/DYToMuMu_M-500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',       99992, 435, 0.05, 0.03557 - 0.00451,  k_factor=1.3),
-    sample('dy800',     'DY800',                                            '/DYToMuMu_M-800_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',       99984,   3, 0.05, 0.00451 - 0.00149,  k_factor=1.3),
-    sample('dy1000',    'DY1000',                                           '/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',      99989,  36, 0.05, 0.00149 - 1.705E-4/1.3, k_factor=1.3),
-##    sample('dy1300',    'DY1300',                                           '/DYToMuMu_M-1300_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',                  50560,   8, 0.05, 3.55E-4 - 9.28E-5,  k_factor=1.3),
-    sample('dy1500',    'DY1500',                                           '/DYToMuMu_M-1500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',      99992,   8, 0.05, 1.705E-4 - 2.208E-5, k_factor=1.),
-##    sample('dy1600',    'DY1600',                                           '/DYToMuMu_M-1600_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',                  50112,  37, 0.05, 9.28E-5 - 2.208E-5/1.3, k_factor=1.3),
-    sample('dy2000',    'DY2000',                                           '/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',      99974,  37, 0.05, 2.208E-5 - 0,       k_factor=1.),
+    sample('zmumu',     '#gamma/Z #rightarrow #mu^{+}#mu^{-}',              '/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',      3293740, 432, 0.05, 1915.),
+    sample('dy120',     'DY120',                                            '/DYToMuMu_M-120_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',       99984, 433, 0.05, 9.414,    k_factor=1.3),
+    sample('dy200',     'DY200',                                            '/DYToMuMu_M-200_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',       99990, 434, 0.05, 1.176,    k_factor=1.3),
+    sample('dy500',     'DY500',                                            '/DYToMuMu_M-500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',       99992, 435, 0.05, 0.03557,  k_factor=1.3),
+    sample('dy800',     'DY800',                                            '/DYToMuMu_M-800_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',       99984,   3, 0.05, 0.00451,  k_factor=1.3),
+    sample('dy1000',    'DY1000',                                           '/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',      99989,  36, 0.05, 0.00149,  k_factor=1.3),
+    sample('dy1500',    'DY1500',                                           '/DYToMuMu_M-1500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',      99992,   8, 0.05, 1.705E-4, k_factor=1.),
+    sample('dy2000',    'DY2000',                                           '/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',      99974,  37, 0.05, 2.208E-5, k_factor=1.),
     sample('ttbar',     't#bar{t}',                                         '/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM', 6923750,   2, 0.15, 225.2),
-    sample('tW',        'tW',                                               '/T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           497658,   1, 0.03,  11.2),
-    sample('tbarW',     'tbarW',                                            '/Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',        493460,  12, 0.03,  11.2),
+    sample('tW',        'tW',                                               '/T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           497658,   1, 0.03,  11.1),
+    sample('tbarW',     'tbarW',                                            '/Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',        493460,  12, 0.03,  11.1),
     sample('ww',        'WW',                                               '/WW_TuneZ2star_8TeV_pythia6_tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',                     10000431,   4, 0.035, 54.8),
     sample('wz',        'WZ',                                               '/WZ_TuneZ2star_8TeV_pythia6_tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',                     10000283,  30, 0.038, 33.2),
     sample('zz',        'ZZ',                                               '/ZZ_TuneZ2star_8TeV_pythia6_tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',                      9799908,   6, 0.025,  8.1),

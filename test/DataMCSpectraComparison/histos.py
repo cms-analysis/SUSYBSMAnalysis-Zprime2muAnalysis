@@ -3,6 +3,8 @@
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
+process.source.fileNames = ['/store/user/slava/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/datamc_dy2000/ecac376f8fa7ccc229aaa06d757d785a/pat_1_1_G72.root']
+process.maxEvents.input = 100
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold
 
 # Since the prescaled trigger comes with different prescales in
@@ -20,10 +22,11 @@ HistosFromPAT.leptonsFromDileptons = True
 # These modules define the basic selection cuts. For the monitoring
 # sets below, we don't need to define a whole new module, since they
 # just change one or two cuts -- see below.
-import SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff as VBTFSelection
-import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionOld_cff as OurSelectionOld
-import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2011EPS_cff as OurSelection2011EPS
+#import SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff as VBTFSelection
+#import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionOld_cff as OurSelectionOld
+#import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2011EPS_cff as OurSelection2011EPS
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff as OurSelectionNew
+import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionDec2012_cff as OurSelectionDec2012
 
 # CandCombiner includes charge-conjugate decays with no way to turn it
 # off. To get e.g. mu+mu+ separate from mu-mu-, cut on the sum of the
@@ -47,15 +50,17 @@ dils = [
 # that doesn't have a trigger match, need to re-add a hltHighLevel
 # filter somewhere below.
 cuts = {
-    'VBTF'     : VBTFSelection,
-    'OurOld'   : OurSelectionOld,
-    'OurEPS'   : OurSelection2011EPS,
+#    'VBTF'     : VBTFSelection,
+#    'OurOld'   : OurSelectionOld,
+#    'OurEPS'   : OurSelection2011EPS,
     'OurNew'   : OurSelectionNew,
-    'OurNoIso' : OurSelectionNew,
-    'EmuVeto'  : OurSelectionNew,
-    'Simple'   : OurSelectionNew, # The selection cuts in the module listed here are ignored below.
-    'VBTFMuPrescaled' : VBTFSelection,
-    'OurMuPrescaled'  : OurSelectionNew,
+    'Our2012'  : OurSelectionDec2012,
+    'OurNoIso' : OurSelectionDec2012,
+    'EmuVeto'  : OurSelectionDec2012,
+    'Simple'   : OurSelectionDec2012, # The selection cuts in the module listed here are ignored below.
+#    'VBTFMuPrescaled' : VBTFSelection,
+    'OurMuPrescaledNew'  : OurSelectionNew,
+    'OurMuPrescaled2012' : OurSelectionDec2012
     }
 
 # Loop over all the cut sets defined and make the lepton, allDilepton
@@ -81,6 +86,9 @@ for cut_name, Selection in cuts.iteritems():
     leptons = process.leptons.clone(muon_cuts = muon_cuts)
     if cut_name == 'EmuVeto':
         leptons.electron_muon_veto_dR = 0.1
+    # Keep using old TuneP for past selections
+    if 'Dec2012' not in Selection.__file__:
+        leptons.muon_track_for_momentum = cms.string('TuneP')
     setattr(process, leptons_name, leptons)
     path_list.append(leptons)
 
@@ -169,13 +177,17 @@ def printify(process):
     pe = process.PrintEventSimple = cms.EDAnalyzer('PrintEvent', dilepton_src = cms.InputTag('SimpleMuonsPlusMuonsMinus'))
     process.pathSimple *= process.PrintEventSimple
 
-    process.PrintEventOurNew = pe.clone(dilepton_src = cms.InputTag('OurNewMuonsPlusMuonsMinus'))
-    process.PrintEventOurNewSS = pe.clone(dilepton_src = cms.InputTag('OurNewMuonsSameSign'))
-    process.PrintEventOurNewEmu = pe.clone(dilepton_src = cms.InputTag('OurNewMuonsElectronsOppSign'))
-    process.pathOurNew *= process.PrintEventOurNew * process.PrintEventOurNewSS * process.PrintEventOurNewEmu
+    #- 2011-2012 selection (Nlayers > 8)
+    #process.PrintEventOurNew = pe.clone(dilepton_src = cms.InputTag('OurNewMuonsPlusMuonsMinus'))
+    #process.PrintEventOurNewSS = pe.clone(dilepton_src = cms.InputTag('OurNewMuonsSameSign'))
+    #process.PrintEventOurNewEmu = pe.clone(dilepton_src = cms.InputTag('OurNewMuonsElectronsOppSign'))
+    #process.pathOurNew *= process.PrintEventOurNew * process.PrintEventOurNewSS * process.PrintEventOurNewEmu
 
-    process.PrintEventVBTF = pe.clone(dilepton_src = cms.InputTag('VBTFMuonsPlusMuonsMinus'))
-    process.pathVBTF *= process.PrintEventVBTF
+    #- December 2012 selection (Nlayers > 5, re-tuned TuneP, dpT/pT < 0.3)
+    process.PrintEventOur2012    = pe.clone(dilepton_src = cms.InputTag('Our2012MuonsPlusMuonsMinus'))
+    process.PrintEventOur2012SS  = pe.clone(dilepton_src = cms.InputTag('Our2012MuonsSameSign'))
+    process.PrintEventOur2012Emu = pe.clone(dilepton_src = cms.InputTag('Our2012MuonsElectronsOppSign'))
+    process.pathOur2012 *= process.PrintEventOur2012 * process.PrintEventOur2012SS * process.PrintEventOur2012Emu
 
 def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.CheckPrescale_cfi')

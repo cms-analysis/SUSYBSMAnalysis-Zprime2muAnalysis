@@ -9,6 +9,7 @@
 #include "RecoVertex/VertexTools/interface/InvariantMassFromVertex.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TrackUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 #include "TrackingTools/Records/interface/TransientTrackRecord.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrack.h"
@@ -38,6 +39,7 @@ private:
   // be handled in the loop in produce.
   std::pair<bool, float>             back_to_back_cos_angle(const pat::CompositeCandidate&) const;
   std::pair<bool, CachingVertex<5> > vertex_constrained_fit(const pat::CompositeCandidate&) const;
+  std::pair<bool, float>             dpt_over_pt(const pat::CompositeCandidate&) const;
 
   // If the variable to embed in the methods above is a simple int or
   // float or is going to be embedded wholesale with the generic
@@ -58,6 +60,9 @@ private:
   const bool cut_on_vertex_chi2;
   const double vertex_chi2_max;
 
+  const bool cut_on_dpt_over_pt;
+  const double dpt_over_pt_max;
+
   edm::ESHandle<TransientTrackBuilder> ttkb;
 };
 
@@ -69,7 +74,9 @@ Zprime2muCompositeCandidatePicker::Zprime2muCompositeCandidatePicker(const edm::
     cut_on_back_to_back_cos_angle(cfg.existsAs<double>("back_to_back_cos_angle_min")),
     back_to_back_cos_angle_min(cut_on_back_to_back_cos_angle ? cfg.getParameter<double>("back_to_back_cos_angle_min") : -2),
     cut_on_vertex_chi2(cfg.existsAs<double>("vertex_chi2_max")),
-    vertex_chi2_max(cut_on_vertex_chi2 ? cfg.getParameter<double>("vertex_chi2_max") : 1e99)
+    vertex_chi2_max(cut_on_vertex_chi2 ? cfg.getParameter<double>("vertex_chi2_max") : 1e99),
+    cut_on_dpt_over_pt(cfg.existsAs<double>("dpt_over_pt_max")),
+    dpt_over_pt_max(cut_on_dpt_over_pt ? cfg.getParameter<double>("dpt_over_pt_max") : 1e99)
 {
   produces<pat::CompositeCandidateCollection>();
 }
@@ -182,6 +189,29 @@ void Zprime2muCompositeCandidatePicker::embed_vertex_constrained_fit(pat::Compos
   dil.addUserFloat("vertexMError", mass.error());
 }
 
+std::pair<bool, float> Zprime2muCompositeCandidatePicker::dpt_over_pt(const pat::CompositeCandidate& dil) const {
+  // Cut on sigma(pT)/pT to reject grossly mismeasured tracks.
+  float dpt_over_pt_largest = -1.;
+  const size_t n = dil.numberOfDaughters();
+  for (size_t i = 0; i < n; ++i) {
+    // Only apply this cut to muons.
+    if (abs(dil.daughter(i)->pdgId()) == 13) {
+      const reco::CandidateBaseRef& lep = dileptonDaughter(dil, i);
+      if (lep.isNonnull()) {
+	const pat::Muon* mu = toConcretePtr<pat::Muon>(lep);
+	if (mu) {
+	  const reco::Track* tk = patmuon::getPickedTrack(*mu).get();
+	  if (tk) {
+	    const double dpt_over_pt = ptError(tk)/tk->pt();
+	    if (dpt_over_pt > dpt_over_pt_largest) dpt_over_pt_largest = dpt_over_pt;
+	  }
+	}
+      }
+    }
+  }
+  return std::make_pair(dpt_over_pt_largest < dpt_over_pt_max, dpt_over_pt_largest);
+}
+
 void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::EventSetup& setup) {
   edm::Handle<pat::CompositeCandidateCollection> cands;
   event.getByLabel(src, cands);
@@ -212,11 +242,17 @@ void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::Ev
     if (cut_on_vertex_chi2 && !vertex.first)
       continue;
 
+    // Loose cut on sigma(pT)/pT of muon tracks.
+    std::pair<bool, float> dpt_over_pt_largest = dpt_over_pt(*c);
+    if (cut_on_dpt_over_pt && !dpt_over_pt_largest.first)
+      continue;
+
     // Save the dilepton since it passed the cuts, and store the cut
     // variables and other stuff for use later.
     new_cands->push_back(*c);
     new_cands->back().addUserFloat("cos_angle",   cos_angle.second);
     embed_vertex_constrained_fit(new_cands->back(), vertex.second);
+    new_cands->back().addUserFloat("dpt_over_pt", dpt_over_pt_largest.second);
   }
 
   // Sort candidates so we keep the ones with larger invariant

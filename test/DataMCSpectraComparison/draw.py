@@ -141,7 +141,8 @@ class Drawer:
         # ASCII table.
         self.quantities_to_compare = ['DileptonMass', 'DimuonMassVertexConstrained']
         self.dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
-        self.cutsets = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso', 'OurMuPrescaled', 'VBTFMuPrescaled']
+#        self.cutsets = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso', 'OurMuPrescaled', 'VBTFMuPrescaled']
+        self.cutsets = ['OurNew', 'Our2012', 'Simple', 'EmuVeto', 'OurNoIso', 'OurMuPrescaledNew', 'OurMuPrescaled2012']
         self.mass_ranges_for_table = [(60,120), (120,200), (200,400), (400,600), (120,), (200,), (400,), (600,)]
 
         if options.include_quantities is not None:
@@ -296,33 +297,26 @@ class Drawer:
             return 1.
 
         # These numbers are specified manually here, transcribing from
-        # the 60-120 GeV tables (whether from the prescaled path) that
-        # are produced when running this script with rescaling turned
-        # off, rather than trying to be smart and getting them from
-        # the histogram files.
+        # the 60-120 GeV tables from the prescaled path that are
+        # produced when running this script with rescaling turned off,
+        # rather than trying to be smart and getting them from the
+        # histogram files.
         # Factors below were calculated for the MuonPhys JSON for 2012
         # released on November 2 and correspond to 15.796/fb.
-        if cutset == 'VBTF':
-            return 354167./343727.7
-        elif cutset == 'OurNew':
-            return 371389/364118.8
-        elif cutset == 'OurOld':
-            return 420219./403246.4
-        elif cutset == 'OurNoIso':
-            return 377271./368666.8
-        elif cutset == 'OurMuPrescaled':
-            return 16805./16434.8
-        elif cutset == 'VBTFMuPrescaled':
-            return 15694./15224.8
-        # If the cutset is not one of the above, don't rescale.
-        return 1.
+        # If the cutset is not one of the below, don't rescale.
+        rescale_factor = 1.
+        if 'New' in cutset:
+            rescale_factor = 16740./17228.5
+        elif '2012' in cutset or cutset =='OurNoIso':
+            rescale_factor = 18893./18804.5
+        return rescale_factor
 
     def advertise_lines(self):
         s = []
         s.append('total lumi from data: %.f/pb' % self.int_lumi)
         s.append('rescaling mumu MC histograms by these cut-dependent factors:')
         for cutset in self.cutsets:
-            s.append('%15s:%.10f' % (cutset, self.get_lumi_rescale_factor(cutset, '')))
+            s.append('%18s:%.10f' % (cutset, self.get_lumi_rescale_factor(cutset, '')))
         s.append('"joins" are:')
         for sample in self.samples:
             s.append('%10s -> %s' % (sample.name, self.get_join_name(sample.name)))
@@ -801,7 +795,7 @@ class Drawer:
             print quantity_to_compare
             
             if quantity_to_compare != 'DileptonMass':
-                cutsets = ['OurNew']
+                cutsets = ['OurNew', 'Our2012']
             else:
                 cutsets = self.cutsets
             

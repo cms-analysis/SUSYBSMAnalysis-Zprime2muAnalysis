@@ -3,7 +3,7 @@
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
-from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff import loose_cut, trigger_match, tight_cut, allDimuons
+from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionDec2012_cff import loose_cut, trigger_match, tight_cut, allDimuons
 
 process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/datamc_zmumu/5222c20b53e3c47b6c8353d464ee954c/pat_42_3_74A.root']
 process.maxEvents.input = 1000
@@ -20,7 +20,7 @@ cuts = [
     ('Pt',      'pt > 45'),
     ('DB',      'abs(dB) < 0.2'),
     ('Iso',     'isolationR03.sumPt / innerTrack.pt < 0.10'),
-    ('TkLayers','globalTrack.hitPattern.trackerLayersWithMeasurement > 8'),
+    ('TkLayers','globalTrack.hitPattern.trackerLayersWithMeasurement > 5'),
     ('PxHits',  'globalTrack.hitPattern.numberOfValidPixelHits >= 1'),
     ('MuHits',  'globalTrack.hitPattern.numberOfValidMuonHits > 0'),
     ('MuMatch', ('numberOfMatchedStations > 1', 'isTrackerMuon')),
@@ -70,10 +70,12 @@ for alld in alldimus:
 # Zprime2muCompositeCandidatePicker level.
 process.dimuonsNoB2B     = process.dimuons.clone()
 process.dimuonsNoVtxProb = process.dimuons.clone()
+process.dimuonsNoDptPt   = process.dimuons.clone()
 delattr(process.dimuonsNoB2B,     'back_to_back_cos_angle_min')
 delattr(process.dimuonsNoVtxProb, 'vertex_chi2_max')
+delattr(process.dimuonsNoDptPt,   'dpt_over_pt_max')
 process.p *= process.allDimuons
-for dimu in ['dimuonsNoB2B', 'dimuonsNoVtxProb']:
+for dimu in ['dimuonsNoB2B', 'dimuonsNoVtxProb', 'dimuonsNoDptPt']:
     hists = HistosFromPAT.clone(dilepton_src = dimu, leptonsFromDileptons = True)
     setattr(process, dimu.replace('dimuons', ''), hists)
     process.p *= getattr(process, dimu) * hists
@@ -148,7 +150,7 @@ events_per_job = 50000
 ''')
 
         from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import *
-        samples = [zmumu, ttbar, dy120, dy200, dy500, dy800, dy1000, dy1500, dy2000, inclmu15]
+        samples = [zmumu, ttbar, dy120_c1, dy200_c1, dy500_c1, dy800_c1, dy1000_c1, dy1500_c1, dy2000_c1, inclmu15]
         for sample in samples:
             print sample.name
             open('crab.cfg', 'wt').write(crab_cfg % sample)

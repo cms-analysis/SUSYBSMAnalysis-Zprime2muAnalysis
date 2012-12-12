@@ -10,8 +10,8 @@ ROOT.gStyle.SetPadRightMargin(0.02)
 
 ps = plot_saver('plots/resfromdy')
 
-f = ROOT.TFile('dyall.root')
-d = f.Resolutiontunep
+f = ROOT.TFile('dyall_c1.root')
+d = f.Resolutiontunepnew
 h = d.Get('DileptonMassResVMass')
 h = make_rms_hist(h)
 
@@ -19,10 +19,10 @@ h.SetTitle('')
 h.GetXaxis().SetTitle('dilepton mass (GeV)')
 h.GetYaxis().SetTitle('dilepton relative mass resolution')
 h.GetYaxis().SetLabelSize(0.02)
-h.GetXaxis().SetRangeUser(120, 2000)
+h.GetXaxis().SetRangeUser(120, 2500)
 h.Draw()
 
-line = ROOT.TF1('line', '[0] + x*[1] + x*x*[2]', 120, 1800)
+line = ROOT.TF1('line', '[0] + x*[1] + x*x*[2]', 120, 2500)
 h.Fit(line, 'IVR')
 ps.c.Update()
 s = h.GetListOfFunctions().FindObject("stats")

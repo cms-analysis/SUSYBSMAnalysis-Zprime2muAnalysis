@@ -47,8 +47,8 @@ class EfficiencyFromMC : public edm::EDAnalyzer {
 
   std::pair<TH1F*, TH1F*> make_eff_pair(TString name, TString title) {
     edm::Service<TFileService> fs;
-    TH1F* a = fs->make<TH1F>("Num" + name, title, nbins, min_mass, max_mass);
-    TH1F* b = fs->make<TH1F>("Den" + name, title, nbins, min_mass, max_mass);
+    TH1F* a = fs->make<TH1F>("Num" + name, title, nbins, min_mass, max_mass);  a->Sumw2();
+    TH1F* b = fs->make<TH1F>("Den" + name, title, nbins, min_mass, max_mass);  b->Sumw2();
     return std::make_pair(a, b);
   }
 };

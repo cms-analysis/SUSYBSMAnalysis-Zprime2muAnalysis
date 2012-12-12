@@ -20,7 +20,7 @@ def drawMassReso(basein='Resolutioninner',refit='tkonly',space='DileptonMassRes'
     chnam, val, err, xlolim, xhilim, iuint = ROOT.TString(''), ROOT.Double(1), ROOT.Double(1), ROOT.Double(1), ROOT.Double(1), ROOT.Long(1)
     baseout = "%s_%s"%(refit,space)
     for m in masses:
-        f = ROOT.TFile('crab/effres_histos/Mu40/ana_effres_zp%i.root' % m)
+        f = ROOT.TFile('crab/effres_histos/Mu40/ana_effres_zp%i_c1.root' % m)
         h = f.Get(basein).Get(space)
         fcn = ROOT.TF1('mg', 'gaus', h.GetMean() - nrms*h.GetRMS(), h.GetMean() + nrms*h.GetRMS() )
         h.Fit(fcn, 'ILVR')
@@ -52,8 +52,10 @@ def drawMassReso(basein='Resolutioninner',refit='tkonly',space='DileptonMassRes'
     ps.c.Update()
     s = g.GetListOfFunctions().FindObject("stats")
     s.SetOptFit(111)
-    s.SetY1NDC(0.15)
-    s.SetY2NDC(0.35)
+#    s.SetY1NDC(0.15)
+#    s.SetY2NDC(0.35)
+    s.SetY1NDC(0.65)
+    s.SetY2NDC(0.85)
     s.SetX1NDC(0.50)
     s.SetX2NDC(0.90)
     ps.c.Update()
@@ -69,7 +71,8 @@ for basein, baseout in [('Resolutioninner', 'tkonly'), ('Resolutiontunep', 'tune
 #- Compare the resolution given by different methods
 ps.c.Clear()
 # ROOT.gStyle.SetOptFit(0)
-lg = ROOT.TLegend(0.50, 0.15, 0.90, 0.35)
+#lg = ROOT.TLegend(0.50, 0.15, 0.90, 0.35)
+lg = ROOT.TLegend(0.50, 0.65, 0.90, 0.85)
 for refit, graph in res_vs_mass:
 #    s = graph.GetListOfFunctions().FindObject("stats")
 #    s.SetOptFit(0)

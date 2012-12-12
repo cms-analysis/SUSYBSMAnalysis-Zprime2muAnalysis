@@ -9,8 +9,8 @@ samples = ['dy60', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'dy1500', 'dy20
 
 kind = [x for x in sys.argv[1:] if os.path.isdir(x)]
 
-dy = [(x, int(x.replace('dy',''))) for x in samples if 'dy' in x]
-zp = [(x, int(x.replace('zp',''))) for x in samples if 'zp' in x]
+dy = [(x, int(x.replace('dy','').replace('_c1',''))) for x in samples if 'dy' in x]
+zp = [(x, int(x.replace('zp','').replace('_c1',''))) for x in samples if 'zp' in x]
 if 'vbtf' in sys.argv:
     which = 'VBTFEfficiencyFromMC'
     plot_dir = 'plots/trigeffvsmassmctruth_vbtf'
@@ -99,7 +99,7 @@ for sample, t, cnum, cden in samples_totals:
         totals_histos[t] = ROOT.TH1F(t + '_totals_num', '', 3100, 0, 3100), ROOT.TH1F(t + '_totals_den', '', 3100, 0, 3100)
     hnum, hden = totals_histos[t]
     if 'zp' in sample:
-        mass = int(sample.replace('zp', ''))
+        mass = int(sample.replace('zp', '').replace('_c1',''))
     else:
         mass = 90
     mass = hden.FindBin(mass)

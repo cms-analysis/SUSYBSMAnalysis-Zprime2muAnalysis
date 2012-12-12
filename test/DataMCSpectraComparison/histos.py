@@ -3,8 +3,8 @@
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
-process.source.fileNames = ['/store/user/slava/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/datamc_dy2000/ecac376f8fa7ccc229aaa06d757d785a/pat_1_1_G72.root']
-process.maxEvents.input = 100
+#process.source.fileNames = ['/store/user/slava/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/datamc_dy2000/ecac376f8fa7ccc229aaa06d757d785a/pat_1_1_G72.root']
+#process.maxEvents.input = 100
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold
 
 # Since the prescaled trigger comes with different prescales in
@@ -335,26 +335,26 @@ events_per_job = 100000
 
         from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
 
-        combine_dy_samples = len([x for x in samples if x.name in ['zmumu', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'dy1500', 'dy2000']]) > 0
+        combine_dy_samples = len([x for x in samples if x.name in ['zmumu', 'dy120_c1', 'dy200_c1', 'dy500_c1', 'dy800_c1', 'dy1000_c1', 'dy1500_c1', 'dy2000_c1']]) > 0
         print 'combine_dy_samples:', combine_dy_samples
 
         for sample in reversed(samples):
             print sample.name
 
             new_py = open('histos.py').read()
-            sample.fill_gen_info = sample.name in ['zmumu', 'dy120', 'dy200', 'dy500', 'dy800', 'dy1000', 'dy1500', 'dy2000', 'zssm1000']
+            sample.fill_gen_info = sample.name in ['zmumu', 'dy120_c1', 'dy200_c1', 'dy500_c1', 'dy800_c1', 'dy1000_c1', 'dy1500_c1', 'dy2000_c1', 'zssm1000']
             new_py += "\nfor_mc(process, hlt_process_name='%(hlt_process_name)s', fill_gen_info=%(fill_gen_info)s)\n" % sample
 
             if combine_dy_samples and (sample.name == 'zmumu' or 'dy' in sample.name):
                 mass_limits = {
-                    'zmumu' : (  20,    120),
-                    'dy120' : ( 120,    200),
-                    'dy200' : ( 200,    500),
-                    'dy500' : ( 500,    800),
-                    'dy800' : ( 800,   1000),
-                    'dy1000': (1000,   1500),
-                    'dy1500': (1500,   2000),
-                    'dy2000': (2000, 100000),
+                    'zmumu'    : (  20,    120),
+                    'dy120_c1' : ( 120,    200),
+                    'dy200_c1' : ( 200,    500),
+                    'dy500_c1' : ( 500,    800),
+                    'dy800_c1' : ( 800,   1000),
+                    'dy1000_c1': (1000,   1500),
+                    'dy1500_c1': (1500,   2000),
+                    'dy2000_c1': (2000, 100000),
                     }
                 lo,hi = mass_limits[sample.name]
                 from SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi import dy_gen_mass_cut

@@ -14,19 +14,18 @@ rebin = 5
 
 masses  = [     20,   120,   200,    500,     800,    1000,    1500,    2000]
 nevents = [3293740, 99984, 99990,  99992,   99984,   99989,   99992,   99974]
-sigmas  = [  1915.,  12.2,  1.53, 0.0462, 0.00586, 0.00194, 1.70e-4, 2.21e-5] # in pb
-# for i in xrange(len(sigmas) - 1):
-#    sigmas[i] = sigmas[i] - sigmas[i+1]
+#sigmas  = [  1915.,  12.2,  1.53, 0.0462, 0.00586, 0.00194, 1.70e-4, 2.21e-5] # in pb, PYTHIA*1.3
+sigmas  = [  1915.,  12.2,  1.52, 0.0452, 0.00562, 0.00184, 1.75e-4, 2.26e-5] # in pb, POWHEG*1.024
 weights = [int_lumi / nev * sig for nev,sig in zip(nevents, sigmas)]
 #weights = [x/weights[-1] for x in weights]
 
 hists = []
 hists_dir = '../DataMCSpectraComparison/mc/'
 for m,w in zip(masses, weights):
-    fn = 'ana_datamc_dy%i.root' % m if m != 20 else 'ana_datamc_zmumu.root'
+    fn = 'ana_datamc_dy%i_c1.root' % m if m != 20 else 'ana_datamc_zmumu.root'
     fn = hists_dir + fn
     f = ROOT.TFile(fn)
-    d = f.OurNewMuonsPlusMuonsMinusHistos
+    d = f.Our2012MuonsPlusMuonsMinusHistos
     
     h = d.Get('DileptonMass').Clone('dy%i' % m)
 #    h.Sumw2()
@@ -56,9 +55,9 @@ htot.GetYaxis().SetTitle('Events/%i GeV/%.1f fb^{-1}' % (rebin, int_lumi/1000)) 
 def fit_it(lo, hi):
 #    fcn = ROOT.TF1('fcn', 'exp([0] + [1] * x**[2])', lo, hi)
     fcn = ROOT.TF1('fcn', 'exp([0] + [1]*x)*x**[2]', lo, hi)
-    fcn.SetParLimits(0, 0, 1000)
-    fcn.SetParLimits(1,  -1, 1)
-    fcn.SetParLimits(2, -10, 0)
+#    fcn.SetParLimits(0, 0, 1000)
+#    fcn.SetParLimits(1,  -1, 1)
+#    fcn.SetParLimits(2, -10, 0)
     fcn.SetParNames("N", "a", "b")
     fcn.SetLineColor(ROOT.kBlue)
 

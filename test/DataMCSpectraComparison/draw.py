@@ -20,7 +20,7 @@ parser.add_option('--no-lumi-rescale', action='store_false', dest='rescale_lumi'
                   help='Do not rescale the luminosity.')
 parser.add_option('--for-rescale-factors', action='store_true', dest='for_rescale_factors', default=False,
                   help='Just print the tables for the Z peak counts to determine the luminosity rescaling factors (implies --no-lumi-rescale and --no-save-plots).')
-parser.add_option('--lumi_syst_frac', dest='lumi_syst_frac', type='float', default=0.06,
+parser.add_option('--lumi_syst_frac', dest='lumi_syst_frac', type='float', default=0.044,
                   help='Set the systematic uncertainty for the luminosity (as a relative value). Default is %default.')
 parser.add_option('--no-draw-zprime', action='store_false', dest='draw_zprime', default=True,
                   help='Do not draw the Z\' curve.')
@@ -218,6 +218,7 @@ class Drawer:
                 return 20
         if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained', 'DileptonPt', 'LeptonPt']:
             return 10
+#            return 50
 #        if quantity_to_compare in ['RelCombIso', 'RelIsoSumPt']:
 #            return 5
         if quantity_to_compare in ['DileptonPhi', 'DileptonRap', 'LeptonPhi', 'LeptonEta']:
@@ -257,7 +258,8 @@ class Drawer:
             if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained']:
                 return 50, 900
         if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained']:
-            return 60,2000
+            return 60, 2000
+#            return 120, 1120
         elif quantity_to_compare in ['DileptonPt', 'LeptonPt']:
             return 0, 700
         elif quantity_to_compare == 'LeptonEta':
@@ -306,9 +308,9 @@ class Drawer:
         # If the cutset is not one of the below, don't rescale.
         rescale_factor = 1.
         if 'New' in cutset:
-            rescale_factor = 16740./17228.5
+            rescale_factor = 16740./17235.0
         elif '2012' in cutset or cutset =='OurNoIso':
-            rescale_factor = 18893./18804.5
+            rescale_factor = 18893./18811.1
         return rescale_factor
 
     def advertise_lines(self):
@@ -736,7 +738,7 @@ class Drawer:
             data_mc_diff.SetMaximum(1.)
             data_mc_diff.SetMarkerStyle(20)
             data_mc_diff.SetMarkerSize(0.8)
-            data_mc_diff.SetTitle("(data-bckg)/bckg")
+            data_mc_diff.SetTitle(';%s;(data-bckg)/bckg' % xtitle)
             data_mc_diff.SetStats(0)
             data_mc_diff.Draw("p e")
             if xrange is not None:
@@ -744,6 +746,7 @@ class Drawer:
             else:
                 l1 = ROOT.TLine(data_mc_diff.GetXaxis().GetXmin(), 0., data_mc_diff.GetXaxis().GetXmax(), 0.)
             l1.Draw()
+            t.Draw()
             plot_fn += '_diff'
             self.ps.save(plot_fn, log=False, pdf_log=False)
             

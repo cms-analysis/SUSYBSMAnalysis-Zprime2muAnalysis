@@ -124,6 +124,7 @@ for cut_name, Selection in cuts.iteritems():
             dil.do_remove_overlap = False
             delattr(dil, 'back_to_back_cos_angle_min')
             delattr(dil, 'vertex_chi2_max')
+            delattr(dil, 'dpt_over_pt_max')
         elif cut_name == 'OurNoIso':
             alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', '')
         elif 'MuPrescaled' in cut_name:

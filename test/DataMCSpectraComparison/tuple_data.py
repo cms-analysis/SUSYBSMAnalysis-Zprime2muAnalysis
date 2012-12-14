@@ -16,7 +16,7 @@ lumis_per_job = %(lumis_per_job)s
 %(lumi_mask)s
 '''
 
-    lumis_per_job = 250
+    lumis_per_job = 200
     lumi_mask = ''
 
     create_only = 'create_only' in sys.argv

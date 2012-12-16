@@ -15,6 +15,7 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymFunctions.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TrackUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneralUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
@@ -331,12 +332,18 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
     "lep_isTrackerMuon[X] && "						\
     "lep_pt[X] > " offlineMinPt " && "					\
     "abs(lep_dB[X]) < 0.2 && "						\
-    "lep_glb_numberOfValidTrackerLayers[X] > 8 && "			\
+    "lep_glb_numberOfValidTrackerLayers[X] > 5 && "			\
     "lep_glb_numberOfValidPixelHits[X] >= 1 && "			\
     "lep_glb_numberOfValidMuonHits[X] > 0 && "				\
-    "lep_numberOfMatchedStations[X] > 1";
+    "lep_numberOfMatchedStations[X] > 1 && "                            \
+    "lep_pt_err[X] / lep_pt[X] < 0.3";
 
-  TString loose_new = loose_no_iso + " && lep_sumPt[X] / lep_tk_pt[X] < 0.1";
+  TString loose_2012 = loose_no_iso + " && lep_sumPt[X] / lep_tk_pt[X] < 0.1";
+
+  TString loose_new(loose_2012);
+  loose_new.ReplaceAll("lep_glb_numberOfValidTrackerLayers[X] > 5", 
+		       "lep_glb_numberOfValidTrackerLayers[X] > 8");
+  loose_new.ReplaceAll(" && lep_pt_err[X] / lep_pt[X] < 0.3", "");
 
   TString loose_2011eps(loose_new);
   loose_2011eps.ReplaceAll("lep_glb_numberOfValidTrackerLayers", 
@@ -348,12 +355,14 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->SetAlias("tight_2010_1",    replace_all(tight_2010,    "[X]", "[1]"));
   tree->SetAlias("vbtf_0",          replace_all(vbtf,          "[X]", "[0]"));
   tree->SetAlias("vbtf_1",          replace_all(vbtf,          "[X]", "[1]"));
-  tree->SetAlias("loose_no_iso_0",  replace_all(loose_no_iso,  "[X]", "[0]"));
-  tree->SetAlias("loose_no_iso_1",  replace_all(loose_no_iso,  "[X]", "[1]"));
-  tree->SetAlias("loose_new_0",     replace_all(loose_new,     "[X]", "[0]"));
-  tree->SetAlias("loose_new_1",     replace_all(loose_new,     "[X]", "[1]"));
   tree->SetAlias("loose_2011eps_0", replace_all(loose_2011eps, "[X]", "[0]"));
   tree->SetAlias("loose_2011eps_1", replace_all(loose_2011eps, "[X]", "[1]"));
+  tree->SetAlias("loose_new_0",     replace_all(loose_new,     "[X]", "[0]"));
+  tree->SetAlias("loose_new_1",     replace_all(loose_new,     "[X]", "[1]"));
+  tree->SetAlias("loose_no_iso_0",  replace_all(loose_no_iso,  "[X]", "[0]"));
+  tree->SetAlias("loose_no_iso_1",  replace_all(loose_no_iso,  "[X]", "[1]"));
+  tree->SetAlias("loose_2012_0",    replace_all(loose_2012,    "[X]", "[0]"));
+  tree->SetAlias("loose_2012_1",    replace_all(loose_2012,    "[X]", "[1]"));
 
   tree->SetAlias("OurSel2010",
 		 "loose_2010_0 && loose_2010_1 && "			\
@@ -361,7 +370,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "OppSign && "						\
 		 "extraDimuonCuts && "					\
 		 "GoodData");
- 
+
   tree->SetAlias("VBTFSel",
 		 "vbtf_0 && vbtf_1 && "					\
 		 "triggerMatched && "					\
@@ -373,7 +382,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
 		 "OppSign && "						\
 		 "extraDimuonCuts && "					\
 		 "GoodData");
-	 
+
   tree->SetAlias("OurSelNewNoSign",
 		 "loose_new_0 && loose_new_1 && "			\
 		 "triggerMatched && "					\
@@ -383,12 +392,21 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->SetAlias("OurSelNew",   "OurSelNewNoSign && OppSign");
   tree->SetAlias("OurSelNewSS", "OurSelNewNoSign && SameSign");
 
+  tree->SetAlias("OurSel2012NoSign",
+		 "loose_2012_0 && loose_2012_1 && "			\
+		 "triggerMatched && "					\
+		 "extraDimuonCuts && "					\
+		 "GoodData");
+
+  tree->SetAlias("OurSel2012",   "OurSel2012NoSign && OppSign");
+  tree->SetAlias("OurSel2012SS", "OurSel2012NoSign && SameSign");
+
   // For e-mu dileptons, below we always put the muon in [0] and the
   // electron in [1], so don't have to check the other combination.
   tree->SetAlias("EmuSelNoSign",
 		 "abs(lep_id[1]) == 11 && "				\
 		 "lep_heep_id[1] == 0 && "				\
-		 "loose_new_0 && "					\
+		 "loose_2012_0 && "					\
 		 "trigger_match_0 && "					\
 		 "GoodData");
 
@@ -501,7 +519,6 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	w = dil.daughter(i)->charge() < 0 ? 0 : 1;
 
       t.lep_id[w] = dil.daughter(i)->pdgId();
-      t.lep_pt[w] = dil.daughter(i)->pt();
       t.lep_eta[w] = dil.daughter(i)->eta();
       t.lep_phi[w] = dil.daughter(i)->phi();
 
@@ -569,6 +586,7 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	  const pat::Electron* el = toConcretePtr<pat::Electron>(dileptonDaughter(dil, i));
 	  assert(el);
 
+	  t.lep_pt[w] = dil.daughter(i)->pt();
 	  t.lep_heep_id[w] = userInt(*el, "HEEPId", 999);
 	  t.lep_min_muon_dR[w] = userFloat(*el, "min_muon_dR", 999);
 	}
@@ -580,9 +598,11 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	const pat::Muon* mu = toConcretePtr<pat::Muon>(dileptonDaughter(dil, i));
 	assert(mu);
 
-	reco::TrackRef pickedTrack = patmuon::getPickedTrack(*mu);
-	t.lep_pt_err[w] = pickedTrack->ptError();
+	const reco::Track* tk = patmuon::getPickedTrack(*mu).get();
+	assert (tk);
 
+	t.lep_pt[w]     = tk->pt();
+	t.lep_pt_err[w] = ptError(tk);
 	t.lep_tk_pt[w] = mu->innerTrack()->pt();
 	t.lep_tk_pt_err[w] = mu->innerTrack()->ptError();
 	t.lep_tk_eta[w] = mu->innerTrack()->eta();
@@ -630,7 +650,7 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	  t.lep_picky_ndf[w] = mu->pickyMuon()->ndof();
 	}
 
-	reco::TrackRef cocktail = muon::tevOptimized(*mu).first;
+	reco::TrackRef cocktail = muon::tevOptimized(*mu, 200, 17, 40, 0.25).first;
 	if (cocktail.isNull()) {
 	  t.lep_cocktail_pt[w] = -999;
 	  t.lep_cocktail_pt_err[w] = -999;

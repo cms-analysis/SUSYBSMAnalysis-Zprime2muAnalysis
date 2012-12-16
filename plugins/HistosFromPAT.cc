@@ -268,7 +268,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   DimuonMassVertexConstrainedWeight = fs->make<TH1F>("DimuonMassVertexConstrainedWeight", titlePrefix + "dimu. vertex-constrained mass", 3000, 0, 3000);
   // Mass plot in bins of log(mass)
   const int    NMBINS = 100;
-  const double MMIN = 50., MMAX = 2000.;
+  const double MMIN = 60., MMAX = 2100.;
   double logMbins[NMBINS+1];
   for (int ibin = 0; ibin <= NMBINS; ibin++)
     logMbins[ibin] = exp(log(MMIN) + (log(MMAX)-log(MMIN))*ibin/NMBINS);

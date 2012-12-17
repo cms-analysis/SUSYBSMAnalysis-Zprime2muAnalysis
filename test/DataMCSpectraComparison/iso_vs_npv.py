@@ -16,10 +16,10 @@ per = max_npv/nbins
 
 hs = []
 
-t.SetAlias('OurSelNewNoIso', 'loose_no_iso_0 && loose_no_iso_1 && triggerMatched && extraDimuonCuts && GoodData && OppSign')
-t.Draw('nvertices>>hnvertices(30, 0, 30)', 'OurSelNewNoIso && dil_mass > 60 && dil_mass < 120')
+t.SetAlias('OurSelNoIso', 'loose_no_iso_0 && loose_no_iso_1 && triggerMatched && extraDimuonCuts && GoodData && OppSign')
+t.Draw('nvertices>>hnvertices(30, 0, 30)', 'OurSelNoIso && dil_mass > 60 && dil_mass < 120')
 ps.save('nvertices')
-t.Draw('nvertices>>hnvertices2(6, 0, 30)', 'OurSelNewNoIso && dil_mass > 60 && dil_mass < 120')
+t.Draw('nvertices>>hnvertices2(6, 0, 30)', 'OurSelNoIso && dil_mass > 60 && dil_mass < 120')
 ROOT.hnvertices2.Draw('histo text00')
 ps.save('nvertices_rebin')
 
@@ -34,7 +34,7 @@ for tkonly in [0, 1]:
         cut = 0.15
         which = 'tkpluscalo'
 
-    t.Draw('iso:nvertices>>hscatter%i(%i,0,%i,100,0,5)' % (tkonly, nbins, max_npv), 'OurSelNewNoIso && dil_mass > 60 && dil_mass < 120')
+    t.Draw('iso:nvertices>>hscatter%i(%i,0,%i,100,0,5)' % (tkonly, nbins, max_npv), 'OurSelNoIso && dil_mass > 60 && dil_mass < 120')
     h = getattr(ROOT, 'hscatter%i' % tkonly)
     h.SetTitle('selected muons from Z#rightarrow#mu#mu (60 < m(#mu#mu) < 120 GeV);number of reconstructed primary vertices;%s relative isolation' % ('tracker-only' if tkonly else 'tracker-plus-calo.'))
     for i in xrange(nbins):

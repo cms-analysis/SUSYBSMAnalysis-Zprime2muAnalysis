@@ -6,7 +6,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import ROOT
 path = 'data/Run2012MuonsOnly/ana_datamc_data.root'
 tmp_fn = 'micro_ntuple.temp.txt'
 branch_spec = 'vertex_m'
-cut = 'OurSelNew'
+cut = 'OurSel2012'
 
 f = ROOT.TFile(path)
 t = f.SimpleNtupler.Get('t')

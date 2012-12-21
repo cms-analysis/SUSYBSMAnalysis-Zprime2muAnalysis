@@ -73,7 +73,8 @@ samples = [
 #    sample('dy1000_c2', 'DY1000_C2',                                        '/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C2-v1/AODSIM',      99989,  36, 0.05, 0.001796, k_factor=1.024),
 #    sample('dy1500_c2', 'DY1500_C2',                                        '/DYToMuMu_M-1500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C2-v1/AODSIM',      99992,   8, 0.05, 1.705E-4, k_factor=1.024),
 #    sample('dy2000_c2', 'DY2000_C2',                                        '/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C2-v1/AODSIM',      99974,  37, 0.05, 2.208E-5, k_factor=1.024),
-    sample('ttbar',     't#bar{t}',                                         '/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM', 6923750,   2, 0.067, 234.),
+#    sample('ttbar',     't#bar{t}',                                         '/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM', 6923750,   2, 0.067, 234.),
+    sample('ttbar_powheg','t#bar{t}',                                        '/TT_CT10_TuneZ2star_8TeV-powheg-tauola/Summer12_DR53X-PU_S10_START53_V7A-v2/AODSIM', 21675970,   2, 0.067, 234.),
     sample('tW',        'tW',                                               '/T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           497658,   1, 0.069, 11.1),
     sample('tbarW',     'tbarW',                                            '/Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',        493460,  12, 0.069, 11.1),
     sample('ww',        'WW',                                               '/WW_TuneZ2star_8TeV_pythia6_tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',                     10000431,   4, 0.035, 54.8),
@@ -103,8 +104,7 @@ for sample in samples:
     else:
         sample.ana_dataset = '/%s/slava-datamc_%s-ecac376f8fa7ccc229aaa06d757d785a/USER' % (sample.dataset.split('/')[1], sample.name)
 
-
-#zmumu.ana_dataset  = '/DYToMuMu_M_20_TuneZ2star_8TeV_pythia6/slava-datamc_zmumu-2e54d35c5572bb8d0ce3ffc532e82068/USER'
+ttbar_powheg.ana_dataset  = '/TT_CT10_TuneZ2star_8TeV-powheg-tauola/slava-datamc_ttbar_powheg-7cd4d04801ad7f47970af9f536392613/USER'
 
 #big_warn('nothing')
 #big_warn('subtracting 232314 from ww.nevents because 3 tupling jobs got stuck')

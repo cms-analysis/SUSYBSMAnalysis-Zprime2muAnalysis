@@ -18,8 +18,8 @@ bins = array('d', [120, 200, 400, 600])
 total_mumu = ROOT.TH1F('mumu', '', len(bins)-1, bins)
 total_emu  = ROOT.TH1F('emu',  '', len(bins)-1, bins)
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import ttbar, ww, tW, tbarW, ztautau, wz, zz
-samples = [ttbar, ww, tW, tbarW, ztautau, wz, zz]
+from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import ttbar_powheg, ww, tW, tbarW, ztautau, wz, zz
+samples = [ttbar_powheg, ww, tW, tbarW, ztautau, wz, zz]
 cut = 'OurNew'
 
 def draw(sample):
@@ -71,7 +71,7 @@ for sample in samples:
 
 
 # Normalize by the sum of the weights.
-lg = ROOT.TLegend(0.74, 0.14, 0.89, 0.47)
+lg = ROOT.TLegend(0.73, 0.12, 0.90, 0.445)
 ROOT.gStyle.SetPaintTextFormat('.1e')
 sum_weights = samples[0].weight.Clone('sum_weights')
 for sample in samples[1:]:
@@ -95,12 +95,14 @@ ps.save('weights')
 
 
 # Now draw the correction factors overlaid.
-lg = ROOT.TLegend(0.16, 0.16, 0.43, 0.32)
+lg = ROOT.TLegend(0.60, 0.16, 0.87, 0.32)
 first = True
-for sample in [ttbar, ww]: # samples:
+for sample in [ttbar_powheg, ww]: # samples:
     g = sample.div
     g.SetLineWidth(2)
     g.SetLineColor(sample.color)
+    g.SetMinimum(0.46)
+    g.SetMaximum(0.72)
     g.Draw('AP' if first else 'P same')
     first = False
     lg.AddEntry(sample.weight, sample.nice_name, 'LE')
@@ -119,4 +121,3 @@ for sample in [ttbar, ww]: # samples:
 
 lg.Draw()
 ps.save('all')
-

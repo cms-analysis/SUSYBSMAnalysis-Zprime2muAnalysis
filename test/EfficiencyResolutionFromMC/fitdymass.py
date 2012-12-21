@@ -28,7 +28,6 @@ for m,w in zip(masses, weights):
     d = f.Our2012MuonsPlusMuonsMinusHistos
     
     h = d.Get('DileptonMass').Clone('dy%i' % m)
-#    h.Sumw2()
     h.Rebin(rebin)
     h.GetXaxis().SetRangeUser(40, 2500)
     h.Scale(w)
@@ -37,7 +36,6 @@ for m,w in zip(masses, weights):
     hists.append(h)
 
 htot = hists[0].Clone('htot')
-#htot.Sumw2()
 for j in xrange(1, len(hists)):
     htot.Add(hists[j])
 htot.SetTitle('')
@@ -55,10 +53,12 @@ htot.GetYaxis().SetTitle('Events/%i GeV/%.1f fb^{-1}' % (rebin, int_lumi/1000)) 
 def fit_it(lo, hi):
 #    fcn = ROOT.TF1('fcn', 'exp([0] + [1] * x**[2])', lo, hi)
     fcn = ROOT.TF1('fcn', 'exp([0] + [1]*x)*x**[2]', lo, hi)
+#    fcn = ROOT.TF1('fcn', 'exp([0] + [1]*x + [2]*x*x)*x**[3]', lo, hi)
 #    fcn.SetParLimits(0, 0, 1000)
 #    fcn.SetParLimits(1,  -1, 1)
 #    fcn.SetParLimits(2, -10, 0)
     fcn.SetParNames("N", "a", "b")
+#    fcn.SetParNames("N", "a", "b", "c")
     fcn.SetLineColor(ROOT.kBlue)
 
 #    htot.Fit(fcn, 'LVR')
@@ -96,9 +96,80 @@ def fit_it(lo, hi):
     l1.Draw()
     ps.save('res_%i_%i' % (lo, hi), log=False)
 
+def draw_overlay(fsets):
+    ROOT.gStyle.SetOptStat(0);
+    ROOT.gStyle.SetOptFit(1111);
+    xmin = 100
+    xmax = 2600
+    rebin = 60
+    htots = []
+    for fset in fsets:
+        hists = []
+        for m,w in zip(masses, weights):
+            fn = 'ana_datamc_dy%i%s.root' % (m, fset) if m != 20 else 'ana_datamc_zmumu.root'
+            fn = hists_dir + fn
+            f = ROOT.TFile(fn)
+            d = f.Our2012MuonsPlusMuonsMinusHistos
+
+            h = d.Get('DileptonMass').Clone('dy%i%s' % (m, fset))
+            h.Rebin(rebin)
+            h.GetXaxis().SetRangeUser(xmin, xmax)
+            h.Scale(w)
+            hists.append(h)
+
+        htot = hists[0].Clone('htot')
+        for j in xrange(1, len(hists)):
+            htot.Add(hists[j])
+        htot.SetTitle('')
+        htots.append(htot)
+
+    for i in xrange(0, len(htots)):
+        if i == 0:
+            htots[i].Draw()
+        else:
+            htots[i].Draw("same")
+    htot.GetXaxis().SetTitle('reconstructed m(#mu^{+}#mu^{-}) (GeV)')
+    htot.GetYaxis().SetTitle('Events/%i GeV/%.1f fb^{-1}' % (rebin, int_lumi/1000)) # assumes original started out with 1 GeV bins, and the xsec is in pb-1.
+    ps.save('mass_overlay')
+
+    l = ROOT.TLine(xmin, 1., xmax, 1.)
+    for i in xrange(1, len(htots)):
+        ps.c.Clear()
+        ratio = htots[i].Clone()
+        ratio.Divide(htots[0])
+        ratio.GetXaxis().SetTitle('reconstructed m(#mu^{+}#mu^{-}) (GeV)')
+        ratio.GetYaxis().SetTitle('C%i / STARTUP' % i)
+        ratio.SetMinimum(0.5)
+        ratio.SetMaximum(1.5)
+        ratio.SetMarkerStyle(20)
+        ratio.Draw("pe")
+        ffunc = ROOT.TF1('ffunc', '[0] + x*[1] + x*x*[2]', xmin, xmax)
+        ratio.Fit(ffunc, 'IVR')
+        l.Draw()
+        ps.save('ratio%i_0' % i, log=False)
+        if i > 1:
+            ratio = htots[i].Clone()
+            ratio.Divide(htots[i-1])
+            ratio.GetXaxis().SetTitle('reconstructed m(#mu^{+}#mu^{-}) (GeV)')
+            ratio.GetYaxis().SetTitle('C%i / C%i' % (i, i-1))
+            ratio.SetMinimum(0.5)
+            ratio.SetMaximum(1.5)
+            ratio.SetMarkerStyle(24)
+            ratio.SetMarkerColor(ROOT.kBlue)
+            ffunc = ROOT.TF1('ffunc', '[0] + x*[1] + x*x*[2]', xmin, xmax)
+            ffunc.SetLineColor(ROOT.kBlue)
+            ratio.Fit(ffunc, 'IVR')
+            ratio.Draw("pe")
+            l.Draw()
+            ps.save('ratio%i_%i' % (i, i-1), log=False)
 
 #l = range(200, 2200, 200)
 l = [200, 300, 400, 600, 800, 2400]
 for lo in l:
     fit_it(lo, 2500)
 #fit_it(400,2000)
+
+# Take different Drell-Yan mass spectra and plot them overlayed,
+# then calculate and plot their ratios.
+#fsets = ["", "_c1", "_c2"]
+#draw_overlay(fsets)

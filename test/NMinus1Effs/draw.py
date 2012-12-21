@@ -43,13 +43,14 @@ else:
         'NoMuMatch',
         'NoVtxProb',
         'NoB2B',
+        'NoDptPt',
         'NoCosm',
         'NoTrgMtch',
         ]
 
 pretty = {
     'NoPt': 'p_{T} > 45 GeV',
-    'NoTkLayers': '# tk lay > 8',
+    'NoTkLayers': '# tk lay > 5',
     'NoPxHits': '# px hits > 0',
     'NoMuStns': '# mu segs > 1',
     'NoDB': '|dB| < 0.2',
@@ -61,14 +62,15 @@ pretty = {
     'NoTrgMtch': 'HLT match',
     'NoB2B': 'back-to-back',
     'NoVtxProb': '#chi^{2} #mu#mu vtx < 10',
+    'NoDptPt': 'dpT/pT',
     'NoIso': 'rel. tk. iso.',
     'data': 'Data, %.1f fb^{-1}',
     'mcsum': 'Simulation',
     'zmumu': 'Z#rightarrow#mu#mu, 60 < M < 120 GeV',
-    'dy120': 'DY#rightarrow#mu#mu, M > 120 GeV',
-    'dy200': 'DY#rightarrow#mu#mu, M > 200 GeV',
-    'dy500': 'DY#rightarrow#mu#mu, M > 500 GeV',
-    'dy1000': 'DY#rightarrow#mu#mu, M > 1000 GeV',
+    'dy120_c1': 'DY#rightarrow#mu#mu, M > 120 GeV',
+    'dy200_c1': 'DY#rightarrow#mu#mu, M > 200 GeV',
+    'dy500_c1': 'DY#rightarrow#mu#mu, M > 500 GeV',
+    'dy1000_c1': 'DY#rightarrow#mu#mu, M > 1000 GeV',
     'ttbar': 't#bar{t}',
     'inclmu15': 'QCD',
     'zssm1000': 'Z\' SSM, M=1000 GeV',
@@ -90,7 +92,7 @@ class nm1entry:
         self.prepare_histos()
             
     def make_fn(self, name):
-        return 'ana_nminus1_%s.root' % name
+        return 'nminus1_histos/ana_nminus1_%s.root' % name
     
     def prepare_histos(self):
         self.histos = {}
@@ -117,8 +119,8 @@ class nm1entry:
 data, lumi = nm1entry('data', True), 15796. # lumi in pb
 mcsum = nm1entry('mcsum')
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import zmumu, dy120, dy200, dy500, dy1000, ttbar, inclmu15
-raw_samples = [zmumu, dy120, dy200, dy500, dy1000, ttbar, inclmu15]
+from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import zmumu, dy120_c1, dy200_c1, dy500_c1, dy1000_c1, ttbar, inclmu15
+raw_samples = [zmumu, dy120_c1, dy200_c1, dy500_c1, dy1000_c1, ttbar, inclmu15]
 mcsum.prepare_histos_sum(raw_samples, lumi)
 mc_samples = [nm1entry(sample) for sample in raw_samples]
 for mc_sample in mc_samples:
@@ -134,21 +136,21 @@ mass_ranges = [
 
 to_use = {
     '60m120':  [data, mcsum], #, zmumu, ttbar],
-    '120m200': [data, mcsum], #, dy120, ttbar],
-    '200m400': [data, mcsum], #, dy200, ttbar],
-    '400m600': [data, mcsum], #, dy200, ttbar],
-    '600m':    [data, mcsum], #, dy500, dy1000, ttbar],
+    '120m200': [data, mcsum], #, dy120_c1, ttbar],
+    '200m400': [data, mcsum], #, dy200_c1, ttbar],
+    '400m600': [data, mcsum], #, dy200_c1, ttbar],
+    '600m':    [data, mcsum], #, dy500_c1, ttbar],
     }
 
 styles = {
     'data':      (ROOT.kBlack,     -1),
     'mcsum':     (ROOT.kMagenta, 1001),
     'zmumu':     (ROOT.kRed,     1001),
-    'dy120':     (ROOT.kRed,     1001),
-    'dy200':     (ROOT.kRed,     1001),
-    'dy500':     (ROOT.kRed,     1001),
-    'dy1000':    (ROOT.kBlue,    1001),
-    'ttbar':     (ROOT.kGreen+2, 3005),
+    'dy120_c1':  (ROOT.kRed,     1001),
+    'dy200_c1':  (ROOT.kRed,     1001),
+    'dy500_c1':  (ROOT.kRed,     1001),
+    'dy1000_c1': (ROOT.kBlue,    1001),
+    'ttbar': (ROOT.kGreen+2, 3005),
     'inclmu15':  (28,            3002),
     }
 

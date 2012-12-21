@@ -55,6 +55,7 @@ options, args = parser.parse_args()
 
 import SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples as MCSamples
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import cumulative_histogram, get_integral, move_below_into_bin, move_above_into_bin, plot_saver, poisson_intervalize, real_hist_max, real_hist_min, set_zp2mu_style, ROOT
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import overall_prescale
 
 class Drawer:
     # Terminology:
@@ -186,7 +187,7 @@ class Drawer:
         if self.do_joins:
             if 'qcd' in sample_name or sample_name in ('inclmu15', 'wmunu', 'wjets'):
                 return 'jets', 4
-            elif self.join_ttbar_and_other_prompt_leptons and sample_name in ('ttbar', 'tW', 'tbarW', 'ztautau', 'ww', 'wz', 'zz'):
+            elif self.join_ttbar_and_other_prompt_leptons and sample_name in ('ttbar', 'ttbar_powheg', 'tW', 'tbarW', 'ztautau', 'ww', 'wz', 'zz'):
                 return 't#bar{t} + other prompt leptons', 2
             elif not self.join_ttbar_and_other_prompt_leptons and sample_name in ('tW', 'tbarW', 'ztautau', 'ww', 'wz', 'zz'):
                 return 'other prompt leptons', 2
@@ -240,8 +241,6 @@ class Drawer:
         # any. E.g. for DileptonMass, only show from 60-2000 GeV on
         # the displayed plot.
         if dilepton == 'MuonsSameSign':
-            if quantity_to_compare == 'DileptonMass':
-                return 0,450
             if quantity_to_compare == 'DileptonPt':
                 return 0,350
             if quantity_to_compare == 'DileptonRap':
@@ -308,9 +307,9 @@ class Drawer:
         # If the cutset is not one of the below, don't rescale.
         rescale_factor = 1.
         if 'New' in cutset:
-            rescale_factor = 16740./17235.0
+            rescale_factor = 16756./17228.6
         elif '2012' in cutset or cutset =='OurNoIso':
-            rescale_factor = 18893./18811.1
+            rescale_factor = 18888./18818.0
         return rescale_factor
 
     def advertise_lines(self):
@@ -401,6 +400,8 @@ class Drawer:
             self.rebin_histogram(sample.histogram, cutset, dilepton, quantity_to_compare)
 
             sample.scaled_by = self.int_lumi * self.get_lumi_rescale_factor(cutset, dilepton) * sample.partial_weight
+            if 'MuPrescaled' in cutset:
+                sample.scaled_by = sample.scaled_by / overall_prescale
             sample.histogram.Scale(sample.scaled_by)
 
             if cumulative:
@@ -798,7 +799,7 @@ class Drawer:
             print quantity_to_compare
             
             if quantity_to_compare != 'DileptonMass':
-                cutsets = ['OurNew', 'Our2012']
+                cutsets = ['OurNew', 'Our2012', 'OurMuPrescaledNew', 'OurMuPrescaled2012']
             else:
                 cutsets = self.cutsets
             

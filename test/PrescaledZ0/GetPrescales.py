@@ -31,7 +31,7 @@ pset = GetPrescales.py
 total_number_of_lumis = -1
 number_of_jobs = 50
 #lumi_mask = /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-196531_8TeV_13Jul2012ReReco_Collisions12_JSON_MuonPhys_v3.txt
-lumi_mask = /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-205618_8TeV_PromptReco_Collisions12_JSON_MuonPhys.txt
+lumi_mask = /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-208686_8TeV_PromptReco_Collisions12_JSON_MuonPhys.txt
 
 [USER]
 ui_working_dir = crab/crab_getprescales_%(name)s

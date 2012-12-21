@@ -86,7 +86,10 @@ bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
   if (event.isRealData() || !assume_simulation_has_prescale_1) 
     prescales = hlt_cfg.prescaleValues(event, setup, trigger_path);
   else
-    prescales = std::make_pair(1,1);
+    //prescales = std::make_pair(1,1);
+    // Do not filter out MC events with prescales=1, apply the
+    // appropriate weights later.
+    return true;
 
   //std::cout<<"------PRESCALES: "<<overall_prescale<<"\t"<<prescales.first<<"\t"<<prescales.second<<std::endl;
 

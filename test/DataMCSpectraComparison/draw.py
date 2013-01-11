@@ -302,14 +302,15 @@ class Drawer:
         # produced when running this script with rescaling turned off,
         # rather than trying to be smart and getting them from the
         # histogram files.
-        # Factors below were calculated for the MuonPhys JSON for 2012
-        # released on November 2 and correspond to 15.796/fb.
+        # Factors below were calculated for the MuonPhys JSON file for
+        # all 2012 collision runs released on December 14 and
+        # correspond to 20.637/fb.
         # If the cutset is not one of the below, don't rescale.
         rescale_factor = 1.
         if 'New' in cutset:
-            rescale_factor = 16756./17228.6
+            rescale_factor = 21663./22508.6
         elif '2012' in cutset or cutset =='OurNoIso':
-            rescale_factor = 18888./18818.0
+            rescale_factor = 24494./24585.1
         return rescale_factor
 
     def advertise_lines(self):

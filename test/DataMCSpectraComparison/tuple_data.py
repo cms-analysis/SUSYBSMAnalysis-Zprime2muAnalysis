@@ -76,9 +76,19 @@ lumis_per_job = %(lumis_per_job)s
             dataset = '/SingleMu/Run2012C-24Aug2012-v1/AOD'
             name    = 'SingleMuRun2012C-24Aug2012'
             tag     = 'FT_53_V10_AN2'
+        elif run1 == 201191 and run2 == 201191:
+            # Special settings for Dec-11 reprocessing of 1 run
+            # (Recovery of 134/pb for Golden JSON.)
+            dataset = '/SingleMu/Run2012C-EcalRecover_11Dec2012-v1/AOD'
+            name    = 'SingleMuRun2012C-EcalRecover_11Dec2012'
+            tag     = 'GR_P_V42_AN2'            
         elif run1 >= 198934 and run1 < 203773:
             dataset = '/SingleMu/Run2012C-PromptReco-v2/AOD'
             name    = 'SingleMuRun2012C-Prompt'
+            tag     = 'GR_P_V42_AN2'
+        elif run1 == 206066 and run2 == 206066:
+            dataset = '/SingleMu/Run2012D-PromptReco-v1/AOD'
+            name    = 'SingleMuRun2012D-Prompt'
             tag     = 'GR_P_V42_AN2'
         elif run1 >= 203773:
             dataset = '/SingleMu/Run2012D-PromptReco-v1/AOD'

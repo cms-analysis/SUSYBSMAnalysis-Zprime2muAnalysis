@@ -308,9 +308,9 @@ class Drawer:
         # If the cutset is not one of the below, don't rescale.
         rescale_factor = 1.
         if 'New' in cutset:
-            rescale_factor = 21663./22508.6
+            rescale_factor = 21671./22531.7
         elif '2012' in cutset or cutset =='OurNoIso':
-            rescale_factor = 24494./24585.1
+            rescale_factor = 24502./24610.4
         return rescale_factor
 
     def advertise_lines(self):

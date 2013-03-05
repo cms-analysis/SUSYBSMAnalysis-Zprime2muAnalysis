@@ -9,6 +9,7 @@ restrict_mass_window = True
 # late_bin numbering: bin 0 = 0-9, bin 2 = 10-26
 intime_bin, late_bin = -1, -1
 check_prescaled_path = False
+#check_prescaled_path = True
 acc_both_24 = False
 
 ################################################################################
@@ -147,23 +148,57 @@ return_data = 1
         
     samples = [
         ('dy60',   '/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy20-a1a20649af8af2c0422279f30cb5b6c7/USER',       60,   120),
-        ('dy120',  '/DYToMuMu_M-120_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy120-a1a20649af8af2c0422279f30cb5b6c7/USER',    120,   200),
-        ('dy200',  '/DYToMuMu_M-200_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy200-a1a20649af8af2c0422279f30cb5b6c7/USER',    200,   500),
-        ('dy500',  '/DYToMuMu_M-500_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy500-a1a20649af8af2c0422279f30cb5b6c7/USER',    500,   800),
-        ('dy800',  '/DYToMuMu_M-800_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy800-a1a20649af8af2c0422279f30cb5b6c7/USER',    800,  1000),
-        ('dy1000', '/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy1000-a1a20649af8af2c0422279f30cb5b6c7/USER', 1000,  1500),
-        ('dy1500', '/DYToMuMu_M-1500_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy1500-a1a20649af8af2c0422279f30cb5b6c7/USER', 1500,  2000),
-        ('dy2000', '/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy2000-a1a20649af8af2c0422279f30cb5b6c7/USER', 2000, 20000),
-        ('zp750',  '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/slava-effres_zp750-a1a20649af8af2c0422279f30cb5b6c7/USER',          -1, 20000),
-        ('zp1000', '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/slava-effres_zp1000-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
-        ('zp1250', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/slava-effres_zp1250-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
-        ('zp1500', '/ZprimePSIToMuMu_M-1500_TuneZ2star_8TeV-pythia6/slava-effres_zp1500-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
-        ('zp1750', '/ZprimePSIToMuMu_M-1750_TuneZ2star_8TeV-pythia6/slava-effres_zp1750-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
-        ('zp2000', '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/slava-effres_zp2000-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
-        ('zp2250', '/ZprimePSIToMuMu_M-2250_TuneZ2star_8TeV-pythia6/slava-effres_zp2250-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
-        ('zp2500', '/ZprimePSIToMuMu_M-2500_TuneZ2star_8TeV-pythia6/slava-effres_zp2500-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
-        ('zp2750', '/ZprimePSIToMuMu_M-2750_TuneZ2star_8TeV-pythia6/slava-effres_zp2750-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
-        ('zp3000', '/ZprimePSIToMuMu_M-3000_TuneZ2star_8TeV-pythia6/slava-effres_zp3000-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+#        ('dy120',  '/DYToMuMu_M-120_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy120-a1a20649af8af2c0422279f30cb5b6c7/USER',    120,   200),
+#        ('dy200',  '/DYToMuMu_M-200_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy200-a1a20649af8af2c0422279f30cb5b6c7/USER',    200,   500),
+#        ('dy500',  '/DYToMuMu_M-500_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy500-a1a20649af8af2c0422279f30cb5b6c7/USER',    500,   800),
+#        ('dy800',  '/DYToMuMu_M-800_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy800-a1a20649af8af2c0422279f30cb5b6c7/USER',    800,  1000),
+#        ('dy1000', '/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy1000-a1a20649af8af2c0422279f30cb5b6c7/USER', 1000,  1500),
+#        ('dy1500', '/DYToMuMu_M-1500_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy1500-a1a20649af8af2c0422279f30cb5b6c7/USER', 1500,  2000),
+#        ('dy2000', '/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy2000-a1a20649af8af2c0422279f30cb5b6c7/USER', 2000, 20000),
+#        ('zp750',  '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/slava-effres_zp750-a1a20649af8af2c0422279f30cb5b6c7/USER',          -1, 20000),
+#        ('zp1000', '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/slava-effres_zp1000-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+#        ('zp1250', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/slava-effres_zp1250-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+#        ('zp1500', '/ZprimePSIToMuMu_M-1500_TuneZ2star_8TeV-pythia6/slava-effres_zp1500-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+#        ('zp1750', '/ZprimePSIToMuMu_M-1750_TuneZ2star_8TeV-pythia6/slava-effres_zp1750-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+#        ('zp2000', '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/slava-effres_zp2000-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+#        ('zp2250', '/ZprimePSIToMuMu_M-2250_TuneZ2star_8TeV-pythia6/slava-effres_zp2250-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+#        ('zp2500', '/ZprimePSIToMuMu_M-2500_TuneZ2star_8TeV-pythia6/slava-effres_zp2500-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+#        ('zp2750', '/ZprimePSIToMuMu_M-2750_TuneZ2star_8TeV-pythia6/slava-effres_zp2750-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+#        ('zp3000', '/ZprimePSIToMuMu_M-3000_TuneZ2star_8TeV-pythia6/slava-effres_zp3000-a1a20649af8af2c0422279f30cb5b6c7/USER',        -1, 20000),
+        ('dy120_c1',  '/DYToMuMu_M-120_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy120_c1-a91db2e46be1c6efe508cc704581ac69/USER',    120,   200),
+        ('dy200_c1',  '/DYToMuMu_M-200_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy200_c1-a91db2e46be1c6efe508cc704581ac69/USER',    200,   500),
+        ('dy500_c1',  '/DYToMuMu_M-500_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy500_c1-a91db2e46be1c6efe508cc704581ac69/USER',    500,   800),
+        ('dy800_c1',  '/DYToMuMu_M-800_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy800_c1-a91db2e46be1c6efe508cc704581ac69/USER',    800,  1000),
+        ('dy1000_c1', '/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy1000_c1-a91db2e46be1c6efe508cc704581ac69/USER', 1000,  1500),
+        ('dy1500_c1', '/DYToMuMu_M-1500_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy1500_c1-a91db2e46be1c6efe508cc704581ac69/USER', 1500,  2000),
+        ('dy2000_c1', '/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy2000_c1-a91db2e46be1c6efe508cc704581ac69/USER', 2000, 20000),
+#        ('dy120_c2',  '/DYToMuMu_M-120_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy120_c2-a91db2e46be1c6efe508cc704581ac69/USER',    120,   200),
+#        ('dy200_c2',  '/DYToMuMu_M-200_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy200_c2-a91db2e46be1c6efe508cc704581ac69/USER',    200,   500),
+#        ('dy500_c2',  '/DYToMuMu_M-500_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy500_c2-a91db2e46be1c6efe508cc704581ac69/USER',    500,   800),
+#        ('dy800_c2',  '/DYToMuMu_M-800_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy800_c2-a91db2e46be1c6efe508cc704581ac69/USER',    800,  1000),
+#        ('dy1000_c2', '/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy1000_c2-a91db2e46be1c6efe508cc704581ac69/USER', 1000,  1500),
+#        ('dy1500_c2', '/DYToMuMu_M-1500_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy1500_c2-a91db2e46be1c6efe508cc704581ac69/USER', 1500,  2000),
+#        ('dy2000_c2', '/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/slava-effres_dy2000_c2-a91db2e46be1c6efe508cc704581ac69/USER', 2000, 20000),
+        ('zp750_c1',  '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/slava-effres_zp750_c1-a91db2e46be1c6efe508cc704581ac69/USER',          -1, 20000),
+        ('zp1000_c1', '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/slava-effres_zp1000_c1-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+        ('zp1250_c1', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/slava-effres_zp1250_c1-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+        ('zp1500_c1', '/ZprimePSIToMuMu_M-1500_TuneZ2star_8TeV-pythia6/slava-effres_zp1500_c1-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+        ('zp1750_c1', '/ZprimePSIToMuMu_M-1750_TuneZ2star_8TeV-pythia6/slava-effres_zp1750_c1-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+        ('zp2000_c1', '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/slava-effres_zp2000_c1-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+        ('zp2250_c1', '/ZprimePSIToMuMu_M-2250_TuneZ2star_8TeV-pythia6/slava-effres_zp2250_c1-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+        ('zp2500_c1', '/ZprimePSIToMuMu_M-2500_TuneZ2star_8TeV-pythia6/slava-effres_zp2500_c1-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+        ('zp2750_c1', '/ZprimePSIToMuMu_M-2750_TuneZ2star_8TeV-pythia6/slava-effres_zp2750_c1-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+        ('zp3000_c1', '/ZprimePSIToMuMu_M-3000_TuneZ2star_8TeV-pythia6/slava-effres_zp3000_c1-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+#        ('zp750_c2',  '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/slava-effres_zp750_c2-a91db2e46be1c6efe508cc704581ac69/USER',          -1, 20000),
+#        ('zp1000_c2', '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/slava-effres_zp1000_c2-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+#        ('zp1250_c2', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/slava-effres_zp1250_c2-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+#        ('zp1500_c2', '/ZprimePSIToMuMu_M-1500_TuneZ2star_8TeV-pythia6/slava-effres_zp1500_c2-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+#        ('zp1750_c2', '/ZprimePSIToMuMu_M-1750_TuneZ2star_8TeV-pythia6/slava-effres_zp1750_c2-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+#        ('zp2000_c2', '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/slava-effres_zp2000_c2-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+#        ('zp2250_c2', '/ZprimePSIToMuMu_M-2250_TuneZ2star_8TeV-pythia6/slava-effres_zp2250_c2-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+#        ('zp2500_c2', '/ZprimePSIToMuMu_M-2500_TuneZ2star_8TeV-pythia6/slava-effres_zp2500_c2-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+#        ('zp2750_c2', '/ZprimePSIToMuMu_M-2750_TuneZ2star_8TeV-pythia6/slava-effres_zp2750_c2-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
+#        ('zp3000_c2', '/ZprimePSIToMuMu_M-3000_TuneZ2star_8TeV-pythia6/slava-effres_zp3000_c2-a91db2e46be1c6efe508cc704581ac69/USER',        -1, 20000),
         ]
 
     resolutions = {
@@ -193,6 +228,7 @@ return_data = 1
 
         if restrict_mass_window and ('zp' in name or 'rs' in name):
             mass = name.replace('zp', '').replace('rs', '')
+            mass = mass.replace('_c1', '').replace('_c2', '')
             mass = int(mass)
             res = resolutions[mass]
             lo = mass - 1.5*res*mass

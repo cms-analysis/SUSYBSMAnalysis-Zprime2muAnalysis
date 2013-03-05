@@ -10,7 +10,7 @@ sys.argv.remove('-b') # and don't mess up sys.argv
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import rec_levels, rec_level_code
 recLevelDict, recLevels = rec_levels()
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import apply_hist_commands, make_rms_hist, set_zp2mu_style
+from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import apply_hist_commands, make_rms_hist, set_zp2mu_style, setTDRStyle
 
 class PSDrawer:
     GEN = recLevels.index('GN')
@@ -38,6 +38,7 @@ class PSDrawer:
         
     def __init__(self, filename, date_pages=False, as_pdf=False):
         set_zp2mu_style(date_pages)
+        #setTDRStyle()
         self.canvas = TCanvas('c1','',0,0,500,640)
         self.ps = TPostScript(filename, 111)
         self.filename = filename

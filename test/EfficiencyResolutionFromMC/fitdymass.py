@@ -4,13 +4,14 @@ import os
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import *
 set_zp2mu_style()
 ROOT.gStyle.SetPadTopMargin(0.02)
-ROOT.gStyle.SetPadRightMargin(0.02)
+ROOT.gStyle.SetPadRightMargin(0.04)
 ROOT.TH1.AddDirectory(0)
 
 ps = plot_saver('plots/fitdymass')
 
 int_lumi = 1000.
-rebin = 5
+rebin = 40
+use_non_dy = True
 
 masses  = [     20,   120,   200,    500,     800,    1000,    1500,    2000]
 nevents = [3293740, 99984, 99990,  99992,   99984,   99989,   99992,   99974]
@@ -29,19 +30,39 @@ for m,w in zip(masses, weights):
     
     h = d.Get('DileptonMass').Clone('dy%i' % m)
     h.Rebin(rebin)
-    h.GetXaxis().SetRangeUser(40, 2500)
+    h.GetXaxis().SetRangeUser(40, 3000)
     h.Scale(w)
     h.Draw()
     ps.save('rawmass%i' % m)
     hists.append(h)
 
+if use_non_dy:
+    from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import ttbar_powheg, tW, tbarW, ww, wz, zz, ztautau
+    non_dy_samples = [ttbar_powheg, tW, tbarW, ww, wz, zz, ztautau]
+    for sample in non_dy_samples:
+        fn = 'ana_datamc_%s.root' % sample.name
+        fn = hists_dir + fn
+        f = ROOT.TFile(fn)
+        d = f.Our2012MuonsPlusMuonsMinusHistos
+
+        w = sample.partial_weight * int_lumi
+        print sample.name, 'w = ', w
+        h = d.Get('DileptonMass').Clone('%s' % sample.name)
+        h.Rebin(rebin)
+        h.GetXaxis().SetRangeUser(40, 3000)
+        h.Scale(w)
+        h.Draw()
+        ps.save('rawmass_%s' % sample.name)
+        hists.append(h)
+
+    
 htot = hists[0].Clone('htot')
 for j in xrange(1, len(hists)):
     htot.Add(hists[j])
 htot.SetTitle('')
-htot.Draw()
 htot.GetXaxis().SetTitle('reconstructed m(#mu^{+}#mu^{-}) (GeV)')
 htot.GetYaxis().SetTitle('Events/%i GeV/%.1f fb^{-1}' % (rebin, int_lumi/1000)) # assumes original started out with 1 GeV bins, and the xsec is in pb-1.
+htot.Draw()
 #htot.Scale(1/htot.Integral(htot.FindBin(300), htot.FindBin(2000)))
 
 #file = ROOT.TFile('dy.root', 'recreate')
@@ -52,17 +73,21 @@ htot.GetYaxis().SetTitle('Events/%i GeV/%.1f fb^{-1}' % (rebin, int_lumi/1000)) 
     
 def fit_it(lo, hi):
 #    fcn = ROOT.TF1('fcn', 'exp([0] + [1] * x**[2])', lo, hi)
-    fcn = ROOT.TF1('fcn', 'exp([0] + [1]*x)*x**[2]', lo, hi)
-#    fcn = ROOT.TF1('fcn', 'exp([0] + [1]*x + [2]*x*x)*x**[3]', lo, hi)
+#    fcn = ROOT.TF1('fcn', 'exp([0] + [1]*x)*x**[2]', lo, hi)
+    fcn = ROOT.TF1('fcn', 'exp([0] - [1]*x + [2]*x*x)*x**(-[3])', lo, hi)
 #    fcn.SetParLimits(0, 0, 1000)
 #    fcn.SetParLimits(1,  -1, 1)
 #    fcn.SetParLimits(2, -10, 0)
-    fcn.SetParNames("N", "a", "b")
-#    fcn.SetParNames("N", "a", "b", "c")
+#    fcn.SetParNames("N", "a", "b")
+#    fcn.SetParameters(24, -2E-3, -3.5)
+    fcn.SetParNames("N", "a", "b", "k")
+    fcn.SetParameters(24, 2E-3, -1E-7, 3.5)
     fcn.SetLineColor(ROOT.kBlue)
 
 #    htot.Fit(fcn, 'LVR')
-    htot.Fit(fcn, 'LVRW')
+#    htot.Fit(fcn, 'LVRW')
+#    htot.Fit(fcn, 'WLREMV')
+    htot.Fit(fcn, 'REMV')
 
     ps.c.Update()
     s = htot.GetListOfFunctions().FindObject("stats")
@@ -89,8 +114,8 @@ def fit_it(lo, hi):
                 hres.SetBinContent(i, res/htot.GetBinContent(i))
                 hres.SetBinError(i, htot.GetBinError(i)/htot.GetBinContent(i))
 
-    hres.SetMinimum(-1.5)
-    hres.SetMaximum( 1.5)
+    hres.SetMinimum(-1.)
+    hres.SetMaximum( 1.)
     hres.Draw('e')
     l1 = ROOT.TLine(lo, 0., hi,  0.)
     l1.Draw()
@@ -164,9 +189,9 @@ def draw_overlay(fsets):
             ps.save('ratio%i_%i' % (i, i-1), log=False)
 
 #l = range(200, 2200, 200)
-l = [200, 300, 400, 600, 800, 2400]
+l = [200, 300, 400, 600, 800]
 for lo in l:
-    fit_it(lo, 2500)
+    fit_it(lo, 3000)
 #fit_it(400,2000)
 
 # Take different Drell-Yan mass spectra and plot them overlayed,

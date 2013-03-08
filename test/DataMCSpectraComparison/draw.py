@@ -32,8 +32,12 @@ parser.add_option('--no-joins', action='store_false', dest='do_joins', default=T
                   help='Do not lump together the MC contributions from different samples.')
 parser.add_option('--no-join-ttbar', action='store_false', dest='join_ttbar_and_other_prompt_leptons', default=True,
                   help='Do not lump ttbar and other prompt leptons contributions together.')
+parser.add_option('--join-dy-and-jets', action='store_true', dest='join_dy_and_jets', default=False,
+                  help='Combine only Drell-Yan and jets samples.')
 parser.add_option('--exclude-sample', action='append', dest='exclude_samples',
                   help='Specify a sample not to use (by name, e.g. wjets). To exclude more than one sample, give this option more than once.')
+parser.add_option('--qcd-from-data', action='store_true', dest='qcd_from_data', default=False,
+                  help='Replace MC predictions of QCD background by data-driven predictions.  External file qcd_from_data.root must be provided.')
 parser.add_option('--include-quantity', action='append', dest='include_quantities',
                   help='If specified, will override the default list of quantities to compare in favor of the specified one. Specify this option more than once to use multiple quantities to compare.')
 parser.add_option('--include-dilepton', action='append', dest='include_dileptons',
@@ -89,6 +93,8 @@ class Drawer:
         self.put_overflow_in_last_bin = options.put_overflow_in_last_bin
         self.do_joins = options.do_joins
         self.join_ttbar_and_other_prompt_leptons = options.join_ttbar_and_other_prompt_leptons
+        self.join_dy_and_jets = options.join_dy_and_jets
+        self.qcd_from_data = options.qcd_from_data
         self.guess_yrange = options.guess_yrange
 
         if not os.path.isdir(self.histo_dir):
@@ -187,12 +193,18 @@ class Drawer:
         if self.do_joins:
             if 'qcd' in sample_name or sample_name in ('inclmu15', 'wmunu', 'wjets'):
                 return 'jets', 4
-            elif self.join_ttbar_and_other_prompt_leptons and sample_name in ('ttbar', 'ttbar_powheg', 'tW', 'tbarW', 'ztautau', 'ww', 'wz', 'zz'):
-                return 't#bar{t} + other prompt leptons', 2
-            elif not self.join_ttbar_and_other_prompt_leptons and sample_name in ('tW', 'tbarW', 'ztautau', 'ww', 'wz', 'zz'):
-                return 'other prompt leptons', 2
             elif 'dy' in sample_name or sample_name == 'zmumu':
                 return '#gamma/Z #rightarrow #mu^{+}#mu^{-}', 7
+            if not self.join_dy_and_jets:
+                if self.join_ttbar_and_other_prompt_leptons and sample_name in ('ttbar', 'ttbar_powheg', 'tW', 'tbarW', 'ztautau', 'ww', 'wz', 'zz'):
+                    return 't#bar{t} + other prompt leptons', 2
+                elif not self.join_ttbar_and_other_prompt_leptons and sample_name in ('tW', 'tbarW', 'ztautau', 'ww', 'wz', 'zz'):
+                    return 'other prompt leptons', 2
+            else:
+                if sample_name in ('tW', 'tbarW'):
+                    return 'single top', 1
+                elif sample_name in ('ww'):
+                    return 'WW', 3
 
         return None, None
 
@@ -255,8 +267,9 @@ class Drawer:
             return 100, 1000
         if 'MuonsSameSign' in dilepton:
             if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained']:
-                return 50, 900
+                return 50, 880
         if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained']:
+#            return 60, 3000
             return 60, 2000
 #            return 120, 1120
         elif quantity_to_compare in ['DileptonPt', 'LeptonPt']:
@@ -394,15 +407,36 @@ class Drawer:
         # it, rebin/scale/otherwise manipulate it as necessary, and
         # store the result as The Histogram in the sample object.
         for sample in self.samples:
-            mc_fn = os.path.join(self.mc_dir, 'ana_datamc_%s.root' % sample.name)
-            f = ROOT.TFile(mc_fn)
-            sample.histogram = getattr(f, self.get_dir_name(cutset, dilepton)).Get(quantity_to_compare).Clone()
+            if (self.qcd_from_data and 'MuPrescaled' not in cutset and 'Electron' not in dilepton and sample.name == 'inclmu15'):
+                # Replace QCD MC prediction by that obtained from data.
+                mc_fn = os.path.join('./', 'qcd_from_data.root')
+                f = ROOT.TFile(mc_fn)
+                if 'MuonsSameSign' in dilepton:
+                    sample.histogram = f.Get('ss').Clone()
+                elif 'MuonsPlusMuonsMinus' in dilepton:
+                    sample.histogram = f.Get('os').Clone()
+                elif 'MuonsAllSigns' in dilepton:
+                    sample.histogram = f.Get('ss').Clone()
+                    sample.histogram.Add(f.Get('os'), 1.)
+                else:
+                    print "+++ Unknown dilepton type! +++"
+                sample.scaled_by = 1. # Assume that the histogram is appropriately normalized.
+            else:
+                mc_fn = os.path.join(self.mc_dir, 'ana_datamc_%s.root' % sample.name)
+                f = ROOT.TFile(mc_fn)
+                sample.histogram = getattr(f, self.get_dir_name(cutset, dilepton)).Get(quantity_to_compare).Clone()
+                sample.scaled_by = self.int_lumi * self.get_lumi_rescale_factor(cutset, dilepton) * sample.partial_weight
+                if 'MuPrescaled' in cutset:
+                    sample.scaled_by = sample.scaled_by / overall_prescale
+
+            # Assume that the QCD histogram includes W+jets as well.
+            if (self.qcd_from_data and 'MuPrescaled' not in cutset and 'Electron' not in dilepton and sample.name in ('wmunu', 'wjets')):
+                nbins = sample.histogram.GetNbinsX()
+                for ibin in range(1, nbins+1):
+                    sample.histogram.SetBinContent(ibin, 0.)
+                    sample.histogram.SetBinError(ibin, 0.)
 
             self.rebin_histogram(sample.histogram, cutset, dilepton, quantity_to_compare)
-
-            sample.scaled_by = self.int_lumi * self.get_lumi_rescale_factor(cutset, dilepton) * sample.partial_weight
-            if 'MuPrescaled' in cutset:
-                sample.scaled_by = sample.scaled_by / overall_prescale
             sample.histogram.Scale(sample.scaled_by)
 
             if cumulative:
@@ -555,7 +589,11 @@ class Drawer:
         elif log_x:
             legend = ROOT.TLegend(0.60, 0.55, 0.86, 0.88)
         else:
-            legend = ROOT.TLegend(0.60, 0.69, 0.86, 0.88)
+            if self.join_dy_and_jets:
+                legend = ROOT.TLegend(0.60, 0.50, 0.86, 0.88)
+            else:
+                legend = ROOT.TLegend(0.60, 0.69, 0.86, 0.88)
+                #legend = ROOT.TLegend(0.60, 0.60, 0.86, 0.88)
 
         legend.SetFillColor(0)
         legend.SetBorderSize(0)
@@ -631,7 +669,10 @@ class Drawer:
         # Must call Draw first or the THStack doesn't have a histogram/axes.
         s.GetXaxis().SetTitleOffset(0.9)
         s.GetXaxis().SetTitleSize(0.047)
-        s.GetYaxis().SetTitleOffset(1.2)
+        if 'MuonsSameSign' in dilepton:
+            s.GetYaxis().SetTitleOffset(0.9)
+        else:
+            s.GetYaxis().SetTitleOffset(1.0)
         s.GetYaxis().SetTitleSize(0.047)
 
         # Set the x-axis range as specified. Then determine what
@@ -719,7 +760,8 @@ class Drawer:
 
         # Adorn the plot with legend and labels.
         l = self.draw_legend(dilepton, cumulative, log_x)
-        t = ROOT.TPaveLabel(0.20, 0.89, 0.86, 0.99, 'CMS 2012 preliminary   #sqrt{s} = 8 TeV    #int L dt = %.f pb^{-1}' % round(self.int_lumi), 'brNDC')
+#        t = ROOT.TPaveLabel(0.20, 0.89, 0.86, 0.99, 'CMS Preliminary   #sqrt{s} = 8 TeV    #int L dt = %.f pb^{-1}' % round(self.int_lumi), 'brNDC')
+        t = ROOT.TPaveLabel(0.30, 0.89, 0.96, 0.99, 'CMS Preliminary   #sqrt{s} = 8 TeV   #int L dt = 20.6 fb^{-1}', 'brNDC')
         t.SetTextSize(0.35)
         t.SetBorderSize(0)
         t.SetFillColor(0)
@@ -794,6 +836,83 @@ class Drawer:
         table_f.close()
         self.table_sections = []
         self.table_rows = []
+
+    def save_histos(self, cutset, dilepton, quantity_to_compare, cumulative):
+        if cutset != 'Our2012':
+            return
+        if dilepton != 'MuonsPlusMuonsMinus':
+            return
+#        if quantity_to_compare != 'DimuonMassVtxConstrainedLog':
+        if quantity_to_compare != 'DimuonMassVertexConstrained':
+            return
+
+        zdy_ifois = 0
+        prompt_ifois = 0
+        for sample in self.samples:
+            if sample.is_zprime:
+                continue
+            if 'dy' in sample.name or sample.name == 'zmumu':
+                print 'dy: ',sample.name
+                if zdy_ifois == 0:
+                    zdy = sample.histogram.Clone('zdy')
+                    zdy_ifois = 1
+                else:
+                    zdy.Add(sample.histogram, 1.)
+            if sample.name in ('ttbar', 'ttbar_powheg', 'tW', 'tbarW', 'ztautau', 'ww', 'wz', 'zz'):
+                print 'ttbar and others', sample.name
+                if prompt_ifois == 0:
+                    prompt = sample.histogram.Clone('prompt')
+                    prompt_ifois = 1
+                else:
+                    prompt.Add(sample.histogram, 1.)
+        data = self.hdata.Clone('data')
+        data_tgraph = poisson_intervalize(self.hdata, True)
+        data_tgraph.SetName("data_tgraph")
+
+        file_name = 'dimuon_histos_differential.root'
+        if cumulative:
+            file_name = 'dimuon_histos_cumulative.root'
+
+        histFile = ROOT.TFile.Open(file_name, 'recreate')
+        if not histFile:
+            raise RuntimeError, \
+                  "Could not open '%s' as an output root file" % output
+        data.Write()
+        prompt.Write()
+        zdy.Write()
+
+        if not cumulative:
+            nbins = data.GetNbinsX()
+            data_tgraph_per_GeV = ROOT.TGraphAsymmErrors(data_tgraph)
+            data_tgraph_per_GeV.SetName("data_tgraph_per_GeV")
+            zdy_per_GeV         = zdy.Clone('zdy_per_GeV')
+            prompt_per_GeV      = prompt.Clone('prompt_per_GeV')
+            for i in xrange(1, nbins):
+                c_data = data.GetBinContent(i)/data.GetBinWidth(i)
+                e_data = data.GetBinError(i)/data.GetBinWidth(i)
+                print i, 'nevents = ', data.GetBinContent(i), ' low edge = ', data.GetBinLowEdge(i), ' width = ', data.GetBinWidth(i), 'events/GeV = ', c_data, '+/-', e_data
+                x        = data.GetBinLowEdge(i) + data.GetBinWidth(i)/2.
+                err_low  = data_tgraph.GetErrorYlow(i-1)/data.GetBinWidth(i)
+                err_high = data_tgraph.GetErrorYhigh(i-1)/data.GetBinWidth(i)
+                print '  x = ', x, ' err_low = ', data_tgraph.GetErrorYlow(i-1), err_low, ' err_high = ', data_tgraph.GetErrorYhigh(i-1), err_high
+                data_tgraph_per_GeV.SetPoint(i-1, x, c_data)
+                data_tgraph_per_GeV.SetPointEYlow(i-1, err_low)
+                data_tgraph_per_GeV.SetPointEYhigh(i-1, err_high)
+
+                c_zdy = zdy.GetBinContent(i)/zdy.GetBinWidth(i)
+                e_zdy = zdy.GetBinError(i)/zdy.GetBinWidth(i)
+                zdy_per_GeV.SetBinContent(i, c_zdy)
+                zdy_per_GeV.SetBinError(i, e_zdy)
+
+                c_prompt = prompt.GetBinContent(i)/prompt.GetBinWidth(i)
+                e_prompt = prompt.GetBinError(i)/prompt.GetBinWidth(i)
+                prompt_per_GeV.SetBinContent(i, c_prompt)
+                prompt_per_GeV.SetBinError(i, e_prompt)
+
+            data_tgraph.Write()
+            data_tgraph_per_GeV.Write()
+            zdy_per_GeV.Write()
+            prompt_per_GeV.Write()
         
     def go(self):
         for quantity_to_compare in self.quantities_to_compare:
@@ -842,6 +961,8 @@ class Drawer:
                         self.prepare_mc_histograms(cutset, dilepton, quantity_to_compare, cumulative)
                         self.prepare_data_histogram(cutset, dilepton, quantity_to_compare, cumulative)
 
+                        # self.save_histos(cutset, dilepton, quantity_to_compare, cumulative)
+                        
                         # Print the entries for the ASCII table for the current
                         # cutset+dilepton. Could extend this to support counts for
                         # ranges that aren't mass.

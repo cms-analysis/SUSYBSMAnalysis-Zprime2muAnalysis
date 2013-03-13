@@ -280,7 +280,7 @@ class Drawer:
 
     def get_log_x(self, cutset, dilepton, quantity_to_compare):
         return quantity_to_compare in ['DimuonMassVtxConstrainedLog']
-            
+
     def parse_lumi_from_log(self, log_fn):
         # JMTBAD magic, fragile parsing
         lumi_scale = 1 # assume /pb
@@ -407,7 +407,7 @@ class Drawer:
         # it, rebin/scale/otherwise manipulate it as necessary, and
         # store the result as The Histogram in the sample object.
         for sample in self.samples:
-            if (self.qcd_from_data and 'MuPrescaled' not in cutset and 'Electron' not in dilepton and sample.name == 'inclmu15'):
+            if (self.qcd_from_data and 'MuPrescaled' not in cutset and 'Electron' not in dilepton and sample.name == 'inclmu15' and quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained', 'DimuonMassVtxConstrainedLog']):
                 # Replace QCD MC prediction by that obtained from data.
                 mc_fn = os.path.join('./', 'qcd_from_data.root')
                 f = ROOT.TFile(mc_fn)
@@ -420,6 +420,30 @@ class Drawer:
                     sample.histogram.Add(f.Get('os'), 1.)
                 else:
                     print "+++ Unknown dilepton type! +++"
+
+                if (quantity_to_compare == 'DimuonMassVtxConstrainedLog'):
+                    # Re-pack fixed-bin-width histogram into a variable-bin-width one
+                    mc_fn = os.path.join(self.mc_dir, 'ana_datamc_%s.root' % sample.name)
+                    f = ROOT.TFile(mc_fn)
+                    varbin_histogram = getattr(f, self.get_dir_name(cutset, dilepton)).Get(quantity_to_compare).Clone()
+
+                    nbins_var = varbin_histogram.GetNbinsX()
+                    nbins_fix = sample.histogram.GetNbinsX()
+                    for ibin_var in range(1, nbins_var+1):
+                        xlow_var = varbin_histogram.GetBinLowEdge(ibin_var)
+                        xupp_var = xlow_var + varbin_histogram.GetBinWidth(ibin_var)
+                        # print ibin_var, xlow_var, xupp_var
+                        cbin = 0
+                        for ibin_fix in range(1, nbins_fix+1):
+                            bin_center = sample.histogram.GetBinCenter(ibin_fix)
+                            if (bin_center > xlow_var and bin_center < xupp_var):
+                                # print "     ", ibin_fix, bin_center, sample.histogram.GetBinContent(ibin_fix)
+                                cbin = cbin + sample.histogram.GetBinContent(ibin_fix)
+                        # print "  ", ibin_var, cbin
+                        varbin_histogram.SetBinContent(ibin_var, cbin)
+
+                    sample.histogram = varbin_histogram.Clone()
+
                 sample.scaled_by = 1. # Assume that the histogram is appropriately normalized.
             else:
                 mc_fn = os.path.join(self.mc_dir, 'ana_datamc_%s.root' % sample.name)
@@ -430,7 +454,7 @@ class Drawer:
                     sample.scaled_by = sample.scaled_by / overall_prescale
 
             # Assume that the QCD histogram includes W+jets as well.
-            if (self.qcd_from_data and 'MuPrescaled' not in cutset and 'Electron' not in dilepton and sample.name in ('wmunu', 'wjets')):
+            if (self.qcd_from_data and 'MuPrescaled' not in cutset and 'Electron' not in dilepton and sample.name in ('wmunu', 'wjets') and quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained', 'DimuonMassVtxConstrainedLog']):
                 nbins = sample.histogram.GetNbinsX()
                 for ibin in range(1, nbins+1):
                     sample.histogram.SetBinContent(ibin, 0.)

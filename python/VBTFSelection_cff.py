@@ -63,5 +63,6 @@ dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          src = cms.InputTag('allDimuons'),
                          cut = cms.string(''),
                          max_candidates = cms.uint32(100),
+                         sort_by_pt = cms.bool(False),
                          do_remove_overlap = cms.bool(False),
                          )

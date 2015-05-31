@@ -15,7 +15,8 @@
 #include "TMath.h"
 #include "TRandom3.h"
 #include "TROOT.h"
-#include "Api.h" // for G__p2f2funcname
+#include "TMVA/RuleFitAPI.h" // for G__p2f2funcname it does not exist anymore
+
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Utilities/interface/Exception.h"
@@ -53,7 +54,7 @@ void TFMultiD::setup(const char *name, Double_t (*fcn)(Double_t *, Double_t *),
     for (Int_t i = 0; i < fNdim; i++)
       fXmin[i] = fXmax[i] = 0;
 
-  char *funcname = G__p2f2funcname((void*)fcn);
+  const char *funcname = "function"; //G__p2f2funcname((void*)fcn);
   if (funcname) {
     fType = 2;
     SetTitle(funcname);

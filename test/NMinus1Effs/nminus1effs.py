@@ -5,8 +5,17 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
 from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionDec2012_cff import loose_cut, trigger_match, tight_cut, allDimuons
 
-process.source.fileNames = ['/store/user/tucker/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/datamc_zmumu/5222c20b53e3c47b6c8353d464ee954c/pat_42_3_74A.root']
-process.maxEvents.input = 1000
+readFiles = cms.untracked.vstring()
+secFiles = cms.untracked.vstring() 
+process.source = cms.Source ("PoolSource",fileNames = readFiles, secondaryFileNames = secFiles)
+readFiles.extend( [
+       '/store/user/rradogna/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/datamc_zpsi5000/a8881ceec144e0dfafbb7486d1b7f8e6/pat_100_1_Hw6.root' ] );
+
+
+secFiles.extend( [
+               ] )
+
+process.maxEvents.input = 10
 
 # Define the numerators and denominators, removing cuts from the
 # allDimuons maker. "NoX" means remove cut X entirely (i.e. the
@@ -90,20 +99,26 @@ process.p *= process.allDimuonsNoCosm * process.dimuonsNoCosm * process.NoCosm
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
-[CRAB]
-jobtype = cmssw
-scheduler = condor
+from CRABClient.UserUtilities import config
+config = config()
 
-[CMSSW]
-datasetpath = %(ana_dataset)s
-dbs_url = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
-pset = nminus1effs.py
-get_edm_output = 1
-job_control
+config.General.requestName = '%(name)s' 
+config.General.workArea = 'PAT_%(name)s'
 
-[USER]
-ui_working_dir = crab/crab_ana_nminus1_%(name)s
-return_data = 1
+config.JobType.pluginName = 'Analysis'
+config.JobType.psetName = '%(pset)s'   
+config.JobType.priority = 1
+
+config.Data.inputDataset =  '%(dataset)s'
+config.Data.inputDBS = 'global'
+config.Data.splitting = 'EventAwareLumiBased' 
+config.Data.unitsPerJob = 10000
+config.Data.publication = True
+config.Data.publishDataName = '%(name)s'
+config.Data.outLFN = '/store/user/federica/PATTuple' 
+
+config.Site.storageSite = 'T2_US_Purdue'
+
 '''
 
     just_testing = 'testing' in sys.argv
@@ -132,16 +147,17 @@ return_data = 1
             new_crab_cfg = crab_cfg % locals()
             job_control = '''
 total_number_of_lumis = -1
-number_of_jobs = 20
+#number_of_jobs = 20
+lumis_per_job = 500
 lumi_mask = tmp.json'''
             new_crab_cfg = new_crab_cfg.replace('job_control', job_control)
-            open('crab.cfg', 'wt').write(new_crab_cfg)
+            open('crab.py', 'wt').write(new_crab_cfg)
 
             if not just_testing:
-                os.system('crab -create -submit all')
+                os.system('crab submit -c all')
 
         if not just_testing:
-            os.system('rm crab.cfg nminus1effs_crab.py nminus1effs_crab.pyc tmp.json')
+            os.system('rm crab.py nminus1effs_crab.py nminus1effs_crab.pyc tmp.json')
 
     if not 'no_mc' in sys.argv:
         crab_cfg = crab_cfg.replace('job_control','''
@@ -150,12 +166,12 @@ events_per_job = 50000
 ''')
 
         from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import *
-        samples = [zmumu, ttbar, dy120_c1, dy200_c1, dy500_c1, dy800_c1, dy1000_c1, dy1500_c1, dy2000_c1, inclmu15]
+        samples =[dy50, dy120, dy200, dy400, dy800, dy1400, dy2300, dy3500, dy4500, dy6000, dy7500, dy8500, dy9500, zpsi5000, ttbar, inclmu15]
         for sample in samples:
             print sample.name
-            open('crab.cfg', 'wt').write(crab_cfg % sample)
+            open('crab.py', 'wt').write(crab_cfg % sample)
             if not just_testing:
-                os.system('crab -create -submit all')
+                os.system('crab submit -c all')
 
         if not just_testing:
-            os.system('rm crab.cfg')
+            os.system('rm crab.py')

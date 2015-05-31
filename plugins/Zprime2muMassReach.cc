@@ -12,6 +12,8 @@
 #include "TStyle.h"
 #include "TPaveLabel.h"
 #include "TText.h"
+#include <ostream>
+#include <iostream>
 
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
@@ -25,7 +27,8 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/RecLevelHelper.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TriggerDecision.h"
-
+using std::iostream; 
+using std::ostream;
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 

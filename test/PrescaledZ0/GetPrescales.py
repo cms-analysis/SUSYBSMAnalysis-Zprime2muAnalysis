@@ -21,21 +21,26 @@ process.p = cms.Path(process.Mu24eta2p1)
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
-[CRAB]
-jobtype = cmssw
-scheduler = condor
+from CRABClient.UserUtilities import config
+config = config()
 
-[CMSSW]
-datasetpath = %(dataset)s
-pset = GetPrescales.py
-total_number_of_lumis = -1
-number_of_jobs = 50
-#lumi_mask = /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-196531_8TeV_13Jul2012ReReco_Collisions12_JSON_MuonPhys_v3.txt
-lumi_mask = /afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-208686_8TeV_PromptReco_Collisions12_JSON_MuonPhys.txt
+config.General.requestName = '%(name)s' 
+config.General.workArea = 'Prescale_%(name)s'
 
-[USER]
-ui_working_dir = crab/crab_getprescales_%(name)s
-return_data = 1
+config.JobType.pluginName = 'Analysis'
+config.JobType.psetName = 'GetPrescales.py'   
+config.JobType.priority = 1
+
+config.Data.inputDataset =  '%(dataset)s'
+config.Data.inputDBS = 'global'
+config.Data.splitting = 'EventAwareLumiBased' 
+config.Data.unitsPerJob = 10000
+config.Data.publication = True
+config.Data.publishDataName = '%(name)s'
+config.Data.outLFN = '/store/user/federica/Prescale' 
+
+config.Site.storageSite = 'T2_US_Purdue'
+
 '''
 
     just_testing = 'testing' in sys.argv
@@ -50,9 +55,9 @@ return_data = 1
 
     for name, dataset in dataset_details:
         print name
-        open('crab.cfg', 'wt').write(crab_cfg % locals())
+        open('crab.py', 'wt').write(crab_cfg % locals())
         if not just_testing:
-            os.system('crab -create -submit all')
+            os.system('crab submit -c all')
 
     if not just_testing:
-        os.system('rm -f crab.cfg tmp.json')
+        os.system('rm -f crab.py tmp.json')

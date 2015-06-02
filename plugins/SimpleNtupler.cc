@@ -297,7 +297,8 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->SetAlias("trigger_match_1", "lep_triggerMatchPt[1] > " triggerMatchMinPt " && abs(lep_triggerMatchEta[1]) < " triggerMatchMaxEta);
   tree->SetAlias("triggerMatched", "trigger_match_0 || trigger_match_1");
 
-  tree->SetAlias("GoodData", "GoodDataRan && HLTPhysicsDeclared && NoScraping && GoodVtx");
+  // tree->SetAlias("GoodData", "GoodDataRan && HLTPhysicsDeclared && NoScraping && GoodVtx");
+  tree->SetAlias("GoodData", "GoodDataRan && HLTPhysicsDeclared && GoodVtx");
 
   tree->SetAlias("extraDimuonCuts", "cos_angle > -0.9998 && vertex_chi2 < 10");
 
@@ -459,6 +460,7 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
   if (fill_gen_info) {
     // This only works for DY/Z'/RSG events, and really just for PYTHIA!
     hardInteraction->Fill(event);
+    if(hardInteraction->IsValid()){
 
     t.gen_res_mass = hardInteraction->resonance->mass();
     t.gen_res_pt   = hardInteraction->resonance->pt();
@@ -480,13 +482,15 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
     t.gen_lep_eta[1] = hardInteraction->lepPlus->eta();
     t.gen_lep_phi[1] = hardInteraction->lepPlus->phi();
 
-    t.gen_lep_noib_pt[0]  = hardInteraction->lepMinusNoIB->pt();
-    t.gen_lep_noib_eta[0] = hardInteraction->lepMinusNoIB->eta();
-    t.gen_lep_noib_phi[0] = hardInteraction->lepMinusNoIB->phi();
-
-    t.gen_lep_noib_pt[1]  = hardInteraction->lepPlusNoIB->pt();
-    t.gen_lep_noib_eta[1] = hardInteraction->lepPlusNoIB->eta();
-    t.gen_lep_noib_phi[1] = hardInteraction->lepPlusNoIB->phi();
+//    t.gen_lep_noib_pt[0]  = hardInteraction->lepMinusNoIB->pt();
+//    t.gen_lep_noib_eta[0] = hardInteraction->lepMinusNoIB->eta();
+//    t.gen_lep_noib_phi[0] = hardInteraction->lepMinusNoIB->phi();
+//
+//    t.gen_lep_noib_pt[1]  = hardInteraction->lepPlusNoIB->pt();
+//    t.gen_lep_noib_eta[1] = hardInteraction->lepPlusNoIB->eta();
+//    t.gen_lep_noib_phi[1] = hardInteraction->lepPlusNoIB->phi();
+        
+    }
   }
 
   edm::Handle<pat::CompositeCandidateCollection> dils;

@@ -29,6 +29,64 @@ private:
     }
   };
 
+  struct lepton_pt_sort {
+    bool operator()(const pat::CompositeCandidate& lhs, const pat::CompositeCandidate& rhs) {
+      // Sort by pT: a pair with two highest-pT muons wins.
+      const reco::CandidateBaseRef& lhs_mu0 = dileptonDaughter(lhs, 0);
+      const reco::CandidateBaseRef& lhs_mu1 = dileptonDaughter(lhs, 1);
+      const reco::CandidateBaseRef& rhs_mu0 = dileptonDaughter(rhs, 0);
+      const reco::CandidateBaseRef& rhs_mu1 = dileptonDaughter(rhs, 1);
+      // Get the unique ids of the dilepton daughters, as well as their pT's.
+      int lhs_id0 = lhs_mu0.key();
+      int lhs_id1 = lhs_mu1.key();
+      int rhs_id0 = rhs_mu0.key();
+      int rhs_id1 = rhs_mu1.key();
+      double lhs_pt0 = lhs_mu0->pt();
+      double lhs_pt1 = lhs_mu1->pt();
+      double rhs_pt0 = rhs_mu0->pt();
+      double rhs_pt1 = rhs_mu1->pt();
+      //std::ostringstream out;
+      //out << " lhs0: " << lhs_id0 << " " << lhs_pt0 << "\n";
+      //out << " lhs1: " << lhs_id1 << " " << lhs_pt1 << "\n";
+      //out << " rhs0: " << rhs_id0 << " " << rhs_pt0 << "\n";
+      //out << " rhs1: " << rhs_id1 << " " << rhs_pt1 << "\n";
+      //edm::LogDebug("Sort dileptons") << out.str();
+      // Sort muons in each dimuon in decreasing order of pT
+      if (lhs_pt0 < lhs_pt1) {
+	double tmp_pt = lhs_pt0;
+	lhs_pt0 = lhs_pt1;
+	lhs_pt1 = tmp_pt;
+	int tmp_id = lhs_id0;
+	lhs_id0 = lhs_id1;
+	lhs_id1 = tmp_id;
+      }
+      if (rhs_pt0 < rhs_pt1) {
+	double tmp_pt = rhs_pt0;
+	rhs_pt0 = rhs_pt1;
+	rhs_pt1 = tmp_pt;
+	int tmp_id = rhs_id0;
+	rhs_id0 = rhs_id1;
+	rhs_id1 = tmp_id;
+      }
+      // In sorting by pT, if there are more than four muons, only the
+      // highest-ranking and lowest-ranking dimuons are well defined.
+      // That's OK because we really care only about the
+      // highest-ranking dimuon.
+      if (lhs_id0 == rhs_id0 && lhs_id1 == rhs_id1) {
+	edm::LogWarning("Sort dileptons") << "+++ Two identical dimuons found? +++";
+	return false;
+      }
+      else if (lhs_id0 == rhs_id0 && lhs_pt1 > rhs_pt1)
+	return true;
+      else if (lhs_id1 == rhs_id1 && lhs_pt0 > rhs_pt0)
+	return true;
+      else if (lhs_id0 != rhs_id0 && lhs_id1 != rhs_id1 && lhs_pt0 > rhs_pt0 && lhs_pt1 > rhs_pt1)
+	return true;
+      else
+	return false;
+    }
+  };
+  
   void remove_overlap(pat::CompositeCandidateCollection&) const;
   std::vector<reco::TransientTrack> get_transient_tracks(const pat::CompositeCandidate&) const;
 
@@ -52,6 +110,7 @@ private:
   StringCutObjectSelector<pat::CompositeCandidate> selector;
 
   const unsigned max_candidates;
+  const bool sort_by_pt;
   const bool do_remove_overlap;
 
   const bool cut_on_back_to_back_cos_angle;
@@ -70,6 +129,7 @@ Zprime2muCompositeCandidatePicker::Zprime2muCompositeCandidatePicker(const edm::
   : src(cfg.getParameter<edm::InputTag>("src")),
     selector(cfg.getParameter<std::string>("cut")),
     max_candidates(cfg.getParameter<unsigned>("max_candidates")),
+    sort_by_pt(cfg.getParameter<bool>("sort_by_pt")),
     do_remove_overlap(cfg.getParameter<bool>("do_remove_overlap")),
     cut_on_back_to_back_cos_angle(cfg.existsAs<double>("back_to_back_cos_angle_min")),
     back_to_back_cos_angle_min(cut_on_back_to_back_cos_angle ? cfg.getParameter<double>("back_to_back_cos_angle_min") : -2),
@@ -168,7 +228,7 @@ void Zprime2muCompositeCandidatePicker::embed_vertex_constrained_fit(pat::Compos
   }
 
   dil.addUserFloat("vertex_chi2", vtx.totalChiSquared()/vtx.degreesOfFreedom());
-
+  dil.addUserFloat("vertex_ndof", vtx.degreesOfFreedom());
   dil.addUserFloat("vertexX", vtx.position().x());
   dil.addUserFloat("vertexY", vtx.position().y());
   dil.addUserFloat("vertexZ", vtx.position().z());
@@ -255,9 +315,12 @@ void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::Ev
     new_cands->back().addUserFloat("dpt_over_pt", dpt_over_pt_largest.second);
   }
 
-  // Sort candidates so we keep the ones with larger invariant
-  // mass. Could make configurable to choose other sorting.
-  sort(new_cands->begin(), new_cands->end(), reverse_mass_sort());
+  // Sort candidates so we keep either the ones with higher-pT
+  // muons or the ones with larger invariant mass.
+  if(sort_by_pt)
+    sort(new_cands->begin(), new_cands->end(), lepton_pt_sort());
+  else
+    sort(new_cands->begin(), new_cands->end(), reverse_mass_sort());
 
   // Remove cands of lower invariant mass that are comprised of a
   // lepton that has been used by a higher invariant mass one.

@@ -3,8 +3,10 @@
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
-#process.source.fileNames = ['/store/user/slava/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/datamc_dy2000/ecac376f8fa7ccc229aaa06d757d785a/pat_1_1_G72.root']
-#process.maxEvents.input = 100
+
+process.source.fileNames =['file:./pat.root']
+process.maxEvents.input = -1
+
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold
 
 # Since the prescaled trigger comes with different prescales in
@@ -53,14 +55,14 @@ cuts = {
 #    'VBTF'     : VBTFSelection,
 #    'OurOld'   : OurSelectionOld,
 #    'OurEPS'   : OurSelection2011EPS,
-    'OurNew'   : OurSelectionNew,
+    #'OurNew'   : OurSelectionNew,
     'Our2012'  : OurSelectionDec2012,
-    'OurNoIso' : OurSelectionDec2012,
-    'EmuVeto'  : OurSelectionDec2012,
+    #'OurNoIso' : OurSelectionDec2012,
+    #'EmuVeto'  : OurSelectionDec2012,
     'Simple'   : OurSelectionDec2012, # The selection cuts in the module listed here are ignored below.
 #    'VBTFMuPrescaled' : VBTFSelection,
-    'OurMuPrescaledNew'  : OurSelectionNew,
-    'OurMuPrescaled2012' : OurSelectionDec2012
+    #'OurMuPrescaledNew'  : OurSelectionNew,
+    #'OurMuPrescaled2012' : OurSelectionDec2012
     }
 
 # Loop over all the cut sets defined and make the lepton, allDilepton
@@ -122,9 +124,12 @@ for cut_name, Selection in cuts.iteritems():
             alldil.tight_cut = ''
             dil.max_candidates = 100
             dil.do_remove_overlap = False
-            delattr(dil, 'back_to_back_cos_angle_min')
-            delattr(dil, 'vertex_chi2_max')
-            delattr(dil, 'dpt_over_pt_max')
+            if hasattr(dil, 'back_to_back_cos_angle_min'):
+                delattr(dil, 'back_to_back_cos_angle_min')
+            if hasattr(dil, 'vertex_chi2_max'):
+                delattr(dil, 'vertex_chi2_max')
+            if hasattr(dil, 'dpt_over_pt_max'):
+                delattr(dil, 'dpt_over_pt_max')
         elif cut_name == 'OurNoIso':
             alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', '')
         elif 'MuPrescaled' in cut_name:
@@ -162,21 +167,24 @@ def ntuplify(process, fill_gen_info=False):
     if fill_gen_info:
         from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction
         process.SimpleNtupler.hardInteraction = hardInteraction
-
-    process.pathSimple *= process.SimpleNtupler * process.SimpleNtuplerEmu
+        
+    if hasattr(process, 'pathSimple'):
+        process.pathSimple *= process.SimpleNtupler * process.SimpleNtuplerEmu
 
 def printify(process):
     process.MessageLogger.categories.append('PrintEvent')
 
     process.load('HLTrigger.HLTcore.triggerSummaryAnalyzerAOD_cfi')
     process.triggerSummaryAnalyzerAOD.inputTag = cms.InputTag('hltTriggerSummaryAOD','','HLT')
-    process.pathSimple *= process.triggerSummaryAnalyzerAOD
+    if hasattr(process, 'pathSimple'):
+        process.pathSimple *= process.triggerSummaryAnalyzerAOD
 
     process.PrintOriginalMuons = cms.EDAnalyzer('PrintEvent', muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'), trigger_results_src = cms.InputTag('TriggerResults','','HLT'))
     process.pathSimple *= process.PrintOriginalMuons
 
     pe = process.PrintEventSimple = cms.EDAnalyzer('PrintEvent', dilepton_src = cms.InputTag('SimpleMuonsPlusMuonsMinus'))
-    process.pathSimple *= process.PrintEventSimple
+    if hasattr(process, 'pathSimple'):
+        process.pathSimple *= process.PrintEventSimple
 
     #- 2011-2012 selection (Nlayers > 8)
     #process.PrintEventOurNew = pe.clone(dilepton_src = cms.InputTag('OurNewMuonsPlusMuonsMinus'))
@@ -185,10 +193,11 @@ def printify(process):
     #process.pathOurNew *= process.PrintEventOurNew * process.PrintEventOurNewSS * process.PrintEventOurNewEmu
 
     #- December 2012 selection (Nlayers > 5, re-tuned TuneP, dpT/pT < 0.3)
-    process.PrintEventOur2012    = pe.clone(dilepton_src = cms.InputTag('Our2012MuonsPlusMuonsMinus'))
-    process.PrintEventOur2012SS  = pe.clone(dilepton_src = cms.InputTag('Our2012MuonsSameSign'))
-    process.PrintEventOur2012Emu = pe.clone(dilepton_src = cms.InputTag('Our2012MuonsElectronsOppSign'))
-    process.pathOur2012 *= process.PrintEventOur2012 * process.PrintEventOur2012SS * process.PrintEventOur2012Emu
+    if hasattr(process, 'pathOur2012'):
+        process.PrintEventOur2012    = pe.clone(dilepton_src = cms.InputTag('Our2012MuonsPlusMuonsMinus'))
+        process.PrintEventOur2012SS  = pe.clone(dilepton_src = cms.InputTag('Our2012MuonsSameSign'))
+        process.PrintEventOur2012Emu = pe.clone(dilepton_src = cms.InputTag('Our2012MuonsElectronsOppSign'))
+        process.pathOur2012 *= process.PrintEventOur2012 * process.PrintEventOur2012SS * process.PrintEventOur2012Emu
 
 def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.CheckPrescale_cfi')
@@ -244,22 +253,33 @@ if 'gogo' in sys.argv:
     from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import set_events_to_process
     set_events_to_process(process, [(run, event)])
 
+f = file('outfile', 'w')
+f.write(process.dumpPython())
+f.close()
+
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
-[CRAB]
-jobtype = cmssw
-scheduler = condor
 
-[CMSSW]
-datasetpath = %(ana_dataset)s
-dbs_url = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
-pset = histos_crab.py
-get_edm_output = 1
-job_control
+from CRABClient.UserUtilities import config
+config = config()
 
-[USER]
-ui_working_dir = crab/crab_ana_datamc_%(name)s
-return_data = 1
+config.General.requestName = '%(name)s' 
+config.General.workArea = 'HISTO_%(name)s'
+
+config.JobType.pluginName = 'Analysis'
+config.JobType.psetName = 'histos_crab.py'   
+config.JobType.priority = 1
+
+config.Data.inputDataset =  '%(dataset)s'
+config.Data.inputDBS = 'global'
+config.Data.splitting = 'EventAwareLumiBased' 
+config.Data.unitsPerJob = 10000
+config.Data.publication = True
+config.Data.publishDataName = '%(name)s'
+config.Data.outLFN = '/store/user/federica/Histos' 
+
+config.Site.storageSite = 'T2_US_Purdue'
+
 '''
 
     just_testing = 'testing' in sys.argv
@@ -317,50 +337,55 @@ lumis_per_job = 500
 %(lumi_mask)s''' % locals()
 
             new_crab_cfg = new_crab_cfg.replace('job_control', job_control)
-            open('crab.cfg', 'wt').write(new_crab_cfg)
+            open('crab.py', 'wt').write(new_crab_cfg)
 
             if not just_testing:
-                os.system('crab -create -submit all')
+                os.system('crab submit -c all')
             else:
                 cmd = 'diff histos.py histos_crab.py | less'
                 print cmd
                 os.system(cmd)
-                cmd = 'less crab.cfg'
+                cmd = 'less crab.py'
                 print cmd
                 os.system(cmd)
 
         if not just_testing:
-            os.system('rm crab.cfg histos_crab.py histos_crab.pyc tmp.json')
+            os.system('rm crab.py histos_crab.py histos_crab.pyc tmp.json')
 
     if 'no_mc' not in sys.argv:
         # Set crab_cfg for MC.
         crab_cfg = crab_cfg.replace('job_control','''
 total_number_of_events = -1
-events_per_job = 100000
+events_per_job = 50000
     ''')
 
         from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
 
-        combine_dy_samples = len([x for x in samples if x.name in ['zmumu', 'dy120_c1', 'dy200_c1', 'dy500_c1', 'dy800_c1', 'dy1000_c1', 'dy1500_c1', 'dy2000_c1']]) > 0
+        combine_dy_samples = len([x for x in samples if x.name in ['dy50', 'dy120', 'dy200', 'dy400', 'dy800', 'dy1400', 'dy2300', 'dy3500', 'dy4500', 'dy6000', 'dy7500', 'dy8500', 'dy9500']]) > 0
         print 'combine_dy_samples:', combine_dy_samples
 
         for sample in reversed(samples):
             print sample.name
 
             new_py = open('histos.py').read()
-            sample.fill_gen_info = sample.name in ['zmumu', 'dy120_c1', 'dy200_c1', 'dy500_c1', 'dy800_c1', 'dy1000_c1', 'dy1500_c1', 'dy2000_c1', 'zssm1000']
+            sample.fill_gen_info = sample.name in ['dy50', 'dy120', 'dy200', 'dy400', 'dy800', 'dy1400', 'dy2300', 'dy3500', 'dy4500', 'dy6000', 'dy7500', 'dy8500', 'dy9500', 'zpsi5000']
             new_py += "\nfor_mc(process, hlt_process_name='%(hlt_process_name)s', fill_gen_info=%(fill_gen_info)s)\n" % sample
 
             if combine_dy_samples and (sample.name == 'zmumu' or 'dy' in sample.name):
                 mass_limits = {
-                    'zmumu'    : (  20,    120),
-                    'dy120_c1' : ( 120,    200),
-                    'dy200_c1' : ( 200,    500),
-                    'dy500_c1' : ( 500,    800),
-                    'dy800_c1' : ( 800,   1000),
-                    'dy1000_c1': (1000,   1500),
-                    'dy1500_c1': (1500,   2000),
-                    'dy2000_c1': (2000, 100000),
+                    'dy50'      : (  50,     120),
+                    'dy120'     : ( 120,     200),
+                    'dy200'     : ( 400,     800),
+                    'dy400'     : (2300,    3500),
+                    'dy800'     : (7500,    8500),
+                    'dy1400'    : ( 200,     400),
+                    'dy2300'    : ( 800,    1400),
+                    'dy3500'    : (1400,    2300),
+                    'dy4500'    : (3500,    4500),
+                    'dy6000'    : (4500,    6000),
+                    'dy7500'    : (6000,    7500),
+                    'dy8500'    : (8500,    9500),
+                    'dy9500'    : (9500,  100000),
                     }
                 lo,hi = mass_limits[sample.name]
                 from SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi import dy_gen_mass_cut
@@ -376,16 +401,16 @@ for pn,p in process.paths.items():
 
             open('histos_crab.py', 'wt').write(new_py)
 
-            open('crab.cfg', 'wt').write(crab_cfg % sample)
+            open('crab.py', 'wt').write(crab_cfg % sample)
             if not just_testing:
-                os.system('crab -create -submit all')
+                os.system('crab submit -c all')
             else:
                 cmd = 'diff histos.py histos_crab.py | less'
                 print cmd
                 os.system(cmd)
-                cmd = 'less crab.cfg'
+                cmd = 'less crab.py'
                 print cmd
                 os.system(cmd)
 
         if not just_testing:
-            os.system('rm crab.cfg histos_crab.py histos_crab.pyc')
+            os.system('rm crab.py histos_crab.py histos_crab.pyc')

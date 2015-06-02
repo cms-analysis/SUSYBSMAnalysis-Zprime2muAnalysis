@@ -176,6 +176,7 @@ double GravitonCos_3_PDF(double *x, double *par) {
 double asym2D(double *x, double *par) {
   const bool debug = false;
   bool paramsChanged = false;
+  cout<<paramsChanged<<endl;//raffa
   static bool first_event = true;
   static double parsave[3];
   if (first_event) {

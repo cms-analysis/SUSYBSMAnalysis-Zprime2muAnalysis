@@ -59,6 +59,8 @@ class ResolutionUsingMC : public edm::EDAnalyzer {
   TH1F* ChargeRightVInvPt;
   TH1F* ChargeWrongVInvPt;
 
+  TH1F* DileptonMassReco;
+  TH1F* DileptonMassGen;
   TH1F* DileptonMassRes;
   TH1F* DileptonResMassRes;
   TH1F* ResonanceMassRes;
@@ -123,7 +125,10 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
   
   ChargeRightVInvPt->Sumw2();
   ChargeWrongVInvPt->Sumw2();
-
+    
+    
+  DileptonMassReco            = fs->make<TH1F>("DileptonMassReco",            titlePrefix + "dil. mass", 20000, 0, 20000);
+  DileptonMassGen            = fs->make<TH1F>("DileptonMassGen",            titlePrefix + "dil. mass gen", 20000, 0, 20000);
   DileptonMassRes    = fs->make<TH1F>("DileptonMassRes",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 100, -0.5, 0.5);
   DileptonResMassRes = fs->make<TH1F>("DileptonResMassRes", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", 100, -0.5, 0.5);
   ResonanceMassRes   = fs->make<TH1F>("ResonanceMassRes",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", 100, -0.5, 0.5);
@@ -140,6 +145,7 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
     DileptonResMassResBy[i] = fs->make<TH1F>("DileptonResMassRes" + dilepton_where_names[i], titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass), " + dilepton_where_names[i], 100, -0.5, 0.5);
     ResonanceMassResBy  [i] = fs->make<TH1F>("ResonanceMassRes"   + dilepton_where_names[i], titlePrefix + "(res. mass - gen res. mass)/(gen res. mass), " + dilepton_where_names[i], 100, -0.5, 0.5);
   }
+ 
 }
 
 void ResolutionUsingMC::fillLeptonResolution(const reco::GenParticle* gen_lep, const reco::CandidateBaseRef& lep) {
@@ -251,8 +257,10 @@ void ResolutionUsingMC::fillDileptonMassResolution(const reco::CompositeCandidat
   const double rdil    = mass    /gen_mass     - 1;
   const double rdilres = mass    /gen_res_mass - 1;
   const double rres    = res_mass/gen_res_mass - 1;
-    double invmres = (1./mass-1./gen_mass)/(1./gen_mass);
+  double invmres = (1./mass-1./gen_mass)/(1./gen_mass);
  
+  DileptonMassReco ->Fill(mass);
+  DileptonMassGen->Fill(gen_mass);
   DileptonMassRes   ->Fill(rdil);
   DileptonResMassRes->Fill(rdilres);
   ResonanceMassRes  ->Fill(rres);
@@ -267,6 +275,7 @@ void ResolutionUsingMC::fillDileptonMassResolution(const reco::CompositeCandidat
   DileptonMassResBy   [w]->Fill(rdil);
   DileptonResMassResBy[w]->Fill(rdilres);
   ResonanceMassResBy  [w]->Fill(rres);
+  
 }
 
 const reco::GenParticle* getGenParticle(const reco::CandidateBaseRef& lep) {

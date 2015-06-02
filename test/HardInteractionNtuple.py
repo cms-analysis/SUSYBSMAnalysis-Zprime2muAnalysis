@@ -11,22 +11,29 @@ process.HardInteractionNtuple.hardInteraction.src = 'genParticles'
 process.p = cms.Path(process.HardInteractionNtuple)
 
 if __name__ == '__main__' and 'submit' in sys.argv:
-    crab_cfg = '''
-[CRAB]
-jobtype = cmssw
-scheduler = %(scheduler)s
+crab_cfg = '''
+from CRABClient.UserUtilities import config
+config = config()
 
-[CMSSW]
-datasetpath = %(dataset)s
-pset = HardInteractionNtuple.py
-total_number_of_events = -1
-events_per_job = 100000
+config.General.requestName = '%(name)s' 
+config.General.workArea = 'HIntuple_%(name)s'
 
-[USER]
-ui_working_dir = crab/crab_hintuple_%(name)s
-return_data = 1
+config.JobType.pluginName = 'Analysis'
+config.JobType.psetName = 'HardInteractionNtuple.py'   
+config.JobType.priority = 1
+
+config.Data.inputDataset = '%(dataset)s'
+config.Data.inputDBS = 'global'
+config.Data.splitting = 'EventAwareLumiBased' 
+config.Data.unitsPerJob = 10000
+config.Data.publication = True
+config.Data.publishDataName = '%(name)s'
+config.Data.outLFN = '/store/user/federica/HIntuple' 
+
+config.Site.storageSite = 'T2_US_Purdue'
+
 '''
-
+#### ??
     scheduler = 'condor'
     samples = [
         ('zmumu', '/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/Summer11-PU_S3_START42_V11-v2/AODSIM'),
@@ -37,7 +44,7 @@ return_data = 1
     just_testing = 'testing' in sys.argv
 
     for name, dataset in samples:
-        open('crab.cfg', 'wt').write(crab_cfg % locals())
+        open('crab.py', 'wt').write(crab_cfg % locals())
         if not just_testing:
-            os.system('crab -create -submit all')
-            os.system('rm crab.cfg')
+            os.system('crab submit -c all')
+            os.system('rm crab.py')

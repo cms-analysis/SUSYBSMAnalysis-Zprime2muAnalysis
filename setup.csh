@@ -1,4 +1,3 @@
-#- 74X branch
 #!/bin/tcsh
 
 pushd $CMSSW_BASE/src

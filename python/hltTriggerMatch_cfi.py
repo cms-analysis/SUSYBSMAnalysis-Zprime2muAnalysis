@@ -1,15 +1,61 @@
 import FWCore.ParameterSet.Config as cms
 
+
+### ==== Unpack trigger, and match ====
+#from PhysicsTools.PatAlgos.triggerLayer1.triggerProducer_cfi import patTrigger
+#patTriggerFull = patTrigger.clone(onlyStandAlone = False)
+#patTriggerMuon =  patTrigger.clone(src = cms.InputTag("patTriggerFull"),
+ #                                  collections = cms.vstring("hltL3MuonCandidates")
+  #                                ) 
+
+
+patTrigger = cms.EDProducer( "PATTriggerProducer", 
+                             onlyStandAlone = cms.bool( False ), 
+                             processName    = cms.string( "HLT" )             
+                             )
+
+muonTriggerMatchHLTMuons = cms.EDProducer("PATTriggerMatcherDRLessByR",
+                                          src = cms.InputTag( 'cleanPatMuons' ),
+                                          matched = cms.InputTag( 'patTrigger' ),
+                                          matchedCuts = cms.string('type("TriggerMuon") && (path("HLT_Mu9*",1,0) || path("HLT_Mu15*",1,0) || path("HLT_Mu24_v*",1,0)|| path("HLT_Mu24*",1,0) || path("HLT_Mu30*",1,0) || path("HLT_Mu40*",1,0))'),
+                                          maxDPtRel   = cms.double( 1. ), 
+                                          maxDeltaR   = cms.double( 0.2 ),
+                                          maxDeltaEta = cms.double( 0.2 ),
+                                          resolveAmbiguities    = cms.bool( True ),
+                                          resolveByMatchQuality = cms.bool( True )
+                                          )
+
+## ==== Embed ====
+#from MuonAnalysis.MuonAssociators.patMuonsWithTrigger_cff import patMuonsWithTrigger
+cleanPatMuonsTriggerMatch =  cms.EDProducer("PATTriggerMatchMuonEmbedder",                                           
+                                            src = cms.InputTag("cleanPatMuons"),                                         
+                                            matches = cms.VInputTag("muonTriggerMatchHLTMuons")  
+                                            )
+
+## ==== Trigger Sequence ====
+patTriggerMatching = cms.Sequence(patTrigger *
+                                  muonTriggerMatchHLTMuons *
+                                  cleanPatMuonsTriggerMatch)
+
+
+
+
+
+
+
+
+
+
 # JMTBAD to drop
-muonTriggerMatchHLTMuons = cms.EDProducer('PATTriggerMatcherDRLessByR',
-    src                   = cms.InputTag('cleanPatMuons'),
-    matched               = cms.InputTag('patTrigger'),
-    matchedCuts           = cms.string('type("TriggerMuon") && (path("HLT_Mu9*",1,0) || path("HLT_Mu15*",1,0) || path("HLT_Mu24*",1,0) || path("HLT_Mu30*",1,0) || path("HLT_Mu40*",1,0))'),
-    maxDPtRel             = cms.double(1),
-    maxDeltaR             = cms.double(0.2),
-    resolveAmbiguities    = cms.bool(True),
-    resolveByMatchQuality = cms.bool(True)
-)
+#muonTriggerMatchHLTMuons = cms.EDProducer('PATTriggerMatcherDRLessByR',
+ #                                         src = cms.InputTag('cleanPatMuons'),
+  #                                        matched = cms.InputTag('patTrigger'),
+   #                                       matchedCuts           = cms.string('type("TriggerMuon") && (path("HLT_Mu9*",1,0) || path("HLT_Mu15*",1,0) || path("HLT_Mu24_v*",1,0)|| path("HLT_Mu24*",1,0) || path("HLT_Mu30*",1,0) || path("HLT_Mu40*",1,0))'),
+    #maxDPtRel             = cms.double(1),
+    #maxDeltaR             = cms.double(0.2),
+   # resolveAmbiguities    = cms.bool(True),
+   # resolveByMatchQuality = cms.bool(True)
+#)
 
 trigger_pt_threshold = 40
 offline_pt_threshold = 45

@@ -15,7 +15,10 @@
 #include "TMath.h"
 #include "TRandom3.h"
 #include "TROOT.h"
-#include "TMVA/RuleFitAPI.h" // for G__p2f2funcname it does not exist anymore
+// #include "Api.h" has to be replaced in 7_4_0 by
+#include "TInterpreter.h" // for G__p2f2funcname
+// #include "TMVA/RuleFitAPI.h" // Federica
+
 
 
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
@@ -54,7 +57,8 @@ void TFMultiD::setup(const char *name, Double_t (*fcn)(Double_t *, Double_t *),
     for (Int_t i = 0; i < fNdim; i++)
       fXmin[i] = fXmax[i] = 0;
 
-  const char *funcname = "function"; //G__p2f2funcname((void*)fcn);
+ const char *funcname = gCling->Getp2f2funcname((void*)fcn);  
+ //const char *funcname = "function"; // Federica
   if (funcname) {
     fType = 2;
     SetTitle(funcname);

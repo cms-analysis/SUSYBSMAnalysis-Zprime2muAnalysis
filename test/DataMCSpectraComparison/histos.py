@@ -123,6 +123,7 @@ for cut_name, Selection in cuts.iteritems():
             alldil.loose_cut = 'isGlobalMuon && pt > 20.'
             alldil.tight_cut = ''
             dil.max_candidates = 100
+            dil.sort_by_pt = True
             dil.do_remove_overlap = False
             if hasattr(dil, 'back_to_back_cos_angle_min'):
                 delattr(dil, 'back_to_back_cos_angle_min')

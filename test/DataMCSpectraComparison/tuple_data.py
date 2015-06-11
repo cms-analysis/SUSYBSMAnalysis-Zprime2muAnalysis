@@ -4,13 +4,14 @@ import sys, os, datetime, FWCore.ParameterSet.Config as cms
 from tuple_common import process, crab_cfg
 
 #process.source.fileNames = ['/store/data/Run2012A/SingleMu/AOD/13Jul2012-v1/00000/009C369E-85D0-E111-BD58-1CC1DE046FC0.root']
-process.source.fileNames = ['/store/relval/CMSSW_7_0_0/SingleMu/RECO/GR_R_70_V1_RelVal_mu2012A-v2/00000/0035CDF7-9099-E311-A7AE-0026189437F0.root',]
+#process.source.fileNames = ['/store/relval/CMSSW_7_0_0/SingleMu/RECO/GR_R_70_V1_RelVal_mu2012A-v2/00000/0035CDF7-9099-E311-A7AE-0026189437F0.root',]
+process.source.fileNames = ['/store/data/Run2015A/SingleMu/AOD/PromptReco-v1/000/246/908/00000/080900A1-330B-E511-A11B-02163E01456E.root']
 #process.GlobalTag.globaltag = 'FT_53_V6C_AN4::All'
 #process.GlobalTag.globaltag = 'GR_H_V33::All'
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag.globaltag = 'GR_H_V33::All'
+process.GlobalTag.globaltag = 'GR_P_V55::All'
 ##process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:com10_2013', '')
-process.maxEvents.input = 10
+process.maxEvents.input = -1
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import removeMCUse
 removeMCUse(process)

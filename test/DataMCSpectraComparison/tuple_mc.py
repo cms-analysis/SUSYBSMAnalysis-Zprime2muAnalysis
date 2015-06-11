@@ -9,10 +9,10 @@ pruneMCLeptons(process, use_sim=True) # because of unscheduled I can't remove th
 AODOnly(process)# it contains
 
 process.source.fileNames = ['/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/GEN-SIM-RECO/MCRUN2_74_V7-v1/00000/AE8D58C2-14DB-E411-A038-002618943901.root',
- #                           '/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/GEN-SIM-RECO/MCRUN2_74_V7-v1/00000/B6A4F83A-14DB-E411-8A01-0025905B8596.root'
+                            '/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/GEN-SIM-RECO/MCRUN2_74_V7-v1/00000/B6A4F83A-14DB-E411-8A01-0025905B8596.root'
 ]
 
-process.maxEvents.input = 200
+process.maxEvents.input = -1
 
 process.GlobalTag.globaltag = 'MCRUN2_74_V7::All'
 

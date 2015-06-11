@@ -2,11 +2,23 @@
 
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
-from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
+from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process, flag
 
-process.source.fileNames =['file:./pat.root']
+process.source.fileNames =['file:./AOD_tuple.root']
+#process.source.fileNames=['/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/MINIAODSIM/MCRUN2_74_V7-v1/00000/3EC6C30E-1CDB-E411-A1EE-0025905B859E.root',
+#'/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/MINIAODSIM/MCRUN2_74_V7-v1/00000/8A55AC04-1CDB-E411-ABF1-002618FDA248.root']
+#process.source.fileNames=['root://cms-xrd-global.cern.ch//store/relval/CMSSW_7_4_0/RelValProdTTbar_13/MINIAODSIM/MCRUN2_74_V7_GENSIM_7_1_15-v1/00000/1E12B842-93DD-E411-AF4F-0025905A48D0.root',
+#'root://cms-xrd-global.cern.ch//store/relval/CMSSW_7_4_0/RelValProdTTbar_13/MINIAODSIM/MCRUN2_74_V7_GENSIM_7_1_15-v1/00000/DE389542-93DD-E411-A207-0025905A48D8.root']
+
 process.maxEvents.input = -1
 
+if flag == "miniAOD":
+	from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
+	HistosFromPAT.leptonsFromDileptons = False;
+if flag == "AOD":
+	from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_AOD
+	HistosFromPAT_AOD.leptonsFromDileptons = False ## True
+	
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold
 
 # Since the prescaled trigger comes with different prescales in
@@ -18,8 +30,7 @@ process.PrescaleToCommon.overall_prescale = overall_prescale
 
 # The histogramming module that will be cloned multiple times below
 # for making histograms with different cut/dilepton combinations.
-from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
-HistosFromPAT.leptonsFromDileptons = True
+
 
 # These modules define the basic selection cuts. For the monitoring
 # sets below, we don't need to define a whole new module, since they
@@ -139,7 +150,12 @@ for cut_name, Selection in cuts.iteritems():
             alldil.tight_cut = prescaled_trigger_match
 
         # Histos now just needs to know which leptons and dileptons to use.
-        histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
+        #histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
+        if flag == 'miniAOD':
+		histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
+	
+	if flag == 'AOD':
+        	histos = HistosFromPAT_AOD.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 
         # Add all these modules to the process and the path list.
         setattr(process, allname, alldil)
@@ -151,10 +167,14 @@ for cut_name, Selection in cuts.iteritems():
     pathname = 'path' + cut_name
     pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
     if 'VBTF' not in cut_name and cut_name != 'Simple':
-        pobj = process.goodDataFilter * pobj
+        pobj = pobj
     if 'MuPrescaled' in cut_name:
         pobj = process.PrescaleToCommon * pobj
-    path = cms.Path(pobj)
+    if flag == 'miniAOD':
+    	path = cms.Path(process.selectedPatMuons*pobj)
+    if flag == 'AOD':	
+    	path = cms.Path(process.goodDataFilter*pobj)#process.selectedPatMuons*pobj)
+    #path = cms.Path(pobj)
     setattr(process, pathname, path)
 
 def ntuplify(process, fill_gen_info=False):

@@ -69,3 +69,14 @@ dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          vertex_chi2_max = cms.double(10),
                          dpt_over_pt_max = cms.double(0.3)
                          )
+			 
+dimuons_AOD = cms.EDProducer('Zprime2muCompositeCandidatePicker_AOD',
+                         src = cms.InputTag('allDimuons'),
+                         cut = cms.string(''),
+                         max_candidates = cms.uint32(1),
+                         sort_by_pt = cms.bool(True),
+                         do_remove_overlap = cms.bool(True),
+                         back_to_back_cos_angle_min = cms.double(-0.9998), # this corresponds to the angle (pi - 0.02) rad = 178.9 deg
+                         vertex_chi2_max = cms.double(10),
+                         dpt_over_pt_max = cms.double(0.3)
+                         )

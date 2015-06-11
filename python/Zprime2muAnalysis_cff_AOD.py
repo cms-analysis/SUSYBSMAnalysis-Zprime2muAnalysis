@@ -7,41 +7,31 @@ import HLTrigger.HLTfilters.hltHighLevel_cfi
 goodDataFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
 goodDataFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', 'PAT')
 goodDataFilter.HLTPaths = ['goodDataAll'] # can set to just 'goodDataPrimaryVertexFilter', for example
-#goodDataFilter.HLTPaths = ['goodDataPrimaryVertexFilter']# can set to just 'goodDataPrimaryVertexFilter', for example
+#goodDataFilter.HLTPaths = ['goodDataMETFilter']
 goodDataFilter.andOr = False # = AND
 
-from SkimMiniAOD_cff import selectedPatMuons
-from MuonPhotonMatch_cff import muonPhotonMatch
-from OurSelectionDec2012_cff import allDimuons, dimuons, loose_cut
+from MuonPhotonMatch_cff_AOD import muonPhotonMatch
+from OurSelectionDec2012_cff import allDimuons, dimuons_AOD, loose_cut
 
-leptons = cms.EDProducer('Zprime2muLeptonProducer',
-                         muon_src = cms.InputTag('selectedPatMuons'), #JMTBAD changeme after new PAT tuples
-                         electron_src = cms.InputTag('slimmedElectrons'),
+leptons = cms.EDProducer('Zprime2muLeptonProducer_AOD',
+                         muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'), #JMTBAD changeme after new PAT tuples
+                         electron_src = cms.InputTag('cleanPatElectrons'),
                          muon_cuts = cms.string(loose_cut),
-                         ##muon_cuts = cms.string('isGlobalMuon && pt>20'),
                          electron_cuts = cms.string('userInt("HEEPId") == 0'),
                          muon_track_for_momentum = cms.string('TunePNew'),
                          muon_photon_match_src = cms.InputTag('muonPhotonMatch'),
                          electron_muon_veto_dR = cms.double(-1),
                          trigger_match_max_dR = cms.double(0.2),
-                         trigger_summary = cms.InputTag('selectedPatTrigger'),
-			 bits = cms.InputTag("TriggerResults","","HLT"),
-    			 prescales = cms.InputTag("patTrigger"),
+                         trigger_summary_src = cms.InputTag('hltTriggerSummaryAOD', '', 'HLT'),
                          )
 
-
-#from PhysicsTools.PatAlgos.selectionLayer1.muonSelector_cfi import*
-#selectedPatMuons.src = cms.InputTag('slimmedMuons')
-#selectedPatMuons.cut = cms.InputTag('isGlobalMuon && pt>20')
-Zprime2muAnalysisSequence = cms.Sequence(selectedPatMuons * muonPhotonMatch * leptons * allDimuons * dimuons)
-#Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)
+Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons_AOD)
 
 def rec_levels(process, new_track_types):
     process.leptons.muon_tracks_for_momentum = cms.vstring(*new_track_types)
-    #process.Zprime2muAnalysisSequence = cms.Sequence(process.muonPhotonMatch * process.leptons)
-    #process.Zprime2muAnalysisSequencePlain = cms.Sequence(process.muonPhotonMatch * process.leptons * process.allDimuons * process.dimuons)
-    process.Zprime2muAnalysisSequence = cms.Sequence(process.selectedPatMuons *process.muonPhotonMatch * process.leptons)
-    process.Zprime2muAnalysisSequencePlain = cms.Sequence(process.selectedPatMuons *process.muonPhotonMatch * process.leptons * process.allDimuons * process.dimuons)
+    process.Zprime2muAnalysisSequence = cms.Sequence(process.muonPhotonMatch * process.leptons)
+    process.Zprime2muAnalysisSequencePlain = cms.Sequence(process.muonPhotonMatch * process.leptons * process.allDimuons * process.dimuons_AOD)
+
     for t in new_track_types:
         ad = process.allDimuons.clone()
         label = 'leptons:%s' % t
@@ -85,7 +75,7 @@ def switch_hlt_process_name(process, name):
             pass
     from PhysicsTools.PatAlgos.tools.helpers import massSearchReplaceAnyInputTag
     for path_name, path in process.paths.iteritems(): # why does values() throw an exception?
-        for label in ['TriggerResults', 'hltL1GtObjectMap', 'TriggerResults']:
+        for label in ['TriggerResults', 'hltL1GtObjectMap', 'hltTriggerSummaryAOD']:
             old = cms.InputTag(label, '', 'HLT')
             new = cms.InputTag(label, '', name)
             massSearchReplaceAnyInputTag(path, old, new, verbose=False)

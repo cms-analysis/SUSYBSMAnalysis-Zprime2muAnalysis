@@ -1,3 +1,4 @@
+#- Test
 #!/bin/tcsh
 
 pushd $CMSSW_BASE/src

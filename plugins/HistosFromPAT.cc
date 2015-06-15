@@ -41,8 +41,8 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   void fillLeptonHistos(const reco::CandidateBaseRef&);
   void fillLeptonHistos(const edm::View<reco::Candidate>&);
   void fillLeptonHistosFromDileptons(const pat::CompositeCandidateCollection&);
-  void fillDileptonHistos(const pat::CompositeCandidate&);
-  void fillDileptonHistos(const pat::CompositeCandidateCollection&);
+  void fillDileptonHistos(const pat::CompositeCandidate&, const edm::Event&);
+  void fillDileptonHistos(const pat::CompositeCandidateCollection&, const edm::Event&);
 
   edm::InputTag lepton_src;
   edm::InputTag dilepton_src;
@@ -403,7 +403,7 @@ void Zprime2muHistosFromPAT::fillLeptonHistosFromDileptons(const pat::CompositeC
   LeptonSigns->Fill(nleptons, total_q);
 }
 
-void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& dil) {
+void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& dil, const edm::Event& event) {
   if (dbg_tree) {
     dbg_t.mass = dil.mass();
     dbg_t.id = dil.daughter(0)->pdgId() + dil.daughter(1)->pdgId();
@@ -445,11 +445,14 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 	// Use mass calculated with the vertex constraint when available
 	if (dil.hasUserFloat("vertexM"))
 	  mass = dil.userFloat("vertexM");
-	else
+	else {
+	  edm::LogWarning("fillDileptonHistos") << "+++ Mass calculated without vertex constraint! +++";
 	  mass = dil.mass();
+	}
 	if (mass > 200.) {
 	  DimuonMuonPtErrOverPtM200->Fill(ptError(tk0)/tk0->pt());
 	  DimuonMuonPtErrOverPtM200->Fill(ptError(tk1)/tk1->pt());
+	  // printf ("Event Info: %6d %4d %10u %6.1f\n", event.id().run(), event.luminosityBlock(), event.id().event(), mass);
 	}
 	if (mass > 500.) {
 	  DimuonMuonPtErrOverPtM500->Fill(ptError(tk0)/tk0->pt());
@@ -477,12 +480,12 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
   }
 }
 
-void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidateCollection& dileptons) {
+void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidateCollection& dileptons, const edm::Event& event) {
   NDileptons->Fill(dileptons.size());
 
   pat::CompositeCandidateCollection::const_iterator dil = dileptons.begin(), dile = dileptons.end();
   for ( ; dil != dile; ++dil)
-    fillDileptonHistos(*dil);
+    fillDileptonHistos(*dil, event);
 }
 
 void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSetup& setup) {
@@ -531,7 +534,7 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
     if (leptonsFromDileptons)
       fillLeptonHistosFromDileptons(*dileptons);
     
-    fillDileptonHistos(*dileptons);
+    fillDileptonHistos(*dileptons, event);
   }
 }
 

@@ -68,6 +68,10 @@ NoL1TMuonsOnly_ll = [NoL1TMuonsOnly_1_ll, NoL1TMuonsOnly_2_ll, NoL1TMuonsOnly_3_
 # December 11th reprocessing of run 201191 (134 pb-1 of data); only for golden JSON.
 Dec11_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_201191-201191_8TeV_11Dec2012ReReco-recover_Collisions12_JSON.txt')
 
+# January 22nd 2013 reprocessing of the whole 2012 dataset
+Jan22_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-208686_8TeV_22Jan2013ReReco_Collisions12_JSON.txt')
+Jan22MuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-208686_8TeV_22Jan2013ReReco_Collisions12_JSON_MuonPhys.txt')
+
 def combine(prompt_ll, rereco1_ll, rereco2_ll, rereco3_ll, dcsonly_ll=None):
     prompt_ll = copy.deepcopy(prompt_ll)
     prompt_ll.removeRuns(runs_to_remove_from_prompt)
@@ -79,15 +83,21 @@ def combine(prompt_ll, rereco1_ll, rereco2_ll, rereco3_ll, dcsonly_ll=None):
     return ll
 
 # Combine all lists
-Run2012_ll          = combine(Prompt_ll,          Jul13_ll,          Aug06_ll,          Aug24_ll)
-Run2012MuonsOnly_ll = combine(PromptMuonsOnly_ll, Jul13MuonsOnly_ll, Aug06MuonsOnly_ll, Aug24MuonsOnly_ll)
-# for x in NoL1TMuonsOnly_ll:
-#     Run2012MuonsOnly_ll = Run2012MuonsOnly_ll | x
+# Run2012_ll          = combine(Prompt_ll,          Jul13_ll,          Aug06_ll,          Aug24_ll)
+# Run2012MuonsOnly_ll = combine(PromptMuonsOnly_ll, Jul13MuonsOnly_ll, Aug06MuonsOnly_ll, Aug24MuonsOnly_ll)
+## for x in NoL1TMuonsOnly_ll:
+##     Run2012MuonsOnly_ll = Run2012MuonsOnly_ll | x
+Run2012_ll          = Jan22_ll
+Run2012MuonsOnly_ll = Jan22MuonsOnly_ll
 
-Run2012PlusDCSOnly_ll          = combine(Prompt_ll,          Jul13_ll,          Aug06_ll,          Aug24_ll,          DCSOnly_ll)
-Run2012PlusDCSOnlyMuonsOnly_ll = combine(PromptMuonsOnly_ll, Jul13MuonsOnly_ll, Aug06MuonsOnly_ll, Aug24MuonsOnly_ll, DCSOnly_ll)
-# for x in NoL1TMuonsOnly_ll:
-#     Run2012PlusDCSOnlyMuonsOnly_ll = Run2012PlusDCSOnlyMuonsOnly_ll | x
+# Run2012PlusDCSOnly_ll          = combine(Prompt_ll,          Jul13_ll,          Aug06_ll,          Aug24_ll,          DCSOnly_ll)
+# Run2012PlusDCSOnlyMuonsOnly_ll = combine(PromptMuonsOnly_ll, Jul13MuonsOnly_ll, Aug06MuonsOnly_ll, Aug24MuonsOnly_ll, DCSOnly_ll)
+## for x in NoL1TMuonsOnly_ll:
+##     Run2012PlusDCSOnlyMuonsOnly_ll = Run2012PlusDCSOnlyMuonsOnly_ll | x
+dcsonly_ll = copy.deepcopy(DCSOnly_ll)
+dcsonly_ll.removeRuns(runs_to_remove_from_dcsonly)
+Run2012PlusDCSOnly_ll          = Jan22_ll | dcsonly_ll
+Run2012PlusDCSOnlyMuonsOnly_ll = Jan22MuonsOnly_ll | dcsonly_ll
 
 # Run 201191 is included in both 2012v2 and Dec-11 re-reco.  We need
 # to use the former for MuonPhys and the latter for Golden.
@@ -96,7 +106,8 @@ Run2012PlusDCSOnlyMuonsOnly_ll = combine(PromptMuonsOnly_ll, Jul13MuonsOnly_ll, 
 # with Dec11_ll.
 # Run2012_ll = Dec11_ll
 
-all_ll_names = ['DCSOnly', 'DCSOnlyForNewRuns', 'Jul13', 'Jul13MuonsOnly', 'Aug06', 'Aug06MuonsOnly', 'Aug24', 'Aug24MuonsOnly', 'Prompt', 'PromptMuonsOnly', 'NoL1TMuonsOnly_1', 'NoL1TMuonsOnly_2', 'NoL1TMuonsOnly_3', 'Run2012', 'Run2012MuonsOnly', 'Run2012PlusDCSOnly', 'Run2012PlusDCSOnlyMuonsOnly']
+# all_ll_names = ['DCSOnly', 'DCSOnlyForNewRuns', 'Jul13', 'Jul13MuonsOnly', 'Aug06', 'Aug06MuonsOnly', 'Aug24', 'Aug24MuonsOnly', 'Prompt', 'PromptMuonsOnly', 'NoL1TMuonsOnly_1', 'NoL1TMuonsOnly_2', 'NoL1TMuonsOnly_3', 'Run2012', 'Run2012MuonsOnly', 'Run2012PlusDCSOnly', 'Run2012PlusDCSOnlyMuonsOnly']
+all_ll_names = ['DCSOnly', 'DCSOnlyForNewRuns', 'Jan22', 'Jan22MuonsOnly', 'Run2012', 'Run2012MuonsOnly', 'Run2012PlusDCSOnly', 'Run2012PlusDCSOnlyMuonsOnly']
 
 def all_lls():
     return [(x, eval(x + '_ll')) for x in all_ll_names]

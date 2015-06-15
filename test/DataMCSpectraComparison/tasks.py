@@ -96,7 +96,7 @@ elif cmd == 'gatherdata':
 
     for lumi_mask in lumi_masks:
         print lumi_mask
-        dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMuRun2012*' % lumi_mask)
+        dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMuRun2012*_22Jan2013*' % lumi_mask)
         files = []
         for d in dirs:
             files += glob.glob(os.path.join(d, 'res/*.root'))
@@ -119,7 +119,8 @@ elif cmd == 'gatherdata':
                 print cl
                                         
         reduce(lambda x,y: x|y, (LumiList(j) for j in jsons)).writeJSON('%(wdir)s/ana_datamc_data.forlumi.json' % locals())
-        do('lumiCalc2.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())
+#        do('lumiCalc2.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())
+        do('pixelLumiCalc.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())
         do('tail -5 %(wdir)s/ana_datamc_data.lumi' % locals())
         print 'done with', lumi_mask, '\n'
 

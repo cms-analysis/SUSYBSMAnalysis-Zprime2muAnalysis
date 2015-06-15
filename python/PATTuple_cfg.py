@@ -126,14 +126,29 @@ process.countPatMuons.minNumber = 1
 # filter later, for example.)
 #
 # Make one path for each (a very small storage burden) so they can be
-# accessed separately in the TriggerResults object; the "All" path
-# isn't necessary because it could be emulated using the AND of all of
-# the separate ones, but it's nice for convenience.
+# accessed separately in the TriggerResults object.
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
 process.goodDataHLTPhysicsDeclared = cms.Path(process.hltPhysicsDeclared)
 process.goodDataPrimaryVertexFilter = cms.Path(process.primaryVertexFilter)
 process.goodDataNoScraping = cms.Path(process.noscraping)
-process.goodDataAll = cms.Path(process.hltPhysicsDeclared * process.primaryVertexFilter * process.noscraping)
+#
+# MET filters.  HEEP uses only eeBadScFilter and ecalLaserCorrFilter.
+process.load("RecoMET.METFilters.metFilters_cff")
+process.goodDataTrackingFailureFilter = cms.Path(process.trackingFailureFilter)
+process.trackingFailureFilter.VertexSource = cms.InputTag('offlinePrimaryVertices')
+process.goodDataTrackingPOGFilter     = cms.Path(process.trkPOGFilters)
+process.goodDataCSCTightHaloFilter    = cms.Path(process.CSCTightHaloFilter)
+process.goodDataEcalTPFilter          = cms.Path(process.EcalDeadCellTriggerPrimitiveFilter)
+process.goodDataEeBadScFilter         = cms.Path(process.eeBadScFilter)
+process.goodDataEcalLaserFilter       = cms.Path(process.ecalLaserCorrFilter)
+process.goodDataHBHENoiseFilter       = cms.Path(process.HBHENoiseFilter)
+process.goodDataHcalLaserFilter       = cms.Path(process.hcalLaserEventFilter)
+#
+# The "All" path isn't necessary because it could be emulated using
+# the AND of all of the separate ones, but it's nice for convenience.
+# Only include primary vertex and HLT declared for now.
+#process.goodDataAll = cms.Path(process.hltPhysicsDeclared * process.primaryVertexFilter * process.noscraping)
+process.goodDataAll = cms.Path(process.hltPhysicsDeclared * process.primaryVertexFilter)
 
 # Add MET and jets. Configuration to be revisited later.
 from PhysicsTools.PatAlgos.tools.metTools import addPfMET, addTcMET
@@ -146,11 +161,20 @@ switchJetCollection(process,
                     doJTA            = True,            
                     doBTagging       = True,            
                     jetCorrLabel     = ('AK5PF', ['L1FastJet', 'L2Relative', 'L3Absolute']),  
-                    doType1MET       = False,            
+                    doType1MET       = True,            
                     genJetCollection = cms.InputTag("ak5GenJets"),
                     doJetID      = False,
                     jetIdLabel   = "ak5"
                     )
+
+# Type-0 (pile-up) and type-1 (JEC) MET corrections, from Zeynep.
+process.load("JetMETCorrections.Type1MET.pfMETCorrectionType0_cfi")
+process.pfType1CorrectedMet.applyType0Corrections = cms.bool(False)
+process.pfType1CorrectedMet.srcType1Corrections = cms.VInputTag(
+    cms.InputTag('pfMETcorrType0'),
+    cms.InputTag('pfJetMETcorr', 'type1')
+    )
+
 
 # Make a collection of muons with our final selection applied so that
 # the muon-jet cleaning will use only muons passing those cuts. This

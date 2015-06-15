@@ -297,7 +297,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->SetAlias("trigger_match_1", "lep_triggerMatchPt[1] > " triggerMatchMinPt " && abs(lep_triggerMatchEta[1]) < " triggerMatchMaxEta);
   tree->SetAlias("triggerMatched", "trigger_match_0 || trigger_match_1");
 
-  tree->SetAlias("GoodData", "GoodDataRan && HLTPhysicsDeclared && NoScraping && GoodVtx");
+  tree->SetAlias("GoodData", "GoodDataRan && HLTPhysicsDeclared && GoodVtx");
 
   tree->SetAlias("extraDimuonCuts", "cos_angle > -0.9998 && vertex_chi2 < 10");
 

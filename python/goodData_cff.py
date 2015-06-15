@@ -17,9 +17,12 @@ primaryVertexFilter = cms.EDFilter('GoodVertexFilter',
                                    maxd0 = cms.double(2)
                                    )
 
+# Obsolete; not included in goodDataAll
 noscraping = cms.EDFilter('FilterOutScraping',
                           applyfilter = cms.untracked.bool(True),
                           debugOn = cms.untracked.bool(False),
                           numtrack = cms.untracked.uint32(10),
                           thresh = cms.untracked.double(0.25)
                           )
+
+# Some more filters are defined in RecoMET/METFilters/python/metFilters_cff.py

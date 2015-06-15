@@ -98,6 +98,7 @@ def addHEEPId(process):
                                     eleIsolEffectiveAreas = heepEventPara.eleIsolEffectiveAreas,
                                     applyRhoCorrToEleIsol = heepEventPara.applyRhoCorrToEleIsol,
                                     eleRhoCorrLabel = heepEventPara.eleRhoCorrTag,
+                                    verticesLabel = heepEventPara.verticesTag,
                                     writeIdAsInt = cms.bool(True),
                                     )
 

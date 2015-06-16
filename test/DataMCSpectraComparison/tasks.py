@@ -47,7 +47,8 @@ elif cmd == 'maketagdirs':
     extra = extra[0]
     do('rm data mc plots')
     for which in ['data', 'mc', 'plots']:
-        d = '~/nobackup/zp2mu_ana_datamc_%s/%s' % (which,extra)
+        #d = '~/nobackup/zp2mu_ana_datamc_%s/%s' % (which,extra)
+        d = './zp2mu_ana_datamc_%s/%s' % (which,extra)
         do('mkdir -p %s' % d)
         do('ln -s %s %s' % (d, which))
 
@@ -56,6 +57,18 @@ elif cmd == 'checkevents':
     for sample in samples:
         print sample.name
         do('grep TrigReport crab/crab_datamc_%s/res/*stdout | grep \' p$\' | sed -e "s/ +/ /g" | awk \'{ s += $4; t += $5; u += $6; } END { print "summary: total: ", s, "passed: ", t, "failed: ", u }\'' % sample.name)
+
+elif cmd == 'checkstatus':
+    from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
+    for sample in samples:
+        print sample.name
+        do('crab -c crab/crab_ana_datamc_%(name)s -status' % sample)
+
+elif cmd == 'getoutput':
+    from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
+    for sample in samples:
+        print sample.name
+        do('crab -c crab/crab_ana_datamc_%(name)s -getoutput' % sample)
 
 elif cmd == 'publishmc':
     from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
@@ -119,7 +132,8 @@ elif cmd == 'gatherdata':
                 print cl
                                         
         reduce(lambda x,y: x|y, (LumiList(j) for j in jsons)).writeJSON('%(wdir)s/ana_datamc_data.forlumi.json' % locals())
-        do('lumiCalc2.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())
+#        do('lumiCalc2.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())
+        do('pixelLumiCalc.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())
         do('tail -5 %(wdir)s/ana_datamc_data.lumi' % locals())
         print 'done with', lumi_mask, '\n'
 

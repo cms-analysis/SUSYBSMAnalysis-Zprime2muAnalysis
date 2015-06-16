@@ -42,7 +42,18 @@ std::ostream& operator<<(std::ostream& out, const reco::GenParticle& gen) {
   return out;
 }
 
-std::ostream& operator<<(std::ostream& out, const reco::HitPattern& hp) {
+// this works in CMSSW_7_2_0 but not in CMSSW_7_1_0
+std::ostream& operator<<(std::ostream& out, const reco::HitPattern& hp) {//raffa add reco::HitPattern::TRACK_HITS (to be checked)
+  out << "# hits: " << hp.numberOfHits(reco::HitPattern::TRACK_HITS)
+      << "\n  # valid: tot: " << hp.numberOfValidHits() << " tk: " << hp.numberOfValidTrackerHits() << " pxb: " << hp.numberOfValidPixelBarrelHits() << " pxe: " << hp.numberOfValidPixelEndcapHits() << " tib: " << hp.numberOfValidStripTIBHits() << " tob: " << hp.numberOfValidStripTOBHits() << " tid: " << hp.numberOfValidStripTIDHits() << " tec: " << hp.numberOfValidStripTECHits() << " mu: " << hp.numberOfValidMuonHits() << " csc: " << hp.numberOfValidMuonCSCHits() << " dt: " << hp.numberOfValidMuonDTHits() << " rpc: " << hp.numberOfValidMuonRPCHits()
+      << "\n  # lost: tot: " << hp.numberOfLostHits(reco::HitPattern::TRACK_HITS) << " tk: " << hp.numberOfLostTrackerHits(reco::HitPattern::TRACK_HITS) << " pxb: " << hp.numberOfLostPixelBarrelHits(reco::HitPattern::TRACK_HITS) << " pxe: " << hp.numberOfLostPixelEndcapHits(reco::HitPattern::TRACK_HITS) << " tib: " << hp.numberOfLostStripTIBHits(reco::HitPattern::TRACK_HITS) << " tob: " << hp.numberOfLostStripTOBHits(reco::HitPattern::TRACK_HITS) << " tid: " << hp.numberOfLostStripTIDHits(reco::HitPattern::TRACK_HITS) << " tec: " << hp.numberOfLostStripTECHits(reco::HitPattern::TRACK_HITS) << " mu: " << hp.numberOfLostMuonHits() << " csc: " << hp.numberOfLostMuonCSCHits() << " dt: " << hp.numberOfLostMuonDTHits() << " rpc: " << hp.numberOfLostMuonRPCHits()
+      << "\n  # bad: tot: " << hp.numberOfBadHits() << " mu: " << hp.numberOfBadMuonHits()  << " csc: " << hp.numberOfBadMuonCSCHits()  << " dt: " << hp.numberOfBadMuonDTHits()  << " rpc: " << hp.numberOfBadMuonRPCHits()
+      << "\n  # tk layers: with meas: " << hp.trackerLayersWithMeasurement() << " without: " << hp.trackerLayersWithoutMeasurement(reco::HitPattern::TRACK_HITS) << " totallyofforbad: " << hp.trackerLayersTotallyOffOrBad() << " null: " << hp.trackerLayersNull()
+      << "\n  # px layers: with meas: " << hp.pixelLayersWithMeasurement() << " without: " << hp.pixelLayersWithoutMeasurement(reco::HitPattern::TRACK_HITS) << " totallyofforbad: " << hp.pixelLayersTotallyOffOrBad() << " null: " << hp.pixelLayersNull()
+      << "\n  # si layers: with meas: " << hp.stripLayersWithMeasurement() << " without: " << hp.stripLayersWithoutMeasurement(reco::HitPattern::TRACK_HITS) << " totallyofforbad: " << hp.stripLayersTotallyOffOrBad() << " null: " << hp.stripLayersNull()
+      << "\n  # dt with both views: " << hp.numberOfDTStationsWithBothViews() << " with rphi: " << hp.numberOfDTStationsWithRPhiView() << " with rz: " << hp.numberOfDTStationsWithRZView();
+
+/*std::ostream& operator<<(std::ostream& out, const reco::HitPattern& hp) {
   out << "# hits: " << hp.numberOfHits()
       << "\n  # valid: tot: " << hp.numberOfValidHits() << " tk: " << hp.numberOfValidTrackerHits() << " pxb: " << hp.numberOfValidPixelBarrelHits() << " pxe: " << hp.numberOfValidPixelEndcapHits() << " tib: " << hp.numberOfValidStripTIBHits() << " tob: " << hp.numberOfValidStripTOBHits() << " tid: " << hp.numberOfValidStripTIDHits() << " tec: " << hp.numberOfValidStripTECHits() << " mu: " << hp.numberOfValidMuonHits() << " csc: " << hp.numberOfValidMuonCSCHits() << " dt: " << hp.numberOfValidMuonDTHits() << " rpc: " << hp.numberOfValidMuonRPCHits()
       << "\n  # lost: tot: " << hp.numberOfLostHits() << " tk: " << hp.numberOfLostTrackerHits() << " pxb: " << hp.numberOfLostPixelBarrelHits() << " pxe: " << hp.numberOfLostPixelEndcapHits() << " tib: " << hp.numberOfLostStripTIBHits() << " tob: " << hp.numberOfLostStripTOBHits() << " tid: " << hp.numberOfLostStripTIDHits() << " tec: " << hp.numberOfLostStripTECHits() << " mu: " << hp.numberOfLostMuonHits() << " csc: " << hp.numberOfLostMuonCSCHits() << " dt: " << hp.numberOfLostMuonDTHits() << " rpc: " << hp.numberOfLostMuonRPCHits()
@@ -51,6 +62,7 @@ std::ostream& operator<<(std::ostream& out, const reco::HitPattern& hp) {
       << "\n  # px layers: with meas: " << hp.pixelLayersWithMeasurement() << " without: " << hp.pixelLayersWithoutMeasurement() << " totallyofforbad: " << hp.pixelLayersTotallyOffOrBad() << " null: " << hp.pixelLayersNull()
       << "\n  # si layers: with meas: " << hp.stripLayersWithMeasurement() << " without: " << hp.stripLayersWithoutMeasurement() << " totallyofforbad: " << hp.stripLayersTotallyOffOrBad() << " null: " << hp.stripLayersNull()
       << "\n  # dt with both views: " << hp.numberOfDTStationsWithBothViews() << " with rphi: " << hp.numberOfDTStationsWithRPhiView() << " with rz: " << hp.numberOfDTStationsWithRZView();
+*/
   return out;
 }
 

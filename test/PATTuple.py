@@ -10,10 +10,12 @@ input_is_MC = True
 # which you wish to run, most especially the globalTag (since the list
 # of files will be configured by CRAB itself so it doesn't matter what
 # gets put here for it).
-globalTag = 'START42_V11::All'
-files = ['file:/uscms/home/tucker/scratch/store/mc/Summer11/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/AODSIM/PU_S3_START42_V11-v2/0000/0084EB16-C57C-E011-A0B4-003048C693E2.root']
-maxEvents = -1
-
+globalTag = 'PRE_STA72_V4::All'
+#globalTag = 'START42_V11::All'
+#files = ['file:/uscms/home/tucker/scratch/store/mc/Summer11/DYToMuMu_M-20_TuneZ2_7TeV-pythia6/AODSIM/PU_S3_START42_V11-v2/0000/0084EB16-C57C-E011-A0B4-003048C693E2.root']
+files = ['/store/relval/CMSSW_7_2_0_pre6/RelValProdTTbar/AODSIM/PRE_STA72_V4-v1/00000/3ECB49AF-3B40-E411-99A3-00259059649C.root']
+#files =['/store/relval/CMSSW_7_2_0_pre7/RelValZMM_13/MINIAODSIM/PU25ns_PRE_LS172_V11-v1/00000/7E33FDCB-2D4E-E411-BE77-0025905938AA.root']
+maxEvents = 10
 ########################################################################
 
 # Load and configure the process appropriately.
@@ -34,6 +36,7 @@ if not input_is_MC:
 # Our path. The name 'p' is expected by the configuration of the
 # OutputModule in PATTuple_cfg.
 process.p = cms.Path(process.patDefaultSequence)
+#process.p = cms.Path(process.type0PFMEtCorrection * process.patDefaultSequence)
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import AODOnly
 AODOnly(process)

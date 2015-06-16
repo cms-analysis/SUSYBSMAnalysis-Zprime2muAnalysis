@@ -107,7 +107,7 @@ bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
   // in ]0,1[, and keep the event if r < chance.
   edm::Service<edm::RandomNumberGenerator> rng;
   if (!rng.isAvailable()) throw cms::Exception("PrescaleToCommon") << "RandomNumberGeneratorService not available!\n";
-  CLHEP::RandFlat rand(rng->getEngine());
+  CLHEP::RandFlat rand(rng->getEngine(event.streamID()));
   const double rnd = rand.fire();
   randoms->Fill(rnd);
   return rnd < double(total_prescale_already)/overall_prescale;

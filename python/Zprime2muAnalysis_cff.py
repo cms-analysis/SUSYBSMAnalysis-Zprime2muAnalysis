@@ -7,6 +7,7 @@ import HLTrigger.HLTfilters.hltHighLevel_cfi
 goodDataFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
 goodDataFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', 'PAT')
 goodDataFilter.HLTPaths = ['goodDataAll'] # can set to just 'goodDataPrimaryVertexFilter', for example
+#goodDataFilter.HLTPaths = ['goodDataPrimaryVertexFilter']# can set to just 'goodDataPrimaryVertexFilter', for example
 goodDataFilter.andOr = False # = AND
 
 from MuonPhotonMatch_cff import muonPhotonMatch

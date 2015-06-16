@@ -32,7 +32,7 @@ def addMuonMCClassification(process):
     # their GEANT hits.
     process.load('MuonAnalysis.MuonAssociators.muonClassificationByHits_cfi')
     from MuonAnalysis.MuonAssociators.muonClassificationByHits_cfi import addUserData as addClassByHits
-    addClassByHits(process.patMuons, extraInfo=True)
+    addClassByHits(process.patMuons,extraInfo=True)
     process.patDefaultSequence = cms.Sequence(process.muonClassificationByHits * process.patDefaultSequence._seq)
 
 def removeMuonMCClassification(process):
@@ -72,11 +72,11 @@ def removeMCUse(process):
     # Remove anything that requires MC truth.
     from PhysicsTools.PatAlgos.tools.coreTools import removeMCMatching
     removeMCMatching(process, ['All'])
-    removeMCMatching(process, ['METs'], postfix='TC')
+#    removeMCMatching(process, ['METs'], postfix='TC')
     removeMCMatching(process, ['METs'], postfix='PF')
-    removeMuonMCClassification(process)
+    #removeMuonMCClassification(process)
     removeSimLeptons(process)
-    removePrunedMCLeptons(process)
+    #removePrunedMCLeptons(process)
     
 def switchHLTProcessName(process, name):
     # As the correct trigger process name is different from the
@@ -92,12 +92,19 @@ def addHEEPId(process):
     from SHarper.HEEPAnalyzer.HEEPSelectionCuts_cfi import heepBarrelCuts, heepEndcapCuts
     from SHarper.HEEPAnalyzer.HEEPEventParameters_cfi import heepEventPara
     process.HEEPId = cms.EDProducer('HEEPIdValueMapProducer',
-                                    eleLabel = cms.InputTag('gsfElectrons'),
+                                    eleLabel = cms.InputTag('gedGsfElectrons'),
                                     barrelCuts = heepBarrelCuts,
                                     endcapCuts = heepEndcapCuts,
                                     eleIsolEffectiveAreas = heepEventPara.eleIsolEffectiveAreas,
                                     applyRhoCorrToEleIsol = heepEventPara.applyRhoCorrToEleIsol,
+                                    #eleRhoCorrLabel = heepEventPara.eleRhoCorrTag,#? possible options
+                                    #eleRhoCorrTag = cms.InputTag("fixedGridRhoFastjetAll"),
+                                    #eleRhoCorr2012Tag = cms.InputTag("kt6PFJets","rho"),
+                                    # I was using
+                                    #eleRhoCorrLabel = cms.InputTag("kt6PFJetsForIsolation","rho"),
+                                    #verticesLabel = cms.InputTag("offlinePrimaryVerticesWithBS"),
                                     eleRhoCorrLabel = heepEventPara.eleRhoCorrTag,
+                                    verticesLabel = heepEventPara.verticesTag,
                                     writeIdAsInt = cms.bool(True),
                                     )
 
@@ -115,9 +122,9 @@ def addHEEPId(process):
     process.patDefaultSequence.replace(process.patElectrons, process.kt6PFJetsForIsolation * process.HEEPId * process.patElectrons)
 
 def AODOnly(process):
-    from PhysicsTools.PatAlgos.tools.coreTools import restrictInputToAOD
-    restrictInputToAOD(process)
-    removeMuonMCClassification(process) # throw the baby out with the bathwater...
+    #from PhysicsTools.PatAlgos.tools.coreTools import restrictInputToAOD
+    #restrictInputToAOD(process) 
+    #removeMuonMCClassification(process) # throw the baby out with the bathwater...???
     removeSimLeptons(process)
 
 # Some scraps to aid in debugging that can be put in your top-level

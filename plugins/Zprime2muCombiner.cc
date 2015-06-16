@@ -54,7 +54,7 @@ namespace reco {
   namespace modules {
     template<>
     struct ParameterAdapter<StringCutObjectSelector<reco::Candidate, true> > {
-      static StringCutObjectSelector<reco::Candidate, true> make(const edm::ParameterSet& cfg) {
+      static StringCutObjectSelector<reco::Candidate, true> make(const edm::ParameterSet& cfg,edm::ConsumesCollector & iC) {
 	return StringCutObjectSelector<reco::Candidate, true>(cfg.getParameter<std::string>("cut"));
       }
     };

@@ -1,20 +1,24 @@
 #!/usr/bin/env python
 
 import sys, os
-from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName, AODOnly
+from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName,AODOnly,removeMuonMCClassification,removeSimLeptons, pruneMCLeptons
 from tuple_common import cms, process, crab_cfg
+
+pruneMCLeptons(process, use_sim=True) # because of unscheduled I can't remove this for data.
 
 AODOnly(process)
 #switchHLTProcessName(process, 'REDIGI311X')
 
-process.source.fileNames = ['/store/mc/Summer12_DR53X/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S10_START53_V7A-v1/0000/FE93A307-F2E2-E111-BC0D-E41F131815FC.root']
-process.maxEvents.input = 1000
-process.GlobalTag.globaltag = 'START53_V11::All'
+process.source.fileNames = ['/store/mc/Phys14DR/DYJetsToEEMuMu_M-9500_13TeV-madgraph/AODSIM/PU20bx25_PHYS14_25_V1-v2/00000/18C7C360-E076-E411-9E2F-E0CB4E19F9BC.root',]
+
+process.maxEvents.input = 10
+
+process.GlobalTag.globaltag = 'PHYS14_25_V1::All'
 
 if __name__ == '__main__' and hasattr(sys, 'argv') and 'submit' in sys.argv:
     job_control = '''
 total_number_of_events = -1
-events_per_job = 150000
+events_per_job = 1000
 '''
 
     just_testing = 'testing' in sys.argv

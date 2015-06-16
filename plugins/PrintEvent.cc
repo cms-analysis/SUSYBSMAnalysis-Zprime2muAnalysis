@@ -137,15 +137,27 @@ void PrintEvent::analyze(const edm::Event& event, const edm::EventSetup& setup) 
     if (!dils.isValid())
       edm::LogInfo("PrintEvent") << "WARNING! tried to get dileptons using " << dilepton_src << " and failed!";
     else if (dils->size()) {
-      edm::Handle<std::vector<reco::Vertex> > vtxs;
-      event.getByLabel("offlinePrimaryVertices", vtxs);
-      BOOST_FOREACH(const reco::Vertex& vtx, *vtxs)
-	out << "vtx with z " << vtx.z() << "\n";
-    
-      out << "dileptons:\n";
-      BOOST_FOREACH(const pat::CompositeCandidate& dil, *dils)
-	out << dil << "\n";
-
+        edm::Handle<std::vector<reco::Vertex> > vtxs;
+        event.getByLabel("offlinePrimaryVertices", vtxs);
+        out << "Offline primary vertices:\n";
+        BOOST_FOREACH(const reco::Vertex& vtx, *vtxs)
+        out << "vtx with x, y, z: " << vtx.x() << " " << vtx.y() << " " << vtx.z() << "\n";
+        
+        out << "\n Dileptons:\n";
+        BOOST_FOREACH(const pat::CompositeCandidate& dil, *dils) {
+            out << dil << "\n";
+            if (dil.hasUserFloat("vertexX"))
+                out << "Common dimuon vertex: (x, y, z): "
+                << dil.userFloat("vertexX") << ", " << dil.userFloat("vertexY") << ", " << dil.userFloat("vertexZ")
+                << " chi2/dof: " << dil.userFloat("vertex_chi2") << "\n";
+            if (dil.hasUserFloat("vertexM"))
+                out << "Mass computed with the common-vertex constraint: "
+                << dil.userFloat("vertexM") << " +/- " << dil.userFloat("vertexMError") << "\n";
+            if (dil.hasUserFloat("cos_angle"))
+                out << "Cos of angle between muons: " << dil.userFloat("cos_angle")
+                << " largest dpT/pT: " << dil.userFloat("dpt_over_pt") << "\n";
+        }
+        
       out << "\n";
     
       edm::LogInfo("PrintEvent") << out.str();

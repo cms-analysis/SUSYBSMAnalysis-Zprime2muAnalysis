@@ -29,6 +29,14 @@ eff_unc.SetMaximum(1.01)
 #eff_unc.SetMaximum(1.50)
 eff_unc.Draw()
 #
+#- Residual mass-dependent QCD NNLO/NLO corrections vs mass: assume 3% flat
+#
+qcd_corr = ROOT.TF1('pol0', '[0]', mass_low, mass_high)
+qcd_corr.SetParameter(0, 0.97)
+qcd_corr.SetLineColor(ROOT.kBlack)
+qcd_corr.SetLineStyle(4)
+qcd_corr.Draw("same")
+#
 #- EWK NLO corrections vs mass, from AN-2012/496
 #
 ewk_corr = ROOT.TF1('pol1', '[0] + x*[1]', mass_low, mass_high)
@@ -53,28 +61,41 @@ scale_corr.SetLineColor(ROOT.kGray)
 scale_corr.SetLineStyle(5)
 scale_corr.Draw("same")
 #
-#- PDF uncertainties vs mass, e-mail from D. Bourilkov, 13/02/2013
+#- PDF uncertainties vs mass, 2013 version, e-mail from D. Bourilkov, 13/02/2013
 #
 masses = [  90,  250,  450,  950, 1450, 1950, 2450, 2950]
 sigmas = [5.85, 4.64, 4.51, 7.06, 11.0, 15.6, 20.9, 31.4]
 l = len(masses)
 for i in range(1, l+1):
     sigmas[i-1] = (1. - sigmas[i-1]/100.)
-print 'PDF uncertainties:'
+print 'PDF uncertainties (2013 version):'
 for i in range(1, l+1):
     print masses[i-1], sigmas[i-1]
-masses = array('d', masses)
-sigmas = array('d', sigmas)
-gpdf = ROOT.TGraph(l, masses, sigmas)
-pdf_unc = ROOT.TF1('pdf_unc', '[0] + x*[1] + x*x*[2]', mass_low, mass_high)
-gpdf.Fit(pdf_unc, "N")
-gpdf.SetLineColor(ROOT.kGreen)
-gpdf.SetMarkerColor(gpdf.GetLineColor())
-gpdf.SetMarkerStyle(20);
-gpdf.SetMarkerSize(1.2);
-gpdf.Draw("same P")
-pdf_unc.SetLineColor(gpdf.GetLineColor())
+#masses = array('d', masses)
+#sigmas = array('d', sigmas)
+#gpdf = ROOT.TGraph(l, masses, sigmas)
+#pdf_unc = ROOT.TF1('pdf_unc', '[0] + x*[1] + x*x*[2]', mass_low, mass_high)
+#gpdf.Fit(pdf_unc, "N")
+#gpdf.SetLineColor(ROOT.kGreen)
+#gpdf.SetMarkerColor(gpdf.GetLineColor())
+#gpdf.SetMarkerStyle(20);
+#gpdf.SetMarkerSize(1.2);
+#gpdf.Draw("same P")
+#pdf_unc.SetLineColor(gpdf.GetLineColor())
+#pdf_unc.Draw("same")
+#
+#- PDF uncertainties vs mass, 2014 version, v2 of AN-12-348 (Fig. 3)
+#
+pdf_unc = ROOT.TF1('pdf_unc', '1. + [0] + x*[1] + x*x*[2]', mass_low, mass_high)
+pdf_unc.SetParameters(-0.0276, -3.03e-5, -2.38e-8)
+pdf_unc.SetLineColor(ROOT.kGreen)
 pdf_unc.Draw("same")
+masses = [  90,  250,  450,  950, 1450, 1950, 2450, 2950]
+sigmas = [   0,    0,    0,    0,    0,    0,    0,    0]
+l = len(masses)
+print 'PDF uncertainties (2014 version):'
+for i in range(1, l+1):
+    print masses[i-1], pdf_unc.Eval(masses[i-1])
 #
 #- Total uncertainty
 #
@@ -82,10 +103,10 @@ i = 0
 mass = 100.
 total_masses = []
 total_sigmas = []
-print '%10s%15s%15s%15s%15s%15s%15s' % ('mass (GeV)', 'Efficiency', 'EWK NLO', 'Alignment', 'Momentum scale', 'PDF', 'Total')
+print '%10s%15s%15s%15s%15s%15s%15s%15s' % ('mass (GeV)', 'Efficiency', 'QCD NNLO', 'EWK NLO', 'Alignment', 'Momentum scale', 'PDF', 'Total')
 while mass < mass_high:
-    total = sqrt((1.-eff_unc.Eval(mass))**2 + (1.-ewk_corr.Eval(mass))**2 + (1.-align_unc.Eval(mass))**2 + (1.-scale_corr.Eval(mass))**2 + (1.-pdf_unc.Eval(mass))**2)
-    print '%10.f%15.4f%15.4f%15.4f%15.4f%15.4f%15.4f' % (mass, 1.-eff_unc.Eval(mass), 1.-ewk_corr.Eval(mass), 1.-align_unc.Eval(mass), 1.-scale_corr.Eval(mass), 1.-pdf_unc.Eval(mass), total)
+    total = sqrt((1.-eff_unc.Eval(mass))**2 + (1.-qcd_corr.Eval(mass))**2 + (1.-ewk_corr.Eval(mass))**2 + (1.-align_unc.Eval(mass))**2 + (1.-scale_corr.Eval(mass))**2 + (1.-pdf_unc.Eval(mass))**2)
+    print '%10.f%15.4f%15.4f%15.4f%15.4f%15.4f%15.4f%15.4f' % (mass, 1.-eff_unc.Eval(mass), 1.-qcd_corr.Eval(mass), 1.-ewk_corr.Eval(mass), 1.-align_unc.Eval(mass), 1.-scale_corr.Eval(mass), 1.-pdf_unc.Eval(mass), total)
     total_masses.append(mass)
     total_sigmas.append(1.-total)
 #    total_sigmas.append(1.+total)

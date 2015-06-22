@@ -4,8 +4,13 @@ import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 
-process.source.fileNames =['file:./pat.root']
+process.source.fileNames =['file:./pat.root',
+                           #'/store/user/rradogna/RelValZpMM_13/datamc_zpsi2250/150617_214232/0000/pat_9.root'
+                           ]
 process.maxEvents.input = -1
+
+process.options.wantSummary = cms.untracked.bool(True)# false di default
+process.MessageLogger.cerr.FwkReport.reportEvery = 1 # default 1000
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold
 
@@ -206,7 +211,7 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.pCheckPrescale = cms.Path(process.CheckPrescale)
 
 def for_data(process):
-    process.GlobalTag.globaltag = 'GR_P_V42_AN2::All'
+    process.GlobalTag.globaltag = 'GR_P_V56::All'
     ntuplify(process)
     check_prescale(process, trigger_paths)
 
@@ -254,9 +259,9 @@ if 'gogo' in sys.argv:
     from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import set_events_to_process
     set_events_to_process(process, [(run, event)])
 
-f = file('outfile', 'w')
-f.write(process.dumpPython())
-f.close()
+#f = file('outfile', 'w')
+#f.write(process.dumpPython())
+#f.close()
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
@@ -264,25 +269,27 @@ if __name__ == '__main__' and 'submit' in sys.argv:
 from CRABClient.UserUtilities import config
 config = config()
 
-config.General.requestName = '%(name)s' 
-config.General.workArea = 'HISTO_%(name)s'
+config.General.requestName = 'ana_datamc_%(name)s'
+config.General.workArea = 'crab'
+#config.General.transferLogs = True
 
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'histos_crab.py'   
-config.JobType.priority = 1
+#config.JobType.priority = 1
 
-config.Data.inputDataset =  '%(dataset)s'
-config.Data.inputDBS = 'global'
+config.Data.inputDataset =  '%(ana_dataset)s'
+config.Data.inputDBS = 'phys03'
 config.Data.splitting = 'EventAwareLumiBased' 
-config.Data.unitsPerJob = 10000
-config.Data.publication = True
-config.Data.publishDataName = '%(name)s'
-config.Data.outLFN = '/store/user/federica/Histos' 
+job_control
+config.Data.publication = False
+config.Data.publishDataName = 'ana_datamc_%(name)s'
+config.Data.outLFNDirBase = '/store/user/rradogna'
 
-config.Site.storageSite = 'T2_US_Purdue'
+#config.Site.storageSite = 'T2_IT_Bari'
+config.Site.storageSite = 'T2_IT_Legnaro'
 
 '''
-
+    
     just_testing = 'testing' in sys.argv
         
     # Run on data.
@@ -302,6 +309,7 @@ config.Site.storageSite = 'T2_US_Purdue'
             ('SingleMuRun2012D-Prompt_206540_207900',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_206540_207900_20121203042806-8627c6a48d2426dec4aa557620a039a0/USER'),
             ('SingleMuRun2012D-Prompt_207901_208380',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_207901_208380_20121212090713-5fce88899b8479b9df01fc5ef8a1e921/USER'),
             ('SingleMuRun2012D-Prompt_208381_208700',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_208381_208700_20121217043712-5fce88899b8479b9df01fc5ef8a1e921/USER'),
+                           #/EGamma/rradogna-datamc_EGammaRun2015A-Prompt_246958_247068_20150622005921-fca42897c1fd4a282764c3898eef279c/USER
 #            ('SingleMuRun2012C-11Dec2012_201191_201191', '/SingleMu/slava-datamc_SingleMuRun2012C-EcalRecover_11Dec2012_201191_201191_20130115101201-5fce88899b8479b9df01fc5ef8a1e921/USER'),
             ]
 
@@ -356,8 +364,8 @@ lumis_per_job = 500
     if 'no_mc' not in sys.argv:
         # Set crab_cfg for MC.
         crab_cfg = crab_cfg.replace('job_control','''
-total_number_of_events = -1
-events_per_job = 50000
+config.Data.totalUnits = -1
+config.Data.unitsPerJob  = 1000
     ''')
 
         from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
@@ -402,16 +410,16 @@ for pn,p in process.paths.items():
 
             open('histos_crab.py', 'wt').write(new_py)
 
-            open('crab.py', 'wt').write(crab_cfg % sample)
+            open('crabConfig.py', 'wt').write(crab_cfg % sample)
             if not just_testing:
-                os.system('crab submit -c all')
+                os.system('crab submit -c crabConfig.py')
             else:
                 cmd = 'diff histos.py histos_crab.py | less'
                 print cmd
                 os.system(cmd)
-                cmd = 'less crab.py'
+                cmd = 'less crabConfig.py'
                 print cmd
                 os.system(cmd)
 
         if not just_testing:
-            os.system('rm crab.py histos_crab.py histos_crab.pyc')
+            os.system('rm crabConfig.py histos_crab.py histos_crab.pyc')

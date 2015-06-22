@@ -53,7 +53,7 @@ class tupleonlysample(sample):
 samples = [
     ##sample('zpsi5000',  'Z\'_{#psi} (5 TeV) #rightarrow #mu^{+}#mu^{-}',  '/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/Phys14DR-PU20bx25_tsg_PHYS14_25_V1-v1/AODSIM',      97890,  48, 1.,  0.0369,  k_factor=1.3, is_zprime=True),
     sample('zpsi2250',  'Z\'_{#psi} (2.25 TeV) #rightarrow #mu^{+}#mu^{-}', '/RelValZpMM_13/CMSSW_7_4_0-MCRUN2_74_V7_gensim_740pre7-v1/GEN-SIM-RECO',      9000,  48, 1.,  0.0369,  k_factor=1.3, is_zprime=True),
-    sample('dy50',   'DY50',   '/RelValZMM_13/CMSSW_7_4_0-PU25ns_MCRUN2_74_V7_GENSIM_7_1_15-v1/GEN-SIM-RECO',   9000, 37 , 1., 5740,    k_factor=1.),
+    #sample('dy50',   'DY50',   '/RelValZMM_13/CMSSW_7_4_0-PU25ns_MCRUN2_74_V7_GENSIM_7_1_15-v1/GEN-SIM-RECO',   9000, 37 , 1., 5740,    k_factor=1.),
     #sample('dy120',  'DY120',  '/DYJetsToEEMuMu_M-120To200_13TeV-madgraph/Phys14DR-PU20bx25_PHYS14_25_V1-v2/AODSIM',   60756, 432, 1., 37,      k_factor=1.049),
     #  sample('dy1400', 'DY1400', '/DYJetsToEEMuMu_M-1400To2300_13TeV-madgraph/Phys14DR-PU20bx25_PHYS14_25_V1-v1/AODSIM', 23204, 433, 1., 0.00255, k_factor=1.049),
     #  sample('dy200',  'DY200',  '/DYJetsToEEMuMu_M-200To400_13TeV-madgraph/Phys14DR-PU20bx25_PHYS14_25_V1-v1/AODSIM',   26430, 434, 1., 5.26,    k_factor=1.049),
@@ -81,11 +81,13 @@ samples.reverse()
 for sample in samples:
     exec '%s = sample' % sample.name
     #if '_c' in sample.name:
-    if 'Zprime' in sample.dataset:
-        sample.ana_dataset = '/%s/federica-%s-bcef9cff6c54eb003cec7431c0bde17e/USER'  % (sample.dataset.split('/')[1], sample.name)
-    else:
-        sample.ana_dataset = '/%s/federica-%s-02dba98b5abbcd2765544ae02b3dcc74/USER'  % (sample.dataset.split('/')[1], sample.name) # this is actually wrong
+    #if 'Zprime' in sample.dataset:
+    #sample.ana_dataset = '/%s/rradogna-datamc_%s-8613b30987dd6a37bceba633a6fea3c5/USER'  % (sample.dataset.split('/')[1], sample.name)
+        #else:
+            #sample.ana_dataset = '/%s/federica-%s-02dba98b5abbcd2765544ae02b3dcc74/USER'  % (sample.dataset.split('/')[1], sample.name) # this is actually wrong
 
+zpsi2250.ana_dataset = '/RelValZpMM_13/rradogna-datamc_%s-8613b30987dd6a37bceba633a6fea3c5/USER'
+ttbar.ana_dataset = '/RelValTTbar_13/rradogna-datamc_ttbar-750b21338a3f946db84cc0a53e55f580/USER'
 #zz.ana_dataset = '/ZZTo4L_Tune4C_13TeV-powheg-pythia8/federica-ZZ_Phys14_PU20BX25-02dba98b5abbcd2765544ae02b3dcc74/USER'
 #wz.ana_dataset = '/WZJetsTo3LNu_Tune4C_13TeV-madgraph-tauola/federica-WZ_Phys14_PU20BX25-02dba98b5abbcd2765544ae02b3dcc74/USER'
 #wjets.ana_dataset = '/WJetsToLNu_13TeV-madgraph-pythia8-tauola/federica-WJets_Phys14_PU20BX25-02dba98b5abbcd2765544ae02b3dcc74/USER'

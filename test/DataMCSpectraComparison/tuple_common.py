@@ -22,7 +22,7 @@ process.patDefaultSequence.replace(process.selectedPatElectrons, process.selecte
 process.countPatMuons.minNumber = 0
 process.countPatLeptons.electronSource = cms.InputTag('heepPatElectrons')
 #process.countPatLeptons.minNumber = 2
-process.countPatLeptons.minNumber = 0# per provare i dati
+process.countPatLeptons.minNumber = 2# per provare i dati
 
 crab_cfg = '''
 from CRABClient.UserUtilities import config

@@ -4,12 +4,21 @@ import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 
-process.source.fileNames =['file:./pat.root',
-                           #'/store/user/rradogna/RelValZpMM_13/datamc_zpsi2250/150617_214232/0000/pat_9.root'
+process.source.fileNames =[#'file:./pat.root',
+                           '/store/user/rradogna/SingleMu/datamc_SingleMuRun2015A-Prompt_246958_247068_20150626155427/150626_135451/0000/pat_1.root',
+#                           '/store/user/rradogna/SingleMu/datamc_SingleMuRun2015A-Prompt_246958_247068_20150626155427/150626_135451/0000/pat_10.root',
+#                           '/store/user/rradogna/SingleMu/datamc_SingleMuRun2015A-Prompt_246958_247068_20150626155427/150626_135451/0000/pat_2.root',
+#                           '/store/user/rradogna/SingleMu/datamc_SingleMuRun2015A-Prompt_246958_247068_20150626155427/150626_135451/0000/pat_3.root',
+#                           '/store/user/rradogna/SingleMu/datamc_SingleMuRun2015A-Prompt_246958_247068_20150626155427/150626_135451/0000/pat_4.root',
+#                           '/store/user/rradogna/SingleMu/datamc_SingleMuRun2015A-Prompt_246958_247068_20150626155427/150626_135451/0000/pat_5.root',
+#                           '/store/user/rradogna/SingleMu/datamc_SingleMuRun2015A-Prompt_246958_247068_20150626155427/150626_135451/0000/pat_6.root',
+#                           '/store/user/rradogna/SingleMu/datamc_SingleMuRun2015A-Prompt_246958_247068_20150626155427/150626_135451/0000/pat_7.root',
+#                           '/store/user/rradogna/SingleMu/datamc_SingleMuRun2015A-Prompt_246958_247068_20150626155427/150626_135451/0000/pat_8.root',
+#                           '/store/user/rradogna/SingleMu/datamc_SingleMuRun2015A-Prompt_246958_247068_20150626155427/150626_135451/0000/pat_9.root'
                            ]
-process.maxEvents.input = -1
+process.maxEvents.input = 1000
 
-process.options.wantSummary = cms.untracked.bool(True)# false di default
+#process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1 # default 1000
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold
@@ -67,7 +76,7 @@ cuts = {
     'Simple'   : OurSelectionDec2012, # The selection cuts in the module listed here are ignored below.
 #    'VBTFMuPrescaled' : VBTFSelection,
     #'OurMuPrescaledNew'  : OurSelectionNew,
-    #'OurMuPrescaled2012' : OurSelectionDec2012
+    'OurMuPrescaled2012' : OurSelectionDec2012 ####restore!
     }
 
 # Loop over all the cut sets defined and make the lepton, allDilepton
@@ -125,7 +134,8 @@ for cut_name, Selection in cuts.iteritems():
         # not the ones passed into the LeptonProducer to set cutFor above.
         if cut_name == 'Simple':
             alldil.electron_cut_mask = cms.uint32(0)
-            alldil.loose_cut = 'isGlobalMuon && pt > 20.'
+            #alldil.loose_cut = 'isGlobalMuon && pt > 20.'#provvisorio primi runs
+            alldil.loose_cut = 'isGlobalMuon && pt > 0.'
             alldil.tight_cut = ''
             dil.max_candidates = 100
             dil.sort_by_pt = True
@@ -157,8 +167,8 @@ for cut_name, Selection in cuts.iteritems():
     pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
     if 'VBTF' not in cut_name and cut_name != 'Simple':
         pobj = process.goodDataFilter * pobj
-    if 'MuPrescaled' in cut_name:
-        pobj = process.PrescaleToCommon * pobj
+    #if 'MuPrescaled' in cut_name: ####### Now it seams that there are no prescaled path ########
+        #pobj = process.PrescaleToCommon * pobj ####### Now it seams that there are no prescaled path ########
     path = cms.Path(pobj)
     setattr(process, pathname, path)
 
@@ -213,7 +223,7 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
 def for_data(process):
     process.GlobalTag.globaltag = 'GR_P_V56::All'
     ntuplify(process)
-    check_prescale(process, trigger_paths)
+    #check_prescale(process, trigger_paths) ####### Now it seams that there are no prescaled path ########
 
 def for_mc(process, hlt_process_name, fill_gen_info):
     ntuplify(process, fill_gen_info)
@@ -279,7 +289,6 @@ config.JobType.psetName = 'histos_crab.py'
 
 config.Data.inputDataset =  '%(ana_dataset)s'
 config.Data.inputDBS = 'phys03'
-config.Data.splitting = 'EventAwareLumiBased' 
 job_control
 config.Data.publication = False
 config.Data.publishDataName = 'ana_datamc_%(name)s'
@@ -297,27 +306,26 @@ config.Site.storageSite = 'T2_IT_Legnaro'
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
 
         dataset_details = [
-            ('SingleMuRun2012A_13Jul2012_190450_193751', '/SingleMu/slava-datamc_SingleMuRun2012A-13Jul2012_190450_193751_20121011073628-426a2d966f78bce6bde85f3ed41c07ba/USER'),
-            ('SingleMuRun2012A_06Aug2012_190782_190949', '/SingleMu/slava-datamc_SingleMuRun2012A-recover-06Aug2012_190782_190949_20121011120430-426a2d966f78bce6bde85f3ed41c07ba/USER'),
-            ('SingleMuRun2012B_13Jul2012_193752_196531', '/SingleMu/slava-datamc_SingleMuRun2012B-13Jul2012_193752_196531_20121012044921-426a2d966f78bce6bde85f3ed41c07ba/USER'),
-            ('SingleMuRun2012C_24Aug2012_197556_198913', '/SingleMu/slava-datamc_SingleMuRun2012C-24Aug2012_197556_198913_20121012113325-426a2d966f78bce6bde85f3ed41c07ba/USER'),
-            ('SingleMuRun2012C_Prompt_198934_203772',    '/SingleMu/slava-datamc_SingleMuRun2012C-Prompt_198934_203772_20121015023300-8627c6a48d2426dec4aa557620a039a0/USER'),
-            ('SingleMuRun2012D_Prompt_203773_204563',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_203773_204563_20121016104501-8627c6a48d2426dec4aa557620a039a0/USER'),
-            ('SingleMuRun2012D_Prompt_204564_206087',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_204564_206087_20121029121943-8627c6a48d2426dec4aa557620a039a0/USER'),
-            ('SingleMuRun2012D_Prompt_206066_206066',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_206066_206066_20130115083834-5fce88899b8479b9df01fc5ef8a1e921/USER'),
-            ('SingleMuRun2012D-Prompt_206088_206539',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_206088_206539_20121112085341-8627c6a48d2426dec4aa557620a039a0/USER'),
-            ('SingleMuRun2012D-Prompt_206540_207900',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_206540_207900_20121203042806-8627c6a48d2426dec4aa557620a039a0/USER'),
-            ('SingleMuRun2012D-Prompt_207901_208380',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_207901_208380_20121212090713-5fce88899b8479b9df01fc5ef8a1e921/USER'),
-            ('SingleMuRun2012D-Prompt_208381_208700',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_208381_208700_20121217043712-5fce88899b8479b9df01fc5ef8a1e921/USER'),
-                           #/EGamma/rradogna-datamc_EGammaRun2015A-Prompt_246958_247068_20150622005921-fca42897c1fd4a282764c3898eef279c/USER
-#            ('SingleMuRun2012C-11Dec2012_201191_201191', '/SingleMu/slava-datamc_SingleMuRun2012C-EcalRecover_11Dec2012_201191_201191_20130115101201-5fce88899b8479b9df01fc5ef8a1e921/USER'),
+#            ('SingleMuRun2012A_13Jul2012_190450_193751', '/SingleMu/slava-datamc_SingleMuRun2012A-13Jul2012_190450_193751_20121011073628-426a2d966f78bce6bde85f3ed41c07ba/USER'),
+#            ('SingleMuRun2012A_06Aug2012_190782_190949', '/SingleMu/slava-datamc_SingleMuRun2012A-recover-06Aug2012_190782_190949_20121011120430-426a2d966f78bce6bde85f3ed41c07ba/USER'),
+#            ('SingleMuRun2012B_13Jul2012_193752_196531', '/SingleMu/slava-datamc_SingleMuRun2012B-13Jul2012_193752_196531_20121012044921-426a2d966f78bce6bde85f3ed41c07ba/USER'),
+#            ('SingleMuRun2012C_24Aug2012_197556_198913', '/SingleMu/slava-datamc_SingleMuRun2012C-24Aug2012_197556_198913_20121012113325-426a2d966f78bce6bde85f3ed41c07ba/USER'),
+#            ('SingleMuRun2012C_Prompt_198934_203772',    '/SingleMu/slava-datamc_SingleMuRun2012C-Prompt_198934_203772_20121015023300-8627c6a48d2426dec4aa557620a039a0/USER'),
+#            ('SingleMuRun2012D_Prompt_203773_204563',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_203773_204563_20121016104501-8627c6a48d2426dec4aa557620a039a0/USER'),
+#            ('SingleMuRun2012D_Prompt_204564_206087',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_204564_206087_20121029121943-8627c6a48d2426dec4aa557620a039a0/USER'),
+#            ('SingleMuRun2012D_Prompt_206066_206066',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_206066_206066_20130115083834-5fce88899b8479b9df01fc5ef8a1e921/USER'),
+#            ('SingleMuRun2012D-Prompt_206088_206539',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_206088_206539_20121112085341-8627c6a48d2426dec4aa557620a039a0/USER'),
+#            ('SingleMuRun2012D-Prompt_206540_207900',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_206540_207900_20121203042806-8627c6a48d2426dec4aa557620a039a0/USER'),
+#            ('SingleMuRun2012D-Prompt_207901_208380',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_207901_208380_20121212090713-5fce88899b8479b9df01fc5ef8a1e921/USER'),
+#            ('SingleMuRun2012D-Prompt_208381_208700',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_208381_208700_20121217043712-5fce88899b8479b9df01fc5ef8a1e921/USER'),
+            ('SingleMuRun2015A-Prompt_246958_247068',    '/SingleMu/rradogna-datamc_SingleMuRun2015A-Prompt_246958_247068_20150626155427-c884408f3bf22365836363f3be40cb0b/USER'),
             ]
 
         lumi_lists = [
-#            'DCSOnly',
+            'DCSOnly',
 #            'Run2012PlusDCSOnlyMuonsOnly',
-            'Run2012MuonsOnly',
-            'Run2012',
+#            'Run2012MuonsOnly',
+#            'Run2012',
             ]
 
         jobs = []
@@ -329,7 +337,7 @@ config.Site.storageSite = 'T2_IT_Legnaro'
         for dataset_name, ana_dataset, lumi_name, lumi_list in jobs:
             json_fn = 'tmp.json'
             lumi_list.writeJSON(json_fn)
-            lumi_mask = 'lumi_mask = %s' % json_fn
+            lumi_mask = json_fn
 
             name = '%s_%s' % (lumi_name, dataset_name)
             print name
@@ -341,15 +349,17 @@ config.Site.storageSite = 'T2_IT_Legnaro'
             new_crab_cfg = crab_cfg % locals()
 
             job_control = '''
-total_number_of_lumis = -1
-lumis_per_job = 500
-%(lumi_mask)s''' % locals()
+config.Data.splitting = 'LumiBased'
+config.Data.totalUnits = -1
+config.Data.unitsPerJob = 200
+config.Data.lumiMask = '%(lumi_mask)s'
+''' % locals()
 
             new_crab_cfg = new_crab_cfg.replace('job_control', job_control)
-            open('crab.py', 'wt').write(new_crab_cfg)
+            open('crabConfig.py', 'wt').write(new_crab_cfg)
 
             if not just_testing:
-                os.system('crab submit -c all')
+                os.system('crab submit -c crabConfig.py')
             else:
                 cmd = 'diff histos.py histos_crab.py | less'
                 print cmd
@@ -359,11 +369,12 @@ lumis_per_job = 500
                 os.system(cmd)
 
         if not just_testing:
-            os.system('rm crab.py histos_crab.py histos_crab.pyc tmp.json')
+            os.system('rm crabConfig.py histos_crab.py histos_crab.pyc tmp.json')
 
     if 'no_mc' not in sys.argv:
         # Set crab_cfg for MC.
         crab_cfg = crab_cfg.replace('job_control','''
+config.Data.splitting = 'EventAwareLumiBased'
 config.Data.totalUnits = -1
 config.Data.unitsPerJob  = 1000
     ''')

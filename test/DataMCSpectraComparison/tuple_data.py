@@ -5,12 +5,11 @@ from tuple_common import process, crab_cfg
 
 #process.source.fileNames = ['/store/data/Run2012A/SingleMu/AOD/13Jul2012-v1/00000/009C369E-85D0-E111-BD58-1CC1DE046FC0.root']
 process.source.fileNames = [#'/store/data/Run2015A/SingleMuon/AOD/PromptReco-v1/000/248/036/00000/787C46EA-5714-E511-863E-02163E014609.root',
-                            #'/store/data/Run2015A/EGamma/AOD/PromptReco-v1/000/246/958/00000/300FCE61-D00B-E511-9F20-02163E014686.root',
-                            '/store/data/Run2015A/EGamma/RECO/PromptReco-v1/000/246/958/00000/0040F913-E80B-E511-9F86-02163E014220.root',
+                            '/store/data/Run2015A/SingleMu/AOD/PromptReco-v1/000/248/033/00000/EE592A5B-5F14-E511-B94C-02163E011BDB.root',
+                            #'/store/data/Run2015A/EGamma/RECO/PromptReco-v1/000/246/958/00000/0040F913-E80B-E511-9F86-02163E014220.root',
                             ]
 #process.GlobalTag.globaltag = 'FT_53_V6C_AN4::All'
 #process.GlobalTag.globaltag = 'GR_H_V33::All'
-from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag.globaltag = 'GR_P_V56::All'
 ##process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:com10_2013', '')
 process.maxEvents.input = 100
@@ -28,7 +27,7 @@ config.Data.unitsPerJob = %(lumis_per_job)s
 config.Data.lumiMask = '%(lumi_mask)s'
 '''
 
-    lumis_per_job = 30
+    lumis_per_job = 100
     lumi_mask = ''
 
     #create_only = 'create_only' in sys.argv
@@ -38,6 +37,7 @@ config.Data.lumiMask = '%(lumi_mask)s'
     def submit(d):
         new_py = open('tuple_data.py').read()
         new_py += '\n\nprocess.GlobalTag.globaltag = "%(tag)s::All"\n' % d
+        #new_py += '\n\nprocess.GlobalTag.globaltag = "%(tag)s"\n' % d
         pset = 'crab/psets/tuple_data_crab_%(name)s.py' % d
         open(pset, 'wt').write(new_py)
 
@@ -108,9 +108,9 @@ config.Data.lumiMask = '%(lumi_mask)s'
 #            tag     = 'GR_P_V42_AN2'
 
         #### Run2015A ###
-        if run1 >= 246908:
-            dataset = '/EGamma/Run2015A-PromptReco-v1/RECO'
-            name    = 'EGammaRun2015A-Prompt'
+        if run1 >= 246864:
+            dataset = '/SingleMu/Run2015A-PromptReco-v1/AOD'
+            name    = 'SingleMuRun2015A-Prompt'
             tag     = 'GR_P_V56'
         else:
             raise ValueError("don't know how to do a run_limits production for run range [%i,%i]" % run_limits)

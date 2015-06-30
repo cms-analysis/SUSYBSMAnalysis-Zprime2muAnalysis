@@ -36,9 +36,9 @@ def do(cmd):
 #latest_dataset = '/SingleMu/Run2012C-PromptReco-v2/AOD'
 #latest_dataset = '/SingleMu/Run2012D-PromptReco-v1/AOD'
 #latest_dataset = '/SingleMu/Run2015A-PromptReco-v1/AOD'
-latest_dataset = '/EGamma/Run2015A-PromptReco-v1/RECO'
+latest_dataset = '/SingleMu/Run2015A-PromptReco-v1/AOD'
 #lumi_masks = ['Run2012PlusDCSOnlyMuonsOnly', 'Run2012MuonsOnly'] #, 'DCSOnly', 'Run2012']
-lumi_masks = ['Run2012MuonsOnly', 'Run2012'] #, 'Run2012PlusDCSOnlyMuonsOnly', 'DCSOnly']
+lumi_masks = ['DCSOnly']#, Run2012MuonsOnly', 'Run2012'] #, 'Run2012PlusDCSOnlyMuonsOnly', 'DCSOnly']
 
 if cmd == 'setdirs':
     crab_dirs_location = extra[0]
@@ -123,9 +123,10 @@ elif cmd == 'gatherdata':
         hadd(os.path.join(wdir, 'ana_datamc_data.root'), files)
 
         for dir in dirs:
-            do('crab -c %(dir)s -status ; crab -c %(dir)s -report' % locals())
+            do('crab status -d %(dir)s ; crab report -d %(dir)s ' % locals())
 
-        jsons = [os.path.join(dir, 'res/lumiSummary.json') for dir in dirs]
+        jsons = [os.path.join(dir, 'results/lumiSummary.json') for dir in dirs]
+        print jsons
         lls = [(j, LumiList(j)) for j in jsons]
         for (j1, ll1), (j2, ll2) in combinations(lls, 2):
             cl = (ll1 & ll2).getCompactList()
@@ -137,7 +138,8 @@ elif cmd == 'gatherdata':
                                         
         reduce(lambda x,y: x|y, (LumiList(j) for j in jsons)).writeJSON('%(wdir)s/ana_datamc_data.forlumi.json' % locals())
         #do('lumiCalc2.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())
-        do('pixelLumiCalc.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())
+        #do('pixelLumiCalc.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())
+        do('python /afs/cern.ch/user/m/marlow/public/lcr2/lcr2.py -i %(wdir)s/ana_datamc_data.forlumi.json > %(wdir)s/ana_datamc_data.lumi' % locals())
         do('tail -5 %(wdir)s/ana_datamc_data.lumi' % locals())
         print 'done with', lumi_mask, '\n'
 
@@ -201,27 +203,29 @@ elif cmd == 'checkavail':
 #    191350, 192989, 192890, 193091, 204900, 206251, 207871: VdM scan
 #    193092: very low pile-up run
 #ok = LumiList(compactList={ "208540": [[99, 101]], "208551": [[581, 586]]})#fake list
-    ok = LumiList(compactList={"246958": [[1, 61]],
-              "246959": [[1, 77]],
-              "246960": [[1, 1], [37, 44]],
-              "246963": [[1, 11], [13, 13], [15, 312], [314, 314], [316, 448]],
-              "246965": [[1, 5]],
-              "247047": [[1, 5], [13, 13], [15, 15]],
-              "247049": [[3, 5]],
-              "247052": [[1, 60]],
-              "247054": [[2, 5], [14, 79]],
-              "247056": [[1, 5], [13, 18]],
-              "247057": [[1, 5], [13, 18], [26, 26]],
-              "247059": [[1, 3]],
-              "247060": [[1, 2], [4, 4]],
-              "247063": [[1, 5], [13, 18]],
-              "247068": [[1, 104], [106, 106], [108, 116], [118, 118], [121, 133]]})#from lumiSummary.json
+    ok = LumiList(compactList={
+#              "246958": [[1, 61]],
+#              "246959": [[1, 77]],
+#              "246960": [[1, 1], [37, 44]],
+#              "246963": [[1, 11], [13, 13], [15, 312], [314, 314], [316, 448]],
+#              "246965": [[1, 5]],
+#              "247047": [[1, 5], [13, 13], [15, 15]],
+#              "247049": [[3, 5]],
+#              "247052": [[1, 60]],
+#              "247054": [[2, 5], [14, 79]],
+#              "247056": [[1, 5], [13, 18]],
+#              "247057": [[1, 5], [13, 18], [26, 26]],
+#              "247059": [[1, 3]],
+#              "247060": [[1, 2], [4, 4]],
+#              "247063": [[1, 5], [13, 18]],
+#              "247068": [[1, 104], [106, 106], [108, 116], [118, 118], [121, 133]]
+                  })#from lumiSummary.json
 
     print 'run range for', latest_dataset, ':', runrange[0], runrange[-1]
     print 'these lumis are in the DCS-only JSON but not (yet) in', latest_dataset
     print str(dcs_ll - ll - ok)
 
-elif cmd == 'oklist':
+elif cmd == 'oklist': 
     addOk_ll = LumiList('crab/crab_datamc_EGammaRun2015A-Prompt_246958_247068_20150622005921/results/lumiSummary.json')
     print addOk_ll
 

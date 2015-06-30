@@ -14,12 +14,16 @@ AODOnly(process) #defined in PATTools and contains
 
 process.source.fileNames = ['/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/GEN-SIM-RECO/MCRUN2_74_V7-v1/00000/AE8D58C2-14DB-E411-A038-002618943901.root',
  #                           '/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/GEN-SIM-RECO/MCRUN2_74_V7-v1/00000/B6A4F83A-14DB-E411-8A01-0025905B8596.root'
+                            #'/store/mc/RunIISpring15DR74/DYJetsToLL_M-1000to1500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/AODSIM/Asympt25ns_MCRUN2_74_V9-v1/00000/06571208-C414-E511-B38A-003048FFCBA4.root',
 ]
 
 process.maxEvents.input = 100
 
-process.GlobalTag.globaltag = 'MCRUN2_74_V7::All'
-
+process.GlobalTag.globaltag = 'MCRUN2_74_V7::All' # ok if you use Configuration.AlCa.GlobalTag
+#process.GlobalTag.globaltag = 'MCRUN2_74_V7' # if you use condDBv2
+#from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag
+#process.GlobalTag.globaltag = 'MCRUN2_74_V9::All'
+#process.GlobalTag.globaltag = 'auto:run2_mc'
 if __name__ == '__main__' and hasattr(sys, 'argv') and 'submit' in sys.argv:
     job_control = '''
 config.Data.splitting = 'EventAwareLumiBased'        

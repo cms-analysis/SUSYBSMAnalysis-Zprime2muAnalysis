@@ -6,10 +6,10 @@ def for_cmssw(ll):
 
 # These run numbers guide the combination of the prompt and DCS-only
 # JSONs.
-first_run = 190456
+first_run = 246958
 last_rereco_run = 198523
 last_prompt_run = 208686
-last_run = 209000
+last_run = 247068
 
 # Sometimes the same run-range json gets made in other versions.
 prompt_version = ''
@@ -33,8 +33,8 @@ for hole in holes:
     print 'goodlumis warning: re-adding "hole" run %i from DCS-only list' % hole
     runs_to_remove_from_dcsonly.remove(hole)
 
-DCSOnly_ll           = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/DCSOnly/json_DCSONLY.txt')
-DCSOnlyForNewRuns_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/DCSOnly/json_DCSONLY.txt')
+DCSOnly_ll           = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/DCSOnly/json_DCSONLY.txt')
+DCSOnlyForNewRuns_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/DCSOnly/json_DCSONLY.txt')
 DCSOnlyForNewRuns_ll.removeRuns(runs_to_remove_from_dcsonly)
 
 # Remove runs outside the range [first_run, last_run] since DCS-only
@@ -56,8 +56,8 @@ Aug24_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certificatio
 Aug24MuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_198022-%i_8TeV_24Aug2012ReReco_Collisions12_JSON_MuonPhys.txt' % last_rereco_run)
 
 # Prompt reconstruction, 2012C v2 and 2012D
-Prompt_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_%i-%i_8TeV_PromptReco_Collisions12_JSON%s.txt'          % (first_run, last_prompt_run, prompt_version))
-PromptMuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_%i-%i_8TeV_PromptReco_Collisions12_JSON_MuonPhys%s.txt' % (first_run, last_prompt_run, prompt_version))
+#Prompt_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_%i-%i_8TeV_PromptReco_Collisions12_JSON%s.txt'          % (first_run, last_prompt_run, prompt_version))
+#PromptMuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_%i-%i_8TeV_PromptReco_Collisions12_JSON_MuonPhys%s.txt' % (first_run, last_prompt_run, prompt_version))
 
 # A few runs with Level-1 calorimeter problems, good for muon physics
 NoL1TMuonsOnly_1_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_195378-195379_8TeV_PromptReco_Collisions12_JSON_MuonPhys_NoL1T.txt')

@@ -68,7 +68,7 @@ process.cleanPatTaus.preselection = process.cleanPatTaus.preselection.value().re
 
 # PAT muons 
 process.patMuons.embedTrack = True
-process.selectedPatMuons.cut = "isTrackerMuon || isGlobalMuon"
+process.selectedPatMuons.cut = "isTrackerMuon && isGlobalMuon && abs(eta)  < 2.4" #&& pt > 20."#"isTrackerMuon || isGlobalMuon"
 process.countPatMuons.minNumber = cms.uint32(1)
 
 # PAT trigger info

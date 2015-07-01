@@ -263,7 +263,7 @@ std::pair<bool, float> Zprime2muCompositeCandidatePicker::dpt_over_pt(const pat:
 	if (mu) {
 	  reco::TrackRef tk = mu->tunePMuonBestTrack();
           if (!((tk.refCore()).isAvailable())) tk = mu->muonBestTrack();
-	  if (1) {
+	  if ((tk.refCore()).isAvailable()) {
 	    const double dpt_over_pt = tk->ptError()/tk->pt();
 	    if (dpt_over_pt > dpt_over_pt_largest) dpt_over_pt_largest = dpt_over_pt;
 	  }

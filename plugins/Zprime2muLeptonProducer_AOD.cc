@@ -110,6 +110,7 @@ pat::Muon* Zprime2muLeptonProducer_AOD::cloneAndSwitchMuonTrack(const pat::Muon&
   // The caller will own this pointer and is responsible for deleting
   // it.
   pat::Muon* mu = muon.clone();
+  std::cout << "Initial: " << mu->pt() << std::endl;
   mu->setCharge(newTrack->charge());
   mu->setP4(p4);
   mu->setVertex(vtx);
@@ -117,7 +118,7 @@ pat::Muon* Zprime2muLeptonProducer_AOD::cloneAndSwitchMuonTrack(const pat::Muon&
   // Store the type code for the track used in the pat::Muon so it can
   // be easily recovered later.
   mu->addUserInt("trackUsedForMomentum", type);
-
+  std::cout << "Final: " << mu->pt() << std::endl;
   return mu;
 }
 
@@ -274,7 +275,7 @@ void Zprime2muLeptonProducer_AOD::produce(edm::Event& event, const edm::EventSet
   Zprime2muTriggerPathsAndFilters pandf(event);
   if (!pandf.valid)
     throw cms::Exception("Zprime2muLeptonProducer_AOD") << "could not determine the HLT path and filter names for this event\n";
-  L3_muons           = get_L3_muons(event, "hltL3fL1sMu20Eta2p1L1f0L2f10QL3Filtered24Q",           trigger_summary_src);
+  L3_muons           = get_L3_muons(event, "hltL3fL1sMu16L1f0L2f10QEta2p1L3Filtered20Q", trigger_summary_src);
   prescaled_L3_muons = get_L3_muons(event, pandf.prescaled_filter, trigger_summary_src);
   //std::cout << L3_muons.size() << std::endl;
   //for (unsigned int p = 0; p<L3_muons.size(); ++p){

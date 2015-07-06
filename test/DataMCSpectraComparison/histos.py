@@ -76,7 +76,7 @@ cuts = {
     'Simple'   : OurSelectionDec2012, # The selection cuts in the module listed here are ignored below.
 #    'VBTFMuPrescaled' : VBTFSelection,
     #'OurMuPrescaledNew'  : OurSelectionNew,
-    'OurMuPrescaled2012' : OurSelectionDec2012 ####restore!
+    'OurMuPrescaled2012' : OurSelectionDec2012
     }
 
 # Loop over all the cut sets defined and make the lepton, allDilepton
@@ -134,7 +134,7 @@ for cut_name, Selection in cuts.iteritems():
         # not the ones passed into the LeptonProducer to set cutFor above.
         if cut_name == 'Simple':
             alldil.electron_cut_mask = cms.uint32(0)
-            #alldil.loose_cut = 'isGlobalMuon && pt > 20.'#provvisorio primi runs
+            #alldil.loose_cut = 'isGlobalMuon && pt > 20.'#to be changed for first runs
             alldil.loose_cut = 'isGlobalMuon && pt > 0.'
             alldil.tight_cut = ''
             dil.max_candidates = 100
@@ -167,8 +167,8 @@ for cut_name, Selection in cuts.iteritems():
     pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
     if 'VBTF' not in cut_name and cut_name != 'Simple':
         pobj = process.goodDataFilter * pobj
-    #if 'MuPrescaled' in cut_name: ####### Now it seams that there are no prescaled path ########
-        #pobj = process.PrescaleToCommon * pobj ####### Now it seams that there are no prescaled path ########
+    if 'MuPrescaled' in cut_name: ####### Now it seams that there are no prescaled path ########
+        pobj = process.PrescaleToCommon * pobj ####### Now it seams that there are no prescaled path ########
     path = cms.Path(pobj)
     setattr(process, pathname, path)
 
@@ -269,9 +269,9 @@ if 'gogo' in sys.argv:
     from SUSYBSMAnalysis.Zprime2muAnalysis.cmsswtools import set_events_to_process
     set_events_to_process(process, [(run, event)])
 
-#f = file('outfile', 'w')
-#f.write(process.dumpPython())
-#f.close()
+f = file('outfile', 'w')
+f.write(process.dumpPython())
+f.close()
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
@@ -324,8 +324,8 @@ config.Site.storageSite = 'T2_IT_Legnaro'
         lumi_lists = [
             'DCSOnly',
 #            'Run2012PlusDCSOnlyMuonsOnly',
-#            'Run2012MuonsOnly',
-#            'Run2012',
+            'Run2015MuonsOnly',
+            'Run2015',
             ]
 
         jobs = []

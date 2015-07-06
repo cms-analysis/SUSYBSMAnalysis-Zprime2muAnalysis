@@ -12,7 +12,8 @@ public:
   explicit CheckPrescale(const edm::ParameterSet&);
 
 private:
-  virtual void beginRun(const edm::Run&, const edm::EventSetup&);
+  //virtual void beginRun(const edm::Run&, const edm::EventSetup&);
+  virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
 
   const std::string hlt_process_name;
@@ -46,7 +47,9 @@ CheckPrescale::CheckPrescale(const edm::ParameterSet& cfg)
   }
 }
 
-void CheckPrescale::beginRun(const edm::Run& run, const edm::EventSetup& setup) {
+//void CheckPrescale::beginRun(const edm::Run& run, const edm::EventSetup& setup) {
+void CheckPrescale::beginRun(edm::Run const& run, edm::EventSetup const& setup){
+
   bool changed = true;
   if (!hlt_cfg.init(run, setup, hlt_process_name, changed))
     throw cms::Exception("CheckPrescale") << "HLTConfigProvider::init failed with process name " << hlt_process_name << "\n";

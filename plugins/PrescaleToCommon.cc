@@ -13,7 +13,8 @@ public:
   explicit PrescaleToCommon(const edm::ParameterSet&);
 
 private:
-  virtual bool beginRun(edm::Run&, const edm::EventSetup&);
+  //virtual bool beginRun(edm::Run&, const edm::EventSetup&);
+  virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
   virtual bool filter(edm::Event&, const edm::EventSetup&);
 
   const std::string hlt_process_name;
@@ -34,14 +35,21 @@ PrescaleToCommon::PrescaleToCommon(const edm::ParameterSet& cfg)
 {
   edm::Service<TFileService> fs;
   randoms = fs->make<TH1F>("randoms", "", 100, 0, 1);
+    
 }
 
-bool PrescaleToCommon::beginRun(edm::Run& run, const edm::EventSetup& setup) {
-  bool changed = true;
-  if (!hlt_cfg.init(run, setup, hlt_process_name, changed))
-    throw cms::Exception("PrescaleToCommon") << "HLTConfigProvider::init failed with process name " << hlt_process_name << "\n";
-  
-  return true;
+//bool PrescaleToCommon::beginRun(edm::Run& run, const edm::EventSetup& setup) {
+//  bool changed = true;
+//  if (!hlt_cfg.init(run, setup, hlt_process_name, changed))
+//    throw cms::Exception("PrescaleToCommon") << "HLTConfigProvider::init failed with process name " << hlt_process_name << "\n";
+//  return true;
+//}
+
+void PrescaleToCommon::beginRun(edm::Run const& run, edm::EventSetup const& setup)
+{
+    bool changed = true;
+    if (!hlt_cfg.init(run, setup, hlt_process_name, changed))
+        throw cms::Exception("PrescaleToCommon") << "HLTConfigProvider::init failed with process name " << hlt_process_name << "\n";
 }
 
 bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
@@ -58,7 +66,13 @@ bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
   std::string trigger_path;
   unsigned path_index = hlt_cfg.size();
   
+    const std::vector<std::string>& pathList = hlt_cfg.triggerNames();
+    std::cout<<"path size "<<pathList.size()<<std::endl;
+    
   for (std::vector<std::string>::const_iterator path = trigger_paths.begin(), end = trigger_paths.end(); path != end; ++path) {
+      std::cout<<" trigger_path "<<*path<<std::endl;
+      std::cout<<" hlt_cfg.triggerIndex(*path) "<<hlt_cfg.triggerIndex(*path)<<" hlt_cfg.size() "<<hlt_cfg.size()<<std::endl;
+
     unsigned ndx = hlt_cfg.triggerIndex(*path);
     if (ndx == hlt_cfg.size())
       continue;
@@ -77,10 +91,13 @@ bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
   // If the trigger path didn't fire for whatever reason, then go
   // ahead and skip the event.
   edm::Handle<edm::TriggerResults> hlt_results;
+    
   event.getByLabel(edm::InputTag("TriggerResults", "", hlt_process_name), hlt_results);
   if (!hlt_results->accept(path_index))
     return false;
-  
+    
+  std::cout<<" hlt_results->accept(path_index) "<<hlt_results->accept(path_index)<<std::endl;
+  std::cout<<" hlt_cfg.prescaleValues(event, setup, trigger_path) "<<hlt_cfg.prescaleValues(event, setup, trigger_path).second<<std::endl;
   std::pair<int, int> prescales;
   // For MC samples, can assume the prescales are 1.
   if (event.isRealData() || !assume_simulation_has_prescale_1) 

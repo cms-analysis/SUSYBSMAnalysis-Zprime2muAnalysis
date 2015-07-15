@@ -36,9 +36,11 @@ def do(cmd):
 #latest_dataset = '/SingleMu/Run2012C-PromptReco-v2/AOD'
 #latest_dataset = '/SingleMu/Run2012D-PromptReco-v1/AOD'
 #latest_dataset = '/SingleMu/Run2015A-PromptReco-v1/AOD'
-latest_dataset = '/SingleMu/Run2015A-PromptReco-v1/AOD'
+#latest_dataset = '/SingleMu/Run2015A-PromptReco-v1/AOD'
+#latest_dataset = '/ExpressPhysics/Run2015B-Express-v1/FEVT'
+latest_dataset = '/SingleMuon/Run2015B-PromptReco-v1/AOD'
 #lumi_masks = ['Run2012PlusDCSOnlyMuonsOnly', 'Run2012MuonsOnly'] #, 'DCSOnly', 'Run2012']
-lumi_masks = ['DCSOnly']#, Run2012MuonsOnly', 'Run2012'] #, 'Run2012PlusDCSOnlyMuonsOnly', 'DCSOnly']
+lumi_masks = ['DCSOnly'] #, 'Run2012PlusDCSOnlyMuonsOnly', 'DCSOnly']
 
 if cmd == 'setdirs':
     crab_dirs_location = extra[0]
@@ -113,7 +115,9 @@ elif cmd == 'gatherdata':
 
     for lumi_mask in lumi_masks:
         print lumi_mask
-        dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMuRun2015*' % lumi_mask)
+#        dirs = glob.glob('crab/crab_ana_datamc_%s_ExpressPhysicsRun2015B*' % lumi_mask)
+        dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMuonRun2015B*' % lumi_mask)
+#        dirs = glob.glob('crab/crab_ana_datamc_%s_ExpressPhysicsRun2015B-Express_251161_251252' % lumi_mask)
         files = []
         for d in dirs:
             files += glob.glob(os.path.join(d, 'results/*.root'))
@@ -184,10 +188,12 @@ elif cmd == 'checkavail':
 #    print lumis
 
     ll = LumiList(compactList=lumis)
-    #print "ll", ll
+#print "ll", ll
     runrange = sorted(int(x) for x in ll.getCompactList().keys())
 
-    dcs_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/DCSOnly/json_DCSONLY.txt') # JMTBAD import from goodlumis
+    #dcs_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/DCSOnly/json_DCSONLY.txt') # JMTBAD import from goodlumis
+    dcs_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/DCSOnly/json_DCSONLY_Run2015B.txt') # JMTBAD import from goodlumis
+
     #print "dcs_ll", dcs_ll
     dcs_runrange = sorted(int(x) for x in dcs_ll.getCompactList().keys())
 
@@ -225,9 +231,9 @@ elif cmd == 'checkavail':
     print 'these lumis are in the DCS-only JSON but not (yet) in', latest_dataset
     print str(dcs_ll - ll - ok)
 
-elif cmd == 'oklist': 
-    addOk_ll = LumiList('crab/crab_datamc_EGammaRun2015A-Prompt_246958_247068_20150622005921/results/lumiSummary.json')
-    print addOk_ll
+#elif cmd == 'oklist':  not true
+#    addOk_ll = LumiList('crab/crab_datamc_EGammaRun2015A-Prompt_246958_247068_20150622005921/results/lumiSummary.json')
+#    print addOk_ll
 
 elif cmd == 'drawall':
     extra = extra[0] if extra else ''

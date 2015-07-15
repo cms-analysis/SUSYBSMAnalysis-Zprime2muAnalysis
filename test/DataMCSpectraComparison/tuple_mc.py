@@ -19,7 +19,7 @@ process.source.fileNames = ['/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tau
 
 process.maxEvents.input = 100
 
-process.GlobalTag.globaltag = 'MCRUN2_74_V7::All' # ok if you use Configuration.AlCa.GlobalTag
+process.GlobalTag.globaltag = 'MCRUN2_74_V9A' # ok if you use Configuration.AlCa.GlobalTag
 #process.GlobalTag.globaltag = 'MCRUN2_74_V7' # if you use condDBv2
 #from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag
 #process.GlobalTag.globaltag = 'MCRUN2_74_V9::All'
@@ -28,7 +28,7 @@ if __name__ == '__main__' and hasattr(sys, 'argv') and 'submit' in sys.argv:
     job_control = '''
 config.Data.splitting = 'EventAwareLumiBased'        
 config.Data.totalUnits = -1
-config.Data.unitsPerJob  = 1000
+config.Data.unitsPerJob  = 5000
 '''
 
     just_testing = 'testing' in sys.argv

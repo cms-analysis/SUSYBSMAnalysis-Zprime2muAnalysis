@@ -169,6 +169,7 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
     Zprime2muTriggerPathsAndFilters pandf(event);
     if (!pandf.valid) throw cms::Exception("Zprime2muTriggerPathsAndFilters") << "could not determine the HLT path and filter names for this event\n";
     trigger::TriggerObjectCollection l3_mus = get_L3_muons(event, checking_prescaled_path ? pandf.prescaled_filter : pandf.filter, trigger_summary_src);
+//    trigger::TriggerObjectCollection l3_mus = get_L3_muons(event, checking_prescaled_path ? pandf.prescaled_filter : pandf.filter, checking_prescaled_path ? pandf.prescaled_filter_2 : pandf.filter_2, trigger_summary_src); // OR of two filter
     bool pass = false;
     for (trigger::TriggerObjectCollection::const_iterator l3_mu = l3_mus.begin(), hoe = l3_mus.end(); l3_mu != hoe; ++l3_mu) {
       if (l3_mu->pt() > hlt_single_min_pt && fabs(l3_mu->eta()) < hlt_single_max_eta) {

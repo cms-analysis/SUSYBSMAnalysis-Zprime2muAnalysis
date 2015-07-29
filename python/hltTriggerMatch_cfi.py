@@ -12,8 +12,8 @@ muonTriggerMatchHLTMuons = cms.EDProducer("PATTriggerMatcherDRLessByR",
                                           resolveByMatchQuality = cms.bool( True )
                                           )
 
-trigger_pt_threshold = 40
-offline_pt_threshold = 45
+trigger_pt_threshold = 45
+offline_pt_threshold = 50
 trigger_paths = ['HLT_Mu40_eta2p1_v%i' % i for i in (9,10,11)]
 trigger_match = 'userFloat("TriggerMatchPt") > %(trigger_pt_threshold)i && abs(userFloat("TriggerMatchEta")) < 2.1' % locals()
 

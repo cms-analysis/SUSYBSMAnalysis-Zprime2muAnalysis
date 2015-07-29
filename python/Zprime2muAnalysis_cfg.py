@@ -25,9 +25,9 @@ process.load('Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cf
 #process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
 process.load('TrackingTools.TransientTrack.TransientTrackBuilder_cfi')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-process.GlobalTag.globaltag =  'MCRUN2_74_V7::All'#'MCRUN2_74_V7::All'
+process.GlobalTag.globaltag =  'MCRUN2_74_V7::All'
 
-flag = cms.string('AOD')
+flag = cms.string('miniAOD')
 if flag == 'miniAOD':
 	process.load('SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff')
 if flag == 'AOD':

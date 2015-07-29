@@ -40,7 +40,6 @@ private:
   edm::Handle<reco::CandViewMatchMap> muon_photon_match_map;
   double electron_muon_veto_dR;
   std::vector<std::pair<float,float> > muon_eta_phis;
-  //edm::InputTag trigger_summary_src;
   double trigger_match_max_dR;
   
   edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
@@ -99,16 +98,10 @@ pat::Electron* Zprime2muLeptonProducer::cloneAndSwitchElectronEnergy(const pat::
 pat::Muon* Zprime2muLeptonProducer::cloneAndSwitchMuonTrack(const pat::Muon& muon, const edm::Event& event) const {
   
   // Muon mass to make a four-vector out of the new track.
-  edm::Handle<std::vector<pat::Muon>> M;
-  event.getByLabel(muon_src, M);
-  edm::Handle<std::vector<pat::Electron>> E;
-  event.getByLabel(electron_src, E);
+  
   
   pat::Muon* mu = muon.clone();
-  if ((M->size()+E->size()) > 1){
-    std::cout << "Initial: " << mu->pt() << std::endl;
-  //std::cout << " Muon type: " << muon.type() << " Pt = " << muon.pt() << std::endl;
-  }
+  
   // Start with null track/invalid type before we find the right one.
   reco::TrackRef newTrack;
   newTrack = muon.tunePMuonBestTrack();
@@ -116,7 +109,6 @@ pat::Muon* Zprime2muLeptonProducer::cloneAndSwitchMuonTrack(const pat::Muon& muo
   
   if (newTrack.isNull()){
     std::cout << "No TuneP" << std::endl;
-    //newTrack = muon.muonBestTrack();
     return 0;
     
   }
@@ -125,9 +117,7 @@ pat::Muon* Zprime2muLeptonProducer::cloneAndSwitchMuonTrack(const pat::Muon& muo
     newTrack = muon.muonBestTrack();    
   }
   */
-  //else std::cout << "TUNEP?? " << newTrack->pt() << std::endl;
-  //std::cout << "Good" << std::endl;
-  //std::cout << newTrack->px() << std::endl;
+  
   static const double mass = 0.10566;
   
   reco::Particle::Point vtx(newTrack->vx(), newTrack->vy(), newTrack->vz());
@@ -142,9 +132,7 @@ pat::Muon* Zprime2muLeptonProducer::cloneAndSwitchMuonTrack(const pat::Muon& muo
   mu->setP4(p4);
   
   mu->setVertex(vtx);
-  if ((M->size() + E->size() )> 1){
-    std::cout << "Final: " << mu->pt() << std::endl;
-  }
+  
   return mu;
 }
 
@@ -218,13 +206,7 @@ std::pair<pat::Muon*,int> Zprime2muLeptonProducer::doLepton(const edm::Event& ev
   // pair.
 
   // To use one of the refit tracks, we have to have a global muon.
-  //edm::Handle<edm::TriggerResults> triggerBits;
-  //edm::Handle<pat::TriggerObjectStandAloneCollection> trigger_summary_src;
-  //edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
-
-  //event.getByToken(triggerBits_, triggerBits);
-  //event.getByToken(trigger_summary_src_, trigger_summary_src);
-  //event.getByToken(triggerPrescales_, triggerPrescales);
+  
     
   if (!mu.isGlobalMuon())// && mu.pt()<= 20.) // federica
     return std::make_pair((pat::Muon*)(0), -1);
@@ -318,14 +300,7 @@ void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& 
   Zprime2muTriggerPathsAndFilters pandf(event);
   if (!pandf.valid)
     throw cms::Exception("Zprime2muLeptonProducer") << "could not determine the HLT path and filter names for this event\n";
-  /*
-  L3_muons           = get_L3_muons(event, pandf.filter,           trigger_summary_src);
-  prescaled_L3_muons = get_L3_muons(event, pandf.prescaled_filter, trigger_summary_src);
-  L3_muons_matched.clear();
-  L3_muons_matched.resize(L3_muons.size(), 0);
-  prescaled_L3_muons_matched.clear();
-  prescaled_L3_muons_matched.resize(prescaled_L3_muons.size(), 0);
-*/
+ 
 
 //TESTING!
 
@@ -341,35 +316,18 @@ void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& 
     
 
     int j = 0;
-    //std::cout << "\n === TRIGGER OBJECTS === " << std::endl;
+    
     L3_muons.clear();
     prescaled_L3_muons.clear();
     for (pat::TriggerObjectStandAlone obj : *trigger_summary_src) { // note: not "const &" since we want to call unpackPathNames
         obj.unpackPathNames(names);
-	/*
-	std::cout << "\tTrigger object:  pt " << obj.pt() << ", eta " << obj.eta() << ", phi " << obj.phi() << std::endl;
-        // Print trigger object collection and type
-        std::cout << "\t   Collection: " << obj.collection() << std::endl;
-        std::cout << "\t   Type IDs:   ";
-        for (unsigned h = 0; h < obj.filterIds().size(); ++h) std::cout << " " << obj.filterIds()[h] ;
-        std::cout << std::endl;
-        // Print associated trigger filters
-        std::cout << "\t   Filters:    ";
-        for (unsigned h = 0; h < obj.filterLabels().size(); ++h) std::cout << " " << obj.filterLabels()[h];
-        std::cout << std::endl;
-        std::vector<std::string> pathNamesAll  = obj.pathNames(false);
-        std::vector<std::string> pathNamesLast = obj.pathNames(true);
-        // Print all trigger paths, for each one record also if the object is associated to a 'l3' filter (always true for the
-        // definition used in the PAT trigger producer) and if it's associated to the last filter of a successfull path (which
-        // means that this object did cause this trigger to succeed; however, it doesn't work on some multi-object triggers)
-        std::cout << "\t   Paths (" << pathNamesAll.size()<<"/"<<pathNamesLast.size()<<"):    ";
-	*/
+	
 	if (obj.collection() == "hltL3MuonCandidates::HLT"){
 	for (unsigned h = 0; h < obj.filterLabels().size(); ++h) {
-	  //std::cout << " " << obj.filterLabels()[h];
 	  
 	  
-	  if (obj.filterLabels()[h] == "hltL3fL1sMu16L1f0L2f10QEta2p1L3Filtered20Q"){ //hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered40Q"){
+	  
+	  if (obj.filterLabels()[h] == pandf.filter){ 
 	    //FilterMatched[j] = 1;
 	    L3_muons.push_back(obj);
 	  }  
@@ -383,14 +341,11 @@ void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& 
     }
     FilterMatched.clear();
     FilterMatched.resize(L3_muons.size(), 0);
-    //std::cout << L3_muons.size() << std::endl;
-    //for (unsigned int p = 0; p<L3_muons.size(); ++p){
-      //std::cout << L3_muons[p].pt() << " " << L3_muons[p].eta()  << std::endl;
-    //}
-    //std::fill(FilterMatched.begin(), FilterMatched.end(), 0);
+    
+    
     PrescaleFilterMatched.clear();
     PrescaleFilterMatched.resize(prescaled_L3_muons.size(), 0);
-    //std::fill(PrescaleFilterMatched.begin(), PrescaleFilterMatched.end(), 0);  
+     
     
     // Using the main choice for momentum assignment, make the primary
     // collection of muons, which will have branch name

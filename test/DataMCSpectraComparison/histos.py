@@ -6,61 +6,15 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process, fla
 
 process.source.fileNames =['file:./test/DataMCSpectraComparison/pat.root']
 
-#process.source.fileNames = ['/store/relval/CMSSW_7_4_0/RelValProdTTbar_13/MINIAODSIM/MCRUN2_74_V7C_pxWorst_gs7115-v1/00000/3C0B0D32-F2E6-E411-8F1F-0025905A60CA.root',
-#'/store/relval/CMSSW_7_4_0/RelValProdTTbar_13/MINIAODSIM/MCRUN2_74_V7C_pxWorst_gs7115-v1/00000/C2E5BA28-F2E6-E411-AAE9-00261894386D.root'
-#]
-
-
-
-#process.source.fileNames =['/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/MINIAODSIM/MCRUN2_74_V7D_pxBest_gs7115-v1/00000/98F83A4D-0FE7-E411-844E-0025905A606A.root',
-#'/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/MINIAODSIM/MCRUN2_74_V7D_pxBest_gs7115-v1/00000/AE601E4B-0FE7-E411-B37A-0025905B8572.root'
-#]
-
-
-
-
-#process.source.fileNames=['/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV/MINIAODSIM/MCRUN2_74_V7_gensim_740pre7-v1/00000/50EC19B0-53DD-E411-9FD2-003048D15DF0.root',
-#'/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV/MINIAODSIM/MCRUN2_74_V7_gensim_740pre7-v1/00000/BC45D0B6-53DD-E411-BA61-002618943967.root'
-#]
-
-
-#process.source.fileNames=['/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV/GEN-SIM-RECO/MCRUN2_74_V7_gensim_740pre7-v1/00000/3458DE41-4EDD-E411-96D3-0025905A60D2.root',
-#'/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV/GEN-SIM-RECO/MCRUN2_74_V7_gensim_740pre7-v1/00000/4A642D72-4DDD-E411-945D-0025905938B4.root']
-#process.source.fileNames=['root://cms-xrd-global.cern.ch//store/relval/CMSSW_7_4_0/RelValProdTTbar_13/MINIAODSIM/MCRUN2_74_V7_GENSIM_7_1_15-v1/00000/1E12B842-93DD-E411-AF4F-0025905A48D0.root',
-#'root://cms-xrd-global.cern.ch//store/relval/CMSSW_7_4_0/RelValProdTTbar_13/MINIAODSIM/MCRUN2_74_V7_GENSIM_7_1_15-v1/00000/DE389542-93DD-E411-A207-0025905A48D8.root']
-
-#working
-#process.source.fileNames=['root://cms-xrd-global.cern.ch//store/user/federica/MINIAOD/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150326_104035/0000/miniaod_1.root',
- #                          'root://cms-xrd-global.cern.ch//store/user/federica/MINIAOD/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150326_104035/0000/miniaod_10.root',
-  #                        'root://cms-xrd-global.cern.ch//store/user/federica/MINIAOD/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150326_104035/0000/miniaod_2.root',
-   #                       'root://cms-xrd-global.cern.ch//store/user/federica/MINIAOD/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150326_104035/0000/miniaod_3.root',
-    #                       'root://cms-xrd-global.cern.ch//store/user/federica/MINIAOD/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150326_104035/0000/miniaod_4.root',
-     #                      'root://cms-xrd-global.cern.ch//store/user/federica/MINIAOD/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150326_104035/0000/miniaod_5.root',
-      #                     'root://cms-xrd-global.cern.ch//store/user/federica/MINIAOD/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150326_104035/0000/miniaod_6.root',
-       #                    'root://cms-xrd-global.cern.ch//store/user/federica/MINIAOD/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150326_104035/0000/miniaod_7.root',
-        #                   'root://cms-xrd-global.cern.ch//store/user/federica/MINIAOD/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150326_104035/0000/miniaod_8.root',
-         #                 'root://cms-xrd-global.cern.ch//store/user/federica/MINIAOD/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150326_104035/0000/miniaod_9.root']
-#AOD
-#process.source.fileNames =['root://cms-xrd-global.cern.ch//store/user/federica/PATTuple/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150223_144430/0000/pat_1.root',
-#'root://cms-xrd-global.cern.ch//store/user/federica/PATTuple/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150223_144430/0000/pat_10.root',
-#'root://cms-xrd-global.cern.ch//store/user/federica/PATTuple/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150223_144430/0000/pat_2.root',
-#'root://cms-xrd-global.cern.ch//store/user/federica/PATTuple/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150223_144430/0000/pat_3.root',
-#'root://cms-xrd-global.cern.ch//store/user/federica/PATTuple/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150223_144430/0000/pat_4.root',
-#'root://cms-xrd-global.cern.ch//store/user/federica/PATTuple/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150223_144430/0000/pat_5.root',
-#'root://cms-xrd-global.cern.ch//store/user/federica/PATTuple/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150223_144430/0000/pat_6.root',
-#'root://cms-xrd-global.cern.ch//store/user/federica/PATTuple/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150223_144430/0000/pat_7.root',
-#'root://cms-xrd-global.cern.ch//store/user/federica/PATTuple/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150223_144430/0000/pat_8.root',
-#'root://cms-xrd-global.cern.ch//store/user/federica/PATTuple/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/ZprimeToMuMu_M-5000_PU20BX25/150223_144430/0000/pat_9.root'
-#]
 
 process.maxEvents.input = -1
-#3882
+
 if flag == "miniAOD":
 	from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
-	HistosFromPAT.leptonsFromDileptons = False;
+	HistosFromPAT.leptonsFromDileptons = True
 if flag == "AOD":
 	from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_AOD
-	HistosFromPAT_AOD.leptonsFromDileptons = False ## True
+	HistosFromPAT_AOD.leptonsFromDileptons = True ## True
 	
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold
 
@@ -216,7 +170,7 @@ for cut_name, Selection in cuts.iteritems():
     if flag == 'miniAOD':
     	path = cms.Path(process.selectedPatMuons*pobj)
     if flag == 'AOD':	
-    	path = cms.Path(process.goodDataFilter*pobj)#process.selectedPatMuons*pobj)
+    	path = cms.Path(process.goodDataFilter*pobj)
     #path = cms.Path(pobj)
     setattr(process, pathname, path)
 

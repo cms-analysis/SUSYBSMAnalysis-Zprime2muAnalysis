@@ -15,9 +15,9 @@
 #include "TrackingTools/TransientTrack/interface/TransientTrack.h"
 #include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
 
-class Zprime2muCompositeCandidatePicker : public edm::EDProducer {
+class Zprime2muCompositeCandidatePicker_miniAOD : public edm::EDProducer {
 public:
-  explicit Zprime2muCompositeCandidatePicker(const edm::ParameterSet&);
+  explicit Zprime2muCompositeCandidatePicker_miniAOD(const edm::ParameterSet&);
   
 private:
   virtual void produce(edm::Event&, const edm::EventSetup&);
@@ -125,7 +125,7 @@ private:
   edm::ESHandle<TransientTrackBuilder> ttkb;
 };
 
-Zprime2muCompositeCandidatePicker::Zprime2muCompositeCandidatePicker(const edm::ParameterSet& cfg)
+Zprime2muCompositeCandidatePicker_miniAOD::Zprime2muCompositeCandidatePicker_miniAOD(const edm::ParameterSet& cfg)
   : src(cfg.getParameter<edm::InputTag>("src")),
     selector(cfg.getParameter<std::string>("cut")),
     max_candidates(cfg.getParameter<unsigned>("max_candidates")),
@@ -141,7 +141,7 @@ Zprime2muCompositeCandidatePicker::Zprime2muCompositeCandidatePicker(const edm::
   produces<pat::CompositeCandidateCollection>();
 }
 
-void Zprime2muCompositeCandidatePicker::remove_overlap(pat::CompositeCandidateCollection& cands) const {
+void Zprime2muCompositeCandidatePicker_miniAOD::remove_overlap(pat::CompositeCandidateCollection& cands) const {
   // For the list of CompositeCandidates, find any that share leptons
   // and remove one of them. The sort order of the input is used to
   // determine which of the pair is to be removed: we keep the first
@@ -186,7 +186,7 @@ void Zprime2muCompositeCandidatePicker::remove_overlap(pat::CompositeCandidateCo
   }
 }
 
-std::vector<reco::TransientTrack> Zprime2muCompositeCandidatePicker::get_transient_tracks(const pat::CompositeCandidate& dil) const {
+std::vector<reco::TransientTrack> Zprime2muCompositeCandidatePicker_miniAOD::get_transient_tracks(const pat::CompositeCandidate& dil) const {
   // Get TransientTracks (for use in e.g. the vertex fit) for each of
   // the muon tracks, using e.g. the cocktail momentum.
 
@@ -195,21 +195,22 @@ std::vector<reco::TransientTrack> Zprime2muCompositeCandidatePicker::get_transie
   for (size_t i = 0; i < n; ++i) {
     const pat::Muon* mu = toConcretePtr<pat::Muon>(dileptonDaughter(dil, i));
     assert(mu);
-    const reco::TrackRef& tk = patmuon::getPickedTrack(*mu);
+    const reco::TrackRef& tk = mu->tunePMuonBestTrack();
+    //if (!((tk.refCore()).isAvailable())) tk = mu->muonBestTrack();
     ttv.push_back(ttkb->build(tk));
   }
 
   return ttv;
 }
 
-std::pair<bool, float> Zprime2muCompositeCandidatePicker::back_to_back_cos_angle(const pat::CompositeCandidate& dil) const {
+std::pair<bool, float> Zprime2muCompositeCandidatePicker_miniAOD::back_to_back_cos_angle(const pat::CompositeCandidate& dil) const {
   // Back-to-back cut to kill cosmics.
   assert(dil.numberOfDaughters() == 2);
   const float cos_angle = dil.daughter(0)->momentum().Dot(dil.daughter(1)->momentum()) / dil.daughter(0)->p() / dil.daughter(1)->p();
   return std::make_pair(cos_angle >= back_to_back_cos_angle_min, cos_angle);
 }
 
-std::pair<bool, CachingVertex<5> > Zprime2muCompositeCandidatePicker::vertex_constrained_fit(const pat::CompositeCandidate& dil) const {
+std::pair<bool, CachingVertex<5> > Zprime2muCompositeCandidatePicker_miniAOD::vertex_constrained_fit(const pat::CompositeCandidate& dil) const {
   // Loose common vertex chi2 cut.
   assert(dil.numberOfDaughters() == 2);
   if (abs(dil.daughter(0)->pdgId()) != 13 || abs(dil.daughter(1)->pdgId()) != 13)
@@ -221,7 +222,7 @@ std::pair<bool, CachingVertex<5> > Zprime2muCompositeCandidatePicker::vertex_con
   return std::make_pair(v.isValid() && v.totalChiSquared()/v.degreesOfFreedom() <= vertex_chi2_max, v);
 }
 
-void Zprime2muCompositeCandidatePicker::embed_vertex_constrained_fit(pat::CompositeCandidate& dil, const CachingVertex<5>& vtx) const {
+void Zprime2muCompositeCandidatePicker_miniAOD::embed_vertex_constrained_fit(pat::CompositeCandidate& dil, const CachingVertex<5>& vtx) const {
   if (!vtx.isValid()) {
     dil.addUserFloat("vertex_chi2", 1e8);
     return;
@@ -249,7 +250,7 @@ void Zprime2muCompositeCandidatePicker::embed_vertex_constrained_fit(pat::Compos
   dil.addUserFloat("vertexMError", mass.error());
 }
 
-std::pair<bool, float> Zprime2muCompositeCandidatePicker::dpt_over_pt(const pat::CompositeCandidate& dil) const {
+std::pair<bool, float> Zprime2muCompositeCandidatePicker_miniAOD::dpt_over_pt(const pat::CompositeCandidate& dil) const {
   // Cut on sigma(pT)/pT to reject grossly mismeasured tracks.
   float dpt_over_pt_largest = -1.;
   const size_t n = dil.numberOfDaughters();
@@ -260,9 +261,10 @@ std::pair<bool, float> Zprime2muCompositeCandidatePicker::dpt_over_pt(const pat:
       if (lep.isNonnull()) {
 	const pat::Muon* mu = toConcretePtr<pat::Muon>(lep);
 	if (mu) {
-	  const reco::Track* tk = patmuon::getPickedTrack(*mu).get();
-	  if (tk) {
-	    const double dpt_over_pt = ptError(tk)/tk->pt();
+	  reco::TrackRef tk = mu->tunePMuonBestTrack();
+          if (!((tk.refCore()).isAvailable())) tk = mu->muonBestTrack();
+	  if ((tk.refCore()).isAvailable()) {
+	    const double dpt_over_pt = tk->ptError()/tk->pt();
 	    if (dpt_over_pt > dpt_over_pt_largest) dpt_over_pt_largest = dpt_over_pt;
 	  }
 	}
@@ -272,7 +274,7 @@ std::pair<bool, float> Zprime2muCompositeCandidatePicker::dpt_over_pt(const pat:
   return std::make_pair(dpt_over_pt_largest < dpt_over_pt_max, dpt_over_pt_largest);
 }
 
-void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::EventSetup& setup) {
+void Zprime2muCompositeCandidatePicker_miniAOD::produce(edm::Event& event, const edm::EventSetup& setup) {
   edm::Handle<pat::CompositeCandidateCollection> cands;
   event.getByLabel(src, cands);
   
@@ -334,4 +336,4 @@ void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::Ev
   event.put(new_cands);
 }
 
-DEFINE_FWK_MODULE(Zprime2muCompositeCandidatePicker);
+DEFINE_FWK_MODULE(Zprime2muCompositeCandidatePicker_miniAOD);

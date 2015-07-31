@@ -4,17 +4,20 @@ import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process, flag
 
-process.source.fileNames =['file:./test/DataMCSpectraComparison/pat.root']
+process.source.fileNames =['file:./pat.root']
+
+#process.source.fileNames =['/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/MINIAODSIM/MCRUN2_74_V7-v1/00000/3EC6C30E-1CDB-E411-A1EE-0025905B859E.root',
+ #      '/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/MINIAODSIM/MCRUN2_74_V7-v1/00000/8A55AC04-1CDB-E411-ABF1-002618FDA248.root']
 
 
 process.maxEvents.input = -1
 
 if flag == "miniAOD":
-	from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
-	HistosFromPAT.leptonsFromDileptons = True
+	from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_miniAOD
+	HistosFromPAT_miniAOD.leptonsFromDileptons = True
 if flag == "AOD":
-	from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_AOD
-	HistosFromPAT_AOD.leptonsFromDileptons = True ## True
+	from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
+	HistosFromPAT.leptonsFromDileptons = True ## True
 	
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold
 
@@ -120,7 +123,11 @@ for cut_name, Selection in cuts.iteritems():
         alldil = Selection.allDimuons.clone(decay = dil_decay % locals(), cut = dil_cut)
         if 'AllSigns' in dil_name:
             alldil.checkCharge = cms.bool(False)
-        dil = Selection.dimuons.clone(src = cms.InputTag(allname))
+	if flag == 'AOD':
+        	dil = Selection.dimuons.clone(src = cms.InputTag(allname))
+	if flag == 'miniAOD':
+		dil = Selection.dimuons_miniAOD.clone(src = cms.InputTag(allname))
+	
 
         # Implement the differences to the selections; currently, as
         # in Zprime2muCombiner, the cuts in loose_cut and
@@ -149,10 +156,10 @@ for cut_name, Selection in cuts.iteritems():
         # Histos now just needs to know which leptons and dileptons to use.
         #histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
         if flag == 'miniAOD':
-		histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
+		histos = HistosFromPAT_miniAOD.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 	
 	if flag == 'AOD':
-        	histos = HistosFromPAT_AOD.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
+        	histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 
         # Add all these modules to the process and the path list.
         setattr(process, allname, alldil)

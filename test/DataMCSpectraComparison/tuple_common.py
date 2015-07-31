@@ -5,7 +5,7 @@ process.p = cms.Path(process.countPatLeptons)
 
 # Loose cut on muons; stronger cuts to be applied for different
 # sets of plots (e.g. add our isolation cut, or apply VBTF).
-process.selectedPatMuons.cut = 'isGlobalMuon' # && pt > 20'
+process.selectedPatMuons.cut = 'isGlobalMuon && pt > 20'
 
 # Want to select only events that have at least two leptons (=
 # muons+electrons), where the electrons must pass HEEP id, but don't

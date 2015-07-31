@@ -59,7 +59,7 @@ allDimuons = cms.EDProducer('Zprime2muCombiner',
                             tight_cut = cms.string(tight_cut)
                             )
 
-dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
+dimuons_miniAOD = cms.EDProducer('Zprime2muCompositeCandidatePicker_miniAOD',
                          src = cms.InputTag('allDimuons'),
                          cut = cms.string(''),
                          max_candidates = cms.uint32(1),
@@ -70,7 +70,7 @@ dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          dpt_over_pt_max = cms.double(0.3)
                          )
 			 
-dimuons_AOD = cms.EDProducer('Zprime2muCompositeCandidatePicker_AOD',
+dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          src = cms.InputTag('allDimuons'),
                          cut = cms.string(''),
                          max_candidates = cms.uint32(1),

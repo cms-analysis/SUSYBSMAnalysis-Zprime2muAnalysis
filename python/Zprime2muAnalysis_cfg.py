@@ -1,7 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
 process = cms.Process('Zprime2muAnalysis')
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(3882))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 
 process.source = cms.Source('PoolSource', fileNames = cms.untracked.vstring(#'/store/mc/Phys14DR/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/788396C0-9D6F-E411-97DF-002590494E34.root',
 	#'/store/mc/Phys14DR/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/MINIAODSIM/PU20bx25_tsg_PHYS14_25_V1-v1/00000/3023C1A6-D56F-E411-B210-002590AC4C08.root',
@@ -27,8 +27,8 @@ process.load('TrackingTools.TransientTrack.TransientTrackBuilder_cfi')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 process.GlobalTag.globaltag =  'MCRUN2_74_V7::All'
 
-flag = cms.string('miniAOD')
+flag = cms.string('AOD')
 if flag == 'miniAOD':
-	process.load('SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff')
+	process.load('SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff_miniAOD')
 if flag == 'AOD':
-	process.load('SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff_AOD')
+	process.load('SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff')

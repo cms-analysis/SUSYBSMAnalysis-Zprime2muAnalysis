@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-HistosFromPAT = cms.EDAnalyzer('Zprime2muHistosFromPAT',
+HistosFromPAT_miniAOD = cms.EDAnalyzer('Zprime2muHistosFromPAT_miniAOD',
                                lepton_src = cms.InputTag('leptons', 'muons'),
                                dilepton_src = cms.InputTag('dimuons'),
                                leptonsFromDileptons = cms.bool(False),
@@ -9,7 +9,7 @@ HistosFromPAT = cms.EDAnalyzer('Zprime2muHistosFromPAT',
                                use_bs_and_pv = cms.bool(True),
                                )
 
-HistosFromPAT_AOD = cms.EDAnalyzer('Zprime2muHistosFromPAT_AOD',
+HistosFromPAT = cms.EDAnalyzer('Zprime2muHistosFromPAT',
                                lepton_src = cms.InputTag('leptons', 'muons'),
                                dilepton_src = cms.InputTag('dimuons'),
                                leptonsFromDileptons = cms.bool(False),

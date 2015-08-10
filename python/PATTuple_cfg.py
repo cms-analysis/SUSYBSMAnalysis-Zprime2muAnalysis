@@ -8,7 +8,8 @@ process.source = cms.Source('PoolSource', fileNames = cms.untracked.vstring('fil
 
 # Load services needed to run the PAT.
 process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
-process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
+#process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
+process.load('Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 from Configuration.AlCa.GlobalTag import GlobalTag 
 process.GlobalTag.globaltag = cms.string('PlaceHolder::All')
@@ -68,7 +69,7 @@ process.cleanPatTaus.preselection = process.cleanPatTaus.preselection.value().re
 
 # PAT muons 
 process.patMuons.embedTrack = True
-process.selectedPatMuons.cut = "isTrackerMuon && isGlobalMuon && abs(eta)  < 2.4" #&& pt > 20."#"isTrackerMuon || isGlobalMuon"
+process.selectedPatMuons.cut = "isTrackerMuon || isGlobalMuon" #&& pt > 20."#"isTrackerMuon || isGlobalMuon"
 process.countPatMuons.minNumber = cms.uint32(1)
 
 # PAT trigger info

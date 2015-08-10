@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
 import sys, os, FWCore.ParameterSet.Config as cms
-from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
-from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process, flag
 
-process.source.fileNames =['file:./pat.root']
+from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process, flag
+from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
+process.source.fileNames =['file:./test/DataMCSpectraComparison/pat.root']
 
 #process.source.fileNames =['/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/MINIAODSIM/MCRUN2_74_V7-v1/00000/3EC6C30E-1CDB-E411-A1EE-0025905B859E.root',
- #      '/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/MINIAODSIM/MCRUN2_74_V7-v1/00000/8A55AC04-1CDB-E411-ABF1-002618FDA248.root']
+#    '/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/MINIAODSIM/MCRUN2_74_V7-v1/00000/8A55AC04-1CDB-E411-ABF1-002618FDA248.root']
 
+#process.source.fileNames =['/store/mc/RunIISpring15DR74/ZprimeToMuMu_M-5000_TuneCUETP8M1_13TeV-pythia8/MINIAODSIM/Asympt25ns_MCRUN2_74_V9-v1/40000/4CB1A894-6235-E511-81A9-6C3BE5B58000.root']
 
 process.maxEvents.input = -1
 
@@ -17,7 +18,7 @@ if flag == "miniAOD":
 	HistosFromPAT_miniAOD.leptonsFromDileptons = True
 if flag == "AOD":
 	from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
-	HistosFromPAT.leptonsFromDileptons = True ## True
+	HistosFromPAT.leptonsFromDileptons = True 
 	
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold
 
@@ -177,7 +178,7 @@ for cut_name, Selection in cuts.iteritems():
     if flag == 'miniAOD':
     	path = cms.Path(process.selectedPatMuons*pobj)
     if flag == 'AOD':	
-    	path = cms.Path(process.goodDataFilter*pobj)
+    	path = cms.Path(pobj)
     #path = cms.Path(pobj)
     setattr(process, pathname, path)
 

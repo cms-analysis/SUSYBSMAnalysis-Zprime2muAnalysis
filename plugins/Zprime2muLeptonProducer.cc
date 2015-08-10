@@ -16,7 +16,7 @@ private:
   virtual void produce(edm::Event&, const edm::EventSetup&);
 
   pat::Electron* cloneAndSwitchElectronEnergy(const pat::Electron&) const;
-  pat::Muon*     cloneAndSwitchMuonTrack     (const pat::Muon&)     const;
+  pat::Muon*     cloneAndSwitchMuonTrack     (const pat::Muon&, const edm::Event& event)     const;
 
   void embedTriggerMatch(pat::Muon*, const std::string&, const trigger::TriggerObjectCollection&, std::vector<int>&);
 
@@ -78,10 +78,11 @@ pat::Electron* Zprime2muLeptonProducer::cloneAndSwitchElectronEnergy(const pat::
   return el;
 }
 
-pat::Muon* Zprime2muLeptonProducer::cloneAndSwitchMuonTrack(const pat::Muon& muon) const {
+pat::Muon* Zprime2muLeptonProducer::cloneAndSwitchMuonTrack(const pat::Muon& muon, const edm::Event& event) const {
   // Muon mass to make a four-vector out of the new track.
   static const double mass = 0.10566;
-
+  std::cout << "Event: " << event.id() << ";";
+  std::cout << "Run: " << event.run() << ";";
   // Start with null track/invalid type before we find the right one.
   reco::TrackRef newTrack;
   patmuon::TrackType type = patmuon::nTrackTypes;
@@ -110,11 +111,11 @@ pat::Muon* Zprime2muLeptonProducer::cloneAndSwitchMuonTrack(const pat::Muon& muo
   // The caller will own this pointer and is responsible for deleting
   // it.
   pat::Muon* mu = muon.clone();
-  
+  std::cout << "Muon pt pre-tune " << mu->pt() << " eta " << mu->eta() << ";";
   mu->setCharge(newTrack->charge());
   mu->setP4(p4);
   mu->setVertex(vtx);
-
+  std::cout << "Muon pt post-tune" << mu->pt() << ";";
   // Store the type code for the track used in the pat::Muon so it can
   // be easily recovered later.
   mu->addUserInt("trackUsedForMomentum", type);
@@ -148,7 +149,7 @@ void Zprime2muLeptonProducer::embedTriggerMatch(pat::Muon* new_mu, const std::st
   new_mu->addUserFloat(ex + "TriggerMatchPt",     L3_mu.pt());
   new_mu->addUserFloat(ex + "TriggerMatchEta",    L3_mu.eta());
   new_mu->addUserFloat(ex + "TriggerMatchPhi",    L3_mu.phi());
-  //std::cout << L3_mu.pt() << " " << L3_mu.eta() << std::endl;
+  std::cout << "Trigger obj " << L3_mu.pt() << " " << L3_mu.eta() << ";";
 }
 
 std::pair<pat::Electron*,int> Zprime2muLeptonProducer::doLepton(const edm::Event& event, const pat::Electron& el, const reco::CandidateBaseRef&) {
@@ -193,7 +194,7 @@ std::pair<pat::Muon*,int> Zprime2muLeptonProducer::doLepton(const edm::Event& ev
 
   // Copy the input muon, and switch its p4/charge/vtx out for that of
   // the selected refit track.
-  pat::Muon* new_mu = cloneAndSwitchMuonTrack(mu);
+  pat::Muon* new_mu = cloneAndSwitchMuonTrack(mu, event);
 
   if (new_mu == 0)
     return std::make_pair(new_mu, -1);
@@ -257,6 +258,7 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer::doLeptons(edm::Event
 void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& setup) {
   // Grab the match map between PAT photons and PAT muons so we can
   // embed the photon candidates later.
+  std::cout << event.id() << std::endl;
   event.getByLabel(muon_photon_match_src, muon_photon_match_map);
   static bool warned = false;
   if (!warned && !muon_photon_match_map.isValid()) {
@@ -275,7 +277,7 @@ void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& 
   Zprime2muTriggerPathsAndFilters pandf(event);
   if (!pandf.valid)
     throw cms::Exception("Zprime2muLeptonProducer") << "could not determine the HLT path and filter names for this event\n";
-  L3_muons           = get_L3_muons(event, "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered40Q", trigger_summary_src);
+  L3_muons           = get_L3_muons(event, "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered45e2p1Q", trigger_summary_src);
   prescaled_L3_muons = get_L3_muons(event, pandf.prescaled_filter, trigger_summary_src);
   //std::cout << L3_muons.size() << std::endl;
   //for (unsigned int p = 0; p<L3_muons.size(); ++p){

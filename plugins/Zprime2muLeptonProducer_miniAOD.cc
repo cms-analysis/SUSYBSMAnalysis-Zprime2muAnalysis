@@ -99,8 +99,17 @@ pat::Muon* Zprime2muLeptonProducer_miniAOD::cloneAndSwitchMuonTrack(const pat::M
   
   // Muon mass to make a four-vector out of the new track.
   
-  
+  std::cout << "Event: " << event.id() << ";";
+  std::cout << "Run: " << event.run() << ";";
   pat::Muon* mu = muon.clone();
+  /*
+  edm::Handle<std::vector<pat::Muon>> M;
+  event.getByLabel(muon_src, M);
+  edm::Handle<std::vector<pat::Electron>> Em;
+  event.getByLabel(electron_src, Em);
+  */
+  //if (Em->size() + M->size() > 1){
+  std::cout << "Muon pt pre-tune " << mu->pt() << " eta " << mu->eta() << ";";
   
   // Start with null track/invalid type before we find the right one.
   reco::TrackRef newTrack;
@@ -132,7 +141,7 @@ pat::Muon* Zprime2muLeptonProducer_miniAOD::cloneAndSwitchMuonTrack(const pat::M
   mu->setP4(p4);
   
   mu->setVertex(vtx);
-  
+  std::cout << "Muon pt post-tune" << mu->pt() << ";";
   return mu;
 }
 
@@ -164,7 +173,7 @@ void Zprime2muLeptonProducer_miniAOD::embedTriggerMatch(pat::Muon* new_mu, const
   new_mu->addUserFloat(ex + "TriggerMatchPt",     L3_mu.pt());
   new_mu->addUserFloat(ex + "TriggerMatchEta",    L3_mu.eta());
   new_mu->addUserFloat(ex + "TriggerMatchPhi",    L3_mu.phi());
-  //std::cout << L3_mu.pt() << " " << L3_mu.eta() << std::endl;
+  std::cout << "Trigger obj " << L3_mu.pt() << " " << L3_mu.eta() << ";";
   
   
 }
@@ -281,6 +290,7 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
 void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::EventSetup& setup) {
   // Grab the match map between PAT photons and PAT muons so we can
   // embed the photon candidates later.
+  std::cout << event.id() << std::endl;
   event.getByLabel(muon_photon_match_src, muon_photon_match_map);
   static bool warned = false;
   if (!warned && !muon_photon_match_map.isValid()) {
@@ -327,7 +337,7 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
 	  
 	  
 	  
-	  if (obj.filterLabels()[h] == "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered40Q"){ 
+	  if (obj.filterLabels()[h] == "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered45e2p1Q"){ 
 	    //FilterMatched[j] = 1;
 	    L3_muons.push_back(obj);
 	  }  

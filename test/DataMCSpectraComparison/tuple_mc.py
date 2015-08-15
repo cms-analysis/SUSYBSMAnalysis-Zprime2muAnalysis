@@ -6,15 +6,12 @@ from tuple_common import cms, process, crab_cfg
 
 pruneMCLeptons(process, use_sim=True) # because of unscheduled I can't remove this for data.
 
-AODOnly(process)# it contains
-
-process.source.fileNames = ['/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/GEN-SIM-RECO/MCRUN2_74_V7-v1/00000/AE8D58C2-14DB-E411-A038-002618943901.root',
-                            '/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/GEN-SIM-RECO/MCRUN2_74_V7-v1/00000/B6A4F83A-14DB-E411-8A01-0025905B8596.root'
-]
+AODOnly(process)# 
+process.source.fileNames = ['/store/mc/RunIISpring15DR74/ZprimeToMuMu_M-5000_TuneCUETP8M1_13TeV-pythia8/AODSIM/Asympt25ns_MCRUN2_74_V9-v1/40000/FE091975-D534-E511-82AA-6C3BE5B5A4C8.root']
 
 process.maxEvents.input = -1
 
-process.GlobalTag.globaltag = 'MCRUN2_74_V7::All'
+process.GlobalTag.globaltag = 'MCRUN2_74_V9::All'
 
 switchHLTProcessName(process, "HLT")
 

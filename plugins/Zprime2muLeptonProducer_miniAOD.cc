@@ -337,7 +337,7 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
 	  
 	  
 	  
-	  if (obj.filterLabels()[h] == "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered45e2p1Q"){ 
+	  if (obj.filterLabels()[h] == "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered50Q"){ 
 	    //FilterMatched[j] = 1;
 	    L3_muons.push_back(obj);
 	  }  

@@ -398,7 +398,7 @@ void Zprime2muHistosFromPAT_miniAOD::fillLeptonHistosFromDileptons(const pat::Co
   int total_q = 0;
 
   pat::CompositeCandidateCollection::const_iterator dil = dileptons.begin(), dile = dileptons.end();
-  for ( ; dil != dile; ++dil)
+  for ( ; dil != dile; ++dil)    
     for (size_t i = 0; i < dil->numberOfDaughters(); ++i) {
       // JMTBAD if photons ever become daughters of the
       // CompositeCandidate, need to protect against this here
@@ -431,12 +431,15 @@ void Zprime2muHistosFromPAT_miniAOD::fillDileptonHistos(const pat::CompositeCand
   DileptonPVsEta ->Fill(dil.eta(), dil.p());
 
   DileptonMass->Fill(dil.mass());
+  
   DileptonMassWeight->Fill(dil.mass(),_prescaleWeight);
   DileptonWithPhotonsMass->Fill(resonanceP4(dil).mass());
 
   const reco::CandidateBaseRef& lep0 = dileptonDaughter(dil, 0);
   const reco::CandidateBaseRef& lep1 = dileptonDaughter(dil, 1);
-
+  
+  
+  
   if (lep0.isNonnull() && lep1.isNonnull()) {
     DileptonDeltaPt->Fill(fabs(lep0->pt()) - fabs(lep1->pt()));
     DileptonDeltaP ->Fill(fabs(lep0->p())  - fabs(lep1->p()));
@@ -444,6 +447,9 @@ void Zprime2muHistosFromPAT_miniAOD::fillDileptonHistos(const pat::CompositeCand
     const pat::Muon* mu0 = toConcretePtr<pat::Muon>(lep0);
     const pat::Muon* mu1 = toConcretePtr<pat::Muon>(lep1);
     if (mu0 && mu1) {
+      if (dil.mass() > 200){
+        std::cout << event.id() << " : mass: " << dil.mass() << " : pt: " << mu0->pt() << " : pt: " << mu1->pt() << std::endl;
+      }
       reco::TrackRef ref0 = mu0->tunePMuonBestTrack();
       if (!((ref0.refCore()).isAvailable())) ref0 = mu0->muonBestTrack();
       reco::TrackRef ref1 = mu1->tunePMuonBestTrack();

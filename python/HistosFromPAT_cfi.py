@@ -7,6 +7,7 @@ HistosFromPAT_miniAOD = cms.EDAnalyzer('Zprime2muHistosFromPAT_miniAOD',
                                beamspot_src = cms.InputTag('offlineBeamSpot'),
                                vertex_src = cms.InputTag('offlineSlimmedPrimaryVertices'),
                                use_bs_and_pv = cms.bool(True),
+			       min_dilepton_mass = cms.double(50.)
                                )
 
 HistosFromPAT = cms.EDAnalyzer('Zprime2muHistosFromPAT',

@@ -3,18 +3,19 @@ import FWCore.ParameterSet.Config as cms
 
 process = cms.Process('PAT')
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
-process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True))
+process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(False))
 process.source = cms.Source('PoolSource', fileNames = cms.untracked.vstring('file:PlaceHolder.root'))
 
 # Load services needed to run the PAT.
 process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
-process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
+#process.load('Configuration.StandardSequences.MagneticField_38T_PostLS1_cff')
+process.load('Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 from Configuration.AlCa.GlobalTag import GlobalTag 
 process.GlobalTag.globaltag = cms.string('PlaceHolder::All')
 
 process.load('FWCore.MessageLogger.MessageLogger_cfi')
-process.MessageLogger.cerr.FwkReport.reportEvery = 5000
+process.MessageLogger.cerr.FwkReport.reportEvery = 100
 process.MessageLogger.cerr.threshold = 'INFO'
 process.MessageLogger.categories.append('PATSummaryTables')
 process.MessageLogger.cerr.PATSummaryTables = cms.untracked.PSet(limit = cms.untracked.int32(-1)) 
@@ -68,7 +69,7 @@ process.cleanPatTaus.preselection = process.cleanPatTaus.preselection.value().re
 
 # PAT muons 
 process.patMuons.embedTrack = True
-process.selectedPatMuons.cut = "isTrackerMuon || isGlobalMuon"
+process.selectedPatMuons.cut = "isTrackerMuon || isGlobalMuon" #&& pt > 20."#"isTrackerMuon || isGlobalMuon"
 process.countPatMuons.minNumber = cms.uint32(1)
 
 # PAT trigger info

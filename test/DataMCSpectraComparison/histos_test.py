@@ -4,18 +4,114 @@ import sys, os, FWCore.ParameterSet.Config as cms
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process, flag
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
-process.source.fileNames =['file:./test/DataMCSpectraComparison/pat.root']
+#process.source.fileNames =['file:./test/DataMCSpectraComparison/pat.root']
 
+#process.source.fileNames =['/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/MINIAODSIM/MCRUN2_74_V7-v1/00000/3EC6C30E-1CDB-E411-A1EE-0025905B859E.root',
+#    '/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/MINIAODSIM/MCRUN2_74_V7-v1/00000/8A55AC04-1CDB-E411-ABF1-002618FDA248.root']
 
-#process.source.fileNames = []
+process.source.fileNames=['/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_1.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_10.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_11.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_12.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_13.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_14.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_15.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_16.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_17.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_18.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_19.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_2.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_20.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_21.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_22.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_23.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_24.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_25.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_26.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_27.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_28.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_29.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_3.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_30.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_31.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_32.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_33.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_34.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_35.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_36.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_37.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_38.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_39.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_4.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_40.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_41.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_42.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_43.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_44.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_45.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_46.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_47.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_48.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_49.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_5.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_50.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_51.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_52.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_53.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_54.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_55.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_56.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_57.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_58.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_59.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_6.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_60.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_61.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_62.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_63.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_64.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_65.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_66.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_67.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_68.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_69.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_7.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_70.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_71.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_72.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_73.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_74.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_75.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_76.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_77.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_78.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_79.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_8.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_80.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_81.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_82.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_83.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_84.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_85.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_86.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_87.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_88.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_89.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_9.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_90.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_91.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_92.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_93.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_94.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_95.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_96.root',
+       '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_97.root']
+
 process.maxEvents.input = -1
 
-if flag == "miniAOD":
-	from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_miniAOD
-	HistosFromPAT_miniAOD.leptonsFromDileptons = True
-if flag == "AOD":
-	from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
-	HistosFromPAT.leptonsFromDileptons = True 
+
+
+
 	
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold
 
@@ -29,6 +125,8 @@ process.PrescaleToCommon.overall_prescale = overall_prescale
 # The histogramming module that will be cloned multiple times below
 # for making histograms with different cut/dilepton combinations.
 
+from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
+HistosFromPAT.leptonsFromDileptons = True 
 
 # These modules define the basic selection cuts. For the monitoring
 # sets below, we don't need to define a whole new module, since they
@@ -121,10 +219,9 @@ for cut_name, Selection in cuts.iteritems():
         alldil = Selection.allDimuons.clone(decay = dil_decay % locals(), cut = dil_cut)
         if 'AllSigns' in dil_name:
             alldil.checkCharge = cms.bool(False)
-	if flag == 'AOD':
-        	dil = Selection.dimuons.clone(src = cms.InputTag(allname))
-	if flag == 'miniAOD':
-		dil = Selection.dimuons_miniAOD.clone(src = cms.InputTag(allname))
+	
+        dil = Selection.dimuons.clone(src = cms.InputTag(allname))
+	
 	
 
         # Implement the differences to the selections; currently, as
@@ -153,11 +250,8 @@ for cut_name, Selection in cuts.iteritems():
 
         # Histos now just needs to know which leptons and dileptons to use.
         #histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
-        if flag == 'miniAOD':
-		histos = HistosFromPAT_miniAOD.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
-	
-	if flag == 'AOD':
-        	histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
+        
+        histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 
         # Add all these modules to the process and the path list.
         setattr(process, allname, alldil)
@@ -169,7 +263,7 @@ for cut_name, Selection in cuts.iteritems():
     pathname = 'path' + cut_name
     pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
     if 'VBTF' not in cut_name and cut_name != 'Simple':
-        pobj = pobj
+        pobj = process.goodDataFilter * pobj
     if 'MuPrescaled' in cut_name:
         pobj = process.PrescaleToCommon * pobj
     if flag == 'miniAOD':

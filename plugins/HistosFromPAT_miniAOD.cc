@@ -52,6 +52,7 @@ class Zprime2muHistosFromPAT_miniAOD : public edm::EDAnalyzer {
   edm::InputTag beamspot_src;
   edm::InputTag vertex_src;
   const bool use_bs_and_pv;
+  const double min_dilepton_mass;
 
   struct debug_tree_t {
     unsigned run;
@@ -145,6 +146,7 @@ Zprime2muHistosFromPAT_miniAOD::Zprime2muHistosFromPAT_miniAOD(const edm::Parame
     beamspot_src(cfg.getParameter<edm::InputTag>("beamspot_src")),
     vertex_src(cfg.getParameter<edm::InputTag>("vertex_src")),
     use_bs_and_pv(cfg.getParameter<bool>("use_bs_and_pv")),
+    min_dilepton_mass(cfg.getParameter<double>("min_dilepton_mass")),
     dbg_tree(0),
     beamspot(0),
     vertex(0),

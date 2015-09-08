@@ -99,17 +99,11 @@ pat::Muon* Zprime2muLeptonProducer_miniAOD::cloneAndSwitchMuonTrack(const pat::M
   
   // Muon mass to make a four-vector out of the new track.
   
-  std::cout << "Event: " << event.id() << ";";
-  std::cout << "Run: " << event.run() << ";";
+  
+  
   pat::Muon* mu = muon.clone();
-  /*
-  edm::Handle<std::vector<pat::Muon>> M;
-  event.getByLabel(muon_src, M);
-  edm::Handle<std::vector<pat::Electron>> Em;
-  event.getByLabel(electron_src, Em);
-  */
-  //if (Em->size() + M->size() > 1){
-  std::cout << "Muon pt pre-tune " << mu->pt() << " eta " << mu->eta() << ";";
+  
+  
   
   // Start with null track/invalid type before we find the right one.
   reco::TrackRef newTrack;
@@ -121,11 +115,8 @@ pat::Muon* Zprime2muLeptonProducer_miniAOD::cloneAndSwitchMuonTrack(const pat::M
     return 0;
     
   }
-  /*
-  if (!((newTrack.refCore()).isAvailable())){    
-    newTrack = muon.muonBestTrack();    
-  }
-  */
+  
+  
   
   static const double mass = 0.10566;
   
@@ -141,7 +132,7 @@ pat::Muon* Zprime2muLeptonProducer_miniAOD::cloneAndSwitchMuonTrack(const pat::M
   mu->setP4(p4);
   
   mu->setVertex(vtx);
-  std::cout << "Muon pt post-tune" << mu->pt() << ";";
+  
   return mu;
 }
 
@@ -173,7 +164,7 @@ void Zprime2muLeptonProducer_miniAOD::embedTriggerMatch(pat::Muon* new_mu, const
   new_mu->addUserFloat(ex + "TriggerMatchPt",     L3_mu.pt());
   new_mu->addUserFloat(ex + "TriggerMatchEta",    L3_mu.eta());
   new_mu->addUserFloat(ex + "TriggerMatchPhi",    L3_mu.phi());
-  std::cout << "Trigger obj " << L3_mu.pt() << " " << L3_mu.eta() << ";";
+  
   
   
 }

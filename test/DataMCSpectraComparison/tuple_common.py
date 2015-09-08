@@ -19,7 +19,7 @@ process.heepPatElectrons = cms.EDFilter('PATElectronSelector',
 process.patDefaultSequence.replace(process.selectedPatElectrons, process.selectedPatElectrons * process.heepPatElectrons)
 process.countPatMuons.minNumber = 0
 process.countPatLeptons.electronSource = cms.InputTag('heepPatElectrons')
-process.countPatLeptons.minNumber = 0
+process.countPatLeptons.minNumber = 2
 
 crab_cfg = '''
 from CRABClient.UserUtilities import config

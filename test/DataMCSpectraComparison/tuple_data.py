@@ -4,16 +4,20 @@ import sys, os, datetime, FWCore.ParameterSet.Config as cms
 from tuple_common import process, crab_cfg
 
 #process.source.fileNames = ['/store/data/Run2012A/SingleMu/AOD/13Jul2012-v1/00000/009C369E-85D0-E111-BD58-1CC1DE046FC0.root']
-process.source.fileNames = ['file:./pickevents.root'
-                            #'/store/data/Run2015B/SingleMuon/AOD/PromptReco-v1/000/251/162/00000/C2C5E84D-4227-E511-8878-02163E01280D.root',
-                            # '/store/data/Run2015A/SingleMu/AOD/PromptReco-v1/000/248/033/00000/EE592A5B-5F14-E511-B94C-02163E011BDB.root',
-#                            '/store/express/Run2015B/ExpressPhysics/FEVT/Express-v1/000/251/168/00000/FED4CDEE-2725-E511-9CE6-02163E011816.root',
+process.source.fileNames = [
+                            #'file:./pickevents.root'
+                            '/store/data/Run2015B/SingleMuon/AOD/PromptReco-v1/000/251/168/00000/02132736-CB26-E511-8127-02163E01386E.root',
+                            '/store/data/Run2015B/SingleMuon/AOD/PromptReco-v1/000/251/168/00000/2447FF28-C826-E511-9B9A-02163E0134D6.root',
+                            '/store/data/Run2015B/SingleMuon/AOD/PromptReco-v1/000/251/168/00000/A4DCB1FF-CE26-E511-AC79-02163E0119E4.root',
+                            '/store/data/Run2015B/SingleMuon/AOD/PromptReco-v1/000/251/168/00000/A86651FA-C926-E511-9D68-02163E011EE9.root',
+                            '/store/data/Run2015B/SingleMuon/AOD/PromptReco-v1/000/251/168/00000/B42C1F30-EA26-E511-9C77-02163E0144D6.root',
+                            '/store/data/Run2015B/SingleMuon/AOD/PromptReco-v1/000/251/168/00000/E285B231-C926-E511-994F-02163E013584.root',
                             ]
 #process.GlobalTag.globaltag = 'FT_53_V6C_AN4::All'
-#process.GlobalTag.globaltag = '74X_dataRun2_Express_v0'
-process.GlobalTag.globaltag = 'GR_P_V56'
+process.GlobalTag.globaltag = '74X_dataRun2_Prompt_v1'
+#process.GlobalTag.globaltag = 'GR_P_V56'
 ##process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:com10_2013', '')
-process.maxEvents.input = 10
+process.maxEvents.input = -1
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import removeMCUse
 removeMCUse(process)
@@ -28,7 +32,7 @@ config.Data.unitsPerJob = %(lumis_per_job)s
 config.Data.lumiMask = '%(lumi_mask)s'
 '''
 
-    lumis_per_job = 15
+    lumis_per_job = 20
     lumi_mask = ''
 
     #create_only = 'create_only' in sys.argv
@@ -119,10 +123,14 @@ config.Data.lumiMask = '%(lumi_mask)s'
 #            name    = 'ExpressPhysicsRun2015B-Express'
 ##            tag     = '74X_dataRun2_Express_v0'
 #            tag     = 'GR_E_V49'
-        if run1 >= 250985 :
+        if run1 >= 250985 and run2 < 253888:
             dataset = '/SingleMuon/Run2015B-PromptReco-v1/AOD'
             name    = 'SingleMuonRun2015B-Prompt'
             tag     = 'GR_P_V56'
+        if run1 >= 253888 :
+            dataset = '/SingleMuon/Run2015C-PromptReco-v1/AOD'
+            name    = 'SingleMuonRun2015C-Prompt'
+            tag     = '74X_dataRun2_Prompt_v1'
         else:
             raise ValueError("don't know how to do a run_limits production for run range [%i,%i]" % run_limits)
 

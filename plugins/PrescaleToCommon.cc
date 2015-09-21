@@ -97,21 +97,31 @@ bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
     return false;
     
   std::cout<<" hlt_results->accept(path_index) "<<hlt_results->accept(path_index)<<std::endl;
-  std::cout<<" hlt_cfg.prescaleValues(event, setup, trigger_path) "<<hlt_cfg.prescaleValues(event, setup, trigger_path).second<<std::endl;
   std::pair<int, int> prescales;
+  std::pair<std::vector<std::pair<std::string,int> >,int> prescalesInDetail;
+  std::ostringstream message;
+    
   // For MC samples, can assume the prescales are 1.
-  if (event.isRealData() || !assume_simulation_has_prescale_1) 
-    prescales = hlt_cfg.prescaleValues(event, setup, trigger_path);
+    if (event.isRealData() || !assume_simulation_has_prescale_1){
+        prescales = hlt_cfg.prescaleValues(event, setup, trigger_path);
+        prescalesInDetail = hlt_cfg.prescaleValuesInDetail(event, setup, trigger_path);
+    }
   else
     //prescales = std::make_pair(1,1);
     // Do not filter out MC events with prescales=1, apply the
     // appropriate weights later.
     return true;
 
-  //std::cout<<"------PRESCALES: "<<overall_prescale<<"\t"<<prescales.first<<"\t"<<prescales.second<<std::endl;
+    for (unsigned int i=0; i<prescalesInDetail.first.size(); ++i) {
+        message << " " << i << ":" << prescalesInDetail.first[i].first << "/" << prescalesInDetail.first[i].second;
+        std::cout<<" prescalesInDetail.first[i].first "<<prescalesInDetail.first[i].first<<" prescalesInDetail.first[i].second "<<prescalesInDetail.first[i].second<<std::endl;
+    }
+    std::cout<<" prescalesInDetail.second "<<prescalesInDetail.second<<std::endl;
+  std::cout<<"------PRESCALES: "<<overall_prescale<<"\t"<<prescales.first<<"\t"<<prescales.second<<std::endl;
+  std::cout<<"------PRESCALES detail: "<<overall_prescale<<"\t"<<prescalesInDetail.first.size()<<"\t"<<message.str()<<"\t"<<prescalesInDetail.second<<std::endl;
 
   const int total_prescale_already = prescales.second * prescales.first;
-
+    std::cout<<"total "<<total_prescale_already<<std::endl;
   if (total_prescale_already > overall_prescale)
     throw cms::Exception("PrescaleToCommon") << "total_prescale_already = " << total_prescale_already << " but overall_prescale requested is " << overall_prescale << "!\n";
 
@@ -127,6 +137,7 @@ bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
   CLHEP::RandFlat rand(rng->getEngine(event.streamID()));
   const double rnd = rand.fire();
   randoms->Fill(rnd);
+  std::cout<<" rndm "<<rnd<<" total_prescale_already)/overall_prescale "<<double(total_prescale_already)/overall_prescale<<std::endl;
   return rnd < double(total_prescale_already)/overall_prescale;
 }
 

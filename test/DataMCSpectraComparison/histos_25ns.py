@@ -4,59 +4,100 @@ import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 
-process.source.fileNames =[#'file:./pat.root',
-#                                                     '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_1.root',
-#                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_10.root',
-#                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_100.root',
-#                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_101.root',
-#                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_102.root',
-#                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_103.root',
-#                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_104.root',
-#                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_105.root',
-#                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_106.root',
-#                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_107.root',
-##                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_108.root',
-##                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_109.root',
-##                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_11.root',
-##                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_110.root',
-##                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_111.root',
-##                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_112.root',
-#                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_113.root',
-                           
-#                           '/store/user/rradogna/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/datamc_dy50/150708_150131/0000/pat_110.root',
-#                           '/store/user/rradogna/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/datamc_dy50/150708_150131/0000/pat_111.root',
-#                           '/store/user/rradogna/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/datamc_dy50/150708_150131/0000/pat_112.root',
-
-#                           
-#                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_1.root',
-#                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_10.root',
-#                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_11.root',
-#                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_12.root',
-#                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_13.root',
-#                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_14.root',
-#                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_15.root',
-#                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_16.root',
-#                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_17.root',
-#                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_18.root',
-#                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_19.root',
-#                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_2.root',
-#                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_20.root',
-##                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_21.root',
-##                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_22.root',
-##                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_23.root',
-##                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_24.root',
-##                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_25.root',
-##                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_26.root',
-##                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_27.root',
-##                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_28.root',
-#                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_29.root',
-#                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409/150713_080429/0000/pat_3.root'
-                           '/store/user/rradogna/RelValZMM_13/datamc_dy50_startup/150730_143145/0000/pat_1.root'
+process.source.fileNames =['file:./pat.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_1.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_10.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_11.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_12.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_13.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_14.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_15.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_16.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_17.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_18.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_19.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_2.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_20.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_21.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_22.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_23.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_24.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_25.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_26.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_27.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_28.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_29.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_3.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_30.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_31.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_32.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_33.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_34.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_35.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_36.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_37.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_38.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_39.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_4.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_40.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_41.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_42.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_43.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_44.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_45.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_46.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_47.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_48.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_49.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_5.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_50.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_51.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_52.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_53.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_54.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_55.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_56.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_57.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_58.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_59.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_6.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_60.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_61.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_62.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_63.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_64.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_65.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_66.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_67.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_68.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_69.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_7.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_70.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_71.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_72.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_73.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_74.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_75.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_76.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_77.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_78.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_79.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_8.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_80.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_81.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_82.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_83.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_84.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_85.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_86.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_87.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_88.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_89.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_9.root',
+#                           '/store/user/rradogna/ExpressPhysics/datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231/150709_101249/0000/pat_90.root'
                            ]
 process.maxEvents.input = -1
-#process.GlobalTag.globaltag = '74X_dataRun2_Prompt_v1'## solo per proare i dati
-#process.GlobalTag.globaltag = 'MCRUN2_74_V9A'## solo per proare i mc
-process.GlobalTag.globaltag = '74X_mcRun2_startup_realistic50ns_v0' #mc startup
+#process.GlobalTag.globaltag = '74X_dataRun2_Express_v0'## solo per proare i dati
 #process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1 # default 1000
 
@@ -73,7 +114,6 @@ process.PrescaleToCommon.overall_prescale = overall_prescale
 # for making histograms with different cut/dilepton combinations.
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
 HistosFromPAT.leptonsFromDileptons = True
-#HistosFromPAT.useMadgraphWeight= cms.untracked.bool(False) #if we want to re-wigth madgraph samples. For other samples the weight is always 1. Does not work with data.
 
 # These modules define the basic selection cuts. For the monitoring
 # sets below, we don't need to define a whole new module, since they
@@ -116,7 +156,7 @@ cuts = {
     'Simple'   : OurSelectionDec2012, # The selection cuts in the module listed here are ignored below.
 #    'VBTFMuPrescaled' : VBTFSelection,
     #'OurMuPrescaledNew'  : OurSelectionNew,
-    'OurMuPrescaled2012' : OurSelectionDec2012
+#    'OurMuPrescaled2012' : OurSelectionDec2012
     }
 
 # Loop over all the cut sets defined and make the lepton, allDilepton
@@ -227,7 +267,7 @@ def ntuplify(process, fill_gen_info=False):
         
     if hasattr(process, 'pathSimple'):
         process.pathSimple *= process.SimpleNtupler * process.SimpleNtuplerEmu
-ntuplify(process) #to have ntuples also running in interactive way
+#ntuplify(process) #to have ntuples also running in interactive way
 
 def printify(process):
     process.MessageLogger.categories.append('PrintEvent')
@@ -261,10 +301,9 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.CheckPrescale_cfi')
     process.CheckPrescale.trigger_paths = cms.vstring(*trigger_paths)
     process.pCheckPrescale = cms.Path(process.CheckPrescale)
-###check_prescale(process, trigger_paths) ### ony to check if it works
 
 def for_data(process):
-    process.GlobalTag.globaltag = '74X_dataRun2_Prompt_v1'
+    process.GlobalTag.globaltag = '74X_dataRun2_Express_v0'
     ntuplify(process)
     #check_prescale(process, trigger_paths) ####### Now it seams that there are no prescaled path ########
 
@@ -323,7 +362,7 @@ from CRABClient.UserUtilities import config
 config = config()
 
 config.General.requestName = 'ana_datamc_%(name)s'
-config.General.workArea = 'crab'
+config.General.workArea = 'crab_25ns'
 #config.General.transferLogs = True
 
 config.JobType.pluginName = 'Analysis'
@@ -352,28 +391,23 @@ config.Site.storageSite = 'T2_IT_Legnaro'
 #            ('SingleMuRun2012A_13Jul2012_190450_193751', '/SingleMu/slava-datamc_SingleMuRun2012A-13Jul2012_190450_193751_20121011073628-426a2d966f78bce6bde85f3ed41c07ba/USER'),
 #            ('SingleMuRun2012A_06Aug2012_190782_190949', '/SingleMu/slava-datamc_SingleMuRun2012A-recover-06Aug2012_190782_190949_20121011120430-426a2d966f78bce6bde85f3ed41c07ba/USER'),
 #            ('SingleMuRun2012B_13Jul2012_193752_196531', '/SingleMu/slava-datamc_SingleMuRun2012B-13Jul2012_193752_196531_20121012044921-426a2d966f78bce6bde85f3ed41c07ba/USER'),
-
-#            ('ExpressPhysicsRun2015B-Express_251161_251252',    '/ExpressPhysics/rradogna-datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231-b1bb0cb9d6986acfdad6df64560b6f76/USER'),
-#            ('ExpressPhysicsRun2015B-Express_251253_251521',    '/ExpressPhysics/rradogna-datamc_ExpressPhysicsRun2015B-Express_251253_251521_20150711154626-b1bb0cb9d6986acfdad6df64560b6f76/USER'),
-#            ('ExpressPhysicsRun2015B-Express_251522_251562',    '/ExpressPhysics/rradogna-datamc_ExpressPhysicsRun2015B-Express_251522_251562_20150712181215-b1bb0cb9d6986acfdad6df64560b6f76/USER'),
-#            ('ExpressPhysicsRun2015B-Express_251563_251643', '/ExpressPhysics/rradogna-datamc_ExpressPhysicsRun2015B-Express_251563_251643_20150714134408-0633e624cb4a2f2023c182912c95c757/USER'),
-
-            ('SingleMuonRun2015B-Prompt_251162_251499',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409-3aa7688518cb1f1b044caf15b1a9ed05/USER'),
-#            ('SingleMuonRun2015B-Prompt_251500_251561',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251500_251561_20150714135629-3aa7688518cb1f1b044caf15b1a9ed05/USER'),
-#             ('SingleMuonRun2015B-Prompt_251562_251642',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251562_251642_20150716164649-9996471c14459acaec01707975d1e954/USER'),
-#             ('SingleMuonRun2015B-Prompt_251500_251642',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251500_251642_20150717155341-9996471c14459acaec01707975d1e954/USER'),
-            ('SingleMuonRun2015B-Prompt_251500_251603',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251500_251603_20150718235715-9996471c14459acaec01707975d1e954/USER'),
-            ('SingleMuonRun2015B-Prompt_251613_251883',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251613_251883_20150719000207-9996471c14459acaec01707975d1e954/USER'),
-                           
-            ('SingleMuonRun2015C-Prompt_253888_254914',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015C-Prompt_253888_254914_20150831150018-681693e882ba0f43234b3b41b1bbc39d/USER'),
-
+#            ('SingleMuRun2012C_24Aug2012_197556_198913', '/SingleMu/slava-datamc_SingleMuRun2012C-24Aug2012_197556_198913_20121012113325-426a2d966f78bce6bde85f3ed41c07ba/USER'),
+#            ('SingleMuRun2012C_Prompt_198934_203772',    '/SingleMu/slava-datamc_SingleMuRun2012C-Prompt_198934_203772_20121015023300-8627c6a48d2426dec4aa557620a039a0/USER'),
+#            ('SingleMuRun2012D_Prompt_203773_204563',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_203773_204563_20121016104501-8627c6a48d2426dec4aa557620a039a0/USER'),
+#            ('SingleMuRun2012D_Prompt_204564_206087',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_204564_206087_20121029121943-8627c6a48d2426dec4aa557620a039a0/USER'),
+#            ('SingleMuRun2012D_Prompt_206066_206066',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_206066_206066_20130115083834-5fce88899b8479b9df01fc5ef8a1e921/USER'),
+#            ('SingleMuRun2012D-Prompt_206088_206539',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_206088_206539_20121112085341-8627c6a48d2426dec4aa557620a039a0/USER'),
+            ('ExpressPhysicsRun2015B-Express_251161_251252_Mu50',    '/ExpressPhysics/rradogna-datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231-b1bb0cb9d6986acfdad6df64560b6f76/USER'),
+            ('ExpressPhysicsRun2015B-Express_251253_251521_Mu50',    '/ExpressPhysics/rradogna-datamc_ExpressPhysicsRun2015B-Express_251253_251521_20150711154626-b1bb0cb9d6986acfdad6df64560b6f76/USER'),
+#            ('SingleMuRun2015A-Prompt_246865_246957',    '/SingleMu/rradogna-datamc_SingleMuRun2015A-Prompt_246865_246957_20150707105042-c884408f3bf22365836363f3be40cb0b/USER'),
+#            ('SingleMuRun2015A-Prompt_246958_247068',    '/SingleMu/rradogna-datamc_SingleMuRun2015A-Prompt_246958_247068_20150626155427-c884408f3bf22365836363f3be40cb0b/USER'),
             ]
 
         lumi_lists = [
 #            'NoLumiMask'
-#            'DCSOnly',
+            'DCSOnly',
 #            'Run2012PlusDCSOnlyMuonsOnly',
-            'Run2015MuonsOnly',
+#            'Run2015MuonsOnly',
 #            'Run2015',
             ]
 
@@ -401,7 +435,6 @@ config.Site.storageSite = 'T2_IT_Legnaro'
 config.Data.splitting = 'LumiBased'
 config.Data.totalUnits = -1
 config.Data.unitsPerJob = 200
-config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions15/13TeV/Cert_254833_13TeV_PromptReco_Collisions15_JSON.txt'
 #config.Data.lumiMask = '%(lumi_mask)s' #######
 ''' % locals()
 
@@ -410,7 +443,6 @@ config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/
 
             if not just_testing:
                 os.system('crab submit -c crabConfig.py')
-#                os.system('crab submit -c crabConfig.py --dryrun')#debug
             else:
                 cmd = 'diff histos.py histos_crab.py | less'
                 print cmd
@@ -427,41 +459,34 @@ config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/
         # Set crab_cfg for MC.
         crab_cfg = crab_cfg.replace('job_control','''
 config.Data.splitting = 'EventAwareLumiBased'
-#config.Data.splitting = 'FileBased'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob  = 5000
-#config.Data.unitsPerJob  = 100
+config.Data.unitsPerJob  = 1000
     ''')
 
-        from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
+        from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples_25ns import samples
 
-        combine_dy_samples = len([x for x in samples if x.name in []]) > 0
-        #combine_dy_samples = len([x for x in samples if x.name in ['dy50','dy100-200', 'dy200-400', 'dy400-500','dy500-700', 'dy700-800']]) > 0
+        combine_dy_samples = len([x for x in samples if x.name in ['dy200', 'dy400', 'dy500', 'dy700', 'dy800', 'dy1500', 'dy2000', 'dy3000']]) > 0
         print 'combine_dy_samples:', combine_dy_samples
 
         for sample in reversed(samples):
             print sample.name
 
             new_py = open('histos.py').read()
-            sample.fill_gen_info = sample.name in ['dy50','dy100-200', 'dy200-400', 'dy400-500','dy500-700', 'dy700-800']
+            sample.fill_gen_info = sample.name in ['dy50', 'dy120', 'dy200', 'dy400', 'dy800', 'dy1400', 'dy2300', 'dy3500', 'dy4500', 'dy6000', 'dy7500', 'dy8500', 'dy9500', 'zpsi5000']
             new_py += "\nfor_mc(process, hlt_process_name='%(hlt_process_name)s', fill_gen_info=%(fill_gen_info)s)\n" % sample
-            
-            if sample.is_madgraph:
-                print "Madgraph: re-weight applied"
-                new_py += "\nHistosFromPAT.useMadgraphWeight= cms.untracked.bool(True)\n"
 
             if combine_dy_samples and (sample.name == 'zmumu' or 'dy' in sample.name):
                 mass_limits = {
-                    'dy50'      : (  50,     100),
+                    #'dy50'      : (  50,     120),
                     #'dy120'     : ( 120,     200),
-                    'dy100-200'     : ( 100,     200),
-                    'dy200-400'     : ( 200,     400),
-                    'dy400-500'     : ( 400,     500),
-                    'dy500-700'     : ( 500,     700),
-                    'dy700-800'     : ( 700,     800),
-#                    'dy1500'    : (1000,    1500),
-#                    'dy2000'    : (1500,    2000),
-#                    'dy3000'    : (2000,    3000),
+                    'dy200'     : ( 100,     200),
+                    'dy400'     : ( 200,     400),
+                    'dy500'     : ( 400,     500),
+                    'dy700'     : ( 500,     700),
+                    'dy800'     : ( 700,     800),
+                    'dy1500'    : (1000,    1500),
+                    'dy2000'    : (1500,    2000),
+                    'dy3000'    : (2000,    3000),
                     #'dy7500'    : (6000,    7500),
                     #'dy8500'    : (8500,    9500),
                     #'dy9500'    : (9500,  100000),
@@ -482,7 +507,7 @@ for pn,p in process.paths.items():
 
             open('crabConfig.py', 'wt').write(crab_cfg % sample)
             if not just_testing:
-                os.system('crab submit --dryrun -c crabConfig.py')
+                os.system('crab submit -c crabConfig.py')
             else:
                 cmd = 'diff histos.py histos_crab.py | less'
                 print cmd
@@ -491,5 +516,5 @@ for pn,p in process.paths.items():
                 print cmd
                 os.system(cmd)
 
-#        if not just_testing:
-#            os.system('rm crabConfig.py histos_crab.py histos_crab.pyc')
+        if not just_testing:
+            os.system('rm crabConfig.py histos_crab.py histos_crab.pyc')

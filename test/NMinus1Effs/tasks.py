@@ -38,12 +38,11 @@ def do(cmd):
 #latest_dataset = '/SingleMu/Run2015A-PromptReco-v1/AOD'
 #latest_dataset = '/SingleMu/Run2015A-PromptReco-v1/AOD'
 #latest_dataset = '/ExpressPhysics/Run2015B-Express-v1/FEVT'
-#latest_dataset = '/SingleMuon/Run2015B-PromptReco-v1/AOD'
-latest_dataset = '/SingleMuon/Run2015C-PromptReco-v1/AOD'
+latest_dataset = '/SingleMuon/Run2015B-PromptReco-v1/AOD'
 #lumi_masks = ['Run2012PlusDCSOnlyMuonsOnly', 'Run2012MuonsOnly'] #, 'DCSOnly', 'Run2012']
 #lumi_masks = ['DCSOnly', 'Run2015', 'Run2015MuonsOnly'] #, 'Run2012PlusDCSOnlyMuonsOnly', 'DCSOnly']
+#lumi_masks = ['DCSOnly','Run2015', 'Run2015MuonsOnly'] #, 'Run2012PlusDCSOnlyMuonsOnly', 'DCSOnly']
 lumi_masks = ['Run2015MuonsOnly'] #, 'Run2012PlusDCSOnlyMuonsOnly', 'DCSOnly']
-#lumi_masks = ['DCSOnly'] #, 'Run2012PlusDCSOnlyMuonsOnly', 'DCSOnly']
 
 
 if cmd == 'setdirs':
@@ -105,14 +104,14 @@ elif cmd == 'gathermc':
     extra = '_' + extra[0] if extra else ''
     for sample in samples:
         name = sample.name
-        pattern = 'crab/crab_ana%(extra)s_datamc_%(name)s/results/zp2mu_histos*root' % locals()
-        fn = 'ana_datamc_%(name)s.root' % locals()
+        pattern = 'crab/crab_ana%(extra)s_nminus1_%(name)s/results/zp2mu_histos*root' % locals()
+        fn = 'ana_nminus1_%(name)s.root' % locals()
         n = len(glob.glob(pattern))
         if n == 0:
             big_warn('no files matching %s' % pattern)
         else:
-            files = glob.glob('crab/crab_ana%(extra)s_datamc_%(name)s/results/zp2mu_histos*root' % locals())
-            hadd('mc/ana_datamc_%s.root' % name, files)
+            files = glob.glob('crab/crab_ana%(extra)s_nminus1_%(name)s/results/zp2mu_histos*root' % locals())
+            hadd('nminus1_histos/ana_nminus1_%s.root' % name, files)
 
 elif cmd == 'gatherdata':
     extra = (extra[0] + '_') if extra else ''
@@ -120,15 +119,15 @@ elif cmd == 'gatherdata':
     for lumi_mask in lumi_masks:
         print lumi_mask
 #        dirs = glob.glob('crab/crab_ana_datamc_%s_ExpressPhysicsRun2015B*' % lumi_mask)
-        dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMuonRun2015C*' % lumi_mask)
+        dirs = glob.glob('crab/crab_ana_nminus1_SingleMuonRun2015C*' )
 #        dirs = glob.glob('crab/crab_ana_datamc_%s_ExpressPhysicsRun2015B-Express_251161_251252' % lumi_mask)
         files = []
         for d in dirs:
             files += glob.glob(os.path.join(d, 'results/*.root'))
 
-        wdir = os.path.join('data', lumi_mask)
+        wdir = os.path.join('nminus1_histos', lumi_mask)
         os.mkdir(wdir)
-        hadd(os.path.join(wdir, 'ana_datamc_data.root'), files)
+        hadd(os.path.join(wdir, 'ana_nminus1_data.root'), files)
 
         for dir in dirs:
             do('crab status -d %(dir)s ; crab report -d %(dir)s ' % locals())
@@ -147,8 +146,7 @@ elif cmd == 'gatherdata':
         reduce(lambda x,y: x|y, (LumiList(j) for j in jsons)).writeJSON('%(wdir)s/ana_datamc_data.forlumi.json' % locals())
         #do('lumiCalc2.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())
         #do('pixelLumiCalc.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())
-#        do('python /afs/cern.ch/user/m/marlow/public/lcr2/lcr2.py -i %(wdir)s/ana_datamc_data.forlumi.json > %(wdir)s/ana_datamc_data.lumi' % locals())
-        do('brilcalc lumi --normtag /afs/cern.ch/user/c/cmsbril/public/normtag_json/OfflineNormtagV1.json -u /pb  -i %(wdir)s/ana_datamc_data.forlumi.json  > %(wdir)s/ana_datamc_data.lumi' % locals())
+        do('brilcalc lumi -i %(wdir)s/ana_datamc_data.forlumi.json -n 0.962 > %(wdir)s/ana_datamc_data.lumi' % locals())
         do('tail -5 %(wdir)s/ana_datamc_data.lumi' % locals())
         print 'done with', lumi_mask, '\n'
 
@@ -197,7 +195,7 @@ elif cmd == 'checkavail':
     runrange = sorted(int(x) for x in ll.getCompactList().keys())
 
     #dcs_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/DCSOnly/json_DCSONLY.txt') # JMTBAD import from goodlumis
-    dcs_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/DCSOnly/json_DCSONLY.txt') # JMTBAD import from goodlumis
+    dcs_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/DCSOnly/json_DCSONLY_Run2015B.txt') # JMTBAD import from goodlumis
 
     #print "dcs_ll", dcs_ll
     dcs_runrange = sorted(int(x) for x in dcs_ll.getCompactList().keys())

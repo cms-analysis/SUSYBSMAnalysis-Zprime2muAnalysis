@@ -74,14 +74,14 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
   for (; genp != genParticles.end(); genp++) {
   counter ++;//
     const int pdgId = genp->pdgId();
-    //const reco::Candidate* mmm = genp->mother();//
-    //std::cout<<counter<<" pdgId "<<pdgId<<" status "<<genp->status()<<std::endl;
+//    const reco::Candidate* mmm = genp->mother();//
+//    std::cout<<counter<<" pdgId "<<pdgId<<" status "<<genp->status()<<std::endl;
     if (genp->status() == 22) {//it was 3
       if (IsResonance(pdgId)) {
       ///std::cout<<"IsResonance(pdgId)"<<std::endl;
 	// We found the resonance (Z0/Z'/etc.). Make sure we didn't
 	// find a second one.
-	 //std::cout<<counter<<" *** pdgId "<<pdgId<<" status "<<genp->status()<<" mother id "<<mmm->pdgId()<<" mother status "<< mmm->status()<<std::endl;
+//	 std::cout<<counter<<" *** pdgId "<<pdgId<<" status "<<genp->status()<<" mother id "<<mmm->pdgId()<<" mother status "<< mmm->status()<<std::endl;
 	if (resonance != 0 && !shutUp)
 	  edm::LogWarning("HardInteraction") << "Found second resonance (pdgId: " << pdgId << ") in event!";
 	else
@@ -109,7 +109,7 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
 	// See if it has as an ancestor the resonance. Do this by just
 	// checking the pdgId -- don't try to see if it's the same
 	// resonance as the one we found above, for now.
-	//std::cout<<counter<<" *** pdgId "<<pdgId<<" status "<<genp->status()<<" mother id "<<mmm->pdgId()<<" mother status "<< mmm->status()<<std::endl;
+//	std::cout<<counter<<" *** pdgId "<<pdgId<<" status "<<genp->status()<<" mother id "<<mmm->pdgId()<<" mother status "<< mmm->status()<<std::endl;
 	const reco::Candidate* m = genp->mother();
 	bool ok = false;
 	while (m) {

@@ -9,13 +9,15 @@ readFiles = cms.untracked.vstring()
 secFiles = cms.untracked.vstring() 
 process.source = cms.Source ("PoolSource",fileNames = readFiles, secondaryFileNames = secFiles)
 readFiles.extend( [
-       '/store/user/rradogna/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/datamc_zpsi5000/a8881ceec144e0dfafbb7486d1b7f8e6/pat_100_1_Hw6.root' ] );
+                   '/store/user/rradogna/RelValTTbar_13/datamc_ttbar_startup/150730_143116/0000/pat_1.root',
+#                   '/store/user/rradogna/RelValZMM_13/datamc_dy50_startup/150730_143145/0000/pat_1.root'
+                   ] );
 
 
 secFiles.extend( [
                ] )
 
-process.maxEvents.input = 10
+process.maxEvents.input = -1
 
 # Define the numerators and denominators, removing cuts from the
 # allDimuons maker. "NoX" means remove cut X entirely (i.e. the
@@ -26,7 +28,7 @@ process.maxEvents.input = 10
 # try to check those with a simple string test below.
 
 cuts = [
-    ('Pt',      'pt > 45'),
+    ('Pt',      'pt > 48'),
     ('DB',      'abs(dB) < 0.2'),
     ('Iso',     'isolationR03.sumPt / innerTrack.pt < 0.10'),
     ('TkLayers','globalTrack.hitPattern.trackerLayersWithMeasurement > 5'),
@@ -46,12 +48,14 @@ for name, cut in cuts:
         lc = lc.replace(' && ' + c, '') # Relies on none of the cuts above being first in the list.
 
     obj_no = allDimuons.clone(loose_cut = lc)
+#    obj_no = allDimuons.clone(loose_cut = lc,tight_cut = tight_cut.replace(trigger_match, ''))#N-2
     setattr(process, 'allDimuonsNo' + name, obj_no)
     
     obj_ti = obj_no.clone(tight_cut = tight_cut + ' && ' + ' && '.join(cut))
     setattr(process, 'allDimuonsTi' + name, obj_ti)
 
 process.allDimuonsNoNo      = allDimuons.clone()
+#process.allDimuonsNoNo      = allDimuons.clone(tight_cut = tight_cut.replace(trigger_match, ''))#N-2
 process.allDimuonsNoTrgMtch = allDimuons.clone(tight_cut = tight_cut.replace(trigger_match, ''))
 
 alldimus = [x for x in dir(process) if 'allDimuonsNo' in x or 'allDimuonsTi' in x]
@@ -77,9 +81,14 @@ for alld in alldimus:
 
 # Handle the cuts that have to be applied at the
 # Zprime2muCompositeCandidatePicker level.
+#process.allDimuonsN2 = allDimuons.clone(tight_cut = tight_cut.replace(trigger_match, ''))#N-2
+#process.p *= process.allDimuonsN2#N-2
 process.dimuonsNoB2B     = process.dimuons.clone()
 process.dimuonsNoVtxProb = process.dimuons.clone()
 process.dimuonsNoDptPt   = process.dimuons.clone()
+#process.dimuonsNoB2B     = process.dimuons.clone(src = 'allDimuonsN2')#N-2
+#process.dimuonsNoVtxProb = process.dimuons.clone(src = 'allDimuonsN2')#N-2
+#process.dimuonsNoDptPt   = process.dimuons.clone(src = 'allDimuonsN2')#N-2
 delattr(process.dimuonsNoB2B,     'back_to_back_cos_angle_min')
 delattr(process.dimuonsNoVtxProb, 'vertex_chi2_max')
 delattr(process.dimuonsNoDptPt,   'dpt_over_pt_max')
@@ -92,6 +101,7 @@ for dimu in ['dimuonsNoB2B', 'dimuonsNoVtxProb', 'dimuonsNoDptPt']:
 # Special case to remove |dB| and B2B cuts simultaneously, as they can
 # be correlated (anti-cosmics).
 process.allDimuonsNoCosm = process.allDimuons.clone(loose_cut = loose_cut.replace(' && abs(dB) < 0.2', ''))
+#process.allDimuonsNoCosm = process.allDimuons.clone(loose_cut = loose_cut.replace(' && abs(dB) < 0.2', ''), tight_cut = tight_cut.replace(trigger_match, '')) #N-2
 process.dimuonsNoCosm = process.dimuons.clone(src = 'allDimuonsNoCosm')
 delattr(process.dimuonsNoCosm, 'back_to_back_cos_angle_min')
 process.NoCosm = HistosFromPAT.clone(dilepton_src = 'dimuonsNoCosm', leptonsFromDileptons = True)
@@ -102,76 +112,78 @@ if __name__ == '__main__' and 'submit' in sys.argv:
 from CRABClient.UserUtilities import config
 config = config()
 
-config.General.requestName = '%(name)s' 
-config.General.workArea = 'PAT_%(name)s'
+config.General.requestName = 'ana_nminus1_%(name)s'
+config.General.workArea = 'crab'
+#config.General.transferLogs = True
 
 config.JobType.pluginName = 'Analysis'
-config.JobType.psetName = '%(pset)s'   
-config.JobType.priority = 1
+config.JobType.psetName = 'nminus1effs.py'
+#config.JobType.priority = 1
 
-config.Data.inputDataset =  '%(dataset)s'
-config.Data.inputDBS = 'global'
-config.Data.splitting = 'EventAwareLumiBased' 
-config.Data.unitsPerJob = 10000
-config.Data.publication = True
-config.Data.publishDataName = '%(name)s'
-config.Data.outLFN = '/store/user/federica/PATTuple' 
+config.Data.inputDataset =  '%(ana_dataset)s'
+config.Data.inputDBS = 'phys03'
+job_control
+config.Data.publication = False
+config.Data.publishDataName = 'ana_datamc_%(name)s'
+config.Data.outLFNDirBase = '/store/user/rradogna'
 
-config.Site.storageSite = 'T2_US_Purdue'
+#config.Site.storageSite = 'T2_IT_Bari'
+config.Site.storageSite = 'T2_IT_Legnaro'
 
 '''
 
     just_testing = 'testing' in sys.argv
     if not 'no_data' in sys.argv:
-        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2012MuonsOnly_ll
-        Run2012MuonsOnly_ll.writeJSON('tmp.json')
+        from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2015MuonsOnly_ll
+        Run2015MuonsOnly_ll.writeJSON('tmp.json')
 
         dataset_details = [
-            ('SingleMuRun2012A_13Jul2012_190450_193751', '/SingleMu/slava-datamc_SingleMuRun2012A-13Jul2012_190450_193751_20121011073628-426a2d966f78bce6bde85f3ed41c07ba/USER'),
-            ('SingleMuRun2012A_06Aug2012_190782_190949', '/SingleMu/slava-datamc_SingleMuRun2012A-recover-06Aug2012_190782_190949_20121011120430-426a2d966f78bce6bde85f3ed41c07ba/USER'),
-            ('SingleMuRun2012B_13Jul2012_193752_196531', '/SingleMu/slava-datamc_SingleMuRun2012B-13Jul2012_193752_196531_20121012044921-426a2d966f78bce6bde85f3ed41c07ba/USER'),
-            ('SingleMuRun2012C_24Aug2012_197556_198913', '/SingleMu/slava-datamc_SingleMuRun2012C-24Aug2012_197556_198913_20121012113325-426a2d966f78bce6bde85f3ed41c07ba/USER'),
-            ('SingleMuRun2012C_Prompt_198934_203772',    '/SingleMu/slava-datamc_SingleMuRun2012C-Prompt_198934_203772_20121015023300-8627c6a48d2426dec4aa557620a039a0/USER'),
-            ('SingleMuRun2012D_Prompt_203773_204563',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_203773_204563_20121016104501-8627c6a48d2426dec4aa557620a039a0/USER'),
-            ('SingleMuRun2012D_Prompt_204564_206087',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_204564_206087_20121029121943-8627c6a48d2426dec4aa557620a039a0/USER'),
-            ('SingleMuRun2012D-Prompt_206088_206539',    '/SingleMu/slava-datamc_SingleMuRun2012D-Prompt_206088_206539_20121112085341-8627c6a48d2426dec4aa557620a039a0/USER'),
+            ('SingleMuonRun2015B-Prompt_251162_251499',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409-3aa7688518cb1f1b044caf15b1a9ed05/USER'),
+            ('SingleMuonRun2015B-Prompt_251500_251603',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251500_251603_20150718235715-9996471c14459acaec01707975d1e954/USER'),
+            ('SingleMuonRun2015B-Prompt_251613_251883',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251613_251883_20150719000207-9996471c14459acaec01707975d1e954/USER'),
+                           
+            ('SingleMuonRun2015C-Prompt_253888_254914',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015C-Prompt_253888_254914_20150831150018-681693e882ba0f43234b3b41b1bbc39d/USER'),
             ]
 
         for name, ana_dataset in dataset_details:
             print name
 
             new_py = open('nminus1effs.py').read()
-            new_py += "\nprocess.GlobalTag.globaltag = 'GR_P_V42_AN2::All'\n"
+            new_py += "\nprocess.GlobalTag.globaltag = '74X_dataRun2_Prompt_v1'\n"
             open('nminus1effs_crab.py', 'wt').write(new_py)
 
             new_crab_cfg = crab_cfg % locals()
             job_control = '''
-total_number_of_lumis = -1
-#number_of_jobs = 20
-lumis_per_job = 500
-lumi_mask = tmp.json'''
+config.Data.splitting = 'LumiBased'
+config.Data.totalUnits = -1
+config.Data.unitsPerJob = 100
+#config.Data.lumiMask = 'tmp.json' #######
+config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions15/13TeV/Cert_254833_13TeV_PromptReco_Collisions15_JSON.txt'
+'''
             new_crab_cfg = new_crab_cfg.replace('job_control', job_control)
-            open('crab.py', 'wt').write(new_crab_cfg)
+            open('crabConfig.py', 'wt').write(new_crab_cfg)
 
             if not just_testing:
-                os.system('crab submit -c all')
+                os.system('crab submit -c crabConfig.py --dryrun') #--dryrun
 
         if not just_testing:
-            os.system('rm crab.py nminus1effs_crab.py nminus1effs_crab.pyc tmp.json')
+            os.system('rm crabConfig.py nminus1effs_crab.py nminus1effs_crab.pyc tmp.json')
 
     if not 'no_mc' in sys.argv:
         crab_cfg = crab_cfg.replace('job_control','''
-total_number_of_events = -1
-events_per_job = 50000
+config.Data.splitting = 'EventAwareLumiBased'
+config.Data.totalUnits = -1
+config.Data.unitsPerJob  = 10000
 ''')
 
         from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import *
-        samples =[dy50, dy120, dy200, dy400, dy800, dy1400, dy2300, dy3500, dy4500, dy6000, dy7500, dy8500, dy9500, zpsi5000, ttbar, inclmu15]
+        samples =[dy50to120,DY120to200Powheg,DY200to400Powheg,DY400to800Powheg,DY800to1400Powheg,dy1400to2300, ttbar_pow]#,ttbar, wz, ww_incl, zz_incl, dy50to120]
+        #samples =[dy50, dy120, dy200, dy400, dy800, dy1400, dy2300, dy3500, dy4500, dy6000, dy7500, dy8500, dy9500, zpsi5000, ttbar, inclmu15]
         for sample in samples:
             print sample.name
-            open('crab.py', 'wt').write(crab_cfg % sample)
+            open('crabConfig.py', 'wt').write(crab_cfg % sample)
             if not just_testing:
-                os.system('crab submit -c all')
+                os.system('crab submit -c crabConfig.py --dryrun')
 
         if not just_testing:
-            os.system('rm crab.py')
+            os.system('rm crabConfig.py')

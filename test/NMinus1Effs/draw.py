@@ -122,7 +122,7 @@ class nm1entry:
                 f = ROOT.TFile(self.make_fn(sample.name))
                 h = f.Get(nminus1).Get('DimuonMassVertexConstrained').Clone()
                 print nminus1, sample.name, sample.partial_weight*lumi
-#                h.Scale(sample.partial_weight * lumi)
+                h.Scale(sample.partial_weight * lumi)
 #                h.Scale(sample.partial_weight )
                 hs.append(h)
             hsum = hs[0].Clone()

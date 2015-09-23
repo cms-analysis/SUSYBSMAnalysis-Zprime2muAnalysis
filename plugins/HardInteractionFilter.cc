@@ -31,6 +31,7 @@ HardInteractionFilter::HardInteractionFilter(const edm::ParameterSet& cfg)
 bool HardInteractionFilter::filter(edm::Event& event, const edm::EventSetup&) {
   hardInteraction.Fill(event);
   const double m = use_resonance_mass ? hardInteraction.resonance->mass() : hardInteraction.dilepton().mass();
+  if(hardInteraction.IsValid()){
   return
     m > min_mass &&
     m < max_mass &&
@@ -38,6 +39,9 @@ bool HardInteractionFilter::filter(edm::Event& event, const edm::EventSetup&) {
     fabs(hardInteraction.lepPlus ->eta()) < max_muon_eta &&
     hardInteraction.lepMinus->pt() > min_muon_pt &&
     hardInteraction.lepPlus ->pt() > min_muon_pt;
+    }
+  else
+  return hardInteraction.IsValid();  
 }
 
 DEFINE_FWK_MODULE(HardInteractionFilter);

@@ -239,20 +239,26 @@ if 'gogo' in sys.argv:
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
-[CRAB]
-jobtype = cmssw
-scheduler = condor
+from CRABClient.UserUtilities import config
+config = config()
 
-[CMSSW]
-datasetpath = %(ana_dataset)s
-dbs_url = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
-pset = histos_crab.py
-get_edm_output = 1
-job_control
+config.General.requestName = '%(name)s' 
+config.General.workArea = 'HISTO_%(name)s'
 
-[USER]
-ui_working_dir = crab/crab_ana_datamc_%(name)s
-return_data = 1
+config.JobType.pluginName = 'Analysis'
+config.JobType.psetName = 'histos_crab.py'   
+config.JobType.priority = 1
+
+config.Data.inputDataset = '%(dataset)s'
+config.Data.inputDBS = 'global'
+config.Data.splitting = 'EventAwareLumiBased' 
+config.Data.unitsPerJob = 10000
+config.Data.publication = True
+config.Data.publishDataName = '%(name)s'
+config.Data.outLFN = '/store/user/federica/Histos' 
+
+config.Site.storageSite = 'T2_US_Purdue'
+
 '''
 
     just_testing = 'testing' in sys.argv
@@ -301,20 +307,20 @@ lumis_per_job = 500
 %(lumi_mask)s''' % locals()
 
             new_crab_cfg = new_crab_cfg.replace('job_control', job_control)
-            open('crab.cfg', 'wt').write(new_crab_cfg)
+            open('crab.py', 'wt').write(new_crab_cfg)
 
             if not just_testing:
-                os.system('crab -create -submit all')
+                os.system('crab submit -c all')
             else:
                 cmd = 'diff histos.py histos_crab.py | less'
                 print cmd
                 os.system(cmd)
-                cmd = 'less crab.cfg'
+                cmd = 'less crab.py'
                 print cmd
                 os.system(cmd)
 
         if not just_testing:
-            os.system('rm crab.cfg histos_crab.py histos_crab.pyc tmp.json')
+            os.system('rm crab.py histos_crab.py histos_crab.pyc tmp.json')
 
     if 'no_mc' not in sys.argv:
         # Set crab_cfg for MC.
@@ -360,16 +366,17 @@ for pn,p in process.paths.items():
 
             open('histos_crab.py', 'wt').write(new_py)
 
-            open('crab.cfg', 'wt').write(crab_cfg % sample)
+            open('crab.py', 'wt').write(crab_cfg % sample)
             if not just_testing:
-                os.system('crab -create -submit all')
+                os.system('crab submit -c all')
             else:
                 cmd = 'diff histos.py histos_crab.py | less'
                 print cmd
                 os.system(cmd)
-                cmd = 'less crab.cfg'
+                cmd = 'less crab.py'
                 print cmd
                 os.system(cmd)
 
         if not just_testing:
-            os.system('rm crab.cfg histos_crab.py histos_crab.pyc')
+            os.system('rm crab.py histos_crab.py histos_crab.pyc')
+

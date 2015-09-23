@@ -543,8 +543,10 @@ double lorengauPlusExpbckgNorm(double *x, double *par) {
   if (renorm_sig) {
     if (debug) out << "Renorm. signal: " << endl;
     TF1 *flor = new TF1("flor", lorengaufun, mass_min, mass_max, 3);
-    double par_sig[3] = {1., par[1], par[2]};
-    signorm = flor->Integral(mass_min, mass_max, par_sig, EPS);
+    //double par_sig[3] = {1., par[1], par[2]};
+    //signorm = flor->Integral(mass_min, mass_max, par_sig, EPS);
+    flor->SetParameters(1., par[1], par[2]); // avoid the crashing of the code
+    signorm = flor->Integral(mass_min, mass_max, EPS); 
     parsave[1] = par[1];
     parsave[2] = par[2];
     delete flor;
@@ -553,8 +555,10 @@ double lorengauPlusExpbckgNorm(double *x, double *par) {
   if (renorm_bkg) {
     if (debug) out << "Renorm. background: " << endl;
     TF1 *fbkg = new TF1("fbkg", expBckg, mass_min, mass_max, 3);
-    double par_bkg[3] = {1., par[3], par[4]};
-    bkgnorm = fbkg->Integral(mass_min, mass_max, par_bkg, EPS);
+    //double par_bkg[3] = {1., par[3], par[4]};
+    // bkgnorm = fbkg->Integral(mass_min, mass_max, par_bkg, EPS);
+    fbkg->SetParameters(1., par[3], par[4]);
+    bkgnorm = fbkg->Integral(mass_min, mass_max, EPS);  // avoid the crashing of the code
     parsave[3] = par[3];
     parsave[4] = par[4];
     delete fbkg;

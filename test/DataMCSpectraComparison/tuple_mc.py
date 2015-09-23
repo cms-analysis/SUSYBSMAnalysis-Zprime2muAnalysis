@@ -1,20 +1,25 @@
 #!/usr/bin/env python
 
 import sys, os
-from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName, AODOnly
+from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName,AODOnly,removeMuonMCClassification,removeSimLeptons, pruneMCLeptons
 from tuple_common import cms, process, crab_cfg
 
-AODOnly(process)
-#switchHLTProcessName(process, 'REDIGI311X')
+pruneMCLeptons(process, use_sim=True) # because of unscheduled I can't remove this for data.
 
-process.source.fileNames = ['/store/mc/Summer12_DR53X/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S10_START53_V7A-v1/0000/FE93A307-F2E2-E111-BC0D-E41F131815FC.root']
-process.maxEvents.input = 1000
-process.GlobalTag.globaltag = 'START53_V11::All'
+AODOnly(process)# 
+process.source.fileNames = ['/store/mc/RunIISpring15DR74/ZprimeToMuMu_M-5000_TuneCUETP8M1_13TeV-pythia8/AODSIM/Asympt25ns_MCRUN2_74_V9-v1/40000/FE091975-D534-E511-82AA-6C3BE5B5A4C8.root']
+
+process.maxEvents.input = -1
+
+process.GlobalTag.globaltag = 'MCRUN2_74_V9::All'
+
+switchHLTProcessName(process, "HLT")
+
 
 if __name__ == '__main__' and hasattr(sys, 'argv') and 'submit' in sys.argv:
     job_control = '''
 total_number_of_events = -1
-events_per_job = 150000
+events_per_job = 10000
 '''
 
     just_testing = 'testing' in sys.argv
@@ -27,14 +32,17 @@ events_per_job = 150000
         new_py = open('tuple_mc.py').read()
         new_py += '\nswitchHLTProcessName(process, "%(hlt_process_name)s")\n' % sample.__dict__
 
-        sample.pset = 'crab/psets/tuple_mc_crab_%(name)s.py' % sample.__dict__
+        sample.pset = 'tuple_mc_crab_%(name)s.py' % sample.__dict__
         open(sample.pset,'wt').write(new_py)
 
-        sample.job_control = job_control % sample.__dict__
-        open('crab.cfg', 'wt').write(crab_cfg % sample.__dict__)
+        #sample.job_control = job_control % sample.__dict__
+        #print sample.__dict__
+
+        sample.job = 'crab_%(name)s.py' % sample.__dict__
+        open(sample.job, 'wt').write(crab_cfg % sample.__dict__)
         if not just_testing:
             if create_only:
-                os.system('crab -create')
-            else:
-                os.system('crab -create -submit all')
-            os.system('rm crab.cfg')
+                os.system('crab submit -c ' + sample.job)
+            #else:
+             #   os.system('crab -create -submit all')
+           # os.system('rm crab.cfg')

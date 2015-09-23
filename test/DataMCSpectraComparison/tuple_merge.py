@@ -19,26 +19,26 @@ process.out.outputCommands = cms.untracked.vstring('keep *', 'drop LumiDetails_l
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
-[CRAB]
-jobtype = cmssw
-scheduler = condor
+from CRABClient.UserUtilities import config
+config = config()
 
-[CMSSW]
-datasetpath = %(ana_dataset)s
-dbs_url = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
-pset = tuple_merge.py
-get_edm_output = 1
-number_of_jobs = 10
-%(job_control)s
+config.General.requestName = 'merge_%(uniq)s_%(name)s' 
+config.General.workArea = 'PAT_merge_%(uniq)s_%(name)s'
 
-[USER]
-ui_working_dir = crab/crab_merge_%(uniq)s_%(name)s
-copy_data = 1
-storage_element = T3_US_FNALLPC
-check_user_remote_dir = 0
-publish_data = 1
-publish_data_name = merge_%(uniq)s_%(name)s
-dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
+config.JobType.pluginName = 'Analysis'
+config.JobType.psetName = 'tuple_merge.py'   
+config.JobType.priority = 1
+
+config.Data.inputDataset = '%(ana_dataset)s'
+config.Data.inputDBS = 'global'
+config.Data.splitting = 'EventAwareLumiBased' 
+config.Data.unitsPerJob = 10000
+config.Data.publication = True
+config.Data.publishDataName = 'merge_%(uniq)s_%(name)s'
+config.Data.outLFN = '/store/user/federica/PATTuple' 
+
+config.Site.storageSite = 'T2_US_Purdue'
+
 '''
 
     just_testing = 'testing' in sys.argv
@@ -65,11 +65,11 @@ dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02
             cfgs.append(crab_cfg % locals())
 
     for cfg in cfgs:
-        open('crab.cfg', 'wt').write(cfg)
+        open('crab.py', 'wt').write(cfg)
         if not just_testing:
-            os.system('crab -create -submit all')
+            os.system('crab submit -c all')
         else:
             print cfg
 
     if not just_testing:
-        os.system('rm crab.cfg')
+        os.system('rm crab.py')

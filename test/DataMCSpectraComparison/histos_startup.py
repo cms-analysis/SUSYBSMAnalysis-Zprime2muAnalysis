@@ -5,23 +5,9 @@ import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 
 process.source.fileNames =[#'file:./pat.root',
-#                                                     '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_1.root',
-#                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_10.root',
-#                           '/store/user/rradogna/WW_TuneCUETP8M1_13TeV-pythia8/datamc_ww_incl/150719_182358/0000/pat_100.root',
 
-                           
 #                           '/store/user/rradogna/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/datamc_dy50/150708_150131/0000/pat_110.root',
-#                           '/store/user/rradogna/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/datamc_dy50/150708_150131/0000/pat_111.root',
-#                           '/store/user/rradogna/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/datamc_dy50/150708_150131/0000/pat_112.root',
 
-#                           
-                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015C-Prompt_253888_254914_20150831150018/150831_130042/0000/pat_446.root',
-                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015C-Prompt_253888_254914_20150831150018/150831_130042/0000/pat_447.root',
-                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015C-Prompt_253888_254914_20150831150018/150831_130042/0000/pat_448.root',
-                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015C-Prompt_253888_254914_20150831150018/150831_130042/0000/pat_449.root',
-                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015C-Prompt_253888_254914_20150831150018/150831_130042/0000/pat_45.root',
-                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015C-Prompt_253888_254914_20150831150018/150831_130042/0000/pat_450.root',
-                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015C-Prompt_253888_254914_20150831150018/150831_130042/0000/pat_451.root',
                            '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015C-Prompt_253888_254914_20150831150018/150831_130042/0000/pat_452.root',
 
                            ]
@@ -193,19 +179,10 @@ config.Site.storageSite = 'T2_IT_Legnaro'
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
 
         dataset_details = [
-#            ('SingleMuRun2012A_13Jul2012_190450_193751', '/SingleMu/slava-datamc_SingleMuRun2012A-13Jul2012_190450_193751_20121011073628-426a2d966f78bce6bde85f3ed41c07ba/USER'),
-#            ('SingleMuRun2012A_06Aug2012_190782_190949', '/SingleMu/slava-datamc_SingleMuRun2012A-recover-06Aug2012_190782_190949_20121011120430-426a2d966f78bce6bde85f3ed41c07ba/USER'),
-#            ('SingleMuRun2012B_13Jul2012_193752_196531', '/SingleMu/slava-datamc_SingleMuRun2012B-13Jul2012_193752_196531_20121012044921-426a2d966f78bce6bde85f3ed41c07ba/USER'),
 
-#            ('ExpressPhysicsRun2015B-Express_251161_251252',    '/ExpressPhysics/rradogna-datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231-b1bb0cb9d6986acfdad6df64560b6f76/USER'),
-#            ('ExpressPhysicsRun2015B-Express_251253_251521',    '/ExpressPhysics/rradogna-datamc_ExpressPhysicsRun2015B-Express_251253_251521_20150711154626-b1bb0cb9d6986acfdad6df64560b6f76/USER'),
-#            ('ExpressPhysicsRun2015B-Express_251522_251562',    '/ExpressPhysics/rradogna-datamc_ExpressPhysicsRun2015B-Express_251522_251562_20150712181215-b1bb0cb9d6986acfdad6df64560b6f76/USER'),
-#            ('ExpressPhysicsRun2015B-Express_251563_251643', '/ExpressPhysics/rradogna-datamc_ExpressPhysicsRun2015B-Express_251563_251643_20150714134408-0633e624cb4a2f2023c182912c95c757/USER'),
 
             ('SingleMuonRun2015B-Prompt_251162_251499',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409-3aa7688518cb1f1b044caf15b1a9ed05/USER'),
-#            ('SingleMuonRun2015B-Prompt_251500_251561',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251500_251561_20150714135629-3aa7688518cb1f1b044caf15b1a9ed05/USER'),
-#             ('SingleMuonRun2015B-Prompt_251562_251642',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251562_251642_20150716164649-9996471c14459acaec01707975d1e954/USER'),
-#             ('SingleMuonRun2015B-Prompt_251500_251642',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251500_251642_20150717155341-9996471c14459acaec01707975d1e954/USER'),
+
             ('SingleMuonRun2015B-Prompt_251500_251603',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251500_251603_20150718235715-9996471c14459acaec01707975d1e954/USER'),
             ('SingleMuonRun2015B-Prompt_251613_251883',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251613_251883_20150719000207-9996471c14459acaec01707975d1e954/USER'),
             

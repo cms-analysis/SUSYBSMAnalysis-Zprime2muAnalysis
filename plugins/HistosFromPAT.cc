@@ -489,7 +489,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
   if (dil.hasUserFloat("vertexM") && dil.hasUserFloat("vertexMError")) {
     float vertex_mass = dil.userFloat("vertexM");
     float vertex_mass_err = dil.userFloat("vertexMError");
-      std::cout<<" filling mass "<<vertex_mass<<std::endl;
+      //std::cout<<" filling mass "<<vertex_mass<<std::endl;
     DimuonMassVertexConstrained->Fill(vertex_mass, _madgraphWeight);
     DimuonMassVtxConstrainedLog->Fill(vertex_mass, _madgraphWeight);
     DimuonMassConstrainedVsUn->Fill(dil.mass(), vertex_mass, _madgraphWeight);

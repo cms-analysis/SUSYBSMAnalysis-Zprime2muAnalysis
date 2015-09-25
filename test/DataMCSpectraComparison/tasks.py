@@ -213,7 +213,7 @@ elif cmd == 'checkavail':
 #- Reasons for excluding some runs:
 #    191350, 192989, 192890, 193091, 204900, 206251, 207871: VdM scan
 #    193092: very low pile-up run
-#ok = LumiList(compactList={ "208540": [[99, 101]], "208551": [[581, 586]]})#fake list
+#ok = LumiList(compactList={ "208540": [[99, 101]], "208551": [[581, 586]]})#list of LS already checked
     ok = LumiList(compactList={
 #              "246958": [[1, 61]],
 #              "246959": [[1, 77]],

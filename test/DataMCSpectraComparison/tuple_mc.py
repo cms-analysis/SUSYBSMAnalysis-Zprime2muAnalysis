@@ -13,30 +13,13 @@ AODOnly(process) #defined in PATTools and contains
 #switchHLTProcessName(process, 'HLT') #default
 
 process.source.fileNames = [
-#                            '/store/relval/CMSSW_7_4_6_patch6/RelValTTbar_13/GEN-SIM-RECO/74X_mcRun2_startup_realistic50ns_v0_trackPog2015Jul24-v1/00000/025D8DD1-5532-E511-8B88-003048FFD730.root',
-#                            '/store/relval/CMSSW_7_4_6_patch6/RelValTTbar_13/GEN-SIM-RECO/74X_mcRun2_startup_realistic50ns_v0_trackPog2015Jul24-v1/00000/5454A03F-5432-E511-B785-0025905B858A.root',
-#                            '/store/relval/CMSSW_7_4_6_patch6/RelValTTbar_13/GEN-SIM-RECO/74X_mcRun2_startup_realistic50ns_v0_trackPog2015Jul24-v1/00000/5C0A93C3-5132-E511-AB6D-0025905A607E.root',
-#                            '/store/relval/CMSSW_7_4_6_patch6/RelValTTbar_13/GEN-SIM-RECO/74X_mcRun2_startup_realistic50ns_v0_trackPog2015Jul24-v1/00000/BE773DF6-5432-E511-9C12-0025905B8562.root',
-#                            '/store/relval/CMSSW_7_4_6_patch6/RelValTTbar_13/GEN-SIM-RECO/74X_mcRun2_startup_realistic50ns_v0_trackPog2015Jul24-v1/00000/DE2E4C8D-5A32-E511-B9FB-002618943922.root',
-#                            '/store/relval/CMSSW_7_4_6_patch6/RelValTTbar_13/GEN-SIM-RECO/74X_mcRun2_startup_realistic50ns_v0_trackPog2015Jul24-v1/00000/E0ACB362-5232-E511-A9B5-00261894385A.root',
-#                            '/store/relval/CMSSW_7_4_6_patch6/RelValTTbar_13/GEN-SIM-RECO/74X_mcRun2_startup_realistic50ns_v0_trackPog2015Jul24-v1/00000/F4423476-5A32-E511-9D17-0025905B8592.root',
-                            
-                            '/store/relval/CMSSW_7_4_6_patch6/RelValZMM_13/GEN-SIM-RECO/74X_mcRun2_startup_realistic50ns_v0_trackPog2015Jul24-v1/00000/3C26ACDC-5032-E511-A912-00261894397A.root',
-                            '/store/relval/CMSSW_7_4_6_patch6/RelValZMM_13/GEN-SIM-RECO/74X_mcRun2_startup_realistic50ns_v0_trackPog2015Jul24-v1/00000/5CF3EBBB-4E32-E511-9E9C-002590596468.root',
-                            '/store/relval/CMSSW_7_4_6_patch6/RelValZMM_13/GEN-SIM-RECO/74X_mcRun2_startup_realistic50ns_v0_trackPog2015Jul24-v1/00000/9622B63D-5D32-E511-87DE-00261894389D.root',
-                            '/store/relval/CMSSW_7_4_6_patch6/RelValZMM_13/GEN-SIM-RECO/74X_mcRun2_startup_realistic50ns_v0_trackPog2015Jul24-v1/00000/BAB18E43-5D32-E511-A01C-0025905A6068.root',
-                            '/store/relval/CMSSW_7_4_6_patch6/RelValZMM_13/GEN-SIM-RECO/74X_mcRun2_startup_realistic50ns_v0_trackPog2015Jul24-v1/00000/DEF5E014-4F32-E511-9D63-0025905A48D8.root',
+#
                             '/store/relval/CMSSW_7_4_6_patch6/RelValZMM_13/GEN-SIM-RECO/74X_mcRun2_startup_realistic50ns_v0_trackPog2015Jul24-v1/00000/F6A03919-5232-E511-B0F4-002618943867.root'
 ]
 
 process.maxEvents.input = -1
-#
-#process.GlobalTag.globaltag = 'MCRUN2_74_V9A' # ok if you use Configuration.AlCa.GlobalTag
 
-#process.GlobalTag.globaltag = 'MCRUN2_74_V7' # if you use condDBv2
-#from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag
-#process.GlobalTag.globaltag = 'MCRUN2_74_V9::All'
-#process.GlobalTag.globaltag = 'auto:run2_mc'
+#process.GlobalTag.globaltag = 'MCRUN2_74_V9A'
 process.GlobalTag.globaltag = '74X_mcRun2_startup_realistic50ns_v0' #mc startup
 
 if __name__ == '__main__' and hasattr(sys, 'argv') and 'submit' in sys.argv:

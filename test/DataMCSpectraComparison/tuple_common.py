@@ -1,6 +1,7 @@
 import os, FWCore.ParameterSet.Config as cms
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTuple_cfg import process
+
 process.p = cms.Path(process.countPatLeptons)
 
 # Loose cut on muons; stronger cuts to be applied for different
@@ -25,23 +26,25 @@ crab_cfg = '''
 from CRABClient.UserUtilities import config
 config = config()
 
-config.General.requestName = '%(name)s' 
-config.General.workArea = 'PAT_%(name)s'
+config.General.requestName = 'datamc_%(name)s'
+config.General.workArea = 'crab'
+#config.General.transferLogs = True
 
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = '%(pset)s'   
-config.JobType.priority = 1
+###config.JobType.priority = 1
 
 config.Data.inputDataset =  '%(dataset)s'
 config.Data.inputDBS = 'global'
-config.Data.splitting = 'EventAwareLumiBased' 
-config.Data.unitsPerJob = 10000
+%(job_control)s
 config.Data.publication = True
-config.Data.publishDataName = '%(name)s'
-config.Data.outLFNDirBase = '/store/user/federica/PATTuple' 
+#config.Data.publishDBS = 'https://cmsweb.cern.ch/dbs/prod/phys03/DBSWriter/'
+config.Data.publishDBS = 'phys03'
+config.Data.publishDataName = 'datamc_%(name)s'
+config.Data.outLFNDirBase = '/store/user/rradogna'
 
-config.Site.storageSite = 'T2_US_Purdue'
-
+#config.Site.storageSite = 'T2_IT_Bari'
+config.Site.storageSite = 'T2_IT_Legnaro'
 '''
 
-#os.system('mkdir -p crab/psets')
+os.system('mkdir -p crab/psets')

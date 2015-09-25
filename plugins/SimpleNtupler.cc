@@ -103,6 +103,8 @@ private:
     float lep_emEt[2];
     float lep_hadEt[2];
     float lep_hoEt[2];
+    float lep_pfIso[2];
+    float lep_pfIsoDB[2];
     int lep_timeNdof[2];
     float lep_timeInOut[2];
     float lep_timeOutIn[2];
@@ -110,7 +112,7 @@ private:
     float lep_timeOutInErr[2];
     int lep_heep_id[2];
     float lep_min_muon_dR[2];
-    short lep_tk_numberOfValidTrackerHits[2]; 
+    short lep_tk_numberOfValidTrackerHits[2];
     short lep_tk_numberOfValidTrackerLayers[2];
     short lep_tk_numberOfValidPixelHits[2];
     short lep_glb_numberOfValidTrackerHits[2]; 
@@ -243,6 +245,8 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->Branch("lep_emEt", t.lep_emEt, "lep_emEt[2]/F");
   tree->Branch("lep_hadEt", t.lep_hadEt, "lep_hadEt[2]/F");
   tree->Branch("lep_hoEt", t.lep_hoEt, "lep_hoEt[2]/F");
+  tree->Branch("lep_pfIso", t.lep_pfIso, "lep_pfIso[2]/F");
+  tree->Branch("lep_pfIsoDB", t.lep_pfIsoDB, "lep_pfIsoDB[2]/F");
   tree->Branch("lep_timeNdof", t.lep_timeNdof, "lep_timeNdof[2]/I");
   tree->Branch("lep_timeInOut", t.lep_timeInOut, "lep_timeInOut[2]/F");
   tree->Branch("lep_timeOutIn", t.lep_timeOutIn, "lep_timeOutIn[2]/F");
@@ -289,18 +293,20 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->SetAlias("Dimu",     "abs(lep_id[0]*lep_id[1]) == 169");
   tree->SetAlias("Emu",      "abs(lep_id[0]*lep_id[1]) == 143");
 
-#define offlineMinPt "45"
-#define triggerMatchMinPt "40"
+#define offlineMinPt "53"
+#define triggerMatchMinPt "50"
 #define triggerMatchMaxEta "2.1"
 
-  tree->SetAlias("trigger_match_0", "lep_triggerMatchPt[0] > " triggerMatchMinPt " && abs(lep_triggerMatchEta[0]) < " triggerMatchMaxEta);
-  tree->SetAlias("trigger_match_1", "lep_triggerMatchPt[1] > " triggerMatchMinPt " && abs(lep_triggerMatchEta[1]) < " triggerMatchMaxEta);
+//  tree->SetAlias("trigger_match_0", "lep_triggerMatchPt[0] > " triggerMatchMinPt " && abs(lep_triggerMatchEta[0]) < " triggerMatchMaxEta);
+//  tree->SetAlias("trigger_match_1", "lep_triggerMatchPt[1] > " triggerMatchMinPt " && abs(lep_triggerMatchEta[1]) < " triggerMatchMaxEta);
+  tree->SetAlias("trigger_match_0", "lep_triggerMatchPt[0] > " triggerMatchMinPt );
+  tree->SetAlias("trigger_match_1", "lep_triggerMatchPt[1] > " triggerMatchMinPt );
   tree->SetAlias("triggerMatched", "trigger_match_0 || trigger_match_1");
 
   // tree->SetAlias("GoodData", "GoodDataRan && HLTPhysicsDeclared && NoScraping && GoodVtx");
   tree->SetAlias("GoodData", "GoodDataRan && HLTPhysicsDeclared && GoodVtx");
 
-  tree->SetAlias("extraDimuonCuts", "cos_angle > -0.9998 && vertex_chi2 < 10");
+  tree->SetAlias("extraDimuonCuts", "cos_angle > -0.9998 && vertex_chi2 < 20");
 
   TString loose_2010 =
     "lep_isGlobalMuon[X] && "						\
@@ -568,6 +574,8 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	t.lep_emEt[w] = -999;
 	t.lep_hadEt[w] = -999;
 	t.lep_hoEt[w] = -999;
+    t.lep_pfIso[w] = -999;
+    t.lep_pfIsoDB[w] = -999;
 	t.lep_timeNdof[w] = -999;
 	t.lep_timeInOut[w] = -999;
 	t.lep_timeOutIn[w] = -999;
@@ -683,6 +691,8 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 	t.lep_emEt[w] = mu->isolationR03().emEt;
 	t.lep_hadEt[w] = mu->isolationR03().hadEt;
 	t.lep_hoEt[w] = mu->isolationR03().hoEt;
+    t.lep_pfIso[w] = mu->pfIsolationR04().sumChargedHadronPt + mu->pfIsolationR04().sumNeutralHadronEt + mu->pfIsolationR04().sumPhotonEt;
+    t.lep_pfIsoDB[w] = mu->pfIsolationR04().sumChargedHadronPt + std::max(mu->pfIsolationR04().sumNeutralHadronEt + mu->pfIsolationR04().sumPhotonEt - 0.5*mu->pfIsolationR04().sumPUPt,0.0);
 	if (mu->isTimeValid()) {
 	  t.lep_timeNdof[w] = mu->time().nDof;
 	  t.lep_timeInOut[w] = mu->time().timeAtIpInOut;

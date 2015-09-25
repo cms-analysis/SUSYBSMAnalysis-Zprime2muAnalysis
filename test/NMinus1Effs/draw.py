@@ -44,12 +44,12 @@ else:
         'NoVtxProb',
         'NoB2B',
         'NoDptPt',
-        'NoCosm',
+                #'NoCosm',
         'NoTrgMtch',
         ]
 
 pretty = {
-    'NoPt': 'p_{T} > 45 GeV',
+    'NoPt': 'p_{T} > 48 GeV',
     'NoTkLayers': '# tk lay > 5',
     'NoPxHits': '# px hits > 0',
     'NoMuStns': '# mu segs > 1',
@@ -61,24 +61,37 @@ pretty = {
     'NoCosm': 'anti-cosmic',
     'NoTrgMtch': 'HLT match',
     'NoB2B': 'back-to-back',
-    'NoVtxProb': '#chi^{2} #mu#mu vtx < 10',
+    'NoVtxProb': '#chi^{2} #mu#mu vtx < 20',
     'NoDptPt': 'dpT/pT',
     'NoIso': 'rel. tk. iso.',
-    'data': 'Data, %.1f fb^{-1}',
+    #'data': 'Data, %.1f fb^{-1}',
+    'data': 'Data, %.1f pb^{-1}, MuonOnly',
     'mcsum': 'Simulation',
     'zmumu': 'Z#rightarrow#mu#mu, 60 < M < 120 GeV',
     'dy120_c1': 'DY#rightarrow#mu#mu, M > 120 GeV',
     'dy200_c1': 'DY#rightarrow#mu#mu, M > 200 GeV',
     'dy500_c1': 'DY#rightarrow#mu#mu, M > 500 GeV',
     'dy1000_c1': 'DY#rightarrow#mu#mu, M > 1000 GeV',
+    'dy50': 'DY#rightarrow#mu#mu madgraph',
+#    'dy50': 'DY#rightarrow#mu#mu, M > 50 GeV',
+    'dy50to120': 'DY#rightarrow#mu#mu powheg',
+    'dy50_startup': 'DY#rightarrow#mu#mu startup',
     'ttbar': 't#bar{t}',
+    'ttbar_pow': 't#bar{t} powheg',
+    'ttbar_startup': 't#bar{t} startup',
+    'ww_incl': 'WW',
+    'zz_incl': 'ZZ',
+    'wz' : 'WZ',
     'inclmu15': 'QCD',
     'zssm1000': 'Z\' SSM, M=1000 GeV',
-    '60m120': '60 < m < 120 GeV',  
+    '60m120': '60 < m < 120 GeV',
+    '70m110': '70 < m < 110 GeV',
     '120m200': '120 < m < 200 GeV', 
     '200m400': '200 < m < 400 GeV',
     '400m600': '400 < m < 600 GeV',
-    '600m': 'm > 600 GeV',
+    '200m': 'm > 200 GeV',
+    '50m': 'm > 50 GeV',
+    '70m': 'm > 70 GeV',
     }
 
 class nm1entry:
@@ -99,7 +112,7 @@ class nm1entry:
         if self.fn is not None:
             f = ROOT.TFile(self.fn)
             for nminus1 in nminus1s + ['NoNo']:
-                self.histos[nminus1] = f.Get(nminus1).Get('DileptonMass').Clone()
+                self.histos[nminus1] = f.Get(nminus1).Get('DimuonMassVertexConstrained').Clone()#DileptonMass
 
     def prepare_histos_sum(self, samples, lumi):
         self.histos = {}
@@ -107,7 +120,7 @@ class nm1entry:
             hs = []
             for sample in samples:
                 f = ROOT.TFile(self.make_fn(sample.name))
-                h = f.Get(nminus1).Get('DileptonMass').Clone()
+                h = f.Get(nminus1).Get('DimuonMassVertexConstrained').Clone()
                 print nminus1, sample.name, sample.partial_weight*lumi
                 h.Scale(sample.partial_weight * lumi)
                 hs.append(h)
@@ -116,11 +129,13 @@ class nm1entry:
                 hsum.Add(h)
             self.histos[nminus1] = hsum
 
-data, lumi = nm1entry('data', True), 15796. # lumi in pb
+data, lumi = nm1entry('data', True), 19.9 # lumi in pb
 mcsum = nm1entry('mcsum')
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import zmumu, dy120_c1, dy200_c1, dy500_c1, dy1000_c1, ttbar, inclmu15
-raw_samples = [zmumu, dy120_c1, dy200_c1, dy500_c1, dy1000_c1, ttbar, inclmu15]
+from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import ww_incl, zz_incl, wz, dy50to120, ttbar_pow
+raw_samples = [dy50to120, ttbar_pow]
+#raw_samples = [dy50, ttbar, ww_incl, zz_incl, wz, dy50to120, ttbar_pow, dy50_startup, ttbar_startup]
+#raw_samples = [zmumu, dy120_c1, dy200_c1, dy500_c1, dy1000_c1, ttbar, inclmu15]
 mcsum.prepare_histos_sum(raw_samples, lumi)
 mc_samples = [nm1entry(sample) for sample in raw_samples]
 for mc_sample in mc_samples:
@@ -128,39 +143,60 @@ for mc_sample in mc_samples:
 
 mass_ranges = [
     ('60m120',  ( 60, 120)),
-    ('120m200', (120, 200)),
-    ('200m400', (200, 400)),
-    ('400m600', (400, 600)),
-    ('600m',    (600, 1e9)),
+    ('70m110',  ( 70, 110)),
+    ('50m',    (50, 1e9)),
+    ('70m',    (70, 1e9)),
+#    ('120m200', (120, 200)),
+#    ('200m400', (200, 400)),
+#    ('400m600', (400, 600)),
+#    ('200m',    (200, 1e9)),
+#    ('50m',    (50, 1e9)),
     ]
 
 to_use = {
-    '60m120':  [data, mcsum], #, zmumu, ttbar],
-    '120m200': [data, mcsum], #, dy120_c1, ttbar],
-    '200m400': [data, mcsum], #, dy200_c1, ttbar],
-    '400m600': [data, mcsum], #, dy200_c1, ttbar],
-    '600m':    [data, mcsum], #, dy500_c1, ttbar],
+    
+#    '60m120':  [data, dy50to120, dy50],#mcsum], #, zmumu, ttbar],
+    '60m120':  [data, dy50to120, ttbar_pow, mcsum],#mcsum], #, zmumu, ttbar],#powheg
+    '70m110':  [data, dy50to120, ttbar_pow, mcsum],
+#    '60m120':  [data, dy50_startup, dy50to120, dy50],#mcsum], #, zmumu, ttbar],
+#    '120m200': [data, mcsum, dy50, ttbar, ww_incl, zz_incl, wz],#mcsum], #, dy120_c1, ttbar],
+#    '200m400': [data, mcsum], #, dy200_c1, ttbar],
+#    '400m600': [data, mcsum], #, dy200_c1, ttbar],
+#    '200m':    [data, mcsum, dy50, ttbar, ww_incl, zz_incl, wz],#mcsum], #, dy500_c1, ttbar],
+    '50m':    [data, dy50to120],
+    '70m':    [data, dy50to120]
     }
 
 styles = {
     'data':      (ROOT.kBlack,     -1),
-    'mcsum':     (ROOT.kMagenta, 1001),
-    'zmumu':     (ROOT.kRed,     1001),
-    'dy120_c1':  (ROOT.kRed,     1001),
+    'mcsum':     (ROOT.kMagenta, 3001),
+    'zmumu':     (ROOT.kRed,     3001),
+    'dy50':      (ROOT.kBlue,     1001),
+    'dy50to120':      (ROOT.kRed,     1001),
+    'dy50_startup':      (ROOT.kViolet+2,     3001),
     'dy200_c1':  (ROOT.kRed,     1001),
     'dy500_c1':  (ROOT.kRed,     1001),
     'dy1000_c1': (ROOT.kBlue,    1001),
-    'ttbar': (ROOT.kGreen+2, 3005),
+    'ttbar':     (ROOT.kGreen+2, 3005),
+    'ttbar_pow':     (ROOT.kGreen+2, 3005),
+    'ttbar_startup':     (ROOT.kGreen+2, 3005),
+    'ww_incl':    (ROOT.kBlue,    3004),
+    'zz_incl':    (62,            3006),
+    'wz' :       (64,            3007),
     'inclmu15':  (28,            3002),
     }
 
 ymin = {
-    '60m120':  0.95,
-    '120m200': 0.87,
-    '200m400': 0.85,
-    '600m':    0.81,
+    '60m120':  0.8,
+    '70m110':  0.8,
+#    '120m200': 0.6,
+#    '200m400': 0.85,
+#    '200m':    0.6,
+    '50m':    0.6,
+    '70m':    0.6,
     }
-global_ymin = 0.58
+#global_ymin = 0.
+global_ymin = None
 
 def table(entry, mass_range):
     print entry.name
@@ -183,8 +219,8 @@ for name, mass_range in mass_ranges:
     pretty_name = pretty[name]
     print name, pretty_name
 
-    lg = ROOT.TLegend(0.25, 0.23, 0.81, 0.43)
-    lg.SetTextSize(0.05)
+    lg = ROOT.TLegend(0.25, 0.21, 0.81, 0.44)
+    lg.SetTextSize(0.03)
     lg.SetFillColor(0)
     lg.SetBorderSize(1)
     
@@ -218,13 +254,14 @@ for name, mass_range in mass_ranges:
             eff.SetLineColor(color)
             eff.SetMarkerStyle(20)
             eff.SetMarkerSize(1.05)
-            lg.AddEntry(eff, pretty.get(entry.name, entry.name) % (lumi/1000.), 'LP')
+            #lg.AddEntry(eff, pretty.get(entry.name, entry.name) % (lumi/1000.), 'LP')
+            lg.AddEntry(eff, pretty.get(entry.name, entry.name) % (lumi/1.), 'LP')
         else:
             draw = '2'
             eff.SetLineColor(color)
             eff.SetFillColor(color)
             eff.SetFillStyle(fill)
-            lg.AddEntry(eff, pretty.get(entry.name, entry.name), 'L')
+            lg.AddEntry(eff, pretty.get(entry.name, entry.name), 'LF')
         draw += same
         eff.Draw(draw)
         effs.append(eff)

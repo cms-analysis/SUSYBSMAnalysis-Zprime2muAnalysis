@@ -508,8 +508,8 @@ def real_hist_max(h, return_bin=False, user_range=None, use_error_bars=True):
     if user_range is None:
         b1, b2 = 1, h.GetNbinsX() + 1
     else:
-        b1, b2 = h.FindBin(user_range[0]), h.FindBin(user_range[1])+1
-    
+        b1, b2 = h.FindBin(user_range[0]), h.FindBin(user_range[1])#####
+        #b1, b2 = h.FindBin(user_range[0]), h.FindBin(user_range[1])+1
     for ibin in xrange(b1, b2):
         if use_error_bars:
             v = h.GetBinContent(ibin) + h.GetBinError(ibin)

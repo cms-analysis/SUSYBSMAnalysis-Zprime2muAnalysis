@@ -88,3 +88,20 @@
     <use name="DataFormats/Common"/>
     <use name="CommonTools/UtilAlgos"/>
 </library>
+
+# to study madgraph samples
+<library file="WeightAnalyzer.cc" name="WeightAnalyzer">
+<use name="ostream"/>
+<use name="CommonTools/UtilAlgos"/>
+<use name="FWCore/ServiceRegistry"/>
+<use name="DataFormats/PatCandidates"/>
+<use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
+</library>
+
+# for vertex fit studies
+<library   file="HistosVertexFromPAT.cc, ResolutionVertexUsingMC.cc" name="Zprime2muVertexAnalyzers">
+    <use name="rootgraphics"/>
+    <use name="CommonTools/UtilAlgos"/>
+    <use name="DataFormats/PatCandidates"/>
+    <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
+</library>

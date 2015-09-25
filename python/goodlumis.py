@@ -6,10 +6,10 @@ def for_cmssw(ll):
 
 # These run numbers guide the combination of the prompt and DCS-only
 # JSONs.
-first_run = 190456
+first_run = 246908 #first DCS run or first analyzed run
 last_rereco_run = 198523
-last_prompt_run = 208686
-last_run = 209000
+last_prompt_run = 255031
+last_run = 255031 #last DCS run or last analyzed run
 
 # Sometimes the same run-range json gets made in other versions.
 prompt_version = ''
@@ -33,37 +33,48 @@ for hole in holes:
     print 'goodlumis warning: re-adding "hole" run %i from DCS-only list' % hole
     runs_to_remove_from_dcsonly.remove(hole)
 
-DCSOnly_ll           = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/DCSOnly/json_DCSONLY.txt')
-DCSOnlyForNewRuns_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/DCSOnly/json_DCSONLY.txt')
+#DCSOnly_ll           = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/DCSOnly/json_DCSONLY.txt')
+#DCSOnlyForNewRuns_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/DCSOnly/json_DCSONLY.txt')
+DCSOnly_ll           = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/DCSOnly/json_DCSONLY.txt')
+DCSOnlyForNewRuns_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/DCSOnly/json_DCSONLY.txt')
 DCSOnlyForNewRuns_ll.removeRuns(runs_to_remove_from_dcsonly)
 
 # Remove runs outside the range [first_run, last_run] since DCS-only
-# list includes HI runs, etc.
-for ll in (DCSOnly_ll, DCSOnlyForNewRuns_ll):
-    ll.removeRuns(xrange(1, first_run))
-    ll.removeRuns(xrange(last_run+1, 300000)) # dummy number
+# list includes HI runs, etc. ###### Use later
+#for ll in (DCSOnly_ll, DCSOnlyForNewRuns_ll):
+#    ll.removeRuns(xrange(1, first_run))
+#    ll.removeRuns(xrange(last_run+1, 300000)) # dummy number
 
-# July 13th reprocessing of 2012A and 2012B
-Jul13_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-196531_8TeV_13Jul2012ReReco_Collisions12_JSON_v2.txt')
-Jul13MuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-196531_8TeV_13Jul2012ReReco_Collisions12_JSON_MuonPhys_v4.txt')
 
-# August 6th reprocessing of 5 runs of 2012A
-Aug06_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190782-190949_8TeV_06Aug2012ReReco_Collisions12_JSON.txt')
-Aug06MuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190782-190949_8TeV_06Aug2012ReReco_Collisions12_JSON_MuonPhys.txt')
+## July 13th reprocessing of 2012A and 2012B
+#Jul13_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-196531_8TeV_13Jul2012ReReco_Collisions12_JSON_v2.txt')
+#Jul13MuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-196531_8TeV_13Jul2012ReReco_Collisions12_JSON_MuonPhys_v4.txt')
+#
+## August 6th reprocessing of 5 runs of 2012A
+#Aug06_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190782-190949_8TeV_06Aug2012ReReco_Collisions12_JSON.txt')
+#Aug06MuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190782-190949_8TeV_06Aug2012ReReco_Collisions12_JSON_MuonPhys.txt')
+#
+## August 24th reprocessing of 2012C v1
+#Aug24_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_198022-%i_8TeV_24Aug2012ReReco_Collisions12_JSON.txt'          % last_rereco_run)
+#Aug24MuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_198022-%i_8TeV_24Aug2012ReReco_Collisions12_JSON_MuonPhys.txt' % last_rereco_run)
 
-# August 24th reprocessing of 2012C v1
-Aug24_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_198022-%i_8TeV_24Aug2012ReReco_Collisions12_JSON.txt'          % last_rereco_run)
-Aug24MuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_198022-%i_8TeV_24Aug2012ReReco_Collisions12_JSON_MuonPhys.txt' % last_rereco_run)
+# Prompt reconstruction, 2015A
+#Cert_246908-248038_13TeV_PromptReco_Collisions15_ZeroTesla_JSON.txt
+#/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/Cert_246908-248038_13TeV_PromptReco_Collisions15_ZeroTesla_JSON_MuonPhys.txt
+#Prompt 2015C
+#Cert_246908-255031_13TeV_PromptReco_Collisions15_50ns_JSON_MuonPhys.txt
+#Cert_246908-255031_13TeV_PromptReco_Collisions15_25ns_JSON_MuonPhys.txt
+Prompt_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/Cert_%i-%i_13TeV_PromptReco_Collisions15_25ns_JSON%s.txt' % (first_run, last_prompt_run, prompt_version))
+#PromptMuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/Cert_%i-%i_13TeV_PromptReco_Collisions15_25ns_JSON_MuonPhys%s.txt' % (first_run, last_prompt_run, prompt_version))
+PromptMuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/Cert_%i-%i_13TeV_PromptReco_Collisions15_50ns_JSON_MuonPhys%s_v2.txt' % (first_run, last_prompt_run, prompt_version))
+#Prompt_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_%i-%i_8TeV_PromptReco_Collisions12_JSON%s.txt'          % (first_run, last_prompt_run, prompt_version))
+#PromptMuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_%i-%i_8TeV_PromptReco_Collisions12_JSON_MuonPhys%s.txt' % (first_run, last_prompt_run, prompt_version))
 
-# Prompt reconstruction, 2012C v2 and 2012D
-Prompt_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_%i-%i_8TeV_PromptReco_Collisions12_JSON%s.txt'          % (first_run, last_prompt_run, prompt_version))
-PromptMuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_%i-%i_8TeV_PromptReco_Collisions12_JSON_MuonPhys%s.txt' % (first_run, last_prompt_run, prompt_version))
-
-# A few runs with Level-1 calorimeter problems, good for muon physics
-NoL1TMuonsOnly_1_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_195378-195379_8TeV_PromptReco_Collisions12_JSON_MuonPhys_NoL1T.txt')
-NoL1TMuonsOnly_2_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_196353-196501_8TeV_PromptReco_Collisions12_JSON_MuonPhys_NoL1T.txt')
-NoL1TMuonsOnly_3_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_200601-200601_8TeV_PromptReco_Collisions12_JSON_MuonPhys_NoL1T.txt')
-NoL1TMuonsOnly_ll = [NoL1TMuonsOnly_1_ll, NoL1TMuonsOnly_2_ll, NoL1TMuonsOnly_3_ll]
+## A few runs with Level-1 calorimeter problems, good for muon physics
+#NoL1TMuonsOnly_1_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_195378-195379_8TeV_PromptReco_Collisions12_JSON_MuonPhys_NoL1T.txt')
+#NoL1TMuonsOnly_2_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_196353-196501_8TeV_PromptReco_Collisions12_JSON_MuonPhys_NoL1T.txt')
+#NoL1TMuonsOnly_3_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_200601-200601_8TeV_PromptReco_Collisions12_JSON_MuonPhys_NoL1T.txt')
+#NoL1TMuonsOnly_ll = [NoL1TMuonsOnly_1_ll, NoL1TMuonsOnly_2_ll, NoL1TMuonsOnly_3_ll]
 
 # December 11th reprocessing of run 201191 (134 pb-1 of data); only for golden JSON.
 Dec11_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_201191-201191_8TeV_11Dec2012ReReco-recover_Collisions12_JSON.txt')
@@ -85,10 +96,12 @@ def combine(prompt_ll, rereco1_ll, rereco2_ll, rereco3_ll, dcsonly_ll=None):
 # Combine all lists
 #Run2012_ll          = combine(Prompt_ll,          Jul13_ll,          Aug06_ll,          Aug24_ll)
 #Run2012MuonsOnly_ll = combine(PromptMuonsOnly_ll, Jul13MuonsOnly_ll, Aug06MuonsOnly_ll, Aug24MuonsOnly_ll)
+Run2015_ll          = Prompt_ll
+Run2015MuonsOnly_ll = PromptMuonsOnly_ll
 ## for x in NoL1TMuonsOnly_ll:
 ##     Run2012MuonsOnly_ll = Run2012MuonsOnly_ll | x
-Run2012_ll          = Jan22_ll
-Run2012MuonsOnly_ll = Jan22MuonsOnly_ll
+#Run2012_ll          = Jan22_ll
+#Run2012MuonsOnly_ll = Jan22MuonsOnly_ll
 
 
 #Run2012PlusDCSOnly_ll          = combine(Prompt_ll,          Jul13_ll,          Aug06_ll,          Aug24_ll,          DCSOnly_ll)
@@ -107,7 +120,12 @@ Run2012PlusDCSOnlyMuonsOnly_ll = Jan22MuonsOnly_ll | dcsonly_ll
 # with Dec11_ll.
 # Run2012_ll = Dec11_ll
 
-all_ll_names = ['DCSOnly', 'DCSOnlyForNewRuns', 'Jan22', 'Jan22MuonsOnly', 'Run2012', 'Run2012MuonsOnly', 'Run2012PlusDCSOnly', 'Run2012PlusDCSOnlyMuonsOnly']
+#all_ll_names = ['DCSOnly', 'DCSOnlyForNewRuns', 'Jan22', 'Jan22MuonsOnly', 'Run2015', 'Run2015MuonsOnly', 'Run2012PlusDCSOnly', 'Run2012PlusDCSOnlyMuonsOnly']
+all_ll_names = ['DCSOnly', 'Run2015', 'Run2015MuonsOnly']
+
+#print 'DCSOnly', DCSOnly_ll
+#print 'Run2015', Run2015_ll
+#print 'Run2015MuonsOnly', Run2015MuonsOnly_ll
 
 def all_lls():
     return [(x, eval(x + '_ll')) for x in all_ll_names]
@@ -119,8 +137,8 @@ for base_name, ll in all_lls():
 if __name__ == '__main__':
     import sys
     if 'write' in sys.argv:
-        Run2012MuonsOnly_ll.writeJSON('Run2012MuonsOnly.json')
-        Run2012_ll.writeJSON('Run2012.json')
+        Run2015MuonsOnly_ll.writeJSON('Run2015MuonsOnly.json')
+        Run2015_ll.writeJSON('Run2015.json')
     elif 'write_all' in sys.argv:
         for base_name, ll in all_lls():
             ll.writeJSON('zp2mu_goodlumis_%s.json' % base_name)

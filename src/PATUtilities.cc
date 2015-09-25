@@ -17,13 +17,31 @@ namespace patmuon {
   reco::TrackRef trackByType(const pat::Muon& mu, TrackType t) {
     switch (t) {
     case TkGlobal: return mu.globalTrack();
-    case TkInner: return mu.innerTrack();
+    case TkInner:{
+//        std::cout<<"case TkInner: muon eta "<<mu.eta()<<" muon pt "<<mu.pt()<<std::endl;
+        return mu.innerTrack();
+    }
     case TkOuter: return mu.outerTrack();
     case TkTPFMS: return mu.tpfmsMuon();
     case TkPicky: return mu.pickyMuon();
     case TkTuneP: return muon::tevOptimized(mu, 200, 4, 6, -1).first;
     case TkTMR: return muon::TMR(mu.innerTrack(), mu.tpfmsMuon()).first;
-    case TkTunePNew: return muon::tevOptimized(mu, 200, 17, 40, 0.25).first;
+    case TkTunePNew: {
+//        std::cout<<"case TkTunePNew: muon eta "<<mu.eta()<<" muon pt "<<mu.pt()<<std::endl;
+        return muon::tevOptimized(mu, 200, 17, 40, 0.25).first;
+    }
+    case TkStartup:{
+        if(fabs(mu.eta())<1.2){
+//            std::cout<<"case TkStartup: muon eta "<<mu.eta()<<" muon pt "<<mu.pt()<<std::endl;
+//            std::cout<<" tunep "<<std::endl;
+            return muon::tevOptimized(mu, 200, 17, 40, 0.25).first;
+        }
+        else {
+//            std::cout<<"case TkStartup: muon eta "<<mu.eta()<<" muon pt "<<mu.pt()<<std::endl;
+//            std::cout<<" tracker "<<std::endl;
+            return mu.innerTrack();
+        }
+    }
     case nTrackTypes: default: return reco::TrackRef();
     }
   }

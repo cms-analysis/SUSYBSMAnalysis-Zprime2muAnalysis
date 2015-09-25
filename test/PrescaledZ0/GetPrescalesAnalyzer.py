@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+#####run with python GetPrescalesAnalyzer.py zp2mu_histos_prescale.root Mu24eta2p1
 import os, sys
 from collections import defaultdict
 from pprint import pprint

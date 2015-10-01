@@ -184,7 +184,7 @@ def ntuplify(process, fill_gen_info=False):
         
     if hasattr(process, 'pathSimple'):
         process.pathSimple *= process.SimpleNtupler * process.SimpleNtuplerEmu
-ntuplify(process) #to have ntuples also running in without crab
+ntuplify(process) #to have ntuples also running without crab
 
 def printify(process):
     process.MessageLogger.categories.append('PrintEvent')
@@ -306,14 +306,7 @@ config.Site.storageSite = 'T2_IT_Legnaro'
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
 
         dataset_details = [
-#            ('SingleMuRun2012A_13Jul2012_190450_193751', '/SingleMu/slava-datamc_SingleMuRun2012A-13Jul2012_190450_193751_20121011073628-426a2d966f78bce6bde85f3ed41c07ba/USER'),
-#            ('SingleMuRun2012A_06Aug2012_190782_190949', '/SingleMu/slava-datamc_SingleMuRun2012A-recover-06Aug2012_190782_190949_20121011120430-426a2d966f78bce6bde85f3ed41c07ba/USER'),
-#            ('SingleMuRun2012B_13Jul2012_193752_196531', '/SingleMu/slava-datamc_SingleMuRun2012B-13Jul2012_193752_196531_20121012044921-426a2d966f78bce6bde85f3ed41c07ba/USER'),
 
-#            ('ExpressPhysicsRun2015B-Express_251161_251252',    '/ExpressPhysics/rradogna-datamc_ExpressPhysicsRun2015B-Express_251161_251252_20150709121231-b1bb0cb9d6986acfdad6df64560b6f76/USER'),
-#            ('ExpressPhysicsRun2015B-Express_251253_251521',    '/ExpressPhysics/rradogna-datamc_ExpressPhysicsRun2015B-Express_251253_251521_20150711154626-b1bb0cb9d6986acfdad6df64560b6f76/USER'),
-#            ('ExpressPhysicsRun2015B-Express_251522_251562',    '/ExpressPhysics/rradogna-datamc_ExpressPhysicsRun2015B-Express_251522_251562_20150712181215-b1bb0cb9d6986acfdad6df64560b6f76/USER'),
-#            ('ExpressPhysicsRun2015B-Express_251563_251643', '/ExpressPhysics/rradogna-datamc_ExpressPhysicsRun2015B-Express_251563_251643_20150714134408-0633e624cb4a2f2023c182912c95c757/USER'),
 
             ('SingleMuonRun2015B-Prompt_251162_251499',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409-3aa7688518cb1f1b044caf15b1a9ed05/USER'),
             ('SingleMuonRun2015B-Prompt_251500_251603',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251500_251603_20150718235715-9996471c14459acaec01707975d1e954/USER'),

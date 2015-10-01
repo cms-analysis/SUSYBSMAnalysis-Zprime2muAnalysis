@@ -52,7 +52,7 @@ config.Data.ignoreLocality = True #x runD to avoid blacklist issue
             #if create_only:
                 #os.system('crab -create')
             #else:
-            os.system('crab submit -c crabConfig.py --dryrun')
+            os.system('crab submit -c crabConfig.py') #--dryrun
             os.system('rm -f crabConfig.py tmp.json')
 
     run_limits = []

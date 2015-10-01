@@ -11,10 +11,11 @@ process.source.fileNames =['file:./pat.root',
 
                            ]
 process.maxEvents.input = -1
-process.GlobalTag.globaltag = '74X_dataRun2_Prompt_v1'## solo per proare i dati
-#process.GlobalTag.globaltag = 'MCRUN2_74_V9A'## solo per proare i mc
+process.GlobalTag.globaltag = '74X_dataRun2_Prompt_v1'## for Run2 data
+#process.GlobalTag.globaltag = 'MCRUN2_74_V9A'## for mc
 #process.GlobalTag.globaltag = '74X_mcRun2_startup_realistic50ns_v0' #mc startup
-#process.options.wantSummary = cms.untracked.bool(True)# false di default
+
+#process.options.wantSummary = cms.untracked.bool(True)# false by default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1 # default 1000
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold
@@ -30,7 +31,6 @@ process.PrescaleToCommon.overall_prescale = overall_prescale
 # for making histograms with different cut/dilepton combinations.
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
 HistosFromPAT.leptonsFromDileptons = True
-#HistosFromPAT.useMadgraphWeight= cms.untracked.bool(False) #if we want to re-wigth madgraph samples. For other samples the weight is always 1. Does not work with data.
 
 # These modules define the basic selection cuts. For the monitoring
 # sets below, we don't need to define a whole new module, since they
@@ -184,7 +184,7 @@ def ntuplify(process, fill_gen_info=False):
         
     if hasattr(process, 'pathSimple'):
         process.pathSimple *= process.SimpleNtupler * process.SimpleNtuplerEmu
-ntuplify(process) #to have ntuples also running in interactive way
+ntuplify(process) #to have ntuples also running in without crab
 
 def printify(process):
     process.MessageLogger.categories.append('PrintEvent')
@@ -316,9 +316,6 @@ config.Site.storageSite = 'T2_IT_Legnaro'
 #            ('ExpressPhysicsRun2015B-Express_251563_251643', '/ExpressPhysics/rradogna-datamc_ExpressPhysicsRun2015B-Express_251563_251643_20150714134408-0633e624cb4a2f2023c182912c95c757/USER'),
 
             ('SingleMuonRun2015B-Prompt_251162_251499',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409-3aa7688518cb1f1b044caf15b1a9ed05/USER'),
-#            ('SingleMuonRun2015B-Prompt_251500_251561',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251500_251561_20150714135629-3aa7688518cb1f1b044caf15b1a9ed05/USER'),
-#             ('SingleMuonRun2015B-Prompt_251562_251642',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251562_251642_20150716164649-9996471c14459acaec01707975d1e954/USER'),
-#             ('SingleMuonRun2015B-Prompt_251500_251642',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251500_251642_20150717155341-9996471c14459acaec01707975d1e954/USER'),
             ('SingleMuonRun2015B-Prompt_251500_251603',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251500_251603_20150718235715-9996471c14459acaec01707975d1e954/USER'),
             ('SingleMuonRun2015B-Prompt_251613_251883',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251613_251883_20150719000207-9996471c14459acaec01707975d1e954/USER'),
                            
@@ -362,8 +359,8 @@ config.Data.totalUnits = -1
 config.Data.unitsPerJob = 200
 #config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions15/13TeV/Cert_254833_13TeV_PromptReco_Collisions15_JSON.txt'
 #config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions15/13TeV/Cert_246908-255031_13TeV_PromptReco_Collisions15_50ns_JSON_MuonPhys_v2.txt'
-config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions15/13TeV/Cert_246908-256869_13TeV_PromptReco_Collisions15_25ns_JSON_MuonPhys.txt'
-#config.Data.lumiMask = '%(lumi_mask)s' #######
+#config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions15/13TeV/Cert_246908-256869_13TeV_PromptReco_Collisions15_25ns_JSON_MuonPhys.txt'
+config.Data.lumiMask = '%(lumi_mask)s' #######
 ''' % locals()
 
             new_crab_cfg = new_crab_cfg.replace('job_control', job_control)

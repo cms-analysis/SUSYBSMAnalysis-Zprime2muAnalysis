@@ -6,7 +6,8 @@ import FWCore.ParameterSet.Config as cms
 import HLTrigger.HLTfilters.hltHighLevel_cfi
 goodDataFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
 goodDataFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', 'PAT')
-goodDataFilter.HLTPaths = ['goodDataAll'] # can set to just 'goodDataPrimaryVertexFilter', for example
+#goodDataFilter.HLTPaths = ['goodDataAll'] # goodDataAll = process.hltPhysicsDeclared * process.primaryVertex but hltPhysicsDeclared bit checked by the certification team
+goodDataFilter.HLTPaths = ['goodDataPrimaryVertexFilter']
 #goodDataFilter.HLTPaths = ['goodDataMETFilter']
 goodDataFilter.andOr = False # = AND
 

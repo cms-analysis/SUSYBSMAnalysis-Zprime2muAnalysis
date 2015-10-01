@@ -5,16 +5,13 @@ from tuple_common import process, crab_cfg
 
 #process.source.fileNames = ['/store/data/Run2012A/SingleMu/AOD/13Jul2012-v1/00000/009C369E-85D0-E111-BD58-1CC1DE046FC0.root']
 process.source.fileNames = [
-                            #'file:./pickevents.root'
-                            '/store/data/Run2015B/SingleMuon/AOD/PromptReco-v1/000/251/168/00000/02132736-CB26-E511-8127-02163E01386E.root',
-                            '/store/data/Run2015B/SingleMuon/AOD/PromptReco-v1/000/251/168/00000/2447FF28-C826-E511-9B9A-02163E0134D6.root',
-                            '/store/data/Run2015B/SingleMuon/AOD/PromptReco-v1/000/251/168/00000/A4DCB1FF-CE26-E511-AC79-02163E0119E4.root',
-                            '/store/data/Run2015B/SingleMuon/AOD/PromptReco-v1/000/251/168/00000/A86651FA-C926-E511-9D68-02163E011EE9.root',
-                            '/store/data/Run2015B/SingleMuon/AOD/PromptReco-v1/000/251/168/00000/B42C1F30-EA26-E511-9C77-02163E0144D6.root',
-                            '/store/data/Run2015B/SingleMuon/AOD/PromptReco-v1/000/251/168/00000/E285B231-C926-E511-994F-02163E013584.root',
+                            'file:./pickevents_254879_54_49148301.root'
+#                            '/store/data/Run2015C/SingleMuon/AOD/PromptReco-v1/000/254/879/00000/02B11B7C-9B4B-E511-BC57-02163E011F6A.root',
+#                            '/store/data/Run2015C/SingleMuon/AOD/PromptReco-v1/000/254/879/00000/2677EE73-9B4B-E511-96E4-02163E0124F9.root',
+#                            '/store/data/Run2015C/SingleMuon/AOD/PromptReco-v1/000/254/879/00000/72684170-9B4B-E511-A3BE-02163E0127FF.root',
                             ]
 #process.GlobalTag.globaltag = 'FT_53_V6C_AN4::All'
-process.GlobalTag.globaltag = '74X_dataRun2_Prompt_v1'
+process.GlobalTag.globaltag = '74X_dataRun2_Prompt_v2'
 #process.GlobalTag.globaltag = 'GR_P_V56'
 ##process.GlobalTag = GlobalTag(process.GlobalTag, 'auto:com10_2013', '')
 process.maxEvents.input = -1
@@ -30,6 +27,7 @@ config.Data.unitsPerJob = %(lumis_per_job)s
 #config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions12/8TeV/Prompt/Cert_190456-208686_8TeV_PromptReco_Collisions12_JSON.txt'
 #config.Data.runRange = '193093-193999' # '193093-194075'
 config.Data.lumiMask = '%(lumi_mask)s'
+config.Data.ignoreLocality = True #x runD to avoid blacklist issue
 '''
 
     lumis_per_job = 20
@@ -54,7 +52,7 @@ config.Data.lumiMask = '%(lumi_mask)s'
             #if create_only:
                 #os.system('crab -create')
             #else:
-            os.system('crab submit -c crabConfig.py')
+            os.system('crab submit -c crabConfig.py --dryrun')
             os.system('rm -f crabConfig.py tmp.json')
 
     run_limits = []
@@ -127,10 +125,14 @@ config.Data.lumiMask = '%(lumi_mask)s'
             dataset = '/SingleMuon/Run2015B-PromptReco-v1/AOD'
             name    = 'SingleMuonRun2015B-Prompt'
             tag     = 'GR_P_V56'
-        if run1 >= 253888 :
+        if run1 >= 253888 and run2 <= 254914:
             dataset = '/SingleMuon/Run2015C-PromptReco-v1/AOD'
             name    = 'SingleMuonRun2015C-Prompt'
             tag     = '74X_dataRun2_Prompt_v1'
+        if run1 >= 256629:
+            dataset = '/SingleMuon/Run2015D-PromptReco-v3/AOD'
+            name    = 'SingleMuonRun2015D-Prompt'
+            tag     = '74X_dataRun2_Prompt_v2'
         else:
             raise ValueError("don't know how to do a run_limits production for run range [%i,%i]" % run_limits)
 

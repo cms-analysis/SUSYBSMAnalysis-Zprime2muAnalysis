@@ -4,10 +4,9 @@ import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 
-process.source.fileNames =[#'file:./pat.root',
+process.source.fileNames =['file:./pat.root',
                            
 #                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015C-Prompt_253888_254914_20150831150018/150831_130042/0000/pat_1.root',
-                           '/store/user/rradogna/SingleMuon/datamc_SingleMuonRun2015C-Prompt_253888_254914_20150831150018/150831_130042/0000/pat_447.root'
 #
 
                            ]
@@ -16,7 +15,7 @@ process.GlobalTag.globaltag = '74X_dataRun2_Prompt_v1'## for Run2 data
 #process.GlobalTag.globaltag = 'MCRUN2_74_V9A'## for mc
 #process.GlobalTag.globaltag = '74X_mcRun2_startup_realistic50ns_v0' #mc startup
 
-#process.options.wantSummary = cms.untracked.bool(True)# false di default
+#process.options.wantSummary = cms.untracked.bool(True)# false by default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1 # default 1000
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold
@@ -314,6 +313,8 @@ config.Site.storageSite = 'T2_IT_Legnaro'
             ('SingleMuonRun2015B-Prompt_251613_251883',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251613_251883_20150719000207-9996471c14459acaec01707975d1e954/USER'),
                            
             ('SingleMuonRun2015C-Prompt_253888_254914',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015C-Prompt_253888_254914_20150831150018-681693e882ba0f43234b3b41b1bbc39d/USER'),
+                           
+            ('SingleMuonRun2015D-Prompt_256629_256842',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015D-Prompt_256629_256842_20150926113604-c9b39dd88dc98b683a1d7cecc8f6c42c/USER'),
 
             ]
 
@@ -349,7 +350,9 @@ config.Site.storageSite = 'T2_IT_Legnaro'
 config.Data.splitting = 'LumiBased'
 config.Data.totalUnits = -1
 config.Data.unitsPerJob = 200
-#config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions15/13TeV/Cert_254833_13TeV_PromptReco_Collisions15_JSON.txt' #runC 50ns
+#config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions15/13TeV/Cert_254833_13TeV_PromptReco_Collisions15_JSON.txt'
+#config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions15/13TeV/Cert_246908-255031_13TeV_PromptReco_Collisions15_50ns_JSON_MuonPhys_v2.txt'
+#config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions15/13TeV/Cert_246908-256869_13TeV_PromptReco_Collisions15_25ns_JSON_MuonPhys.txt'
 config.Data.lumiMask = '%(lumi_mask)s' #######
 ''' % locals()
 
@@ -397,20 +400,19 @@ config.Data.unitsPerJob  = 5000
             if sample.is_madgraph:
                 print "Madgraph: re-weight applied"
                 new_py += "\nHistosFromPAT.useMadgraphWeight= cms.untracked.bool(True)\n"
-                #new_py += "\nprocess.Histosstartup.useMadgraphWeight= True\n" #to let it work specify the correct process name
 
             if combine_dy_samples and (sample.name == 'zmumu' or 'dy' in sample.name):
                 mass_limits = {
-                    'dy50'      : (  50,     100),
+#                    'dy50'      : (  50,     100),
                     #'dy120'     : ( 120,     200),
-                    'dy100-200'     : ( 100,     200),
-                    'dy200-400'     : ( 200,     400),
-                    'dy400-500'     : ( 400,     500),
-                    'dy500-700'     : ( 500,     700),
-                    'dy700-800'     : ( 700,     800),
-                    'dy1500'    : (1000,    1500),
-                    'dy2000'    : (1500,    2000),
-                    'dy3000'    : (2000,    3000),
+#                    'dy100-200'     : ( 100,     200),
+#                    'dy200-400'     : ( 200,     400),
+#                    'dy400-500'     : ( 400,     500),
+#                    'dy500-700'     : ( 500,     700),
+#                    'dy700-800'     : ( 700,     800),
+#                    'dy1500'    : (1000,    1500),
+#                    'dy2000'    : (1500,    2000),
+#                    'dy3000'    : (2000,    3000),
                     #'dy7500'    : (6000,    7500),
                     #'dy8500'    : (8500,    9500),
                     #'dy9500'    : (9500,  100000),
@@ -431,7 +433,7 @@ for pn,p in process.paths.items():
 
             open('crabConfig.py', 'wt').write(crab_cfg % sample)
             if not just_testing:
-                os.system('crab submit --dryrun -c crabConfig.py')
+                os.system('crab submit  -c crabConfig.py') #--dryrun
             else:
                 cmd = 'diff histos.py histos_crab.py | less'
                 print cmd

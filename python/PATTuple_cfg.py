@@ -65,8 +65,8 @@ addHEEPId(process)
 
 # PAT taus
 del process.patTaus.tauIDSources.againstElectronMVA5raw
-del process.patTaus.tauIDSources.againstMuonMedium
-process.cleanPatTaus.preselection = process.cleanPatTaus.preselection.value().replace('againstMuonMedium', 'againstMuonTight') 
+#del process.patTaus.tauIDSources.againstMuonMedium
+process.cleanPatTaus.preselection = process.cleanPatTaus.preselection.value().replace('againstMuonMedium', 'againstMuonTight')
 
 # PAT muons 
 process.patMuons.embedTrack = True
@@ -137,9 +137,9 @@ process.goodDataMETFilter =  cms.Path(process.HBHENoiseFilter *
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
 process.goodDataHLTPhysicsDeclared = cms.Path(process.hltPhysicsDeclared)
-process.goodDataPrimaryVertexFilter = cms.Path(process.primaryVertexFilter)
+process.goodDataPrimaryVertexFilter = cms.Path(process.primaryVertex)
 process.goodDataNoScraping = cms.Path(process.noscraping)
-process.goodDataAll = cms.Path(process.hltPhysicsDeclared * process.primaryVertexFilter) # * process.noscraping)
+process.goodDataAll = cms.Path(process.hltPhysicsDeclared * process.primaryVertex) # * process.noscraping)
 
 process.outpath = cms.EndPath(process.out) 
 #print process.dumpPython()

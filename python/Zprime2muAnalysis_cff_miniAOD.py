@@ -11,7 +11,7 @@ goodDataFilter.HLTPaths = ['goodDataAll'] # can set to just 'goodDataPrimaryVert
 goodDataFilter.andOr = False # = AND
 
 from SkimMiniAOD_cff import selectedPatMuons
-from MuonPhotonMatch_cff_miniAOD import muonPhotonMatch
+from MuonPhotonMatch_cff import muonPhotonMatchminiAOD
 from OurSelectionDec2012_cff import allDimuons, dimuons_miniAOD, loose_cut
 
 leptons = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
@@ -21,7 +21,7 @@ leptons = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
                          ##muon_cuts = cms.string('isGlobalMuon && pt>20'),
                          electron_cuts = cms.string('userInt("HEEPId") == 0'),
                          muon_track_for_momentum = cms.string('TunePNew'),
-                         muon_photon_match_src = cms.InputTag('muonPhotonMatch'),
+                         muon_photon_match_src = cms.InputTag('muonPhotonMatchminiAOD'),
                          electron_muon_veto_dR = cms.double(-1),
                          trigger_match_max_dR = cms.double(0.2),
                          trigger_summary = cms.InputTag('selectedPatTrigger'),
@@ -31,7 +31,7 @@ leptons = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
 
 
 
-Zprime2muAnalysisSequence = cms.Sequence(selectedPatMuons * muonPhotonMatch * leptons * allDimuons * dimuons_miniAOD)
+Zprime2muAnalysisSequence = cms.Sequence(selectedPatMuons * muonPhotonMatchminiAOD * leptons * allDimuons * dimuons_miniAOD)
 #Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)
 
 def rec_levels(process, new_track_types):

@@ -10,7 +10,7 @@ hltPhysicsDeclared = cms.EDFilter('HLTPhysicsDeclared',
                                   L1GtReadoutRecordTag = cms.InputTag('gtDigis')
                                   )
 
-primaryVertex = cms.EDFilter('GoodVertexFilter',
+primaryVertexFilter = cms.EDFilter('GoodVertexFilter',
                                    vertexCollection = cms.InputTag('offlinePrimaryVertices'),
                                    minimumNDOF = cms.uint32(4),
                                    maxAbsZ = cms.double(24),

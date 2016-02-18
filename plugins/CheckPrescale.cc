@@ -6,6 +6,7 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
 #include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
+#include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
 
 class CheckPrescale : public edm::EDAnalyzer {
 public:
@@ -21,6 +22,7 @@ private:
   HLTConfigProvider hlt_cfg;
   const bool dump_prescales;
   const bool throw_on_prescale;
+  HLTPrescaleProvider hltPrescaleProvider_;
 
   struct tree_t {
     unsigned run;
@@ -38,7 +40,8 @@ CheckPrescale::CheckPrescale(const edm::ParameterSet& cfg)
   : hlt_process_name(cfg.getParameter<edm::InputTag>("hlt_src").process()),
     trigger_paths(cfg.getParameter<std::vector<std::string> >("trigger_paths")),
     dump_prescales(cfg.getUntrackedParameter<bool>("dump_prescales", false)),
-    throw_on_prescale(cfg.getUntrackedParameter<bool>("throw_on_prescale", !dump_prescales))
+    throw_on_prescale(cfg.getUntrackedParameter<bool>("throw_on_prescale", !dump_prescales)),
+    hltPrescaleProvider_(cfg, consumesCollector(), *this)
 {
   if (dump_prescales) {
     edm::Service<TFileService> fs;
@@ -51,7 +54,7 @@ CheckPrescale::CheckPrescale(const edm::ParameterSet& cfg)
 void CheckPrescale::beginRun(edm::Run const& run, edm::EventSetup const& setup){
 
   bool changed = true;
-  if (!hlt_cfg.init(run, setup, hlt_process_name, changed))
+  if (!hltPrescaleProvider_.init(run, setup, hlt_process_name, changed))
     throw cms::Exception("CheckPrescale") << "HLTConfigProvider::init failed with process name " << hlt_process_name << "\n";
 
   //if (changed) {
@@ -67,6 +70,7 @@ void CheckPrescale::analyze(const edm::Event& event, const edm::EventSetup& setu
   // not meant to handle checking more-fundamentally different trigger
   // paths, e.g. HLT_Mu15_v2, HLT_Mu24_v1, but only different versions
   // of the "same" path.
+  HLTConfigProvider const& hlt_cfg = hltPrescaleProvider_.hltConfigProvider();
   bool found = false;
   for (std::vector<std::string>::const_iterator trigger_path = trigger_paths.begin(), end = trigger_paths.end(); trigger_path != end; ++trigger_path) {
     if (hlt_cfg.triggerIndex(*trigger_path) != hlt_cfg.size()) {
@@ -77,8 +81,22 @@ void CheckPrescale::analyze(const edm::Event& event, const edm::EventSetup& setu
     else
       continue;
 
-    std::pair<int, int> prescales = hlt_cfg.prescaleValues(event, setup, *trigger_path);
+    //std::pair<int, int> prescales = hlt_cfg.prescaleValues(event, setup, *trigger_path);
+      std::pair<int, int> prescales;
+      prescales.first=1;
+      std::pair<std::vector<std::pair<std::string,int> >,int> prescalesInDetail;
+      prescalesInDetail = hltPrescaleProvider_.prescaleValuesInDetail(event, setup, *trigger_path);
     //std::cout << "trigger path " << *trigger_path << " has L1/HLT prescales: " << prescales.first << "/" << prescales.second << "   event r/l/e: " << event.id().run() << "/" << event.luminosityBlock() << "/" << event.id().event() << " orbitNum: " << event.orbitNumber() << " BX: " << event.bunchCrossing() << " seconds since the epoch: " << event.time().unixTime() << "\n";
+
+     
+      for (unsigned int i=0; i<prescalesInDetail.first.size(); ++i) {
+          //std::cout<<" prescalesInDetail.first[i].first "<<prescalesInDetail.first[i].first<<" prescalesInDetail.first[i].second "<<prescalesInDetail.first[i].second<<std::endl;
+          prescales.first *= prescalesInDetail.first[i].second;
+          //std::cout<<" prescales.first "<<prescales.first<<std::endl;
+      }
+      
+      //std::cout<<" prescalesInDetail.second "<<prescalesInDetail.second<<std::endl;
+      prescales.second = prescalesInDetail.second;
 
     if (prescales.first != 1 || prescales.second != 1) {
       std::ostringstream out;

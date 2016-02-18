@@ -138,7 +138,9 @@ Zprime2muCompositeCandidatePicker::Zprime2muCompositeCandidatePicker(const edm::
     cut_on_dpt_over_pt(cfg.existsAs<double>("dpt_over_pt_max")),
     dpt_over_pt_max(cut_on_dpt_over_pt ? cfg.getParameter<double>("dpt_over_pt_max") : 1e99)
 {
-  produces<pat::CompositeCandidateCollection>();
+ consumes<pat::CompositeCandidateCollection>(src); 
+ produces<pat::CompositeCandidateCollection>();
+  
 }
 
 void Zprime2muCompositeCandidatePicker::remove_overlap(pat::CompositeCandidateCollection& cands) const {

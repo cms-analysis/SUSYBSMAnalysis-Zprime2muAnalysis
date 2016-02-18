@@ -101,10 +101,12 @@ void RecLevelHelper::storeRecLevelMap(const edm::Event& event) {
   for (int rec = 0; rec < MAX_LEVELS; rec++) {
     edm::View<reco::Candidate> view;
     get(event, rec, lepInputs[rec], view);
+    edm::Handle<reco::Candidate> handle;
 
     // Cache the product ids for each collection so we can look up the
     // rec level from the CandidateBaseRef.
-    int key = int(view.id().id());
+    // int key = int(view.id().id());
+    int key = int(handle.id().id());
     if (recLevelMap.find(key) == recLevelMap.end())
       recLevelMap[key] = rec;
 

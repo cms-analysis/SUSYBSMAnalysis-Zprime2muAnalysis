@@ -12,5 +12,5 @@ triggerDecision = cms.PSet(doingElectrons = cms.bool(False),
                            # taken care of in code as there is no such
                            # path in the Spring11/Summer11 MC.
                            l1Paths = cms.vstring('L1_SingleMu16er'),
-                           hltPaths = cms.vstring('HLT_Mu40_eta2p1_v9')
+                           hltPaths = cms.vstring('HLT_Mu50_v2')
                            )

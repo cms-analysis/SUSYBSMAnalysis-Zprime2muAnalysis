@@ -4,7 +4,7 @@
 # run like DataMCSpectraComparison/histos.py, where all modes get run
 # in the same job.
 use_old_selection = False
-restrict_mass_window = True
+restrict_mass_window = False
 # intime_bin numbering: bin 0 = 0-5, bin 1 = 6-11, bin 2 = 12-26
 # late_bin numbering: bin 0 = 0-9, bin 2 = 10-26
 intime_bin, late_bin = -1, -1
@@ -19,7 +19,8 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import cms, process
 
 process.maxEvents.input = -1
 #process.source.fileNames = ['file:./pat.root']
-process.source.fileNames = ['/store/user/rradogna/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/effres_zp5000/b5e3e443fb661f20a0d6cd4cace0f7ee/pat_10_1_sf5.root',]
+process.source.fileNames = [ '/store/user/alfloren/PAATuples/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/effres_dy50to120/160216_151921/0000/Zprime_100.root',
+                            ]
 process.options.wantSummary = True
 
 ex = ''
@@ -30,7 +31,8 @@ if use_old_selection:
     switch_to_old_selection(process)
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import rec_levels, rec_level_module
-tracks = ['global', 'inner', 'tpfms', 'picky', 'tunep', 'tmr', 'tunepnew']
+#tracks = ['global', 'inner', 'tpfms', 'picky', 'tunep', 'tmr', 'tunepnew']
+tracks = ['tunepnew']
 rec_levels(process, tracks)
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HardInteractionFilter_cfi')
@@ -47,7 +49,7 @@ process.load('SUSYBSMAnalysis.Zprime2muAnalysis.EfficiencyFromMC_cfi')
 import SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff as VBTFSelection
 process.allDimuonsVBTF = VBTFSelection.allDimuons.clone()
 process.dimuonsVBTF = VBTFSelection.dimuons.clone(src = 'allDimuonsVBTF')
-process.VBTFEfficiencyFromMC = process.EfficiencyFromMC.clone(dimuon_src = 'dimuonsVBTF', acceptance_max_eta_2 = 2.1)
+process.VBTFEfficiencyFromMC = process.EfficiencyFromMC.clone(dimuon_src = 'dimuonsVBTF', acceptance_max_eta_2 = 2.4)
 
 # Temporarily disable explicit checks on Level-1 decision until we
 # figure out which branch to use.
@@ -88,7 +90,7 @@ if check_prescaled_path:
     min_offline_pt = prescaled_offline_pt_threshold
     ex += 'mu' + str(min_hlt_pt)
 
-    l1,hlt = 'L1_SingleMu16er', 'HLT_Mu24_eta2p1_v3'
+    l1,hlt = 'L1_SingleMu16er', 'HLT_Mu27_v2'
     from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match
 
     for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
@@ -125,38 +127,52 @@ if not check_prescaled_path:
 
 process.p2 = cms.Path(p2)
 
+f = file('outfile', 'w')
+f.write(process.dumpPython())
+f.close()
 ###############################################################################
     
 import sys, os
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
-[CRAB]
-jobtype = cmssw
-scheduler = remoteGlidein
+from CRABClient.UserUtilities import config
+config = config()
 
-[CMSSW]
-datasetpath = %(dataset)s
-#dbs_url = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
-dbs_url=phys03
-pset = histos_crab.py
-total_number_of_events = -1
-events_per_job = 20000
-use_dbs3=1
+config.General.requestName = 'ana_effres_%(ex)s%(name)s'
+config.General.workArea = 'crab'
+#config.General.transferLogs = True
 
-[USER]
-ui_working_dir = crab/crab_ana_effres_%(ex)s%(name)s
-return_data = 1
+config.JobType.pluginName = 'Analysis'
+config.JobType.psetName = 'histos_crab.py'
+#config.JobType.priority = 1
+
+config.Data.inputDataset =  '%(dataset)s'
+config.Data.inputDBS = 'phys03'
+config.Data.splitting = 'EventAwareLumiBased'
+#config.Data.splitting = 'FileBased'
+config.Data.totalUnits = -1
+config.Data.unitsPerJob  = 20000
+#config.Data.unitsPerJob  = 100
+config.Data.publication = False
+config.Data.outputDatasetTag = 'ana_datamc_%(name)s'
+config.Data.outLFNDirBase = '/store/user/alfloren'
+config.Data.ignoreLocality = True
+
+config.Site.storageSite = 'T2_CH_CERN'
+                          
 '''
         
     samples = [
-               ('zp5000','/ZprimeToMuMu_M-5000_Tune4C_13TeV-pythia8/rradogna-effres_zp5000-b5e3e443fb661f20a0d6cd4cace0f7ee/USER',-1, 20000),
-               ('dy120','/DYJetsToEEMuMu_M-120To200_13TeV-madgraph/rradogna-effres_dy120-b5e3e443fb661f20a0d6cd4cace0f7ee/USER',-1, 20000),
-               ('dy200','/DYJetsToEEMuMu_M-200To400_13TeV-madgraph/rradogna-effres_dy200-b5e3e443fb661f20a0d6cd4cace0f7ee/USER',-1, 20000),
-               ('dy800','/DYJetsToEEMuMu_M-400To800_13TeV-madgraph/rradogna-effres_dy800-b5e3e443fb661f20a0d6cd4cace0f7ee/USER',-1, 20000),
-               ('dy2000','/DYJetsToEEMuMu_M-1400To2300_13TeV-madgraph/rradogna-effres_dy2000-b5e3e443fb661f20a0d6cd4cace0f7ee/USER',-1, 20000),
-               ('dy3000','/DYJetsToEEMuMu_M-2300To3500_13TeV-madgraph/rradogna-effres_dy3000-b5e3e443fb661f20a0d6cd4cace0f7ee/USER',-1, 20000),
-               ('dy4500','/DYJetsToEEMuMu_M-4500To6000_13TeV-madgraph/rradogna-effres_dy5000-b5e3e443fb661f20a0d6cd4cace0f7ee/USER',-1, 20000),
-               ('dy9500','/DYJetsToEEMuMu_M-9500_13TeV-madgraph/rradogna-effres_dy9500-b5e3e443fb661f20a0d6cd4cace0f7ee/USER',-1, 20000),
+               ('dy120','/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/alfloren-effres_dy50to120-2b07f03a08b1e3f01e70977ff823c3f4/USER',50, 120),
+               ('dy200','/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/alfloren-effres_dy120to200-2b07f03a08b1e3f01e70977ff823c3f4/USER',120, 200),
+               ('dy400','/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/alfloren-effres_dy200to400-2b07f03a08b1e3f01e70977ff823c3f4/USER',200, 400),
+               #('dy800','/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/rradogna-effres_dy400to800_s-4acec3425cf1ea1237c0a164f83c7ac2/USER',400, 800),
+               ('dy1400','/ZToMuMu_NNPDF30_13TeV-powheg_M_800_1400/alfloren-effres_dy800to1400-2b07f03a08b1e3f01e70977ff823c3f4/USER',800, 1400),
+               ('dy2300','/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/alfloren-effres_dy1400to2300-2b07f03a08b1e3f01e70977ff823c3f4/USER',1400, 2300),
+               ('dy3500','/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/alfloren-effres_dy1400to2300-2b07f03a08b1e3f01e70977ff823c3f4/USER',2300, 3500),
+               ('dy4500','/ZToMuMu_NNPDF30_13TeV-powheg_M_3500_4500/alfloren-effres_dy3500to4500-2b07f03a08b1e3f01e70977ff823c3f4/USER',3500, 4500),
+               ('dy6000','/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/alfloren-effres_dy4500to6000-2b07f03a08b1e3f01e70977ff823c3f4/USER',4500, 6000),
+               
         ]
 
     resolutions = {
@@ -183,7 +199,7 @@ return_data = 1
         ex += '_'
     
     for name, dataset, lo, hi in samples:
-        open('crab.cfg', 'wt').write(crab_cfg % locals())
+        open('crabConfig.py', 'wt').write(crab_cfg % locals())
 
         if restrict_mass_window and ('zp' in name or 'rs' in name):
             mass = name.replace('zp', '').replace('rs', '')
@@ -201,5 +217,5 @@ return_data = 1
         open('histos_crab.py', 'wt').write(new_py)
         
         if not just_testing:
-            os.system('crab -create -submit all')
-            os.system('rm crab.cfg histos_crab.py histos_crab.pyc')
+            os.system('crab submit  -c crabConfig.py')
+            os.system('rm crabConfig.py histos_crab.py histos_crab.pyc')

@@ -29,7 +29,6 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TrackUtilities.h"
-#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"///
 
 class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
  public:
@@ -70,10 +69,6 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   const reco::Vertex*   vertex;
     bool _usePrescaleWeight;
     int  _prescaleWeight;
-    
-    double eventWeight;///
-    bool _useMadgraphWeight;///
-    double _madgraphWeight;///
 
   TH1F* NBeamSpot;
   TH1F* NVertices;
@@ -141,8 +136,6 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
     //special
     TH1F* DimuonMassVtx_chi2;
     TH1F* DimuonMassVtx_prob;
-    //weight
-    TH1F* WeightMadGraph;///
 };
 
 Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
@@ -156,10 +149,15 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
     beamspot(0),
     vertex(0),
     _usePrescaleWeight(cfg.getUntrackedParameter<bool>("usePrescaleWeight",false)),
-    _prescaleWeight(1),
-    _useMadgraphWeight(cfg.getParameter<bool>("useMadgraphWeight")),///
-    _madgraphWeight(1.)///
+    _prescaleWeight(1)
 {
+
+  consumes<reco::CandidateView>(lepton_src);
+  consumes<pat::CompositeCandidateCollection>(dilepton_src);
+  consumes<reco::BeamSpot>(beamspot_src);
+  consumes<reco::VertexCollection>(vertex_src);
+  
+
   std::string title_prefix = cfg.getUntrackedParameter<std::string>("titlePrefix", "");
   if (title_prefix.size() && title_prefix[title_prefix.size()-1] != ' ')
     title_prefix += " ";
@@ -293,9 +291,6 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
     //special
     DimuonMassVtx_chi2 = fs->make<TH1F>("DimuonMassVtx_chi2", titlePrefix + "dimu. vertex #chi^{2}/dof", 300, 0, 30);
     DimuonMassVtx_prob = fs->make<TH1F>("DimuonMassVtx_prob", titlePrefix + "dimu. vertex probability", 100, 0, 1);
-    
-     //weight
-     WeightMadGraph = fs->make<TH1F>("weightperevent", titlePrefix + "weight per event", 4, -2,2);
 }
 
 void Zprime2muHistosFromPAT::getBSandPV(const edm::Event& event) {
@@ -317,63 +312,63 @@ void Zprime2muHistosFromPAT::getBSandPV(const edm::Event& event) {
       ++vertex_count;
     }
   }
-  NVertices->Fill(vertex_count, _madgraphWeight);
+  NVertices->Fill(vertex_count);
 }
 
 void Zprime2muHistosFromPAT::fillBasicLeptonHistos(const reco::CandidateBaseRef& lep) {
-  LeptonEta->Fill(lep->eta(), _madgraphWeight);
-  LeptonRap->Fill(lep->rapidity(), _madgraphWeight);
-  LeptonPhi->Fill(lep->phi(), _madgraphWeight);
+  LeptonEta->Fill(lep->eta());
+  LeptonRap->Fill(lep->rapidity());
+  LeptonPhi->Fill(lep->phi());
 
-  LeptonPt->Fill(lep->pt(), _madgraphWeight);
-  LeptonPz->Fill(fabs(lep->pz()), _madgraphWeight);
-  LeptonP ->Fill(lep->p(), _madgraphWeight);
+  LeptonPt->Fill(lep->pt());
+  LeptonPz->Fill(fabs(lep->pz()));
+  LeptonP ->Fill(lep->p());
 
-  LeptonPtVsEta->Fill(lep->eta(), lep->pt(), _madgraphWeight);
-  LeptonPVsEta ->Fill(lep->eta(), lep->p(), _madgraphWeight);
+  LeptonPtVsEta->Fill(lep->eta(), lep->pt());
+  LeptonPVsEta ->Fill(lep->eta(), lep->p());
 }
 
 void Zprime2muHistosFromPAT::fillOfflineMuonHistos(const pat::Muon* mu) {
   const reco::MuonIsolation& iso = mu->isolationR03();
-  IsoSumPt   ->Fill(iso.sumPt, _madgraphWeight);
-  RelIsoSumPt->Fill(iso.sumPt / mu->innerTrack()->pt(), _madgraphWeight);
-  IsoEcal    ->Fill(iso.emEt, _madgraphWeight);
-  IsoHcal    ->Fill(iso.hadEt + iso.hoEt, _madgraphWeight);
-  CombIso    ->Fill( iso.sumPt + iso.emEt + iso.hadEt + iso.hoEt, _madgraphWeight);
-  RelCombIso ->Fill((iso.sumPt + iso.emEt + iso.hadEt + iso.hoEt) / mu->innerTrack()->pt(), _madgraphWeight);
-  IsoNTracks ->Fill(iso.nTracks, _madgraphWeight);
-  IsoNJets   ->Fill(iso.nJets, _madgraphWeight);
+  IsoSumPt   ->Fill(iso.sumPt);
+  RelIsoSumPt->Fill(iso.sumPt / mu->innerTrack()->pt());
+  IsoEcal    ->Fill(iso.emEt);
+  IsoHcal    ->Fill(iso.hadEt + iso.hoEt);
+  CombIso    ->Fill( iso.sumPt + iso.emEt + iso.hadEt + iso.hoEt);
+  RelCombIso ->Fill((iso.sumPt + iso.emEt + iso.hadEt + iso.hoEt) / mu->innerTrack()->pt());
+  IsoNTracks ->Fill(iso.nTracks);
+  IsoNJets   ->Fill(iso.nJets);
 
-  CombIsoNoECAL   ->Fill( iso.sumPt + iso.hadEt + iso.hoEt, _madgraphWeight);
-  RelCombIsoNoECAL->Fill((iso.sumPt + iso.hadEt + iso.hoEt) / mu->innerTrack()->pt(), _madgraphWeight);
+  CombIsoNoECAL   ->Fill( iso.sumPt + iso.hadEt + iso.hoEt);
+  RelCombIsoNoECAL->Fill((iso.sumPt + iso.hadEt + iso.hoEt) / mu->innerTrack()->pt());
 
   const reco::TrackRef track = patmuon::getPickedTrack(*mu);
   if (track.isAvailable()) {
-    Chi2dof->Fill(track->normalizedChi2(), _madgraphWeight);
+    Chi2dof->Fill(track->normalizedChi2());
 
     if (beamspot != 0) {
-      TrackD0BS->Fill(fabs(track->dxy(beamspot->position())), _madgraphWeight);
-      TrackDZBS->Fill(fabs(track->dz (beamspot->position())), _madgraphWeight);
+      TrackD0BS->Fill(fabs(track->dxy(beamspot->position())));
+      TrackDZBS->Fill(fabs(track->dz (beamspot->position())));
     }
 
     if (vertex != 0) {
-      TrackD0PV->Fill(fabs(track->dxy(vertex->position())), _madgraphWeight);
-      TrackDZPV->Fill(fabs(track->dz (vertex->position())), _madgraphWeight);
+      TrackD0PV->Fill(fabs(track->dxy(vertex->position())));
+      TrackDZPV->Fill(fabs(track->dz (vertex->position())));
     }
 
     const reco::HitPattern& hp = track->hitPattern();
-    NPxHits->Fill(hp.numberOfValidPixelHits(), _madgraphWeight);
-    NStHits->Fill(hp.numberOfValidStripHits(), _madgraphWeight);
-    NTkHits->Fill(hp.numberOfValidTrackerHits(), _madgraphWeight);
-    NMuHits->Fill(hp.numberOfValidMuonHits(), _madgraphWeight);
+    NPxHits->Fill(hp.numberOfValidPixelHits());
+    NStHits->Fill(hp.numberOfValidStripHits());
+    NTkHits->Fill(hp.numberOfValidTrackerHits());
+    NMuHits->Fill(hp.numberOfValidMuonHits());
 
-    NHits->Fill(hp.numberOfValidHits(), _madgraphWeight);
-    NInvalidHits->Fill(hp.numberOfHits(reco::HitPattern::TRACK_HITS) - hp.numberOfValidHits(), _madgraphWeight);
+    NHits->Fill(hp.numberOfValidHits());
+    NInvalidHits->Fill(hp.numberOfHits(reco::HitPattern::TRACK_HITS) - hp.numberOfValidHits());
     //NInvalidHits->Fill(hp.numberOfHits() - hp.numberOfValidHits());
     
-    NPxLayers->Fill(hp.pixelLayersWithMeasurement(), _madgraphWeight);
-    NStLayers->Fill(hp.stripLayersWithMeasurement(), _madgraphWeight);
-    NTkLayers->Fill(hp.trackerLayersWithMeasurement(), _madgraphWeight);
+    NPxLayers->Fill(hp.pixelLayersWithMeasurement());
+    NStLayers->Fill(hp.stripLayersWithMeasurement());
+    NTkLayers->Fill(hp.trackerLayersWithMeasurement());
   }
 }
 
@@ -392,7 +387,7 @@ void Zprime2muHistosFromPAT::fillLeptonHistos(const reco::CandidateBaseRef& lep)
 }
 
 void Zprime2muHistosFromPAT::fillLeptonHistos(const edm::View<reco::Candidate>& leptons) {
-  NLeptons->Fill(leptons.size(), _madgraphWeight);
+  NLeptons->Fill(leptons.size());
 
  // JMTBAD this should use leptonsPassingCuts or whatever
   int total_q = 0;
@@ -420,8 +415,8 @@ void Zprime2muHistosFromPAT::fillLeptonHistosFromDileptons(const pat::CompositeC
     }
 
   // These become sanity checks.
-  NLeptons->Fill(nleptons, _madgraphWeight);
-  LeptonSigns->Fill(nleptons, total_q, _madgraphWeight);
+  NLeptons->Fill(nleptons);
+  LeptonSigns->Fill(nleptons, total_q);
 }
 
 void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& dil, const edm::Event& event) {
@@ -430,27 +425,27 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
     dbg_t.id = dil.daughter(0)->pdgId() + dil.daughter(1)->pdgId();
     dbg_tree->Fill();
   }
-  DileptonEta->Fill(dil.eta(), _madgraphWeight);
-  DileptonRap->Fill(dil.rapidity(), _madgraphWeight);
-  DileptonPhi->Fill(dil.phi(), _madgraphWeight);
+  DileptonEta->Fill(dil.eta());
+  DileptonRap->Fill(dil.rapidity());
+  DileptonPhi->Fill(dil.phi());
 
-  DileptonPt->Fill(dil.pt(), _madgraphWeight);
-  DileptonPz->Fill(fabs(dil.pz()), _madgraphWeight);
-  DileptonP ->Fill(dil.p(), _madgraphWeight);
+  DileptonPt->Fill(dil.pt());
+  DileptonPz->Fill(fabs(dil.pz()));
+  DileptonP ->Fill(dil.p());
 
-  DileptonPtVsEta->Fill(dil.eta(), dil.pt(), _madgraphWeight);
-  DileptonPVsEta ->Fill(dil.eta(), dil.p(), _madgraphWeight);
+  DileptonPtVsEta->Fill(dil.eta(), dil.pt());
+  DileptonPVsEta ->Fill(dil.eta(), dil.p());
 
-  DileptonMass->Fill(dil.mass(), _madgraphWeight);
-  DileptonMassWeight->Fill(dil.mass(),_prescaleWeight*_madgraphWeight);//?
-  DileptonWithPhotonsMass->Fill(resonanceP4(dil).mass(), _madgraphWeight);
+  DileptonMass->Fill(dil.mass());
+  DileptonMassWeight->Fill(dil.mass(),_prescaleWeight);
+  DileptonWithPhotonsMass->Fill(resonanceP4(dil).mass());
 
   const reco::CandidateBaseRef& lep0 = dileptonDaughter(dil, 0);
   const reco::CandidateBaseRef& lep1 = dileptonDaughter(dil, 1);
 
   if (lep0.isNonnull() && lep1.isNonnull()) {
-    DileptonDeltaPt->Fill(fabs(lep0->pt()) - fabs(lep1->pt()), _madgraphWeight);
-    DileptonDeltaP ->Fill(fabs(lep0->p())  - fabs(lep1->p()), _madgraphWeight);
+    DileptonDeltaPt->Fill(fabs(lep0->pt()) - fabs(lep1->pt()));
+    DileptonDeltaP ->Fill(fabs(lep0->p())  - fabs(lep1->p()));
 
     const pat::Muon* mu0 = toConcretePtr<pat::Muon>(lep0);
     const pat::Muon* mu1 = toConcretePtr<pat::Muon>(lep1);
@@ -458,9 +453,9 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
       const reco::Track* tk0 = patmuon::getPickedTrack(*mu0).get();
       const reco::Track* tk1 = patmuon::getPickedTrack(*mu1).get();
       if (tk0 && tk1) {
-	DimuonMuonPtErrors->Fill(ptError(tk0), ptError(tk1), _madgraphWeight);
-	DimuonMuonPtErrOverPt->Fill(ptError(tk0)/tk0->pt(), _madgraphWeight);
-	DimuonMuonPtErrOverPt->Fill(ptError(tk1)/tk1->pt(), _madgraphWeight);
+	DimuonMuonPtErrors->Fill(ptError(tk0), ptError(tk1));
+	DimuonMuonPtErrOverPt->Fill(ptError(tk0)/tk0->pt());
+	DimuonMuonPtErrOverPt->Fill(ptError(tk1)/tk1->pt());
 	float mass = -999.;
 	// Use mass calculated with the vertex constraint when available
 	if (dil.hasUserFloat("vertexM"))
@@ -470,45 +465,44 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 	  mass = dil.mass();
 	}
 	if (mass > 200.) {
-	  DimuonMuonPtErrOverPtM200->Fill(ptError(tk0)/tk0->pt(), _madgraphWeight);
-	  DimuonMuonPtErrOverPtM200->Fill(ptError(tk1)/tk1->pt(), _madgraphWeight);
+	  DimuonMuonPtErrOverPtM200->Fill(ptError(tk0)/tk0->pt());
+	  DimuonMuonPtErrOverPtM200->Fill(ptError(tk1)/tk1->pt());
 	}
 	if (mass > 500.) {
-	  DimuonMuonPtErrOverPtM500->Fill(ptError(tk0)/tk0->pt(), _madgraphWeight);
-	  DimuonMuonPtErrOverPtM500->Fill(ptError(tk1)/tk1->pt(), _madgraphWeight);
+	  DimuonMuonPtErrOverPtM500->Fill(ptError(tk0)/tk0->pt());
+	  DimuonMuonPtErrOverPtM500->Fill(ptError(tk1)/tk1->pt());
 	}
       }
     }
   }
 
-  DileptonDaughterIds->Fill(dil.daughter(0)->pdgId(), dil.daughter(1)->pdgId(), _madgraphWeight);
+  DileptonDaughterIds->Fill(dil.daughter(0)->pdgId(), dil.daughter(1)->pdgId());
 
-  DileptonDaughterDeltaR->Fill(reco::deltaR(*dil.daughter(0), *dil.daughter(1)), _madgraphWeight);
-  DileptonDaughterDeltaPhi->Fill(reco::deltaPhi(dil.daughter(0)->phi(), dil.daughter(1)->phi()), _madgraphWeight);
+  DileptonDaughterDeltaR->Fill(reco::deltaR(*dil.daughter(0), *dil.daughter(1)));
+  DileptonDaughterDeltaPhi->Fill(reco::deltaPhi(dil.daughter(0)->phi(), dil.daughter(1)->phi())); 
 
   if (dil.hasUserFloat("vertexM") && dil.hasUserFloat("vertexMError")) {
     float vertex_mass = dil.userFloat("vertexM");
     float vertex_mass_err = dil.userFloat("vertexMError");
-      //std::cout<<" filling mass "<<vertex_mass<<std::endl;
-    DimuonMassVertexConstrained->Fill(vertex_mass, _madgraphWeight);
-    DimuonMassVtxConstrainedLog->Fill(vertex_mass, _madgraphWeight);
-    DimuonMassConstrainedVsUn->Fill(dil.mass(), vertex_mass, _madgraphWeight);
-    DimuonMassVertexConstrainedError->Fill(vertex_mass, vertex_mass_err, _madgraphWeight);
-    DimuonMassVertexConstrainedWeight->Fill(vertex_mass,_prescaleWeight*_madgraphWeight);
-    DimuonMassVtxConstrainedLogWeight->Fill(vertex_mass,_prescaleWeight*_madgraphWeight);
+    DimuonMassVertexConstrained->Fill(vertex_mass);
+    DimuonMassVtxConstrainedLog->Fill(vertex_mass);
+    DimuonMassConstrainedVsUn->Fill(dil.mass(), vertex_mass);
+    DimuonMassVertexConstrainedError->Fill(vertex_mass, vertex_mass_err);
+    DimuonMassVertexConstrainedWeight->Fill(vertex_mass,_prescaleWeight);
+    DimuonMassVtxConstrainedLogWeight->Fill(vertex_mass,_prescaleWeight);
     // special
     float vertex_chi2 = dil.userFloat("vertex_chi2");
-      DimuonMassVtx_chi2->Fill(vertex_chi2, _madgraphWeight);
+      DimuonMassVtx_chi2->Fill(vertex_chi2);
     if (vertex_chi2 > 0 ) {
         float vertex_ndof = dil.userFloat("vertex_ndof");
         float vertex_chi2_noNormalized = vertex_chi2*vertex_ndof;
-        DimuonMassVtx_prob->Fill(TMath::Prob(vertex_chi2_noNormalized, vertex_ndof), _madgraphWeight);}
+        DimuonMassVtx_prob->Fill(TMath::Prob(vertex_chi2_noNormalized, vertex_ndof));}
 
   }
 }
 
 void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidateCollection& dileptons, const edm::Event& event) {
-  NDileptons->Fill(dileptons.size(), _madgraphWeight);
+  NDileptons->Fill(dileptons.size());
 
   pat::CompositeCandidateCollection::const_iterator dil = dileptons.begin(), dile = dileptons.end();
   for ( ; dil != dile; ++dil)
@@ -537,15 +531,7 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
 //    std::cout<<*hltPrescale<<std::endl;
 //    std::cout<<l1Prescale<<std::endl;
 //    std::cout<<totalPrescale<<std::endl;
-    if (_useMadgraphWeight) {
-        eventWeight = 1.;
-        edm::Handle<GenEventInfoProduct> gen_ev_info;
-        event.getByLabel(edm::InputTag("generator"), gen_ev_info);
-        eventWeight = gen_ev_info->weight();
-        _madgraphWeight = ( eventWeight > 0 ) ? 1 : -1;
-        std::cout<<"eventWeight"<<eventWeight<<"_madgraphWeight"<<_madgraphWeight<<std::endl;
-        WeightMadGraph->Fill(_madgraphWeight);
-    }
+
 
   if (use_bs_and_pv)
     getBSandPV(event);

@@ -22,15 +22,15 @@ Zprime2muTriggerPathsAndFilters::Zprime2muTriggerPathsAndFilters(const edm::Even
   // samples (e.g. 51X/52X), the next line may not be sufficient, and
   // we will have to think of a better way to handle this.
 //  if (!event.isRealData())                { path = "HLT_Mu50_v1", filter = "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered50Q",path_2 = "HLT_Mu45_eta2p1_v1", filter_2 = "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered45e2p1Q", prescaled_path = "HLT_Mu24_eta2p1_v1", prescaled_filter = "hltL3fL1sMu20Eta2p1L1f0L2f10QL3Filtered24Q", prescaled_path_2 = "HLT_Mu24_eta2p1_v1", prescaled_filter_2 = "hltL3fL1sMu20Eta2p1L1f0L2f10QL3Filtered24Q"; }
-    if (!event.isRealData())                { path = "HLT_Mu50_v1", filter = "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered50Q", prescaled_path = "HLT_Mu24_eta2p1_v1", prescaled_filter = "hltL3fL1sMu20Eta2p1L1f0L2f10QL3Filtered24Q"; }
-//    if (!event.isRealData())                { path = "HLT_Mu45_eta2p1_v1", filter = "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered45e2p1Q", prescaled_path = "HLT_Mu24_eta2p1_v1", prescaled_filter = "hltL3fL1sMu20Eta2p1L1f0L2f10QL3Filtered24Q"; }
+    if (!event.isRealData())                { path = "HLT_Mu50_v2", filter = "hltL3fL1sMu16orMu25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu25L1f0L2f10QL3Filtered27Q"; }
+    //   if (!event.isRealData())                { path = "HLT_Mu45_eta2p1_v2", filter = "hltL3fL1sMu16orMu25L1f0L2f10QL3Filtered45e2p1Q", prescaled_path = "HLT_Mu24_eta2p1_v1", prescaled_filter = "hltL3fL1sMu20Eta2p1L1f0L2f10QL3Filtered24Q"; }
 //  else if (run >= 246865 && run < 247068) { path = "HLT_L1SingleMuOpen_v1",  filter = "hltL1MuOpenL1Filtered0", prescaled_path = "HLT_Mu24_eta2p1_v3", prescaled_filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered24Q"; }
 //  else if (run >= 196533 && run < 199609) { path = "HLT_Mu40_eta2p1_v10", filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered40Q", prescaled_path = "HLT_Mu24_eta2p1_v4", prescaled_filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered24Q"; }
 //  else if (run >= 250985)                 { path = "HLT_Mu50_v1", filter = "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered50Q",path_2 = "HLT_Mu45_eta2p1_v1", filter_2 = "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered45e2p1Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu25L1f0L2f10QL3Filtered27Q", prescaled_path_2 = "HLT_Mu27_v1", prescaled_filter_2 = "hltL3fL1sMu25L1f0L2f10QL3Filtered27Q"; } // at least until run 204601
 //    else if (run >= 250985 && run < 253888)                 { path = "HLT_Mu45_eta2p1_v1", filter = "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered45e2p1Q", prescaled_path = "HLT_Mu24_eta2p1_v1", prescaled_filter = "hltL3fL1sMu20Eta2p1L1f0L2f10QL3Filtered24Q"; } // at least until run 204601
-    else if (run >= 250985 && run < 253888)                 { path = "HLT_Mu50_v1", filter = "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered50Q", prescaled_path = "HLT_Mu24_eta2p1_v1", prescaled_filter = "hltL3fL1sMu20Eta2p1L1f0L2f10QL3Filtered24Q"; } // at least until run 204601
+    else if (run >= 250985 && run < 253888)                 { path = "HLT_Mu50_v1", filter = "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu25L1f0L2f10QL3Filtered27Q"; } // at least until run 204601
 //    else if (run >= 253888)                 { path = "HLT_Mu45_eta2p1_v2", filter = "hltL3fL1sMu16orMu25L1f0L2f10QL3Filtered45e2p1Q", prescaled_path = "HLT_Mu24_eta2p1_v1", prescaled_filter = "hltL3fL1sMu20Eta2p1L1f0L2f10QL3Filtered24Q"; } // at least until run 204601
-    else if (run >= 253888)                 { path = "HLT_Mu50_v2", filter = "hltL3fL1sMu16orMu25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu24_eta2p1_v1", prescaled_filter = "hltL3fL1sMu20Eta2p1L1f0L2f10QL3Filtered24Q"; } // at least until run 204601
+    else if (run >= 253888)                 { path = "HLT_Mu50_v2", filter = "hltL3fL1sMu16orMu25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu25L1f0L2f10QL3Filtered27Q"; } // at least until run 204601
 // HLT_Mu50_v2 hltL3fL1sMu16orMu25L1f0L2f10QL3Filtered50Q
     else
         valid = false;
@@ -40,6 +40,7 @@ trigger::TriggerObjectCollection get_L3_muons(const edm::Event& event, const std
   trigger::TriggerObjectCollection L3_muons;
 
   edm::Handle<trigger::TriggerEvent> trigEvent;
+ 
   event.getByLabel(trigger_summary_src, trigEvent);
   if (!trigEvent.isValid())
     throw cms::Exception("get_L3_muons") << "couldn't get hltTriggerSummaryAOD " << trigger_summary_src.encode() << " from event\n";
@@ -81,3 +82,4 @@ trigger::TriggerObjectCollection get_L3_muons(const edm::Event& event, const std
 
   return L3_muons;
 }
+

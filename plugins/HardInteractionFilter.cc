@@ -16,6 +16,7 @@ private:
   const bool use_resonance_mass;
   const double max_muon_eta;
   const double min_muon_pt;
+ 
 };
 
 HardInteractionFilter::HardInteractionFilter(const edm::ParameterSet& cfg)
@@ -26,6 +27,9 @@ HardInteractionFilter::HardInteractionFilter(const edm::ParameterSet& cfg)
     max_muon_eta(cfg.getParameter<double>("max_muon_eta")),
     min_muon_pt(cfg.getParameter<double>("min_muon_pt"))
 {
+  
+    consumes<reco::GenParticleCollection>(hardInteraction.src);
+   
 }
 
 bool HardInteractionFilter::filter(edm::Event& event, const edm::EventSetup&) {

@@ -21,7 +21,7 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_condD
 from Configuration.AlCa.GlobalTag_condDBv2 import GlobalTag
 process.GlobalTag.globaltag = 'MCRUN2_74_V9'
 
-flag = cms.string('miniAOD')
+flag = cms.string('AOD')
 if flag == 'AOD':
 	process.load('SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff')
 if flag == 'miniAOD':

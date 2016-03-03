@@ -66,7 +66,7 @@ addHEEPId(process)
 # PAT taus
 del process.patTaus.tauIDSources.againstElectronMVA5raw
 #del process.patTaus.tauIDSources.againstMuonMedium
-process.cleanPatTaus.preselection = process.cleanPatTaus.preselection.value().replace('againstMuonMedium', 'againstMuonTight')
+process.cleanPatTaus.preselection = process.cleanPatTaus.preselection.value().replace('againstMuonMedium', 'againstMuonTight') 
 
 # PAT muons 
 process.patMuons.embedTrack = True

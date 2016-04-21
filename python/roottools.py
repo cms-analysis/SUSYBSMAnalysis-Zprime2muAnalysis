@@ -105,7 +105,9 @@ def binomial_divide(h1, h2, confint=clopper_pearson, force_lt_1=True):
         #print ibin, s, t, a, b
 
         _x  = xax.GetBinCenter(ibin)
+        #print "x", _x
         _xw = xax.GetBinWidth(ibin)/2
+        #print "xw", _xw
         
         x.append(_x)
         exl.append(_xw)
@@ -115,7 +117,53 @@ def binomial_divide(h1, h2, confint=clopper_pearson, force_lt_1=True):
         eyl.append(p_hat - a)
         eyh.append(b - p_hat)
     eff = ROOT.TGraphAsymmErrors(len(x), *[array('d', obj) for obj in (x,y,exl,exh,eyl,eyh)])
-    return eff
+    return eff, y, eyl, eyh
+
+def wald_binomial_err2(p_hat, pw, den):
+    err2 = float(p_hat) * (1 - float(p_hat)) / (float(den)/pw) # den is pre-weighted number of MC events
+    return err2
+
+def eff_wald(num, den, l, nMC, pw,temp):
+    nbins = temp.GetNbinsX()
+    xax = temp.GetXaxis()
+    x = []
+    y = []
+    exl = []
+    exh = []
+    eyl = []
+    eyh = []
+    numTot = sum(e*f for e,f in zip(pw,num))
+    for i in range(l): # i = NoX
+        ibin = i+1
+        _x  = xax.GetBinCenter(ibin)
+        _xw = xax.GetBinWidth(ibin)/2
+        x.append(_x)
+        exl.append(_xw)
+        exh.append(_xw)
+        denTot_i = 0
+        sum_err2_i = 0
+        err2_i_ = []
+        denTot_i = sum([b*c for b,c in zip(pw,[a[i] for a in den])])
+        if denTot_i == 0:
+            print "why", i
+        elif denTot_i!=0:
+            _y = numTot/denTot_i
+        y.append(_y)
+        for mc in range(nMC): 
+            #print float(num[mc]), den[mc][i]
+            p_hat_i_mc = 0
+            if num[mc] != 0:
+                p_hat_i_mc = float(num[mc])/den[mc][i] # mc = mc sample, i = NoX
+                err2_i_.append((pw[mc]*den[mc][i]/denTot_i)**2 * wald_binomial_err2(p_hat_i_mc,1., den[mc][i]))
+            else:
+                p_hat_i_mc = 0
+                err2_i_.append(0)
+            #print p_hat_i_mc
+        sum_err2_i = sum(err2_i_)
+        eyh.append(sum_err2_i**0.5)
+        eyl.append(sum_err2_i**0.5)
+    eff = ROOT.TGraphAsymmErrors(len(x), *[array('d', obj) for obj in (x,y,exl,exh,eyl,eyh)])
+    return eff, y, eyl, eyh
 
 def core_gaussian(hist, factor, i=[0]):
     core_mean  = hist.GetMean()
@@ -213,6 +261,9 @@ def get_bin_content_error(hist, value):
 def get_integral(hist, xlo, xhi=None, integral_only=False, include_last_bin=True):
     """For the given histogram, return the integral of the bins
     corresponding to the values xlo to xhi along with its error.
+
+    Edited to return 0 if integral is negative (for N-1 calculation 
+    to prevent negative efficeincy when events have negative weights)
     """
     
     binlo = hist.FindBin(xlo)
@@ -225,12 +276,18 @@ def get_integral(hist, xlo, xhi=None, integral_only=False, include_last_bin=True
 
     integral = hist.Integral(binlo, binhi)
     if integral_only:
-        return integral
+        if integral < 0:
+            return 0
+        else:
+            return integral
 
     wsq = 0
     for i in xrange(binlo, binhi+1):
         wsq += hist.GetBinError(i)**2
-    return integral, wsq**0.5
+    if integral < 0:
+        return 0,0
+    else:
+        return integral, wsq**0.5
 
 def get_hist_stats(hist, factor=None, draw=False):
     """For the given histogram, return a five-tuple of the number of
@@ -359,7 +416,7 @@ def move_overflow_into_last_bin(h):
 class plot_saver:
     i = 0
     
-    def __init__(self, plot_dir=None, html=True, log=True, root=True, pdf=False, pdf_log=False, C=False, C_log=False, size=(820,630)):
+    def __init__(self, plot_dir=None, html=True, log=True, root=True, pdf=False, pdf_log=False, C=False, C_log=False, size=(820,630), name=''):
         self.c = ROOT.TCanvas('c%i' % plot_saver.i, '', *size)
         plot_saver.i += 1
         self.saved = []
@@ -371,6 +428,7 @@ class plot_saver:
         self.pdf_log = pdf_log
         self.C = C
         self.C_log = C_log
+        self.name = name
 
     def __del__(self):
         self.write_index()
@@ -381,7 +439,10 @@ class plot_saver:
     def write_index(self):
         if not self.saved or not self.html:
             return
-        html = open(os.path.join(self.plot_dir, 'index.html'), 'wt')
+        if self.name == '':
+            html = open(os.path.join(self.plot_dir, 'index.html'), 'wt')
+        else:
+            html = open(os.path.join(self.plot_dir, 'index_%s.html'%(self.name)), 'wt')
         html.write('<html><body><pre>\n')
         html.write('<a href="..">.. (parent directory)</a>\n')
         for i, save in enumerate(self.saved):
@@ -735,6 +796,8 @@ __all__ = [
     'cumulative_histogram',
     'detree',
     'draw_in_order',
+    'eff_wald',
+    'wald_binomial_err2',
     'fit_gaussian',
     'get_bin_content_error',
     'get_integral',

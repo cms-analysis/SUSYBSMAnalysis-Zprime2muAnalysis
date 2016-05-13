@@ -119,52 +119,6 @@ def binomial_divide(h1, h2, confint=clopper_pearson, force_lt_1=True):
     eff = ROOT.TGraphAsymmErrors(len(x), *[array('d', obj) for obj in (x,y,exl,exh,eyl,eyh)])
     return eff, y, eyl, eyh
 
-def wald_binomial_err2(p_hat, pw, den):
-    err2 = float(p_hat) * (1 - float(p_hat)) / (float(den)/pw) # den is pre-weighted number of MC events
-    return err2
-
-def eff_wald(num, den, l, nMC, pw,temp):
-    nbins = temp.GetNbinsX()
-    xax = temp.GetXaxis()
-    x = []
-    y = []
-    exl = []
-    exh = []
-    eyl = []
-    eyh = []
-    numTot = sum(e*f for e,f in zip(pw,num))
-    for i in range(l): # i = NoX
-        ibin = i+1
-        _x  = xax.GetBinCenter(ibin)
-        _xw = xax.GetBinWidth(ibin)/2
-        x.append(_x)
-        exl.append(_xw)
-        exh.append(_xw)
-        denTot_i = 0
-        sum_err2_i = 0
-        err2_i_ = []
-        denTot_i = sum([b*c for b,c in zip(pw,[a[i] for a in den])])
-        if denTot_i == 0:
-            print "why", i
-        elif denTot_i!=0:
-            _y = numTot/denTot_i
-        y.append(_y)
-        for mc in range(nMC): 
-            #print float(num[mc]), den[mc][i]
-            p_hat_i_mc = 0
-            if num[mc] != 0:
-                p_hat_i_mc = float(num[mc])/den[mc][i] # mc = mc sample, i = NoX
-                err2_i_.append((pw[mc]*den[mc][i]/denTot_i)**2 * wald_binomial_err2(p_hat_i_mc,1., den[mc][i]))
-            else:
-                p_hat_i_mc = 0
-                err2_i_.append(0)
-            #print p_hat_i_mc
-        sum_err2_i = sum(err2_i_)
-        eyh.append(sum_err2_i**0.5)
-        eyl.append(sum_err2_i**0.5)
-    eff = ROOT.TGraphAsymmErrors(len(x), *[array('d', obj) for obj in (x,y,exl,exh,eyl,eyh)])
-    return eff, y, eyl, eyh
-
 def core_gaussian(hist, factor, i=[0]):
     core_mean  = hist.GetMean()
     core_width = factor*hist.GetRMS()
@@ -258,7 +212,7 @@ def get_bin_content_error(hist, value):
     bin = hist.FindBin(*value)
     return (hist.GetBinContent(bin), hist.GetBinError(bin))
 
-def get_integral(hist, xlo, xhi=None, integral_only=False, include_last_bin=True):
+def get_integral(hist, xlo, xhi=None, integral_only=False, include_last_bin=True, nm1=False):
     """For the given histogram, return the integral of the bins
     corresponding to the values xlo to xhi along with its error.
 
@@ -276,7 +230,7 @@ def get_integral(hist, xlo, xhi=None, integral_only=False, include_last_bin=True
 
     integral = hist.Integral(binlo, binhi)
     if integral_only:
-        if integral < 0:
+        if nm1 and integral < 0:
             return 0
         else:
             return integral
@@ -284,7 +238,7 @@ def get_integral(hist, xlo, xhi=None, integral_only=False, include_last_bin=True
     wsq = 0
     for i in xrange(binlo, binhi+1):
         wsq += hist.GetBinError(i)**2
-    if integral < 0:
+    if nm1 and integral < 0:
         return 0,0
     else:
         return integral, wsq**0.5
@@ -796,8 +750,6 @@ __all__ = [
     'cumulative_histogram',
     'detree',
     'draw_in_order',
-    'eff_wald',
-    'wald_binomial_err2',
     'fit_gaussian',
     'get_bin_content_error',
     'get_integral',

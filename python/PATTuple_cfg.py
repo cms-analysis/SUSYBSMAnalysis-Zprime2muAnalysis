@@ -64,8 +64,9 @@ from PATTools import addHEEPId
 addHEEPId(process)
 
 # PAT taus
-del process.patTaus.tauIDSources.againstElectronMVA5raw
+del process.patTaus.tauIDSources.againstElectronMVA6Raw
 #del process.patTaus.tauIDSources.againstMuonMedium
+process.cleanPatTaus.preselection = process.cleanPatTaus.preselection.value().replace('againstElectronVLooseMVA5', 'againstElectronLooseMVA6')
 process.cleanPatTaus.preselection = process.cleanPatTaus.preselection.value().replace('againstMuonMedium', 'againstMuonTight')
 
 # PAT muons 
@@ -78,8 +79,8 @@ process.load('SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi')
 from PhysicsTools.PatAlgos.tools.trigTools import switchOnTrigger, switchOnTriggerMatchEmbedding
 switchOnTrigger( process )
 switchOnTriggerMatchEmbedding( process,
-                               # triggerProducer = 'patTrigger', # this is already the default setting
-                               triggerMatchers = [ 'muonTriggerMatchHLTMuons' ]
+                                triggerProducer = 'patTrigger', # this is already the default setting
+                                triggerMatchers = [ 'muonTriggerMatchHLTMuons' ]
                                )
 # PAT Met and Jets
 from PhysicsTools.PatAlgos.tools.metTools import addMETCollection 
@@ -95,7 +96,7 @@ switchJetCollection(process,
                                           'trackCountingHighEffBJetTags',
                                           'simpleSecondaryVertexHighEffBJetTags',
                                           'simpleSecondaryVertexHighPurBJetTags',
-                                          'combinedSecondaryVertexBJetTags'],
+                                          'combinedSecondaryVertexV2BJetTags'],
                     getJetMCFlavour = False,
                     )
 

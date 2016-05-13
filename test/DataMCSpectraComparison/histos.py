@@ -9,7 +9,7 @@ process.source.fileNames =[#'file:PAT_SingleMuRun2015B-Rereco-Suite_251162_25155
                            ]
 process.maxEvents.input =-1
 #process.GlobalTag.globaltag = '76X_dataRun2_v15'## solo per proare i dati
-process.GlobalTag.globaltag = '76X_mcRun2_asymptotic_v12'
+process.GlobalTag.globaltag = '80X_mcRun2_asymptotic_2016_v3'
 #process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1 # default 1000
 

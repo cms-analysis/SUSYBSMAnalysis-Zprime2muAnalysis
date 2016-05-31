@@ -260,7 +260,7 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   consumes<reco::VertexCollection>(vertices_src);
   consumes<edm::TriggerResults>(TriggerResults_src);
   consumes<GenEventInfoProduct>(genEventInfo_);
-  consumes<reco::GenParticleCollection>(hardInteraction->src);
+  #consumes<reco::GenParticleCollection>(hardInteraction->src);
   
  
   edm::Service<TFileService> fs;

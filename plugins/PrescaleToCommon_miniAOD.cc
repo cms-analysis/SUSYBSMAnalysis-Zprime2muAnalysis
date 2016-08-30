@@ -8,10 +8,12 @@
 #include "FWCore/Utilities/interface/RandomNumberGenerator.h"
 #include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
 #include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
+#include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
 
-class PrescaleToCommon : public edm::EDFilter {
+
+class PrescaleToCommon_miniAOD : public edm::EDFilter {
 public:
-  explicit PrescaleToCommon(const edm::ParameterSet&);
+  explicit PrescaleToCommon_miniAOD(const edm::ParameterSet&);
 
 private:
   //virtual bool beginRun(edm::Run&, const edm::EventSetup&);
@@ -20,6 +22,9 @@ private:
 
   const std::string hlt_process_name;
   edm::InputTag TriggerResults_src;
+  edm::InputTag L1Prescale_max_src;
+  edm::InputTag L1Prescale_min_src;
+  edm::InputTag Prescale_src;
   const std::vector<std::string> trigger_paths;
   const int overall_prescale;
   const bool assume_simulation_has_prescale_1;
@@ -30,9 +35,12 @@ private:
   
 };
 
-PrescaleToCommon::PrescaleToCommon(const edm::ParameterSet& cfg)
+PrescaleToCommon_miniAOD::PrescaleToCommon_miniAOD(const edm::ParameterSet& cfg)
   : hlt_process_name(cfg.getParameter<edm::InputTag>("hlt_src").process()),
     TriggerResults_src(cfg.getParameter<edm::InputTag>("TriggerResults_src")),
+    L1Prescale_max_src(cfg.getParameter<edm::InputTag>("L1Prescale_max_src")),
+    L1Prescale_min_src(cfg.getParameter<edm::InputTag>("L1Prescale_min_src")),
+    Prescale_src(cfg.getParameter<edm::InputTag>("Prescale_src")),
     trigger_paths(cfg.getParameter<std::vector<std::string> >("trigger_paths")),
     overall_prescale(cfg.getParameter<int>("overall_prescale")),
     assume_simulation_has_prescale_1(cfg.getParameter<bool>("assume_simulation_has_prescale_1")),
@@ -42,24 +50,28 @@ PrescaleToCommon::PrescaleToCommon(const edm::ParameterSet& cfg)
   edm::Service<TFileService> fs;
   randoms = fs->make<TH1F>("randoms", "", 100, 0, 1); 
   consumes<edm::TriggerResults>(TriggerResults_src);
+  consumes<pat::PackedTriggerPrescales>(L1Prescale_max_src);
+  consumes<pat::PackedTriggerPrescales>(L1Prescale_min_src);
+  consumes<pat::PackedTriggerPrescales>(Prescale_src);
+  consumes<pat::PackedTriggerPrescales>(Prescale_src);
 }
 
-//bool PrescaleToCommon::beginRun(edm::Run& run, const edm::EventSetup& setup) {
+//bool PrescaleToCommon_miniAOD::beginRun(edm::Run& run, const edm::EventSetup& setup) {
 //  bool changed = true;
 //  if (!hlt_cfg.init(run, setup, hlt_process_name, changed))
-//    throw cms::Exception("PrescaleToCommon") << "HLTConfigProvider::init failed with process name " << hlt_process_name << "\n";
+//    throw cms::Exception("PrescaleToCommon_miniAOD") << "HLTConfigProvider::init failed with process name " << hlt_process_name << "\n";
 //  return true;
 //}
 
-void PrescaleToCommon::beginRun(edm::Run const& run, edm::EventSetup const& setup)
+void PrescaleToCommon_miniAOD::beginRun(edm::Run const& run, edm::EventSetup const& setup)
 {
     bool changed = true;
     // if (!hlt_cfg.init(run, setup, hlt_process_name, changed))
         if (!hltPrescaleProvider_.init(run,setup,hlt_process_name,changed))
-        throw cms::Exception("PrescaleToCommon") << "HLTConfigProvider::init failed with process name " << hlt_process_name << "\n";
+        throw cms::Exception("PrescaleToCommon_miniAOD") << "HLTConfigProvider::init failed with process name " << hlt_process_name << "\n";
 }
 
-bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
+bool PrescaleToCommon_miniAOD::filter(edm::Event& event, const edm::EventSetup& setup) {
   // JMTBAD move this into common code with CheckPrescale!
   if (_disable) return true;
  
@@ -69,6 +81,19 @@ bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
   // not meant to handle checking more-fundamentally different trigger
   // paths, e.g. HLT_Mu15_v2, HLT_Mu24_v1, but only different versions
   // of the "same" path.
+
+
+   edm::Handle<pat::PackedTriggerPrescales> hltPrescales;
+   edm::Handle<pat::PackedTriggerPrescales> L1Prescales_max;
+   edm::Handle<pat::PackedTriggerPrescales> L1Prescales_min;
+
+   event.getByLabel(Prescale_src, hltPrescales);
+   event.getByLabel(L1Prescale_max_src, L1Prescales_max);
+   event.getByLabel(L1Prescale_min_src, L1Prescales_min);
+
+
+
+
   HLTConfigProvider const& hlt_cfg = hltPrescaleProvider_.hltConfigProvider();
   bool found = false;
   std::string trigger_path;
@@ -87,7 +112,7 @@ bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
       continue;
 
     if (found)
-      throw cms::Exception("PrescaleToCommon") << "a version of the trigger path " << *path << " was already found; probably you misconfigured.\n";
+      throw cms::Exception("PrescaleToCommon_miniAOD") << "a version of the trigger path " << *path << " was already found; probably you misconfigured.\n";
     
     found = true;
     trigger_path = *path;
@@ -95,7 +120,7 @@ bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
   }
 
   if (!found)
-    throw cms::Exception("PrescaleToCommon") << "none of the trigger paths specified were found!\n";
+    throw cms::Exception("PrescaleToCommon_miniAOD") << "none of the trigger paths specified were found!\n";
 
   // If the trigger path didn't fire for whatever reason, then go
   // ahead and skip the event.
@@ -106,25 +131,31 @@ bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
     return false;
   //std::cout<<" hlt_results->accept(path_index) "<<hlt_results->accept(path_index)<<std::endl;
   //std::cout<<" hlt_cfg.prescaleValues(event, setup, trigger_path) "<<hlt_cfg.prescaleValues(event, setup, trigger_path).second<<std::endl;
-  std::pair<int, int> prescales;
-  std::pair<std::vector<std::pair<std::string,int> >,int> prescalesInDetail;
+
+  double hltPrescale = 1;
+ // double L1Prescale_max = 1;
+  double L1Prescale_min = 1;
   std::ostringstream message;
   // For MC samples, can assume the prescales are 1.
   if (event.isRealData() || !assume_simulation_has_prescale_1) {
-    prescales = hltPrescaleProvider_.prescaleValues(event, setup, trigger_path);
-    prescalesInDetail = hltPrescaleProvider_.prescaleValuesInDetail(event, setup, trigger_path);
+    hltPrescale = hltPrescales->getPrescaleForIndex(path_index);
+//    L1Prescale_max = L1Prescales_max->getPrescaleForName(trigger_path);
+    L1Prescale_min = L1Prescales_min->getPrescaleForIndex(path_index);
+    
      }
   else
     //prescales = std::make_pair(1,1);
     // Do not filter out MC events with prescales=1, apply the
     // appropriate weights later.
     return true;
+
   //std::cout<<"------PRESCALES: "<<overall_prescale<<"\t"<<prescales.first<<"\t"<<prescales.second<<std::endl;
 
-  const int total_prescale_already = prescales.second * prescales.first;
+
+  const int total_prescale_already = hltPrescale*L1Prescale_min;
 
   if (total_prescale_already > overall_prescale)
-    throw cms::Exception("PrescaleToCommon") << "total_prescale_already = " << total_prescale_already << " but overall_prescale requested is " << overall_prescale << "!\n";
+    throw cms::Exception("PrescaleToCommon_miniAOD") << "total_prescale_already = " << total_prescale_already << " but overall_prescale requested is " << overall_prescale << "!\n";
 
   // If we're already there, keep the event.
   if (total_prescale_already == overall_prescale)
@@ -134,11 +165,11 @@ bool PrescaleToCommon::filter(edm::Event& event, const edm::EventSetup& setup) {
   // total_prescale_already/overall_prescale. So get uniform number r
   // in ]0,1[, and keep the event if r < chance.
   edm::Service<edm::RandomNumberGenerator> rng;
-  if (!rng.isAvailable()) throw cms::Exception("PrescaleToCommon") << "RandomNumberGeneratorService not available!\n";
+  if (!rng.isAvailable()) throw cms::Exception("PrescaleToCommon_miniAOD") << "RandomNumberGeneratorService not available!\n";
   CLHEP::RandFlat rand(rng->getEngine(event.streamID()));
   const double rnd = rand.fire();
   randoms->Fill(rnd);
   return rnd < double(total_prescale_already)/overall_prescale;
 }
 
-DEFINE_FWK_MODULE(PrescaleToCommon);
+DEFINE_FWK_MODULE(PrescaleToCommon_miniAOD);

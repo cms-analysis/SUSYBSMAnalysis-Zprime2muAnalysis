@@ -1,15 +1,19 @@
 #!/usr/bin/env python
 
+miniAOD = True
+
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 
 process.source.fileNames =[#'file:PAT_SingleMuRun2015B-Rereco-Suite_251162_251559_20160120153115/crab_SingleMuRun2015B-Rereco-Suite_251162_251559_20160120153115/results/Zprime_123.root',
-                          'file:Zprime_10.root',
+                           '/store/mc/RunIISpring16MiniAODv1/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/30000/02244373-7E03-E611-B581-003048F5B2B4.root',
+			   #'/store/data/Run2016F/SingleMuon/MINIAOD/PromptReco-v1/000/277/932/00000/084865EB-1859-E611-BDA7-02163E011A89.root',
+			   #'file:/afs/cern.ch/work/j/jschulte/ZPrime/tuple/DYinclsuive_pat.root',
                            ]
 process.maxEvents.input =-1
 #process.GlobalTag.globaltag = '76X_dataRun2_v15'## solo per proare i dati
-process.GlobalTag.globaltag = '80X_mcRun2_asymptotic_2016_v3'
+process.GlobalTag.globaltag = '80X_dataRun2_Prompt_v10'
 #process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1 # default 1000
 
@@ -22,10 +26,17 @@ process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrescaleToCommon_cff')
 process.PrescaleToCommon.trigger_paths = prescaled_trigger_paths
 process.PrescaleToCommon.overall_prescale = overall_prescale
 
+process.PrescaleToCommonMiniAOD.trigger_paths = prescaled_trigger_paths
+process.PrescaleToCommonMiniAOD.overall_prescale = overall_prescale
+
 # The histogramming module that will be cloned multiple times below
 # for making histograms with different cut/dilepton combinations.
-from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
-HistosFromPAT.leptonsFromDileptons = True
+if miniAOD:
+	from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
+	HistosFromPAT.leptonsFromDileptons = True
+else:
+	from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
+	HistosFromPAT.leptonsFromDileptons = True
 
 # These modules define the basic selection cuts. For the monitoring
 # sets below, we don't need to define a whole new module, since they
@@ -92,7 +103,11 @@ for cut_name, Selection in cuts.iteritems():
         muon_cuts = Selection.loose_cut.replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
     else:
         muon_cuts = Selection.loose_cut
-    leptons = process.leptons.clone(muon_cuts = muon_cuts)
+    if miniAOD:
+    	leptons = process.leptons_mini.clone(muon_cuts = muon_cuts)
+    else:
+    	leptons = process.leptons.clone(muon_cuts = muon_cuts)
+
     if cut_name == 'EmuVeto':
         leptons.electron_muon_veto_dR = 0.1
     # Keep using old TuneP for past selections
@@ -119,7 +134,10 @@ for cut_name, Selection in cuts.iteritems():
         alldil = Selection.allDimuons.clone(decay = dil_decay % locals(), cut = dil_cut)
         if 'AllSigns' in dil_name:
             alldil.checkCharge = cms.bool(False)
-        dil = Selection.dimuons.clone(src = cms.InputTag(allname))
+        if miniAOD:
+		dil = Selection.dimuonsMiniAOD.clone(src = cms.InputTag(allname))
+        else:
+		dil = Selection.dimuons.clone(src = cms.InputTag(allname))
 
         # Implement the differences to the selections; currently, as
         # in Zprime2muCombiner, the cuts in loose_cut and
@@ -145,9 +163,10 @@ for cut_name, Selection in cuts.iteritems():
             alldil.loose_cut = alldil.loose_cut.value().replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
             assert alldil.tight_cut == trigger_match
             alldil.tight_cut = prescaled_trigger_match
-
+	alldil.tight_cut = ''
         # Histos now just needs to know which leptons and dileptons to use.
-        histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
+      
+	histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 
         # Add all these modules to the process and the path list.
         setattr(process, allname, alldil)
@@ -157,17 +176,35 @@ for cut_name, Selection in cuts.iteritems():
 
     # Finally, make the path for this set of cuts.
     pathname = 'path' + cut_name
-    pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
+    if miniAOD:
+    	pobj = process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+    else:
+    	pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
     if 'VBTF' not in cut_name and cut_name != 'Simple':
         pobj = process.goodDataFilter * pobj
     if 'MuPrescaled' in cut_name: ####### Now it seams that there are no prescaled path ########
-        pobj = process.PrescaleToCommon * pobj ####### Now it seams that there are no prescaled path ########
+        if miniAOD:
+		pobj = process.PrescaleToCommonMiniAOD * pobj ####### Now it seams that there are no prescaled path ########
+        else:
+		pobj = process.PrescaleToCommon * pobj ####### Now it seams that there are no prescaled path ########
     path = cms.Path(pobj)
     setattr(process, pathname, path)
 
 
 def ntuplify(process, fill_gen_info=False):
-    process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler',
+
+
+    if miniAOD:
+	process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler_miniAOD',
+                                           dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
+                                           beamspot_src = cms.InputTag('offlineBeamSpot'),
+                                           vertices_src = cms.InputTag('offlineSlimmedPrimaryVertices'),
+					   TriggerResults_src = cms.InputTag('TriggerResults'),
+                                           genEventInfo = cms.untracked.InputTag('generator')
+                                           )
+ 
+    else:
+	process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler',
                                            dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
                                            beamspot_src = cms.InputTag('offlineBeamSpot'),
                                            vertices_src = cms.InputTag('offlinePrimaryVertices'),

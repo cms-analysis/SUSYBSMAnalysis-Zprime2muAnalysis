@@ -37,6 +37,12 @@
   <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
 </library>
 
+<library file="Zprime2muLeptonProducer_miniAOD.cc" name="Zprime2muLeptonProducer_miniAOD">
+  <use name="CommonTools/Utils"/>
+  <use name="DataFormats/PatCandidates"/>
+  <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
+</library>
+
 <library file="Zprime2muCombiner.cc" name="Zprime2muCombiner">
   <use name="DataFormats/PatCandidates"/>
   <use name="CommonTools/CandAlgos"/>
@@ -55,12 +61,21 @@
   <use name="TrackingTools/TransientTrack"/>
 </library>
 
+<library file="Zprime2muCompositeCandidatePicker_miniAOD.cc" name="Zprime2muCompositeCandidatePicker_miniAOD">
+  <use name="CommonTools/Utils"/>
+  <use name="DataFormats/PatCandidates"/>
+  <use name="RecoVertex/KalmanVertexFit"/>
+  <use name="RecoVertex/KinematicFit"/>
+  <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
+  <use name="TrackingTools/Records"/>
+  <use name="TrackingTools/TransientTrack"/>
+</library>
+
 <library file="GenParticleMerger.cc" name="GenParticleMerger">
   <use name="CommonTools/UtilAlgos"/>
   <use name="DataFormats/HepMCCandidate"/>
 </library>
-
-<library file="AsymmetryFrameAnalysis.cc,AsymmetryParametrizer.cc,CocktailAnalyzer.cc,EfficiencyFromMC.cc,HardInteractionFilter.cc,HardInteractionNtuple.cc,HistosFromPAT.cc,MuonsFromDimuons.cc,PrintEvent.cc,QCDBackground.cc,ResolutionUsingMC.cc,SimpleNtupler.cc,Zprime2muAsymmetry.cc,Zprime2muMassReach.cc" name="Zprime2muAnalyzers">
+<library file="AsymmetryFrameAnalysis.cc,AsymmetryParametrizer.cc,CocktailAnalyzer.cc,EfficiencyFromMC.cc,HardInteractionFilter.cc,HardInteractionNtuple.cc,HistosFromPAT.cc, HistosFromPAT_miniAOD.cc, MuonsFromDimuons.cc,PrintEvent.cc,QCDBackground.cc,ResolutionUsingMC.cc,SimpleNtupler.cc,SimpleNtupler_miniAOD.cc,Zprime2muAsymmetry.cc,Zprime2muMassReach.cc" name="Zprime2muAnalyzers">
   <use name="ostream"/>
   <use name="rootgraphics"/>
   <use name="CommonTools/UtilAlgos"/>
@@ -68,11 +83,12 @@
   <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
 </library>
 
-<library file="CheckPrescale.cc,PrescaleToCommon.cc,VetoOtherDataset.cc" name="Zprime2muTriggerPlugins">
+<library file="CheckPrescale.cc,PrescaleToCommon.cc,PrescaleToCommon_miniAOD.cc,VetoOtherDataset.cc" name="Zprime2muTriggerPlugins">
   <use name="clhep"/>
   <use name="rootgraphics"/>
   <use name="CommonTools/UtilAlgos"/>
   <use name="HLTrigger/HLTcore"/>
+  <use name="DataFormats/PatCandidates"/>
 </library>
 
 <library file="GenPileupFilter.cc" name="Zprime2muPileupPlugins">

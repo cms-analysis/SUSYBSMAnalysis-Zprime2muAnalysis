@@ -12,5 +12,13 @@ muonPhotonMatch = cms.EDProducer('TrivialDeltaRViewMatcher',
                                  distMin = cms.double(0.1)
                                  )
 
+
+
+muonPhotonMatchMiniAOD = cms.EDProducer('TrivialDeltaRViewMatcher',
+                                 src     = cms.InputTag('slimmedMuons'),
+                                 matched = cms.InputTag('slimmedPhotons'),
+                                 distMin = cms.double(0.1)
+)
+
 def addUserData(patMuonProducer, tag=cms.InputTag('muonPhotonMatch')):
     patMuonProducer.userData.userCands.src.append(tag)

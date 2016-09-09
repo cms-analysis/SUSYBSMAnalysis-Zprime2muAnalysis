@@ -5,6 +5,10 @@ miniAOD = True
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
+from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFiltersMiniAOD
+
+
+
 
 process.source.fileNames =[#'file:PAT_SingleMuRun2015B-Rereco-Suite_251162_251559_20160120153115/crab_SingleMuRun2015B-Rereco-Suite_251162_251559_20160120153115/results/Zprime_123.root',
                            '/store/mc/RunIISpring16MiniAODv1/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/30000/02244373-7E03-E611-B581-003048F5B2B4.root',
@@ -181,7 +185,13 @@ for cut_name, Selection in cuts.iteritems():
     else:
     	pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
     if 'VBTF' not in cut_name and cut_name != 'Simple':
-        pobj = process.goodDataFilter * pobj
+        if not miniAOD:
+		pobj = process.goodDataFilter * pobj
+	else:
+		for dataFilter in goodDataFiltersMiniAOD: 
+			pobj = dataFilter * pobj
+
+
     if 'MuPrescaled' in cut_name: ####### Now it seams that there are no prescaled path ########
         if miniAOD:
 		pobj = process.PrescaleToCommonMiniAOD * pobj ####### Now it seams that there are no prescaled path ########

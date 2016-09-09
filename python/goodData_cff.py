@@ -17,6 +17,13 @@ primaryVertex = cms.EDFilter('GoodVertexFilter',
                                    maxd0 = cms.double(2)
                                    )
 
+primaryVertexMiniAOD = cms.EDFilter('GoodVertexFilter',
+                                   vertexCollection = cms.InputTag('offlineSlimmedPrimaryVertices'),
+                                   minimumNDOF = cms.uint32(4),
+                                   maxAbsZ = cms.double(24),
+                                   maxd0 = cms.double(2)
+                                   )
+
 noscraping = cms.EDFilter('FilterOutScraping',
                           applyfilter = cms.untracked.bool(True),
                           debugOn = cms.untracked.bool(False),

@@ -6,9 +6,13 @@ import FWCore.ParameterSet.Config as cms
 import HLTrigger.HLTfilters.hltHighLevel_cfi
 goodDataFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
 goodDataFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', 'PAT')
-goodDataFilter.HLTPaths = [] # can set to just 'goodDataPrimaryVertexFilter', for example
+goodDataFilter.HLTPaths = ["goodDataPrimaryVertexFilter"] # can set to just 'goodDataPrimaryVertexFilter', for example
 #goodDataFilter.HLTPaths = ['goodDataMETFilter']
 goodDataFilter.andOr = False # = AND
+
+from SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff import primaryVertexMiniAOD
+goodDataFiltersMiniAOD = [primaryVertexMiniAOD]
+
 
 from MuonPhotonMatch_cff import muonPhotonMatch, muonPhotonMatchMiniAOD
 from OurSelectionDec2012_cff import allDimuons, dimuons, dimuonsMiniAOD, loose_cut

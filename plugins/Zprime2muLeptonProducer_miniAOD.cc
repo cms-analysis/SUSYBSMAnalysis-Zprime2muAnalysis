@@ -152,7 +152,7 @@ void Zprime2muLeptonProducer_miniAOD::embedTriggerMatch(pat::Muon* new_mu, const
   
   int best = -1;
   float best_dR = trigger_match_max_dR;
-  std::cout << "size of L3 collection: " << L3.size() << std::endl;
+  //std::cout << "size of L3 collection: " << L3.size() << std::endl;
   for (size_t i = 0; i < L3.size(); ++i) {
     // Skip those already used.
     if (L3_matched[i])
@@ -335,12 +335,13 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
     for (pat::TriggerObjectStandAlone obj : *trigger_summary_src) { // note: not "const &" since we want to call unpackPathNames
         obj.unpackPathNames(names);
 	
-	if (obj.collection() == "hltL3MuonCandidates::HLT"){
+	//if (obj.collection() == "hltL3MuonCandidates::HLT"){
 	for (unsigned h = 0; h < obj.filterLabels().size(); ++h) {
 	  
 	  
 	 //this should not be hard coded! 
-	  if (obj.filterLabels()[h] == "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q"){ 
+	//std::cout << obj.filterLabels()[h] << std::endl;   
+	if (obj.filterLabels()[h] == "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q"){ 
 	    //FilterMatched[j] = 1;
 	    L3_muons.push_back(obj);
 	  }  
@@ -349,7 +350,7 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
 	    prescaled_L3_muons.push_back(obj);
 	  } 
 	 }
-        }
+       // }
 	j++;
     }
     FilterMatched.clear();

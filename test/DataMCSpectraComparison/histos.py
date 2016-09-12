@@ -326,7 +326,7 @@ if __name__ == '__main__' and 'submit' in sys.argv:
 from CRABClient.UserUtilities import config
 config = config()
 
-config.General.requestName = 'ana_datamc_%(name)s_JsonPromptReco'
+config.General.requestName = 'ana_datamc_%(name)s'
 config.General.workArea = 'crab'
 #config.General.transferLogs = True
 
@@ -335,7 +335,7 @@ config.JobType.psetName = 'histos_crab.py'
 #config.JobType.priority = 1
 
 config.Data.inputDataset =  '%(ana_dataset)s'
-config.Data.inputDBS = 'phys03'
+config.Data.inputDBS = 'global'
 job_control
 config.Data.publication = False
 config.Data.outputDatasetTag = 'ana_datamc_%(name)s'
@@ -430,49 +430,20 @@ config.Data.totalUnits = -1
 config.Data.unitsPerJob  = 10000
     ''')
 
-        from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
+        samples = [
+               ('dy50to120','/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/RunIISpring16MiniAODv1-PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/MINIAODSIM'),
+                            
+        ]
 
-        combine_dy_samples = len([x for x in samples if x.name in ['dy200', 'dy400', 'dy500', 'dy700', 'dy800', 'dy1500', 'dy2000', 'dy3000']]) > 0
-        print 'combine_dy_samples:', combine_dy_samples
-
-        for sample in reversed(samples):
-            print sample.name
+       
+        for name, ana_dataset in samples:
+            print name
 
             new_py = open('histos.py').read()
-            sample.fill_gen_info = sample.name in ['dy50', 'dy100to200', 'dy200to400', 'dy400', 'dy800', 'dy1400', 'dy2300', 'dy3500', 'dy4500', 'dy6000', 'dy7500', 'dy8500', 'dy9500', 'zpsi5000']
-            new_py += "\nfor_mc(process, hlt_process_name='%(hlt_process_name)s', fill_gen_info=%(fill_gen_info)s)\n" % sample
-
-            if combine_dy_samples and (sample.name == 'zmumu' or 'dy' in sample.name):
-                mass_limits = {
-                    #'dy50'      : (  50,     120),
-                    #'dy120'     : ( 120,     200),
-                    'dy200'     : ( 100,     200),
-                    'dy400'     : ( 200,     400),
-                    'dy500'     : ( 400,     500),
-                    'dy700'     : ( 500,     700),
-                    'dy800'     : ( 700,     800),
-                    'dy1500'    : (1000,    1500),
-                    'dy2000'    : (1500,    2000),
-                    'dy3000'    : (2000,    3000),
-                    #'dy7500'    : (6000,    7500),
-                    #'dy8500'    : (8500,    9500),
-                    #'dy9500'    : (9500,  100000),
-                    }
-                lo,hi = mass_limits[sample.name]
-                from SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi import dy_gen_mass_cut
-                new_cut = dy_gen_mass_cut % locals()
-
-                new_py += '''
-process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DYGenMassFilter_cfi')
-
-process.DYGenMassFilter.cut = "%(new_cut)s"
-for pn,p in process.paths.items():
-    setattr(process, pn, cms.Path(process.DYGenMassFilter*p._seq))
-''' % locals()
-
+            
             open('histos_crab.py', 'wt').write(new_py)
 
-            open('crabConfig.py', 'wt').write(crab_cfg % sample)
+            open('crabConfig.py', 'wt').write(crab_cfg % locals())
             if not just_testing:
                 os.system('crab submit -c crabConfig.py')
             else:
@@ -485,3 +456,4 @@ for pn,p in process.paths.items():
 
         if not just_testing:
             os.system('rm crabConfig.py histos_crab.py histos_crab.pyc')
+

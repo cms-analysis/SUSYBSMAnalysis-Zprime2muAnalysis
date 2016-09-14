@@ -1031,7 +1031,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
         //
         // Tracker Plus First Muon Station Muon Information
         //
-	if (!(mu->tpfmsMuon().refCore().isAvailable())) {
+	if (!(mu->tpfmsTrack().refCore().isAvailable())) {
 	  t.lep_tpfms_p[w] = -999;
 	  t.lep_tpfms_pt[w] = -999;
 	  t.lep_tpfms_pt_err[w] = -999;
@@ -1045,24 +1045,23 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
 	  t.lep_tpfms_qOverPt[w] = -999;
 	}
 	else {
-
-	  t.lep_tpfms_p[w] = mu->tpfmsMuon()->p();
-	  t.lep_tpfms_pt[w] = mu->tpfmsMuon()->pt();
-	  t.lep_tpfms_pt_err[w] = mu->tpfmsMuon()->ptError();
-	  t.lep_tpfms_px[w] = mu->tpfmsMuon()->px();
-	  t.lep_tpfms_py[w] = mu->tpfmsMuon()->py();
-	  t.lep_tpfms_pz[w] = mu->tpfmsMuon()->pz();
-	  t.lep_tpfms_eta[w] = mu->tpfmsMuon()->eta();
-	  t.lep_tpfms_phi[w] = mu->tpfmsMuon()->phi();
-	  t.lep_tpfms_chi2[w] = mu->tpfmsMuon()->chi2();
-	  t.lep_tpfms_ndf[w] = mu->tpfmsMuon()->ndof();
-	  t.lep_tpfms_qOverPt[w] = (mu->charge())/(mu->tpfmsMuon()->pt());
+	  t.lep_tpfms_p[w] = mu->tpfmsTrack()->p();
+	  t.lep_tpfms_pt[w] = mu->tpfmsTrack()->pt();
+	  t.lep_tpfms_pt_err[w] = mu->tpfmsTrack()->ptError();
+	  t.lep_tpfms_px[w] = mu->tpfmsTrack()->px();
+	  t.lep_tpfms_py[w] = mu->tpfmsTrack()->py();
+	  t.lep_tpfms_pz[w] = mu->tpfmsTrack()->pz();
+	  t.lep_tpfms_eta[w] = mu->tpfmsTrack()->eta();
+	  t.lep_tpfms_phi[w] = mu->tpfmsTrack()->phi();
+	  t.lep_tpfms_chi2[w] = mu->tpfmsTrack()->chi2();
+	  t.lep_tpfms_ndf[w] = mu->tpfmsTrack()->ndof();
+	  t.lep_tpfms_qOverPt[w] = (mu->charge())/(mu->tpfmsTrack()->pt());
 	}
 
         //
         // Picky Muon Information
         //
-	if (!(mu->pickyMuon().refCore().isAvailable())) {
+	if (!(mu->pickyTrack().refCore().isAvailable())) {
 	  t.lep_picky_p[w] = -999;
 	  t.lep_picky_pt[w] = -999;
 	  t.lep_picky_pt_err[w] = -999;
@@ -1076,24 +1075,24 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
 	  t.lep_picky_qOverPt[w] = -999;
 	}
 	else {
-	  t.lep_picky_p[w] = mu->pickyMuon()->p();
-	  t.lep_picky_pt[w] = mu->pickyMuon()->pt();
-	  t.lep_picky_pt_err[w] = mu->pickyMuon()->ptError();
-	  t.lep_picky_px[w] = mu->pickyMuon()->px();
-	  t.lep_picky_py[w] = mu->pickyMuon()->py();
-	  t.lep_picky_pz[w] = mu->pickyMuon()->pz();
-	  t.lep_picky_eta[w] = mu->pickyMuon()->eta();
-	  t.lep_picky_phi[w] = mu->pickyMuon()->phi();
-	  t.lep_picky_chi2[w] = mu->pickyMuon()->chi2();
-	  t.lep_picky_ndf[w] = mu->pickyMuon()->ndof();
-	  t.lep_picky_qOverPt[w] = (mu->charge())/(mu->pickyMuon()->pt());
+	  t.lep_picky_p[w] = mu->pickyTrack()->p();
+	  t.lep_picky_pt[w] = mu->pickyTrack()->pt();
+	  t.lep_picky_pt_err[w] = mu->pickyTrack()->ptError();
+	  t.lep_picky_px[w] = mu->pickyTrack()->px();
+	  t.lep_picky_py[w] = mu->pickyTrack()->py();
+	  t.lep_picky_pz[w] = mu->pickyTrack()->pz();
+	  t.lep_picky_eta[w] = mu->pickyTrack()->eta();
+	  t.lep_picky_phi[w] = mu->pickyTrack()->phi();
+	  t.lep_picky_chi2[w] = mu->pickyTrack()->chi2();
+	  t.lep_picky_ndf[w] = mu->pickyTrack()->ndof();
+	  t.lep_picky_qOverPt[w] = (mu->charge())/(mu->pickyTrack()->pt());
 	}
 
         //
-        // Cocktail Muon Information
+        // Cocktail Muon Information not available in miniAOD in this form
         //
 	//std::cout << "here4?" << std::endl;
-	//reco::TrackRef cocktail = muon::tevOptimized(*mu, 200, 17, 40, 0.25).first;
+	//reco::TrackRef cocktail = muon::tevOptimized(mu->globalTrack(),mu->innerTrack(),mu->tpfmsTrack(),mu->pickyTrack(),mu->dytTrack(), 200., 17., 40., 0.25).first;
 /*	std::cout << "was?!" << std::endl;
 	if (!(cocktail.refCore().isAvailable())) {
 	  t.lep_cocktail_p[w] = -999;

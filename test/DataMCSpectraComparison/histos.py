@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-miniAOD = True
+miniAOD = False
 
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
@@ -9,12 +9,65 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFilt
 
 
 
-
 process.source.fileNames =[#'file:PAT_SingleMuRun2015B-Rereco-Suite_251162_251559_20160120153115/crab_SingleMuRun2015B-Rereco-Suite_251162_251559_20160120153115/results/Zprime_123.root',
-                           '/store/mc/RunIISpring16MiniAODv1/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/30000/02244373-7E03-E611-B581-003048F5B2B4.root',
+                           #'/store/mc/RunIISpring16MiniAODv1/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/30000/02244373-7E03-E611-B581-003048F5B2B4.root',
 			   #'/store/data/Run2016F/SingleMuon/MINIAOD/PromptReco-v1/000/277/932/00000/084865EB-1859-E611-BDA7-02163E011A89.root',
 			   #'file:/afs/cern.ch/work/j/jschulte/ZPrime/tuple/DYinclsuive_pat.root',
-                           ]
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_1.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_2.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_3.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_4.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_5.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_6.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_7.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_8.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_9.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_10.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_11.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_12.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_13.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_14.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_15.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_16.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_17.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_18.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_19.root', 
+                          #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/effres_dy400to800_sam/160701_184048/0000/pat_20.root',
+			  #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/10000/CAB9C442-A73A-E611-9383-5254003DEED4.root',
+			  #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/10000/FA8D18A0-A63A-E611-B09E-5254003DEED4.root',
+			  #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/10000/FC331993-A63A-E611-9F72-0242AC130003.root',			  
+			  #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/40000/8001242B-CB2B-E611-A417-08606E15EABA.root',
+			  #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/40000/A4F32B2B-CB2B-E611-BCA2-08606E15EABA.root',
+		          #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/40000/C01DA52A-CB2B-E611-A556-3085A9262DB8.root',
+			   #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/datamc_dy400to800/160509_211352/0000/pat_1.root',
+			   #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/datamc_dy400to800/160509_211352/0000/pat_2.root',
+			   #'/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/datamc_dy400to800/160509_211352/0000/pat_3.root',
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/datamc_DY400to800Powheg/160912_122505/0000/pat_1.root',			
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/datamc_DY400to800Powheg/160912_122505/0000/pat_2.root',			
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/datamc_DY400to800Powheg/160912_122505/0000/pat_3.root',			
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/datamc_DY400to800Powheg/160912_122505/0000/pat_4.root',			
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/datamc_DY400to800Powheg/160912_122505/0000/pat_5.root',			
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/datamc_DY400to800Powheg/160912_122505/0000/pat_6.root',			
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/datamc_DY400to800Powheg/160912_122505/0000/pat_7.root',			
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/datamc_DY400to800Powheg/160912_122505/0000/pat_8.root',			
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/datamc_DY400to800Powheg/160912_122505/0000/pat_9.root',			
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/datamc_DY400to800Powheg/160912_122505/0000/pat_10.root',		
+			  #'file:pat.root'
+		          #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root',
+			  #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/AA745369-613A-E611-93A7-0025907B4EE6.root',
+			  #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/B2BFFF97-603A-E611-90A2-0CC47AB35D34.root',
+			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_1.root',		
+			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_2.root',		
+			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_3.root',		
+			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_4.root',		
+			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_5.root',		
+			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_6.root',		
+			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_7.root',		
+			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_8.root',		
+			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_9.root',		
+			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_10.root',		
+			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_11.root',		
+]
 process.maxEvents.input =-1
 #process.GlobalTag.globaltag = '76X_dataRun2_v15'## solo per proare i dati
 process.GlobalTag.globaltag = '80X_dataRun2_Prompt_v10'
@@ -201,10 +254,14 @@ for cut_name, Selection in cuts.iteritems():
     setattr(process, pathname, path)
 
 
-def ntuplify(process, fill_gen_info=False):
+def ntuplify(process, fill_gen_info=True):
 
 
     if miniAOD:
+	process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
+    	obj = process.prunedMCLeptons
+	obj.src = cms.InputTag('prunedGenParticles')
+
 	process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler_miniAOD',
                                            dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
                                            beamspot_src = cms.InputTag('offlineBeamSpot'),
@@ -228,7 +285,10 @@ def ntuplify(process, fill_gen_info=False):
         process.SimpleNtupler.hardInteraction = hardInteraction
         
     if hasattr(process, 'pathSimple'):
-        process.pathSimple *= process.SimpleNtupler * process.SimpleNtuplerEmu
+	if miniAOD and fill_gen_info:
+        	process.pathSimple *=obj * process.SimpleNtupler * process.SimpleNtuplerEmu
+	else:
+		process.pathSimple *= process.SimpleNtupler * process.SimpleNtuplerEmu
 ntuplify(process) #to have ntuples also running in interactive way
 
 def printify(process):

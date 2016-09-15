@@ -260,8 +260,7 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
   consumes<reco::VertexCollection>(vertices_src);
   consumes<edm::TriggerResults>(TriggerResults_src);
   consumes<GenEventInfoProduct>(genEventInfo_);
-  //consumes<reco::GenParticleCollection>(hardInteraction->src);
-  
+  if (fill_gen_info) consumes<std::vector<reco::GenParticle>>(hardInteraction->src);
  
   edm::Service<TFileService> fs;
   tree = fs->make<TTree>("t", "");

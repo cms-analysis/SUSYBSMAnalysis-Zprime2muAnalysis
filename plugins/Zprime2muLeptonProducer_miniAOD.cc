@@ -341,11 +341,11 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
 	  
 	 //this should not be hard coded! 
 	//std::cout << obj.filterLabels()[h] << std::endl;   
-	if (obj.filterLabels()[h] == "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q"){ 
+	if (obj.filterLabels()[h] == pandf.filter){ 
 	    //FilterMatched[j] = 1;
 	    L3_muons.push_back(obj);
 	  }  
-	  if (obj.filterLabels()[h] ==	"hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q"){
+	  if (obj.filterLabels()[h] ==	pandf.prescaled_filter){
 	    //FilterMatched[j] = 1;
 	    prescaled_L3_muons.push_back(obj);
 	  } 

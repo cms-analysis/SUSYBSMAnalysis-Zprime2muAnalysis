@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-miniAOD = False
+
+miniAOD = True
 
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
@@ -53,20 +54,20 @@ process.source.fileNames =[#'file:PAT_SingleMuRun2015B-Rereco-Suite_251162_25155
 			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/datamc_DY400to800Powheg/160912_122505/0000/pat_9.root',			
 			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/datamc_DY400to800Powheg/160912_122505/0000/pat_10.root',		
 			  #'file:pat.root'
-		          #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root',
-			  #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/AA745369-613A-E611-93A7-0025907B4EE6.root',
-			  #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/B2BFFF97-603A-E611-90A2-0CC47AB35D34.root',
-			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_1.root',		
-			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_2.root',		
-			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_3.root',		
-			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_4.root',		
-			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_5.root',		
-			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_6.root',		
-			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_7.root',		
-			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_8.root',		
-			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_9.root',		
-			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_10.root',		
-			  '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_11.root',		
+		          '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root',
+			  '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/AA745369-613A-E611-93A7-0025907B4EE6.root',
+			  '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/B2BFFF97-603A-E611-90A2-0CC47AB35D34.root',
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_1.root',		
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_2.root',		
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_3.root',		
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_4.root',		
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_5.root',		
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_6.root',		
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_7.root',		
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_8.root',		
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_9.root',		
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_10.root',		
+			  #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_11.root',		
 ]
 process.maxEvents.input =-1
 #process.GlobalTag.globaltag = '76X_dataRun2_v15'## solo per proare i dati
@@ -241,7 +242,9 @@ for cut_name, Selection in cuts.iteritems():
         if not miniAOD:
 		pobj = process.goodDataFilter * pobj
 	else:
-		for dataFilter in goodDataFiltersMiniAOD: 
+		process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
+		for dataFilter in goodDataFiltersMiniAOD:
+			#setattr(process,dataFilter 
 			pobj = dataFilter * pobj
 
 
@@ -266,7 +269,7 @@ def ntuplify(process, fill_gen_info=True):
                                            dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
                                            beamspot_src = cms.InputTag('offlineBeamSpot'),
                                            vertices_src = cms.InputTag('offlineSlimmedPrimaryVertices'),
-					   TriggerResults_src = cms.InputTag('TriggerResults'),
+					   TriggerResults_src = cms.InputTag('TriggerResults', '', 'PAT'),
                                            genEventInfo = cms.untracked.InputTag('generator')
                                            )
  

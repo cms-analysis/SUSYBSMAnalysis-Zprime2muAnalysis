@@ -647,12 +647,13 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
   event.getByLabel(TriggerResults_src, respat);
   
   const edm::TriggerNames& namespat = event.triggerNames(*respat);
-  
-  if (namespat.triggerIndex("goodDataHLTPhysicsDeclared") < respat->size()) {
+ 
+
+  if (namespat.triggerIndex("Flag_goodVertices") < respat->size()) {
     t.GoodDataRan = 1;
-    t.HLTPhysicsDeclared = respat->accept(namespat.triggerIndex("goodDataHLTPhysicsDeclared"));
-    t.GoodVtx = respat->accept(namespat.triggerIndex("goodDataPrimaryVertexFilter"));
-    t.NoScraping = respat->accept(namespat.triggerIndex("goodDataNoScraping"));
+    t.HLTPhysicsDeclared = true;
+    t.GoodVtx = respat->accept(namespat.triggerIndex("Flag_goodVertices"));
+    t.NoScraping = true;
   }
 
   // Get Beamspot information

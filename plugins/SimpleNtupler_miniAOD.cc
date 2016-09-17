@@ -190,9 +190,8 @@ private:
     bool lep_isGlobalMuon[2];
     bool lep_isTrackerMuon[2];
     bool GoodDataRan;
-    bool HLTPhysicsDeclared;
     bool GoodVtx;
-    bool NoScraping;
+    bool METFilter;
     float gen_res_mass;
     float gen_res_pt;
     float gen_res_rap;
@@ -234,6 +233,7 @@ private:
   const bool fill_gen_info;
   const edm::InputTag TriggerResults_src;
   const edm::InputTag genEventInfo_;
+  std::vector<edm::InputTag> filterTags;
   HardInteraction* hardInteraction;
   //const edm::InputTag TriggerResults_src; 
 };
@@ -251,8 +251,8 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
     fill_gen_info(cfg.existsAs<edm::ParameterSet>("hardInteraction")),
     TriggerResults_src(cfg.getParameter<edm::InputTag>("TriggerResults_src")),
     genEventInfo_(cfg.getUntrackedParameter<edm::InputTag>("genEventInfo")),
+    filterTags(cfg.getParameter<std::vector<edm::InputTag> > ("metFilter")),  
     hardInteraction(fill_gen_info ? new HardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction")) : 0)
-   
 {
  
   consumes<pat::CompositeCandidateCollection>(dimu_src);
@@ -417,9 +417,8 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
   tree->Branch("lep_isGlobalMuon", t.lep_isGlobalMuon, "lep_isGlobalMuon[2]/O");
   tree->Branch("lep_isTrackerMuon", t.lep_isTrackerMuon, "lep_isTrackerMuon[2]/O");
   tree->Branch("GoodDataRan", &t.GoodDataRan, "GoodDataRan/O");
-  tree->Branch("HLTPhysicsDeclared", &t.HLTPhysicsDeclared, "HLTPhysicsDeclared/O");
   tree->Branch("GoodVtx", &t.GoodVtx, "GoodVtx/O");
-  tree->Branch("NoScraping", &t.NoScraping, "NoScraping/O");
+  tree->Branch("METFilter", &t.METFilter, "METFilter/O");
   if (fill_gen_info) {
     tree->Branch("genWeight", &t.genWeight, "genWeight/F");
     tree->Branch("gen_res_mass", &t.gen_res_mass, "gen_res_mass/F");
@@ -651,9 +650,13 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
 
   if (namespat.triggerIndex("Flag_goodVertices") < respat->size()) {
     t.GoodDataRan = 1;
-    t.HLTPhysicsDeclared = true;
     t.GoodVtx = respat->accept(namespat.triggerIndex("Flag_goodVertices"));
-    t.NoScraping = true;
+    bool metFilterAccept = true;
+    for ( std::vector<edm::InputTag>::iterator filterTag_i = filterTags.begin(); filterTag_i != filterTags.end(); ++filterTag_i ) {
+      std::string filterTag = (*filterTag_i).label();	
+      metFilterAccept  *= respat->accept(namespat.triggerIndex(filterTag));	
+    }
+    t.METFilter = metFilterAccept;
   }
 
   // Get Beamspot information

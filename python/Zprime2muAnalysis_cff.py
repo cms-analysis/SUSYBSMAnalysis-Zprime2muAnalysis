@@ -10,8 +10,11 @@ goodDataFilter.HLTPaths = ["goodDataPrimaryVertexFilter"] # can set to just 'goo
 #goodDataFilter.HLTPaths = ['goodDataMETFilter']
 goodDataFilter.andOr = False # = AND
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff import primaryVertexMiniAOD
+from SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff import primaryVertexMiniAOD, hltPhysicsDeclared, metFilters
 goodDataFiltersMiniAOD = [primaryVertexMiniAOD]
+## for full filtering, use:
+#goodDataFiltersMiniAOD = [primaryVertexMiniAOD,hltPhysicsDeclared]
+#goodDataFiltersMiniAOD += metFilters
 
 
 from MuonPhotonMatch_cff import muonPhotonMatch, muonPhotonMatchMiniAOD

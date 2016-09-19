@@ -190,9 +190,8 @@ private:
     bool lep_isGlobalMuon[2];
     bool lep_isTrackerMuon[2];
     bool GoodDataRan;
-    bool HLTPhysicsDeclared;
     bool GoodVtx;
-    bool NoScraping;
+    bool METFilter;
     float gen_res_mass;
     float gen_res_pt;
     float gen_res_rap;
@@ -418,9 +417,8 @@ SimpleNtupler::SimpleNtupler(const edm::ParameterSet& cfg)
   tree->Branch("lep_isGlobalMuon", t.lep_isGlobalMuon, "lep_isGlobalMuon[2]/O");
   tree->Branch("lep_isTrackerMuon", t.lep_isTrackerMuon, "lep_isTrackerMuon[2]/O");
   tree->Branch("GoodDataRan", &t.GoodDataRan, "GoodDataRan/O");
-  tree->Branch("HLTPhysicsDeclared", &t.HLTPhysicsDeclared, "HLTPhysicsDeclared/O");
   tree->Branch("GoodVtx", &t.GoodVtx, "GoodVtx/O");
-  tree->Branch("NoScraping", &t.NoScraping, "NoScraping/O");
+  tree->Branch("METFilter", &t.METFilter, "METFilter/O");
   if (fill_gen_info) {
     tree->Branch("genWeight", &t.genWeight, "genWeight/F");
     tree->Branch("gen_res_mass", &t.gen_res_mass, "gen_res_mass/F");
@@ -649,11 +647,10 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
   
   const edm::TriggerNames& namespat = event.triggerNames(*respat);
   
-  if (namespat.triggerIndex("goodDataHLTPhysicsDeclared") < respat->size()) {
+  if (namespat.triggerIndex("goodDataPrimaryVertexFilter") < respat->size()) {
     t.GoodDataRan = 1;
-    t.HLTPhysicsDeclared = respat->accept(namespat.triggerIndex("goodDataHLTPhysicsDeclared"));
     t.GoodVtx = respat->accept(namespat.triggerIndex("goodDataPrimaryVertexFilter"));
-    t.NoScraping = respat->accept(namespat.triggerIndex("goodDataNoScraping"));
+    t.METFilter = respat->accept(namespat.triggerIndex("goodDataMETFilter"));
   }
 
   // Get Beamspot information

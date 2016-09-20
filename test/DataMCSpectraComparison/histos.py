@@ -199,7 +199,8 @@ for cut_name, Selection in cuts.iteritems():
     # Finally, make the path for this set of cuts.
     pathname = 'path' + cut_name
     if miniAOD:
-    	pobj = process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+        process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DileptonPreselector_cfi')
+        pobj = process.dileptonPreseletor * process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
     else:
     	pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
 

@@ -75,7 +75,7 @@
   <use name="CommonTools/UtilAlgos"/>
   <use name="DataFormats/HepMCCandidate"/>
 </library>
-<library file="AsymmetryFrameAnalysis.cc,AsymmetryParametrizer.cc,CocktailAnalyzer.cc,EfficiencyFromMC.cc,HardInteractionFilter.cc, DibosonGenMass.cc,HardInteractionNtuple.cc,HistosFromPAT.cc, HistosFromPAT_miniAOD.cc, MuonsFromDimuons.cc,PrintEvent.cc,QCDBackground.cc,ResolutionUsingMC.cc,SimpleNtupler.cc,SimpleNtupler_miniAOD.cc,Zprime2muAsymmetry.cc,Zprime2muMassReach.cc" name="Zprime2muAnalyzers">
+<library file="AsymmetryFrameAnalysis.cc,AsymmetryParametrizer.cc,CocktailAnalyzer.cc,EfficiencyFromMC.cc,HardInteractionFilter.cc,HardInteractionNtuple.cc,HistosFromPAT.cc, HistosFromPAT_miniAOD.cc, MuonsFromDimuons.cc,PrintEvent.cc,QCDBackground.cc,ResolutionUsingMC.cc,SimpleNtupler.cc,SimpleNtupler_miniAOD.cc,Zprime2muAsymmetry.cc,Zprime2muMassReach.cc" name="Zprime2muAnalyzers">
   <use name="ostream"/>
   <use name="rootgraphics"/>
   <use name="CommonTools/UtilAlgos"/>
@@ -121,8 +121,11 @@
     <use name="DataFormats/PatCandidates"/>
     <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
 </library>
-
-# to filter events on miniAPD
+# to filter events on miniAOD
 <library file="METFilterMiniAOD.cc" name="METFIlterMiniAOD">
     <use name="DataFormats/Common"/>
+</library>
+# to filter events based on lepton multiplicity
+<library file="DileptonPreselector.cc" name="DileptonPreselector">
+  <use name="DataFormats/PatCandidates"/>
 </library>

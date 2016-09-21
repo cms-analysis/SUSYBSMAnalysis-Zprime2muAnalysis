@@ -1300,8 +1300,9 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
 		}
 		t.jet_pt[2] = -999.;
                 t.jet_eta[2] = -999.;
-                t.jet_phi[2] = -999.;                                                                                                                                                                                                                                                    }
-	  t.jet_pt[3] = -999.;                                                                                                                                                                                                                                                           t.jet_eta[3] = -999.;
+                t.jet_phi[2] = -999.;
+	  }
+	  t::.jet_pt[3] = -999.;                                                                                                                                                                                                                                                           t.jet_eta[3] = -999.;
           t.jet_phi[3] = -999.;
     }
 

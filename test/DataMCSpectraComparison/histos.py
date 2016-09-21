@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-miniAOD = False
+miniAOD = True
 
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name

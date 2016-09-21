@@ -76,6 +76,8 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
     const int pdgId = genp->pdgId();
 //    const reco::Candidate* mmm = genp->mother();//
 //    std::cout<<counter<<" pdgId "<<pdgId<<" status "<<genp->status()<<std::endl;
+    
+    
     if (genp->status() == 22) {//it was 3
       if (IsResonance(pdgId)) {
       ///std::cout<<"IsResonance(pdgId)"<<std::endl;
@@ -89,6 +91,7 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
       }
     }
     else if(genp->status() == 23) {//it was 3
+      
       if (pdgId == leptonFlavor) {
       ///std::cout<<"leptonFlavor"<<std::endl;
 	// We found the l-. Make sure we didn't find a second one.

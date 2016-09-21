@@ -20,7 +20,7 @@ process.source.fileNames = [
 process.maxEvents.input = -1
 
 #process.GlobalTag.globaltag = 'MCRUN2_74_V9A'
-process.GlobalTag.globaltag = '74X_mcRun2_startup_realistic50ns_v0' #mc startup
+process.GlobalTag.globaltag = '80X_dataRun2_Prompt_v10' #mc startup
 
 if __name__ == '__main__' and hasattr(sys, 'argv') and 'submit' in sys.argv:
     job_control = '''

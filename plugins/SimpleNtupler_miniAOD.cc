@@ -7,6 +7,8 @@
 #include "DataFormats/PatCandidates/interface/CompositeCandidate.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
 #include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
+#include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/Math/interface/deltaR.h"
@@ -222,6 +224,13 @@ private:
     float gen_lep_noib_eta[2];
     float gen_lep_noib_phi[2];
     float gen_lep_noib_qOverPt[2];
+    float met_pt;
+    float met_phi;
+    int nJets;
+    float jet_pt[4];
+    float jet_eta[4];
+    float jet_phi[4];
+
   };
 
   tree_t t;
@@ -229,6 +238,8 @@ private:
 
   const edm::InputTag dimu_src;
   const edm::InputTag beamspot_src;
+  const edm::InputTag met_src;
+  const edm::InputTag jet_src;
   const edm::InputTag vertices_src;
   const bool fill_gen_info;
   const edm::InputTag TriggerResults_src;
@@ -247,6 +258,8 @@ TString SimpleNtupler_miniAOD::replace_all(const TString& a, const TString& b, c
 SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
   : dimu_src(cfg.getParameter<edm::InputTag>("dimu_src")),
     beamspot_src(cfg.getParameter<edm::InputTag>("beamspot_src")),
+    met_src(cfg.getParameter<edm::InputTag>("met_src")),
+    jet_src(cfg.getParameter<edm::InputTag>("jet_src")),
     vertices_src(cfg.getParameter<edm::InputTag>("vertices_src")),
     fill_gen_info(cfg.existsAs<edm::ParameterSet>("hardInteraction")),
     TriggerResults_src(cfg.getParameter<edm::InputTag>("TriggerResults_src")),
@@ -256,6 +269,8 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
 {
  
   consumes<pat::CompositeCandidateCollection>(dimu_src);
+  consumes<std::vector<pat::MET>>(met_src);
+  consumes<std::vector<pat::Jet>>(jet_src);
   consumes<reco::BeamSpot>(beamspot_src);
   consumes<reco::VertexCollection>(vertices_src);
   consumes<edm::TriggerResults>(TriggerResults_src);
@@ -419,6 +434,12 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
   tree->Branch("GoodDataRan", &t.GoodDataRan, "GoodDataRan/O");
   tree->Branch("GoodVtx", &t.GoodVtx, "GoodVtx/O");
   tree->Branch("METFilter", &t.METFilter, "METFilter/O");
+  tree->Branch("met_pt", &t.met_pt, "met_pt/F");
+  tree->Branch("met_phi", &t.met_phi, "met_phi/F");
+  tree->Branch("nJets", &t.nJets, "nJets/I");
+  tree->Branch("jet_pt", t.jet_pt, "jet_pt[4]/F");
+  tree->Branch("jet_eta", t.jet_eta, "jet_eta[4]/F");
+  tree->Branch("jet_phi", t.jet_phi, "jet_phi[4]/F");
   if (fill_gen_info) {
     tree->Branch("genWeight", &t.genWeight, "genWeight/F");
     tree->Branch("gen_res_mass", &t.gen_res_mass, "gen_res_mass/F");
@@ -682,7 +703,6 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
 
     // This only works for DY/Z'/RSG events, and really just for PYTHIA!
     hardInteraction->Fill(event);
-
    int EventWeight = 1.;
    edm::Handle<GenEventInfoProduct> gen_ev_info;
    event.getByLabel(genEventInfo_, gen_ev_info);
@@ -694,7 +714,6 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
     // Store Generator Level information
     //
     if(hardInteraction->IsValid()){
-
         t.gen_res_mass = hardInteraction->resonance->mass();
         t.gen_res_pt   = hardInteraction->resonance->pt();
         t.gen_res_rap  = hardInteraction->resonance->rapidity();
@@ -1264,7 +1283,53 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
 
     //
     // Fill tree
+
+  edm::Handle< std::vector< pat::MET > > mets;
+  event.getByLabel(met_src, mets);
+  t.met_pt = mets->front().pt();
+  t.met_phi = mets->front().phi();
+
+  edm::Handle< std::vector< pat::Jet > > jets;
+  event.getByLabel(jet_src, jets);
+
+
+  int nJets = 0;
+
+  for (std::vector<pat::Jet>::const_iterator itJet = jets->begin(); itJet != jets->end(); itJet++) {
+	if (fabs(itJet->eta()) < 2.4 && itJet->pt() > 30 && itJet->neutralHadronEnergyFraction() < 0.99 && itJet->neutralEmEnergyFraction() < 0.99 && itJet->chargedHadronEnergyFraction() > 0 && itJet->muonEnergyFraction() < 0.8 && itJet->chargedEmEnergyFraction() < 0.99 && (itJet->chargedMultiplicity()+itJet->neutralMultiplicity()) > 1  && itJet->chargedMultiplicity() > 0 && deltaR((*itJet),dil.daughter(0)->p4()) > 0.4 && deltaR((*itJet),dil.daughter(1)->p4())){
+           	if (nJets < 4){
+			t.jet_pt[nJets] = itJet->pt();		
+			t.jet_eta[nJets] = itJet->eta();		
+			t.jet_phi[nJets] = itJet->phi();		
+		}
+	   	nJets++; 		
+	}
+  }
     //
+  t.nJets = nJets;
+
+  if (nJets < 4){
+	if (nJets < 3){
+		if (nJets < 2){
+			if (nJets < 1){
+				t.jet_pt[0] = -999.;
+				t.jet_eta[0] = -999.;
+				t.jet_phi[0] = -999.;
+			}
+			t.jet_pt[1] = -999.;
+			t.jet_eta[1] = -999.;
+			t.jet_phi[1] = -999.;
+	
+		}
+		t.jet_pt[2] = -999.;
+		t.jet_eta[2] = -999.;
+		t.jet_phi[2] = -999.;
+	}
+	t.jet_pt[3] = -999.;
+	t.jet_eta[3] = -999.;
+	t.jet_phi[3] = -999.;		
+  }
+
     tree->Fill();
 
   } // end BOOST_FOREACH(dil, *dils)

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-miniAOD = True
+miniAOD = False
 
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
@@ -14,8 +14,70 @@ process.source.fileNames =[#'file:PAT_SingleMuRun2015B-Rereco-Suite_251162_25155
                            #'/store/data/Run2016G/SingleMuon/MINIAOD/PromptReco-v1/000/278/819/00000/68409ABF-A263-E611-A259-FA163E2F90EB.root',
 			   #'/store/data/Run2016F/SingleMuon/MINIAOD/PromptReco-v1/000/277/932/00000/084865EB-1859-E611-BDA7-02163E011A89.root',
 			   #'file:/afs/cern.ch/work/j/jschulte/ZPrime/tuple/DYinclsuive_pat.root',
-			   '/store/mc/RunIISpring16MiniAODv2/WWTo2L2Nu_13TeV-powheg/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/00000/00B02413-021A-E611-9326-001EC9ADCC80.root',
+			  #'/store/mc/RunIISpring16MiniAODv2/WWTo2L2Nu_13TeV-powheg/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/00000/00B02413-021A-E611-9326-001EC9ADCC80.root',
+			  #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root',
+                          #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/AA745369-613A-E611-93A7-0025907B4EE6.root',
+                          #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/B2BFFF97-603A-E611-90A2-0CC47AB35D34.root',
+			  #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/40000/8001242B-CB2B-E611-A417-08606E15EABA.root',
+                          #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/40000/A4F32B2B-CB2B-E611-BCA2-08606E15EABA.root',
+                          #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/40000/C01DA52A-CB2B-E611-A556-3085A9262DB8.root',
 			  # ' /store/user/alfloren/PAATuples/WWTo2L2Nu_13TeV-powheg/datamc_WWinclusive/160524_124813/0000/pat_1.root',
+                          #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root',
+                          #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/AA745369-613A-E611-93A7-0025907B4EE6.root',
+                          #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/B2BFFF97-603A-E611-90A2-0CC47AB35D34.root',
+                          #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_1.root',         
+                          #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_2.root',         
+                          #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_3.root',         
+                          #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_4.root',         
+                          #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_5.root',         
+                          #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_6.root',         
+                          #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_7.root',         
+                          #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_8.root',         
+                          #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_9.root',         
+                          #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_10.root',                
+                          #'/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160913_120904/0000/pat_11.root',
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_1.root',         
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_2.root',         
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_3.root',         
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_4.root',         
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_5.root',         
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_6.root',         
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_7.root',         
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_8.root',         
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_9.root',         
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_10.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_11.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_12.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_13.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_14.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_15.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_16.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_17.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_18.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_19.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_20.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_21.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_22.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_23.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_24.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_25.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_26.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_27.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_28.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_29.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_30.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_31.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_32.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_33.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_34.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_35.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_36.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_37.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_38.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_39.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_40.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_41.root',                
+                          '/store/user/jschulte/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/datamc_DY120to200Powheg/160916_150239/0000/pat_42.root',  
                            ]
 process.maxEvents.input = -1
 #process.GlobalTag.globaltag = '76X_dataRun2_v15'## solo per proare i dati
@@ -184,11 +246,11 @@ for cut_name, Selection in cuts.iteritems():
        #define the list of MC samples to be read here. be careful that if WWinclusive or tautau sample are not commented it will apply the filters when running locally.
 
     samples = [
-               #('dy200to400','/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM'),
+               ('dy200to400','/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM'),
 	       #('dy200to400','/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/rradogna-datamc_dy200to400-20330eea4b39a6d27baf680b4cd56b47/USER'),
                #  ('dy200to400','/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM'),
 	       # ('dy50to120','/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM'),
-	         ('WWinclusive','/WWTo2L2Nu_13TeV-powheg/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM'),
+	        # ('WWinclusive','/WWTo2L2Nu_13TeV-powheg/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM'),
 		
         ]
 
@@ -200,7 +262,7 @@ for cut_name, Selection in cuts.iteritems():
     pathname = 'path' + cut_name
     if miniAOD:
         process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DileptonPreselector_cfi')
-        pobj = process.dileptonPreseletor * process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+        pobj = process.dileptonPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
     else:
     	pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
 
@@ -253,15 +315,20 @@ def ntuplify(process, fill_gen_info=True):
 
 	process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler_miniAOD',
                                            dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
+					   met_src = cms.InputTag("slimmedMETs"),
+					   jet_src = cms.InputTag("slimmedJets"),
                                            beamspot_src = cms.InputTag('offlineBeamSpot'),
                                            vertices_src = cms.InputTag('offlineSlimmedPrimaryVertices'),
 					   TriggerResults_src = cms.InputTag('TriggerResults', '', 'PAT'),
-                                           genEventInfo = cms.untracked.InputTag('generator')
+                                           genEventInfo = cms.untracked.InputTag('generator'),
+                                           metFilter = cms.VInputTag( cms.InputTag("Flag_HBHENoiseFilter"), cms.InputTag("Flag_HBHENoiseIsoFilter"), cms.InputTag("Flag_EcalDeadCellTriggerPrimitiveFilter"), cms.InputTag("Flag_eeBadScFilter"), cms.InputTag("Flag_globalTightHalo2016Filter"))
                                            )
  
     else:
 	process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler',
                                            dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
+					   met_src = cms.InputTag("patMETsPF"),
+					   jet_src = cms.InputTag("cleanPatJets"),
                                            beamspot_src = cms.InputTag('offlineBeamSpot'),
                                            vertices_src = cms.InputTag('offlinePrimaryVertices'),
 					   TriggerResults_src = cms.InputTag('TriggerResults', '', 'PAT'),

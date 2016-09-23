@@ -128,4 +128,9 @@
 # to filter events based on lepton multiplicity
 <library file="DileptonPreselector.cc" name="DileptonPreselector">
   <use name="DataFormats/PatCandidates"/>
+</library> 
+# count events and event weights
+<library file="EventCounter.cc" name="EventCounter">
+    <use name="SimDataFormats/GeneratorProducts"/>
+    <use name="CommonTools/UtilAlgos"/>
 </library>

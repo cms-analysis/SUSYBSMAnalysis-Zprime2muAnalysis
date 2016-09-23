@@ -32,7 +32,7 @@ leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          muon_photon_match_src = cms.InputTag('muonPhotonMatch'),
                          electron_muon_veto_dR = cms.double(-1),
                          trigger_match_max_dR = cms.double(0.2),
-                         trigger_summary_src = cms.InputTag('hltTriggerSummaryAOD', '', 'HLT2'),
+                         trigger_summary_src = cms.InputTag('hltTriggerSummaryAOD', '', 'HLT'),
                          )
 leptons_mini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
                          muon_src = cms.InputTag('slimmedMuons'), #JMTBAD changeme after new PAT tuples
@@ -47,7 +47,7 @@ leptons_mini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
                          electron_muon_veto_dR = cms.double(-1),
                          trigger_match_max_dR = cms.double(0.2),
                          trigger_summary = cms.InputTag('selectedPatTrigger'),
-			 bits = cms.InputTag("TriggerResults","","HLT2"),
+			 bits = cms.InputTag("TriggerResults","","HLT"),
     			 prescales = cms.InputTag("patTrigger"),
                          )
 

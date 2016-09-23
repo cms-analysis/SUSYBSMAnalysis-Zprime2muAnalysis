@@ -19,7 +19,10 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import cms, process
 
 process.maxEvents.input = -1
 #process.source.fileNames = ['file:./pat.root']
-process.source.fileNames = [ '/store/user/alfloren/PAATuples/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/effres_dy50to120/160216_151921/0000/Zprime_100.root',
+process.source.fileNames = [ '/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/effres_dy2300to3500/160518_094214/0000/pat_10.root',
+                            '/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/effres_dy2300to3500/160518_094214/0000/pat_11.root',
+                            '/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/effres_dy2300to3500/160518_094214/0000/pat_12.root',
+                            '/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/effres_dy2300to3500/160518_094214/0000/pat_13.root',
                             ]
 process.options.wantSummary = True
 
@@ -31,8 +34,8 @@ if use_old_selection:
     switch_to_old_selection(process)
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import rec_levels, rec_level_module
-#tracks = ['global', 'inner', 'tpfms', 'picky', 'tunep', 'tmr', 'tunepnew']
-tracks = ['tunepnew']
+tracks = ['global', 'inner', 'tpfms', 'picky', 'tunep', 'tmr', 'tunepnew']
+#tracks = ['tunepnew']
 rec_levels(process, tracks)
 
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.HardInteractionFilter_cfi')
@@ -50,21 +53,28 @@ import SUSYBSMAnalysis.Zprime2muAnalysis.VBTFSelection_cff as VBTFSelection
 process.allDimuonsVBTF = VBTFSelection.allDimuons.clone()
 process.dimuonsVBTF = VBTFSelection.dimuons.clone(src = 'allDimuonsVBTF')
 process.VBTFEfficiencyFromMC = process.EfficiencyFromMC.clone(dimuon_src = 'dimuonsVBTF', acceptance_max_eta_2 = 2.4)
+process.VBTFEfficiencyFromMCnoTrigger = process.EfficiencyFromMCnoTrigger.clone(dimuon_src = 'dimuonsVBTF', acceptance_max_eta_2 = 2.4) ### NO TRIGGER PROCESS
 
 # Temporarily disable explicit checks on Level-1 decision until we
 # figure out which branch to use.
-for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
+#for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
+### NO TRIGGER PROCESSES
+for eff in [process.EfficiencyFromMCnoTrigger, process.VBTFEfficiencyFromMCnoTrigger]:
     eff.check_l1 = False
 
 if acc_both_24:
-    for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
+    #for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
+    ### NO TRIGGER PROCESSES
+    for eff in [process.EfficiencyFromMCnoTrigger, process.VBTFEfficiencyFromMCnoTrigger]:
         eff.acceptance_max_eta_1 = 2.4
     from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match
     for d in [process.allDimuonsVBTF, process.allDimuons]:
         d.tight_cut = trigger_match.replace(' && abs(userFloat("TriggerMatchEta")) < 2.1', '')
     ex += 'accboth24'
 
-p2 = process.HardInteractionFilter * process.Zprime2muAnalysisSequencePlain * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC
+#p2 = process.HardInteractionFilter * process.Zprime2muAnalysisSequencePlain * process.EfficiencyFromMC * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMC
+### NO TRIGGER p2
+p2 = process.HardInteractionFilter * process.Zprime2muAnalysisSequencePlain * process.EfficiencyFromMCnoTrigger * process.allDimuonsVBTF * process.dimuonsVBTF * process.VBTFEfficiencyFromMCnoTrigger
 p  = process.HardInteractionFilterRes * process.Zprime2muAnalysisSequence # this will get all the Histostunep, Histospicky, Histosglobal, etc. below.
 
 if intime_bin in range(0,3) and late_bin in range(0,2):
@@ -93,7 +103,9 @@ if check_prescaled_path:
     l1,hlt = 'L1_SingleMu16er', 'HLT_Mu27_v2'
     from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match
 
-    for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
+    #for eff in [process.EfficiencyFromMC, process.VBTFEfficiencyFromMC]:
+    ### NO TRIGGER
+    for eff in [process.EfficiencyFromMCnoTrigger, process.VBTFEfficiencyFromMCnoTrigger]:
         eff.triggerDecision.l1Paths = [l1]
         eff.triggerDecision.hltPaths = [hlt]
         eff.hlt_single_min_pt = min_hlt_pt

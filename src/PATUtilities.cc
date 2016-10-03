@@ -24,6 +24,7 @@ namespace patmuon {
     case TkOuter: return mu.outerTrack();
     case TkTPFMS: return mu.tpfmsMuon();
     case TkPicky: return mu.pickyMuon();
+    case TkDYT: return mu.dytTrack();
     case TkTuneP: return muon::tevOptimized(mu, 200, 4, 6, -1).first;
     case TkTMR: return muon::TMR(mu.innerTrack(), mu.tpfmsMuon()).first;
     case TkTunePNew: {
@@ -35,6 +36,39 @@ namespace patmuon {
 //            std::cout<<"case TkStartup: muon eta "<<mu.eta()<<" muon pt "<<mu.pt()<<std::endl;
 //            std::cout<<" tunep "<<std::endl;
             return muon::tevOptimized(mu, 200, 17, 40, 0.25).first;
+        }
+        else {
+//            std::cout<<"case TkStartup: muon eta "<<mu.eta()<<" muon pt "<<mu.pt()<<std::endl;
+//            std::cout<<" tracker "<<std::endl;
+            return mu.innerTrack();
+        }
+    }
+    case nTrackTypes: default: return reco::TrackRef();
+    }
+  }
+
+ reco::TrackRef trackByTypeMiniAOD(const pat::Muon& mu, TrackType t) {
+    switch (t) {
+    case TkGlobal: return mu.globalTrack();
+    case TkInner:{
+//        std::cout<<"case TkInner: muon eta "<<mu.eta()<<" muon pt "<<mu.pt()<<std::endl;
+        return mu.innerTrack();
+    }
+    case TkOuter: return mu.outerTrack();
+    case TkTPFMS: return mu.tpfmsMuon();
+    case TkPicky: return mu.pickyMuon();
+    case TkDYT:   return mu.dytTrack();
+    case TkTuneP: return mu.tunePMuonBestTrack();
+    case TkTMR: return muon::TMR(mu.innerTrack(), mu.tpfmsMuon()).first;
+    case TkTunePNew: {
+//        std::cout<<"case TkTunePNew: muon eta "<<mu.eta()<<" muon pt "<<mu.pt()<<std::endl;
+        return mu.tunePMuonBestTrack();
+    }
+    case TkStartup:{
+        if(fabs(mu.eta())<1.2){
+//            std::cout<<"case TkStartup: muon eta "<<mu.eta()<<" muon pt "<<mu.pt()<<std::endl;
+//            std::cout<<" tunep "<<std::endl;
+            return mu.tunePMuonBestTrack();
         }
         else {
 //            std::cout<<"case TkStartup: muon eta "<<mu.eta()<<" muon pt "<<mu.pt()<<std::endl;
@@ -84,6 +118,8 @@ namespace patmuon {
       return TkOuter;
     else if (tk == mu.tpfmsMuon())
       return TkTPFMS;
+    else if (tk == mu.dytTrack())
+      return TkDYT;
     else if (tk == mu.pickyMuon())
       return TkPicky;
     else

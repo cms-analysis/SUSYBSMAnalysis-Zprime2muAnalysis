@@ -61,15 +61,6 @@
   <use name="TrackingTools/TransientTrack"/>
 </library>
 
-<library file="Zprime2muCompositeCandidatePicker_miniAOD.cc" name="Zprime2muCompositeCandidatePicker_miniAOD">
-  <use name="CommonTools/Utils"/>
-  <use name="DataFormats/PatCandidates"/>
-  <use name="RecoVertex/KalmanVertexFit"/>
-  <use name="RecoVertex/KinematicFit"/>
-  <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
-  <use name="TrackingTools/Records"/>
-  <use name="TrackingTools/TransientTrack"/>
-</library>
 
 <library file="GenParticleMerger.cc" name="GenParticleMerger">
   <use name="CommonTools/UtilAlgos"/>

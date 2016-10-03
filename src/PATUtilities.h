@@ -5,12 +5,13 @@
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 
 namespace patmuon {
-  enum TrackType { TkGlobal, TkInner, TkOuter, TkTPFMS, TkPicky, TkTuneP, TkTMR, TkTunePNew, TkStartup, nTrackTypes };
-  const std::string track_names[nTrackTypes+1] = { "global", "inner", "outer", "tpfms", "picky", "tunep", "tmr", "tunepnew", "startup", "invaild" };
+  enum TrackType { TkGlobal, TkInner, TkOuter, TkTPFMS, TkPicky, TkDYT, TkTuneP, TkTMR, TkTunePNew, TkStartup, nTrackTypes };
+  const std::string track_names[nTrackTypes+1] = { "global", "inner", "outer", "tpfms", "picky","dyt", "tunep", "tmr", "tunepnew", "startup", "invaild" };
 //startup: tunep in barrel and tracker-only in endcaps
     
   TrackType trackNameToType(std::string name);
   reco::TrackRef trackByType(const pat::Muon& mu, TrackType t);
+  reco::TrackRef trackByTypeMiniAOD(const pat::Muon& mu, TrackType t);
   reco::TrackRef trackByName(const pat::Muon& mu, const std::string& name);
   reco::TrackRef userDataTrack(const pat::Muon& mu, const std::string& name);
   TrackType getPickedTrackType(const pat::Muon& mu);

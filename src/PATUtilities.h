@@ -11,7 +11,6 @@ namespace patmuon {
     
   TrackType trackNameToType(std::string name);
   reco::TrackRef trackByType(const pat::Muon& mu, TrackType t);
-  reco::TrackRef trackByTypeMiniAOD(const pat::Muon& mu, TrackType t);
   reco::TrackRef trackByName(const pat::Muon& mu, const std::string& name);
   reco::TrackRef userDataTrack(const pat::Muon& mu, const std::string& name);
   TrackType getPickedTrackType(const pat::Muon& mu);

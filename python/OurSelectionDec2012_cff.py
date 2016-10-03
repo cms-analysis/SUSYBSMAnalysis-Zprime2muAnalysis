@@ -71,4 +71,3 @@ dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          dpt_over_pt_max = cms.double(0.3)
                          )
 
-

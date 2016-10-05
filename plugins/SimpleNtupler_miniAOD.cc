@@ -975,18 +975,15 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
         //> 	    const double dpt_over_pt = tk->ptError()/tk->pt();
         //
         //
-	reco::TrackRef tk = mu->tunePMuonBestTrack();
-	if (!((tk.refCore()).isAvailable())) tk = mu->muonBestTrack();
-        if ((tk.refCore()).isAvailable()) {
-		t.lep_p[w]     = tk->p();
-		t.lep_pt[w]     = tk->pt();
-		t.lep_px[w]     = tk->px();
-		t.lep_py[w]     = tk->py();
-		t.lep_pz[w]     = tk->pz();
-		t.lep_qOverPt[w] = tk->charge() / tk->pt();
-		t.lep_pt_err[w] = tk->ptError();
-		t.lep_cocktail_choice[w] = short(patmuon::whichTrack(*mu, tk));
-        } 
+	const reco::Track* tk = patmuon::getPickedTrack(*mu).get();
+	t.lep_p[w]     = tk->p();
+	t.lep_pt[w]     = tk->pt();
+	t.lep_px[w]     = tk->px();
+	t.lep_py[w]     = tk->py();
+	t.lep_pz[w]     = tk->pz();
+	t.lep_qOverPt[w] = tk->charge() / tk->pt();
+	t.lep_pt_err[w] = tk->ptError();
+     
         //
         // Tracker Track Muon Information
         //
@@ -1109,42 +1106,38 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
 	  t.lep_picky_ndf[w] = mu->pickyTrack()->ndof();
 	  t.lep_picky_qOverPt[w] = (mu->charge())/(mu->pickyTrack()->pt());
 	}
+        if (!mu->hasUserInt("hasTeVMuons") || mu->userInt("hasTeVMuons")){
+	        reco::TrackRef cocktail = muon::tevOptimized(*mu, 200, 17, 40, 0.25).first;
+       		 if (cocktail.isNull()) {
+          	 t.lep_cocktail_p[w] = -999;
+          	 t.lep_cocktail_pt[w] = -999;
+           	 t.lep_cocktail_pt_err[w] = -999;
+          	 t.lep_cocktail_px[w] = -999;
+          	 t.lep_cocktail_py[w] = -999;
+          	 t.lep_cocktail_pz[w] = -999;
+          	 t.lep_cocktail_eta[w] = -999;
+          	 t.lep_cocktail_phi[w] = -999;
+          	 t.lep_cocktail_chi2[w] = -999;
+          	 t.lep_cocktail_ndf[w] = -999;
+          	 t.lep_cocktail_qOverPt[w] = -999;
+          	 t.lep_cocktail_choice[w] = -999;
+        	}
+        	else {
+          	 t.lep_cocktail_p[w] = cocktail->p();
+          	 t.lep_cocktail_pt[w] = cocktail->pt();
+          	 t.lep_cocktail_pt_err[w] = cocktail->ptError();
+          	 t.lep_cocktail_px[w] = cocktail->px();
+          	 t.lep_cocktail_py[w] = cocktail->py();
+         	 t.lep_cocktail_pz[w] = cocktail->pz();
+          	 t.lep_cocktail_eta[w] = cocktail->eta();
+          	 t.lep_cocktail_phi[w] = cocktail->phi();
+          	 t.lep_cocktail_chi2[w] = cocktail->chi2();
+          	 t.lep_cocktail_ndf[w] = cocktail->ndof();
+          	 t.lep_cocktail_qOverPt[w] = (mu->charge())/(cocktail->pt());
+          	 t.lep_cocktail_choice[w] = short(patmuon::whichTrack(*mu, cocktail));
+        	}
 
-        //
-        // Cocktail Muon Information not available in miniAOD in this form
-        //
-	//std::cout << "here4?" << std::endl;
-	//reco::TrackRef cocktail = muon::tevOptimized(mu->globalTrack(),mu->innerTrack(),mu->tpfmsTrack(),mu->pickyTrack(),mu->dytTrack(), 200., 17., 40., 0.25).first;
-/*	std::cout << "was?!" << std::endl;
-	if (!(cocktail.refCore().isAvailable())) {
-	  t.lep_cocktail_p[w] = -999;
-	  t.lep_cocktail_pt[w] = -999;
-	  t.lep_cocktail_pt_err[w] = -999;
-	  t.lep_cocktail_px[w] = -999;
-	  t.lep_cocktail_py[w] = -999;
-	  t.lep_cocktail_pz[w] = -999;
-	  t.lep_cocktail_eta[w] = -999;
-	  t.lep_cocktail_phi[w] = -999;
-	  t.lep_cocktail_chi2[w] = -999;
-	  t.lep_cocktail_ndf[w] = -999;
-	  t.lep_cocktail_qOverPt[w] = -999;
-	  t.lep_cocktail_choice[w] = -999;
 	}
-	else {
-	  t.lep_cocktail_p[w] = cocktail->p();
-	  t.lep_cocktail_pt[w] = cocktail->pt();
-	  t.lep_cocktail_pt_err[w] = cocktail->ptError();
-	  t.lep_cocktail_px[w] = cocktail->px();
-	  t.lep_cocktail_py[w] = cocktail->py();
-	  t.lep_cocktail_pz[w] = cocktail->pz();
-	  t.lep_cocktail_eta[w] = cocktail->eta();
-	  t.lep_cocktail_phi[w] = cocktail->phi();
-	  t.lep_cocktail_chi2[w] = cocktail->chi2();
-	  t.lep_cocktail_ndf[w] = cocktail->ndof();
-	  t.lep_cocktail_qOverPt[w] = (mu->charge())/(cocktail->pt());
-	  t.lep_cocktail_choice[w] = short(patmuon::whichTrack(*mu, cocktail));
-        }*/
-	
 	if (!(mu->tunePMuonBestTrack().refCore().isAvailable())) {
 	  t.lep_tuneP_p[w] = -999;
 	  t.lep_tuneP_pt[w] = -999;

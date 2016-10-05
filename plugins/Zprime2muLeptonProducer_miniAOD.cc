@@ -119,7 +119,30 @@ pat::Muon* Zprime2muLeptonProducer_miniAOD::cloneAndSwitchMuonTrack(const pat::M
   // Start with null track/invalid type before we find the right one.
   reco::TrackRef newTrack;
   newTrack = muon.tunePMuonBestTrack();
+  patmuon::TrackType type = patmuon::nTrackTypes;
 
+  // If the muon has the track embedded using the UserData mechanism,
+  // take it from there first. Otherwise, try to get the track the
+  // standard way.
+
+
+  if (muon.pt() > 100.) {
+	mu->addUserInt("hasTeVMuons", 1);
+  }
+  else{
+
+	 mu->addUserInt("hasTeVMuons", 0); 
+  }
+  if (muon.hasUserData(muon_track_for_momentum))
+    newTrack = patmuon::userDataTrack(muon, muon_track_for_momentum);
+  else {
+ 
+	type = patmuon::trackNameToType(muon_track_for_momentum);
+    	newTrack = patmuon::trackByType(*mu, type);
+  }
+  
+  // If we didn't find the appropriate track, indicate failure by a
+  // null pointer.
   
   if (newTrack.isNull()){
     std::cout << "No TuneP" << std::endl;
@@ -143,6 +166,9 @@ pat::Muon* Zprime2muLeptonProducer_miniAOD::cloneAndSwitchMuonTrack(const pat::M
   mu->setP4(p4);
   
   mu->setVertex(vtx);
+
+
+  mu->addUserInt("trackUsedForMomentum", type);
   
   return mu;
 }

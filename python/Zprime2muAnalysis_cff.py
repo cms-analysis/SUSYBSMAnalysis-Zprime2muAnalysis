@@ -18,7 +18,7 @@ goodDataFiltersMiniAOD = [primaryVertexMiniAOD]
 
 
 from MuonPhotonMatch_cff import muonPhotonMatch, muonPhotonMatchMiniAOD
-from OurSelectionDec2012_cff import allDimuons, dimuons, dimuonsMiniAOD, loose_cut
+from OurSelectionDec2012_cff import allDimuons, dimuons, loose_cut
 
 leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'), #JMTBAD changeme after new PAT tuples
@@ -52,7 +52,7 @@ leptons_mini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
                          )
 
 Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)
-Zprime2muAnalysisSequence_MiniAOD = cms.Sequence(muonPhotonMatchMiniAOD * leptons_mini * allDimuons * dimuonsMiniAOD)
+Zprime2muAnalysisSequence_MiniAOD = cms.Sequence(muonPhotonMatchMiniAOD * leptons_mini * allDimuons * dimuons)
 
 def rec_levels(process, new_track_types):
     process.leptons.muon_tracks_for_momentum = cms.vstring(*new_track_types)

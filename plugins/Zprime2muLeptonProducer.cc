@@ -160,7 +160,6 @@ if (muon.hasUserData(muon_track_for_momentum))
   // Store the type code for the track used in the pat::Muon so it can
   // be easily recovered later.
   mu->addUserInt("trackUsedForMomentum", type);
-
   return mu;
 }
 

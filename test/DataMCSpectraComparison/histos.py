@@ -61,12 +61,13 @@ process.PrescaleToCommonMiniAOD.overall_prescale = overall_prescale
 
 # The histogramming module that will be cloned multiple times below
 # for making histograms with different cut/dilepton combinations.
+
 if miniAOD:
 	from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
 	HistosFromPAT.leptonsFromDileptons = True
 else:
 	from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
-	HistosFromPAT.leptonsFromDileptons = True
+HistosFromPAT.leptonsFromDileptons = True
 
 # These modules define the basic selection cuts. For the monitoring
 # sets below, we don't need to define a whole new module, since they
@@ -164,10 +165,8 @@ for cut_name, Selection in cuts.iteritems():
         alldil = Selection.allDimuons.clone(decay = dil_decay % locals(), cut = dil_cut)
         if 'AllSigns' in dil_name:
             alldil.checkCharge = cms.bool(False)
-        if miniAOD:
-		dil = Selection.dimuonsMiniAOD.clone(src = cms.InputTag(allname))
-        else:
-		dil = Selection.dimuons.clone(src = cms.InputTag(allname))
+
+	dil = Selection.dimuons.clone(src = cms.InputTag(allname))
 
         # Implement the differences to the selections; currently, as
         # in Zprime2muCombiner, the cuts in loose_cut and

@@ -336,6 +336,10 @@ void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& 
     throw cms::Exception("Zprime2muLeptonProducer") << "could not determine the HLT path and filter names for this event\n";
   L3_muons           = get_L3_muons(event, pandf.filter,           trigger_summary_src);
   prescaled_L3_muons = get_L3_muons(event, pandf.prescaled_filter, trigger_summary_src);
+//    std::cout<<"filter "<<pandf.filter<<std::endl;
+//    std::cout<<"L3_muons.size()"<<L3_muons.size()<<std::endl;
+//    std::cout<<"prescaled filter "<<pandf.prescaled_filter<<std::endl;
+//    std::cout<<"prescaled_L3_muons.size()"<<prescaled_L3_muons.size()<<std::endl;
   L3_muons_matched.clear();
   L3_muons_matched.resize(L3_muons.size(), 0);
   prescaled_L3_muons_matched.clear();

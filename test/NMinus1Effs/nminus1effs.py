@@ -1,16 +1,25 @@
 #!/usr/bin/env python
 
+miniAOD = True
+
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
-from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
+from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFiltersMiniAOD
+if miniAOD:
+    from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
+else:
+    from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
 from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionDec2012_cff import loose_cut, trigger_match, tight_cut, allDimuons
 
 readFiles = cms.untracked.vstring()
 secFiles = cms.untracked.vstring() 
 process.source = cms.Source ("PoolSource",fileNames = readFiles, secondaryFileNames = secFiles)
 readFiles.extend( [
-                   '/store/user/rradogna/RelValTTbar_13/datamc_ttbar_startup/150730_143116/0000/pat_1.root',
-#                   '/store/user/rradogna/RelValZMM_13/datamc_dy50_startup/150730_143145/0000/pat_1.root'
+#                   '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root',
+#       '/store/mc/RunIISpring16MiniAODv1/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/30000/4E45A151-D6FC-E511-9FE4-0090FAA58134.root',
+                                             '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root',
+#                   '/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/datamc_dy200to400/160509_211417/0000/pat_1.root',
+
                    ] );
 
 
@@ -18,6 +27,8 @@ secFiles.extend( [
                ] )
 
 process.maxEvents.input = -1
+#process.GlobalTag.globaltag = '80X_mcRun2_asymptotic_2016_v3'
+#process.MessageLogger.cerr.FwkReport.reportEvery = 1 # default 1000
 
 # Define the numerators and denominators, removing cuts from the
 # allDimuons maker. "NoX" means remove cut X entirely (i.e. the
@@ -28,14 +39,14 @@ process.maxEvents.input = -1
 # try to check those with a simple string test below.
 
 cuts = [
-    ('Pt',      'pt > 48'),
-    ('DB',      'abs(dB) < 0.2'),
-    ('Iso',     'isolationR03.sumPt / innerTrack.pt < 0.10'),
-    ('TkLayers','globalTrack.hitPattern.trackerLayersWithMeasurement > 5'),
-    ('PxHits',  'globalTrack.hitPattern.numberOfValidPixelHits >= 1'),
-    ('MuHits',  'globalTrack.hitPattern.numberOfValidMuonHits > 0'),
-    ('MuMatch', ('numberOfMatchedStations > 1', 'isTrackerMuon')),
-    ]
+        ('Pt',      'pt > 53'),
+        ('DB',      'abs(dB) < 0.2'),
+        ('Iso',     'isolationR03.sumPt / innerTrack.pt < 0.10'),
+        ('TkLayers','globalTrack.hitPattern.trackerLayersWithMeasurement > 5'),
+        ('PxHits',  'globalTrack.hitPattern.numberOfValidPixelHits >= 1'),
+        ('MuHits',  'globalTrack.hitPattern.numberOfValidMuonHits > 0'),
+        ('MuMatch', ('numberOfMatchedStations > 1', 'isTrackerMuon')),
+        ]
 
 for name, cut in cuts:
     if type(cut) != tuple:
@@ -48,7 +59,7 @@ for name, cut in cuts:
         lc = lc.replace(' && ' + c, '') # Relies on none of the cuts above being first in the list.
 
     obj_no = allDimuons.clone(loose_cut = lc)
-#    obj_no = allDimuons.clone(loose_cut = lc,tight_cut = tight_cut.replace(trigger_match, ''))#N-2
+    #obj_no = allDimuons.clone(loose_cut = lc,tight_cut = tight_cut.replace(trigger_match, ''))#N-2
     setattr(process, 'allDimuonsNo' + name, obj_no)
     
     obj_ti = obj_no.clone(tight_cut = tight_cut + ' && ' + ' && '.join(cut))
@@ -67,7 +78,19 @@ for x in alldimus:
     o = getattr(process, x)
     assert o.loose_cut.value() != loose_cut or o.tight_cut.value() != tight_cut
 
-process.p = cms.Path(process.goodDataFilter * process.muonPhotonMatch * process.leptons * reduce(lambda x,y: x*y, [getattr(process, x) for x in alldimus]))
+if miniAOD:
+    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DileptonPreselector_cfi')####?????
+    process.leptons = process.leptons_mini.clone()
+    process.p = cms.Path(process.dileptonPreseletor * process.muonPhotonMatchMiniAOD * process.leptons * reduce(lambda x,y: x*y, [getattr(process, x) for x in alldimus]))
+    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
+    for dataFilter in goodDataFiltersMiniAOD:
+        #setattr(process,dataFilter
+        process.p *= dataFilter
+else:
+    process.leptons = process.leptons.clone()
+    process.p = cms.Path(process.goodDataFilter * process.muonPhotonMatch * process.leptons * reduce(lambda x,y: x*y, [getattr(process, x) for x in alldimus]))
+
+
 
 # For all the allDimuons producers, make dimuons producers, and
 # analyzers to make the histograms.
@@ -92,6 +115,7 @@ process.dimuonsNoDptPt   = process.dimuons.clone()
 delattr(process.dimuonsNoB2B,     'back_to_back_cos_angle_min')
 delattr(process.dimuonsNoVtxProb, 'vertex_chi2_max')
 delattr(process.dimuonsNoDptPt,   'dpt_over_pt_max')
+
 process.p *= process.allDimuons
 for dimu in ['dimuonsNoB2B', 'dimuonsNoVtxProb', 'dimuonsNoDptPt']:
     hists = HistosFromPAT.clone(dilepton_src = dimu, leptonsFromDileptons = True)
@@ -107,6 +131,9 @@ delattr(process.dimuonsNoCosm, 'back_to_back_cos_angle_min')
 process.NoCosm = HistosFromPAT.clone(dilepton_src = 'dimuonsNoCosm', leptonsFromDileptons = True)
 process.p *= process.allDimuonsNoCosm * process.dimuonsNoCosm * process.NoCosm
 
+f = file('outfile', 'w')
+f.write(process.dumpPython())
+f.close()
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
 from CRABClient.UserUtilities import config

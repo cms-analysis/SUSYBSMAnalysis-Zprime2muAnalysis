@@ -177,6 +177,7 @@ pat::Muon* Zprime2muLeptonProducer_miniAOD::cloneAndSwitchMuonTrack(const pat::M
 void Zprime2muLeptonProducer_miniAOD::embedTriggerMatch(pat::Muon* new_mu, const std::string& ex, const pat::TriggerObjectStandAloneCollection& L3, std::vector<int>& L3_matched) {
   
   int best = -1;
+  float defaultpTvalue = 20.;
   float best_dR = trigger_match_max_dR;
   //std::cout << "size of L3 collection: " << L3.size() << std::endl;
   for (size_t i = 0; i < L3.size(); ++i) {
@@ -191,9 +192,9 @@ void Zprime2muLeptonProducer_miniAOD::embedTriggerMatch(pat::Muon* new_mu, const
     }
   }
 
-  if (best < 0)
-    return;
- 
+//  if (best < 0)
+//    return;
+  if (best >= 0) {
   const pat::TriggerObjectStandAlone& L3_mu = L3[best];
   L3_matched[best] = 1;
   
@@ -202,7 +203,10 @@ void Zprime2muLeptonProducer_miniAOD::embedTriggerMatch(pat::Muon* new_mu, const
   new_mu->addUserFloat(ex + "TriggerMatchPt",     L3_mu.pt());
   new_mu->addUserFloat(ex + "TriggerMatchEta",    L3_mu.eta());
   new_mu->addUserFloat(ex + "TriggerMatchPhi",    L3_mu.phi());
-  
+  }
+    else{
+        new_mu->addUserFloat(ex + "TriggerMatchPt",    defaultpTvalue);
+    }
   
   
 }
@@ -319,7 +323,7 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
 void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::EventSetup& setup) {
   // Grab the match map between PAT photons and PAT muons so we can
   // embed the photon candidates later.
-  std::cout << event.id() << std::endl;
+  //std::cout << event.id() << std::endl;
   event.getByLabel(muon_photon_match_src, muon_photon_match_map);
   static bool warned = false;
   if (!warned && !muon_photon_match_map.isValid()) {
@@ -385,7 +389,10 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
     
     PrescaleFilterMatched.clear();
     PrescaleFilterMatched.resize(prescaled_L3_muons.size(), 0);
-     
+//    std::cout<<"filter "<<pandf.filter<<std::endl;
+//    std::cout<<"L3_muons.size()"<<L3_muons.size()<<std::endl;
+//    std::cout<<"prescaled filter "<<pandf.prescaled_filter<<std::endl;
+//    std::cout<<"prescaled_L3_muons.size()"<<prescaled_L3_muons.size()<<std::endl;
     
     // Using the main choice for momentum assignment, make the primary
     // collection of muons, which will have branch name

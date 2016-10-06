@@ -31,6 +31,7 @@ trigger_paths = ['HLT_Mu50_v%i' % i for i in (1,2,3,4)]
 #trigger_paths = ['HLT_Mu50_v1']
 #trigger_match = 'userFloat("TriggerMatchPt") > %(trigger_pt_threshold)i && abs(userFloat("TriggerMatchEta")) < 2.1' % locals()
 trigger_match = 'userFloat("TriggerMatchPt") > %(trigger_pt_threshold)i ' % locals()
+#trigger_match = '1>0'
 
 #overall_prescale = 1
 overall_prescale = 350

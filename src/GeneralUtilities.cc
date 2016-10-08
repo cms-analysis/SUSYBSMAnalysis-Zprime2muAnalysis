@@ -141,3 +141,18 @@ WhereDilepton whereIsDilepton(const reco::CompositeCandidate& dil,
   else //if (wlep1 == W_OUTSIDE && wlep2 == W_OUTSIDE)
     return W_OUTSIDEOUTSIDE;
 }
+
+WhatIsDileptonMass whatIsDileptonMass(float mass) {
+  if      (mass > 0    && mass <= 500 )  return M_0;  
+  else if (mass > 500  && mass <= 1000)  return M_500;  
+  else if (mass > 1000 && mass <= 1500)  return M_1000;  
+  else if (mass > 1500 && mass <= 2000)  return M_1500;  
+  else if (mass > 2000 && mass <= 2500)  return M_2000;  
+  else if (mass > 2500 && mass <= 3000)  return M_2500;  
+  else if (mass > 3000 && mass <= 3500)  return M_3000;  
+  else if (mass > 3500 && mass <= 4000)  return M_3500;  
+  else if (mass > 4000 && mass <= 4500)  return M_4000;  
+  else if (mass > 4500 && mass <= 5000)  return M_4500;
+  else 
+    return M_OUTSIDE;
+}

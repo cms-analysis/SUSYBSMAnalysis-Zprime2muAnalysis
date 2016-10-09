@@ -191,7 +191,7 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
     ResonanceMassResBy  [i] = fs->make<TH1F>("ResonanceMassRes"   + dilepton_where_names[i], titlePrefix + "(res. mass - gen res. mass)/(gen res. mass), " + dilepton_where_names[i], 100, -0.5, 0.5);
     
     for (size_t j = 0; j < M_MAX; ++j) { 
-      DileptonMassResVsMassBy[j][i]    = fs->make<TH1F>("DileptonMassResVMass_"     + dilepton_mass_names[j] + dilepton_where_names[j],    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 100, -0.5, 0.5);
+      DileptonMassResVsMassBy[j][i]    = fs->make<TH1F>("DileptonMassResVMass_" + dilepton_mass_names[j] + dilepton_where_names[i],    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 100, -0.5, 0.5);
     }
   }  
 }

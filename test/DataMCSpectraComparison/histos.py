@@ -248,18 +248,18 @@ for cut_name, Selection in cuts.iteritems():
                                        )   
 		     pobj = process.DYGenMassFilter * pobj
 		     
-	    if 'tautau' in name:
-		    if miniAOD:
+	     if 'tautau' in name:
+		     if miniAOD:
 			    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
 			    process.DYGenMassFilter = cms.EDFilter('TauTauSelection',
                                        src = cms.InputTag('prunedGenParticles'),                                      
                                        )
-		    else:
+		     else:
 			   process.DYGenMassFilter = cms.EDFilter('TauTauSelection',
                                        src = cms.InputTag('prunedMCLeptons'),                                      
                                        ) 
 
-	            pobj = process.DYGenMassFilter * pobj
+	             pobj = process.DYGenMassFilter * pobj
 
 
 	

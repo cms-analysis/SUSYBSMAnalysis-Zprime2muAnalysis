@@ -213,6 +213,7 @@ for cut_name, Selection in cuts.iteritems():
                #  ('dy200to400','/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM'),
 	       # ('dy50to120','/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM'),
 	        # ('WWinclusive','/WWTo2L2Nu_13TeV-powheg/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM'),
+		#('tautau', '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM'),
 		
         ]
 
@@ -246,6 +247,19 @@ for cut_name, Selection in cuts.iteritems():
                                        max_mass = cms.double(200),
                                        )   
 		     pobj = process.DYGenMassFilter * pobj
+		     
+	    if 'tautau' in name:
+		    if miniAOD:
+			    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
+			    process.DYGenMassFilter = cms.EDFilter('TauTauSelection',
+                                       src = cms.InputTag('prunedGenParticles'),                                      
+                                       )
+		    else:
+			   process.DYGenMassFilter = cms.EDFilter('TauTauSelection',
+                                       src = cms.InputTag('prunedMCLeptons'),                                      
+                                       ) 
+
+	            pobj = process.DYGenMassFilter * pobj
 
 
 	

@@ -4,13 +4,15 @@
 #include "DataFormats/HLTReco/interface/TriggerEvent.h"
 #include "DataFormats/HLTReco/interface/TriggerObject.h"
 #include "DataFormats/HLTReco/interface/TriggerTypeDefs.h"
-
 #include "FWCore/Common/interface/TriggerNames.h"
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
-
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TriggerDecision.h"
 
+
+
+
 using namespace std;
+using namespace edm;
 
 void TriggerDecision::init(const edm::ParameterSet& config, const bool dbg) {
   debug = dbg;
@@ -24,24 +26,34 @@ void TriggerDecision::init(const edm::ParameterSet& config, const bool dbg) {
     l1Paths  = config.getParameter<vector<string> >("l1Paths");
     hltPaths = config.getParameter<vector<string> >("hltPaths");
   }
+
+ 
+
 }
+   
+
 
 void TriggerDecision::initEvent(const edm::Event& event) {
   for (int i_rec = 0; i_rec < TRIG_LEVELS; i_rec++) {
     passTrig[i_rec] = true;
     trigWord[i_rec] = 0;
   }
-
+   
   // If we're to ignore trigger info, leave passTrig as true.
   if (useTrigger) {
     storeL1Decision(event);
     storeHLTDecision(event);
   }
+
+
+
 }
 
 void TriggerDecision::storeL1Decision(const edm::Event& event) {
   // Get Level-1 decisions for trigger paths we are interested in.
+
   edm::Handle<L1GlobalTriggerObjectMapRecord> l1Map;
+ 
   event.getByLabel(l1GtObjectMap, l1Map);
 
   static int ifois = 0;
@@ -84,6 +96,7 @@ void TriggerDecision::storeHLTDecision(const edm::Event& event) {
   // Get the HLT TriggerResults object, from which the official HLT
   // path decisions can be extracted.
   edm::Handle<edm::TriggerResults> hltRes;
+ 
   event.getByLabel(hltResults, hltRes);
 
   // Get the map between path names and indices.

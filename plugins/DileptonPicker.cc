@@ -40,6 +40,7 @@ DileptonPicker::DileptonPicker(const ParameterSet& cfg)
   : src(cfg.getParameter<InputTag>("src")),
     maxDileptons(cfg.getParameter<unsigned>("maxDileptons"))
 {
+  consumes<CompositeCandidateCollection>(src);
   produces<CompositeCandidateCollection>();
 }
 

@@ -31,6 +31,7 @@ private:
 
 L1MuonSanitizer::L1MuonSanitizer(const ParameterSet& cfg) {
   src = cfg.getParameter<InputTag>("src");
+  consumes<L1MuonParticleCollection>(src);
   produces<L1MuonParticleCollection>();
 }
 

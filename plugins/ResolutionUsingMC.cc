@@ -45,6 +45,15 @@ class ResolutionUsingMC : public edm::EDAnalyzer {
   TH1F* LeptonPRes;
   TH1F* LeptonInvPtRes;
   TH1F* LeptonInvPRes;
+  
+  TH2F* LeptonPtVSEta;
+  TH2F* LeptonPtVSTheta;
+    
+  TH2F* LeptonInvPtResVPtGen_2d;
+  TH2F* LeptonInvPtResVPtGen_2d_B;
+  TH2F* LeptonInvPtResVPtGen_2d_BO;
+  TH2F* LeptonInvPtResVPtGen_2d_E;
+  TH2F* LeptonInvPtResVPtGen_2d_EO;
   TProfile* LeptonInvPtResVPtGen;
   TProfile* LeptonInvPResVPGen;
   TH1F* LeptonInvPtPull;
@@ -59,11 +68,20 @@ class ResolutionUsingMC : public edm::EDAnalyzer {
   TH1F* ChargeRightVInvPt;
   TH1F* ChargeWrongVInvPt;
 
+  TH1F* DileptonMassReco;
+  TH1F* DileptonMassGen;
   TH1F* DileptonMassRes;
   TH1F* DileptonResMassRes;
   TH1F* ResonanceMassRes;
   TH1F* DileptonMassInvRes;
 
+  TH2F* DileptonMassResVMass_2d;
+  TH2F* DileptonMassResVMass_2d_BB;
+  TH2F* DileptonMassResVMass_2d_EO;
+  TH2F* DileptonMassResVMass_2d_BOBO;
+  TH2F* DileptonMassResVMass_2d_E;
+  TH2F* DileptonMassResVMass_2d_vsPtsum;
+  TH2F* DileptonMassResVMass_2d_vsLeadPt;
   TProfile* DileptonMassResVMass;
   TProfile* DileptonResMassResVMass;
   TProfile* ResonanceMassResVMass;
@@ -72,6 +90,8 @@ class ResolutionUsingMC : public edm::EDAnalyzer {
   TH1F* DileptonMassResBy[W_D_MAX];
   TH1F* DileptonResMassResBy[W_D_MAX];
   TH1F* ResonanceMassResBy[W_D_MAX];
+
+  TH1F* DileptonMassResVsMassBy[M_MAX][W_D_MAX];
 };
 
 ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
@@ -81,16 +101,23 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
     leptonsFromDileptons(cfg.getParameter<bool>("leptonsFromDileptons")),
     doQoverP(cfg.getParameter<bool>("doQoverP"))
 {
+
+   consumes<reco::GenParticleCollection>(hardInteraction.src);
+   consumes<edm::View<reco::Candidate>>(lepton_src);
+   consumes<pat::CompositeCandidateCollection>(dilepton_src);
+   
+
+
   std::string title_prefix = cfg.getUntrackedParameter<std::string>("titlePrefix", "");
   if (title_prefix.size() && title_prefix[title_prefix.size()-1] != ' ')
     title_prefix += " ";
   const TString titlePrefix(title_prefix.c_str());
-
+  
   edm::Service<TFileService> fs;
- 
-    double massmax = 5000;
-    int nbinsmass=250;
- 
+  
+  double massmax = 5000;
+  int nbinsmass=250;
+  
   LeptonEtaDiff = fs->make<TH1F>("LeptonEtaDiff", titlePrefix + "#eta - gen #eta", 100, -0.002, 0.002);
   LeptonPhiDiff = fs->make<TH1F>("LeptonPhiDiff", titlePrefix + "#phi - gen #phi", 100, -0.002, 0.002);
   LeptonPtDiff  = fs->make<TH1F>("LeptonPtDiff",  titlePrefix + "pT - gen pT", 100, -20, 20);
@@ -102,6 +129,15 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
   LeptonInvPtRes = fs->make<TH1F>("LeptonInvPtRes", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT)", 100, -0.5, 0.5);
   LeptonInvPRes  = fs->make<TH1F>("LeptonInvPRes",  titlePrefix + "(1/p - 1/gen p)/(1/gen p)",    100, -0.5, 0.5);
 
+  LeptonPtVSEta = fs->make<TH2F>("LeptonPtVSEta", titlePrefix + "pt vs. eta",  300,0, 3000,100, -5, 5);
+  LeptonPtVSTheta = fs->make<TH2F>("LeptonPtVSTheta", titlePrefix + "pt vs. theta",  300,0, 3000,100, -TMath::Pi(), TMath::Pi());
+
+    
+  LeptonInvPtResVPtGen_2d = fs->make<TH2F>("LeptonInvPtResVPtGen_2d", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  300,0, 3000,1500, -1, 1.5);
+  LeptonInvPtResVPtGen_2d_B = fs->make<TH2F>("LeptonInvPtResVPtGen_2d_B", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  300,0, 3000,1500, -1, 1.5);
+  LeptonInvPtResVPtGen_2d_BO = fs->make<TH2F>("LeptonInvPtResVPtGen_2d_BO", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  300,0, 3000,1500, -1, 1.5);
+  LeptonInvPtResVPtGen_2d_E = fs->make<TH2F>("LeptonInvPtResVPtGen_2d_E", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  300,0, 3000,1500, -1, 1.5);
+  LeptonInvPtResVPtGen_2d_EO = fs->make<TH2F>("LeptonInvPtResVPtGen_2d_EO", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  300,0, 3000,1500, -1, 1.5);
   LeptonInvPtResVPtGen = fs->make<TProfile>("LeptonInvPtResVPtGen", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT", 50, 0, 1000, -0.5, 0.5);
   LeptonInvPResVPGen   = fs->make<TProfile>("LeptonInvPResVPGen",   titlePrefix + "(1/p - 1/gen p)/(1/gen p) vs. gen p",     50, 0, 1000, -0.5, 0.5);
   
@@ -123,23 +159,41 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
   
   ChargeRightVInvPt->Sumw2();
   ChargeWrongVInvPt->Sumw2();
-
+    
+    
+  DileptonMassReco            = fs->make<TH1F>("DileptonMassReco",            titlePrefix + "dil. mass", 20000, 0, 20000);
+  DileptonMassGen            = fs->make<TH1F>("DileptonMassGen",            titlePrefix + "dil. mass gen", 20000, 0, 20000);
   DileptonMassRes    = fs->make<TH1F>("DileptonMassRes",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 100, -0.5, 0.5);
   DileptonResMassRes = fs->make<TH1F>("DileptonResMassRes", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", 100, -0.5, 0.5);
   ResonanceMassRes   = fs->make<TH1F>("ResonanceMassRes",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", 100, -0.5, 0.5);
   DileptonMassInvRes    = fs->make<TH1F>("DileptonMassInvRes",    titlePrefix + "(1/dil. mass - 1/gen dil. mass)/(1/gen dil. mass)", 100, -0.5, 0.5);
+
+  DileptonMassResVMass_2d    = fs->make<TH2F>("DileptonMassResVMass_2d",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 60,0, 6000,1500, -1, 1.5);
+  DileptonMassResVMass_2d_BB    = fs->make<TH2F>("DileptonMassResVMass_2d_BB",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 60,0, 6000,1500, -1, 1.5);
+  DileptonMassResVMass_2d_EO    = fs->make<TH2F>("DileptonMassResVMass_2d_EO",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 60,0, 6000,1500, -1, 1.5);
+  DileptonMassResVMass_2d_BOBO    = fs->make<TH2F>("DileptonMassResVMass_2d_BOBO",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 60,0, 6000,1500, -1, 1.5);
+  DileptonMassResVMass_2d_E    = fs->make<TH2F>("DileptonMassResVMass_2d_E",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 60,0, 6000,1500, -1, 1.5);
   
+  DileptonMassResVMass_2d_vsPtsum    = fs->make<TH2F>("DileptonMassResVMass_2d_vsPtsum",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 60,0, 6000,1500, -1, 1.5);
+  DileptonMassResVMass_2d_vsLeadPt    = fs->make<TH2F>("DileptonMassResVMass_2d_vsLeadPt",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 60,0, 6000,1500, -1, 1.5);
+
   DileptonMassResVMass    = fs->make<TProfile>("DileptonMassResVMass",    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", nbinsmass,0, massmax, -1, 1);
   DileptonResMassResVMass = fs->make<TProfile>("DileptonResMassResVMass", titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass)", nbinsmass,0, massmax, -1, 1);
   ResonanceMassResVMass   = fs->make<TProfile>("ResonanceMassResVMass",   titlePrefix + "(res. mass - gen res. mass)/(gen res. mass)", nbinsmass,0, massmax, -1, 1);
   DileptonInvMassResVMass    = fs->make<TProfile>("DileptonInvMassResVMass",    titlePrefix + "(./dil. mass - 1/gen dil. mass)/(1/gen dil. mass)", nbinsmass,0, massmax, -1, 1);
 
   static const TString dilepton_where_names[W_D_MAX] = {"BB", "BO", "BE", "BU", "OO", "OE", "OU", "EE", "EU", "UU"};
+  static const TString dilepton_mass_names[M_MAX] = {"0to500", "500to1000", "1000to1500", "1500to2000", "2000to2500", "2500to3000", "3000to3500", "3500to4000", "4000to4500", "4500to5000","5000toInf"};
+  
   for (size_t i = 0; i < W_D_MAX; ++i) {
     DileptonMassResBy   [i] = fs->make<TH1F>("DileptonMassRes"    + dilepton_where_names[i], titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass), " + dilepton_where_names[i], 100, -0.5, 0.5);
     DileptonResMassResBy[i] = fs->make<TH1F>("DileptonResMassRes" + dilepton_where_names[i], titlePrefix + "(dil. mass - gen res. mass)/(gen res. mass), " + dilepton_where_names[i], 100, -0.5, 0.5);
     ResonanceMassResBy  [i] = fs->make<TH1F>("ResonanceMassRes"   + dilepton_where_names[i], titlePrefix + "(res. mass - gen res. mass)/(gen res. mass), " + dilepton_where_names[i], 100, -0.5, 0.5);
-  }
+    
+    for (size_t j = 0; j < M_MAX; ++j) { 
+      DileptonMassResVsMassBy[j][i]    = fs->make<TH1F>("DileptonMassResVMass_" + dilepton_mass_names[j] + dilepton_where_names[i],    titlePrefix + "(dil. mass - gen dil. mass)/(gen dil. mass)", 100, -0.5, 0.5);
+    }
+  }  
 }
 
 void ResolutionUsingMC::fillLeptonResolution(const reco::GenParticle* gen_lep, const reco::CandidateBaseRef& lep) {
@@ -192,8 +246,17 @@ void ResolutionUsingMC::fillLeptonExtraMomentumResolution(const reco::GenParticl
 
   const double inv_pt_res = inv_pt_diff/inv_gen_pt;
   const double inv_p_res  = inv_p_diff /inv_gen_p;
-
+    
+    LeptonPtVSEta->Fill(lep->pt(), lep->eta());
+    LeptonPtVSTheta->Fill(lep->pt(), lep->theta());
+    
   // Inverse momentum resolutions as a function of generated momenta.
+    LeptonInvPtResVPtGen_2d->Fill(gen_lep->pt(), inv_pt_res);
+    if(abs(gen_lep->eta())<0.9)LeptonInvPtResVPtGen_2d_B->Fill(gen_lep->pt(), inv_pt_res);
+    if(abs(gen_lep->eta())<1.2)LeptonInvPtResVPtGen_2d_BO->Fill(gen_lep->pt(), inv_pt_res);
+    if(abs(gen_lep->eta())>1.2)LeptonInvPtResVPtGen_2d_E->Fill(gen_lep->pt(), inv_pt_res);
+    if(abs(gen_lep->eta())>0.9)LeptonInvPtResVPtGen_2d_EO->Fill(gen_lep->pt(), inv_pt_res);
+    
   LeptonInvPtResVPtGen->Fill(gen_lep->pt(), inv_pt_res*inv_pt_res);
   LeptonInvPResVPGen  ->Fill(gen_lep->p(),  inv_p_res*inv_p_res);
   
@@ -251,22 +314,38 @@ void ResolutionUsingMC::fillDileptonMassResolution(const reco::CompositeCandidat
   const double rdil    = mass    /gen_mass     - 1;
   const double rdilres = mass    /gen_res_mass - 1;
   const double rres    = res_mass/gen_res_mass - 1;
-    double invmres = (1./mass-1./gen_mass)/(1./gen_mass);
+  double invmres = (1./mass-1./gen_mass)/(1./gen_mass);
  
+  DileptonMassReco ->Fill(mass);
+  DileptonMassGen->Fill(gen_mass);
   DileptonMassRes   ->Fill(rdil);
   DileptonResMassRes->Fill(rdilres);
   ResonanceMassRes  ->Fill(rres);
-  DileptonMassInvRes   ->Fill(invmres);
+  DileptonMassInvRes->Fill(invmres);
 
+  DileptonMassResVMass_2d   ->Fill(gen_mass,     rdil);
+  if(abs(hardInteraction.lepPlus->eta())<0.9 && abs(hardInteraction.lepMinus->eta())<0.9 )DileptonMassResVMass_2d_BB   ->Fill(gen_mass,     rdil);
+  if(abs(hardInteraction.lepPlus->eta())>0.9 || abs(hardInteraction.lepMinus->eta())>0.9 )DileptonMassResVMass_2d_EO   ->Fill(gen_mass,     rdil);
+  if(abs(hardInteraction.lepPlus->eta())<1.2 && abs(hardInteraction.lepMinus->eta())<1.2 )DileptonMassResVMass_2d_BOBO   ->Fill(gen_mass,     rdil);
+  if(abs(hardInteraction.lepPlus->eta())>1.2 || abs(hardInteraction.lepMinus->eta())>1.2 )DileptonMassResVMass_2d_E   ->Fill(gen_mass,     rdil);
+    
+  DileptonMassResVMass_2d_vsPtsum   ->Fill(hardInteraction.lepPlus->pt()+hardInteraction.lepMinus->pt(),     rdil);
+  if (hardInteraction.lepPlus->pt()> hardInteraction.lepMinus->pt())DileptonMassResVMass_2d_vsLeadPt   ->Fill(hardInteraction.lepPlus->pt(),     rdil);
+  else DileptonMassResVMass_2d_vsLeadPt   ->Fill(hardInteraction.lepMinus->pt(),     rdil);
+  
   DileptonMassResVMass   ->Fill(gen_mass,     rdil*rdil);
   DileptonResMassResVMass->Fill(gen_res_mass, rdilres*rdilres);
   ResonanceMassResVMass  ->Fill(gen_res_mass, rres*rres);
   DileptonInvMassResVMass   ->Fill(gen_mass,  invmres*invmres);
 
   size_t w = whereIsDilepton(dil);
+  size_t m = whatIsDileptonMass(gen_mass);
+
   DileptonMassResBy   [w]->Fill(rdil);
   DileptonResMassResBy[w]->Fill(rdilres);
   ResonanceMassResBy  [w]->Fill(rres);
+  
+  DileptonMassResVsMassBy[m][w]   ->Fill(rdil);
 }
 
 const reco::GenParticle* getGenParticle(const reco::CandidateBaseRef& lep) {

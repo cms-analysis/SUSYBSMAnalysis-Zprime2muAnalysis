@@ -69,7 +69,7 @@ CocktailAnalyzer::CocktailAnalyzer(const edm::ParameterSet& cfg)
     eta_max(cfg.getParameter<double>("eta_max"))
 {
   edm::Service<TFileService> fs;
-
+  consumes<pat::MuonCollection>(muon_src);
   int ni = int(num_ingredients);
   TMRCocktailChoice         = choice_labels(fs->make<TH1F>("TMRCocktailChoice",         "TMR cocktail choice",          ni, 0, ni));
   TunePCocktailChoice       = choice_labels(fs->make<TH1F>("TunePCocktailChoice",       "Tune P cocktail choice",       ni, 0, ni));

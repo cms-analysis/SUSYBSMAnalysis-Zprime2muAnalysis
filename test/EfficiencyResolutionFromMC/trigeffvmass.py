@@ -5,8 +5,8 @@
 import sys, os
 from array import array
 
-samples = ['dy60', 'dy120_c1', 'dy200_c1', 'dy500_c1', 'dy800_c1', 'dy1000_c1', 'dy1500_c1', 'dy2000_c1', 'zp750_c1', 'zp1000_c1', 'zp1250_c1', 'zp1500_c1', 'zp1750_c1', 'zp2000_c1', 'zp2250_c1', 'zp2500_c1', 'zp2750_c1', 'zp3000_c1']
-
+#samples = ['dy60', 'dy120_c1', 'dy200_c1', 'dy500_c1', 'dy800_c1', 'dy1000_c1', 'dy1500_c1', 'dy2000_c1', 'zp750_c1', 'zp1000_c1', 'zp1250_c1', 'zp1500_c1', 'zp1750_c1', 'zp2000_c1', 'zp2250_c1', 'zp2500_c1', 'zp2750_c1', 'zp3000_c1']
+samples = ['dy50']
 kind = [x for x in sys.argv[1:] if os.path.isdir(x)]
 
 dy = [(x, int(x.replace('dy','').replace('_c1',''))) for x in samples if 'dy' in x]
@@ -237,7 +237,7 @@ Total.GetXaxis().SetRangeUser(80, 3000)
 Total.GetYaxis().SetRangeUser(0.90, 1.)
 Total.Draw('P same')
 #lg.Draw()
-t = ROOT.TPaveLabel(0.50, 0.84, 0.90, 0.94, 'CMS Simulation   #sqrt{s} = 8 TeV', 'brNDC')
+t = ROOT.TPaveLabel(0.50, 0.84, 0.90, 0.94, 'CMS Simulation   #sqrt{s} = 13 TeV', 'brNDC')
 #t.SetTextFont(42)
 t.SetTextSize(0.39)
 t.SetBorderSize(0)

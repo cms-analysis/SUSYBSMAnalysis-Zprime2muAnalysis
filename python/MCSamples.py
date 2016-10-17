@@ -4,6 +4,8 @@ import os
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import big_warn, files_from_dbs
 from SUSYBSMAnalysis.Zprime2muAnalysis.crabtools import dataset_from_publish_log
 
+miniAOD = True
+
 class sample(object):
     def __init__(self, name, nice_name, dataset, nevents, color, syst_frac, cross_section, k_factor=1, filenames=None, scheduler='condor', hlt_process_name='HLT', ana_dataset=None, is_madgraph=False, is_zprime=False):
         self.name = name
@@ -52,69 +54,47 @@ class tupleonlysample(sample):
 # Single-top cross sections are from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SingleTopSigma
 # K factor for Drell-Yan samples is the ratio of the NNLO to POWHEG cross sections for M > 20 GeV bin, 1915/1871=1.024
 samples = [
-#    sample('zpsi5000',  'Z\'_{#psi} (5 TeV) #rightarrow #mu^{+}#mu^{-}',  '/ZprimeToMuMu_M-5000_TuneCUETP8M1_13TeV-pythia8/RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1/AODSIM', 99320, 48, 1., 0.0369,  k_factor=1, is_zprime=True),
-    #sample('zpsi2250',  'Z\'_{#psi} (2.25 TeV) #rightarrow #mu^{+}#mu^{-}', '/RelValZpMM_13/CMSSW_7_4_0-MCRUN2_74_V7_gensim_740pre7-v1/GEN-SIM-RECO',      9000,  48, 1.,  0.0369,  k_factor=1.3, is_zprime=True),
-           
-#    sample('dy50',          'DY50', '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v2/AODSIM', 13344402, 209 , 1., 6025.2,    k_factor=1., is_madgraph=True), #19917018 events without weight. -N*fraction of neg + N*(1-frac) frac=16.5%
-##    sample('dy50_startup',          'DY50', '/RelValZMM_13/CMSSW_7_4_6_patch6-74X_mcRun2_startup_realistic50ns_v0_trackPog2015Jul24-v1/GEN-SIM-RECO', 8619, 8 , 1., 6025.2,    k_factor=1.),
-           
-           ####POWHEG
-    #sample('dy50to120',          'DY50to120', '/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM', 2895638, 209 , 1., 1975,    k_factor=1.), # cross sect by Benj
-    sample('DY120to200Powheg',     'DY120to200', '/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/RunIISpring16reHLT80-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/AODSIM', 100000, 210, 1., 19.32, k_factor=1.,hlt_process_name="HLT2"),#mcm 19.32
+    ####filippo's branch    
+    #sample('dy50to120',   'DY50to120', '/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/RunIISpring16DR80-PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/AODSIM', 2967200, 209 , 1., 1975,   k_factor=1.006),#NLO xs and k-factor applied to reach NLO
+    #sample('dy120to200',  'DY120to200', '/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/RunIISpring16DR80-PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/AODSIM', 99200, 210, 1., 19.32, k_factor=1.006),#mcm 19.32
+    #sample('dy200to400',  'DY200to400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/RunIISpring16DR80-PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/AODSIM', 100000, 211, 1., 2.731, k_factor=1.006),#mcm 2.731
+    #sample('dy400to800',  'DY400to800', '/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/RunIISpring16DR80-PUSpring16_80X_mcRun2_asymptotic_2016_v3-v2/AODSIM', 100000, 212, 1., 0.241, k_factor=1.006),
+    #sample('dy800to1400', 'DY800to1400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_800_1400/RunIISpring16DR80-PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/AODSIM', 100000, 72, 1., 0.01678, k_factor=1.006),
+    #sample('dy1400to2300','DY1400to2300', '/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/RunIISpring16DR80-PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/AODSIM', 100000, 70 , 1., 0.00139,    k_factor=1.006),
+    #sample('dy2300to3500','DY2300to3500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/RunIISpring16DR80-PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/AODSIM', 99200, 70 , 1., 0.00008948,    k_factor=1.006),
+    #sample('dy3500to4500','DY3500to4500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_3500_4500/RunIISpring16DR80-PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/AODSIM', 100000, 70 , 1., 0.0000041,    k_factor=1.006),
+    #sample('dy4500to6000','DY4500to6000', '/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/RunIISpring16DR80-PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/AODSIM', 100000, 70 , 1., 4.56E-7,    k_factor=1.006),
+
+    sample('DY50to120Powheg',   'DY50to120',  '/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/RunIISpring16reHLT80-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/AODSIM',  2976600, 209, 1., 1975, k_factor=1.006,hlt_process_name="HLT2"),#mcm 19.32
+    sample('DY120to200Powheg',  'DY120to200', '/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/RunIISpring16reHLT80-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/AODSIM', 100000, 210, 1., 19.32, k_factor=1.006,hlt_process_name="HLT2"),
+    sample('DY200to400Powheg',  'DY200to400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/RunIISpring16reHLT80-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/AODSIM', 100000, 211, 1., 2.731, k_factor=1.006,hlt_process_name="HLT2"),
+    sample('DY400to800Powheg',  'DY400to800', '/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/RunIISpring16reHLT80-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/AODSIM', 99000, 212, 1., 0.241, k_factor=1.006,hlt_process_name="HLT2"),
+    sample('DY800to1400Powheg', 'DY800to1400','/ZToMuMu_NNPDF30_13TeV-powheg_M_800_1400/RunIISpring16reHLT80-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/AODSIM', 96398, 72, 1., 0.01678, k_factor=1.006,hlt_process_name="HLT2"),
+    sample('DY1400to2300Powheg','DY1400to2300','/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/RunIISpring16reHLT80-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/AODSIM', 100000, 70, 1., 0.00139, k_factor=1.006,hlt_process_name="HLT2"),
+    sample('DY2300to3500Powheg','DY2300to3500','/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/RunIISpring16reHLT80-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/AODSIM', 100000, 70, 1., 0.00008948, k_factor=1.006,hlt_process_name="HLT2"),
+    sample('DY3500to4500Powheg','DY3500to4500','/ZToMuMu_NNPDF30_13TeV-powheg_M_3500_4500/RunIISpring16reHLT80-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/AODSIM', 99000, 70, 1., 0.0000041, k_factor=1.006,hlt_process_name="HLT2"),
+    sample('DY4500to6000Powheg','DY4500to6000','/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/RunIISpring16reHLT80-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/AODSIM', 99000, 70, 1., 4.56E-7, k_factor=1.006,hlt_process_name="HLT2"),  
+    sample('DY6000toInfPowheg','DY6000toInf','/ZToMuMu_NNPDF30_13TeV-powheg_M_6000_Inf/RunIISpring16reHLT80-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/AODSIM', 100000, 70, 1., 4.56E-7, k_factor=1.006,hlt_process_name="HLT2")    
     #sample('DY200to400Powheg',  'DY200to400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1/AODSIM', 100000, 211, 1., 2.731, k_factor=1.),#mcm 2.731
-    sample('DY400to800Powheg',  'DY400to800', '/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/RunIISpring16reHLT80-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/AODSIM', 99000, 212, 1., 0.241, k_factor=1.,hlt_process_name="HLT2"),
-    #sample('DY800to1400Powheg',     'DY800to1400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_800_1400/RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1/AODSIM', 100000, 72, 1., 0.01678, k_factor=1.),
-    #sample('dy1400to2300',          'DY1400to2300', '/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM', 99600, 70 , 1., 0.00139,    k_factor=1.),
-#    sample('DY3500to4500Powheg',  'DY3500to4500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_3500_4500/RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1/AODSIM', 100000, 30, 1., 0.0000041, k_factor=1.),
-#    sample('dy50to120',          'DY50', '/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM', 19917018, 8 , 1., 6025.2,    k_factor=1.),
-##
-#           #####aMC@NLO
-#    sample('dy100to200',    'DY100-200', '/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM', 66471, 210 , 1., 226,    k_factor=1., is_madgraph=True), #initial 101638 frac 17.3
-#    sample('dy200to400',    'DY200-400', '/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM', 55741,  211, 1., 7.67,    k_factor=1., is_madgraph=True), #initial 97111 frac 21.3
-#    sample('dy400to500',    'DY400-500', '/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM', 52853,  212, 1., 0.423,    k_factor=1., is_madgraph=True), #initial 99722 frac 23.5
-#    sample('dy500to700',    'DY500-700', '/DYJetsToLL_M-500to700_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM', 52131,  72, 1., 0.24,    k_factor=1., is_madgraph=True), #initial 101029 frac 24.2
-#    sample('dy700to800',    'DY700-800', '/DYJetsToLL_M-700to800_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM', 48005,  70, 1., 0.035,   k_factor=1., is_madgraph=True), #initial 96011 frac 25.
-#    sample('dy800to1000',   'DY800-1000', '/DYJetsToLL_M-800to1000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM', 44073,  30, 1., 0.03,   k_factor=1., is_madgraph=True), #initial 89216 frac 25.3
-#    sample('dy1000to1500',  'DY1000-1500', '/DYJetsToLL_M-1000to1500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM', 42151,  43, 1., 0.016,    k_factor=1., is_madgraph=True), #initial 90067 26.6
-#           #######
-#    sample('dy1500to2000',  'DY1500-2000', '/DYJetsToLL_M-1500to2000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM', 41895,  44, 1., 0.002,    k_factor=1., is_madgraph=True),#initil 95217 fraction 28
-#    sample('dy2000to3000',  'DY2000-3000', '/DYJetsToLL_M-2000to3000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM', 38080,  45, 1., 0.00054,    k_factor=1., is_madgraph=True),#initial 95200 fraction 30
-           
-#    sample('tW'   ,'tW',       '/T_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola/Phys14DR-PU20bx25_PHYS14_25_V1-v1/AODSIM',    986100,  1, 1., 35.6, k_factor=1.),
-#    sample('tbarW','tbarW',    '/Tbar_tW-channel-DR_Tune4C_13TeV-CSA14-powheg-tauola/Phys14DR-PU20bx25_PHYS14_25_V1-v1/AODSIM', 971800, 12, 1., 35.6, k_factor=1.),
-
-    #sample('wz',        'WZ', '/WZ_TuneCUETP8M1_13TeV-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v2/AODSIM', 996920, 98, 1., 66.1, k_factor=1.),# 40.2 cross section from aidan
-##    sample('zz',       'ZZ', '/ZZTo4L_13TeV_powheg_pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM',  6621404, 7, 1., 0.157, k_factor=1.),# 0.157 pb sasha 1.256 McM
-##    sample('ww',       'WW', '/WWTo2L2Nu_13TeV-powheg/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v2/AODSIM', 499926,   5, 1., 12.59 , k_factor=1. ),
-    #sample('zz_incl',   'ZZ', '/ZZ_TuneCUETP8M1_13TeV-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v2/AODSIM', 998848, 94, 1., 15.4, k_factor=1.),# 0.157 pb sasha 1.256 McM
-    #sample('ww_incl',   'WW', '/WW_TuneCUETP8M1_13TeV-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM', 994416,   91, 1., 118.7 , k_factor=1. ),
-
-    #sample('wjets',     'W+jets', '/WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM', 16430759, 52, 1., 61500, k_factor=1., is_madgraph=True), #without weights:24162881 ratio negative 16%
-#    sample('inclmu15', 'QCD',  '/QCD_Pt-20toInf_MuEnrichedPt15_TuneCUETP8M1_13TeV_pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v2/AODSIM', 4767935, 801, 1., 867000000, k_factor=1.),
-    #sample('ttbar_pow',     't#bar{t}', '/TT_TuneCUETP8M1_13TeV-powheg-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v4/AODSIM', 19699896, 4 , 1., 815.96, k_factor=1.),
-#    sample('ttbar',     't#bar{t}', '/TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM', 4995842, 4 , 1., 815.96, k_factor=1.),
-#    sample('ttbar_startup',     't#bar{t}', '/RelValTTbar_13/CMSSW_7_4_6_patch6-74X_mcRun2_startup_realistic50ns_v0_trackPog2015Jul24-v1/GEN-SIM-RECO', 9000, 4 , 1., 815.96, k_factor=1.),
-#
-    #sample('tWantitop', 'tWantiTop', '/ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v2/AODSIM',1000000,63 , 1., 35.85, k_factor=1.),#aidan 35.6*0.1086
-    #sample('tWtop',     'tWTop', '/ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/AODSIM',998400,66 , 1., 35.85, k_factor=1.)#aidan 35.6*0.1086
-           
+    #sample('DY400to800Powheg',  'DY400to800', '/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/RunIISpring16reHLT80-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/AODSIM', 99000, 212, 1., 0.241, k_factor=1.,hlt_process_name="HLT2"),
     ]
 
 samples.reverse()
 
-for sample in samples:
-    exec '%s = sample' % sample.name
-    #if '_c' in sample.name:
-    #if 'Zprime' in sample.dataset:
-#    sample.ana_dataset = '/%s/federica-%s-f646da20575c2cb2b2eda7b4413fb91e/USER'  % (sample.dataset.split('/')[1], sample.name)
-#    if sample.name == 'dy100-200':
-#        sample.ana_dataset = '/%s/federica-%s-7a0d7047a2104d11a44d5593620f154b/USER'% (sample.dataset.split('/')[1], sample.name)
-#    elif sample.name == 'dy200-400' or sample.name == 'dy400-500' or sample.name == 'dy500-700' or sample.name == 'dy700-800':
-#        sample.ana_dataset = '/%s/federica-%s-f646da20575c2cb2b2eda7b4413fb91e/USER'% (sample.dataset.split('/')[1], sample.name)
-#    else:
-    sample.ana_dataset = '/%s/rradogna-datamc_%s-c4b4ec8fa143ea00cec443e9d0afb38f/USER'  % (sample.dataset.split('/')[1], sample.name)
 
-        #else:
+#if miniAOD:
+
+#else:
+for sample in samples:
+   exec '%s = sample' % sample.name
+   if not miniAOD:
+       sample.ana_dataset = '/%s/rradogna-datamc_%s-c4b4ec8fa143ea00cec443e9d0afb38f/USER'  % (sample.dataset.split('/')[1], sample.name)
+   else:
+       sample.ana_dataset = '/'+ sample.dataset.split('/')[1]+ '/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM'
+# DY120to200Powheg.ana_dataset = 'ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/RunIISpring16reHLT80-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM'
+       print sample.ana_dataset
+       #print  (sample.dataset.split('/AODSIM')[0]+ '/MINIAODSIM', sample.name)
+
             #sample.ana_dataset = '/%s/federica-%s-02dba98b5abbcd2765544ae02b3dcc74/USER'  % (sample.dataset.split('/')[1], sample.name) # this is actually wrong
 #dy100to200.ana_dataset = '/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy100to200-1e36332d8badf10b79a5027340f46eb1/USER'
 #dy200to400.ana_dataset = '/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy200to400-1e36332d8badf10b79a5027340f46eb1/USER'

@@ -1,0 +1,130 @@
+<use name="FWCore/Framework"/>
+<use name="FWCore/ParameterSet"/>
+<use name="FWCore/Utilities"/>
+
+<library file="DileptonPicker.cc" name="DileptonPicker">
+  <use name="DataFormats/Candidate"/>
+  <use name="DataFormats/MuonReco"/>
+  <use name="DataFormats/PatCandidates"/>
+  <use name="DataFormats/TrackReco"/>
+  <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
+</library>
+
+<library file="GenDilCandViewShallowCloneCombiner.cc" name="GenDilCandViewShallowCloneCombiner">
+  <use name="DataFormats/Candidate"/>
+  <use name="CommonTools/CandAlgos"/>
+  <use name="CommonTools/CandUtils"/>
+  <use name="CommonTools/UtilAlgos"/>
+</library>
+
+<library file="HLTLeptonSanitizer.cc,L1MuonSanitizer.cc,L3MuonSanitizer.cc" name="TriggerLeptonSanitizers">
+  <use name="DataFormats/Candidate"/>
+  <use name="DataFormats/EgammaCandidates"/>
+  <use name="DataFormats/L1Trigger"/>
+  <use name="DataFormats/MuonReco"/>
+  <use name="DataFormats/RecoCandidate"/>
+  <use name="DataFormats/TrackReco"/>
+</library>
+
+<library file="HLTLeptonsFromTriggerEvent.cc" name="HLTLeptonsFromTriggerEvent">
+  <use name="DataFormats/Candidate"/>
+  <use name="DataFormats/HLTReco"/>
+  <use name="DataFormats/RecoCandidate"/>
+</library>
+
+<library file="Zprime2muLeptonProducer.cc" name="Zprime2muLeptonProducer">
+  <use name="CommonTools/Utils"/>
+  <use name="DataFormats/PatCandidates"/>
+  <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
+</library>
+
+<library file="Zprime2muLeptonProducer_miniAOD.cc" name="Zprime2muLeptonProducer_miniAOD">
+  <use name="CommonTools/Utils"/>
+  <use name="DataFormats/PatCandidates"/>
+  <use name="DataFormats/Common"/>
+  <use name="DataFormats/EgammaCandidates"/>
+  <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
+</library>
+
+<library file="Zprime2muCombiner.cc" name="Zprime2muCombiner">
+  <use name="DataFormats/PatCandidates"/>
+  <use name="CommonTools/CandAlgos"/>
+  <use name="CommonTools/CandUtils"/>
+  <use name="CommonTools/UtilAlgos"/>
+  <use name="PhysicsTools/PatUtils"/>
+</library>
+
+<library file="Zprime2muCompositeCandidatePicker.cc" name="Zprime2muCompositeCandidatePicker">
+  <use name="CommonTools/Utils"/>
+  <use name="DataFormats/PatCandidates"/>
+  <use name="RecoVertex/KalmanVertexFit"/>
+  <use name="RecoVertex/KinematicFit"/>
+  <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
+  <use name="TrackingTools/Records"/>
+  <use name="TrackingTools/TransientTrack"/>
+</library>
+
+<library file="GenParticleMerger.cc" name="GenParticleMerger">
+  <use name="CommonTools/UtilAlgos"/>
+  <use name="DataFormats/HepMCCandidate"/>
+</library>
+<library file="AsymmetryFrameAnalysis.cc,AsymmetryParametrizer.cc,CocktailAnalyzer.cc,EfficiencyFromMC.cc,EfficiencyFromMCnoTrigger.cc,HardInteractionFilter.cc,DibosonGenMass.cc,TauTauSelection.cc,HardInteractionNtuple.cc,HistosFromPAT.cc, MuonsFromDimuons.cc,PrintEvent.cc,QCDBackground.cc,ResolutionUsingMC.cc,SimpleNtupler.cc,SimpleNtupler_miniAOD.cc,Zprime2muAsymmetry.cc,Zprime2muMassReach.cc" name="Zprime2muAnalyzers">
+  <use name="ostream"/>
+  <use name="rootgraphics"/>
+  <use name="CommonTools/UtilAlgos"/>
+  <use name="DataFormats/PatCandidates"/>
+  <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
+</library>
+
+<library file="CheckPrescale.cc,PrescaleToCommon.cc,PrescaleToCommon_miniAOD.cc,VetoOtherDataset.cc" name="Zprime2muTriggerPlugins">
+  <use name="clhep"/>
+  <use name="rootgraphics"/>
+  <use name="CommonTools/UtilAlgos"/>
+  <use name="HLTrigger/HLTcore"/>
+  <use name="DataFormats/PatCandidates"/>
+</library>
+
+<library file="GenPileupFilter.cc" name="Zprime2muPileupPlugins">
+  <use name="rootgraphics"/>
+  <use name="CommonTools/UtilAlgos"/>
+  <use name="SimDataFormats/PileupSummaryInfo"/>
+</library>
+<library file="GetPrescaleL1HLT.cc" name="GetPrescaleL1HLT">
+    <use name="FWCore/PluginManager"/>
+    <use name="FWCore/Common"/>
+    <use name="HLTrigger/HLTcore"/>
+    <use name="FWCore/ServiceRegistry"/>
+    <use name="DataFormats/Common"/>
+    <use name="CommonTools/UtilAlgos"/>
+</library>
+
+# to study madgraph samples
+<library file="WeightAnalyzer.cc" name="WeightAnalyzer">
+<use name="ostream"/>
+<use name="CommonTools/UtilAlgos"/>
+<use name="FWCore/ServiceRegistry"/>
+<use name="DataFormats/PatCandidates"/>
+<use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
+</library>
+
+# for vertex fit studies
+<library   file="HistosVertexFromPAT.cc, ResolutionVertexUsingMC.cc" name="Zprime2muVertexAnalyzers">
+    <use name="rootgraphics"/>
+    <use name="CommonTools/UtilAlgos"/>
+    <use name="DataFormats/PatCandidates"/>
+    <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
+</library>
+# to filter events on miniAOD
+<library file="METFilterMiniAOD.cc" name="METFIlterMiniAOD">
+    <use name="DataFormats/Common"/>
+</library>
+# to filter events based on lepton multiplicity
+<library file="DileptonPreselector.cc" name="DileptonPreselector">
+  <use name="DataFormats/PatCandidates"/>
+</library> 
+# count events and event weights
+<library file="EventCounter.cc" name="EventCounter">
+    <use name="SimDataFormats/GeneratorProducts"/>
+    <use name="CommonTools/UtilAlgos"/>
+</library>
+

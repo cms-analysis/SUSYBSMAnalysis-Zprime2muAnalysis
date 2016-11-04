@@ -6,6 +6,8 @@ import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFiltersMiniAOD
 if miniAOD:
+    from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import electrons_miniAOD
+    electrons_miniAOD(process)
     from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
 else:
     from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
@@ -62,7 +64,7 @@ process.source = cms.Source ("PoolSource",
 secFiles.extend( [
                ] )
 
-process.maxEvents.input = -1
+process.maxEvents.input = 100
 #process.GlobalTag.globaltag = '80X_mcRun2_asymptotic_2016_v3'
 #process.MessageLogger.cerr.FwkReport.reportEvery = 1 # default 1000
 
@@ -117,7 +119,7 @@ for x in alldimus:
 if miniAOD:
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DileptonPreselector_cfi')####?????
     process.leptons = process.leptons_mini.clone()
-    process.p = cms.Path(process.dileptonPreseletor * process.muonPhotonMatchMiniAOD * process.leptons * reduce(lambda x,y: x*y, [getattr(process, x) for x in alldimus]))
+    process.p = cms.Path(process.egmGsfElectronIDSequence*process.dileptonPreseletor * process.muonPhotonMatchMiniAOD * process.leptons * reduce(lambda x,y: x*y, [getattr(process, x) for x in alldimus]))
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
     for dataFilter in goodDataFiltersMiniAOD:
         #setattr(process,dataFilter

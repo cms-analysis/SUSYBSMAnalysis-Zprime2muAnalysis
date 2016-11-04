@@ -8,18 +8,9 @@ process.p = cms.Path(process.countPatLeptons)
 # sets of plots (e.g. add our isolation cut, or apply VBTF).
 process.selectedPatMuons.cut = 'isGlobalMuon && tunePMuonBestTrack().pt > 20'
 
-# Want to select only events that have at least two leptons (=
-# muons+electrons), where the electrons must pass HEEP id, but don't
-# want to force HEEP id on selectedPatElectrons so as not to screw up
-# the jet cleaning until we study this.
-process.heepPatElectrons = cms.EDFilter('PATElectronSelector',
-                                        src = cms.InputTag('patElectrons'),
-                                        cut = cms.string('userInt("HEEPId") == 0')
-                                        )
-
-process.patDefaultSequence.replace(process.selectedPatElectrons, process.selectedPatElectrons * process.heepPatElectrons)
 process.countPatMuons.minNumber = 0
-process.countPatLeptons.electronSource = cms.InputTag('heepPatElectrons')
+#process.countPatLeptons.electronSource = cms.InputTag('heepPatElectrons')
+process.countPatLeptons.electronSource = cms.InputTag('patElectrons')
 process.countPatLeptons.minNumber = 2
 
 crab_cfg = '''

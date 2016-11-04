@@ -85,41 +85,38 @@ def switchHLTProcessName(process, name):
     process.patTrigger.processName = name
     process.patTriggerEvent.processName = name
 
-def addHEEPId(process):
-    # Run the HEEP electron id. This must be done at PAT tuple making
-    # time and cannot be done later unless some modifications are done
-    # the GsfElectron/GsfElectronCore classes.
-    from SHarper.HEEPAnalyzer.HEEPSelectionCuts_cfi import heepBarrelCuts, heepEndcapCuts
-    from SHarper.HEEPAnalyzer.HEEPEventParameters_cfi import heepEventPara
-    process.HEEPId = cms.EDProducer('HEEPIdValueMapProducer',
-                                    eleLabel = cms.InputTag('gedGsfElectrons'),
-                                    barrelCuts = heepBarrelCuts,
-                                    endcapCuts = heepEndcapCuts,
-                                    eleIsolEffectiveAreas = heepEventPara.eleIsolEffectiveAreas,
-                                    applyRhoCorrToEleIsol = heepEventPara.applyRhoCorrToEleIsol,
-                                    #eleRhoCorrLabel = heepEventPara.eleRhoCorrTag,#? possible options
-                                    #eleRhoCorrTag = cms.InputTag("fixedGridRhoFastjetAll"),
-                                    #eleRhoCorr2012Tag = cms.InputTag("kt6PFJets","rho"),
-                                    # I was using
-                                    #eleRhoCorrLabel = cms.InputTag("kt6PFJetsForIsolation","rho"),
-                                    #verticesLabel = cms.InputTag("offlinePrimaryVerticesWithBS"),
-                                    eleRhoCorrLabel = heepEventPara.eleRhoCorrTag,
-                                    verticesLabel = heepEventPara.verticesTag,
-                                    writeIdAsInt = cms.bool(True),
-                                    )
 
-    # For isolation correction
-    from RecoJets.JetProducers.kt4PFJets_cfi import kt4PFJets
-    process.kt6PFJetsForIsolation = kt4PFJets.clone( rParam = 0.6, doRhoFastjet = True )
-    process.kt6PFJetsForIsolation.Rho_EtaMax = cms.double(2.5)
-    
-    # Embed the HEEP cut bitwords into the userData of the
-    # patElectrons so we can use it to cut on at dilepton-making time
-    # instead of necessarily dropping them in the selectedPatElectrons
-    # or cleanPatElectrons steps.
-    process.patElectrons.userData.userInts.src.append('HEEPId')
-    
-    process.patDefaultSequence.replace(process.patElectrons, process.kt6PFJetsForIsolation * process.HEEPId * process.patElectrons)
+################################################################################
+#def addHEEPId(process):
+#    # Run the HEEP electron id. This must be done at PAT tuple making
+#    # time and cannot be done later unless some modifications are done
+#    # the GsfElectron/GsfElectronCore classes.
+#    from SHarper.HEEPAnalyzer.HEEPSelectionCuts_cfi import heepBarrelCuts, heepEndcapCuts
+#    from SHarper.HEEPAnalyzer.HEEPEventParameters_cfi import heepEventPara
+#    process.HEEPId = cms.EDProducer('HEEPIdValueMapProducer',
+#                                    eleLabel = cms.InputTag('gedGsfElectrons'),
+#                                    barrelCuts = heepBarrelCuts,
+#                                    endcapCuts = heepEndcapCuts,
+#                                    eleIsolEffectiveAreas = heepEventPara.eleIsolEffectiveAreas,
+#                                    applyRhoCorrToEleIsol = heepEventPara.applyRhoCorrToEleIsol,
+#                                    eleRhoCorrLabel = heepEventPara.eleRhoCorrTag,
+#                                    verticesLabel = heepEventPara.verticesTag,
+#                                    writeIdAsInt = cms.bool(True),
+#                                    )
+
+#    # For isolation correction
+#    from RecoJets.JetProducers.kt4PFJets_cfi import kt4PFJets
+#    process.kt6PFJetsForIsolation = kt4PFJets.clone( rParam = 0.6, doRhoFastjet = True )
+#    process.kt6PFJetsForIsolation.Rho_EtaMax = cms.double(2.5)
+#    
+#    # Embed the HEEP cut bitwords into the userData of the
+#    # patElectrons so we can use it to cut on at dilepton-making time
+#    # instead of necessarily dropping them in the selectedPatElectrons
+#    # or cleanPatElectrons steps.
+#    process.patElectrons.userData.userInts.src.append('HEEPId')
+#    
+#    process.patDefaultSequence.replace(process.patElectrons, process.kt6PFJetsForIsolation * process.HEEPId * process.patElectrons)
+##################################################################################################################
 
 def AODOnly(process):
     #from PhysicsTools.PatAlgos.tools.coreTools import restrictInputToAOD

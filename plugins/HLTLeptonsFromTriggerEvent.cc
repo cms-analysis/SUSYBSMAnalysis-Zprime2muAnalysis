@@ -31,6 +31,7 @@ HLTLeptonsFromTriggerEvent::HLTLeptonsFromTriggerEvent(const ParameterSet& cfg)
   : summary(cfg.getParameter<InputTag>("summary")),
     leptons(cfg.getParameter<vector<InputTag> >("leptons"))
 {
+  consumes<trigger::TriggerEvent>(summary);
   produces<vector<reco::RecoChargedCandidate> >();
 }
 

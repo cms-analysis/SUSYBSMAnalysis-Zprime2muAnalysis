@@ -30,6 +30,7 @@ private:
 
 L3MuonSanitizer::L3MuonSanitizer(const ParameterSet& cfg) {
   src = cfg.getParameter<InputTag>("src");
+  consumes<MuonTrackLinksCollection>(src);
   produces<MuonCollection>();
 }
 

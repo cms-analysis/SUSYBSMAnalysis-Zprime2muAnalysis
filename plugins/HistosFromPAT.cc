@@ -5,6 +5,8 @@
 #include "TH2F.h"
 #include "TProfile.h"
 #include "TTree.h"
+#include "TMath.h"
+
 
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
@@ -41,8 +43,8 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   void fillLeptonHistos(const reco::CandidateBaseRef&);
   void fillLeptonHistos(const edm::View<reco::Candidate>&);
   void fillLeptonHistosFromDileptons(const pat::CompositeCandidateCollection&);
-  void fillDileptonHistos(const pat::CompositeCandidate&);
-  void fillDileptonHistos(const pat::CompositeCandidateCollection&);
+  void fillDileptonHistos(const pat::CompositeCandidate&, const edm::Event&);
+  void fillDileptonHistos(const pat::CompositeCandidateCollection&, const edm::Event&);
 
   edm::InputTag lepton_src;
   edm::InputTag dilepton_src;
@@ -131,6 +133,9 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TH1F* DimuonMassVtxConstrainedLogWeight;
   TH2F* DimuonMassConstrainedVsUn;
   TH2F* DimuonMassVertexConstrainedError;
+    //special
+    TH1F* DimuonMassVtx_chi2;
+    TH1F* DimuonMassVtx_prob;
 };
 
 Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
@@ -146,6 +151,13 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
     _usePrescaleWeight(cfg.getUntrackedParameter<bool>("usePrescaleWeight",false)),
     _prescaleWeight(1)
 {
+
+  consumes<reco::CandidateView>(lepton_src);
+  consumes<pat::CompositeCandidateCollection>(dilepton_src);
+  consumes<reco::BeamSpot>(beamspot_src);
+  consumes<reco::VertexCollection>(vertex_src);
+  
+
   std::string title_prefix = cfg.getUntrackedParameter<std::string>("titlePrefix", "");
   if (title_prefix.size() && title_prefix[title_prefix.size()-1] != ' ')
     title_prefix += " ";
@@ -180,9 +192,9 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   LeptonPhi = fs->make<TH1F>("LeptonPhi", titlePrefix + "#phi", 100, -TMath::Pi(), TMath::Pi());
 
   // Lepton momenta: p, p_T, p_z.
-  LeptonPt = fs->make<TH1F>("LeptonPt", titlePrefix + "pT", 2000, 0, 2000);
-  LeptonPz = fs->make<TH1F>("LeptonPz", titlePrefix + "pz", 2000, 0, 2000);
-  LeptonP  = fs->make<TH1F>("LeptonP",  titlePrefix + "p",  2000, 0, 2000);
+  LeptonPt = fs->make<TH1F>("LeptonPt", titlePrefix + "pT", 5000, 0, 5000);
+  LeptonPz = fs->make<TH1F>("LeptonPz", titlePrefix + "pz", 5000, 0, 5000);
+  LeptonP  = fs->make<TH1F>("LeptonP",  titlePrefix + "p",  5000, 0, 5000);
 
   // Lepton momenta versus pseudorapidity.
   LeptonPVsEta  = fs->make<TProfile>("LeptonPVsEta",   titlePrefix + "p vs. #eta",  100, -6, 6);
@@ -235,18 +247,18 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   DileptonPhi = fs->make<TH1F>("DileptonPhi", titlePrefix + "dil. #phi", 100, -TMath::Pi(), TMath::Pi());
 
   // Dilepton momenta: p, p_T, p_z.
-  DileptonPt = fs->make<TH1F>("DileptonPt", titlePrefix + "dil. pT", 2000, 0, 2000);
-  DileptonPz = fs->make<TH1F>("DileptonPz", titlePrefix + "dil. pz", 2000, 0, 2000);
-  DileptonP  = fs->make<TH1F>("DileptonP",  titlePrefix + "dil. p",  2000, 0, 2000);
+  DileptonPt = fs->make<TH1F>("DileptonPt", titlePrefix + "dil. pT", 5000, 0, 5000);
+  DileptonPz = fs->make<TH1F>("DileptonPz", titlePrefix + "dil. pz", 5000, 0, 5000);
+  DileptonP  = fs->make<TH1F>("DileptonP",  titlePrefix + "dil. p",  5000, 0, 5000);
   
   // Dilepton momenta versus pseudorapidity.
   DileptonPVsEta  = fs->make<TProfile>("DileptonPVsEta",  titlePrefix + "dil. p vs. #eta",  100, -6, 6);
   DileptonPtVsEta = fs->make<TProfile>("DileptonPtVsEta", titlePrefix + "dil. pT vs. #eta", 100, -6, 6);
   
   // Dilepton invariant mass.
-  DileptonMass            = fs->make<TH1F>("DileptonMass",            titlePrefix + "dil. mass", 3000, 0, 3000);
-  DileptonMassWeight      = fs->make<TH1F>("DileptonMassWeight",      titlePrefix + "dil. mass", 3000, 0, 3000);
-  DileptonWithPhotonsMass = fs->make<TH1F>("DileptonWithPhotonsMass", titlePrefix + "res. mass", 3000, 0, 3000);
+  DileptonMass            = fs->make<TH1F>("DileptonMass",            titlePrefix + "dil. mass", 20000, 0, 20000);
+  DileptonMassWeight      = fs->make<TH1F>("DileptonMassWeight",      titlePrefix + "dil. mass", 20000, 0, 20000);
+  DileptonWithPhotonsMass = fs->make<TH1F>("DileptonWithPhotonsMass", titlePrefix + "res. mass", 20000, 0, 20000);
   
   // Plots comparing the daughter lepton momenta.
   DileptonDeltaPt = fs->make<TH1F>("DileptonDeltaPt",  titlePrefix + "dil. |pT^{1}| - |pT^{2}|", 100, -100, 100);
@@ -264,8 +276,8 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   DileptonDaughterDeltaPhi = fs->make<TH1F>("DileptonDaughterDeltaPhi", "", 100, 0, 3.15);
 
   // Dimuons have a vertex-constrained fit: some associated histograms.
-  DimuonMassVertexConstrained = fs->make<TH1F>("DimuonMassVertexConstrained", titlePrefix + "dimu. vertex-constrained mass", 3000, 0, 3000);
-  DimuonMassVertexConstrainedWeight = fs->make<TH1F>("DimuonMassVertexConstrainedWeight", titlePrefix + "dimu. vertex-constrained mass", 3000, 0, 3000);
+  DimuonMassVertexConstrained = fs->make<TH1F>("DimuonMassVertexConstrained", titlePrefix + "dimu. vertex-constrained mass", 20000, 0, 20000);
+  DimuonMassVertexConstrainedWeight = fs->make<TH1F>("DimuonMassVertexConstrainedWeight", titlePrefix + "dimu. vertex-constrained mass", 20000, 0, 20000);
   // Mass plot in bins of log(mass)
   const int    NMBINS = 100;
   const double MMIN = 60., MMAX = 2100.;
@@ -276,6 +288,9 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   DimuonMassVtxConstrainedLogWeight = fs->make<TH1F>("DimuonMassVtxConstrainedLogWeight", titlePrefix + "dimu vtx-constrained mass in log bins", NMBINS, logMbins);
   DimuonMassConstrainedVsUn = fs->make<TH2F>("DimuonMassConstrainedVsUn", titlePrefix + "dimu. vertex-constrained vs. non-constrained mass", 200, 0, 3000, 200, 0, 3000);
   DimuonMassVertexConstrainedError = fs->make<TH2F>("DimuonMassVertexConstrainedError", titlePrefix + "dimu. vertex-constrained mass error vs. mass", 100, 0, 3000, 100, 0, 400);
+    //special
+    DimuonMassVtx_chi2 = fs->make<TH1F>("DimuonMassVtx_chi2", titlePrefix + "dimu. vertex #chi^{2}/dof", 300, 0, 30);
+    DimuonMassVtx_prob = fs->make<TH1F>("DimuonMassVtx_prob", titlePrefix + "dimu. vertex probability", 100, 0, 1);
 }
 
 void Zprime2muHistosFromPAT::getBSandPV(const edm::Event& event) {
@@ -348,7 +363,8 @@ void Zprime2muHistosFromPAT::fillOfflineMuonHistos(const pat::Muon* mu) {
     NMuHits->Fill(hp.numberOfValidMuonHits());
 
     NHits->Fill(hp.numberOfValidHits());
-    NInvalidHits->Fill(hp.numberOfHits() - hp.numberOfValidHits());
+    NInvalidHits->Fill(hp.numberOfHits(reco::HitPattern::TRACK_HITS) - hp.numberOfValidHits());
+    //NInvalidHits->Fill(hp.numberOfHits() - hp.numberOfValidHits());
     
     NPxLayers->Fill(hp.pixelLayersWithMeasurement());
     NStLayers->Fill(hp.stripLayersWithMeasurement());
@@ -403,13 +419,12 @@ void Zprime2muHistosFromPAT::fillLeptonHistosFromDileptons(const pat::CompositeC
   LeptonSigns->Fill(nleptons, total_q);
 }
 
-void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& dil) {
+void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& dil, const edm::Event& event) {
   if (dbg_tree) {
     dbg_t.mass = dil.mass();
     dbg_t.id = dil.daughter(0)->pdgId() + dil.daughter(1)->pdgId();
     dbg_tree->Fill();
   }
-  
   DileptonEta->Fill(dil.eta());
   DileptonRap->Fill(dil.rapidity());
   DileptonPhi->Fill(dil.phi());
@@ -445,8 +460,10 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 	// Use mass calculated with the vertex constraint when available
 	if (dil.hasUserFloat("vertexM"))
 	  mass = dil.userFloat("vertexM");
-	else
+	else{
+	  edm::LogWarning("fillDileptonHistos") << "+++ Mass calculated without vertex constraint! +++";
 	  mass = dil.mass();
+	}
 	if (mass > 200.) {
 	  DimuonMuonPtErrOverPtM200->Fill(ptError(tk0)/tk0->pt());
 	  DimuonMuonPtErrOverPtM200->Fill(ptError(tk1)/tk1->pt());
@@ -467,22 +484,29 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
   if (dil.hasUserFloat("vertexM") && dil.hasUserFloat("vertexMError")) {
     float vertex_mass = dil.userFloat("vertexM");
     float vertex_mass_err = dil.userFloat("vertexMError");
-
     DimuonMassVertexConstrained->Fill(vertex_mass);
     DimuonMassVtxConstrainedLog->Fill(vertex_mass);
     DimuonMassConstrainedVsUn->Fill(dil.mass(), vertex_mass);
     DimuonMassVertexConstrainedError->Fill(vertex_mass, vertex_mass_err);
     DimuonMassVertexConstrainedWeight->Fill(vertex_mass,_prescaleWeight);
     DimuonMassVtxConstrainedLogWeight->Fill(vertex_mass,_prescaleWeight);
+    // special
+    float vertex_chi2 = dil.userFloat("vertex_chi2");
+      DimuonMassVtx_chi2->Fill(vertex_chi2);
+    if (vertex_chi2 > 0 ) {
+        float vertex_ndof = dil.userFloat("vertex_ndof");
+        float vertex_chi2_noNormalized = vertex_chi2*vertex_ndof;
+        DimuonMassVtx_prob->Fill(TMath::Prob(vertex_chi2_noNormalized, vertex_ndof));}
+
   }
 }
 
-void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidateCollection& dileptons) {
+void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidateCollection& dileptons, const edm::Event& event) {
   NDileptons->Fill(dileptons.size());
 
   pat::CompositeCandidateCollection::const_iterator dil = dileptons.begin(), dile = dileptons.end();
   for ( ; dil != dile; ++dil)
-    fillDileptonHistos(*dil);
+    fillDileptonHistos(*dil, event);
 }
 
 void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSetup& setup) {
@@ -531,7 +555,7 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
     if (leptonsFromDileptons)
       fillLeptonHistosFromDileptons(*dileptons);
     
-    fillDileptonHistos(*dileptons);
+    fillDileptonHistos(*dileptons, event);
   }
 }
 

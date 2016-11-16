@@ -16,6 +16,7 @@ private:
   const bool use_resonance_mass;
   const double max_muon_eta;
   const double min_muon_pt;
+ 
 };
 
 HardInteractionFilter::HardInteractionFilter(const edm::ParameterSet& cfg)
@@ -26,11 +27,15 @@ HardInteractionFilter::HardInteractionFilter(const edm::ParameterSet& cfg)
     max_muon_eta(cfg.getParameter<double>("max_muon_eta")),
     min_muon_pt(cfg.getParameter<double>("min_muon_pt"))
 {
+  
+    consumes<reco::GenParticleCollection>(hardInteraction.src);
+   
 }
 
 bool HardInteractionFilter::filter(edm::Event& event, const edm::EventSetup&) {
   hardInteraction.Fill(event);
   const double m = use_resonance_mass ? hardInteraction.resonance->mass() : hardInteraction.dilepton().mass();
+  if(hardInteraction.IsValid()){
   return
     m > min_mass &&
     m < max_mass &&
@@ -38,6 +43,9 @@ bool HardInteractionFilter::filter(edm::Event& event, const edm::EventSetup&) {
     fabs(hardInteraction.lepPlus ->eta()) < max_muon_eta &&
     hardInteraction.lepMinus->pt() > min_muon_pt &&
     hardInteraction.lepPlus ->pt() > min_muon_pt;
+    }
+  else
+  return hardInteraction.IsValid();  
 }
 
 DEFINE_FWK_MODULE(HardInteractionFilter);

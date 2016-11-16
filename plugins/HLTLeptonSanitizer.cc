@@ -42,6 +42,7 @@ private:
 template <typename CollectionType>
 HLTLeptonSanitizer<CollectionType>::HLTLeptonSanitizer(const ParameterSet& cfg) {
   src = cfg.getParameter<InputTag>("src");
+  consumes<CollectionType>(src);
   produces<CollectionType>();
 }
 

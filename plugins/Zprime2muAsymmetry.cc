@@ -463,7 +463,7 @@ void Zprime2muAsymmetry::fillFitData(const edm::Event& event) {
     // Loop over all generated dimuons
     for (unsigned int i_dil = 0; i_dil < n_gen; i_dil++) {
       const reco::CompositeCandidate& gen_dil = genDileptons->at(i_dil);
-      printf("run %u event %u gen dimuon pt %f eta %f phi %f mass %f\n", event.id().run(), event.id().event(), gen_dil.pt(), gen_dil.eta(), gen_dil.phi(), gen_dil.mass());
+      printf("run %u event %llu gen dimuon pt %f eta %f phi %f mass %f\n", event.id().run(), event.id().event(), gen_dil.pt(), gen_dil.eta(), gen_dil.phi(), gen_dil.mass());
       const reco::Candidate* gen_mum = gen_dil.daughter(0)->charge() == -1 ? gen_dil.daughter(0) : gen_dil.daughter(1);
       const reco::Candidate* gen_mup = gen_dil.daughter(0)->charge() ==  1 ? gen_dil.daughter(0) : gen_dil.daughter(1);
       printf("  mu- status %i + %i\n", gen_mum->status(), gen_mup->status());

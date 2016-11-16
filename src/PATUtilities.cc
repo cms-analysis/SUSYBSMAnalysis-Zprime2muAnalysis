@@ -14,16 +14,55 @@ namespace patmuon {
     return nTrackTypes;
   }
 
-  reco::TrackRef trackByType(const pat::Muon& mu, TrackType t) {
+
+
+ reco::TrackRef trackByType(const pat::Muon& mu, TrackType t) {
+    bool hasTeVMuons = true;
+    if (mu.hasUserInt("hasTeVMuons")) hasTeVMuons = mu.userInt("hasTeVMuons");
     switch (t) {
     case TkGlobal: return mu.globalTrack();
-    case TkInner: return mu.innerTrack();
+    case TkInner:{
+//        std::cout<<"case TkInner: muon eta "<<mu.eta()<<" muon pt "<<mu.pt()<<std::endl;
+        return mu.innerTrack();
+    }
     case TkOuter: return mu.outerTrack();
-    case TkTPFMS: return mu.tpfmsMuon();
-    case TkPicky: return mu.pickyMuon();
-    case TkTuneP: return muon::tevOptimized(mu, 200, 4, 6, -1).first;
+    case TkTPFMS:{
+	if (hasTeVMuons) return mu.tpfmsMuon();
+	else return mu.tunePMuonBestTrack();
+   }
+   case TkPicky:{
+	if (hasTeVMuons) return mu.pickyMuon();
+	else mu.tunePMuonBestTrack();
+    }
+    case TkDYT:{
+	   if (hasTeVMuons) return mu.dytTrack();
+	   else mu.tunePMuonBestTrack();
+    }
+    case TkTuneP: {
+	if (hasTeVMuons) muon::tevOptimized(mu, 200, 4, 6, -1).first;
+	else return mu.tunePMuonBestTrack();
+    }
     case TkTMR: return muon::TMR(mu.innerTrack(), mu.tpfmsMuon()).first;
-    case TkTunePNew: return muon::tevOptimized(mu, 200, 17, 40, 0.25).first;
+    case TkTunePNew: {
+//        std::cout<<"case TkTunePNew: muon eta "<<mu.eta()<<" muon pt "<<mu.pt()<<std::endl;
+         if (hasTeVMuons) return muon::tevOptimized(mu, 200, 17, 40, 0.25).first;
+         else return mu.tunePMuonBestTrack();
+        
+    }
+    case TkStartup:{
+        if(fabs(mu.eta())<1.2){
+//            std::cout<<"case TkStartup: muon eta "<<mu.eta()<<" muon pt "<<mu.pt()<<std::endl;
+//            std::cout<<" tunep "<<std::endl;
+                if (hasTeVMuons) return muon::tevOptimized(mu, 200, 17, 40, 0.25).first;
+         	else return mu.tunePMuonBestTrack();
+
+	 }
+        else {
+//            std::cout<<"case TkStartup: muon eta "<<mu.eta()<<" muon pt "<<mu.pt()<<std::endl;
+//            std::cout<<" tracker "<<std::endl;
+            return mu.innerTrack();
+        }
+    }
     case nTrackTypes: default: return reco::TrackRef();
     }
   }
@@ -45,6 +84,7 @@ namespace patmuon {
     return TrackType(mu.userInt("trackUsedForMomentum"));
   }
   
+ 
   reco::TrackRef getPickedTrack(const pat::Muon& mu) {
     return trackByType(mu, getPickedTrackType(mu));
   }
@@ -66,6 +106,8 @@ namespace patmuon {
       return TkOuter;
     else if (tk == mu.tpfmsMuon())
       return TkTPFMS;
+    else if (tk == mu.dytTrack())
+      return TkDYT;
     else if (tk == mu.pickyMuon())
       return TkPicky;
     else

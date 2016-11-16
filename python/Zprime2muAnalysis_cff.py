@@ -6,41 +6,77 @@ import FWCore.ParameterSet.Config as cms
 import HLTrigger.HLTfilters.hltHighLevel_cfi
 goodDataFilter = HLTrigger.HLTfilters.hltHighLevel_cfi.hltHighLevel.clone()
 goodDataFilter.TriggerResultsTag = cms.InputTag('TriggerResults', '', 'PAT')
-goodDataFilter.HLTPaths = ['goodDataAll'] # can set to just 'goodDataPrimaryVertexFilter', for example
+goodDataFilter.HLTPaths = ["goodDataPrimaryVertexFilter"] # can set to just 'goodDataPrimaryVertexFilter', for example
+#goodDataFilter.HLTPaths = ['goodDataMETFilter']
 goodDataFilter.andOr = False # = AND
 
-from MuonPhotonMatch_cff import muonPhotonMatch
+from SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff import primaryVertexMiniAOD, hltPhysicsDeclared, metFilters
+goodDataFiltersMiniAOD = [primaryVertexMiniAOD]
+## for full filtering, use:
+#goodDataFiltersMiniAOD = [primaryVertexMiniAOD,hltPhysicsDeclared]
+#goodDataFiltersMiniAOD += metFilters
+
+
+from MuonPhotonMatch_cff import muonPhotonMatch, muonPhotonMatchMiniAOD
 from OurSelectionDec2012_cff import allDimuons, dimuons, loose_cut
 
 leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'), #JMTBAD changeme after new PAT tuples
                          electron_src = cms.InputTag('cleanPatElectrons'),
+                         muon_srcSecond = cms.InputTag('cleanPatMuonsTriggerMatch'), #JMTBAD changeme after new PAT tuples
+                         electron_srcSecond = cms.InputTag('cleanPatElectrons'),
                          muon_cuts = cms.string(loose_cut),
-                         electron_cuts = cms.string('userInt("HEEPId") == 0'),
+                         electron_cuts = cms.string(''),
                          muon_track_for_momentum = cms.string('TunePNew'),
+                         muon_track_for_momentum_CSC = cms.string('Inner'),
                          muon_photon_match_src = cms.InputTag('muonPhotonMatch'),
                          electron_muon_veto_dR = cms.double(-1),
                          trigger_match_max_dR = cms.double(0.2),
                          trigger_summary_src = cms.InputTag('hltTriggerSummaryAOD', '', 'HLT'),
                          )
+leptons_mini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
+                              muon_src = cms.InputTag('slimmedMuons'), #JMTBAD changeme after new PAT tuples
+                              electron_src = cms.InputTag('slimmedElectrons'),
+                              electron_id = cms.InputTag('egmGsfElectronIDs:heepElectronID-HEEPV60'),
+                              muon_srcSecond = cms.InputTag('slimmedMuons'), #JMTBAD changeme after new PAT tuples
+                              muon_cuts = cms.string(loose_cut),
+                              muon_track_for_momentum = cms.string('TunePNew'),
+                              muon_track_for_momentum_CSC = cms.string('Inner'),
+                              muon_photon_match_src = cms.InputTag('muonPhotonMatchMiniAOD'),
+                              electron_muon_veto_dR = cms.double(-1),
+                              trigger_match_max_dR = cms.double(0.2),
+                              trigger_summary = cms.InputTag('selectedPatTrigger'),
+                              #bits = cms.InputTag("TriggerResults","","HLT2"),##mc reHLT
+                              bits = cms.InputTag("TriggerResults","","HLT"),#data
+                              prescales = cms.InputTag("patTrigger"),
+                              )
 
 Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)
+Zprime2muAnalysisSequence_MiniAOD = cms.Sequence(muonPhotonMatchMiniAOD * leptons_mini * allDimuons * dimuons)
+
+from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
+def electrons_miniAOD(process):
+    switchOnVIDElectronIdProducer(process, DataFormat.MiniAOD)
+    my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV60_cff']
+    for idmod in my_id_modules:
+        setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+    
 
 def rec_levels(process, new_track_types):
     process.leptons.muon_tracks_for_momentum = cms.vstring(*new_track_types)
     process.Zprime2muAnalysisSequence = cms.Sequence(process.muonPhotonMatch * process.leptons)
     process.Zprime2muAnalysisSequencePlain = cms.Sequence(process.muonPhotonMatch * process.leptons * process.allDimuons * process.dimuons)
-
+    
     for t in new_track_types:
         ad = process.allDimuons.clone()
         label = 'leptons:%s' % t
         ad.decay = '%s@+ %s@-' % (label, label)
         setattr(process, 'allDimuons' + t, ad)
-
+        
         d = process.dimuons.clone()
         d.src = 'allDimuons' + t
         setattr(process, 'dimuons' + t, d)
-
+        
         process.Zprime2muAnalysisSequence *= ad
         process.Zprime2muAnalysisSequence *= d
 

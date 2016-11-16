@@ -4,7 +4,8 @@ import FWCore.ParameterSet.Config as cms
 process = cms.Process('PAT')
 process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(-1))
 process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True))
-process.source = cms.Source('PoolSource', fileNames = cms.untracked.vstring('file:PlaceHolder.root'))
+process.source = cms.Source('PoolSource',
+                            fileNames = cms.untracked.vstring('file:PlaceHolder.root'))
 
 # Load services needed to run the PAT.
 process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
@@ -33,7 +34,7 @@ process.out = cms.OutputModule('PoolOutputModule',
                                # fileName = cms.untracked.string('file:PlaceHolder.root'),
                                SelectEvents   = cms.untracked.PSet(SelectEvents = cms.vstring('p')),
                                outputCommands = cms.untracked.vstring('drop *',
-                                                                      'keep patElectrons_cleanPatElectrons__*',
+                                                                      'keep patElectrons_*_*_*',
                                                                       'keep patMuons_cleanPatMuons__*',
                                                                       'keep patJets_cleanPatJets__*',
                                                                       'keep patPhotons_cleanPatPhotons__*',
@@ -59,9 +60,6 @@ process.out = cms.OutputModule('PoolOutputModule',
                                                                       'keep *_patMETsPF_*_*',
                                                                       )
                                )
-# PAT electrons
-from PATTools import addHEEPId
-addHEEPId(process)
 
 # PAT taus
 del process.patTaus.tauIDSources.againstElectronMVA6Raw

@@ -1,5 +1,6 @@
 <use name="FWCore/Framework"/>
 <use name="FWCore/ParameterSet"/>
+<use name="FWCore/Utilities"/>
 
 <library file="DileptonPicker.cc" name="DileptonPicker">
   <use name="DataFormats/Candidate"/>
@@ -40,6 +41,8 @@
 <library file="Zprime2muLeptonProducer_miniAOD.cc" name="Zprime2muLeptonProducer_miniAOD">
   <use name="CommonTools/Utils"/>
   <use name="DataFormats/PatCandidates"/>
+  <use name="DataFormats/Common"/>
+  <use name="DataFormats/EgammaCandidates"/>
   <use name="SUSYBSMAnalysis/Zprime2muAnalysis"/>
 </library>
 
@@ -124,3 +127,4 @@
     <use name="SimDataFormats/GeneratorProducts"/>
     <use name="CommonTools/UtilAlgos"/>
 </library>
+

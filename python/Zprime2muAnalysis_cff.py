@@ -54,13 +54,26 @@ leptons_mini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
 Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)
 Zprime2muAnalysisSequence_MiniAOD = cms.Sequence(muonPhotonMatchMiniAOD * leptons_mini * allDimuons * dimuons)
 
+
+#####################################################################
+############# E L E C T R O N  -  S E L E C T O R ###################
+# defined a proces to call VID Ele Selector using miniAOD 
+# the proces is called in test/DataMCSpectraComparison/histos.py
+# and in test/NMinus1Effs/nminus1effs.py
+
+# to use it you have to do from CMSSW_X_X_X/src/:
+# git cms-merge-topic Sam-Harper:HEEPV70VID
+# compile it, and pass to "my_id_modules" the version that you merged 
+
 from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 def electrons_miniAOD(process):
     switchOnVIDElectronIdProducer(process, DataFormat.MiniAOD)
+    # my_id_module is the 
     my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV60_cff']
     for idmod in my_id_modules:
         setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
-    
+
+#####################################################################    
 
 def rec_levels(process, new_track_types):
     process.leptons.muon_tracks_for_momentum = cms.vstring(*new_track_types)

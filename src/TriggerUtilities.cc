@@ -23,12 +23,12 @@ Zprime2muTriggerPathsAndFilters::Zprime2muTriggerPathsAndFilters(const edm::Even
   // we will have to think of a better way to handle this.
 //    if (!event.isRealData())                { path = "HLT_Mu50_v2", filter = "hltL3fL1sMu16orMu25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu25L1f0L2f10QL3Filtered27Q"; }
     // TO BE USED FOR reHLT MC
-           if (!event.isRealData())                { path = "HLT_Mu50_v2", filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q"; }
+    if (!event.isRealData())                { path = "HLT_Mu50_v2", filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q"; }
     
-    else if (run >= 250985 && run < 253888)                 { path = "HLT_Mu50_v1", filter = "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu25L1f0L2f10QL3Filtered27Q"; } // at least until run 204601
-//    else if (run >= 253888)                 { path = "HLT_Mu45_eta2p1_v2", filter = "hltL3fL1sMu16orMu25L1f0L2f10QL3Filtered45e2p1Q", prescaled_path = "HLT_Mu24_eta2p1_v1", prescaled_filter = "hltL3fL1sMu20Eta2p1L1f0L2f10QL3Filtered24Q"; } // at least until run 204601
-    else if (run >= 253888)                 { path = "HLT_Mu50_v2", filter = "hltL3fL1sMu16orMu25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu25L1f0L2f10QL3Filtered27Q"; } // at least until run 204601
-// HLT_Mu50_v2 hltL3fL1sMu16orMu25L1f0L2f10QL3Filtered50Q
+    else if (run >= 250985 && run < 253888) { path = "HLT_Mu50_v1", filter = "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu25L1f0L2f10QL3Filtered27Q"; } 
+    else if (run >= 253888 && run < 278819) { path = "HLT_Mu50_v2", filter = "hltL3fL1sMu16orMu25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu25L1f0L2f10QL3Filtered27Q"; } 
+    else if (run >= 278819) { path = "HLT_Mu50_v4", filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v2", prescaled_filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q"; } 
+
     else
         valid = false;
 }

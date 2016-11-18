@@ -34,7 +34,7 @@ leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          trigger_match_max_dR = cms.double(0.2),
                          trigger_summary_src = cms.InputTag('hltTriggerSummaryAOD', '', 'HLT'),
                          )
-leptons_mini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
+leptonsMini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
                               muon_src = cms.InputTag('slimmedMuons'), #JMTBAD changeme after new PAT tuples
                               electron_src = cms.InputTag('slimmedElectrons'),
                               electron_id = cms.InputTag('egmGsfElectronIDs:heepElectronID-HEEPV60'),
@@ -52,7 +52,7 @@ leptons_mini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
                               )
 
 Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)
-Zprime2muAnalysisSequence_MiniAOD = cms.Sequence(muonPhotonMatchMiniAOD * leptons_mini * allDimuons * dimuons)
+Zprime2muAnalysisSequence_MiniAOD = cms.Sequence(muonPhotonMatchMiniAOD * leptonsMini * allDimuons * dimuons)
 
 
 #####################################################################
@@ -74,24 +74,6 @@ def electrons_miniAOD(process):
         setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 
 #####################################################################    
-
-def rec_levels(process, new_track_types):
-    process.leptons.muon_tracks_for_momentum = cms.vstring(*new_track_types)
-    process.Zprime2muAnalysisSequence = cms.Sequence(process.muonPhotonMatch * process.leptons)
-    process.Zprime2muAnalysisSequencePlain = cms.Sequence(process.muonPhotonMatch * process.leptons * process.allDimuons * process.dimuons)
-    
-    for t in new_track_types:
-        ad = process.allDimuons.clone()
-        label = 'leptons:%s' % t
-        ad.decay = '%s@+ %s@-' % (label, label)
-        setattr(process, 'allDimuons' + t, ad)
-        
-        d = process.dimuons.clone()
-        d.src = 'allDimuons' + t
-        setattr(process, 'dimuons' + t, d)
-        
-        process.Zprime2muAnalysisSequence *= ad
-        process.Zprime2muAnalysisSequence *= d
 
 def rec_level_module(process, module, name, tracks):
     p = []

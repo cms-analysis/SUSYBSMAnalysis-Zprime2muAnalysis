@@ -46,7 +46,7 @@ leptonsMini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
                               electron_muon_veto_dR = cms.double(-1),
                               trigger_match_max_dR = cms.double(0.2),
                               trigger_summary = cms.InputTag('selectedPatTrigger'),
-                              #bits = cms.InputTag("TriggerResults","","HLT2"),##mc reHLT
+#                              bits = cms.InputTag("TriggerResults","","HLT2"),##mc reHLT
                               bits = cms.InputTag("TriggerResults","","HLT"),#data
                               prescales = cms.InputTag("patTrigger"),
                               )

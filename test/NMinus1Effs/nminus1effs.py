@@ -25,47 +25,20 @@ secFiles = cms.untracked.vstring()
 #process.source = cms.Source ("PoolSource",fileNames = readFiles, secondaryFileNames = secFiles)
 
 process.source = cms.Source ("PoolSource",
-                             fileNames =  cms.untracked.vstring("/store/data/Run2016G/SingleMuon/MINIAOD/PromptReco-v1/000/278/820/00000/0667AC34-2464-E611-84CE-02163E011979.root"),
+                             fileNames =  cms.untracked.vstring(
+                                                                '/store/data/Run2016B/SingleMuon/MINIAOD/23Sep2016-v3/00000/162AD1DB-1E98-E611-9893-008CFA56D58C.root',
+                                                                '/store/data/Run2016B/SingleMuon/MINIAOD/23Sep2016-v3/00000/1A1F07FF-2698-E611-915C-0242AC130004.root'
+#                                                                '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root'
+                                                                ),
                              secondaryFileNames = secFiles)
 
 
 
-#readFiles.extend( ['store/data/Run2016G/SingleMuon/MINIAOD/PromptReco-v1/000/278/820/00000/0667AC34-2464-E611-84CE-02163E011979.root']);
-
-#### m4500_6000
-#readFiles.extend( ['/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/2E8F7144-A63A-E611-9DB8-001D0967DFF3.root',
-#       '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/4A0CB50D-A63A-E611-A67A-0090FAA58D04.root',
-#       '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/88049D17-A63A-E611-A789-0090FAA573F0.root' ] );
-
-#### m120_200
-#readFiles.extend( [
-#        '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root',
-#        '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/AA745369-613A-E611-93A7-0025907B4EE6.root',
-#        '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/B2BFFF97-603A-E611-90A2-0CC47AB35D34.root' ] );
-
-#### pattuples
-#readFiles.extend( [
-        #                   '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root',
-        #       '/store/mc/RunIISpring16MiniAODv1/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/30000/4E45A151-D6FC-E511-9FE4-0090FAA58134.root',
-        #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root',
-        #                   '/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/datamc_dy200to400/160509_211417/0000/pat_1.root',
-        
- #       ] );
-
-#### m2300_3500
-#readFiles.extend( [
-#        '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/80000/8C0E76AA-D93C-E611-94E2-0CC47A4D76B6.root',
-#        '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/80000/B449FDAB-D93C-E611-A15B-0025905B85FE.root',
-#        '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/80000/F23DCBB0-D93C-E611-B5D6-0025905A606A.root' ] );
-
-
-#### m50_120
-
 secFiles.extend( [
                ] )
 
-process.maxEvents.input = 100
-#process.GlobalTag.globaltag = '80X_mcRun2_asymptotic_2016_v3'
+process.maxEvents.input = -1
+process.GlobalTag.globaltag = '80X_dataRun2_2016SeptRepro_v4'
 #process.MessageLogger.cerr.FwkReport.reportEvery = 1 # default 1000
 
 # Define the numerators and denominators, removing cuts from the

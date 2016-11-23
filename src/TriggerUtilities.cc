@@ -21,13 +21,16 @@ Zprime2muTriggerPathsAndFilters::Zprime2muTriggerPathsAndFilters(const edm::Even
   // JMTBAD if there are different HLT menus used for different
   // samples (e.g. 51X/52X), the next line may not be sufficient, and
   // we will have to think of a better way to handle this.
-//    if (!event.isRealData())                { path = "HLT_Mu50_v2", filter = "hltL3fL1sMu16orMu25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu25L1f0L2f10QL3Filtered27Q"; }
+  // Trigger OR
+  if (!event.isRealData())                { path = "HLT_Mu50_v2", filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q",path_2 = "HLT_Mu50_v2", filter_2 = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q", prescaled_path_2 = "HLT_Mu27_v1", prescaled_filter_2 = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q"; }
+  //
     // TO BE USED FOR reHLT MC
-    if (!event.isRealData())                { path = "HLT_Mu50_v2", filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q"; }
+//    if (!event.isRealData())                { path = "HLT_Mu50_v2", filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q"; }
     
-    else if (run >= 250985 && run < 253888) { path = "HLT_Mu50_v1", filter = "hltL3fL1sMu16orMu25L1f0L2f16QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu25L1f0L2f10QL3Filtered27Q"; } 
-    else if (run >= 253888 && run < 278819) { path = "HLT_Mu50_v2", filter = "hltL3fL1sMu16orMu25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu25L1f0L2f10QL3Filtered27Q"; } 
-    else if (run >= 278819) { path = "HLT_Mu50_v4", filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v2", prescaled_filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q"; } 
+  // Trigger OR
+  else if (run >= 272007)                 { path = "HLT_Mu50_v4", filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q",path_2 = "HLT_TkMu50_v4", filter_2 = "hltL3fL1sMu25f0TkFiltered50Q", prescaled_path = "HLT_Mu27_v2", prescaled_filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q", prescaled_path_2 = "HLT_Mu27_v1", prescaled_filter_2 = "hltL3fL1sMu25L1f0L2f10QL3Filtered27Q"; }
+  //
+  //    else if (run >= 272007) { path = "HLT_Mu50_v4", filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v2", prescaled_filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q"; }
 
     else
         valid = false;

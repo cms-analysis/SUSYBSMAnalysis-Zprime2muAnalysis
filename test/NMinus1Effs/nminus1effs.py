@@ -118,7 +118,7 @@ for x in alldimus:
 
 if miniAOD:
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DileptonPreselector_cfi')####?????
-    process.leptons = process.leptons_mini.clone()
+    process.leptons = process.leptonsMini.clone()
     process.p = cms.Path(process.egmGsfElectronIDSequence*process.dileptonPreseletor * process.muonPhotonMatchMiniAOD * process.leptons * reduce(lambda x,y: x*y, [getattr(process, x) for x in alldimus]))
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
     for dataFilter in goodDataFiltersMiniAOD:

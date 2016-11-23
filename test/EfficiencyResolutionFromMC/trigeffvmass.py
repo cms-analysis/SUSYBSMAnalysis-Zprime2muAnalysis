@@ -6,7 +6,7 @@ import sys, os
 from array import array
 
 #samples = ['dy60', 'dy120_c1', 'dy200_c1', 'dy500_c1', 'dy800_c1', 'dy1000_c1', 'dy1500_c1', 'dy2000_c1', 'zp750_c1', 'zp1000_c1', 'zp1250_c1', 'zp1500_c1', 'zp1750_c1', 'zp2000_c1', 'zp2250_c1', 'zp2500_c1', 'zp2750_c1', 'zp3000_c1']
-samples = ['dy50']
+samples = ['dy200','dy400', 'dy800', 'dy2300', 'dy3500']
 kind = [x for x in sys.argv[1:] if os.path.isdir(x)]
 
 dy = [(x, int(x.replace('dy','').replace('_c1',''))) for x in samples if 'dy' in x]
@@ -15,14 +15,14 @@ if 'vbtf' in sys.argv:
     which = 'VBTFEfficiencyFromMC'
     plot_dir = 'plots/trigeffvsmassmctruth_vbtf'
 else:
-    which = 'EfficiencyFromMC'
+    which = 'EfficiencyFromMCMini'
     plot_dir = 'plots/trigeffvsmassmctruth'
 
 if kind:
     kind = kind[0]
     plot_dir += '_' + kind
 else:
-    kind = 'normal'
+    kind = 'crab'
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import *
 #setTDRStyle()
@@ -45,7 +45,7 @@ samples_totals = []
 
 print '%30s%30s%30s%30s%30s' % ('sample', 'type', 'num', 'den', 'eff')
 for sample in samples:
-    f = files[sample] = ROOT.TFile(os.path.join(kind, 'ana_effres_%s.root' % sample))
+    f = files[sample] = ROOT.TFile(os.path.join(kind, 'ReHLT_%s.root' % sample))
     d = f.Get(which)
     if make_individual_plots or make_individual_effs:
         ps = plot_saver(os.path.join(plot_dir, sample), pdf=True)
@@ -168,9 +168,9 @@ def do_replace_or_add(name, samples, which, add=False):
     num.Draw('hist same')
     ps.save('%s_%s_%s_both' % (name, which, 'add' if add else 'replace'))
 
-    eff = binomial_divide(num, den)
+    eff = binomial_divide(num, den)[0]
     eff.Draw('AP')
-    eff.GetXaxis().SetLimits(80, 3000)
+    eff.GetXaxis().SetLimits(200, 3000)
     if which.startswith('Acc'):
         eff.GetYaxis().SetRangeUser(0.2, 1.01)
     elif 'Reco' in which:
@@ -262,13 +262,15 @@ RecoWrtAccTrig.Draw('AP')
 RecoWrtAcc.Draw('P same')
 TotalReco.Draw('P same')
 fitwindow = 200,3000
-#RecoWrtAcc.Fit('pol1', 'VR', '', *fitwindow)
-fcn = ROOT.TF1('fcn', '[0] + [1]/(x + [2])**3', *fitwindow)
-fcn.SetParNames("a", "b", "c")
-fcn.SetLineColor(TotalReco.GetLineColor())
-lg.AddEntry(fcn, 'fit to a + b/pow(m+c, 3) for m in 200-3000 GeV', 'L')
+#fcn = ROOT.TF1('fcn', '[0] + [1]/(x)**3 - (x*x/[3])', *fitwindow)
+#fcn.SetParLimits(1,-9e6,-1.e4)
+#fcn.SetParLimits(2,1e7,1.e14)
+#fcn.SetParNames("a", "b", "c")
+#fcn.SetLineColor(TotalReco.GetLineColor())
+#lg.AddEntry(fcn, 'fit to a + b/pow(m, 3) - m^2/d for m in 200-3500 GeV', 'L')
 #lg.SetTextFont(42)
 lg.Draw()
+
 ROOT.gStyle.SetOptFit(1111)
 TotalReco.Fit(fcn, 'VR')
 ps.c.Update()

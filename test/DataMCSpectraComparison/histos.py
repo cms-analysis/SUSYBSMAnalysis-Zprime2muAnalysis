@@ -2,7 +2,7 @@
 
 
 miniAOD = True
-Electrons = False
+Electrons = True
 
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
@@ -12,8 +12,8 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFilt
 process.source.fileNames =[#'file:./pat.root'
 			   #'file:PAT_SingleMuRun2015B-Rereco-Suite_251162_251559_20160120153115/crab_SingleMuRun2015B-Rereco-Suite_251162_251559_20160120153115/results/Zprime_123.root',
 	'/store/data/Run2016G/SingleMuon/MINIAOD/PromptReco-v1/000/278/820/00000/0E01D82A-0B64-E611-9779-FA163ED73506.root',
-	'/store/data/Run2016G/SingleMuon/MINIAOD/PromptReco-v1/000/278/820/00000/10B29DE2-1664-E611-9797-02163E013458.root',
-	'/store/data/Run2016G/SingleMuon/MINIAOD/PromptReco-v1/000/278/820/00000/0667AC34-2464-E611-84CE-02163E011979.root',
+	#'/store/data/Run2016G/SingleMuon/MINIAOD/PromptReco-v1/000/278/820/00000/10B29DE2-1664-E611-9797-02163E013458.root',
+	#'/store/data/Run2016G/SingleMuon/MINIAOD/PromptReco-v1/000/278/820/00000/0667AC34-2464-E611-84CE-02163E011979.root',
 			   #'/store/data/Run2016F/SingleMuon/MINIAOD/PromptReco-v1/000/277/932/00000/084865EB-1859-E611-BDA7-02163E011A89.root',
 			   #'file:/afs/cern.ch/work/j/jschulte/ZPrime/tuple/DYinclsuive_pat.root',
 			   #'/store/mc/RunIISpring16MiniAODv2/WWTo2L2Nu_13TeV-powheg/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/00000/00B02413-021A-E611-9326-001EC9ADCC80.root',
@@ -80,16 +80,9 @@ dils = [('MuonsPlusMuonsMinus',          '%(leptons_name)s:muons@+ %(leptons_nam
 # that doesn't have a trigger match, need to re-add a hltHighLevel
 # filter somewhere below.
 cuts = {
-	#    'VBTF'     : VBTFSelection,
-	#    'OurOld'   : OurSelectionOld,
-	#    'OurEPS'   : OurSelection2011EPS,
-	#'OurNew'   : OurSelectionNew,
-	
 	'Our2012'  : OurSelectionDec2012,
 	#'OurNoIso' : OurSelectionDec2012,
-	#'EmuVeto'  : OurSelectionDec2012,
 	'Simple'   : OurSelectionDec2012, # The selection cuts in the module listed here are ignored below.
-	#    'VBTFMuPrescaled' : VBTFSelection,
 	#'OurMuPrescaledNew'  : OurSelectionNew,
 	#'OurMuPrescaled2012' : OurSelectionDec2012
 	}
@@ -140,7 +133,7 @@ for cut_name, Selection in cuts.iteritems():
     else:
         muon_cuts = Selection.loose_cut
     if miniAOD:
-    	leptons = process.leptons_mini.clone(muon_cuts = muon_cuts)
+    	leptons = process.leptonsMini.clone(muon_cuts = muon_cuts)
     else:
     	leptons = process.leptons.clone(muon_cuts = muon_cuts)
 

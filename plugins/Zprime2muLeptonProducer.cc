@@ -215,7 +215,7 @@ void Zprime2muLeptonProducer::embedTriggerMatch_or(pat::Muon* new_mu, const std:
     float defaultpTvalue = 20.;
     float best_dR_1 = trigger_match_max_dR;
     float best_dR_2 = trigger_match_max_dR;
-    std::cout<<"embedded trigger function"<<std::endl;
+//    std::cout<<"embedded trigger function"<<std::endl;
     for (size_t i = 0; i < L3.size(); ++i) {
         // Skip those already used.
         if (L3_matched[i])
@@ -239,7 +239,7 @@ void Zprime2muLeptonProducer::embedTriggerMatch_or(pat::Muon* new_mu, const std:
             best_dR_2 = dR;
         }
     }
-    std::cout<<" best1 "<<best_1<<" best2 "<<best_2<<" best_dR_1 "<<best_dR_1<<" best_dR_2 "<<best_dR_2<<std::endl;
+//    std::cout<<" best1 "<<best_1<<" best2 "<<best_2<<" best_dR_1 "<<best_dR_1<<" best_dR_2 "<<best_dR_2<<std::endl;
 //    if (best_1 < 0 && best_2 < 0 )
 //    return;
     
@@ -423,10 +423,10 @@ void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& 
   L3_muons           = get_L3_muons(event, pandf.filter,           trigger_summary_src);
   L3_muons_2         = get_L3_muons(event, pandf.filter_2,         trigger_summary_src);
   prescaled_L3_muons = get_L3_muons(event, pandf.prescaled_filter, trigger_summary_src);
-    std::cout<<"filter "<<pandf.filter<<std::endl;
-    std::cout<<"L3_muons.size()"<<L3_muons.size()<<std::endl;
-    std::cout<<"filter_2 "<<pandf.filter_2<<std::endl;
-    std::cout<<"L3_muons_2.size()"<<L3_muons_2.size()<<std::endl;
+//    std::cout<<"filter "<<pandf.filter<<std::endl;
+//    std::cout<<"L3_muons.size()"<<L3_muons.size()<<std::endl;
+//    std::cout<<"filter_2 "<<pandf.filter_2<<std::endl;
+//    std::cout<<"L3_muons_2.size()"<<L3_muons_2.size()<<std::endl;
 
 //    std::cout<<"prescaled filter "<<pandf.prescaled_filter<<std::endl;
 //    std::cout<<"prescaled_L3_muons.size()"<<prescaled_L3_muons.size()<<std::endl;

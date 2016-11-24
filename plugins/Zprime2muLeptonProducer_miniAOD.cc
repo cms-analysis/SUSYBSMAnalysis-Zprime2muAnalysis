@@ -259,8 +259,8 @@ void Zprime2muLeptonProducer_miniAOD::embedTriggerMatch_or(pat::Muon* new_mu, co
         new_mu->addUserFloat(ex + "TriggerMatchPt",     L3_mu.pt());
         new_mu->addUserFloat(ex + "TriggerMatchEta",    L3_mu.eta());
         new_mu->addUserFloat(ex + "TriggerMatchPhi",    L3_mu.phi());
-        std::cout<<"ex + trigger match = "<<ex<<"...TriggerMatchPt = "<<L3_mu.pt()<<std::endl;
-        std::cout<<"TriggerMatchPt muon producer = "<<new_mu->hasUserFloat(ex + "TriggerMatchPt")<<std::endl;
+//        std::cout<<"ex + trigger match = "<<ex<<"...TriggerMatchPt = "<<L3_mu.pt()<<std::endl;
+//        std::cout<<"TriggerMatchPt muon producer = "<<new_mu->hasUserFloat(ex + "TriggerMatchPt")<<std::endl;
     }
     else if (best_1 <0 && best_2 >= 0){
         const pat::TriggerObjectStandAlone& L3_mu = L3_or[best_2];
@@ -522,6 +522,11 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
        // }
 	j++;
     }
+//    std::cout<<"quel trigger path = "<<pandf.filter<<std::endl;
+//    std::cout<<"nombre de muon that triggered HLT_50 = "<<L3_muons.size()<<std::endl;
+//    std::cout<<"quel trigger path = "<<pandf.filter_2<<std::endl;
+//    std::cout<<"nombre de muon that triggered HLT_Tk50 = "<<L3_muons_2.size()<<std::endl;
+    
     L3_muons_matched.clear();
     L3_muons_matched.resize(L3_muons.size(), 0);
     L3_muons_matched_2.clear();

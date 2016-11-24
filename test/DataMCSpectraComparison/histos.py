@@ -21,6 +21,7 @@ process.source.fileNames =[#'file:./pat.root'
 			   ]
 process.maxEvents.input =-1
 process.GlobalTag.globaltag = '80X_dataRun2_2016SeptRepro_v4' #re_reco data
+#process.GlobalTag.globaltag = '80X_mcRun2_asymptotic_2016_miniAODv2_v1' # for MC
 #process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1 # default 1000
 

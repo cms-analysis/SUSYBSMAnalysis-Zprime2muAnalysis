@@ -111,12 +111,7 @@ for sample in samples:
        sample.ana_dataset = '/%s/rradogna-datamc_%s-c4b4ec8fa143ea00cec443e9d0afb38f/USER'  % (sample.dataset.split('/')[1], sample.name)
    else:
        sample.ana_dataset = '/'+ sample.dataset.split('/')[1]+ '/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM'
-#       sample.ana_dataset = '/'+ sample.dataset.split('/')[1]+ '/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM'
-# DY120to200Powheg.ana_dataset = 'ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/RunIISpring16reHLT80-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM'
-#print sample.ana_dataset
-       #print  (sample.dataset.split('/AODSIM')[0]+ '/MINIAODSIM', sample.name)
 
-            #sample.ana_dataset = '/%s/federica-%s-02dba98b5abbcd2765544ae02b3dcc74/USER'  % (sample.dataset.split('/')[1], sample.name) # this is actually wrong
 #dy100to200.ana_dataset = '/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy100to200-1e36332d8badf10b79a5027340f46eb1/USER'
 #dy200to400.ana_dataset = '/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy200to400-1e36332d8badf10b79a5027340f46eb1/USER'
 #dy400to500.ana_dataset = '/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy400to500-1e36332d8badf10b79a5027340f46eb1/USER'
@@ -126,28 +121,6 @@ for sample in samples:
 #dy1000to1500.ana_dataset = '/DYJetsToLL_M-1000to1500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy1000to1500-1e36332d8badf10b79a5027340f46eb1/USER'
 #dy1500to2000.ana_dataset = '/DYJetsToLL_M-1500to2000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy1500to2000-1e36332d8badf10b79a5027340f46eb1/USER'
 #dy2000to3000.ana_dataset = '/DYJetsToLL_M-2000to3000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy2000to3000-1e36332d8badf10b79a5027340f46eb1/USER'
-
-#zpsi5000.ana_dataset = '/ZprimeToMuMu_M-5000_TuneCUETP8M1_13TeV-pythia8/rradogna-datamc_zpsi5000-1e36332d8badf10b79a5027340f46eb1/USER'
-#dy50_startup.ana_dataset = '/RelValZMM_13/rradogna-datamc_dy50_startup-8b577364235a1c7c11f4fb31512a2917/USER'
-
-#dy50to120.ana_dataset = '/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/rradogna-datamc_dy50to120-1e36332d8badf10b79a5027340f46eb1/USER'
-#DY120to200Powheg.ana_dataset = '/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/alfloren-DY120to200Powheg-ea459820ba8ecaf0b251c44e2defe317/USER'
-#DY200to400Powheg.ana_dataset = '/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/alfloren-DY200to400Powheg-ea459820ba8ecaf0b251c44e2defe317/USER'
-#DY400to800Powheg.ana_dataset = '/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/alfloren-DY400to800Powheg-ea459820ba8ecaf0b251c44e2defe317/USER'
-#DY800to1400Powheg.ana_dataset = '/ZToMuMu_NNPDF30_13TeV-powheg_M_800_1400/alfloren-DY800to1400Powheg-d361b004739dfc1dad40e50368455d7a/USER'
-#dy1400to2300.ana_dataset = '/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/rradogna-datamc_dy1400to2300-1e36332d8badf10b79a5027340f46eb1/USER'
-#DY3500to4500Powheg.ana_dataset = '/ZToMuMu_NNPDF30_13TeV-powheg_M_3500_4500/alfloren-DY3500to4500Powheg-ea459820ba8ecaf0b251c44e2defe317/USER'
-
-#ww_incl.ana_dataset = '/WW_TuneCUETP8M1_13TeV-pythia8/rradogna-datamc_ww_incl-1e36332d8badf10b79a5027340f46eb1/USER'
-#zz_incl.ana_dataset = '/ZZ_TuneCUETP8M1_13TeV-pythia8/rradogna-datamc_zz_incl-1e36332d8badf10b79a5027340f46eb1/USER'
-###wjets.ana_datasetOLD = '/WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_wjets-1e36332d8badf10b79a5027340f46eb1/USER'
-###ttbar.ana_dataset = '/TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_ttbar-1e36332d8badf10b79a5027340f46eb1/USER'
-#wjets.ana_dataset = '/WJetsToLNu_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_wjets-d2059c7d2b57376da41472544da161fa/USER'
-#ttbar_pow.ana_dataset = '/TT_TuneCUETP8M1_13TeV-powheg-pythia8/rradogna-datamc_ttbar_pow-1e36332d8badf10b79a5027340f46eb1/USER'
-##ttbar_startup.ana_dataset = '/RelValTTbar_13/rradogna-datamc_ttbar_startup-8b577364235a1c7c11f4fb31512a2917/USER'
-#tWantitop.ana_dataset = '/ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1/alfloren-tWantitop-728a04705e311faf7e2183c346d6b42c/USER'
-#tWtop.ana_dataset = '/ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1/alfloren-tWtop-728a04705e311faf7e2183c346d6b42c/USER'
-
 
 __all__ = ['samples'] + [s.name for s in samples]
 

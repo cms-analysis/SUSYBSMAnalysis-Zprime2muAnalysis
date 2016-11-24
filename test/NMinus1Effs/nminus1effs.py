@@ -155,7 +155,8 @@ config.General.workArea = 'crab'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'nminus1effs.py'
 #config.JobType.priority = 1
-config.Data.inputDataset =  '%(ana_dataset)s'
+#config.Data.inputDataset =  '%(ana_dataset)s' #for pattuples
+config.Data.inputDataset =  '%(dataset)s' # for miniAOD
 config.Data.inputDBS = 'global'
 job_control
 config.Data.publication = False
@@ -172,22 +173,31 @@ config.Site.storageSite = 'T2_IT_Legnaro'
         #Run2016G_ll.writeJSON('tmp.json')
 
         dataset_details = [
-           # ('SingleMuonRun2015B-Prompt_251162_251499',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409-3aa7688518cb1f1b044caf15b1a9ed05/USER'),
-            ('SingleMuonRun2016G-PromptReco-v1',  '/SingleMuon/Run2016G-PromptReco-v1/MINIAOD')
+                           #                 ('SingleMuonRun2016F-ReReco-v1', '/SingleMuon/Run2016F-23Sep2016-v1/MINIAOD'),
+                           #                ('SingleMuonRun2016E-ReReco-v1', '/SingleMuon/Run2016E-23Sep2016-v1/MINIAOD'),
+                           #               ('SingleMuonRun2016D-ReReco-v1', '/SingleMuon/Run2016D-23Sep2016-v1/MINIAOD'),
+                           #              ('SingleMuonRun2016C-ReReco-v1','/SingleMuon/Run2016C-23Sep2016-v1/MINIAOD')
+                           #             ('SingleMuonRun2016B-ReReco-v3', '/SingleMuon/Run2016B-23Sep2016-v3/MINIAOD')
+                           #            ('SingleMuonRun2016G-PromptReco-v1',  '/SingleMuon/Run2016G-PromptReco-v1/MINIAOD')
+                           #              ('SingleMuonRun2016H-PromptReco-v3', '/SingleMuon/Run2016H-PromptReco-v3/MINIAOD'),
+                           ('SingleMuonRun2016H-PromptReco-v2', '/SingleMuon/Run2016H-PromptReco-v2/MINIAOD') 
+                           #	    ('SingleMuonRun2016G-ReReco-v1', '/SingleMuon/Run2016G-23Sep2016-v1/MINIAOD')
             ]
 
-        for name, ana_dataset in dataset_details:
+#        for name, ana_dataset in dataset_details: # for pattuples
+        for name, dataset in dataset_details:
+
             print name
 
             new_py = open('nminus1effs.py').read()
-            new_py += "\nprocess.GlobalTag.globaltag = '80X_dataRun2_Prompt_v11'\n"
+            new_py += "\nprocess.GlobalTag.globaltag = '80X_dataRun2_2016SeptRepro_v4'\n"
             open('nminus1effs_crab.py', 'wt').write(new_py)
 
             new_crab_cfg = crab_cfg % locals()
             job_control = '''
 config.Data.splitting = 'LumiBased'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob = 10 ##100
+config.Data.unitsPerJob = 100
 #config.Data.lumiMask = 'tmp.json' #######
 config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions16/13TeV/Cert_271036-282037_13TeV_PromptReco_Collisions16_JSON_NoL1T_MuonPhys.txt'
 '''
@@ -209,8 +219,13 @@ config.Data.unitsPerJob  = 10000
 
         from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import *
         #samples =[DY120to200Powheg]
-        samples =[DY50to120Powheg,DY120to200Powheg,DY200to400Powheg,DY400to800Powheg,DY800to1400Powheg,DY1400to2300Powheg,DY2300to3500Powheg,DY3500to4500Powheg,DY4500to6000Powheg,DY6000toInfPowheg]#,ttbar, wz, ww_incl, zz_incl, dy50to120]
-        #samples =[dy50, dy120, dy200, dy400, dy800, dy1400, dy2300, dy3500, dy4500, dy6000, dy7500, dy8500, dy9500, zpsi5000, ttbar, inclmu15]
+        samples =[
+                  dy50to120, dy120to200, dy200to400, dy400to800, dy800to1400, dy1400to2300,dy2300to3500, dy3500to4500, dy4500to6000,
+                  #  WZ, ZZ, WW200to600, WW600to1200, WW1200to2500, WW2500,
+                  #Wjets, ttbar_lep,
+                  #                Wantitop, tW,
+                  #                qcd80to120, qcd120to170, qcd170to300, qcd300to470, qcd470to600, qcd600to800, qcd800to1000, qcd1000to1400, qcd1400to1800, qcd1800to2400, qcd2400to3200, qcd3200
+                  ]
         for sample in samples:
             #print sample.name
             open('crabConfig.py', 'wt').write(crab_cfg % sample)

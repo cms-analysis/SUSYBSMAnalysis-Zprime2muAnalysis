@@ -7,7 +7,7 @@ HistosFromPAT = cms.EDAnalyzer('Zprime2muHistosFromPAT',
                                beamspot_src = cms.InputTag('offlineBeamSpot'),
                                vertex_src = cms.InputTag('offlinePrimaryVertices'),
                                use_bs_and_pv = cms.bool(True),
-                               useMadgraphWeight = cms.bool(False),
+                               useMadgraphWeight = cms.bool(True),
                                )
 
 HistosFromPAT_MiniAOD = cms.EDAnalyzer('Zprime2muHistosFromPAT',
@@ -17,5 +17,5 @@ HistosFromPAT_MiniAOD = cms.EDAnalyzer('Zprime2muHistosFromPAT',
                                beamspot_src = cms.InputTag('offlineBeamSpot'),
                                vertex_src = cms.InputTag('offlineSlimmedPrimaryVertices'),
                                use_bs_and_pv = cms.bool(True),
-                               useMadgraphWeight = cms.bool(False),
+                               useMadgraphWeight = cms.bool(True),
 )

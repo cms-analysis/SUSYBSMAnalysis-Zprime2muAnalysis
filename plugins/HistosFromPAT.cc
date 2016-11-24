@@ -557,7 +557,6 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
 	}
         WeightMadGraph->Fill(_madgraphWeight);
     }
-    if (_madgraphWeight == -1) std::cout<<"_madgraphWeight "<<_madgraphWeight<<std::endl;
 
   if (use_bs_and_pv)
     getBSandPV(event);

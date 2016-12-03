@@ -25,47 +25,20 @@ secFiles = cms.untracked.vstring()
 #process.source = cms.Source ("PoolSource",fileNames = readFiles, secondaryFileNames = secFiles)
 
 process.source = cms.Source ("PoolSource",
-                             fileNames =  cms.untracked.vstring("/store/data/Run2016G/SingleMuon/MINIAOD/PromptReco-v1/000/278/820/00000/0667AC34-2464-E611-84CE-02163E011979.root"),
+                             fileNames =  cms.untracked.vstring(
+                                                                '/store/data/Run2016B/SingleMuon/MINIAOD/23Sep2016-v3/00000/162AD1DB-1E98-E611-9893-008CFA56D58C.root',
+                                                                '/store/data/Run2016B/SingleMuon/MINIAOD/23Sep2016-v3/00000/1A1F07FF-2698-E611-915C-0242AC130004.root'
+#                                                                '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root'
+                                                                ),
                              secondaryFileNames = secFiles)
 
 
 
-#readFiles.extend( ['store/data/Run2016G/SingleMuon/MINIAOD/PromptReco-v1/000/278/820/00000/0667AC34-2464-E611-84CE-02163E011979.root']);
-
-#### m4500_6000
-#readFiles.extend( ['/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/2E8F7144-A63A-E611-9DB8-001D0967DFF3.root',
-#       '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/4A0CB50D-A63A-E611-A67A-0090FAA58D04.root',
-#       '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/88049D17-A63A-E611-A789-0090FAA573F0.root' ] );
-
-#### m120_200
-#readFiles.extend( [
-#        '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root',
-#        '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/AA745369-613A-E611-93A7-0025907B4EE6.root',
-#        '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/B2BFFF97-603A-E611-90A2-0CC47AB35D34.root' ] );
-
-#### pattuples
-#readFiles.extend( [
-        #                   '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root',
-        #       '/store/mc/RunIISpring16MiniAODv1/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/30000/4E45A151-D6FC-E511-9FE4-0090FAA58134.root',
-        #'/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root',
-        #                   '/store/user/rradogna/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/datamc_dy200to400/160509_211417/0000/pat_1.root',
-        
- #       ] );
-
-#### m2300_3500
-#readFiles.extend( [
-#        '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/80000/8C0E76AA-D93C-E611-94E2-0CC47A4D76B6.root',
-#        '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/80000/B449FDAB-D93C-E611-A15B-0025905B85FE.root',
-#        '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/80000/F23DCBB0-D93C-E611-B5D6-0025905A606A.root' ] );
-
-
-#### m50_120
-
 secFiles.extend( [
                ] )
 
-process.maxEvents.input = 100
-#process.GlobalTag.globaltag = '80X_mcRun2_asymptotic_2016_v3'
+process.maxEvents.input = -1
+process.GlobalTag.globaltag = '80X_dataRun2_2016SeptRepro_v4'
 #process.MessageLogger.cerr.FwkReport.reportEvery = 1 # default 1000
 
 # Define the numerators and denominators, removing cuts from the
@@ -182,7 +155,8 @@ config.General.workArea = 'crab'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'nminus1effs.py'
 #config.JobType.priority = 1
-config.Data.inputDataset =  '%(ana_dataset)s'
+#config.Data.inputDataset =  '%(ana_dataset)s' #for pattuples
+config.Data.inputDataset =  '%(dataset)s' # for miniAOD
 config.Data.inputDBS = 'global'
 job_control
 config.Data.publication = False
@@ -199,22 +173,31 @@ config.Site.storageSite = 'T2_IT_Legnaro'
         #Run2016G_ll.writeJSON('tmp.json')
 
         dataset_details = [
-           # ('SingleMuonRun2015B-Prompt_251162_251499',    '/SingleMuon/rradogna-datamc_SingleMuonRun2015B-Prompt_251162_251499_20150713100409-3aa7688518cb1f1b044caf15b1a9ed05/USER'),
-            ('SingleMuonRun2016G-PromptReco-v1',  '/SingleMuon/Run2016G-PromptReco-v1/MINIAOD')
+                           #                 ('SingleMuonRun2016F-ReReco-v1', '/SingleMuon/Run2016F-23Sep2016-v1/MINIAOD'),
+                           #                ('SingleMuonRun2016E-ReReco-v1', '/SingleMuon/Run2016E-23Sep2016-v1/MINIAOD'),
+                           #               ('SingleMuonRun2016D-ReReco-v1', '/SingleMuon/Run2016D-23Sep2016-v1/MINIAOD'),
+                           #              ('SingleMuonRun2016C-ReReco-v1','/SingleMuon/Run2016C-23Sep2016-v1/MINIAOD')
+                           #             ('SingleMuonRun2016B-ReReco-v3', '/SingleMuon/Run2016B-23Sep2016-v3/MINIAOD')
+                           #            ('SingleMuonRun2016G-PromptReco-v1',  '/SingleMuon/Run2016G-PromptReco-v1/MINIAOD')
+                           #              ('SingleMuonRun2016H-PromptReco-v3', '/SingleMuon/Run2016H-PromptReco-v3/MINIAOD'),
+                           ('SingleMuonRun2016H-PromptReco-v2', '/SingleMuon/Run2016H-PromptReco-v2/MINIAOD') 
+                           #	    ('SingleMuonRun2016G-ReReco-v1', '/SingleMuon/Run2016G-23Sep2016-v1/MINIAOD')
             ]
 
-        for name, ana_dataset in dataset_details:
+#        for name, ana_dataset in dataset_details: # for pattuples
+        for name, dataset in dataset_details:
+
             print name
 
             new_py = open('nminus1effs.py').read()
-            new_py += "\nprocess.GlobalTag.globaltag = '80X_dataRun2_Prompt_v11'\n"
+            new_py += "\nprocess.GlobalTag.globaltag = '80X_dataRun2_2016SeptRepro_v4'\n"
             open('nminus1effs_crab.py', 'wt').write(new_py)
 
             new_crab_cfg = crab_cfg % locals()
             job_control = '''
 config.Data.splitting = 'LumiBased'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob = 10 ##100
+config.Data.unitsPerJob = 100
 #config.Data.lumiMask = 'tmp.json' #######
 config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions16/13TeV/Cert_271036-282037_13TeV_PromptReco_Collisions16_JSON_NoL1T_MuonPhys.txt'
 '''
@@ -236,8 +219,13 @@ config.Data.unitsPerJob  = 10000
 
         from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import *
         #samples =[DY120to200Powheg]
-        samples =[DY50to120Powheg,DY120to200Powheg,DY200to400Powheg,DY400to800Powheg,DY800to1400Powheg,DY1400to2300Powheg,DY2300to3500Powheg,DY3500to4500Powheg,DY4500to6000Powheg,DY6000toInfPowheg]#,ttbar, wz, ww_incl, zz_incl, dy50to120]
-        #samples =[dy50, dy120, dy200, dy400, dy800, dy1400, dy2300, dy3500, dy4500, dy6000, dy7500, dy8500, dy9500, zpsi5000, ttbar, inclmu15]
+        samples =[
+                  dy50to120, dy120to200, dy200to400, dy400to800, dy800to1400, dy1400to2300,dy2300to3500, dy3500to4500, dy4500to6000,
+                  #  WZ, ZZ, WW200to600, WW600to1200, WW1200to2500, WW2500,
+                  #Wjets, ttbar_lep,
+                  #                Wantitop, tW,
+                  #                qcd80to120, qcd120to170, qcd170to300, qcd300to470, qcd470to600, qcd600to800, qcd800to1000, qcd1000to1400, qcd1400to1800, qcd1800to2400, qcd2400to3200, qcd3200
+                  ]
         for sample in samples:
             #print sample.name
             open('crabConfig.py', 'wt').write(crab_cfg % sample)

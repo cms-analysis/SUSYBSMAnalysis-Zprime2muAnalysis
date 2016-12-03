@@ -35,22 +35,21 @@ leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          trigger_summary_src = cms.InputTag('hltTriggerSummaryAOD', '', 'HLT'),
                          )
 leptonsMini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
-                             muon_src = cms.InputTag('slimmedMuons'), #JMTBAD changeme after new PAT tuples
-                             electron_src = cms.InputTag('slimmedElectrons'),
-                             electron_srcSecond = cms.InputTag('slimmedElectrons'),
-                             electron_id = cms.InputTag('egmGsfElectronIDs:heepElectronID-HEEPV60'), # updated in Nov.2016 works in 8_0_20
-                             muon_srcSecond = cms.InputTag('slimmedMuons'), #JMTBAD changeme after new PAT tuples
-                             muon_cuts = cms.string(loose_cut),
-                             muon_track_for_momentum = cms.string('TunePNew'),
-                             muon_track_for_momentum_CSC = cms.string('Inner'),
-                             muon_photon_match_src = cms.InputTag('muonPhotonMatchMiniAOD'),
-                             electron_muon_veto_dR = cms.double(-1),
-                             trigger_match_max_dR = cms.double(0.2),
-                             trigger_summary = cms.InputTag('selectedPatTrigger'),
-                             #bits = cms.InputTag("TriggerResults","","HLT2"),##mc reHLT
-                             bits = cms.InputTag("TriggerResults","","HLT"),#data
-                             prescales = cms.InputTag("patTrigger"),
-                             )
+                              muon_src = cms.InputTag('slimmedMuons'), #JMTBAD changeme after new PAT tuples
+                              electron_src = cms.InputTag('slimmedElectrons'),
+                              electron_id = cms.InputTag('egmGsfElectronIDs:heepElectronID-HEEPV60'),
+                              muon_srcSecond = cms.InputTag('slimmedMuons'), #JMTBAD changeme after new PAT tuples
+                              muon_cuts = cms.string(loose_cut),
+                              muon_track_for_momentum = cms.string('TunePNew'),
+                              muon_track_for_momentum_CSC = cms.string('Inner'),
+                              muon_photon_match_src = cms.InputTag('muonPhotonMatchMiniAOD'),
+                              electron_muon_veto_dR = cms.double(-1),
+                              trigger_match_max_dR = cms.double(0.2),
+                              trigger_summary = cms.InputTag('selectedPatTrigger'),
+                              #bits = cms.InputTag("TriggerResults","","HLT2"),##mc reHLT
+                              bits = cms.InputTag("TriggerResults","","HLT"),#data
+                              prescales = cms.InputTag("patTrigger"),
+                              )
 
 Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)
 Zprime2muAnalysisSequence_MiniAOD = cms.Sequence(muonPhotonMatchMiniAOD * leptonsMini * allDimuons * dimuons)

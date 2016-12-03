@@ -1,3 +1,60 @@
 The documentation for this package is now TWikified:
 
 https://twiki.cern.ch/twiki/bin/view/CMS/Zprime2muAnalysis
+
+////////////////////////////////////////////////////////////////////////
+/////////////////////////// M  U O N S /////////////////////////////////
+If you are interested in the Muon histos only:
+cmsrel CMSSW_8_0_20
+cd CMSSW_8_0_20/src
+cmsenv
+git clone -b mini-AOD git@github.com:cms-analysis/SUSYBSMAnalysis-Zprime2muAnalysis.git
+mv SUSYBSMAnalysis-Zprime2muAnalysis SUSYBSMAnalysis/Zprime2muAnalysis
+scram b -j 23
+
+The code is set to run on data, if you want to run over MC, you have to switch some inputTag:
+
+
+
+////////////////////////////////////////////////////////////////////////
+/////////////////////////// E - M  U / /////////////////////////////////
+If you are interested in the Electron-Muon histos, please follow these instructions:
+
+The HEEP V7.0 (which simply has a replaced tracker isolation), now works 
+in AOD and miniAOD and gives the same answer. The miniAOD is the 
+reference implementation and the AOD version should be an almost perfect 
+approximation.
+
+To use this last version, the SUSYBSMAnalysis-Zprime2muAnalysis package needs of a quick further change.
+
+Instructions: create a new CMSSW_8_0_20 (other releases should work but have not 
+been explicitly tested) and do the git cms-merge-topic Sam-Harper:HEEPV70VID. Then copy all of those packages in your work area (the one where you cloned the /SUSYBSMAnalysis-Zprime2muAnalysis) 
+
+cmsrel CMSSW_8_0_20
+cd CMSSW_8_0_20/src
+cmsenv
+git cms-merge-topic Sam-Harper:HEEPV70VID
+cp */*/*/SUSYBSMAnalysis.Zprime2muAnalysis .
+scramv1 b -j 16
+
+If you want to get the mass plots, before to run the code
+(cmsRun test/DataMCSpectraComparison/histos.py)
+you have to modify the following files:
+1. /python/Zprime2muAnalysis_cff.py: 
+switch to the new selector by commenting the following line and copying the line after
+#my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV60_cff']
+my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV70_cff']
+
+2. /test/DataMCSpectraComparison/histos.py:
+add the process needed by commenting the following line and uncommenting the 2 lines after
+#path_list.append(process.egmGsfElectronIDSequence)
+process.load("RecoEgamma.ElectronIdentification.heepIdVarValueMapProducer_cfi")   
+path_list.append(process.heepIDVarValueMaps * process.egmGsfElectronIDSequence)
+
+NMinus1Effs/ If you are interested into the efficiencies, you should do not care about the electrons. The code is already able to run properly using an old HEEP Id. But in case you want, the following lines have to be change in /nminus1effs.py:
+process.load("RecoEgamma.ElectronIdentification.heepIdVarValueMapProducer_cfi")
+process.p = cms.Path(process.heepIDVarValueMaps*process.egmGsfElectronIDSequence*process.dileptonPreseletor * process.muonPhotonMatchMiniAOD * process.leptons * reduce(lambda x,y: x*y, [getattr(process, x) for x in alldimus]))
+    
+	    
+
+

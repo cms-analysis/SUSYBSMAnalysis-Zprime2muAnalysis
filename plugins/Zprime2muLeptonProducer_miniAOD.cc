@@ -329,8 +329,9 @@ std::pair<pat::Electron*,int> Zprime2muLeptonProducer_miniAOD::doLepton(const ed
   // cannot be done in the string object selector (so far, just the
   // minimum muon dR above).
   // int cutFor = electron_selector(*new_el) ? 0 : 1;
-  //legacy variable keept as 1
-  int cutFor = 1; //selection moved to doLeptons where this function is called only if electron passes EleID == 1
+  
+  //legacy variable keept as 0, which means that the lepton passes the cuts
+  int cutFor = 0; //selection moved to doLeptons where this function doLepton is called only for electrons passes EleID
   
 
   return std::make_pair(new_el, cutFor);
@@ -341,9 +342,8 @@ std::pair<pat::Muon*,int> Zprime2muLeptonProducer_miniAOD::doLepton(const edm::E
   // pair.
 
   // To use one of the refit tracks, we have to have a global muon.
-  
-    
-  if (!mu.isGlobalMuon())// && mu.pt()<= 20.) // federica
+      
+  if (!mu.isGlobalMuon())
     return std::make_pair((pat::Muon*)(0), -1);
 
   // Copy the input muon, and switch its p4/charge/vtx out for that of
@@ -371,7 +371,7 @@ std::pair<pat::Muon*,int> Zprime2muLeptonProducer_miniAOD::doLepton(const edm::E
   // {TriggerMatch, prescaledTriggerMatch} x {Pt, Eta, Phi,
   // Charge}. (Maybe embed whole candidates later.)
   
-//  embedTriggerMatch(new_mu, "",          L3_muons,           L3_muons_matched);
+  //  embedTriggerMatch(new_mu, "",          L3_muons,           L3_muons_matched);
   embedTriggerMatch_or(new_mu, "",         L3_muons, L3_muons_2,        L3_muons_matched, L3_muons_matched_2);
   embedTriggerMatch(new_mu, "prescaled", prescaled_L3_muons, prescaled_L3_muons_matched);
 
@@ -435,13 +435,17 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
   if(patEles.isValid()){ 
     for(auto ele=patEles->begin();ele!=patEles->end();++ele){
       const edm::Ptr<pat::Electron> elePtr(patEles,ele-patEles->begin()); //value map is keyed of edm::Ptrs so we need to make one
-      
-      bool passID = (*vid)[elePtr]; //a bool, true if it passed the ID, false if it didnt
+     
+      //Electron selection is done here using VID
+      //A bool true is returned if electron passes ID
+      //and only in this case a new lepton is created
+      bool passID = (*vid)[elePtr];
       if(passID) {	
 	const pat::Electron Electrons = *ele;
 	std::pair<T*,int> res = doLepton(event, Electrons);
 	if (res.first == 0)
 	  continue;
+	
 	res.first->addUserInt("cutFor", res.second);
 	new_leptons->push_back(*res.first);
 	delete res.first;

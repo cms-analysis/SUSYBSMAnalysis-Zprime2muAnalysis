@@ -59,6 +59,9 @@ else:
 #import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2011EPS_cff as OurSelection2011EPS
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff as OurSelectionNew
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionDec2012_cff as OurSelectionDec2012
+import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2016_cff as OurSelection2016
+
+
 
 # CandCombiner includes charge-conjugate decays with no way to turn it
 # off. To get e.g. mu+mu+ separate from mu-mu-, cut on the sum of the
@@ -75,6 +78,7 @@ dils = [('MuonsPlusMuonsMinus',          '%(leptons_name)s:muons@+ %(leptons_nam
 # filter somewhere below.
 cuts = {
 	'Our2012'  : OurSelectionDec2012,
+	'Our2016'  : OurSelection2016,
 	#'OurNoIso' : OurSelectionDec2012,
 	'Simple'   : OurSelectionDec2012, # The selection cuts in the module listed here are ignored below.
 	#'OurMuPrescaledNew'  : OurSelectionNew,
@@ -97,6 +101,7 @@ if miniAOD and Electrons:
 		]
 	
 	cuts = {'Our2012'  : OurSelectionDec2012,
+		'Our2016'  : OurSelection2016,
 		'EmuVeto'  : OurSelectionDec2012, # this switches on the dRMuEl veto
 		'Simple'   : OurSelectionDec2012, # The selection cuts in the module listed here are ignored below.
 		}

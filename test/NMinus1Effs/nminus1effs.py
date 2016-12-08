@@ -11,7 +11,8 @@ if miniAOD:
     from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
 else:
     from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
-from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionDec2012_cff import loose_cut, trigger_match, tight_cut, allDimuons
+#from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionDec2012_cff import loose_cut, trigger_match, tight_cut, allDimuons
+from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2016_cff import loose_cut, trigger_match, tight_cut, allDimuons
 
 #### if you run on data change HLT2 in
 ##Zprime2muAnalysis_cff
@@ -27,7 +28,7 @@ secFiles = cms.untracked.vstring()
 process.source = cms.Source ("PoolSource",
                              fileNames =  cms.untracked.vstring(
                                                                 '/store/data/Run2016B/SingleMuon/MINIAOD/23Sep2016-v3/00000/162AD1DB-1E98-E611-9893-008CFA56D58C.root',
-                                                                '/store/data/Run2016B/SingleMuon/MINIAOD/23Sep2016-v3/00000/1A1F07FF-2698-E611-915C-0242AC130004.root'
+                                                                #'/store/data/Run2016B/SingleMuon/MINIAOD/23Sep2016-v3/00000/1A1F07FF-2698-E611-915C-0242AC130004.root'
 #                                                                '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root'
                                                                 ),
                              secondaryFileNames = secFiles)
@@ -57,6 +58,7 @@ cuts = [
     ('PxHits',  'globalTrack.hitPattern.numberOfValidPixelHits >= 1'),
     ('MuHits',  'globalTrack.hitPattern.numberOfValidMuonHits > 0'),
     ('MuMatch', ('numberOfMatchedStations > 1', 'isTrackerMuon')),
+    #('MuMatch', ('( numberOfMatchedStations > 1 || (numberOfMatchedStations == 1 && !(stationMask == 1 || stationMask == 16)) || (numberOfMatchedStations == 1 && (stationMask == 1 || stationMask == 16) && numberOfMatchedRPCLayers > 2))', 'isTrackerMuon')),
     ]
 
 for name, cut in cuts:

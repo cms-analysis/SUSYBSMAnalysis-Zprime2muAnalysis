@@ -121,6 +121,8 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TProfile* DileptonPVsEta;
   TProfile* DileptonPtVsEta;
   TH1F* DileptonMass;
+  TH1F* DileptonMass_bb;
+  TH1F* DileptonMass_be;
   TH1F* DileptonMassWeight;
   TH1F* DileptonWithPhotonsMass;
   TH1F* DileptonDeltaPt;
@@ -133,8 +135,12 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TH1F* DileptonDaughterDeltaR;
   TH1F* DileptonDaughterDeltaPhi;
   TH1F* DimuonMassVertexConstrained;
+  TH1F* DimuonMassVertexConstrained_bb;
+  TH1F* DimuonMassVertexConstrained_be;
   TH1F* DimuonMassVertexConstrainedWeight;
   TH1F* DimuonMassVtxConstrainedLog;
+  TH1F* DimuonMassVtxConstrainedLog_bb;
+  TH1F* DimuonMassVtxConstrainedLog_be;
   TH1F* DimuonMassVtxConstrainedLogWeight;
   TH2F* DimuonMassConstrainedVsUn;
   TH2F* DimuonMassVertexConstrainedError;
@@ -268,6 +274,8 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   
   // Dilepton invariant mass.
   DileptonMass            = fs->make<TH1F>("DileptonMass",            titlePrefix + "dil. mass", 20000, 0, 20000);
+  DileptonMass_bb         = fs->make<TH1F>("DileptonMass_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
+  DileptonMass_be         = fs->make<TH1F>("DileptonMass_be",            titlePrefix + "dil. mass barrel-endcaps and endcaps-endcaps", 20000, 0, 20000);
   DileptonMassWeight      = fs->make<TH1F>("DileptonMassWeight",      titlePrefix + "dil. mass", 20000, 0, 20000);
   DileptonWithPhotonsMass = fs->make<TH1F>("DileptonWithPhotonsMass", titlePrefix + "res. mass", 20000, 0, 20000);
   
@@ -288,6 +296,8 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
 
   // Dimuons have a vertex-constrained fit: some associated histograms.
   DimuonMassVertexConstrained = fs->make<TH1F>("DimuonMassVertexConstrained", titlePrefix + "dimu. vertex-constrained mass", 20000, 0, 20000);
+  DimuonMassVertexConstrained_bb = fs->make<TH1F>("DimuonMassVertexConstrained_bb", titlePrefix + "dimu. vertex-constrained mass barrel-barrel", 20000, 0, 20000);
+  DimuonMassVertexConstrained_be = fs->make<TH1F>("DimuonMassVertexConstrained_be", titlePrefix + "dimu. vertex-constrained mass barrel-endcaps and endcaps-endcaps", 20000, 0, 20000);
   DimuonMassVertexConstrainedWeight = fs->make<TH1F>("DimuonMassVertexConstrainedWeight", titlePrefix + "dimu. vertex-constrained mass", 20000, 0, 20000);
   // Mass plot in bins of log(mass)
   const int    NMBINS = 100;
@@ -296,6 +306,8 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   for (int ibin = 0; ibin <= NMBINS; ibin++)
     logMbins[ibin] = exp(log(MMIN) + (log(MMAX)-log(MMIN))*ibin/NMBINS);
   DimuonMassVtxConstrainedLog = fs->make<TH1F>("DimuonMassVtxConstrainedLog", titlePrefix + "dimu vtx-constrained mass in log bins", NMBINS, logMbins);
+  DimuonMassVtxConstrainedLog_bb = fs->make<TH1F>("DimuonMassVtxConstrainedLog_bb", titlePrefix + "dimu vtx-constrained mass in log bins barrel-barrel", NMBINS, logMbins);
+  DimuonMassVtxConstrainedLog_be = fs->make<TH1F>("DimuonMassVtxConstrainedLog_be", titlePrefix + "dimu vtx-constrained mass in log bins barrel-endcaps", NMBINS, logMbins);
   DimuonMassVtxConstrainedLogWeight = fs->make<TH1F>("DimuonMassVtxConstrainedLogWeight", titlePrefix + "dimu vtx-constrained mass in log bins", NMBINS, logMbins);
   DimuonMassConstrainedVsUn = fs->make<TH2F>("DimuonMassConstrainedVsUn", titlePrefix + "dimu. vertex-constrained vs. non-constrained mass", 200, 0, 3000, 200, 0, 3000);
   DimuonMassVertexConstrainedError = fs->make<TH2F>("DimuonMassVertexConstrainedError", titlePrefix + "dimu. vertex-constrained mass error vs. mass", 100, 0, 3000, 100, 0, 400);
@@ -505,6 +517,20 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
     DimuonMassVertexConstrainedError->Fill(vertex_mass, vertex_mass_err, _madgraphWeight);
     DimuonMassVertexConstrainedWeight->Fill(vertex_mass,_prescaleWeight*_madgraphWeight);
     DimuonMassVtxConstrainedLogWeight->Fill(vertex_mass,_prescaleWeight*_madgraphWeight);
+
+    // plot per categories
+  if (dil.daughter(0)->eta()<=1.2 && dil.daughter(1)->eta()<=1.2 && dil.daughter(0)->eta()>=-1.2 && dil.daughter(1)->eta()>=-1.2){
+        DimuonMassVertexConstrained_bb->Fill(vertex_mass,_madgraphWeight);
+        DimuonMassVtxConstrainedLog_bb->Fill(vertex_mass, _madgraphWeight);
+        DileptonMass_bb->Fill(dil.mass(), _madgraphWeight);
+}
+
+ if (dil.daughter(0)->eta()<-1.2 || dil.daughter(1)->eta()<-1.2 || dil.daughter(0)->eta()>1.2 || dil.daughter(1)->eta()>1.2){
+        DimuonMassVertexConstrained_be->Fill(vertex_mass,_madgraphWeight);
+        DimuonMassVtxConstrainedLog_be->Fill(vertex_mass, _madgraphWeight);
+        DileptonMass_be->Fill(dil.mass(), _madgraphWeight);
+}
+
     // special
     float vertex_chi2 = dil.userFloat("vertex_chi2");
       DimuonMassVtx_chi2->Fill(vertex_chi2, _madgraphWeight);

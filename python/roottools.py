@@ -105,7 +105,9 @@ def binomial_divide(h1, h2, confint=clopper_pearson, force_lt_1=True):
         #print ibin, s, t, a, b
 
         _x  = xax.GetBinCenter(ibin)
+        #print "x", _x
         _xw = xax.GetBinWidth(ibin)/2
+        #print "xw", _xw
         
         x.append(_x)
         exl.append(_xw)
@@ -115,7 +117,7 @@ def binomial_divide(h1, h2, confint=clopper_pearson, force_lt_1=True):
         eyl.append(p_hat - a)
         eyh.append(b - p_hat)
     eff = ROOT.TGraphAsymmErrors(len(x), *[array('d', obj) for obj in (x,y,exl,exh,eyl,eyh)])
-    return eff
+    return eff, y, eyl, eyh
 
 def core_gaussian(hist, factor, i=[0]):
     core_mean  = hist.GetMean()
@@ -142,7 +144,10 @@ def cumulative_histogram(h, type='ge'):
         prev = 0 if i == first else hc.GetBinContent(i-step)
         c = h.GetBinContent(i) + prev
         hc.SetBinContent(i, c)
-        hc.SetBinError(i, c**0.5)
+        if c > 0:
+            hc.SetBinError(i, c**0.5)
+        else:
+            hc.SetBinError(i, 0.)
     return hc
 
 def detree(t, branches='run:lumi:event', cut='', xform=lambda x: tuple(int(y) for y in x)):
@@ -207,9 +212,12 @@ def get_bin_content_error(hist, value):
     bin = hist.FindBin(*value)
     return (hist.GetBinContent(bin), hist.GetBinError(bin))
 
-def get_integral(hist, xlo, xhi=None, integral_only=False, include_last_bin=True):
+def get_integral(hist, xlo, xhi=None, integral_only=False, include_last_bin=True, nm1=False):
     """For the given histogram, return the integral of the bins
     corresponding to the values xlo to xhi along with its error.
+
+    Edited to return 0 if integral is negative (for N-1 calculation 
+    to prevent negative efficeincy when events have negative weights)
     """
     
     binlo = hist.FindBin(xlo)
@@ -222,12 +230,18 @@ def get_integral(hist, xlo, xhi=None, integral_only=False, include_last_bin=True
 
     integral = hist.Integral(binlo, binhi)
     if integral_only:
-        return integral
+        if nm1 and integral < 0:
+            return 0
+        else:
+            return integral
 
     wsq = 0
     for i in xrange(binlo, binhi+1):
         wsq += hist.GetBinError(i)**2
-    return integral, wsq**0.5
+    if nm1 and integral < 0:
+        return 0,0
+    else:
+        return integral, wsq**0.5
 
 def get_hist_stats(hist, factor=None, draw=False):
     """For the given histogram, return a five-tuple of the number of
@@ -356,7 +370,7 @@ def move_overflow_into_last_bin(h):
 class plot_saver:
     i = 0
     
-    def __init__(self, plot_dir=None, html=True, log=True, root=True, pdf=False, pdf_log=False, C=False, C_log=False, size=(820,630)):
+    def __init__(self, plot_dir=None, html=True, log=True, root=True, pdf=False, pdf_log=False, C=False, C_log=False, size=(820,630), name=''):
         self.c = ROOT.TCanvas('c%i' % plot_saver.i, '', *size)
         plot_saver.i += 1
         self.saved = []
@@ -368,6 +382,7 @@ class plot_saver:
         self.pdf_log = pdf_log
         self.C = C
         self.C_log = C_log
+        self.name = name
 
     def __del__(self):
         self.write_index()
@@ -378,7 +393,10 @@ class plot_saver:
     def write_index(self):
         if not self.saved or not self.html:
             return
-        html = open(os.path.join(self.plot_dir, 'index.html'), 'wt')
+        if self.name == '':
+            html = open(os.path.join(self.plot_dir, 'index.html'), 'wt')
+        else:
+            html = open(os.path.join(self.plot_dir, 'index_%s.html'%(self.name)), 'wt')
         html.write('<html><body><pre>\n')
         html.write('<a href="..">.. (parent directory)</a>\n')
         for i, save in enumerate(self.saved):
@@ -505,8 +523,8 @@ def real_hist_max(h, return_bin=False, user_range=None, use_error_bars=True):
     if user_range is None:
         b1, b2 = 1, h.GetNbinsX() + 1
     else:
-        b1, b2 = h.FindBin(user_range[0]), h.FindBin(user_range[1])+1
-    
+        b1, b2 = h.FindBin(user_range[0]), h.FindBin(user_range[1])#####
+        #b1, b2 = h.FindBin(user_range[0]), h.FindBin(user_range[1])+1
     for ibin in xrange(b1, b2):
         if use_error_bars:
             v = h.GetBinContent(ibin) + h.GetBinError(ibin)

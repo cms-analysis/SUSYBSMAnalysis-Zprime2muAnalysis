@@ -7,17 +7,19 @@ ROOT.gStyle.SetOptStat(110010)
 
 ps = plot_saver('plots/iso_vs_npv', pdf=True)
 
-f = ROOT.TFile('data/Run2012MuonsOnly/ana_datamc_data.root')
+f = ROOT.TFile('data/Run2015MuonsOnly/ana_datamc_data.root')
+#f = ROOT.TFile('data/DCSOnly/ana_datamc_data.root')
 t = f.SimpleNtupler.Get('t')
 
 max_npv = 30
-nbins = 6
+nbins = 3
 per = max_npv/nbins
 
 hs = []
 
-t.SetAlias('OurSelNoIso', 'loose_no_iso_0 && loose_no_iso_1 && triggerMatched && extraDimuonCuts && GoodData && OppSign')
-t.Draw('nvertices>>hnvertices(30, 0, 30)', 'OurSelNoIso && dil_mass > 60 && dil_mass < 120')
+#t.SetAlias('OurSelNoIso', 'loose_no_iso_0 && loose_no_iso_1 && (lep_triggerMatchPt[0] > 45 || lep_triggerMatchPt[1] > 45) && extraDimuonCuts && GoodData && OppSign') ##error trigg matching OR
+t.SetAlias('OurSelNoIso', 'lep_isGlobalMuon[0] && lep_isTrackerMuon[0] && lep_pt[0] > 48 && abs(lep_dB[0]) < 0.2 && lep_glb_numberOfValidTrackerLayers[0] > 5 && lep_glb_numberOfValidPixelHits[0] >= 1 && lep_glb_numberOfValidMuonHits[0] > 0 && lep_numberOfMatchedStations[0] > 1 && lep_pt_err[0] / lep_pt[0] < 0.3 && lep_isGlobalMuon[1] && lep_isTrackerMuon[1] && lep_pt[1] > 48 && abs(lep_dB[1]) < 0.2 && lep_glb_numberOfValidTrackerLayers[1] > 5 && lep_glb_numberOfValidPixelHits[1] >= 1 && lep_glb_numberOfValidMuonHits[1] > 0 && lep_numberOfMatchedStations[1] > 1 && lep_pt_err[1] / lep_pt[1] < 0.3 && triggerMatched && extraDimuonCuts && GoodData && OppSign')
+t.Draw('nvertices>>hnvertices(35, 0, 35)', 'OurSelNoIso && dil_mass > 60 && dil_mass < 120')
 ps.save('nvertices')
 t.Draw('nvertices>>hnvertices2(6, 0, 30)', 'OurSelNoIso && dil_mass > 60 && dil_mass < 120')
 ROOT.hnvertices2.Draw('histo text00')
@@ -30,8 +32,12 @@ for tkonly in [0, 1]:
         cut = 0.1
         which = 'tkonly'
     else:
-        t.SetAlias('iso', '(lep_sumPt+lep_emEt+lep_hadEt)/lep_tk_pt')
-        cut = 0.15
+#        t.SetAlias('iso', '(lep_sumPt+lep_emEt+lep_hadEt)/lep_tk_pt')
+#        cut = 0.15
+        t.SetAlias('iso', '(lep_pfIso)/lep_tk_pt')
+        cut = 0.2
+#        t.SetAlias('iso', '(lep_pfIsoDB)/lep_tk_pt')
+#        cut = 0.2
         which = 'tkpluscalo'
 
     t.Draw('iso:nvertices>>hscatter%i(%i,0,%i,100,0,5)' % (tkonly, nbins, max_npv), 'OurSelNoIso && dil_mass > 60 && dil_mass < 120')
@@ -63,8 +69,12 @@ for tkonly in [0, 1]:
     hs.append(hfrac.Clone(which))
 
 tkpcal, tkonly = hs
+#tkpcal.SetLineColor(ROOT.kGreen+1)
+#tkpcal.SetMarkerColor(ROOT.kGreen+1)
 tkpcal.SetLineColor(ROOT.kRed)
 tkpcal.SetMarkerColor(ROOT.kRed)
+#tkpcal.SetLineColor(ROOT.kMagenta)
+#tkpcal.SetMarkerColor(ROOT.kMagenta)
 tkpcal.SetLineWidth(2)
 tkonly.SetLineWidth(2)
 tkpcal.SetMarkerStyle(21)
@@ -73,10 +83,12 @@ tkpcal.SetMarkerSize(1.1)
 tkonly.SetMarkerSize(1.2)
 tkpcal.Draw('APEZ')
 tkpcal.GetYaxis().SetTitle('fraction of events failing the rel. iso. cut')
-tkpcal.GetYaxis().SetRangeUser(0.005, 0.05)
+tkpcal.GetYaxis().SetRangeUser(0.005, 0.08)
 tkonly.Draw('PEZ')
 l = ROOT.TLegend(0.15, 0.74, 0.70, 0.86)
-l.AddEntry(tkpcal, 'tracker-plus-calorimeters, cut = 0.15', 'LPE')
+#l.AddEntry(tkpcal, 'tracker-plus-calorimeters, cut = 0.15', 'LPE')
+#l.AddEntry(tkpcal, 'PF iso DB correction, cut = 0.2', 'LPE')
+l.AddEntry(tkpcal, 'PF iso, cut = 0.2', 'LPE')
 l.AddEntry(tkonly, 'tracker-only, cut = 0.1', 'LPE')
 l.Draw()
 ps.save('overlay')

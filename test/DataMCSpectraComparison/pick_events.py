@@ -19,19 +19,26 @@ if __name__ == '__main__' and 'submit' in sys.argv:
     from pprint import pformat
     
     crab_cfg = '''
-[CMSSW]
-%(job_control)s
-pset = pick_events_crab.py
-datasetpath = %(dataset)s
-get_edm_output = 1
+from CRABClient.UserUtilities import config
+config = config()
 
-[USER]
-return_data = 1
-ui_working_dir = crab/crab_pickevents_%(uniq)s_%(name)s
+config.General.requestName = '%(name)s' 
+config.General.workArea = 'Pickevents_%(uniq)s_%(name)s'
 
-[CRAB]
-scheduler = %(scheduler)s
-jobtype = cmssw
+config.JobType.pluginName = 'Analysis'
+config.JobType.psetName = 'pick_events_crab.py'   
+config.JobType.priority = 1
+
+config.Data.inputDataset =  '%(dataset)s'
+config.Data.inputDBS = 'global'
+config.Data.splitting = 'EventAwareLumiBased' 
+config.Data.unitsPerJob = 10000
+config.Data.publication = True
+config.Data.publishDataName = '%(name)s'
+config.Data.outLFN = '/store/user/federica/Pickevents' 
+
+config.Site.storageSite = 'T2_US_Purdue'
+
 '''
 
     just_testing = 'testing' in sys.argv
@@ -112,7 +119,7 @@ total_number_of_events = -1
 events_per_job = 100000'''
 
         scheduler = 'condor' if 'condor' in sys.argv else 'glite'
-        open('crab.cfg', 'wt').write(crab_cfg % locals())
+        open('crab.py', 'wt').write(crab_cfg % locals())
 
         pset = open('pick_events.py').read()
         pset += '\nevents_to_process = '
@@ -122,16 +129,14 @@ events_per_job = 100000'''
 
         if not just_testing:
             if create_only:
-                os.system('crab -create')
-            else:
-                os.system('crab -create -submit')
+                os.system('crab submit')
         else:
-            print 'crab.cfg'
-            os.system('less crab.cfg')
+            print 'crab.py'
+            os.system('less crab.py')
             print 'pick_events.json'
             os.system('less pick_events.json')
             print 'pick_events_crab.py'
             os.system('diff pick_events.py pick_events_crab.py | less')
 
     if not just_testing:
-        os.system('rm crab.cfg pick_events.json pick_events_crab.py pick_events_crab.pyc')
+        os.system('rm crab.py pick_events.json pick_events_crab.py pick_events_crab.pyc')

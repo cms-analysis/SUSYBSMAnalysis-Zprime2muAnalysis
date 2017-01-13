@@ -9,6 +9,7 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TriggerDecision.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TriggerUtilities.h"
+#include "DataFormats/HLTReco/interface/TriggerEvent.h"
 
 class EfficiencyFromMC : public edm::EDAnalyzer {
  public:
@@ -23,6 +24,9 @@ class EfficiencyFromMC : public edm::EDAnalyzer {
   const bool use_resonance_mass_denom;
   const edm::InputTag dimuon_src;
   const edm::InputTag trigger_summary_src;
+  edm::InputTag l1GtObjectMap;
+  edm::InputTag hltResults;
+  edm::InputTag src;
   const double hlt_single_min_pt;  
   const double hlt_single_max_eta;
   const double checking_prescaled_path;
@@ -81,6 +85,11 @@ EfficiencyFromMC::EfficiencyFromMC(const edm::ParameterSet& cfg)
     hardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction"))    
 {
   triggerDecision.init(cfg.getParameter<edm::ParameterSet>("triggerDecision"));
+  consumes<edm::TriggerResults>(cfg.getParameter<edm::ParameterSet>("triggerDecision").getParameter<edm::InputTag>("hltResults"));
+  consumes<L1GlobalTriggerObjectMapRecord>(cfg.getParameter<edm::ParameterSet>("triggerDecision").getParameter<edm::InputTag>("l1GtObjectMap"));
+  consumes<reco::GenParticleCollection>(hardInteraction.src);
+  consumes<pat::CompositeCandidateCollection>(dimuon_src);
+  consumes<trigger::TriggerEvent>(trigger_summary_src);
 
   edm::Service<TFileService> fs;
 
@@ -104,7 +113,7 @@ EfficiencyFromMC::EfficiencyFromMC(const edm::ParameterSet& cfg)
 void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   hardInteraction.Fill(event);
   triggerDecision.initEvent(event);
-
+  
   if (!hardInteraction.IsValid()) {
     edm::LogWarning("EfficiencyFromMC") << "!hardInteraction.isValid()";
     return;
@@ -169,6 +178,7 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
     Zprime2muTriggerPathsAndFilters pandf(event);
     if (!pandf.valid) throw cms::Exception("Zprime2muTriggerPathsAndFilters") << "could not determine the HLT path and filter names for this event\n";
     trigger::TriggerObjectCollection l3_mus = get_L3_muons(event, checking_prescaled_path ? pandf.prescaled_filter : pandf.filter, trigger_summary_src);
+//    trigger::TriggerObjectCollection l3_mus = get_L3_muons(event, checking_prescaled_path ? pandf.prescaled_filter : pandf.filter, checking_prescaled_path ? pandf.prescaled_filter_2 : pandf.filter_2, trigger_summary_src); // OR of two filter
     bool pass = false;
     for (trigger::TriggerObjectCollection::const_iterator l3_mu = l3_mus.begin(), hoe = l3_mus.end(); l3_mu != hoe; ++l3_mu) {
       if (l3_mu->pt() > hlt_single_min_pt && fabs(l3_mu->eta()) < hlt_single_max_eta) {
@@ -202,7 +212,7 @@ void EfficiencyFromMC::analyze(const edm::Event& event, const edm::EventSetup& s
   // muons to the gen two muons before we count it.
   edm::Handle<pat::CompositeCandidateCollection> dimuons;
   event.getByLabel(dimuon_src, dimuons);
-  static const double dRmax = 0.5;
+  static const double dRmax = 0.25;
   for (pat::CompositeCandidateCollection::const_iterator di = dimuons->begin(), die = dimuons->end(); di != die; ++di) {
     reco::CandidateBaseRef dau0 = dileptonDaughter(*di, 0);
     reco::CandidateBaseRef dau1 = dileptonDaughter(*di, 1);

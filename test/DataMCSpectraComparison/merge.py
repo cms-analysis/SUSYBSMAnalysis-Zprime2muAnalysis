@@ -21,7 +21,7 @@ if not files:
         crab_dir = last_crab_dir()
         print 'Auto-crab dir:', crab_dir
     files = files_from_crab_dir(crab_dir)
-    name = os.path.join(crab_dir, 'res', 'merged.root')
+    name = os.path.join(crab_dir, 'results', 'merged.root') ### instead of res
     
 print 'Files to run over:', len(files)
 pprint(files)

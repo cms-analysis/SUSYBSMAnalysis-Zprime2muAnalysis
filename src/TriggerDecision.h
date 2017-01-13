@@ -4,10 +4,14 @@
 #include <string>
 #include <vector>
 
+
+#include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerObjectMap.h"
+#include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerObjectMapRecord.h"
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/RecLevelHelper.h"
+#include "FWCore/Framework/interface/ProcessMatch.h"
+
 
 class TriggerDecision {
  public:
@@ -62,6 +66,7 @@ class TriggerDecision {
   // The input tags for the L1 and HLT decision objects.
   edm::InputTag l1GtObjectMap;
   edm::InputTag hltResults;
+  
 
   // Which trigger paths to use.
   std::vector<std::string> l1Paths;

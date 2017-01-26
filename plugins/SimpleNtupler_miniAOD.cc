@@ -184,6 +184,7 @@ private:
     short lep_glb_outermostMuonStationWithValidHits[2];
     short lep_numberOfMatches[2];
     short lep_numberOfMatchedStations[2];
+    short lep_numberOfMatchedRPCLayers[2];
     unsigned int lep_stationMask[2];
     int lep_numberOfChambers[2];
     int lep_numberOfChambersNoRPC[2];
@@ -424,6 +425,7 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
   tree->Branch("lep_glb_outermostMuonStationWithValidHits", t.lep_glb_outermostMuonStationWithValidHits, "lep_glb_outermostMuonStationWithValidHits[2]/S");
   tree->Branch("lep_numberOfMatches", t.lep_numberOfMatches, "lep_numberOfMatches[2]/S");
   tree->Branch("lep_numberOfMatchedStations", t.lep_numberOfMatchedStations, "lep_numberOfMatchedStations[2]/S");
+  tree->Branch("lep_numberOfMatchedRPCLayers",t.lep_numberOfMatchedRPCLayers, "lep_numberOfMatchedRPCLayers[2]/S");
   tree->Branch("lep_stationMask", t.lep_stationMask, "lep_stationMask[2]/I");
   tree->Branch("lep_numberOfChambers", t.lep_numberOfChambers, "lep_numberOfChambers[2]/I");
   tree->Branch("lep_numberOfChambersNoRPC", t.lep_numberOfChambersNoRPC, "lep_numberOfChambersNoRPC[2]/I");
@@ -700,75 +702,75 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
   
 
   if (fill_gen_info) {
-
+    
     // This only works for DY/Z'/RSG events, and really just for PYTHIA!
     hardInteraction->Fill(event);
-   int EventWeight = 1.;
-   edm::Handle<GenEventInfoProduct> gen_ev_info;
-   event.getByLabel(genEventInfo_, gen_ev_info);
-   EventWeight = gen_ev_info->weight();
-   t.genWeight = ( EventWeight > 0 ) ? 1 : -1;
-
-
+    int EventWeight = 1.;
+    edm::Handle<GenEventInfoProduct> gen_ev_info;
+    event.getByLabel(genEventInfo_, gen_ev_info);
+    EventWeight = gen_ev_info->weight();
+    t.genWeight = ( EventWeight > 0 ) ? 1 : -1;
+    
+    
     //
     // Store Generator Level information
     //
     if(hardInteraction->IsValid()){
-        t.gen_res_mass = hardInteraction->resonance->mass();
-        t.gen_res_pt   = hardInteraction->resonance->pt();
-        t.gen_res_rap  = hardInteraction->resonance->rapidity();
-        t.gen_res_eta  = hardInteraction->resonance->eta();
-        t.gen_res_phi  = hardInteraction->resonance->phi();
-
-        t.gen_dil_mass = hardInteraction->dilepton().mass();
-        t.gen_dil_pt   = hardInteraction->dilepton().pt();
-        t.gen_dil_rap  = hardInteraction->dilepton().Rapidity();
-        t.gen_dil_eta  = hardInteraction->dilepton().eta();
-        t.gen_dil_phi  = hardInteraction->dilepton().phi();
-        t.gen_dil_dR   = deltaR(*hardInteraction->lepMinus, *hardInteraction->lepPlus);
-        t.gen_dil_dPhi = deltaPhi(*hardInteraction->lepMinus, *hardInteraction->lepPlus);
-
-        t.gen_lep_p[0]  = hardInteraction->lepMinus->p();
-        t.gen_lep_pt[0]  = hardInteraction->lepMinus->pt();
-        t.gen_lep_px[0]  = hardInteraction->lepMinus->px();
-        t.gen_lep_py[0]  = hardInteraction->lepMinus->py();
-        t.gen_lep_pz[0]  = hardInteraction->lepMinus->pz();
-        t.gen_lep_E[0]  = hardInteraction->lepMinus->energy();
-        t.gen_lep_eta[0] = hardInteraction->lepMinus->eta();
-        t.gen_lep_phi[0] = hardInteraction->lepMinus->phi();
-        t.gen_lep_qOverPt[0] = hardInteraction->lepMinus->charge() / hardInteraction->lepMinus->pt();
-
-        t.gen_lep_p[1]  = hardInteraction->lepPlus->p();
-        t.gen_lep_pt[1]  = hardInteraction->lepPlus->pt();
-        t.gen_lep_px[1]  = hardInteraction->lepMinus->px();
-        t.gen_lep_py[1]  = hardInteraction->lepMinus->py();
-        t.gen_lep_pz[1]  = hardInteraction->lepMinus->pz();
-        t.gen_lep_E[1]  = hardInteraction->lepMinus->energy();
-        t.gen_lep_eta[1] = hardInteraction->lepPlus->eta();
-        t.gen_lep_phi[1] = hardInteraction->lepPlus->phi();
-        t.gen_lep_qOverPt[1] = hardInteraction->lepPlus->charge() / hardInteraction->lepPlus->pt();
-
-        /*
-        t.gen_lep_noib_pt[0]  = hardInteraction->lepMinusNoIB->pt();
-        t.gen_lep_noib_px[0]  = hardInteraction->lepMinusNoIB->px();
-        t.gen_lep_noib_py[0]  = hardInteraction->lepMinusNoIB->py();
-        t.gen_lep_noib_pz[0]  = hardInteraction->lepMinusNoIB->pz();
-        t.gen_lep_noib_e[0]  = hardInteraction->lepMinusNoIB->energy();
-        t.gen_lep_noib_eta[0] = hardInteraction->lepMinusNoIB->eta();
-        t.gen_lep_noib_phi[0] = hardInteraction->lepMinusNoIB->phi();
-
-        t.gen_lep_noib_pt[1]  = hardInteraction->lepPlusNoIB->pt();
-        t.gen_lep_noib_px[1]  = hardInteraction->lepMinusNoIB->px();
-        t.gen_lep_noib_py[1]  = hardInteraction->lepMinusNoIB->py();
-        t.gen_lep_noib_pz[1]  = hardInteraction->lepMinusNoIB->pz();
-        t.gen_lep_noib_e[1]  = hardInteraction->lepMinusNoIB->energy();
-        t.gen_lep_noib_eta[1] = hardInteraction->lepPlusNoIB->eta();
-        t.gen_lep_noib_phi[1] = hardInteraction->lepPlusNoIB->phi();
-        */
+      t.gen_res_mass = hardInteraction->resonance->mass();
+      t.gen_res_pt   = hardInteraction->resonance->pt();
+      t.gen_res_rap  = hardInteraction->resonance->rapidity();
+      t.gen_res_eta  = hardInteraction->resonance->eta();
+      t.gen_res_phi  = hardInteraction->resonance->phi();
+      
+      t.gen_dil_mass = hardInteraction->dilepton().mass();
+      t.gen_dil_pt   = hardInteraction->dilepton().pt();
+      t.gen_dil_rap  = hardInteraction->dilepton().Rapidity();
+      t.gen_dil_eta  = hardInteraction->dilepton().eta();
+      t.gen_dil_phi  = hardInteraction->dilepton().phi();
+      t.gen_dil_dR   = deltaR(*hardInteraction->lepMinus, *hardInteraction->lepPlus);
+      t.gen_dil_dPhi = deltaPhi(*hardInteraction->lepMinus, *hardInteraction->lepPlus);
+      
+      t.gen_lep_p[0]  = hardInteraction->lepMinus->p();
+      t.gen_lep_pt[0]  = hardInteraction->lepMinus->pt();
+      t.gen_lep_px[0]  = hardInteraction->lepMinus->px();
+      t.gen_lep_py[0]  = hardInteraction->lepMinus->py();
+      t.gen_lep_pz[0]  = hardInteraction->lepMinus->pz();
+      t.gen_lep_E[0]  = hardInteraction->lepMinus->energy();
+      t.gen_lep_eta[0] = hardInteraction->lepMinus->eta();
+      t.gen_lep_phi[0] = hardInteraction->lepMinus->phi();
+      t.gen_lep_qOverPt[0] = hardInteraction->lepMinus->charge() / hardInteraction->lepMinus->pt();
+      
+      t.gen_lep_p[1]  = hardInteraction->lepPlus->p();
+      t.gen_lep_pt[1]  = hardInteraction->lepPlus->pt();
+      t.gen_lep_px[1]  = hardInteraction->lepMinus->px();
+      t.gen_lep_py[1]  = hardInteraction->lepMinus->py();
+      t.gen_lep_pz[1]  = hardInteraction->lepMinus->pz();
+      t.gen_lep_E[1]  = hardInteraction->lepMinus->energy();
+      t.gen_lep_eta[1] = hardInteraction->lepPlus->eta();
+      t.gen_lep_phi[1] = hardInteraction->lepPlus->phi();
+      t.gen_lep_qOverPt[1] = hardInteraction->lepPlus->charge() / hardInteraction->lepPlus->pt();
+      
+      /*
+       t.gen_lep_noib_pt[0]  = hardInteraction->lepMinusNoIB->pt();
+       t.gen_lep_noib_px[0]  = hardInteraction->lepMinusNoIB->px();
+       t.gen_lep_noib_py[0]  = hardInteraction->lepMinusNoIB->py();
+       t.gen_lep_noib_pz[0]  = hardInteraction->lepMinusNoIB->pz();
+       t.gen_lep_noib_e[0]  = hardInteraction->lepMinusNoIB->energy();
+       t.gen_lep_noib_eta[0] = hardInteraction->lepMinusNoIB->eta();
+       t.gen_lep_noib_phi[0] = hardInteraction->lepMinusNoIB->phi();
+       
+       t.gen_lep_noib_pt[1]  = hardInteraction->lepPlusNoIB->pt();
+       t.gen_lep_noib_px[1]  = hardInteraction->lepMinusNoIB->px();
+       t.gen_lep_noib_py[1]  = hardInteraction->lepMinusNoIB->py();
+       t.gen_lep_noib_pz[1]  = hardInteraction->lepMinusNoIB->pz();
+       t.gen_lep_noib_e[1]  = hardInteraction->lepMinusNoIB->energy();
+       t.gen_lep_noib_eta[1] = hardInteraction->lepPlusNoIB->eta();
+       t.gen_lep_noib_phi[1] = hardInteraction->lepPlusNoIB->phi();
+      */
     } // end if hardInteraction->IsValid()
-
+    
   } // end if fill_gen_info
-
+  
   //
   // Get dilepton collection
   //
@@ -929,6 +931,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
         t.lep_glb_outermostMuonStationWithValidHits[w] = -999;
 	t.lep_numberOfMatches[w] = -999;
 	t.lep_numberOfMatchedStations[w] = -999;
+	t.lep_numberOfMatchedRPCLayers[w] = -999;
         t.lep_stationMask[w] = 999;
 	t.lep_isGlobalMuon[w] = false;
 	t.lep_isTrackerMuon[w] = false;
@@ -1231,6 +1234,8 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
 	t.lep_numberOfMatches[w] = mu->numberOfMatches();
         // number of stations with matched segments
 	t.lep_numberOfMatchedStations[w] = mu->numberOfMatchedStations();
+	// number of layers with matched rpc hits
+	t.lep_numberOfMatchedRPCLayers[w] = mu->numberOfMatchedRPCLayers();
         // get bit map of stations with matched segments
         // bits 0-1-2-3 = DT stations 1-2-3-4
         // bits 4-5-6-7 = CSC stations 1-2-3-4

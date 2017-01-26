@@ -19,6 +19,7 @@ private:
 MuonsFromDimuons::MuonsFromDimuons(const edm::ParameterSet& cfg)
   : dimuon_src(cfg.getParameter<edm::InputTag>("dimuon_src"))
 {
+  consumes<pat::CompositeCandidateCollection>(dimuon_src);
   produces<pat::MuonCollection>();
 }
 

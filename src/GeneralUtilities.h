@@ -42,7 +42,10 @@ enum WhereDilepton { W_BARRELBARREL=0, W_BARRELOVERLAP,  W_BARRELENDCAP,
 		     W_BARRELOUTSIDE,  W_OVERLAPOVERLAP, W_OVERLAPENDCAP, 
 		     W_OVERLAPOUTSIDE, W_ENDCAPENDCAP,   W_ENDCAPOUTSIDE,
 		     W_OUTSIDEOUTSIDE, W_D_MAX };
-  
+
+enum WhatIsDileptonMass { M_0=0, M_500, M_1000, M_1500, M_2000, M_2500, M_3000, 
+			  M_3500, M_4000, M_4500, M_OUTSIDE, M_MAX };
+
 // Helper method to return a code (one of the W_* ones above) based
 // on where the lepton is in the muon system by eta; in the barrel,
 // in the overlap region, in the endcap, or outside acceptance
@@ -55,5 +58,7 @@ WhereLepton whereIsLepton(const reco::CandidateBaseRef& lepton,
 // definitions of location).
 WhereDilepton whereIsDilepton(const reco::CompositeCandidate& dil,
 			      const bool areElectrons=false);
+
+WhatIsDileptonMass whatIsDileptonMass(float mass);
 
 #endif

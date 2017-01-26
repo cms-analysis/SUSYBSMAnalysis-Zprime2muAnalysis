@@ -32,7 +32,7 @@ def addMuonMCClassification(process):
     # their GEANT hits.
     process.load('MuonAnalysis.MuonAssociators.muonClassificationByHits_cfi')
     from MuonAnalysis.MuonAssociators.muonClassificationByHits_cfi import addUserData as addClassByHits
-    addClassByHits(process.patMuons, extraInfo=True)
+    addClassByHits(process.patMuons,extraInfo=True)
     process.patDefaultSequence = cms.Sequence(process.muonClassificationByHits * process.patDefaultSequence._seq)
 
 def removeMuonMCClassification(process):
@@ -72,11 +72,11 @@ def removeMCUse(process):
     # Remove anything that requires MC truth.
     from PhysicsTools.PatAlgos.tools.coreTools import removeMCMatching
     removeMCMatching(process, ['All'])
-    removeMCMatching(process, ['METs'], postfix='TC')
+#    removeMCMatching(process, ['METs'], postfix='TC')
     removeMCMatching(process, ['METs'], postfix='PF')
-    removeMuonMCClassification(process)
+    #removeMuonMCClassification(process)
     removeSimLeptons(process)
-    removePrunedMCLeptons(process)
+    #removePrunedMCLeptons(process)
     
 def switchHLTProcessName(process, name):
     # As the correct trigger process name is different from the
@@ -85,39 +85,43 @@ def switchHLTProcessName(process, name):
     process.patTrigger.processName = name
     process.patTriggerEvent.processName = name
 
-def addHEEPId(process):
-    # Run the HEEP electron id. This must be done at PAT tuple making
-    # time and cannot be done later unless some modifications are done
-    # the GsfElectron/GsfElectronCore classes.
-    from SHarper.HEEPAnalyzer.HEEPSelectionCuts_cfi import heepBarrelCuts, heepEndcapCuts
-    from SHarper.HEEPAnalyzer.HEEPEventParameters_cfi import heepEventPara
-    process.HEEPId = cms.EDProducer('HEEPIdValueMapProducer',
-                                    eleLabel = cms.InputTag('gsfElectrons'),
-                                    barrelCuts = heepBarrelCuts,
-                                    endcapCuts = heepEndcapCuts,
-                                    eleIsolEffectiveAreas = heepEventPara.eleIsolEffectiveAreas,
-                                    applyRhoCorrToEleIsol = heepEventPara.applyRhoCorrToEleIsol,
-                                    eleRhoCorrLabel = heepEventPara.eleRhoCorrTag,
-                                    writeIdAsInt = cms.bool(True),
-                                    )
 
-    # For isolation correction
-    from RecoJets.JetProducers.kt4PFJets_cfi import kt4PFJets
-    process.kt6PFJetsForIsolation = kt4PFJets.clone( rParam = 0.6, doRhoFastjet = True )
-    process.kt6PFJetsForIsolation.Rho_EtaMax = cms.double(2.5)
-    
-    # Embed the HEEP cut bitwords into the userData of the
-    # patElectrons so we can use it to cut on at dilepton-making time
-    # instead of necessarily dropping them in the selectedPatElectrons
-    # or cleanPatElectrons steps.
-    process.patElectrons.userData.userInts.src.append('HEEPId')
-    
-    process.patDefaultSequence.replace(process.patElectrons, process.kt6PFJetsForIsolation * process.HEEPId * process.patElectrons)
+################################################################################
+#def addHEEPId(process):
+#    # Run the HEEP electron id. This must be done at PAT tuple making
+#    # time and cannot be done later unless some modifications are done
+#    # the GsfElectron/GsfElectronCore classes.
+#    from SHarper.HEEPAnalyzer.HEEPSelectionCuts_cfi import heepBarrelCuts, heepEndcapCuts
+#    from SHarper.HEEPAnalyzer.HEEPEventParameters_cfi import heepEventPara
+#    process.HEEPId = cms.EDProducer('HEEPIdValueMapProducer',
+#                                    eleLabel = cms.InputTag('gedGsfElectrons'),
+#                                    barrelCuts = heepBarrelCuts,
+#                                    endcapCuts = heepEndcapCuts,
+#                                    eleIsolEffectiveAreas = heepEventPara.eleIsolEffectiveAreas,
+#                                    applyRhoCorrToEleIsol = heepEventPara.applyRhoCorrToEleIsol,
+#                                    eleRhoCorrLabel = heepEventPara.eleRhoCorrTag,
+#                                    verticesLabel = heepEventPara.verticesTag,
+#                                    writeIdAsInt = cms.bool(True),
+#                                    )
+
+#    # For isolation correction
+#    from RecoJets.JetProducers.kt4PFJets_cfi import kt4PFJets
+#    process.kt6PFJetsForIsolation = kt4PFJets.clone( rParam = 0.6, doRhoFastjet = True )
+#    process.kt6PFJetsForIsolation.Rho_EtaMax = cms.double(2.5)
+#    
+#    # Embed the HEEP cut bitwords into the userData of the
+#    # patElectrons so we can use it to cut on at dilepton-making time
+#    # instead of necessarily dropping them in the selectedPatElectrons
+#    # or cleanPatElectrons steps.
+#    process.patElectrons.userData.userInts.src.append('HEEPId')
+#    
+#    process.patDefaultSequence.replace(process.patElectrons, process.kt6PFJetsForIsolation * process.HEEPId * process.patElectrons)
+##################################################################################################################
 
 def AODOnly(process):
-    from PhysicsTools.PatAlgos.tools.coreTools import restrictInputToAOD
-    restrictInputToAOD(process)
-    removeMuonMCClassification(process) # throw the baby out with the bathwater...
+    #from PhysicsTools.PatAlgos.tools.coreTools import restrictInputToAOD
+    #restrictInputToAOD(process) 
+    #removeMuonMCClassification(process) # throw the baby out with the bathwater...???
     removeSimLeptons(process)
 
 # Some scraps to aid in debugging that can be put in your top-level

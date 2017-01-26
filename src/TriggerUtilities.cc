@@ -18,22 +18,29 @@ Zprime2muTriggerPathsAndFilters::Zprime2muTriggerPathsAndFilters(const edm::Even
 
   valid = true; // assume until proven otherwise
   const unsigned run = event.id().run();
-
   // JMTBAD if there are different HLT menus used for different
   // samples (e.g. 51X/52X), the next line may not be sufficient, and
   // we will have to think of a better way to handle this.
-  if (!event.isRealData())                { path = "HLT_Mu40_eta2p1_v9",  filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered40Q", prescaled_path = "HLT_Mu24_eta2p1_v3", prescaled_filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered24Q"; }
-  else if (run >= 190456 && run < 196532) { path = "HLT_Mu40_eta2p1_v9",  filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered40Q", prescaled_path = "HLT_Mu24_eta2p1_v3", prescaled_filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered24Q"; }
-  else if (run >= 196533 && run < 199609) { path = "HLT_Mu40_eta2p1_v10", filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered40Q", prescaled_path = "HLT_Mu24_eta2p1_v4", prescaled_filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered24Q"; }
-  else if (run >= 199610)                 { path = "HLT_Mu40_eta2p1_v11", filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered40Q", prescaled_path = "HLT_Mu24_eta2p1_v5", prescaled_filter = "hltL3fL1sMu16Eta2p1L1f0L2f16QL3Filtered24Q"; } // at least until run 204601
-  else
-    valid = false;
+  // Trigger OR
+  if (!event.isRealData())                { path = "HLT_Mu50_v2", filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q",path_2 = "HLT_Mu50_v2", filter_2 = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q", prescaled_path_2 = "HLT_Mu27_v1", prescaled_filter_2 = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q"; }
+  //
+    // TO BE USED FOR reHLT MC
+//    if (!event.isRealData())                { path = "HLT_Mu50_v2", filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v1", prescaled_filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q"; }
+    
+  // Trigger OR
+  else if (run >= 272007)                 { path = "HLT_Mu50_v4", filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q",path_2 = "HLT_TkMu50_v4", filter_2 = "hltL3fL1sMu25f0TkFiltered50Q", prescaled_path = "HLT_Mu27_v2", prescaled_filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q", prescaled_path_2 = "HLT_Mu27_v1", prescaled_filter_2 = "hltL3fL1sMu25L1f0L2f10QL3Filtered27Q"; }
+  //
+  //    else if (run >= 272007) { path = "HLT_Mu50_v4", filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q", prescaled_path = "HLT_Mu27_v2", prescaled_filter = "hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q"; }
+
+    else
+        valid = false;
 }
 
 trigger::TriggerObjectCollection get_L3_muons(const edm::Event& event, const std::string& filter, const edm::InputTag& trigger_summary_src, const std::string& collection) {
   trigger::TriggerObjectCollection L3_muons;
 
   edm::Handle<trigger::TriggerEvent> trigEvent;
+ 
   event.getByLabel(trigger_summary_src, trigEvent);
   if (!trigEvent.isValid())
     throw cms::Exception("get_L3_muons") << "couldn't get hltTriggerSummaryAOD " << trigger_summary_src.encode() << " from event\n";
@@ -73,5 +80,7 @@ trigger::TriggerObjectCollection get_L3_muons(const edm::Event& event, const std
     if (std::find(keys_passing_filter.begin(), keys_passing_filter.end(), iO) != keys_passing_filter.end())
       L3_muons.push_back(TOC.at(iO));
 
+    //std::cout<<"filter: "<<filter<<"collection size: "<<L3_muons.size()<<std::endl;
   return L3_muons;
 }
+

@@ -4,8 +4,10 @@ import os
 from SUSYBSMAnalysis.Zprime2muAnalysis.tools import big_warn, files_from_dbs
 from SUSYBSMAnalysis.Zprime2muAnalysis.crabtools import dataset_from_publish_log
 
+miniAOD = True
+
 class sample(object):
-    def __init__(self, name, nice_name, dataset, nevents, color, syst_frac, cross_section, k_factor=1, filenames=None, scheduler='condor', hlt_process_name='HLT', ana_dataset=None, is_zprime=False):
+    def __init__(self, name, nice_name, dataset, nevents, color, syst_frac, cross_section, k_factor=1, filenames=None, scheduler='condor', hlt_process_name='HLT', ana_dataset=None, is_madgraph=False, is_zprime=False):
         self.name = name
         self.nice_name = nice_name
         self.dataset = dataset
@@ -18,6 +20,7 @@ class sample(object):
         self.scheduler = scheduler
         self.hlt_process_name = hlt_process_name
         self.ana_dataset = ana_dataset
+        self.is_madgraph = is_madgraph
         self.is_zprime = is_zprime
 
     @property
@@ -36,7 +39,7 @@ class sample(object):
         return getattr(self, key)
 
     def _dump(self, redump_existing=False):
-        dst = os.path.join('/uscmst1b_scratch/lpc1/3DayLifetime/tucker', self.name)
+        dst = os.path.join('/uscmst1b_scratch/lpc1/3DayLifetime/tucker', self.name) 
         os.system('mkdir ' + dst)
         for fn in self.filenames:
             print fn
@@ -47,57 +50,77 @@ class tupleonlysample(sample):
     def __init__(self, name, dataset, scheduler='condor', hlt_process_name='HLT'):
         super(tupleonlysample, self).__init__(name, 'dummy', dataset, 1, 1, 1, 1, scheduler=scheduler, hlt_process_name=hlt_process_name)
 
-# https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat8TeV for xsecs (all below in pb)
-# Single-top cross sections are from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SingleTopSigma8TeV
+# https://twiki.cern.ch/twiki/bin/viewauth/CMS/StandardModelCrossSectionsat13TeV for xsecs (all below in pb)
+# Single-top cross sections are from https://twiki.cern.ch/twiki/bin/viewauth/CMS/SingleTopSigma
 # K factor for Drell-Yan samples is the ratio of the NNLO to POWHEG cross sections for M > 20 GeV bin, 1915/1871=1.024
 samples = [
-    sample('zmumu',     '#gamma/Z #rightarrow #mu^{+}#mu^{-}',              '/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',      3293740, 432, 0.05, 1915.),
-    sample('dy120_c1',  'DY120_C1',                                         '/DYToMuMu_M-120_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',       99984, 433, 0.05, 11.89,    k_factor=1.024),
-    sample('dy200_c1',  'DY200_C1',                                         '/DYToMuMu_M-200_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',       99990, 434, 0.05, 1.485,    k_factor=1.024),
-    sample('dy500_c1',  'DY500_C1',                                         '/DYToMuMu_M-500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',       99992, 435, 0.05, 0.04415,  k_factor=1.024),
-    sample('dy800_c1',  'DY800_C1',                                         '/DYToMuMu_M-800_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',       99984,   3, 0.05, 0.005491, k_factor=1.024),
-    sample('dy1000_c1', 'DY1000_C1',                                        '/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',      99989,  36, 0.05, 0.001796, k_factor=1.024),
-    sample('dy1500_c1', 'DY1500_C1',                                        '/DYToMuMu_M-1500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',      99992,   8, 0.05, 1.705E-4, k_factor=1.024),
-    sample('dy2000_c1', 'DY2000_C1',                                        '/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',      99974,  37, 0.05, 2.208E-5, k_factor=1.024),
-#    sample('ttbar',     't#bar{t}',                                         '/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM', 6923750,   2, 0.067, 234.),
-    sample('ttbar_powheg','t#bar{t}',                                        '/TT_CT10_TuneZ2star_8TeV-powheg-tauola/Summer12_DR53X-PU_S10_START53_V7A-v2/AODSIM', 21675970,   2, 0.067, 234.),
-    sample('tW',        'tW',                                               '/T_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           497658,   1, 0.069, 11.1),
-    sample('tbarW',     'tbarW',                                            '/Tbar_tW-channel-DR_TuneZ2star_8TeV-powheg-tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',        493460,  12, 0.069, 11.1),
-    sample('ww',        'WW',                                               '/WW_TuneZ2star_8TeV_pythia6_tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',                     10000431,   4, 0.035, 54.8),
-    sample('wz',        'WZ',                                               '/WZ_TuneZ2star_8TeV_pythia6_tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',                     10000283,  30, 0.038, 33.2),
-    sample('zz',        'ZZ',                                               '/ZZ_TuneZ2star_8TeV_pythia6_tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',                      9799908,   6, 0.025, 17.6),
-    sample('ztautau',   'Z #rightarrow #tau^{+}#tau^{-}',                   '/DYToTauTau_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',    3295238,  46, 0.05, 1915.),
-    sample('wjets',     'W+jets',                                           '/WJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',           18393090,   3, 0.05, 36257.),
-    sample('inclmu15',  'QCD',                                              '/QCD_Pt_20_MuEnrichedPt_15_TuneZ2star_8TeV_pythia6/Summer12_DR53X-PU_S10_START53_V7A-v3/AODSIM',     21484602, 801, 1.,  3.64E8 * 3.7E-4),
-#    sample('zpsi750_c1',   'Z\'_{#psi} (0.75 TeV) #rightarrow #mu^{+}#mu^{-}', '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',        25040,  48, 0.05,  0.14,    k_factor=1.3, is_zprime=True),
-#    sample('zpsi1000_c1',  'Z\'_{#psi} (1 TeV) #rightarrow #mu^{+}#mu^{-}',    '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',       25040,  48, 0.05,  0.0369,  k_factor=1.3, is_zprime=True),
-#    sample('zpsi1250_c1',  'Z\'_{#psi} (1.25 TeV) #rightarrow #mu^{+}#mu^{-}', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',       25344,  48, 0.05,  0.0129,  k_factor=1.3, is_zprime=True),
-#    sample('zpsi1500_c1',  'Z\'_{#psi} (1.5 TeV) #rightarrow #mu^{+}#mu^{-}',  '/ZprimePSIToMuMu_M-1500_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',       25344,  48, 0.05,  0.00433, k_factor=1.3, is_zprime=True),
-#    sample('zpsi1750_c1',  'Z\'_{#psi} (1.75 TeV) #rightarrow #mu^{+}#mu^{-}', '/ZprimePSIToMuMu_M-1750_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',       25272,  48, 0.05,  0.00172, k_factor=1.3, is_zprime=True),
-#    sample('zpsi2000_c1',  'Z\'_{#psi} (2 TeV) #rightarrow #mu^{+}#mu^{-}',    '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',       25092,  48, 0.05,  6.88E-4, k_factor=1.3, is_zprime=True),
-#    sample('zpsi2250_c1',  'Z\'_{#psi} (2.25 TeV) #rightarrow #mu^{+}#mu^{-}', '/ZprimePSIToMuMu_M-2250_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',       25104,  48, 0.05,  2.93E-4, k_factor=1.3, is_zprime=True),
-#    sample('zpsi2500_c1',  'Z\'_{#psi} (2.5 TeV) #rightarrow #mu^{+}#mu^{-}',  '/ZprimePSIToMuMu_M-2500_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',       25344,  48, 0.05,  1.27E-4, k_factor=1.3, is_zprime=True),
-#    sample('zpsi2750_c1',  'Z\'_{#psi} (2.75 TeV) #rightarrow #mu^{+}#mu^{-}', '/ZprimePSIToMuMu_M-2750_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',       25376,  48, 0.05,  5.55E-5, k_factor=1.3, is_zprime=True),
-#    sample('zpsi3000_c1',  'Z\'_{#psi} (3 TeV) #rightarrow #mu^{+}#mu^{-}',    '/ZprimePSIToMuMu_M-3000_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM',       25040,  48, 0.05,  2.5E-5,  k_factor=1.3, is_zprime=True),
-]
+    
+    sample('dy50to120',   'DY50to120', '/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 2976600, 209 , 1., 1975,   k_factor=1.006),#NLO xs and k-factor applied to reach NLO
+    sample('dy120to200',  'DY120to200', '/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 100000, 210, 1., 19.32, k_factor=1.006),#mcm 19.32
+    sample('dy200to400',  'DY200to400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 100000, 211, 1., 2.731, k_factor=1.006),#mcm 2.731
+    sample('dy400to800',  'DY400to800', '/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 99000, 212, 1., 0.241, k_factor=1.006),
+    sample('dy800to1400', 'DY800to1400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_800_1400/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 100000, 72, 1., 0.01678, k_factor=1.006),
+    sample('dy1400to2300','DY1400to2300', '/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 100000, 70 , 1., 0.00139,    k_factor=1.006),
+    sample('dy2300to3500','DY2300to3500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 100000, 70 , 1., 0.00008948,    k_factor=1.006),
+    sample('dy3500to4500','DY3500to4500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_3500_4500/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 99000, 70 , 1., 0.0000041,    k_factor=1.006),
+    sample('dy4500to6000','DY4500to6000', '/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 100000, 70 , 1., 4.56E-7,    k_factor=1.006),
+
+
+    sample('WZ', 'WZ', '/WZ_TuneCUETP8M1_13TeV-pythia8/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 1000000, 98, 1., 47.13, k_factor=1.),#NLO from MCFM
+    sample('ZZ',   'ZZ', '/ZZ_TuneCUETP8M1_13TeV-pythia8/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 989312, 94, 1.,16.523, k_factor=1.),#NLO from MCFM
+##   WWincl   ###
+    sample('WWinclusive', 'WWinclusive','/WWTo2L2Nu_13TeV-powheg/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 1996600, 208, 1., 12.178, k_factor=1.),#already NNLO xs
+    sample('WW200to600', 'WW200to600','/WWTo2L2Nu_Mll_200To600_13TeV-powheg/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 200000, 208, 1., 1.385, k_factor=1.),#already NNLO xs
+    sample('WW600to1200', 'WW600to1200','/WWTo2L2Nu_Mll_600To1200_13TeV-powheg/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 200000, 208, 1., 0.0566, k_factor=1.),#already NNLO xs
+    sample('WW1200to2500', 'WW1200to2500','/WWTo2L2Nu_Mll_1200To2500_13TeV-powheg/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 200000, 208, 1., 0.0035, k_factor=1.),#already NNLO xs
+    sample('WW2500', 'WW2500','/WWTo2L2Nu_Mll_2500ToInf_13TeV-powheg/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 38969, 208, 1., 0.00005, k_factor=1.),#already NNLO xs
+
+
+###   dyIncl   ###
+    sample('dyInclusive50',          'DYInclusive50', '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 28696958, 209 , 1., 6025.2,    k_factor=1., is_madgraph=True),  #(I will update the number of events)
+          sample('Wjets', 'Wjets', '/WJetsToLNu_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM',28210360,52,1.,61526.7,k_factor=1),#already NNLO xs
+          sample('ttbar_lep',     'ttbar_lep', '/TTTo2L2Nu_13TeV-powheg/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0_ext1-v1/MINIAODSIM', 104607105, 4 , 1., 87.31, k_factor=1.),
+          sample('Wantitop', 'WantiTop', '/ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM',985000,63 , 1., 35.6, k_factor=1.),#already NNLO xs          
+          sample('tW',     'tW', '/ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v2/MINIAODSIM',998400,66 , 1., 35.6, k_factor=1.),#already NNLO xs
+
+
+    sample('qcd80to120', 'QCD80to120', '/QCD_Pt_80to120_TuneCUETP8M1_13TeV_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM',699511,43,1.,2762530,k_factor=1),
+    sample('qcd120to170', 'QCD120to170', '/QCD_Pt_120to170_TuneCUETP8M1_13TeV_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM',698555,43,1.,471100,k_factor=1),
+    sample('qcd170to300', 'QCD170to300', '/QCD_Pt_170to300_TuneCUETP8M1_13TeV_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM',699973,43,1.,117276,k_factor=1),
+    sample('qcd300to470', 'QCD300to470', '/QCD_Pt_300to470_TuneCUETP8M1_13TeV_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM', 2482816,43,1.,7823,k_factor=1),
+    sample('qcd470to600', 'QCD470to600', '/QCD_Pt_470to600_TuneCUETP8M1_13TeV_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM',1998648,43,1.,648.2,k_factor=1),
+    sample('qcd600to800', 'QCD600to800', '/QCD_Pt_600to800_TuneCUETP8M1_13TeV_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM',1385860,43,1.,186.9,k_factor=1),
+    sample('qcd800to1000', 'QCD800to1000', '/QCD_Pt_800to1000_TuneCUETP8M1_13TeV_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM',399968,43,10,32.293,k_factor=1),
+    sample('qcd1000to1400', 'QCD1000to1400', '/QCD_Pt_1000to1400_TuneCUETP8M1_13TeV_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM',299967,43,1.,9.4183,k_factor=1),
+    sample('qcd1400to1800', 'QCD1400to1800', '/QCD_Pt_1400to1800_TuneCUETP8M1_13TeV_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM',39874,43,1.,0.84265,k_factor=1),
+    sample('qcd1800to2400', 'QCD1800to2400', '/QCD_Pt_1800to2400_TuneCUETP8M1_13TeV_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM',39975,43,1.,0.114943,k_factor=1),
+    sample('qcd2400to3200', 'QCD2400to3200', '/QCD_Pt_2400to3200_TuneCUETP8M1_13TeV_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM',39990,43,1.,0.00682981,k_factor=1),
+    sample('qcd3200', 'QCD3200', '/QCD_Pt_3200toInf_TuneCUETP8M1_13TeV_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM',39988,43,1.,0.000165445,k_factor=1),
+
+    ]
 
 samples.reverse()
 
+
+#if miniAOD:
+
+#else:
 for sample in samples:
-    exec '%s = sample' % sample.name
-    if '_c' in sample.name:
-        if 'ZprimePSI' in sample.dataset:
-            sample.ana_dataset = '/%s/valuev-datamc_%s-7cd4d04801ad7f47970af9f536392613/USER' % (sample.dataset.split('/')[1], sample.name)
-        else:
-            sample.ana_dataset = '/%s/slava-datamc_%s-7cd4d04801ad7f47970af9f536392613/USER' % (sample.dataset.split('/')[1], sample.name)
-    else:
-        sample.ana_dataset = '/%s/slava-datamc_%s-ecac376f8fa7ccc229aaa06d757d785a/USER' % (sample.dataset.split('/')[1], sample.name)
+   exec '%s = sample' % sample.name
+   if not miniAOD:
+       sample.ana_dataset = '/%s/rradogna-datamc_%s-c4b4ec8fa143ea00cec443e9d0afb38f/USER'  % (sample.dataset.split('/')[1], sample.name)
+   else:
+       sample.ana_dataset = '/'+ sample.dataset.split('/')[1]+ '/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM'
 
-ttbar_powheg.ana_dataset  = '/TT_CT10_TuneZ2star_8TeV-powheg-tauola/slava-datamc_ttbar_powheg-7cd4d04801ad7f47970af9f536392613/USER'
-
-#big_warn('nothing')
-#big_warn('subtracting 232314 from ww.nevents because 3 tupling jobs got stuck')
-#ww.nevents -= 232314
+#dy100to200.ana_dataset = '/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy100to200-1e36332d8badf10b79a5027340f46eb1/USER'
+#dy200to400.ana_dataset = '/DYJetsToLL_M-200to400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy200to400-1e36332d8badf10b79a5027340f46eb1/USER'
+#dy400to500.ana_dataset = '/DYJetsToLL_M-400to500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy400to500-1e36332d8badf10b79a5027340f46eb1/USER'
+#dy500to700.ana_dataset = '/DYJetsToLL_M-500to700_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy500to700-1e36332d8badf10b79a5027340f46eb1/USER'
+#dy700to800.ana_dataset = '/DYJetsToLL_M-700to800_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy700to800-1e36332d8badf10b79a5027340f46eb1/USER'
+#dy800to1000.ana_dataset = '/DYJetsToLL_M-800to1000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy800to1000-1e36332d8badf10b79a5027340f46eb1/USER'
+#dy1000to1500.ana_dataset = '/DYJetsToLL_M-1000to1500_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy1000to1500-1e36332d8badf10b79a5027340f46eb1/USER'
+#dy1500to2000.ana_dataset = '/DYJetsToLL_M-1500to2000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy1500to2000-1e36332d8badf10b79a5027340f46eb1/USER'
+#dy2000to3000.ana_dataset = '/DYJetsToLL_M-2000to3000_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/rradogna-datamc_dy2000to3000-1e36332d8badf10b79a5027340f46eb1/USER'
 
 __all__ = ['samples'] + [s.name for s in samples]
 

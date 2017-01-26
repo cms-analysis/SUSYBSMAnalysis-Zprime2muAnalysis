@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.PATTuple_cfg import cms, process
-from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName, AODOnly
+from SUSYBSMAnalysis.Zprime2muAnalysis.PATTools import switchHLTProcessName, AODOnly, pruneMCLeptons
 
 process.maxEvents.input = 50
-process.GlobalTag.globaltag = 'START53_V11::All'
-process.source.fileNames = ['/store/mc/Summer12_DR53X/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/AODSIM/PU_S10_START53_V7A-v1/0000/FA95BB52-98F4-E111-BFEA-003048FFD7BE.root']
-process.p = cms.Path(process.patDefaultSequence)
+process.GlobalTag.globaltag = '76X_mcRun2_asymptotic_v12'
+process.source.fileNames = ['/store/mc/RunIIFall15DR76/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/AODSIM/PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/20000/0094C520-D9B0-E511-B9FC-002590E3A024.root',
+ #                           '/store/relval/CMSSW_7_4_0/RelValZpMM_2250_13TeV_Tauola/GEN-SIM-RECO/MCRUN2_74_V7-v1/00000/B6A4F83A-14DB-E411-8A01-0025905B8596.root'
+]
 
+process.p = cms.Path(process.countPatMuons)
+
+pruneMCLeptons(process, use_sim=True)
 AODOnly(process)
 
 process.countPatMuons.minNumber = 0
@@ -27,7 +31,8 @@ process.out.outputCommands = [
     'keep patPhotons_cleanPatPhotons__PAT',
     'keep edmTriggerResults_TriggerResults__HLT*',
     'keep edmTriggerResults_TriggerResults__REDIGI*',
-    'keep GenEventInfoProduct_generator__HLT',
+    'keep GenEventInfoProduct_generator__SIM',
+    #'keep GenEventInfoProduct_generator__HLT',
     'keep edmTriggerResults_TriggerResults__PAT',
     'keep *_patTrigger_*_*', # keep these two for now, for Level-1 decisions
     'keep *_patTriggerEvent_*_*',
@@ -36,87 +41,58 @@ process.out.outputCommands = [
 import sys, os
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
-[CRAB]
-jobtype = cmssw
-scheduler = condor
+from CRABClient.UserUtilities import config
+config = config()
 
-[CMSSW]
-datasetpath = %(dataset)s
-pset = %(pset_fn)s
-total_number_of_events = -1
-events_per_job = %(events_per_job)s
-get_edm_output = 1
+config.General.requestName = 'effres_%(name)s' 
+config.General.workArea = 'PAT_effres_%(name)s'
 
-[USER]
-ui_working_dir = crab/crab_effres_%(name)s
-copy_data = 1
-storage_element = T3_US_FNALLPC
-check_user_remote_dir = 0
-publish_data = 1
-publish_data_name = effres_%(name)s
-dbs_url_for_publication = https://cmsdbsprod.cern.ch:8443/cms_dbs_ph_analysis_02_writer/servlet/DBSServlet
+config.JobType.pluginName = 'Analysis'
+config.JobType.psetName = '%(pset_fn)s'   
+###config.JobType.priority = 1
+
+config.Data.inputDataset =  '%(dataset)s'
+config.Data.inputDBS = 'global'
+config.Data.splitting = 'EventAwareLumiBased' 
+config.Data.unitsPerJob = 10000
+config.Data.publication = True
+config.Data.publishDBS = 'phys03'
+config.Data.outputDatasetTag = 'effres_%(name)s'
+config.Data.outLFNDirBase = '/store/user/alfloren/PAATuples'
+config.Data.ignoreLocality = True 
+
+config.Site.storageSite = 'T2_CH_CERN'
+config.Site.whitelist = ["T2_CH_CERN"]
+
 '''
-
-    os.system('mkdir -p psets crab')
+    #os.system('mkdir -p psets crab')
     
     just_testing = 'testing' in sys.argv
     
     samples = [
-#        ('dy20',   '/DYToMuMu_M-20_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('dy120',  '/DYToMuMu_M-120_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('dy200',  '/DYToMuMu_M-200_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('dy500',  '/DYToMuMu_M-500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('dy800',  '/DYToMuMu_M-800_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('dy1000', '/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('dy1500', '/DYToMuMu_M-1500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('dy2000', '/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-        ('dy120_c1',  '/DYToMuMu_M-120_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-        ('dy200_c1',  '/DYToMuMu_M-200_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-        ('dy500_c1',  '/DYToMuMu_M-500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-        ('dy800_c1',  '/DYToMuMu_M-800_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-        ('dy1000_c1', '/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-        ('dy1500_c1', '/DYToMuMu_M-1500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-        ('dy2000_c1', '/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-#        ('dy120_c2',  '/DYToMuMu_M-120_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C2-v1/AODSIM'),
-#        ('dy200_c2',  '/DYToMuMu_M-200_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C2-v1/AODSIM'),
-#        ('dy500_c2',  '/DYToMuMu_M-500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C2-v1/AODSIM'),
-#        ('dy800_c2',  '/DYToMuMu_M-800_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C2-v1/AODSIM'),
-#        ('dy1000_c2', '/DYToMuMu_M-1000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C2-v1/AODSIM'),
-#        ('dy1500_c2', '/DYToMuMu_M-1500_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C2-v1/AODSIM'),
-#        ('dy2000_c2', '/DYToMuMu_M-2000_CT10_TuneZ2star_8TeV-powheg-pythia6/Summer12_DR53X-PU_S10_START53_V7C2-v1/AODSIM'),
-#        ('zp750',  '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('zp1000', '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('zp1250', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('zp1500', '/ZprimePSIToMuMu_M-1500_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('zp1750', '/ZprimePSIToMuMu_M-1750_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('zp2000', '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('zp2250', '/ZprimePSIToMuMu_M-2250_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('zp2500', '/ZprimePSIToMuMu_M-2500_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('zp2750', '/ZprimePSIToMuMu_M-2750_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-#        ('zp3000', '/ZprimePSIToMuMu_M-3000_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM'),
-        ('zp750_c1',  '/ZprimePSIToMuMu_M-750_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-        ('zp1000_c1', '/ZprimePSIToMuMu_M-1000_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-        ('zp1250_c1', '/ZprimePSIToMuMu_M-1250_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-        ('zp1500_c1', '/ZprimePSIToMuMu_M-1500_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-        ('zp1750_c1', '/ZprimePSIToMuMu_M-1750_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-        ('zp2000_c1', '/ZprimePSIToMuMu_M-2000_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-        ('zp2250_c1', '/ZprimePSIToMuMu_M-2250_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-        ('zp2500_c1', '/ZprimePSIToMuMu_M-2500_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-        ('zp2750_c1', '/ZprimePSIToMuMu_M-2750_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-        ('zp3000_c1', '/ZprimePSIToMuMu_M-3000_TuneZ2star_8TeV-pythia6/Summer12_DR53X-PU_S10_START53_V7C1-v1/AODSIM'),
-    ]
+       # ('dy50to120',   '/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/RunIIFall15DR76-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/AODSIM'),
+       # ('dy120to200',  '/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/RunIIFall15DR76-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/AODSIM'),
+       # ('dy200to400',  '/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/RunIIFall15DR76-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/AODSIM'),
+        ('dy400to800',  '/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/RunIIFall15DR76-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/AODSIM'),
+        #('dy800to1400',  '/ZToMuMu_NNPDF30_13TeV-powheg_M_800_1400/RunIIFall15DR76-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/AODSIM'),
+       # ('dy1400to2300', '/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/RunIIFall15DR76-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/AODSIM'),
+       # ('dy2300to3500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/RunIIFall15DR76-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/AODSIM'),
+       # ('dy3500to4500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_3500_4500/RunIIFall15DR76-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/AODSIM'),
+        #('dy4500to6000', '/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/RunIIFall15DR76-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v3/AODSIM'),
+
+  ]
 
     for name, dataset in samples:
         print name
-        events_per_job = 26000
+        events_per_job = 5000
 
         pset = open('tuple.py').read()
         #if name == 'dy20':
         #    pset += '\nswitchHLTProcessName(process, "REDIGI38X")\n'
-        pset_fn = 'psets/tuple_effres_crab_%s.py' % name
+        pset_fn = 'tuple_effres_crab_%s.py' % name
         open(pset_fn, 'wt').write(pset)
         
-        open('crab.cfg', 'wt').write(crab_cfg % locals())
+        open('crabConfig.py', 'wt').write(crab_cfg % locals())
         if not just_testing:
-            os.system('crab -create -submit all')
-            os.system('rm crab.cfg')
+            os.system('crab submit -c crabConfig.py')
+            # os.system('rm crab.py')

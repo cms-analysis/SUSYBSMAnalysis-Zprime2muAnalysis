@@ -90,8 +90,7 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
 	  resonance = &*genp;
       }
     }
-    else if(genp->status() == 23) {//it was 3
-      
+    else if(genp->status() == 23 || genp->isHardProcess()) {//it was 3
       if (pdgId == leptonFlavor) {
       ///std::cout<<"leptonFlavor"<<std::endl;
 	// We found the l-. Make sure we didn't find a second one.

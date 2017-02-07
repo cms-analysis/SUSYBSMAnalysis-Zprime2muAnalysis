@@ -33,8 +33,8 @@ class ResolutionAtZ : public edm::EDAnalyzer {
   TH1F* DileptonMass_BB;
   TH1F* DileptonMass_BE;
   TH2F* DileptonMass_2d_vsPt;
-  TH2F* DileptonMass_2d_vsPt_B;
-  TH2F* DileptonMass_2d_vsPt_E;
+  TH2F* DileptonMass_2d_vsPt_BB;
+  TH2F* DileptonMass_2d_vsPt_BE;
 
 };
 
@@ -49,51 +49,38 @@ ResolutionAtZ::ResolutionAtZ(const edm::ParameterSet& cfg)
    consumes<pat::CompositeCandidateCollection>(dilepton_src);
    
 
-
-  std::string title_prefix = cfg.getUntrackedParameter<std::string>("titlePrefix", "");
-  if (title_prefix.size() && title_prefix[title_prefix.size()-1] != ' ')
-    title_prefix += " ";
-  const TString titlePrefix(title_prefix.c_str());
-  
-  edm::Service<TFileService> fs;
-  
-  double ptbins[10]  = { 20, 30, 50, 70, 100, 150, 200, 250, 300, 600};
-
-  DileptonMass    = fs->make<TH1F>("DileptonMass"   , titlePrefix + "dil. mass", 2000, 0, 2000);
-  DileptonMass_BB = fs->make<TH1F>("DileptonMass_BB", titlePrefix + "dil. mass", 2000, 0, 2000);
-  DileptonMass_BE = fs->make<TH1F>("DileptonMass_BE", titlePrefix + "dil. mass", 2000, 0, 2000);
- 
-  DileptonMass_2d_vsPt   = fs->make<TH2F>("DileptonMass_2d_vsPt", titlePrefix + " dil. mass vs pt"  , 200, 50., 150., 9, ptbins);
-  DileptonMass_2d_vsPt_B = fs->make<TH2F>("DileptonMass_2d_vsPt_B", titlePrefix + " dil. mass vs pt", 200, 50., 150., 9, ptbins);
-  DileptonMass_2d_vsPt_E = fs->make<TH2F>("DileptonMass_2d_vsPt_E", titlePrefix + " dil. mass vs pt", 200, 50., 150., 9, ptbins);
+   std::string title_prefix = cfg.getUntrackedParameter<std::string>("titlePrefix", "");
+   if (title_prefix.size() && title_prefix[title_prefix.size()-1] != ' ')
+     title_prefix += " ";
+   const TString titlePrefix(title_prefix.c_str());
+   
+   edm::Service<TFileService> fs;
+   //   double ptbins[10]  = { 20, 30, 50, 70, 100, 150, 200, 250, 300, 600};   
+   DileptonMass    = fs->make<TH1F>("DileptonMass"   , titlePrefix + "dil. mass", 2000, 0, 2000);
+   DileptonMass_BB = fs->make<TH1F>("DileptonMass_BB", titlePrefix + "dil. mass", 2000, 0, 2000);
+   DileptonMass_BE = fs->make<TH1F>("DileptonMass_BE", titlePrefix + "dil. mass", 2000, 0, 2000);
+   
+   DileptonMass_2d_vsPt   = fs->make<TH2F>("DileptonMass_2d_vsPt", titlePrefix + " dil. mass vs pt"    , 200, 50., 150., 500., 0., 2000.);
+   DileptonMass_2d_vsPt_BB = fs->make<TH2F>("DileptonMass_2d_vsPt_BB", titlePrefix + " dil. mass vs pt", 200, 50., 150., 500., 0., 2000.);
+   DileptonMass_2d_vsPt_BE = fs->make<TH2F>("DileptonMass_2d_vsPt_BE", titlePrefix + " dil. mass vs pt", 200, 50., 150., 500., 0., 2000.);
 }
 
 void ResolutionAtZ::fillDileptonMassResolution(const reco::CompositeCandidate& dil) {
   const double mass         = dil.mass();    
-  if (mass < 60. || mass > 120.) return; 
 
   DileptonMass        ->Fill(mass);
   DileptonMass_2d_vsPt->Fill(mass, dil.daughter(0)->pt());
   DileptonMass_2d_vsPt->Fill(mass, dil.daughter(1)->pt());
+  
   if (abs(dil.daughter(0)->eta()) < 1.2 && abs(dil.daughter(1)->eta()) < 1.2) { 
     DileptonMass_BB->Fill(mass);
-    DileptonMass_2d_vsPt_B->Fill(mass, dil.daughter(0)->pt());
-    DileptonMass_2d_vsPt_B->Fill(mass, dil.daughter(1)->pt());
+    DileptonMass_2d_vsPt_BB->Fill(mass, dil.daughter(0)->pt());
+    DileptonMass_2d_vsPt_BB->Fill(mass, dil.daughter(1)->pt());
   }
   else { 
     DileptonMass_BE->Fill(mass);
-    if (abs(dil.daughter(0)->eta()) < 1.2 && abs(dil.daughter(1)->eta()) > 1.2) { 
-      DileptonMass_2d_vsPt_B->Fill(mass, dil.daughter(0)->pt());
-      DileptonMass_2d_vsPt_E->Fill(mass, dil.daughter(1)->pt());
-    }
-    else if (abs(dil.daughter(1)->eta()) < 1.2 && abs(dil.daughter(0)->eta()) > 1.2) {
-      DileptonMass_2d_vsPt_B->Fill(mass, dil.daughter(1)->pt());
-      DileptonMass_2d_vsPt_E->Fill(mass, dil.daughter(0)->pt());
-    }
-    else { 
-      DileptonMass_2d_vsPt_E->Fill(mass, dil.daughter(0)->pt());
-      DileptonMass_2d_vsPt_E->Fill(mass, dil.daughter(1)->pt());
-    }
+    DileptonMass_2d_vsPt_BE->Fill(mass, dil.daughter(0)->pt());
+    DileptonMass_2d_vsPt_BE->Fill(mass, dil.daughter(1)->pt());
   }
 }
 

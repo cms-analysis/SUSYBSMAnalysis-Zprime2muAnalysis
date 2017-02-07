@@ -306,7 +306,7 @@ void ResolutionUsingMC::fillDileptonMassResolution(const reco::CompositeCandidat
     return;
   
   const double mass         = dil.mass();    
-  const double gen_mass     = (hardInteraction.lepPlus->p4() + hardInteraction.lepMinus->p4()).mass();
+  const double gen_mass     = (hardInteraction.lepPlusNoIB->p4() + hardInteraction.lepMinusNoIB->p4()).mass();
 
   const double res_mass     = resonanceP4(dil).mass();
   const double gen_res_mass = hardInteraction.resonance->mass();
@@ -324,17 +324,17 @@ void ResolutionUsingMC::fillDileptonMassResolution(const reco::CompositeCandidat
   DileptonMassInvRes->Fill(invmres);
 
   DileptonMassResVMass_2d   ->Fill(gen_mass,     rdil);
-  if   (abs(hardInteraction.lepPlus->eta())<1.2 && abs(hardInteraction.lepMinus->eta())<1.2 )  DileptonMassResVMass_2d_BB ->Fill(gen_mass,     rdil);
-  else                                                                                         DileptonMassResVMass_2d_BE ->Fill(gen_mass,     rdil);         
+  if   (abs(hardInteraction.lepPlusNoIB->eta())<1.2 && abs(hardInteraction.lepMinusNoIB->eta())<1.2 )  DileptonMassResVMass_2d_BB ->Fill(gen_mass,     rdil);
+  else                                                                                                 DileptonMassResVMass_2d_BE ->Fill(gen_mass,     rdil);
     
-  DileptonMassResVMass_2d_vsPtsum   ->Fill(hardInteraction.lepPlus->pt()+hardInteraction.lepMinus->pt(),     rdil);
-  if (hardInteraction.lepPlus->pt() > hardInteraction.lepMinus->pt())  DileptonMassResVMass_2d_vsLeadPt   ->Fill(hardInteraction.lepPlus->pt(),     rdil);
-  else                                                                 DileptonMassResVMass_2d_vsLeadPt   ->Fill(hardInteraction.lepMinus->pt(),     rdil);
+  DileptonMassResVMass_2d_vsPtsum   ->Fill(hardInteraction.lepPlusNoIB->pt()+hardInteraction.lepMinusNoIB->pt(),     rdil);
+  if (hardInteraction.lepPlusNoIB->pt() > hardInteraction.lepMinusNoIB->pt())  DileptonMassResVMass_2d_vsLeadPt   ->Fill(hardInteraction.lepPlusNoIB->pt(),     rdil);
+  else                                                                 DileptonMassResVMass_2d_vsLeadPt   ->Fill(hardInteraction.lepMinusNoIB->pt(),     rdil);
 
-  if   (abs(hardInteraction.lepPlus->eta()) < 1.2) DileptonMassResVMass_2d_vsPt_B ->Fill(hardInteraction.lepPlus->pt(),     rdil);
-  else                                             DileptonMassResVMass_2d_vsPt_E ->Fill(hardInteraction.lepPlus->pt(),     rdil);
-  if   (abs(hardInteraction.lepMinus->eta()) < 1.2) DileptonMassResVMass_2d_vsPt_B ->Fill(hardInteraction.lepMinus->pt(),     rdil);
-  else                                              DileptonMassResVMass_2d_vsPt_E ->Fill(hardInteraction.lepMinus->pt(),     rdil);
+  if   (abs(hardInteraction.lepPlusNoIB->eta()) < 1.2) DileptonMassResVMass_2d_vsPt_B ->Fill(hardInteraction.lepPlusNoIB->pt(),     rdil);
+  else                                             DileptonMassResVMass_2d_vsPt_E ->Fill(hardInteraction.lepPlusNoIB->pt(),     rdil);
+  if   (abs(hardInteraction.lepMinusNoIB->eta()) < 1.2) DileptonMassResVMass_2d_vsPt_B ->Fill(hardInteraction.lepMinusNoIB->pt(),     rdil);
+  else                                              DileptonMassResVMass_2d_vsPt_E ->Fill(hardInteraction.lepMinusNoIB->pt(),     rdil);
   
   DileptonMassResVMass   ->Fill(gen_mass,     rdil*rdil);
   DileptonResMassResVMass->Fill(gen_res_mass, rdilres*rdilres);

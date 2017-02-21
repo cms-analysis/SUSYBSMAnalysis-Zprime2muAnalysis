@@ -302,7 +302,7 @@ void ResolutionUsingMC::fillChargeResolution(const reco::GenParticle* gen_lep, c
 }
 
 void ResolutionUsingMC::fillDileptonMassResolution(const reco::CompositeCandidate& dil) {
-  if (!hardInteraction.IsValid())
+  if (!hardInteraction.IsValidForRes())
     return;
   
   const double mass         = dil.mass();    
@@ -324,13 +324,16 @@ void ResolutionUsingMC::fillDileptonMassResolution(const reco::CompositeCandidat
   DileptonMassInvRes->Fill(invmres);
 
   DileptonMassResVMass_2d   ->Fill(gen_mass,     rdil);
-  if   (abs(hardInteraction.lepPlusNoIB->eta())<1.2 && abs(hardInteraction.lepMinusNoIB->eta())<1.2 )  DileptonMassResVMass_2d_BB ->Fill(gen_mass,     rdil);
-  else                                                                                                 DileptonMassResVMass_2d_BE ->Fill(gen_mass,     rdil);
-    
+  if (dil.daughter(0)->eta()<=1.2 && dil.daughter(1)->eta()<=1.2 && dil.daughter(0)->eta()>=-1.2 && dil.daughter(1)->eta()>=-1.2) 
+    //    if   (abs(dil.daughter(0)->eta())<1.2 && abs(dil.daughter(1)->eta())<1.2 )   
+    DileptonMassResVMass_2d_BB ->Fill(gen_mass,     rdil);
+  else                                                                         
+    DileptonMassResVMass_2d_BE ->Fill(gen_mass,     rdil);
+  
   DileptonMassResVMass_2d_vsPtsum   ->Fill(hardInteraction.lepPlusNoIB->pt()+hardInteraction.lepMinusNoIB->pt(),     rdil);
   if (hardInteraction.lepPlusNoIB->pt() > hardInteraction.lepMinusNoIB->pt())  DileptonMassResVMass_2d_vsLeadPt   ->Fill(hardInteraction.lepPlusNoIB->pt(),     rdil);
   else                                                                 DileptonMassResVMass_2d_vsLeadPt   ->Fill(hardInteraction.lepMinusNoIB->pt(),     rdil);
-
+  
   if   (abs(hardInteraction.lepPlusNoIB->eta()) < 1.2) DileptonMassResVMass_2d_vsPt_B ->Fill(hardInteraction.lepPlusNoIB->pt(),     rdil);
   else                                             DileptonMassResVMass_2d_vsPt_E ->Fill(hardInteraction.lepPlusNoIB->pt(),     rdil);
   if   (abs(hardInteraction.lepMinusNoIB->eta()) < 1.2) DileptonMassResVMass_2d_vsPt_B ->Fill(hardInteraction.lepMinusNoIB->pt(),     rdil);
@@ -381,6 +384,7 @@ void ResolutionUsingMC::fillDileptonHistos(const pat::CompositeCandidateCollecti
 void ResolutionUsingMC::analyze(const edm::Event& event, const edm::EventSetup& setup) {
   hardInteraction.Fill(event);
   
+  std::cout << event.id().run() << " " << event.id().event() << std::endl;
   edm::Handle<edm::View<reco::Candidate> > leptons;
   event.getByLabel(lepton_src, leptons);
 
@@ -393,7 +397,7 @@ void ResolutionUsingMC::analyze(const edm::Event& event, const edm::EventSetup& 
 
   edm::Handle<pat::CompositeCandidateCollection> dileptons;
   event.getByLabel(dilepton_src, dileptons);
-
+  
   if (!dileptons.isValid())
     edm::LogWarning("DileptonHandleInvalid") << "tried to get " << dilepton_src << " and failed!";
   else {

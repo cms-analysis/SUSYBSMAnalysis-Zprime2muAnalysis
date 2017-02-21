@@ -31,6 +31,7 @@ struct HardInteraction {
 
   // Return whether all the pointers are valid.
   bool IsValid() const;
+  bool IsValidForRes() const;
 
   // Store pointers to all the particles from the genParticles collection.
   void Fill(const reco::GenParticleCollection& genParticles);

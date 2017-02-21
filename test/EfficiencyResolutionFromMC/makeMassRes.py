@@ -12,7 +12,8 @@ import ROOT
 ROOT.gROOT.SetBatch(True)
 sys.argv = oldargv
     
-mrange = [100, 200, 300, 400, 600, 800, 1000, 1400, 1800, 2200, 2800, 3400, 4000, 5000, 6000] #, 5500, 6000] 
+mrange = [120, 200, 300, 400, 600, 800, 1000, 1300, 1600, 2000, 2500, 3100, 3800, 4500, 5500]
+#mrange = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500]
 
 ROOT.gROOT.LoadMacro("cruijff.C+")
 
@@ -52,10 +53,12 @@ def loadHistos(inputfile,region,rebin):
     for i,h in enumerate(histos): 
         xmin,xmax = getBinRange(res,mrange[i],mrange[i+1])
         histos[i] = res.ProjectionY("res%s%s" %(mrange[i],region), xmin, xmax)
-        histos[i].Rebin(10)
+        histos[i].Rebin(5)
         
-        if (histos[i].Integral() < 1000): 
-            histos[i].Rebin(2)
+#        if (histos[i].Integral() < 5000): 
+#            histos[i].Rebin(2)
+        
+
         
     return histos
 
@@ -68,11 +71,14 @@ def doFitGeneric(hist,output,rap="BB",fit="cruijff",syst=False):
     chi2 = []
     for i,h in enumerate(hist):
         if ("cruijff" in fit):
-            fit_min = h.GetMean()-2.3*h.GetRMS()
-            fit_max = h.GetMean()+1.5*h.GetRMS()
-        if ("crystal" in fit):
-            fit_min = h.GetMean() - 2.5*h.GetRMS() 
-            fit_max = h.GetMean() + 1.2*h.GetRMS()
+            fit_min = h.GetMean()-2.0*h.GetRMS()
+            fit_max = h.GetMean()+1.7*h.GetRMS()
+        elif ("crystal" in fit):
+            fit_min = h.GetMean() - 2.3*h.GetRMS() 
+            fit_max = h.GetMean() + 1.0*h.GetRMS()
+        else: 
+            fit_min = FITMIN
+            fit_max = FITMAX
 
         print "+++++++++++++++++++++++++++++++++++++++++"
         print "Fitting histogram for %d < m_{ll} <%d, with Range=[%3.2f, %3.2f]" %(mrange[i],mrange[i+1],fit_min,fit_max)
@@ -132,7 +138,7 @@ def doFitGeneric(hist,output,rap="BB",fit="cruijff",syst=False):
         h.SetLineColor(ROOT.kBlack)
         h.SetMarkerStyle(20)
         h.SetMarkerSize(0.8)
-        h.GetXaxis().SetRangeUser(FITMIN,FITMAX)
+        h.GetXaxis().SetRangeUser(fit_min,fit_max)
 
         h.Draw("E")
         funct.Draw("SAME")
@@ -213,8 +219,7 @@ def doFitWithSyst(hist,output,nrms,rapidity):
 def drawMassResGeneric(hist,output,rapidity,funct="cruijff"):
     mass = []
     merr = []
-    for i,m in enumerate(mrange):
-        if m==6000: break
+    for i in range(len(mrange)-1):
         mass.append(mrange[i]+(mrange[i+1]-mrange[i])/2)
         merr.append((mrange[i+1]-mrange[i])/2)
     
@@ -229,6 +234,10 @@ def drawMassResGeneric(hist,output,rapidity,funct="cruijff"):
     c2.cd()
 
     fun  = ROOT.TF1("fun","pol4")
+    fun.SetParNames("A","B","C","D","E")            
+    for i in range(fun.GetNpar()): 
+        fun.ReleaseParameter(i)
+        fun.SetParameter(i,0.)
 
     param = [ROOT.TGraphErrors(len(mass)) for x in range((len(pars)/len(mass))+1)] 
     res = ROOT.TGraphErrors(len(mass))
@@ -256,33 +265,68 @@ def drawMassResGeneric(hist,output,rapidity,funct="cruijff"):
         f.SetLineColor(ROOT.kBlue)
         f.SetFillColor(0)
         f.GetXaxis().SetTitle("m(#mu^{+}#mu^{-}) [GeV]")
-        f.GetXaxis().SetRangeUser(100,6000)
+        f.GetXaxis().SetRangeUser(mrange[0],mrange[len(mrange)-1])
         if ("chi2" in f.GetName()): 
             f.GetYaxis().SetRangeUser(0,20)            
 
         if "Sigma" in f.GetName():
-            f.GetYaxis().SetRangeUser(0,0.2)
+            f.GetYaxis().SetRangeUser(0,0.15)
 
-#        if "Alpha" in f.GetName():
-#            f.GetYaxis().SetRangeUser(0,1.0)
+        if "AlphaR" in f.GetName():
+            f.GetYaxis().SetRangeUser(0,.4)
 
+        if "AlphaL" in f.GetName():
+            f.GetYaxis().SetRangeUser(0.1,.6)
+
+        if "Mean" in f.GetName():
+            f.GetYaxis().SetRangeUser(-0.035,0.05)
+                        
         f.Draw("AP E0")
         
         ## FIT PARAMETERS 
-        if ("Sigma" in f.GetName() or "Alpha" in f.GetName()):
-            fun.SetParNames("A","B","C","D","E")            
+        for i in range(fun.GetNpar()): 
+            fun.ReleaseParameter(i)
+            fun.SetParameter(i,0.)
+        
+        if ("chi2" not in f.GetName()): 
             if ("Sigma" in f.GetName()):  
-                fun.SetParameters(0.,1E-5,-1.E-10,1E-12,-1E-16)
+                print "Fitting Sigma"
+                fun.SetParameters(0.,1E-5,-1.E-8,2E-12,-2E-16)
+                fun.SetParLimits(1, 1.0E-6, 1.0E-4)
+                fun.SetParLimits(2,-1.0E-7,-1.0E-9)
+#                fun.SetParLimits(4,-3.0E-16,-1E-16)
+                #                fun.FixParameter(3,0.)
+#                fun.FixParameter(3,0.)
+#                fun.FixParameter(4,0.)
+            elif "AlphaR" in f.GetName(): 
+                fun.SetParameters(0.25, 1E-6, -1.E-9, 1.E-12, -1.E-16)
+                fun.SetParLimits(1, 1E-7, 1E-5)
+                fun.SetParLimits(2, -1E-8 ,-1E-10)                
+                fun.SetParLimits(3, 1E-14 ,1E-11)                
+                fun.FixParameter(4,0.)
                 fun.FixParameter(3,0.)
-#                fun.FixParameter(3,0.)
-#                fun.FixParameter(4,0.)
-            else: 
-                fun.SetParameters(0.1,0.,0.,0.,0.)
-#                fun.FixParameter(4,0.)
-#                fun.FixParameter(3,0.)
+#                fun.FixParameter(2,0.)
+#                fun.FixParameter(1,0.)
+            elif "AlphaL" in f.GetName(): 
+                fun.SetParameters(0.1,-1E-6, 1E-9, -1.E-13, 1E-16)
+                fun.SetParLimits(1, -5E-5, -5E-7)
+                fun.SetParLimits(2, 1E-10, 1E-8)                
+                fun.SetParLimits(3, -1E-12, -1E-15)
+#                fun.SetParLimits(4, 1E-18, 1E-10)
+                fun.FixParameter(4,0.)
+                fun.FixParameter(3,0.)
+#                fun.FixParameter(2,0.)
+            elif "Mean" in f.GetName():
+                fun.SetParameters(0.004,-3E-5,1E-10,-1E-12,1.E-16)
+                fun.SetParLimits(1,-1E-4,-1E-6)
+                fun.SetParLimits(2, 1E-12,1E-8)
+                fun.SetParLimits(3,-1E-12,-5E-14)
+                fun.FixParameter(4,0.)
+                
             f.Fit(fun,"MBFE+")            
             fun.Draw("SAME")
 
+        
             latexFit = ROOT.TLatex()
             latexFit.SetTextFont(42)
             latexFit.SetTextSize(0.030)
@@ -356,8 +400,8 @@ def makeMassRes(inputfile,output,funct):
     resBB.GetYaxis().SetTitle("Dimuon Mass Resolution")
 #    resBB.GetYaxis().SetTitleOffset(1.5)
     resBB.GetXaxis().SetTitle("m(#mu^{+}#mu^{-}) [GeV]")
-    resBB.GetYaxis().SetRangeUser(0,.25)
-    resBB.GetXaxis().SetRangeUser(100,6000)
+    resBB.GetYaxis().SetRangeUser(0,.15)
+    resBB.GetXaxis().SetRangeUser(mrange[0],mrange[len(mrange)-1])
     resBB.GetFunction("fun").SetLineColor(ROOT.kRed+1)
     resBB.Draw("AP E0")
     
@@ -370,8 +414,8 @@ def makeMassRes(inputfile,output,funct):
     resBE.GetYaxis().SetTitle("Dimuon Mass Resolution")
     resBE.GetYaxis().SetTitleOffset(1.5)
  #   resBE.GetXaxis().SetTitle("m(#mu^{+}#mu^{-}) [GeV]")
-    resBE.GetYaxis().SetRangeUser(0,.25)
-    resBE.GetXaxis().SetRangeUser(100,6000)
+    resBE.GetYaxis().SetRangeUser(0,.15)
+    resBE.GetXaxis().SetRangeUser(mrange[0],mrange[len(mrange)-1])
     resBE.GetFunction("fun").SetLineColor(ROOT.kGreen+2)
     resBE.Draw("PE0 SAME")
 

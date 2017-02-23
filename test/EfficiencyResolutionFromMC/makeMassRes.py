@@ -1,9 +1,10 @@
 #!/usr/bin/python
 
 # import ROOT in batch mode
-import sys
+import sys,os
 import argparse
 import math
+from setTDRStyle import setTDRStyle
 
 oldargv = sys.argv[:]
 sys.argv = [ '-b-' ]
@@ -11,228 +12,182 @@ import ROOT
 ROOT.gROOT.SetBatch(True)
 sys.argv = oldargv
     
+mrange = [120, 200, 300, 400, 600, 800, 1000, 1300, 1600, 2000, 2500, 3100, 3800, 4500, 5500]
+#mrange = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500]
+
+ROOT.gROOT.LoadMacro("cruijff.C+")
+
+FITMIN = -1.
+FITMAX =  1. 
+def getBinRange(histo,mlow,mhigh):
+    xmin =  0
+    xmax = -1
+    nbins = histo.GetNbinsX()
+    for bin in range(nbins):
+        if mlow==histo.GetXaxis().GetBinLowEdge(bin): 
+            xmin = bin
+        if mhigh==histo.GetXaxis().GetBinLowEdge(bin):
+            xmax = bin
+    return xmin,xmax
+    
 def loadHistos(inputfile,region,rebin):
     _file = ROOT.TFile(inputfile)
 
-    histos = []
+    res = ROOT.TH2F()
+    res.SetDirectory(0)
+    ROOT.TH1.AddDirectory(ROOT.kFALSE)    
+    histoname = "Resolutiontunepnew"
+    if ("BB" in region):
+        res = _file.Get("%s/DileptonMassResVMass_2d_BB" %(histoname)).Clone()
+    elif ("BE" in region):
+        res = _file.Get("%s/DileptonMassResVMass_2d_BE" %(histoname)).Clone()
 
-    Res_0to500     = ROOT.TH1F()
-    Res_500to1000  = ROOT.TH1F()
-    Res_1000to1500 = ROOT.TH1F()
-    Res_1500to2000 = ROOT.TH1F()
-    Res_2000to2500 = ROOT.TH1F()
-    Res_2500to3000 = ROOT.TH1F()
-    Res_3000to3500 = ROOT.TH1F()
-    Res_3500to4000 = ROOT.TH1F()
-    Res_4000to4500 = ROOT.TH1F()
-    Res_4500to5000 = ROOT.TH1F()
-    
-    Res_0to500     .SetDirectory(0)
-    Res_500to1000  .SetDirectory(0)
-    Res_1000to1500 .SetDirectory(0)
-    Res_1500to2000 .SetDirectory(0)
-    Res_2000to2500 .SetDirectory(0)
-    Res_2500to3000 .SetDirectory(0)
-    Res_3000to3500 .SetDirectory(0)
-    Res_3500to4000 .SetDirectory(0)
-    Res_4000to4500 .SetDirectory(0)
-    Res_4500to5000 .SetDirectory(0)
-    ROOT.TH1.AddDirectory(ROOT.kFALSE)
-    
-    if ("barrel" in region):
-        Res_0to500     = _file.Get("DileptonMassResVMass_0to500BB").Clone()
-        Res_500to1000  = _file.Get("DileptonMassResVMass_500to1000BB").Clone()
-        Res_1000to1500 = _file.Get("DileptonMassResVMass_1000to1500BB").Clone()
-        Res_1500to2000 = _file.Get("DileptonMassResVMass_1500to2000BB").Clone()
-        Res_2000to2500 = _file.Get("DileptonMassResVMass_2000to2500BB").Clone()
-        Res_2500to3000 = _file.Get("DileptonMassResVMass_2500to3000BB").Clone()
-        Res_3000to3500 = _file.Get("DileptonMassResVMass_3000to3500BB").Clone()
-        Res_3500to4000 = _file.Get("DileptonMassResVMass_3500to4000BB").Clone()
-        Res_4000to4500 = _file.Get("DileptonMassResVMass_4000to4500BB").Clone()
-        Res_4500to5000 = _file.Get("DileptonMassResVMass_4500to5000BB").Clone()
-    elif ("other" in region):
-        Res_0to500     = _file.Get("DileptonMassResVMass_0to500BEp").Clone()
-        Res_500to1000  = _file.Get("DileptonMassResVMass_500to1000BEp").Clone()
-        Res_1000to1500 = _file.Get("DileptonMassResVMass_1000to1500BEp").Clone()
-        Res_1500to2000 = _file.Get("DileptonMassResVMass_1500to2000BEp").Clone()
-        Res_2000to2500 = _file.Get("DileptonMassResVMass_2000to2500BEp").Clone()
-        Res_2500to3000 = _file.Get("DileptonMassResVMass_2500to3000BEp").Clone()
-        Res_3000to3500 = _file.Get("DileptonMassResVMass_3000to3500BEp").Clone()
-        Res_3500to4000 = _file.Get("DileptonMassResVMass_3500to4000BEp").Clone()
-        Res_4000to4500 = _file.Get("DileptonMassResVMass_4000to4500BEp").Clone()
-        Res_4500to5000 = _file.Get("DileptonMassResVMass_4500to5000BEp").Clone()
-
-        Res_0to500     .Add( _file.Get("DileptonMassResVMass_0to500BEm").Clone()    )
-        Res_500to1000  .Add( _file.Get("DileptonMassResVMass_500to1000BEm").Clone() )
-        Res_1000to1500 .Add( _file.Get("DileptonMassResVMass_1000to1500BEm").Clone())
-        Res_1500to2000 .Add( _file.Get("DileptonMassResVMass_1500to2000BEm").Clone())
-        Res_2000to2500 .Add( _file.Get("DileptonMassResVMass_2000to2500BEm").Clone())
-        Res_2500to3000 .Add( _file.Get("DileptonMassResVMass_2500to3000BEm").Clone())
-        Res_3000to3500 .Add( _file.Get("DileptonMassResVMass_3000to3500BEm").Clone())
-        Res_3500to4000 .Add( _file.Get("DileptonMassResVMass_3500to4000BEm").Clone())
-        Res_4000to4500 .Add( _file.Get("DileptonMassResVMass_4000to4500BEm").Clone())
-        Res_4500to5000 .Add( _file.Get("DileptonMassResVMass_4500to5000BEm").Clone())
-                    
-    elif ("all" in region):
-        Res_0to500     = _file.Get("DileptonMassResVMass_0to500").Clone()
-        Res_500to1000  = _file.Get("DileptonMassResVMass_500to1000").Clone()
-        Res_1000to1500 = _file.Get("DileptonMassResVMass_1000to1500").Clone()
-        Res_1500to2000 = _file.Get("DileptonMassResVMass_1500to2000").Clone()
-        Res_2000to2500 = _file.Get("DileptonMassResVMass_2000to2500").Clone()
-        Res_2500to3000 = _file.Get("DileptonMassResVMass_2500to3000").Clone()
-        Res_3000to3500 = _file.Get("DileptonMassResVMass_3000to3500").Clone()
-        Res_3500to4000 = _file.Get("DileptonMassResVMass_3500to4000").Clone()
-        Res_4000to4500 = _file.Get("DileptonMassResVMass_4000to4500").Clone()
-        Res_4500to5000 = _file.Get("DileptonMassResVMass_4500to5000").Clone()
+    histos = [ROOT.TH1D() for x in range(len(mrange)-1)]
+    for h in histos:
+        h.SetDirectory(0)
+        ROOT.TH1.AddDirectory(ROOT.kFALSE)    
         
-    elif ("BB" in region):
-        Res_0to500     = _file.Get("DileptonMassResVMass_0to500BB").Clone()
-        Res_500to1000  = _file.Get("DileptonMassResVMass_500to1000BB").Clone()
-        Res_1000to1500 = _file.Get("DileptonMassResVMass_1000to1500BB").Clone()
-        Res_1500to2000 = _file.Get("DileptonMassResVMass_1500to2000BB").Clone()
-        Res_2000to2500 = _file.Get("DileptonMassResVMass_2000to2500BB").Clone()
-        Res_2500to3000 = _file.Get("DileptonMassResVMass_2500to3000BB").Clone()
-        Res_3000to3500 = _file.Get("DileptonMassResVMass_3000to3500BB").Clone()
-        Res_3500to4000 = _file.Get("DileptonMassResVMass_3500to4000BB").Clone()
-        Res_4000to4500 = _file.Get("DileptonMassResVMass_4000to4500BB").Clone()
-        Res_4500to5000 = _file.Get("DileptonMassResVMass_4500to5000BB").Clone()
-    elif ("BEp" in region):
-        Res_0to500     = _file.Get("DileptonMassResVMass_0to500BEp").Clone()
-        Res_500to1000  = _file.Get("DileptonMassResVMass_500to1000BEp").Clone()
-        Res_1000to1500 = _file.Get("DileptonMassResVMass_1000to1500BEp").Clone()
-        Res_1500to2000 = _file.Get("DileptonMassResVMass_1500to2000BEp").Clone()
-        Res_2000to2500 = _file.Get("DileptonMassResVMass_2000to2500BEp").Clone()
-        Res_2500to3000 = _file.Get("DileptonMassResVMass_2500to3000BEp").Clone()
-        Res_3000to3500 = _file.Get("DileptonMassResVMass_3000to3500BEp").Clone()
-        Res_3500to4000 = _file.Get("DileptonMassResVMass_3500to4000BEp").Clone()
-        Res_4000to4500 = _file.Get("DileptonMassResVMass_4000to4500BEp").Clone()
-        Res_4500to5000 = _file.Get("DileptonMassResVMass_4500to5000BEp").Clone()
-    elif ("BEm" in region):
-        Res_0to500     = _file.Get("DileptonMassResVMass_0to500BEm").Clone()
-        Res_500to1000  = _file.Get("DileptonMassResVMass_500to1000BEm").Clone()
-        Res_1000to1500 = _file.Get("DileptonMassResVMass_1000to1500BEm").Clone()
-        Res_1500to2000 = _file.Get("DileptonMassResVMass_1500to2000BEm").Clone()
-        Res_2000to2500 = _file.Get("DileptonMassResVMass_2000to2500BEm").Clone()
-        Res_2500to3000 = _file.Get("DileptonMassResVMass_2500to3000BEm").Clone()
-        Res_3000to3500 = _file.Get("DileptonMassResVMass_3000to3500BEm").Clone()
-        Res_3500to4000 = _file.Get("DileptonMassResVMass_3500to4000BEm").Clone()
-        Res_4000to4500 = _file.Get("DileptonMassResVMass_4000to4500BEm").Clone()
-        Res_4500to5000 = _file.Get("DileptonMassResVMass_4500to5000BEm").Clone()
-    else:
-        Res_0to500     = _file.Get("DileptonMassResVMass_0to500%s"%region).Clone()
-        Res_500to1000  = _file.Get("DileptonMassResVMass_500to1000%s"%region).Clone()
-        Res_1000to1500 = _file.Get("DileptonMassResVMass_1000to1500%s"%region).Clone()
-        Res_1500to2000 = _file.Get("DileptonMassResVMass_1500to2000%s"%region).Clone()
-        Res_2000to2500 = _file.Get("DileptonMassResVMass_2000to2500%s"%region).Clone()
-        Res_2500to3000 = _file.Get("DileptonMassResVMass_2500to3000%s"%region).Clone()
-        Res_3000to3500 = _file.Get("DileptonMassResVMass_3000to3500%s"%region).Clone()
-        Res_3500to4000 = _file.Get("DileptonMassResVMass_3500to4000%s"%region).Clone()
-        Res_4000to4500 = _file.Get("DileptonMassResVMass_4000to4500%s"%region).Clone()
-        Res_4500to5000 = _file.Get("DileptonMassResVMass_4500to5000%s"%region).Clone()
-        
-    histos.append(Res_0to500    )
-    histos.append(Res_500to1000 )
-    histos.append(Res_1000to1500)
-    histos.append(Res_1500to2000)
-    histos.append(Res_2000to2500)
-    histos.append(Res_2500to3000)
-    histos.append(Res_3000to3500)
-    histos.append(Res_3500to4000)
-    histos.append(Res_4000to4500)
-    histos.append(Res_4500to5000)
-
-#        if(h.Integral() < 5000.): 
-#            print "Rebinning histos with value: %d" %(rebin*2)
-#            h.Rebin(rebin*2) 
-#        else:
-#            print "Rebinning histos with value: %d" %(rebin)            
-#            h.Rebin(rebin) 
-        
-    _file.Close()
-    return histos
-
-def doFit(hist,output,nrms,rap="BB"):
     c1 = ROOT.TCanvas("c1","c1",700,700)
     c1.cd()
 
-    leg = ROOT.TLegend(.20,.7,.30,.80,"","brNDC");
-    leg.SetTextFont(42);
-    leg.SetBorderSize(0);
-    leg.SetTextSize(.02);
+    for i,h in enumerate(histos): 
+        xmin,xmax = getBinRange(res,mrange[i],mrange[i+1])
+        histos[i] = res.ProjectionY("res%s%s" %(mrange[i],region), xmin, xmax)
+        histos[i].Rebin(5)
+        
+#        if (histos[i].Integral() < 5000): 
+#            histos[i].Rebin(2)
+        
 
-    mrange = [0,500,1000,1500,2000,2500,3000,3500,4000,4500,5000]
-    sig    = []
-    sige   = []
-    alpha  = []
-    alphae = []
-    n      = []
-    ne     = []
+        
+    return histos
+
+def doFitGeneric(hist,output,rap="BB",fit="cruijff",syst=False):
+    c1 = ROOT.TCanvas("c1","c1",700,700)
+    c1.cd()
+
+    pars = []
+    errs = []
+    chi2 = []
     for i,h in enumerate(hist):
+        if ("cruijff" in fit):
+            fit_min = h.GetMean()-2.0*h.GetRMS()
+            fit_max = h.GetMean()+1.7*h.GetRMS()
+        elif ("crystal" in fit):
+            fit_min = h.GetMean() - 2.3*h.GetRMS() 
+            fit_max = h.GetMean() + 1.0*h.GetRMS()
+        else: 
+            fit_min = FITMIN
+            fit_max = FITMAX
+
         print "+++++++++++++++++++++++++++++++++++++++++"
-        print "Fitting histogram for %d < m_{ll} <%d" %(mrange[i],mrange[i+1])
+        print "Fitting histogram for %d < m_{ll} <%d, with Range=[%3.2f, %3.2f]" %(mrange[i],mrange[i+1],fit_min,fit_max)
         print "+++++++++++++++++++++++++++++++++++++++++\n"
 
-        fit_min = h.GetMean() - 1.3*nrms*h.GetRMS() 
-        fit_max = h.GetMean() + 0.7*nrms*h.GetRMS()
-
+ 
         # fit with a gaussian to use parameters of the fit for the CB...
-        gaus = ROOT.TF1("gaus_%s"%(nrms),"gaus",fit_min,fit_max)
-        gaus.SetLineColor(ROOT.kBlue)
+        gaus = ROOT.TF1("gaus","gaus",fit_min,fit_max)
         gaus.SetParameters(0,h.GetMean(),h.GetRMS())
-        h.Fit("gaus_%s"%(nrms),"M0R+")
+        h.Fit("gaus","M0R+")
         
-        crystal = ROOT.TF1("crystal_%s"%(nrms),"crystalball",fit_min,fit_max)
-        crystal.SetLineColor(ROOT.kRed)
-        
-        tmp_mean = gaus.GetParameter(1)
-        tmp_sig  = gaus.GetParameter(2)
-        min_mean = tmp_mean+0.5*tmp_mean
-        max_mean = tmp_mean-0.5*tmp_mean
-        crystal.SetParameters(gaus.GetParameter(0), tmp_mean, tmp_sig, 1.4, 2)
-#        crystal.SetParLimits(0, 0, 2*gaus.GetParameter(0)) # //const
-        crystal.SetParLimits(1, min_mean, max_mean)
-        crystal.SetParLimits(2, 0, 2.5*h.GetRMS())# //sigma
-        crystal.SetParLimits(3, 0.5, 2.)# //alpha
-#        crystal.SetParLimits(4, 0., 3.)# //alpha
-        
-#        crystal.SetParLimits(4, 0, 5.)
-#            crystal.SetParameters(gaus.GetParameter(0), gaus.GetParameter(1), gaus.GetParameter(2), -1.6, 7.85)
-#            crystal.SetParLimits(3, -3, 3)# //alpha
-        
-        h.Fit("crystal_%s"%(nrms),"M0R+")
-        
-        # crystal
-        sig   .append(crystal.GetParameter(2))
-        sige  .append(crystal.GetParError(2))
-        alpha .append(crystal.GetParameter(3))  
-        alphae.append(crystal.GetParError(3))
-        n     .append(crystal.GetParameter(4))  #exponential parameter 
-        ne    .append(crystal.GetParError(4))   #exponential parameter
+        funct = ROOT.TF1()
+        if "cruijff" in fit: 
+            print ">>>>>> Using Cruijff >>>>>>>>"
+            funct = ROOT.TF1(fit,ROOT.cruijff,fit_min,fit_max,5)
+            funct.SetParameters(gaus.GetParameter(0), gaus.GetParameter(1), gaus.GetParameter(2), 0., 0.) #15, 0.001)             
+            funct.SetParNames("Constant","Mean","Sigma","AlphaL","AlphaR")        
+
+        elif "crystal" in fit: 
+            print ">>>>>>>>  Using CRYSTAL BALL >>>>>>>>"
+            funct = ROOT.TF1(fit,"crystalball",fit_min,fit_max)
+            funct.SetParameters(gaus.GetParameter(0), gaus.GetParameter(1), gaus.GetParameter(2), 1.4, 1.5)
+#            funct.SetParLimits(1, gaus.GetParameter(1)*0.5, gaus.GetParameter(1)*1.5)
+            funct.SetParLimits(2, 0., 2.5*h.GetRMS())
+            funct.SetParLimits(3, 0.5, 2.)
+            funct.SetParLimits(4, 0., 3.)
+            
+        funct.SetLineColor(ROOT.kBlue)
+        funct.SetLineWidth(2)
+        h.Fit(fit,"M0R+")
+
+        if syst: 
+            if ("cruijff" in fit): 
+                print ">>>>>>>>  Using CRYSTAL BALL for systematics >>>>>>>>"
+                systfunc = ROOT.TF1("systfunc","crystalball",h.GetMean() - 2.5*h.GetRMS(),h.GetMean() + 1.2*h.GetRMS())
+                systfunc.SetParameters(funct.GetParameter(0), funct.GetParameter(1), funct.GetParameter(2), 1.4, 2.)
+            elif ("crystal" in fit): 
+                print ">>>>>>>>  Using CRUIJFF for systematics >>>>>>>>"
+                systfunc = ROOT.TF1("systfunc",ROOT.cruijff, h.GetMean() - 2.3*h.GetRMS(),  h.GetMean() + 1.5*h.GetRMS(),5)
+                systfunc.SetParameters(funct.GetParameter(0), funct.GetParameter(1), funct.GetParameter(2), 0., 0.) #15, 0.001)             
+                systfunc.SetParNames("Constant","Mean","Sigma","AlphaL","AlphaR")        
+            systfunc.SetLineColor(ROOT.kRed)
+            h.Fit("systfunc","M0R+")
+
+        for par in range(funct.GetNpar()-1):
+            pars.append(funct.GetParameter(par+1))
+            if syst and ("Mean" in funct.GetParName(par+1) or "Sigma" in funct.GetParName(par+1)): 
+                sys =1-systfunc.GetParameter(par+1)/funct.GetParameter(par+1)
+                sys = sys*funct.GetParameter(par+1)
+            else:
+                sys = 0.
+            errs.append(math.sqrt(sys*sys+funct.GetParError(par+1)*funct.GetParError(par+1)))
+        chi2.append(funct.GetChisquare()/funct.GetNDF())
 
         h.SetTitle("Mass resolution for %d < m_{ll} <%d" %(mrange[i],mrange[i+1]))
         h.GetXaxis().SetTitle("m_{ll}^{RECO} / m_{ll}^{GEN} - 1")
         h.SetLineColor(ROOT.kBlack)
         h.SetMarkerStyle(20)
-        h.SetMarkerSize(0.7)
-    
-        if (i==0):
-            leg.AddEntry(h,"DY simulation")
-#            leg.AddEntry(h.GetFunction("gaus_%s"%(nrms)),"Gaussian Fit","L")
-            leg.AddEntry(h.GetFunction("crystal_%s"%(nrms)),"CrystalBall Fit","L")
-            
-        h.Draw("E")
-        crystal.Draw("SAME")
-        leg.Draw("SAME")
-        
-        ROOT.gSystem.MakeDirectory("%s/%1.1fRMS" %(output,nrms))
-        saveas = "/%1.1fRMS/MassRes_M%d_%d_%s" %(nrms,mrange[i],mrange[i+1],rap)
-        c1.SaveAs(output+saveas+".root")
-        c1.SaveAs(output+saveas+".C")
-        c1.SaveAs(output+saveas+".png")
-        c1.SaveAs(output+saveas+".pdf")
+        h.SetMarkerSize(0.8)
+        h.GetXaxis().SetRangeUser(fit_min,fit_max)
 
+        h.Draw("E")
+        funct.Draw("SAME")
+#        systfunc.Draw("SAME")
+
+        latex = ROOT.TLatex()
+        latex.SetTextFont(42)
+        latex.SetTextAlign(31)
+        latex.SetTextSize(0.04)
+        latex.SetNDC(True)
+        latexCMS = ROOT.TLatex()
+        latexCMS.SetTextFont(61)
+        latexCMS.SetTextSize(0.055)
+        latexCMS.SetNDC(True)
+        latexCMSExtra = ROOT.TLatex()
+        latexCMSExtra.SetTextFont(52)
+        latexCMSExtra.SetTextSize(0.03)
+        latexCMSExtra.SetNDC(True)
+
+        latex.DrawLatex(0.95, 0.96, "(13 TeV)")
+
+        cmsExtra = "Simulation" 
+        latexCMS.DrawLatex(0.78,0.88,"CMS")
+        yLabelPos = 0.84
+        latexCMSExtra.DrawLatex(0.78,yLabelPos,"%s"%(cmsExtra))
+
+        latexFit1 = ROOT.TLatex()
+        latexFit1.SetTextFont(61)
+        latexFit1.SetTextSize(0.035)
+        latexFit1.SetNDC(True)
+        latexFit1.DrawLatex(0.19, 0.84, "%d < m <%d" %(mrange[i],mrange[i+1]))
+        
+        latexFit = ROOT.TLatex()
+        latexFit.SetTextFont(42)
+        latexFit.SetTextSize(0.030)
+        latexFit.SetNDC(True)        
+        for par in range(funct.GetNpar()-1):
+            yPos = 0.74-0.04*(float(par))
+            latexFit.DrawLatex(0.19, yPos,"%s = %5.3g #pm %5.3g"%(funct.GetParName(par+1),funct.GetParameter(par+1),funct.GetParError(par+1)))
+        latexFit.DrawLatex(0.19, 0.58, "#chi^{2}/ndf = %5.1f / %2.0f = %4.2f" %(funct.GetChisquare(),funct.GetNDF(),funct.GetChisquare()/funct.GetNDF()))
+                
+        saveas = "/MassRes_M%d_%d_%s_%s" %(mrange[i],mrange[i+1],rap,fit)
+        c1.Print(output+saveas+".root")
+        c1.Print(output+saveas+".C")
+        c1.Print(output+saveas+".png")
+        c1.Print(output+saveas+".pdf")
+        
     print "DONE Fitting..."
-    return sig,sige,alpha,alphae,n,ne
+    return pars,errs,chi2
 
 def doFitWithSyst(hist,output,nrms,rapidity):
     print "######################################################"
@@ -259,242 +214,267 @@ def doFitWithSyst(hist,output,nrms,rapidity):
     print "### DONE ###"
     print "############"
     return sig,err,alp,aer,n,nerr
-
     
-def drawMassRes(hist,output,rapidity,nrms):
-    mass = [250,750,1250,1750,2250,2750,3250,3750,4250,4750]
-    merr = [250,250,250,250,250,250,250,250,250,250]
 
-#    (c_sig,c_err,g_sig,g_err) = doFit(hist,output,nrms,rapidity,2)
-    (sig,err,alpha,alphae,n,nerr) = doFitWithSyst(hist,output,nrms,rapidity)
+def drawMassResGeneric(hist,output,rapidity,funct="cruijff"):
+    mass = []
+    merr = []
+    for i in range(len(mrange)-1):
+        mass.append(mrange[i]+(mrange[i+1]-mrange[i])/2)
+        merr.append((mrange[i+1]-mrange[i])/2)
+    
+
+    (pars,errs,chi2) = doFitGeneric(hist,output,rapidity,funct,True)
+#    if "crystal" in funct: 
+#        (pars2,_,_) = doFitGeneric(hist,output,rapidity,"cruijff")
+#    else:
+#        (pars2,_,_) = doFitGeneric(hist,output,rapidity,"crystal")
     
     c2 = ROOT.TCanvas("c2","c2",700,700)
     c2.cd()
 
-    fun = ROOT.TF1("fun","pol2")
-    fun.SetParameters(0.,0.,0.)
-  
-    res_crystal  = ROOT.TGraphErrors(10)
-    res_crystal.SetName("crystal")
-    for i in range(0,len(mass)):
-        res_crystal.SetPoint(i,mass[i],sig[i])
-        res_crystal.SetPointError(i,merr[i],err[i])
+    fun  = ROOT.TF1("fun","pol4")
+    fun.SetParNames("A","B","C","D","E")            
+    for i in range(fun.GetNpar()): 
+        fun.ReleaseParameter(i)
+        fun.SetParameter(i,0.)
 
-    res_crystal.SetMarkerStyle(22)
-    res_crystal.SetMarkerColor(ROOT.kRed)
-    res_crystal.SetLineColor(ROOT.kRed)
-    res_crystal.SetFillColor(0)
-    res_crystal.SetTitle("Dimuon mass resolution vs mass")
-    res_crystal.GetYaxis().SetTitle("Dimuon Mass Resolution")
-    res_crystal.GetYaxis().SetTitleOffset(1.5)
-    res_crystal.GetXaxis().SetTitle("m(#mu^{+}#mu^{-}) [GeV]")
-    res_crystal.GetYaxis().SetRangeUser(0,.1)
-    res_crystal.GetXaxis().SetRangeUser(0,5000)
-    fun.SetParameters(0.,0.,0.)
-    res_crystal.Fit(fun,"M+")
-    res_crystal.GetFunction("fun").SetLineColor(ROOT.kRed+2)
-    res_crystal.Draw("AP E0")
+    param = [ROOT.TGraphErrors(len(mass)) for x in range((len(pars)/len(mass))+1)] 
+    res = ROOT.TGraphErrors(len(mass))
+    for k,f in enumerate(param): 
+        if k==4: 
+            f.SetName("chi2")
+        else : 
+            f.SetName(hist[0].GetFunction(funct).GetParName(k+1))            
 
-    leg = ROOT.TLegend(.35,.7,.50,.80,"","brNDC")
-    leg.AddEntry(res_crystal,"CrystalBall Fit")
-    leg.SetTextFont(42)
-    leg.SetBorderSize(0)
-    leg.SetTextSize(.02)
-    leg.Draw("SAME")
+        for i in range(0,len(mass)):
+            if k==4: 
+                f.SetName("chi2")
+                f.SetPoint(i,mass[i],chi2[i])
+                f.SetPointError(i,merr[i],0)
+            else: 
+                f.SetPoint(i,mass[i],pars[i*4+k])
+                f.SetPointError(i,merr[i],errs[i*4+k])
+        
+        if ("Sigma" in f.GetName()):
+            res = param[k]
 
-    c2.SetGrid()
-    saveas = "/%1.1fRMS/MassResolutionVsMass_%s" %(nrms,rapidity)
-    c2.SaveAs(output+saveas+".png")
-    c2.SaveAs(output+saveas+".pdf")
-    c2.SaveAs(output+saveas+".root")
-    c2.SaveAs(output+saveas+".C")
+        f.SetMarkerStyle(20)
+        f.SetMarkerSize(1.0)
+        f.SetMarkerColor(ROOT.kBlue)
+        f.SetLineColor(ROOT.kBlue)
+        f.SetFillColor(0)
+        f.GetXaxis().SetTitle("m(#mu^{+}#mu^{-}) [GeV]")
+        f.GetXaxis().SetRangeUser(mrange[0],mrange[len(mrange)-1])
+        if ("chi2" in f.GetName()): 
+            f.GetYaxis().SetRangeUser(0,20)            
+
+        if "Sigma" in f.GetName():
+            f.GetYaxis().SetRangeUser(0,0.15)
+
+        if "AlphaR" in f.GetName():
+            f.GetYaxis().SetRangeUser(0,.4)
+
+        if "AlphaL" in f.GetName():
+            f.GetYaxis().SetRangeUser(0.1,.6)
+
+        if "Mean" in f.GetName():
+            f.GetYaxis().SetRangeUser(-0.035,0.05)
+                        
+        f.Draw("AP E0")
+        
+        ## FIT PARAMETERS 
+        for i in range(fun.GetNpar()): 
+            fun.ReleaseParameter(i)
+            fun.SetParameter(i,0.)
+        
+        if ("chi2" not in f.GetName()): 
+            if ("Sigma" in f.GetName()):  
+                print "Fitting Sigma"
+                fun.SetParameters(0.,1E-5,-1.E-8,2E-12,-2E-16)
+                fun.SetParLimits(1, 1.0E-6, 1.0E-4)
+                fun.SetParLimits(2,-1.0E-7,-1.0E-9)
+#                fun.SetParLimits(4,-3.0E-16,-1E-16)
+                #                fun.FixParameter(3,0.)
+#                fun.FixParameter(3,0.)
+#                fun.FixParameter(4,0.)
+            elif "AlphaR" in f.GetName(): 
+                fun.SetParameters(0.25, 1E-6, -1.E-9, 1.E-12, -1.E-16)
+                fun.SetParLimits(1, 1E-7, 1E-5)
+                fun.SetParLimits(2, -1E-8 ,-1E-10)                
+                fun.SetParLimits(3, 1E-14 ,1E-11)                
+                fun.FixParameter(4,0.)
+                fun.FixParameter(3,0.)
+#                fun.FixParameter(2,0.)
+#                fun.FixParameter(1,0.)
+            elif "AlphaL" in f.GetName(): 
+                fun.SetParameters(0.1,-1E-6, 1E-9, -1.E-13, 1E-16)
+                fun.SetParLimits(1, -5E-5, -5E-7)
+                fun.SetParLimits(2, 1E-10, 1E-8)                
+                fun.SetParLimits(3, -1E-12, -1E-15)
+#                fun.SetParLimits(4, 1E-18, 1E-10)
+                fun.FixParameter(4,0.)
+                fun.FixParameter(3,0.)
+#                fun.FixParameter(2,0.)
+            elif "Mean" in f.GetName():
+                fun.SetParameters(0.004,-3E-5,1E-10,-1E-12,1.E-16)
+                fun.SetParLimits(1,-1E-4,-1E-6)
+                fun.SetParLimits(2, 1E-12,1E-8)
+                fun.SetParLimits(3,-1E-12,-5E-14)
+                fun.FixParameter(4,0.)
+                
+            f.Fit(fun,"MBFE+")            
+            fun.Draw("SAME")
+
+        
+            latexFit = ROOT.TLatex()
+            latexFit.SetTextFont(42)
+            latexFit.SetTextSize(0.030)
+            latexFit.SetNDC(True)        
+            for par in range(fun.GetNpar()):
+                yPos = 0.74-0.04*(float(par))
+                latexFit.DrawLatex(0.19, yPos,"%s = %5.3g #pm %5.3g"%(fun.GetParName(par),fun.GetParameter(par),fun.GetParError(par)))
+            latexFit.DrawLatex(0.19, 0.54, "#chi^{2}/ndf = %5.1f / %2.0f = %4.2f" %(fun.GetChisquare(),fun.GetNDF(),fun.GetChisquare()/fun.GetNDF()))
+            
+        latex = ROOT.TLatex()
+        latex.SetTextFont(42)
+        latex.SetTextAlign(31)
+        latex.SetTextSize(0.04)
+        latex.SetNDC(True)
+        latexCMS = ROOT.TLatex()
+        latexCMS.SetTextFont(61)
+        latexCMS.SetTextSize(0.055)
+        latexCMS.SetNDC(True)
+        latexCMSExtra = ROOT.TLatex()
+        latexCMSExtra.SetTextFont(52)
+        latexCMSExtra.SetTextSize(0.03)
+        latexCMSExtra.SetNDC(True)
+        
+        latex.DrawLatex(0.95, 0.96, "(13 TeV)")
+        
+        cmsExtra = "Simulation" #splitline{Simulation}{Preliminary}"
+        latexCMS.DrawLatex(0.19,0.88,"CMS")
+        yLabelPos = 0.84
+        latexCMSExtra.DrawLatex(0.19,yLabelPos,"%s"%(cmsExtra))
+
+
+        c2.SetGrid()
+        saveas = "/%sVsMass_%s" %(f.GetName(),rapidity)
+        c2.SaveAs(output+saveas+".png")
+        c2.SaveAs(output+saveas+".pdf")
+        c2.SaveAs(output+saveas+".root")
+        c2.SaveAs(output+saveas+".C")
     
-    ROOT.gPad.Update()
-    c2.Clear()
+        ROOT.gPad.Update()
+        c2.Clear()
     
-    alp_crystal  = ROOT.TGraphErrors(10)
-    alp_crystal.SetName("crystal")
-    for i in range(0,len(mass)):
-        alp_crystal.SetPoint(i,mass[i],alpha[i])
-        alp_crystal.SetPointError(i,merr[i],alphae[i])
 
-    alp_crystal.SetMarkerStyle(22)
-    alp_crystal.SetMarkerColor(ROOT.kRed)
-    alp_crystal.SetLineColor(ROOT.kRed)
-    alp_crystal.SetFillColor(0)
-    alp_crystal.GetYaxis().SetRangeUser(0,2.)
-    alp_crystal.GetXaxis().SetRangeUser(0,5000)
-    alp_crystal.SetTitle("CB parameter alpha vs mass")
-    alp_crystal.GetYaxis().SetTitle("CB parameter alpha")
-    alp_crystal.GetYaxis().SetTitleOffset(1.5)
-    alp_crystal.GetXaxis().SetTitle("m(#mu^{+}#mu^{-}) [GeV]")
-    fun.SetParameters(0.,0.,0.)
-    fun.FixParameter(1,0.)
-    fun.FixParameter(2,0.)
-    alp_crystal.Fit(fun,"M+")
-    alp_crystal.GetFunction("fun").SetLineColor(ROOT.kRed+2)
-    alp_crystal.Draw("AP E0")
-
-    saveas = "/%1.1fRMS/AlphaVsMass_%s" %(nrms,rapidity)
-    c2.SaveAs(output+saveas+".png")
-    c2.SaveAs(output+saveas+".pdf")
-    c2.SaveAs(output+saveas+".root")
-    
-    n_crystal  = ROOT.TGraphErrors(10)
-    n_crystal.SetName("crystal")
-    for i in range(0,len(mass)):
-        n_crystal.SetPoint(i,mass[i],n[i])
-        n_crystal.SetPointError(i,merr[i],nerr[i])
-
-    n_crystal.SetMarkerStyle(22)
-    n_crystal.SetMarkerColor(ROOT.kRed)
-    n_crystal.SetLineColor(ROOT.kRed)
-    n_crystal.SetFillColor(0)
-    n_crystal.GetYaxis().SetRangeUser(0,3.)
-    n_crystal.GetXaxis().SetRangeUser(0,5000)
-    n_crystal.SetTitle("Parametrization of n vs mass")
-    n_crystal.GetYaxis().SetTitle("CB parameter n")
-    n_crystal.GetYaxis().SetTitleOffset(1.5)
-    n_crystal.GetXaxis().SetTitle("m(#mu^{+}#mu^{-}) [GeV]")
-    fun.SetParameters(0.,0.,0.)
-    fun.FixParameter(1,0.)
-    fun.FixParameter(2,0.)
-    n_crystal.Fit(fun,"M+")
-    n_crystal.GetFunction("fun").SetLineColor(ROOT.kRed+2)
-    n_crystal.Draw("AP E0")
-
-    saveas = "/%1.1fRMS/BremsVsMass_%s" %(nrms,rapidity)
-    c2.SaveAs(output+saveas+".png")
-    c2.SaveAs(output+saveas+".pdf")
-    c2.SaveAs(output+saveas+".root")
-    
-    
     # PRINT FIT RESULTS!!!
-    mrange = [0,500,1000,1500,2000,2500,3000,3500,4000,4500,5000]
-    ndf = []
-    chi = []
-    for h in hist:
-        chi.append(h.GetFunction("crystal_%s"%nrms).GetChisquare())
-        ndf.append(h.GetFunction("crystal_%s"%nrms).GetNDF())
-
-    print "|---------------------------------------------------------------------------------------|"
-    print "|                              CRYSTAL BALL PARAMETRIZATION                             |"
-    print "|---------------------------------------------------------------------------------------|"
-    print "|      mll  %s     | Chi2/n.d.f. |   Sigma  [%%]   |      Alpha      |       N          |" %(rapidity)
-    print "|---------------------------------------------------------------------------------------|" 
-    for i in range(0,len(mass)):
-        print "| %4d < mll < %4d | %6.1f / %2.0f | %5.3f +/- %5.3f | %5.3f +/- %5.3f | %5.3f +/- %5.3f |" %(mass[i]-merr[i], mass[i]+merr[i], chi[i], ndf[i],
-	        sig[i]*100, err[i]*100, alpha[i], alphae[i], n[i], nerr[i])
-    print "|---------------------------------------------------------------------------------------------------------|" 
-    print "| res(m)   | (%.2e +/- %.1e) + (%.2e +/- %.1e) x + (% .2e +/- %.1e) x^2 | %5.2f / %2.0f |" %(res_crystal.GetFunction("fun").GetParameter(0), res_crystal.GetFunction("fun").GetParError(0),
-          res_crystal.GetFunction("fun").GetParameter(1), res_crystal.GetFunction("fun").GetParError(1),
-          res_crystal.GetFunction("fun").GetParameter(2), res_crystal.GetFunction("fun").GetParError(2),
-          res_crystal.GetFunction("fun").GetChisquare(),res_crystal.GetFunction("fun").GetNDF())
-    print "| alpha(m) | (%.2e +/- %.1e) + (%.2e +/- %.1e) x + (% .2e +/- %.1e) x^2 | %5.2f / %2.0f |" %(alp_crystal.GetFunction("fun").GetParameter(0), alp_crystal.GetFunction("fun").GetParError(0),
-          alp_crystal.GetFunction("fun").GetParameter(1), alp_crystal.GetFunction("fun").GetParError(1),
-          alp_crystal.GetFunction("fun").GetParameter(2), alp_crystal.GetFunction("fun").GetParError(2),
-          alp_crystal.GetFunction("fun").GetChisquare(),alp_crystal.GetFunction("fun").GetNDF())
-    print "| n(m)     | (%.2e +/- %.1e) + (%.2e +/- %.1e) x + (% .2e +/- %.1e) x^2 | %5.2f / %2.0f |"  %(n_crystal.GetFunction("fun").GetParameter(0), n_crystal.GetFunction("fun").GetParError(0),
-          n_crystal.GetFunction("fun").GetParameter(1), n_crystal.GetFunction("fun").GetParError(1),
-          n_crystal.GetFunction("fun").GetParameter(2), n_crystal.GetFunction("fun").GetParError(2),
-          n_crystal.GetFunction("fun").GetChisquare(),n_crystal.GetFunction("fun").GetNDF())      
-    print "|---------------------------------------------------------------------------------------------------------|" 
-    
-    return res_crystal
+    return res
     
     
-def makeMassRes(inputfile,output,nrms,ncat):
-    ROOT.gStyle.SetOptStat(0)
+def makeMassRes(inputfile,output,funct):
+    style = setTDRStyle()
+    ROOT.gStyle.SetTitleYOffset(1.45)
+    ROOT.gStyle.SetTitleXOffset(1.45)
     ROOT.gStyle.SetOptFit(0)
     ROOT.gStyle.SetStatX(.9)
     ROOT.gStyle.SetStatY(.9)
-
-    ROOT.gSystem.MakeDirectory(output)
     
-    
-    if (ncat==2): 
-        hist_barrel = loadHistos(inputfile,"barrel",1)
-        hist_other  = loadHistos(inputfile,"other",1)
-        hist_all    = loadHistos(inputfile,"all",1)
-        drawMassRes(hist_barrel,output,"barrel",nrms)
-        drawMassRes(hist_other,output,"other",nrms)
-        drawMassRes(hist_all,output,"all",nrms)    
-    elif (ncat==3):
-         hist_BB  = loadHistos(inputfile,"BB",1)
-         hist_BEp = loadHistos(inputfile,"BEp",1)
-         hist_BEm = loadHistos(inputfile,"BEm",1)
-         hist_all = loadHistos(inputfile,"all",1)
-         resBB  = drawMassRes(hist_BB,  output, "BB" , nrms)
-         resBEp = drawMassRes(hist_BEp, output, "BEp", nrms)
-         resBEm = drawMassRes(hist_BEm, output, "BEm", nrms)
-         resAll = drawMassRes(hist_all, output, "all", nrms)    
-    
-    print resBB
-    print resBEp
-    print resBEm
+    hist_barrel = loadHistos(inputfile,"BB",1)
+    hist_other  = loadHistos(inputfile,"BE",1)
+    resBB  = drawMassResGeneric(hist_barrel,output,"BB",funct)
+    resBE  = drawMassResGeneric(hist_other,output,"BE",funct)
     
     res = ROOT.TCanvas("res","res",700,700)
     res.cd()
     res.SetTickx()
     res.SetTicky()
     
-    resBB.SetMarkerStyle(22)
+    resBB.SetMarkerStyle(20)
+    resBB.SetMarkerSize(1)
     resBB.SetMarkerColor(ROOT.kRed)
     resBB.SetLineColor(ROOT.kRed)
     resBB.SetFillColor(0)
     resBB.SetTitle("Dimuon mass resolution vs mass")
     resBB.GetYaxis().SetTitle("Dimuon Mass Resolution")
-    resBB.GetYaxis().SetTitleOffset(1.5)
+#    resBB.GetYaxis().SetTitleOffset(1.5)
     resBB.GetXaxis().SetTitle("m(#mu^{+}#mu^{-}) [GeV]")
-    resBB.GetYaxis().SetRangeUser(0,.2)
-    resBB.GetXaxis().SetRangeUser(0,5000)
+    resBB.GetYaxis().SetRangeUser(0,.15)
+    resBB.GetXaxis().SetRangeUser(mrange[0],mrange[len(mrange)-1])
     resBB.GetFunction("fun").SetLineColor(ROOT.kRed+1)
     resBB.Draw("AP E0")
     
-         
-    resBEp.SetMarkerStyle(22)
-    resBEp.SetMarkerColor(ROOT.kGreen+1)
-    resBEp.SetLineColor(ROOT.kGreen+1)
-    resBEp.SetFillColor(0)
-    resBEp.SetTitle("Dimuon mass resolution vs mass")
-    resBEp.GetYaxis().SetTitle("Dimuon Mass Resolution")
-    resBEp.GetYaxis().SetTitleOffset(1.5)
-    resBEp.GetXaxis().SetTitle("m(#mu^{+}#mu^{-}) [GeV]")
-    resBEp.GetYaxis().SetRangeUser(0,.2)
-    resBEp.GetXaxis().SetRangeUser(0,5000)
-    resBEp.GetFunction("fun").SetLineColor(ROOT.kGreen+2)
-    resBEp.Draw("PE0 SAME")
-    
-    resBEm.SetMarkerStyle(22)
-    resBEm.SetMarkerColor(ROOT.kBlue+1)
-    resBEm.SetLineColor(ROOT.kBlue+1)
-    resBEm.SetFillColor(0)
-    resBEm.SetTitle("Dimuon mass resolution vs mass")
-    resBEm.GetYaxis().SetTitle("Dimuon Mass Resolution")
-    resBEm.GetYaxis().SetTitleOffset(1.5)
-    resBEm.GetXaxis().SetTitle("m(#mu^{+}#mu^{-}) [GeV]")
-    resBEm.GetYaxis().SetRangeUser(0,.2)
-    resBEm.GetXaxis().SetRangeUser(0,5000)
-    resBEm.GetFunction("fun").SetLineColor(ROOT.kBlue+2)
-    resBEm.Draw("PE0 SAME")
+    resBE.SetMarkerStyle(20)
+    resBE.SetMarkerSize(1.0)
+    resBE.SetMarkerColor(ROOT.kGreen+1)
+    resBE.SetLineColor(ROOT.kGreen+1)
+    resBE.SetFillColor(0)
+    resBE.SetTitle("Dimuon mass resolution vs mass")
+    resBE.GetYaxis().SetTitle("Dimuon Mass Resolution")
+    resBE.GetYaxis().SetTitleOffset(1.5)
+ #   resBE.GetXaxis().SetTitle("m(#mu^{+}#mu^{-}) [GeV]")
+    resBE.GetYaxis().SetRangeUser(0,.15)
+    resBE.GetXaxis().SetRangeUser(mrange[0],mrange[len(mrange)-1])
+    resBE.GetFunction("fun").SetLineColor(ROOT.kGreen+2)
+    resBE.Draw("PE0 SAME")
+
+    latexFitBB = ROOT.TLatex()
+    latexFitBB.SetTextFont(42)
+    latexFitBB.SetTextSize(0.030)
+    latexFitBB.SetNDC(True)        
+    latexFitBB.SetTextColor(ROOT.kRed)
+
+    latexFitBE = ROOT.TLatex()
+    latexFitBE.SetTextFont(42)
+    latexFitBE.SetTextSize(0.030)
+    latexFitBE.SetNDC(True)        
+    latexFitBE.SetTextColor(ROOT.kGreen+2)
+    latexFitBB.DrawLatex(0.19, 0.78,"BB Category")
+    latexFitBE.DrawLatex(0.60, 0.78,"BE+EE Category")
+    for par in range(resBB.GetFunction("fun").GetNpar()):
+        yPos = 0.74-0.04*(float(par))
+        latexFitBB.DrawLatex(0.19, yPos,"%s = %5.3g #pm %5.3g"%(resBB.GetFunction("fun").GetParName(par),resBB.GetFunction("fun").GetParameter(par),resBB.GetFunction("fun").GetParError(par)))
+        latexFitBE.DrawLatex(0.60, yPos,"%s = %5.3g #pm %5.3g"%(resBE.GetFunction("fun").GetParName(par),resBE.GetFunction("fun").GetParameter(par),resBE.GetFunction("fun").GetParError(par)))
+    latexFitBB.DrawLatex(0.19, 0.54, "#chi^{2}/ndf = %5.1f / %2.0f = %4.2f" %(resBB.GetFunction("fun").GetChisquare(),resBB.GetFunction("fun").GetNDF(),resBB.GetFunction("fun").GetChisquare()/resBB.GetFunction("fun").GetNDF()))
+    latexFitBE.DrawLatex(0.60, 0.54, "#chi^{2}/ndf = %5.1f / %2.0f = %4.2f" %(resBE.GetFunction("fun").GetChisquare(),resBE.GetFunction("fun").GetNDF(),resBE.GetFunction("fun").GetChisquare()/resBE.GetFunction("fun").GetNDF()))
         
-    leg = ROOT.TLegend(.35,.7,.50,.80,"","brNDC")
-    leg.AddEntry(resBB,"BB")
-    leg.AddEntry(resBEp,"BEp")
-    leg.AddEntry(resBEm,"BEm")                
-    leg.SetTextFont(42)
-    leg.SetBorderSize(0)
-    leg.SetTextSize(.02)
-    leg.Draw("SAME")
+#    leg = ROOT.TLegend(.35,.7,.50,.80,"","brNDC")
+#    leg.AddEntry(resBB,"BB")
+#    leg.AddEntry(resBE,"BE+EE")
+#    leg.SetTextFont(42)
+#    leg.SetBorderSize(0)
+#    leg.SetTextSize(.04)
+#    leg.Draw("SAME")
+
+    latex = ROOT.TLatex()
+    latex.SetTextFont(42)
+    latex.SetTextAlign(31)
+    latex.SetTextSize(0.04)
+    latex.SetNDC(True)
+    latexCMS = ROOT.TLatex()
+    latexCMS.SetTextFont(61)
+    latexCMS.SetTextSize(0.055)
+    latexCMS.SetNDC(True)
+    latexCMSExtra = ROOT.TLatex()
+    latexCMSExtra.SetTextFont(52)
+    latexCMSExtra.SetTextSize(0.03)
+    latexCMSExtra.SetNDC(True)
+    
+    latex.DrawLatex(0.95, 0.96, "(13 TeV)")
+    
+    cmsExtra = "Simulation" #splitline{Simulation}{Preliminary}"
+    latexCMS.DrawLatex(0.19,0.88,"CMS")
+    yLabelPos = 0.84
+    latexCMSExtra.DrawLatex(0.19,yLabelPos,"%s"%(cmsExtra))
     
     res.SetGrid()
-    saveas = "/%1.1fRMS/MassResolutionVsMass_3CAT" %(nrms)
+    saveas = "/MassResolutionVsMass" 
     res.SaveAs(output+saveas+".png")
     res.SaveAs(output+saveas+".pdf")
     res.SaveAs(output+saveas+".root")
     res.SaveAs(output+saveas+".C")
-    
-         
+             
 #### ========= MAIN =======================
 if __name__ == "__main__":
     import argparse
@@ -503,17 +483,27 @@ if __name__ == "__main__":
 
     parser.add_argument("-i","--ifile", dest="inputfile",default="files/res_ZToMuMu_M_120_6000.root", help='Input filename')
     parser.add_argument("-o","--ofolder",dest="output", default="plots/", help='folder name to store results')
-    parser.add_argument("-n","--nrms",dest="nrms", type=float, default=2.0, help='number of RMS used in the fit')
-    parser.add_argument("-ncat","--ncategories", dest="ncat", type=int, default=3, help='number of categories')
+    parser.add_argument("-f","--funct",dest="funct", default="cruijff", help='function used')
+    parser.add_argument("-x","--xrange", type=str, help='lower and upper x limit', nargs=1)
+                    
+#    parser.add_argument("-ncat","--ncategories", dest="ncat", type=int, default=3, help='number of categories')
     args = parser.parse_args()
     
     inputfile = args.inputfile
-    nrms= args.nrms
     output=args.output
-    ncat=args.ncat
+#    ncat=args.ncat
+
+    if args.xrange is not None:
+        ranges = args.xrange[0].split(",")
+        FITMIN = float(ranges[0])
+        FITMAX = float(ranges[1])
+
+    if not os.path.exists(args.output):
+        os.makedirs(args.output);
+        if os.path.exists("/afs/cern.ch"): os.system("cp /afs/cern.ch/user/g/gpetrucc/php/index.php "+args.output)
     
-    print "Running on: %s with %d RMS and %d categories" %(inputfile,nrms,ncat)
+    print "Running on: %s " %(inputfile)
     print "Saving result in: %s" %(output)
 
-    makeMassRes(inputfile,output,nrms, ncat)
+    makeMassRes(inputfile,output,args.funct)
     print "DONE"

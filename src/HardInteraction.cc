@@ -52,8 +52,11 @@ void HardInteraction::Clear() {
   resonanceIsFake = false;
 }
 
+bool HardInteraction::IsValidForRes() const { 
+  return lepPlusNoIB != 0 && lepMinusNoIB != 0;
+}
 bool HardInteraction::IsValid() const {
-  //return quark != 0 && resonance != 0 && lepPlus != 0 && lepMinus != 0 && lepPlusNoIB != 0 && lepMinusNoIB != 0;
+  //  return quark != 0 && resonance != 0 &&  &lepPlusNoIB != 0 && lepMinusNoIB != 0;
   return quark != 0 && resonance != 0 && lepPlus != 0 && lepMinus != 0; //could happen that the Z' decay directly in status1 muons and we don't have lepPlusNoIB lepMinusNoIB.
 }
 
@@ -72,28 +75,22 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
   int counter=0;
   reco::GenParticleCollection::const_iterator genp = genParticles.begin();
   for (; genp != genParticles.end(); genp++) {
-  counter ++;//
+    counter ++;//
     const int pdgId = genp->pdgId();
-//    const reco::Candidate* mmm = genp->mother();//
-//    std::cout<<counter<<" pdgId "<<pdgId<<" status "<<genp->status()<<std::endl;
-    
     
     if (genp->status() == 22) {//it was 3
       if (IsResonance(pdgId)) {
-      ///std::cout<<"IsResonance(pdgId)"<<std::endl;
+	///std::cout<<"IsResonance(pdgId)"<<std::endl;
 	// We found the resonance (Z0/Z'/etc.). Make sure we didn't
 	// find a second one.
-//	 std::cout<<counter<<" *** pdgId "<<pdgId<<" status "<<genp->status()<<" mother id "<<mmm->pdgId()<<" mother status "<< mmm->status()<<std::endl;
 	if (resonance != 0 && !shutUp)
 	  edm::LogWarning("HardInteraction") << "Found second resonance (pdgId: " << pdgId << ") in event!";
 	else
 	  resonance = &*genp;
       }
     }
-    else if(genp->status() == 23) {//it was 3
-      
+    else if(genp->isHardProcess()) {//it was 3
       if (pdgId == leptonFlavor) {
-      ///std::cout<<"leptonFlavor"<<std::endl;
 	// We found the l-. Make sure we didn't find a second one.
 	if (lepMinusNoIB != 0 && !shutUp)
 	  edm::LogWarning("HardInteraction") << "Found second l- in event!";
@@ -112,18 +109,16 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
 	// See if it has as an ancestor the resonance. Do this by just
 	// checking the pdgId -- don't try to see if it's the same
 	// resonance as the one we found above, for now.
-//	std::cout<<counter<<" *** pdgId "<<pdgId<<" status "<<genp->status()<<" mother id "<<mmm->pdgId()<<" mother status "<< mmm->status()<<std::endl;
 	const reco::Candidate* m = genp->mother();
 	bool ok = false;
 	while (m) {
 	  if (IsResonance(m->pdgId())) {
-		///std::cout<<"mamma resonance "<<std::endl;  
 	    ok = true;
 	    break;
 	  }
 	  m = m->mother();
 	}
-
+	
 	if (ok) {
 	  if (pdgId == leptonFlavor)
 	    lepMinus = &*genp;
@@ -180,10 +175,10 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
     }
     else
       if (!shutUp) edm::LogWarning("HardInteraction")
-	<< "Did not find the resonance in the event, and forbidden"
-	<< " from faking it!";
+		     << "Did not find the resonance in the event, and forbidden"
+		     << " from faking it!";
   }
-
+  
   // Did we successfully identify a Candidate that has the
   // quark/antiquark as its mothers? Try to get them.
   if (mothersAreQuarks != 0 && mothersAreQuarks->numberOfMothers() == 2) {
@@ -203,11 +198,10 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
 	antiquark = mom;
     }
   }
+  
   // If we didn't find the quark or antiquark, bomb.
   if (quark == 0 || antiquark == 0)
     if (!shutUp) edm::LogWarning("HardInteraction")
       << "Couldn't find at least one of the quark/antiquark! quark = "
       << quark << " antiquark = " << antiquark;
-
-  //edm::LogWarning("HardInteraction") << "test pts: quark: " << quark->pt() << " qbar: " << antiquark->pt() << " resonance: " << resonance->pt() << " l- before brem " << lepMinusNoIB->pt() << " l+ " << lepPlusNoIB->pt() << " final l- " << lepMinus->pt() << " l+ " << lepPlus->pt();
 }

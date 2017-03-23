@@ -80,51 +80,51 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
     
     if (genp->status() == 22) {//it was 3
       if (IsResonance(pdgId)) {
-	///std::cout<<"IsResonance(pdgId)"<<std::endl;
-	// We found the resonance (Z0/Z'/etc.). Make sure we didn't
-	// find a second one.
-	if (resonance != 0 && !shutUp)
-	  edm::LogWarning("HardInteraction") << "Found second resonance (pdgId: " << pdgId << ") in event!";
-	else
-	  resonance = &*genp;
-      }
-    }
-    else if(genp->isHardProcess()) {//it was 3
-      if (pdgId == leptonFlavor) {
-	// We found the l-. Make sure we didn't find a second one.
-	if (lepMinusNoIB != 0 && !shutUp)
-	  edm::LogWarning("HardInteraction") << "Found second l- in event!";
-	else
-	  lepMinusNoIB = &*genp;
-      }
-      else if (pdgId == -leptonFlavor) {
-	// We found the l+. Make sure we didn't find a second one.
-	if (lepPlusNoIB != 0 && !shutUp) edm::LogWarning("HardInteraction") << "Found second l+ in event!";
-	else
-	  lepPlusNoIB = &*genp;
+        ///std::cout<<"IsResonance(pdgId)"<<std::endl;
+        // We found the resonance (Z0/Z'/etc.). Make sure we didn't
+        // find a second one.
+	      if (resonance != 0 && !shutUp)
+          edm::LogWarning("HardInteraction") << "Found second resonance (pdgId: " << pdgId << ") in event!";
+        else
+          resonance = &*genp;
       }
     }
     else if (genp->status() == 1) {
       if (abs(pdgId) == leptonFlavor) {
-	// See if it has as an ancestor the resonance. Do this by just
-	// checking the pdgId -- don't try to see if it's the same
-	// resonance as the one we found above, for now.
-	const reco::Candidate* m = genp->mother();
-	bool ok = false;
-	while (m) {
-	  if (IsResonance(m->pdgId())) {
-	    ok = true;
-	    break;
-	  }
-	  m = m->mother();
-	}
+        // See if it has as an ancestor the resonance. Do this by just
+        // checking the pdgId -- don't try to see if it's the same
+        // resonance as the one we found above, for now.
+        const reco::Candidate* m = genp->mother();
+        bool ok = false;
+        while (m) {
+          if (IsResonance(m->pdgId())) {
+            ok = true;
+            break;
+          }
+          m = m->mother();
+        }
 	
-	if (ok) {
-	  if (pdgId == leptonFlavor)
-	    lepMinus = &*genp;
-	  else
-	    lepPlus = &*genp;
-	}
+        if (ok) {
+          if (pdgId == leptonFlavor)
+            lepMinus = &*genp;
+          else
+            lepPlus = &*genp;
+        }
+      }
+    }
+    if (genp->isHardProcess()) {//it was 3 //it was else if
+      if (pdgId == leptonFlavor) {
+        // We found the l-. Make sure we didn't find a second one.
+        if (lepMinusNoIB != 0 && !shutUp)
+          edm::LogWarning("HardInteraction") << "Found second l- in event!";
+        else
+          lepMinusNoIB = &*genp;
+      }
+      else if (pdgId == -leptonFlavor) {
+        // We found the l+. Make sure we didn't find a second one.
+        if (lepPlusNoIB != 0 && !shutUp) edm::LogWarning("HardInteraction") << "Found second l+ in event!";
+        else
+          lepPlusNoIB = &*genp;
       }
     }
   }

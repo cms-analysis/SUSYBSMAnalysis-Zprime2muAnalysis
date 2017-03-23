@@ -11,6 +11,6 @@ triggerDecision = cms.PSet(doingElectrons = cms.bool(False),
                            # be studied is e.g. 40 GeV, that has to be
                            # taken care of in code as there is no such
                            # path in the Spring11/Summer11 MC.
-                           l1Paths = cms.vstring('L1_SingleMu16er'),
-                           hltPaths = cms.vstring('HLT_Mu50_v2')
+                           l1Paths = cms.vstring(''),
+                           hltPaths = cms.vstring('HLT_Mu50_v5', 'HLT_TkMu50_v3')
                            )

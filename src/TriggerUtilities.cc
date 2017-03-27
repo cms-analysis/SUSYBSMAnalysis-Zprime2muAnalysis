@@ -83,4 +83,3 @@ trigger::TriggerObjectCollection get_L3_muons(const edm::Event& event, const std
     //std::cout<<"filter: "<<filter<<"collection size: "<<L3_muons.size()<<std::endl;
   return L3_muons;
 }
-

@@ -715,40 +715,41 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
     //
     // Store Generator Level information
     //
-    if(hardInteraction->IsValid()){
+//     if(hardInteraction->IsValid()){
+	if(hardInteraction->IsValidForRes()){
       t.gen_res_mass = hardInteraction->resonance->mass();
       t.gen_res_pt   = hardInteraction->resonance->pt();
       t.gen_res_rap  = hardInteraction->resonance->rapidity();
       t.gen_res_eta  = hardInteraction->resonance->eta();
       t.gen_res_phi  = hardInteraction->resonance->phi();
       
-      t.gen_dil_mass = hardInteraction->dilepton().mass();
-      t.gen_dil_pt   = hardInteraction->dilepton().pt();
-      t.gen_dil_rap  = hardInteraction->dilepton().Rapidity();
-      t.gen_dil_eta  = hardInteraction->dilepton().eta();
-      t.gen_dil_phi  = hardInteraction->dilepton().phi();
-      t.gen_dil_dR   = deltaR(*hardInteraction->lepMinus, *hardInteraction->lepPlus);
-      t.gen_dil_dPhi = deltaPhi(*hardInteraction->lepMinus, *hardInteraction->lepPlus);
-      
-      t.gen_lep_p[0]  = hardInteraction->lepMinus->p();
-      t.gen_lep_pt[0]  = hardInteraction->lepMinus->pt();
-      t.gen_lep_px[0]  = hardInteraction->lepMinus->px();
-      t.gen_lep_py[0]  = hardInteraction->lepMinus->py();
-      t.gen_lep_pz[0]  = hardInteraction->lepMinus->pz();
-      t.gen_lep_E[0]  = hardInteraction->lepMinus->energy();
-      t.gen_lep_eta[0] = hardInteraction->lepMinus->eta();
-      t.gen_lep_phi[0] = hardInteraction->lepMinus->phi();
-      t.gen_lep_qOverPt[0] = hardInteraction->lepMinus->charge() / hardInteraction->lepMinus->pt();
-      
-      t.gen_lep_p[1]  = hardInteraction->lepPlus->p();
-      t.gen_lep_pt[1]  = hardInteraction->lepPlus->pt();
-      t.gen_lep_px[1]  = hardInteraction->lepMinus->px();
-      t.gen_lep_py[1]  = hardInteraction->lepMinus->py();
-      t.gen_lep_pz[1]  = hardInteraction->lepMinus->pz();
-      t.gen_lep_E[1]  = hardInteraction->lepMinus->energy();
-      t.gen_lep_eta[1] = hardInteraction->lepPlus->eta();
-      t.gen_lep_phi[1] = hardInteraction->lepPlus->phi();
-      t.gen_lep_qOverPt[1] = hardInteraction->lepPlus->charge() / hardInteraction->lepPlus->pt();
+      t.gen_dil_mass = (hardInteraction->lepPlusNoIB->p4() + hardInteraction->lepMinusNoIB->p4()).mass();//hardInteraction->dilepton().mass();
+      t.gen_dil_pt   = (hardInteraction->lepPlusNoIB->p4() + hardInteraction->lepMinusNoIB->p4()).pt();
+      t.gen_dil_rap  = (hardInteraction->lepPlusNoIB->p4() + hardInteraction->lepMinusNoIB->p4()).Rapidity();
+      t.gen_dil_eta  = (hardInteraction->lepPlusNoIB->p4() + hardInteraction->lepMinusNoIB->p4()).eta();
+      t.gen_dil_phi  = (hardInteraction->lepPlusNoIB->p4() + hardInteraction->lepMinusNoIB->p4()).phi();
+      t.gen_dil_dR   = deltaR(*hardInteraction->lepMinusNoIB, *hardInteraction->lepPlusNoIB);
+      t.gen_dil_dPhi = deltaPhi(*hardInteraction->lepMinusNoIB, *hardInteraction->lepPlusNoIB);
+//       
+      t.gen_lep_p[0]  = hardInteraction->lepMinusNoIB->p();
+      t.gen_lep_pt[0]  = hardInteraction->lepMinusNoIB->pt();
+      t.gen_lep_px[0]  = hardInteraction->lepMinusNoIB->px();
+      t.gen_lep_py[0]  = hardInteraction->lepMinusNoIB->py();
+      t.gen_lep_pz[0]  = hardInteraction->lepMinusNoIB->pz();
+      t.gen_lep_E[0]  = hardInteraction->lepMinusNoIB->energy();
+      t.gen_lep_eta[0] = hardInteraction->lepMinusNoIB->eta();
+      t.gen_lep_phi[0] = hardInteraction->lepMinusNoIB->phi();
+      t.gen_lep_qOverPt[0] = hardInteraction->lepMinusNoIB->charge() / hardInteraction->lepMinusNoIB->pt();
+//       
+      t.gen_lep_p[1]  = hardInteraction->lepPlusNoIB->p();
+      t.gen_lep_pt[1]  = hardInteraction->lepPlusNoIB->pt();
+      t.gen_lep_px[1]  = hardInteraction->lepPlusNoIB->px();
+      t.gen_lep_py[1]  = hardInteraction->lepPlusNoIB->py();
+      t.gen_lep_pz[1]  = hardInteraction->lepPlusNoIB->pz();
+      t.gen_lep_E[1]  = hardInteraction->lepPlusNoIB->energy();
+      t.gen_lep_eta[1] = hardInteraction->lepPlusNoIB->eta();
+      t.gen_lep_phi[1] = hardInteraction->lepPlusNoIB->phi();
+      t.gen_lep_qOverPt[1] = hardInteraction->lepPlusNoIB->charge() / hardInteraction->lepPlusNoIB->pt();
       
       /*
        t.gen_lep_noib_pt[0]  = hardInteraction->lepMinusNoIB->pt();

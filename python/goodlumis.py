@@ -6,10 +6,10 @@ def for_cmssw(ll):
 
 # These run numbers guide the combination of the prompt and DCS-only
 # JSONs.
-first_run = 246908 #first DCS run or first analyzed run
-last_rereco_run = 198523
-last_prompt_run = 256869
-last_run = 256869 #last DCS run or last analyzed run
+first_run = 271036 #first DCS run or first analyzed run
+last_rereco_run = 284044
+last_prompt_run = 284044
+last_run = 284044 #last DCS run or last analyzed run
 
 # Sometimes the same run-range json gets made in other versions.
 prompt_version = ''
@@ -64,8 +64,10 @@ DCSOnlyForNewRuns_ll.removeRuns(runs_to_remove_from_dcsonly)
 #Prompt 2015C
 #Cert_246908-255031_13TeV_PromptReco_Collisions15_50ns_JSON_MuonPhys.txt
 #Cert_246908-255031_13TeV_PromptReco_Collisions15_25ns_JSON_MuonPhys.txt
-Prompt_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/Cert_%i-%i_13TeV_PromptReco_Collisions15_25ns_JSON%s.txt' % (first_run, last_prompt_run, prompt_version))
-PromptMuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/Cert_%i-%i_13TeV_PromptReco_Collisions15_25ns_JSON_MuonPhys%s.txt' % (first_run, last_prompt_run, prompt_version))
+
+Prompt_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt')# % (first_run, last_prompt_run, prompt_version))
+PromptMuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON_MuonPhys.txt')# % (first_run, last_prompt_run, prompt_version))
+
 #PromptMuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions15/13TeV/Cert_%i-%i_13TeV_PromptReco_Collisions15_50ns_JSON_MuonPhys%s_v2.txt' % (first_run, last_prompt_run, prompt_version))
 #Prompt_ll          = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_%i-%i_8TeV_PromptReco_Collisions12_JSON%s.txt'          % (first_run, last_prompt_run, prompt_version))
 #PromptMuonsOnly_ll = LumiList('/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_%i-%i_8TeV_PromptReco_Collisions12_JSON_MuonPhys%s.txt' % (first_run, last_prompt_run, prompt_version))
@@ -96,8 +98,8 @@ def combine(prompt_ll, rereco1_ll, rereco2_ll, rereco3_ll, dcsonly_ll=None):
 # Combine all lists
 #Run2012_ll          = combine(Prompt_ll,          Jul13_ll,          Aug06_ll,          Aug24_ll)
 #Run2012MuonsOnly_ll = combine(PromptMuonsOnly_ll, Jul13MuonsOnly_ll, Aug06MuonsOnly_ll, Aug24MuonsOnly_ll)
-Run2015_ll          = Prompt_ll
-Run2015MuonsOnly_ll = PromptMuonsOnly_ll
+Run2016_ll          = Prompt_ll
+Run2016MuonsOnly_ll = PromptMuonsOnly_ll
 ## for x in NoL1TMuonsOnly_ll:
 ##     Run2012MuonsOnly_ll = Run2012MuonsOnly_ll | x
 #Run2012_ll          = Jan22_ll
@@ -121,7 +123,7 @@ Run2012PlusDCSOnlyMuonsOnly_ll = Jan22MuonsOnly_ll | dcsonly_ll
 # Run2012_ll = Dec11_ll
 
 #all_ll_names = ['DCSOnly', 'DCSOnlyForNewRuns', 'Jan22', 'Jan22MuonsOnly', 'Run2015', 'Run2015MuonsOnly', 'Run2012PlusDCSOnly', 'Run2012PlusDCSOnlyMuonsOnly']
-all_ll_names = ['DCSOnly', 'Run2015', 'Run2015MuonsOnly']
+all_ll_names = ['DCSOnly', 'Run2016', 'Run2016MuonsOnly']
 
 #print 'DCSOnly', DCSOnly_ll
 #print 'Run2015', Run2015_ll
@@ -137,8 +139,8 @@ for base_name, ll in all_lls():
 if __name__ == '__main__':
     import sys
     if 'write' in sys.argv:
-        Run2015MuonsOnly_ll.writeJSON('Run2015MuonsOnly.json')
-        Run2015_ll.writeJSON('Run2015.json')
+        Run2016MuonsOnly_ll.writeJSON('Run2016MuonsOnly.json')
+        Run2016_ll.writeJSON('Run2016.json')
     elif 'write_all' in sys.argv:
         for base_name, ll in all_lls():
             ll.writeJSON('zp2mu_goodlumis_%s.json' % base_name)

@@ -9,54 +9,121 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import *
 from SUSYBSMAnalysis.Zprime2muAnalysis.roottools import *
 set_zp2mu_style()
 
-lumiBCD = 2800.
+
+# lumi = 13081.143
+
+#13066.191#6293.188#4409.061#4079.344#2231.20#1#2260.881 #2619.44
+
+#tipo = 'TuneP'
+#tipo = 'Inner'
+# tipo = 'TriggerScale'
+tipo = ''
+
+#tt = 'tt pow'
+tt = 'tt lep'
+
+# lumi = 20409.950
+# period = 'BF'
+# period_1 = 'RunB - RunF'
+
+# lumi = 16786.820
+# period = 'GH' 
+# period_1 = 'RunG - RunH'
+
+lumi = 36238.735#36238.734
+period = '' 
+
+cartella = 'LeptonPt'
+axisX = 'p_{T}(#mu) [GeV]'
+# cartella = 'DileptonPt'
+# cartella = 'NTkLayers'
+# cartella = 'RelIsoSumPt'
+# cartella = 'NPxHits'
+# cartella = 'DimuonMuonPtErrOverPt'
+# cartella = 'DimuonMassVtx_chi2'
+# axisX = 'Vtx #chi^{2}'
+
+# cartella = 'DileptonMass'
+# cartella = 'DileptonMass_bb'
+# cartella = 'DileptonMass_be'
+# cartella = 'DimuonMassVertexConstrained'
+# axisX = 'm(#mu#mu) [GeV]'
+categoria = 'all'
+categoria_1 = ''
+# cartella = 'DimuonMassVertexConstrained_bb'
+# categoria = 'Barrel - Barrel'
+# categoria_1 = 'BB'
+# cartella = 'DimuonMassVertexConstrained_be'
+# categoria = 'BE + EE'
+# categoria_1 = 'BE'
+# categoria_1 = 'E^{-}B or E^{-}E^{-} or E^{-}E^{+}'
 
 styles = {
 #    'sample':    (color, draw/fill style),
-    'dataB':      (ROOT.kBlack,     -1),
+    'data':      (ROOT.kBlack,     -1),
     'dataCD':      (ROOT.kBlack,     -1),
     'dataBCD':      (ROOT.kBlack,     -1),
-    'mc_samples_50m120': (ROOT.kGreen+2,1001),
-    'mc_samples_120m': (ROOT.kGreen+2,1001),
-    #'dy50to120':(ROOT.kGreen, 1001),
-    #'dy120to200':(ROOT.kGreen-4, 1001),
-    #'dy200to400':(ROOT.kGreen+1, 1001),
-    #'dy400to800':(ROOT.kGreen-7, 1001),
-    #'dy800to1400':(ROOT.kGreen-3, 1001),
-    #'dy1400to2300':(ROOT.kGreen+2, 1001),
-    #'dy2300to3500':(ROOT.kGreen-9, 1001),
-    #'dy3500to4500':(ROOT.kGreen-6, 1001),
-    #'dy4500to6000':(ROOT.kGreen-2, 1001),
-    'dy50to120':(ROOT.kGreen+2, 1001),
-    'dy120to200':(ROOT.kGreen+2, 1001),
-    'dy200to400':(ROOT.kGreen+2, 1001),
-    'dy400to800':(ROOT.kGreen+2, 1001),
-    'dy800to1400':(ROOT.kGreen+2, 1001),
-    'dy1400to2300':(ROOT.kGreen+2, 1001),
-    'dy2300to3500':(ROOT.kGreen+2, 1001),
-    'dy3500to4500':(ROOT.kGreen+2, 1001),
-    'dy4500to6000':(ROOT.kGreen+2, 1001),
-    'dy6000':(ROOT.kGreen+2, 1001),
+
+
+#                                 return 'DY #rightarrow #tau#tau', 5
+#                         else:
+#                                 return  'DY #rightarrow #mu#mu', 3
+ 
+  
+     
+          
+    'dyInclusive50': (5,1001),
+    'dy50to120':(3, 1001),
+    'dy120to200':(3, 1001),
+    'dy200to400':(3, 1001),
+    'dy400to800':(3, 1001),
+    'dy800to1400':(3, 1001),
+    'dy1400to2300':(3, 1001),
+    'dy2300to3500':(3, 1001),
+    'dy3500to4500':(3, 1001),
+    'dy4500to6000':(3, 1001),
+#    'dy6000':(ROOT.kGreen+2, 1001),
+    'ttbar_lep':(4,1001),
+    'ttbar_lep50to500':(4,1001),
+    'ttbar_lep50to800':(4,1001),
+    'ttbar_lep_500to800':(4,1001),
+    'ttbar_lep_800to1200':(4,1001),
+    'ttbar_lep_1200to1800':(4,1001),
+    'ttbar_lep_1800':(4,1001),
     'ttbar_pow':(ROOT.kBlue,1001),
-    'ww_incl':(ROOT.kOrange,1001),
-    'zz_incl':(ROOT.kOrange,1001),
-    'wz':(ROOT.kOrange,1001),
-    'tWtop':(ROOT.kYellow,1001),
-    'tWantitop':(ROOT.kYellow,1001),
-    'wjets':(ROOT.kViolet,1001),
-    'qcd50to80':(ROOT.kViolet,1001),
-    'qcd80to120':(ROOT.kViolet,1001),
-    'qcd120to170':(ROOT.kViolet,1001),
-    'qcd170to300':(ROOT.kViolet,1001),
-    'qcd300to470':(ROOT.kViolet,1001),
-    'qcd470to600':(ROOT.kViolet,1001),
-    'qcd600to800':(ROOT.kViolet,1001),
-    'qcd800to1000':(ROOT.kViolet,1001),
-    'qcd1000to1400':(ROOT.kViolet,1001),
-    'qcd1400to1800':(ROOT.kViolet,1001),
-    'qcd1800to2400':(ROOT.kViolet,1001),
-    'qcd2400to3200':(ROOT.kViolet,1001),
-    'qcd3200':(ROOT.kViolet,1001),
+    'WWinclusive':(ROOT.kRed-10,1001),
+    'WW200to600':(ROOT.kRed-10,1001),
+    'WW600to1200':(ROOT.kRed-10,1001),
+    'WW1200to2500':(ROOT.kRed-10,1001),
+    'WW2500':(ROOT.kRed-10,1001),
+    'ZZ':(2,1001),
+    'ZZ_ext':(2,1001),
+    'WZ':(ROOT.kRed+3,1001),
+    'WZ_ext':(ROOT.kRed+3,1001),
+    'tW':(ROOT.kBlue+2,1001),
+    'Wantitop':(ROOT.kBlue+2,1001),
+    'Wjets':(7,1001),
+#    'ww_incl':(ROOT.kOrange,1001),
+#    'zz_incl':(ROOT.kOrange,1001),
+#    'wz':(ROOT.kOrange,1001),
+#    'tWtop':(ROOT.kYellow,1001),
+#    'tWantitop':(ROOT.kYellow,1001),
+#    'wjets':(ROOT.kViolet,1001),
+    'qcd50to80':(20,1001),
+    'qcd80to120':(20,1001),
+    'qcd120to170':(20,1001),
+    'qcd170to300':(20,1001),
+    'qcd300to470':(20,1001),
+    'qcd470to600':(20,1001),
+    'qcd600to800':(20,1001),
+    'qcd800to1000':(20,1001),
+    'qcd1000to1400':(20,1001),
+    'qcd1400to1800':(20,1001),
+    'qcd1800to2400':(20,1001),
+    'qcd2400to3200':(20,1001),
+    'qcd3200':(20,1001),
+
+
 }
 
 nminus1s = [
@@ -107,7 +174,9 @@ pretty = {
     'dataB': 'Data RunB, %.1f fb^{-1}, MuonOnly',
     'dataCD': 'Data RunC+D, %.1f fb^{-1}, MuonOnly',
     'dataBCD': 'Data, %.1f fb^{-1}, 2015 MuonOnly',
+    'all': 'm > 60 GeV',
     '120m': 'm > 120 GeV',
+    '500m': 'm > 500 GeV',
     '60m120': '60 < m < 120 GeV',
     'zpsi5000': 'Z\'_{#psi}, M=5000 GeV',
     'dy50to120': 'DY#rightarrow#mu#mu 50 < m < 120 GeV',
@@ -120,6 +189,12 @@ pretty = {
     'dy3500to4500': 'DY#rightarrow#mu#mu 3500 < m < 4500 GeV',
     'dy4500to6000': 'DY#rightarrow#mu#mu 4500 < m < 6000 GeV',
     'dy6000': 'DY#rightarrow#mu#mu m > 6000 GeV',
+    'ttbar_lep': 't#bar{t} lep',
+    'ttbar_lep50to500': 't#bar{t} lep 50 < m < 500 GeV',
+    'ttbar_lep50to800': 't#bar{t} lep 50 < m < 500 GeV',
+    'ttbar_lep_800to1200': 't#bar{t} lep',
+    'ttbar_lep_1200to1800': 't#bar{t} lep',
+    'ttbar_lep1800toInf': 't#bar{t} lep',
     'ttbar_pow': 't#bar{t} powheg',
     'ww_incl': 'WW',
     'zz_incl': 'ZZ',
@@ -234,10 +309,13 @@ def table_wald(entry,nminus1, mass_range):
             else:
                 errw = (eff*(1-eff)/den)**0.5
         if 'data' not in entry.name:
-            num = num*entry.partial_weight*lumiBCD
-            den = den*entry.partial_weight*lumiBCD
+        	num = num*entry.partial_weight*lumi
+        	den = den*entry.partial_weight*lumi
+#         print '%20s%15i%15i%20f%20f%15f%15f%15f%23f'     % (nminus1, mlow, mhigh, num, den, eff, eff-lcp, hcp-eff,        errw)
+#         print '%20s%15i%15i%20f%20f%15f%15f%15f%15f%16f' % (nminus1, mlow, mhigh, num, den, eff, lcp,     hcp,     eff-errw, eff+errw)
         print '%20s%15i%15i%20f%20f%15f%15f%15f%23f'     % (nminus1, mlow, mhigh, num, den, eff, eff-lcp, hcp-eff,        errw)
         print '%20s%15i%15i%20f%20f%15f%15f%15f%15f%16f' % (nminus1, mlow, mhigh, num, den, eff, lcp,     hcp,     eff-errw, eff+errw)
+
         print ' '
     print '---------------------------------------------'
 
@@ -259,8 +337,9 @@ def table(entry,nminus1, mass_range):
 class nm1entry:
     def __init__(self, sample, is_data, lumi):
         if type(sample) == str:
-            self.name = sample
-            self.fn = 'data/ana_nminus1_%s.root' %sample
+            self.name = sample      
+            self.fn = '/afs/cern.ch/work/f/ferrico/private/ZPrime_code/CMSSW_8_0_21/src/SUSYBSMAnalysis/Zprime2muAnalysis/test/NMinus1Effs/data/Run2016MuonsOnly%s/ana_nminus1_data.root' %period
+            #self.fn = 'data/ana_nminus1_%s_%s.root' % (sample, tipo)
             #self.fn = self.make_fn(sample) if is_data else None
             self.lumi = lumi if is_data else None
             self.is_data = is_data
@@ -272,15 +351,20 @@ class nm1entry:
         self.prepare_histos()
             
 
-    def make_fn(self, name):
-        return 'mc/ana_nminus1_%s.root' % name
+    def make_fn(self, name):   
+        #return 'mc/ana_nminus1_%s.root' % name
+        return '/afs/cern.ch/work/f/ferrico/private/ZPrime_code/CMSSW_8_0_21/src/SUSYBSMAnalysis/Zprime2muAnalysis/test/NMinus1Effs/mc/ana_nminus1_%s.root' %  name       
+        #return 'mc_TriggerScale/ana_nminus1_%s.root' % name
+        
+        
     
     def prepare_histos(self):
         self.histos = {}
         if self.fn is not None:
             f = ROOT.TFile(self.fn)
             for nminus1 in nminus1s + ['NoNo']:
-                self.histos[nminus1] = f.Get(nminus1).Get('DimuonMassVertexConstrained').Clone()
+                self.histos[nminus1] = f.Get(nminus1).Get(cartella).Clone()
+#                self.histos[nminus1] = f.Get(nminus1).Get('DimuonMassVertexConstrained').Clone()
 
     # This function isn't used anymore, but keep for posterity? cjsbad
     def prepare_histos_sum(self, samples, lumi):
@@ -290,7 +374,8 @@ class nm1entry:
             print '%20s%20s%21s%20s%20s' % ('cut', 'sampe name', 'partial weight', 'scale(ref)','scale(lumi)')
             for sample in samples:
                 f = ROOT.TFile(self.make_fn(sample.name))
-                h = f.Get(nminus1).Get('DimuonMassVertexConstrained').Clone()
+                #h = f.Get(nminus1).Get('DimuonMassVertexConstrained').Clone()
+                h = f.Get(nminus1).Get(cartella).Clone()
                 if lumi>0:
                     # scale to luminosity for comparision of single dataset to MC
                     h.Scale(sample.partial_weight * lumi) 
@@ -302,5 +387,4 @@ class nm1entry:
             for h in hs[1:]:
                 hsum.Add(h)
             self.histos[nminus1] = hsum
-
 

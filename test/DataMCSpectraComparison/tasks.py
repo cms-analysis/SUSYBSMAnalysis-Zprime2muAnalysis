@@ -123,13 +123,13 @@ elif cmd == 'gathermc':
     extra = '_' + extra[0] if extra else ''
     for sample in samples:
         name = sample.name
-        pattern = 'crab/crab_ana%(extra)s_datamc_%(name)s*/results/zp2mu_histos*root' % locals()
+        pattern = 'crab/crab_ana%(extra)s_datamc_%(name)s/results/zp2mu_histos*root' % locals()
         fn = 'ana_datamc_%(name)s.root' % locals()
         n = len(glob.glob(pattern))
         if n == 0:
             big_warn('no files matching %s' % pattern)
         else:
-            files = glob.glob('crab/crab_ana%(extra)s_datamc_%(name)s*/results/zp2mu_histos*root' % locals())
+            files = glob.glob('crab/crab_ana%(extra)s_datamc_%(name)s/results/zp2mu_histos*root' % locals())
             hadd('mc/ana_datamc_%s.root' % name, files)
 
 elif cmd == 'gatherdata':

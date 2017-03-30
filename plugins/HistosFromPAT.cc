@@ -685,11 +685,11 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
 			 		   	_kFactor_be = 1.064 - 0.0001674 * gM + 6.599e-08 * pow(gM,2) - 9.657e-12 * pow(gM,3);
 			 	}
 			 	
-//	    		std::cout<<"----------------------------------------------------------- GEN MASS = " <<hardInteraction->resonance->mass()<<std::endl;
-//    			std::cout<<"------------------------------------------------------------------ kFactor = "<<_kFactor<<" --- BB = "<<_kFactor_bb<<" --- BE = "<<_kFactor_be<<std::endl;
+// 	    		std::cout<<"----------------------------------------------------------- GEN MASS = " <<hardInteraction->resonance->mass()<<std::endl;
+//     			std::cout<<"------------------------------------------------------------------ kFactor = "<<_kFactor<<" --- BB = "<<_kFactor_bb<<" --- BE = "<<_kFactor_be<<std::endl;
     		} // hardInter
     		else
-//    			std::cout<<"problems"<<std::endl;
+    			std::cout<<"problems"<<std::endl;
     		} //gen_info
     	} //kFactor
         

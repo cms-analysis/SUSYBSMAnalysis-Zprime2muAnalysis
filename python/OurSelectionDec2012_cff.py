@@ -41,6 +41,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match,
 loose_cut = 'isGlobalMuon && ' \
             'isTrackerMuon && ' \
             'pt > %s && ' \
+            'abs(eta) < 2.4 && ' \
             'abs(dB) < 0.2 && ' \
             'isolationR03.sumPt / innerTrack.pt < 0.10 && ' \
             'globalTrack.hitPattern.trackerLayersWithMeasurement > 5 && ' \

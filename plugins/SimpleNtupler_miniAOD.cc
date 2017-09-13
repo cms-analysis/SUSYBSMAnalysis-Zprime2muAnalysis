@@ -59,6 +59,7 @@ private:
     float cos_angle;
     float vertex_chi2;
     float cos_cs;
+    float chi_dilepton;
     float phi_cs;
     float vertex_m;
     float vertex_m_err;
@@ -303,6 +304,7 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
   tree->Branch("cos_angle", &t.cos_angle, "cos_angle/F");
   tree->Branch("vertex_chi2", &t.vertex_chi2, "vertex_chi2/F");
   tree->Branch("cos_cs", &t.cos_cs, "cos_cs/F");
+  tree->Branch("chi_dilepton", &t.chi_dilepton, "chi_dilepton/F");
   tree->Branch("phi_cs", &t.phi_cs, "phi_cs/F");
   tree->Branch("vertex_m", &t.vertex_m, "vertex_m/F");
   tree->Branch("vertex_m_err", &t.vertex_m_err, "vertex_m_err/F");
@@ -1277,10 +1279,12 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
       const reco::CandidateBaseRef mup = dileptonDaughterByCharge(dil, +1);
 
       t.cos_cs = calcCosThetaCSAnal(mum->pz(), mum->energy(), mup->pz(), mup->energy(), dil.pt(), dil.pz(), dil.mass());
+      t.chi_dilepton = exp(std::abs(mum->p4().Rapidity()-mup->p4().Rapidity()));
       t.phi_cs = calcPhiCSAnal(mum->px(), mum->py(), mup->px(), mup->py(), dil.pt(), dil.eta(), dil.phi(), dil.mass(), true);
     } // end if opp_sign
     else {
       t.cos_cs = -999;
+      t.chi_dilepton = -999;
       t.phi_cs = -999;
     } // end if !opp_sign
 

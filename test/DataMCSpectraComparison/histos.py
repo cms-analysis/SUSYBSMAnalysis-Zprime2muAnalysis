@@ -11,9 +11,10 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFilt
 
 process.source.fileNames =[#'file:./pat.root'
 #'/store/data/Run2017B/SingleMuon/MINIAOD/PromptReco-v1/000/297/057/00000/D21018A6-7956-E711-828D-02163E0123EE.root',
-'/store/data/Run2017D/SingleMuon/MINIAOD/PromptReco-v1/000/302/031/00000/2411F4EE-2D8F-E711-B514-02163E0134D6.root'
+#'/store/data/Run2017D/SingleMuon/MINIAOD/PromptReco-v1/000/302/031/00000/2411F4EE-2D8F-E711-B514-02163E0134D6.root'
 # '/store/mc/PhaseIFall16MiniAOD/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/MINIAODSIM/FlatPU28to62HcalNZSRAW_PhaseIFall16_exo52_90X_upgrade2017_realistic_v6_C1-v1/120000/304E419F-CC13-E711-93E9-FA163E0231A1.root'
-
+'/store/data/Run2017E/SingleMuon/MINIAOD/PromptReco-v1/000/303/572/00000/487D9434-79A0-E711-BC5F-02163E01358B.root',
+'/store/data/Run2017E/SingleMuon/MINIAOD/PromptReco-v1/000/303/573/00000/02129FCB-79A0-E711-92D1-02163E01A1CF.root'
 			   ]
 process.maxEvents.input = -1
 # process.GlobalTag.globaltag ='90X_upgrade2017_realistic_v6_C1' # MC --- change line 440

@@ -46,7 +46,7 @@ void HLTLeptonsFromTriggerEvent::produce(Event& event,
   Handle<trigger::TriggerEvent> trigEvent;
   event.getByLabel(summary, trigEvent);
 
-  auto_ptr<vector<reco::RecoChargedCandidate> > cands(new vector<reco::RecoChargedCandidate>);
+  unique_ptr<vector<reco::RecoChargedCandidate> > cands(new vector<reco::RecoChargedCandidate>);
 
   if (trigEvent.isValid()) {
     // The TriggerEvent object keeps a list of objects that fired a
@@ -94,7 +94,7 @@ void HLTLeptonsFromTriggerEvent::produce(Event& event,
   else
     LogWarning("HLTLeptonsFromTriggerEvent") << "no TriggerEvent record " << summary << " in event; producing empty collection.";
 
-  event.put(cands);
+  event.put(std::move(cands), "cands");
 }
 
 DEFINE_FWK_MODULE(HLTLeptonsFromTriggerEvent);

@@ -281,7 +281,7 @@ void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::Ev
   // does this get cached correctly? do we care?
   setup.get<TransientTrackRecord>().get("TransientTrackBuilder", ttkb);
 
-  std::auto_ptr<pat::CompositeCandidateCollection> new_cands(new pat::CompositeCandidateCollection);
+  std::unique_ptr<pat::CompositeCandidateCollection> new_cands(new pat::CompositeCandidateCollection);
 
   // Copy all the candidates that pass the specified cuts into the new
   // output vector. Also embed into the output dimuons any other
@@ -333,7 +333,7 @@ void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::Ev
   if (new_cands->size() > max_candidates)
     new_cands->erase(new_cands->begin() + max_candidates, new_cands->end());
   
-  event.put(new_cands);
+  event.put(move(new_cands));
 }
 
 DEFINE_FWK_MODULE(Zprime2muCompositeCandidatePicker);

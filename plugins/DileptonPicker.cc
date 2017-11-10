@@ -51,7 +51,7 @@ void DileptonPicker::produce(Event& event, const EventSetup& eSetup) {
   event.getByLabel(src, hdileptons);
 
   // Make the output collection.
-  auto_ptr<CompositeCandidateCollection> dileptons(new CompositeCandidateCollection);
+  unique_ptr<CompositeCandidateCollection> dileptons(new CompositeCandidateCollection);
 
   ostringstream out;
 
@@ -85,7 +85,7 @@ void DileptonPicker::produce(Event& event, const EventSetup& eSetup) {
     LogWarning("DileptonPicker")
       << "no collection " << src << " in event; producing empty collection";
 
-  event.put(dileptons);
+  event.put(std::move(dileptons), "dileptons");
 }
 
 DEFINE_FWK_MODULE(DileptonPicker);

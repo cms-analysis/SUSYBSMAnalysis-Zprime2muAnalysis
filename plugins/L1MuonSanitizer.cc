@@ -42,7 +42,7 @@ void L1MuonSanitizer::produce(Event& event,
   event.getByLabel(src, muons);
 
   // make the output collection
-  auto_ptr<L1MuonParticleCollection> cands(new L1MuonParticleCollection);
+  unique_ptr<L1MuonParticleCollection> cands(new L1MuonParticleCollection);
 
   if (!muons.failedToGet()) {
     l1extra::L1MuonParticleCollection::const_iterator muon;
@@ -62,7 +62,7 @@ void L1MuonSanitizer::produce(Event& event,
     edm::LogWarning("L1MuonSanitizer")
       << "no collection " << src << " in event; producing empty collection";
 
-  event.put(cands);
+  event.put(std::move(cands), "cands");
 }
 
 DEFINE_FWK_MODULE(L1MuonSanitizer);

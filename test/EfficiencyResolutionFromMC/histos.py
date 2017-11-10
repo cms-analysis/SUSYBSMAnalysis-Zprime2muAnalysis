@@ -14,8 +14,8 @@ import sys, os
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import cms, process
 
 process.maxEvents.input = 1000
-process.source.fileNames = [#'/store/mc/RunIISpring16MiniAODv1/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16_80X_mcRun2_asymptotic_2016_v3-v1/30000/02244373-7E03-E611-B581-003048F5B2B4.root',
-                            '/store/mc/RunIISpring16MiniAODv2/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/MINIAODSIM/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/90000/18C80393-613A-E611-86DF-0090FAA573E0.root',
+process.source.fileNames = [
+'/store/mc/PhaseIFall16MiniAOD/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/MINIAODSIM/FlatPU28to62HcalNZSRAW_PhaseIFall16_exo52_90X_upgrade2017_realistic_v6_C1-v1/120000/304E419F-CC13-E711-93E9-FA163E0231A1.root'
                             ]
 process.options.wantSummary = True
 
@@ -133,25 +133,26 @@ config.Data.inputDBS = 'global'
 config.Data.splitting = 'EventAwareLumiBased'
 #config.Data.splitting = 'FileBased'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob  = 20000
-#config.Data.unitsPerJob  = 100
+config.Data.unitsPerJob  = 200000
 config.Data.publication = False
 config.Data.outputDatasetTag = 'ana_datamc_%(name)s'
-config.Data.outLFNDirBase = '/store/user/alfloren'
+config.Data.outLFNDirBase = '/store/user/ferrico'
 config.Data.ignoreLocality = True
-
-config.Site.storageSite = 'T2_CH_CERN'
+config.Site.storageSite = 'T2_IT_Bari'
                           
 '''
         
     samples = [
-               #('dy120','/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/alfloren-effres_dy50to120-2b07f03a08b1e3f01e70977ff823c3f4/USER',50, 120),
-               #('dy200','/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM',120, 200),
-               ('dy400','/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM',200, 400),
-               #('dy800','/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM',400, 800),
-               #('dy1400','/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM',800, 1400),
-               #('dy2300','/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM',1400, 2300),
-               #('dy3500','/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM',2300,3500),
+
+	    ('dy50to120', '/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_EXO50_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 50., 120.),
+    	('dy120to200', '/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo51_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 120, 200),
+	    ('dy200to400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo52_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 200, 400),
+    	('dy400to800', '/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo53_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 400, 800),
+	    ('dy800to1400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_800_1400/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo54_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 800, 1400),
+    	('dy1400to2300', '/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo55_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 1400, 2300),
+	    ('dy2300to3500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo56_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 2300, 3500),
+    	('dy3500to4500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_3500_4500/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo57_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 3500, 4500),
+	    ('dy4500to6000', '/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo58_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 4500, 6000),
               
                
         ]
@@ -162,12 +163,12 @@ config.Site.storageSite = 'T2_CH_CERN'
         open('crabConfig.py', 'wt').write(crab_cfg % locals())
 
         new_py = open('histos.py').read()
-        new_py += '\nprocess.HardInteractionFilter.min_mass = "%i"\n' % lo
-        new_py += '\nprocess.HardInteractionFilter.max_mass = "%i"\n' % hi
-        new_py += '\nprocess.HardInteractionFilterRes.min_mass = "%i"\n' % lo
-        new_py += '\nprocess.HardInteractionFilterRes.max_mass = "%i"\n' % hi
+        new_py += '\nprocess.HardInteractionFilter.min_mass = %i\n' % lo
+        new_py += '\nprocess.HardInteractionFilter.max_mass = %i\n' % hi
+        new_py += '\nprocess.HardInteractionFilterRes.min_mass = %i\n' % lo
+        new_py += '\nprocess.HardInteractionFilterRes.max_mass = %i\n' % hi
         open('histos_crab.py', 'wt').write(new_py)
         
         if not just_testing:
             os.system('crab submit  -c crabConfig.py')
-            os.system('rm crabConfig.py histos_crab.py histos_crab.pyc')
+#             os.system('rm crabConfig.py histos_crab.py histos_crab.pyc')

@@ -28,9 +28,10 @@ secFiles = cms.untracked.vstring()
 process.source = cms.Source ("PoolSource",
                              fileNames =  cms.untracked.vstring(
 
-'/store/mc/RunIISummer16MiniAODv2/TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/120000/0030B9D6-72C1-E611-AE49-02163E00E602.root',
-#                                                                 '/store/data/Run2016B/SingleMuon/MINIAOD/23Sep2016-v3/00000/162AD1DB-1E98-E611-9893-008CFA56D58C.root',
-                                                                #'/store/data/Run2016B/SingleMuon/MINIAOD/23Sep2016-v3/00000/1A1F07FF-2698-E611-915C-0242AC130004.root'
+'/store/data/Run2017B/SingleMuon/MINIAOD/PromptReco-v1/000/297/057/00000/D21018A6-7956-E711-828D-02163E0123EE.root',
+'/store/data/Run2017B/SingleMuon/MINIAOD/PromptReco-v1/000/297/057/00000/D4518E5E-8556-E711-8DE2-02163E011A3B.root',
+'/store/data/Run2017B/SingleMuon/MINIAOD/PromptReco-v1/000/297/057/00000/D472A679-8156-E711-ADEF-02163E01A6DE.root',
+'/store/data/Run2017B/SingleMuon/MINIAOD/PromptReco-v1/000/297/430/00000/0E2FC6B5-535A-E711-B20D-02163E013676.root',
                                                                 ),
                              secondaryFileNames = secFiles)
 
@@ -40,7 +41,7 @@ secFiles.extend( [
                ] )
 
 process.maxEvents.input = -1
-process.GlobalTag.globaltag = '80X_dataRun2_2016SeptRepro_v6'
+process.GlobalTag.globaltag ='92X_dataRun2_Prompt_v4' 
 #process.MessageLogger.cerr.FwkReport.reportEvery = 1 # default 1000
 
 # Define the numerators and denominators, removing cuts from the
@@ -159,11 +160,11 @@ config.General.workArea = 'crab'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'nminus1effs.py'
 #config.JobType.priority = 1
-config.Data.inputDataset =  '%(dataset)s' 
+config.Data.inputDataset =  '%(ana_dataset)s' 
 config.Data.inputDBS = 'global'
 job_control
 config.Data.publication = False
-config.Data.outputDatasetTag = 'ana_datamc_%(name)s'
+config.Data.outputDatasetTag = 'ana_nminus1_%(name)s'
 config.Data.outLFNDirBase = '/store/user/ferrico'
 #config.Site.storageSite = 'T2_IT_Bari'
 config.Site.storageSite = 'T2_IT_Bari'
@@ -178,20 +179,17 @@ config.Site.storageSite = 'T2_IT_Bari'
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
         
         dataset_details = [
- 						('SingleMuonRun2017B-ReReco-v3', '/SingleMuon/Run2016B-23Sep2016-v3/MINIAOD'),
- 						('SingleMuonRun2016C-ReReco-v1', '/SingleMuon/Run2016C-23Sep2016-v1/MINIAOD'),
- 						('SingleMuonRun2016D-ReReco-v1', '/SingleMuon/Run2016D-23Sep2016-v1/MINIAOD'),
- 						('SingleMuonRun2016E-ReReco-v1', '/SingleMuon/Run2016E-23Sep2016-v1/MINIAOD'),
-						('SingleMuonRun2016F-ReReco-v1', '/SingleMuon/Run2016F-23Sep2016-v1/MINIAOD'),
-				########  RUN G PROMPT		('SingleMuonRun2016G-PromptReco-v1',  '/SingleMuon/Run2016G-PromptReco-v1/MINIAOD')
- 						('SingleMuonRun2016G-ReReco-v1', '/SingleMuon/Run2016G-23Sep2016-v1/MINIAOD'),
-# 						('SingleMuonRun2016H-PromptReco-v3', '/SingleMuon/Run2016H-PromptReco-v3/MINIAOD'), #change global tag: 199
-# 						('SingleMuonRun2016H-PromptReco-v2', '/SingleMuon/Run2016H-PromptReco-v2/MINIAOD'),  ##change global tag: 199
+        
+# 						('SingleMuonRun2017B-PromptReco-v1', '/SingleMuon/Run2017B-PromptReco-v1/MINIAOD'),
+						('SingleMuonRun2017B-PromptReco-v2', '/SingleMuon/Run2017B-PromptReco-v2/MINIAOD'),
+						('SingleMuonRun2017C-PromptReco-v1', '/SingleMuon/Run2017C-PromptReco-v1/MINIAOD'),
+						('SingleMuonRun2017C-PromptReco-v2', '/SingleMuon/Run2017C-PromptReco-v2/MINIAOD'),
+# 						('SingleMuonRun2017C-PromptReco-v3', '/SingleMuon/Run2017C-PromptReco-v3/MINIAOD'),
 
             ]
 
         lumi_lists = [
-			'Run2016MuonsOnly',
+			'Run2017MuonsOnly',
 		]
 
         jobs = []
@@ -202,15 +200,17 @@ config.Site.storageSite = 'T2_IT_Bari'
 
 
         for dataset_name, ana_dataset, lumi_name, lumi_list in jobs:
+            print lumi_name
             json_fn = 'tmp.json'
             lumi_list.writeJSON(json_fn)
             lumi_mask = json_fn
 
             name = '%s_%s' % (lumi_name, dataset_name)
             print name
+            print lumi_mask
 
             new_py = open('nminus1effs.py').read()
-            new_py += "\nprocess.GlobalTag.globaltag = '80X_dataRun2_Prompt_v14'\n"  #### RunH
+            new_py += "\nprocess.GlobalTag.globaltag = '92X_dataRun2_Prompt_v4'\n"  #### RunH
             open('nminus1effs_crab.py', 'wt').write(new_py)
 
             new_crab_cfg = crab_cfg % locals()
@@ -219,17 +219,18 @@ config.Data.splitting = 'LumiBased'
 config.Data.totalUnits = -1
 config.Data.unitsPerJob = 100
 #config.Data.lumiMask = 'tmp.json' #######
-# config.Data.lumiMask = 'https://cms-service-dqm.web.cern.ch/cms-service-dqm/CAF/certification/Collisions16/13TeV/Final/Cert_271036-284044_13TeV_PromptReco_Collisions16_JSON_MuonPhys.txt'
-config.Data.lumiMask = '%(lumi_mask)s' #######
-'''
+config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/PromptReco/Cert_294927-301567_13TeV_PromptReco_Collisions17_JSON_MuonPhys.txt'
+#config.Data.lumiMask = '%(lumi_mask)s' #######
+''' % locals()
+
             new_crab_cfg = new_crab_cfg.replace('job_control', job_control)
             open('crabConfig.py', 'wt').write(new_crab_cfg)
 
             if not just_testing:
                 os.system('crab submit -c crabConfig.py') #--dryrun
 
-        if not just_testing:
-            os.system('rm crabConfig.py nminus1effs_crab.py nminus1effs_crab.pyc tmp.json')
+#         if not just_testing:
+#             os.system('rm crabConfig.py nminus1effs_crab.py nminus1effs_crab.pyc tmp.json')
 
     if not 'no_mc' in sys.argv:
         crab_cfg = crab_cfg.replace('job_control','''
@@ -261,5 +262,5 @@ config.Data.unitsPerJob  = 100000
             if not just_testing:
                 os.system('crab submit -c crabConfig.py')
                 #os.system('crab submit -c crabConfig.py --dryrun')
-        if not just_testing:
-            os.system('rm crabConfig.py')
+#         if not just_testing:
+#             os.system('rm crabConfig.py')

@@ -25,7 +25,7 @@ muonTriggerMatchHLTMuonsMiniAOD = cms.EDProducer('PATTriggerMatcherDRLessByR',
 #offline_pt_threshold = 48 #?
 trigger_pt_threshold = 50
 offline_pt_threshold = 53 #?
-trigger_paths = ['HLT_Mu50_v%i' % i for i in (1,2,3,4)]
+trigger_paths = ['HLT_Mu50_v%i' % i for i in (6, 7, 8, 9, 10, 11)]
 #trigger_paths = ['HLT_Mu45_eta2p1_v%i' % i for i in (1,2)]
 #trigger_paths = ['HLT_Mu45_eta2p1_v1']
 #trigger_paths = ['HLT_Mu50_v1']
@@ -41,7 +41,7 @@ prescaled_offline_pt_threshold = 27
 #prescaled_trigger_paths = ['HLT_L1SingleMuOpen_v1','HLT_L1SingleMu3p5_v1']
 #prescaled_trigger_paths = ['HLT_Mu27_v1']
 #HLT_Mu24_eta2p1_v
-prescaled_trigger_paths = ['HLT_Mu27_v%i' % i for i in (1,2,3,4)]
+prescaled_trigger_paths = ['HLT_Mu27_v%i' % i for i in (6, 7, 8, 9, 10, 11)]
 prescaled_trigger_match = trigger_match.replace('Trigger', 'prescaledTrigger').replace('%i' % trigger_pt_threshold, '%i' % prescaled_trigger_pt_threshold)
 
 

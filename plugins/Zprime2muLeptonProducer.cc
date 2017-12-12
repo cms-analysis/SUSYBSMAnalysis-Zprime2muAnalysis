@@ -355,8 +355,8 @@ std::pair<pat::Muon*,int> Zprime2muLeptonProducer::doLepton(const edm::Event& ev
   // pair of function calls, there will be new user floats:
   // {TriggerMatch, prescaledTriggerMatch} x {Pt, Eta, Phi,
   // Charge}. (Maybe embed whole candidates later.)
-//  embedTriggerMatch(new_mu, "",          L3_muons,           L3_muons_matched);
-  embedTriggerMatch_or(new_mu, "",         L3_muons, L3_muons_2,        L3_muons_matched, L3_muons_matched_2);
+ embedTriggerMatch(new_mu, "",          L3_muons,           L3_muons_matched);
+  // embedTriggerMatch_or(new_mu, "",         L3_muons, L3_muons_2,        L3_muons_matched, L3_muons_matched_2);
   embedTriggerMatch(new_mu, "prescaled", prescaled_L3_muons, prescaled_L3_muons_matched);
 
   // Evaluate cuts here with string object selector, and any code that
@@ -383,7 +383,7 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer::doLeptons(edm::Event
   edm::Handle<reco::CandidateView> lepton_view;
   event.getByLabel(srcSecond, lepton_view);
 
-  std::auto_ptr<TCollection> new_leptons(new TCollection);
+  std::unique_ptr<TCollection> new_leptons(new TCollection);
 
   for (size_t i = 0; i < leptons->size(); ++i) {
     std::pair<T*,int> res = doLepton(event, leptons->at(i), lepton_view->refAt(i));
@@ -394,7 +394,7 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer::doLeptons(edm::Event
     delete res.first;
   }
 
-  return event.put(new_leptons, instance_label);
+  return event.put(std::move(new_leptons), instance_label);
 }
 
 void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& setup) {
@@ -421,7 +421,7 @@ void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& 
   if (!pandf.valid)
     throw cms::Exception("Zprime2muLeptonProducer") << "could not determine the HLT path and filter names for this event\n";
   L3_muons           = get_L3_muons(event, pandf.filter,           trigger_summary_src);
-  L3_muons_2         = get_L3_muons(event, pandf.filter_2,         trigger_summary_src);
+//   L3_muons_2         = get_L3_muons(event, pandf.filter_2,         trigger_summary_src);
   prescaled_L3_muons = get_L3_muons(event, pandf.prescaled_filter, trigger_summary_src);
 //    std::cout<<"filter "<<pandf.filter<<std::endl;
 //    std::cout<<"L3_muons.size()"<<L3_muons.size()<<std::endl;
@@ -432,8 +432,8 @@ void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& 
 //    std::cout<<"prescaled_L3_muons.size()"<<prescaled_L3_muons.size()<<std::endl;
   L3_muons_matched.clear();
   L3_muons_matched.resize(L3_muons.size(), 0);
-  L3_muons_matched_2.clear();
-  L3_muons_matched_2.resize(L3_muons_2.size(), 0);
+//   L3_muons_matched_2.clear();
+//   L3_muons_matched_2.resize(L3_muons_2.size(), 0);
   prescaled_L3_muons_matched.clear();
   prescaled_L3_muons_matched.resize(prescaled_L3_muons.size(), 0);
   // std::cout<<"quel trigger path = "<<pandf.filter<<std::endl;
@@ -467,8 +467,8 @@ void Zprime2muLeptonProducer::produce(edm::Event& event, const edm::EventSetup& 
     // Reset the flags so the matching can be redone.
     L3_muons_matched.clear();
     L3_muons_matched.resize(L3_muons.size(), 0);
-    L3_muons_matched_2.clear();
-    L3_muons_matched_2.resize(L3_muons_2.size(), 0);
+//     L3_muons_matched_2.clear();
+//     L3_muons_matched_2.resize(L3_muons_2.size(), 0);
     prescaled_L3_muons_matched.clear();
     prescaled_L3_muons_matched.resize(prescaled_L3_muons.size(), 0);
   

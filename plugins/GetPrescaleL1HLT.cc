@@ -151,14 +151,14 @@ GetPrescaleL1HLT::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
           }
     }
 
-   std::auto_ptr<int> l1Prescale(new int(prescales.first));
-   std::auto_ptr<int> hltPrescale(new int(prescales.second));
-   std::auto_ptr<int> totalPrescale(new int(prescales.first*prescales.second));
+   std::unique_ptr<int> l1Prescale(new int(prescales.first));
+   std::unique_ptr<int> hltPrescale(new int(prescales.second));
+   std::unique_ptr<int> totalPrescale(new int(prescales.first*prescales.second));
 
 
-  iEvent.put(hltPrescale, "HLTPrescale");
-  iEvent.put(l1Prescale, "L1Prescale");
-  iEvent.put(totalPrescale, "TotalPrescale");
+  iEvent.put(std::move(hltPrescale), "HLTPrescale");
+  iEvent.put(std::move(l1Prescale), "L1Prescale");
+  iEvent.put(std::move(totalPrescale), "TotalPrescale");
 
 /* This is an event example
    //Read 'ExampleData' from the Event
@@ -167,7 +167,7 @@ GetPrescaleL1HLT::produce(edm::Event& iEvent, const edm::EventSetup& iSetup)
 
    //Use the ExampleData to create an ExampleData2 which 
    // is put into the Event
-   std::auto_ptr<ExampleData2> pOut(new ExampleData2(*pIn));
+   std::unique_ptr<ExampleData2> pOut(new ExampleData2(*pIn));
    iEvent.put(pOut);
 */
 

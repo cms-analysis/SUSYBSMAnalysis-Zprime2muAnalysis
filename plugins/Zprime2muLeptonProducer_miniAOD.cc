@@ -391,8 +391,8 @@ std::pair<pat::Muon*,int> Zprime2muLeptonProducer_miniAOD::doLepton(const edm::E
   // {TriggerMatch, prescaledTriggerMatch} x {Pt, Eta, Phi,
   // Charge}. (Maybe embed whole candidates later.)
   
-  //  embedTriggerMatch(new_mu, "",          L3_muons,           L3_muons_matched);
-  embedTriggerMatch_or(new_mu, "",         L3_muons, L3_muons_2,        L3_muons_matched, L3_muons_matched_2);
+   embedTriggerMatch(new_mu, "",          L3_muons,           L3_muons_matched);
+//   embedTriggerMatch_or(new_mu, "",         L3_muons, L3_muons_2,        L3_muons_matched, L3_muons_matched_2);
   embedTriggerMatch(new_mu, "prescaled", prescaled_L3_muons, prescaled_L3_muons_matched);
 
   // Evaluate cuts here with string object selector, and any code that
@@ -420,7 +420,7 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
   edm::Handle<reco::CandidateView> lepton_view;
   event.getByLabel(view_src, lepton_view);
 
-  std::auto_ptr<TCollection> new_leptons(new TCollection);
+  std::unique_ptr<TCollection> new_leptons(new TCollection);
 
   for (size_t i = 0; i < leptons->size(); ++i) {
     std::pair<T*,int> res = doLepton(event, leptons->at(i), lepton_view->refAt(i));
@@ -431,7 +431,7 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
     delete res.first;
   }
 
-  return event.put(new_leptons, instance_label);
+  return event.put(std::move(new_leptons), instance_label);
 }
 
 
@@ -450,7 +450,7 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
   }
   
   
-  std::auto_ptr<TCollection> new_leptons(new TCollection);
+  std::unique_ptr<TCollection> new_leptons(new TCollection);
   
   if(patEles.isValid()){ 
     for(auto ele=patEles->begin();ele!=patEles->end();++ele){
@@ -474,7 +474,7 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
     }
   }
 
-  return event.put(new_leptons, instance_label);
+  return event.put(std::move(new_leptons), instance_label);
 }
 
 
@@ -518,10 +518,11 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
     int j = 0;
     
     L3_muons.clear();
-    L3_muons_2.clear();
+//     L3_muons_2.clear();
     prescaled_L3_muons.clear();
     for (pat::TriggerObjectStandAlone obj : *trigger_summary_src) { // note: not "const &" since we want to call unpackPathNames
         obj.unpackPathNames(names);
+        obj.unpackFilterLabels(event, *triggerBits); 
 	
 	//if (obj.collection() == "hltL3MuonCandidates::HLT"){
 	for (unsigned h = 0; h < obj.filterLabels().size(); ++h) {
@@ -533,10 +534,10 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
 	    //FilterMatched[j] = 1;
 	    L3_muons.push_back(obj);
     }
-    if (obj.filterLabels()[h] == pandf.filter_2){
-         //FilterMatched[j] = 1;
-         L3_muons_2.push_back(obj);
-    }
+//     if (obj.filterLabels()[h] == pandf.filter_2){
+//          //FilterMatched[j] = 1;
+//          L3_muons_2.push_back(obj);
+//     }
     
 	  if (obj.filterLabels()[h] ==	pandf.prescaled_filter){
 	    //FilterMatched[j] = 1;
@@ -553,8 +554,8 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
     
     L3_muons_matched.clear();
     L3_muons_matched.resize(L3_muons.size(), 0);
-    L3_muons_matched_2.clear();
-    L3_muons_matched_2.resize(L3_muons_2.size(), 0);
+//     L3_muons_matched_2.clear();
+//     L3_muons_matched_2.resize(L3_muons_2.size(), 0);
     prescaled_L3_muons_matched.clear();
     prescaled_L3_muons_matched.resize(prescaled_L3_muons.size(), 0);
 //    std::cout<<"filter "<<pandf.filter<<std::endl;
@@ -586,8 +587,8 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
       // Reset the flags so the matching can be redone.
         L3_muons_matched.clear();
         L3_muons_matched.resize(L3_muons.size(), 0);
-        L3_muons_matched_2.clear();
-        L3_muons_matched_2.resize(L3_muons_2.size(), 0);
+//         L3_muons_matched_2.clear();
+//         L3_muons_matched_2.resize(L3_muons_2.size(), 0);
         prescaled_L3_muons_matched.clear();
         prescaled_L3_muons_matched.resize(prescaled_L3_muons.size(), 0);
       

@@ -17,13 +17,13 @@ GeneralizedEndpoint::GeneralizedEndpoint(){
   _Correction[1][1] =  0.041069;  _CorrectionError[1][1] = 0.030070;
   _Correction[1][2] =  -0.113320; _CorrectionError[1][2] = 0.028683;
   //[-1.2, 0.]
-  _Correction[2][0] =  0.0;      _CorrectionError[2][0] = 0.03;
-  _Correction[2][1] =  0.0;      _CorrectionError[2][1] = 0.03;
-  _Correction[2][2] =  0.0;      _CorrectionError[2][2] = 0.03;
+  _Correction[2][0] =  0.0;      _CorrectionError[2][0] = 0.025;
+  _Correction[2][1] =  0.0;      _CorrectionError[2][1] = 0.025;
+  _Correction[2][2] =  0.0;      _CorrectionError[2][2] = 0.025;
   //[-0., 1.2]
-  _Correction[3][0] =  0.0;      _CorrectionError[3][0] = 0.03;
-  _Correction[3][1] =  0.0;      _CorrectionError[3][1] = 0.03;
-  _Correction[3][2] =  0.0;      _CorrectionError[3][2] = 0.03;
+  _Correction[3][0] =  0.0;      _CorrectionError[3][0] = 0.025;
+  _Correction[3][1] =  0.0;      _CorrectionError[3][1] = 0.025;
+  _Correction[3][2] =  0.0;      _CorrectionError[3][2] = 0.025;
   //[1.2, 2.1]
   _Correction[4][0] =  0.005114; _CorrectionError[4][0] = 0.033115;
   _Correction[4][1] =  0.035573; _CorrectionError[4][1] = 0.038574;

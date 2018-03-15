@@ -14,6 +14,7 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TrackUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 
 class ResolutionAtZ : public edm::EDAnalyzer {
  public:
@@ -101,6 +102,7 @@ void ResolutionAtZ::analyze(const edm::Event& event, const edm::EventSetup& setu
   if (!dileptons.isValid())
     edm::LogWarning("DileptonHandleInvalid") << "tried to get " << dilepton_src << " and failed!";
   else {
+
     fillDileptonHistos(*dileptons);
   }
 }

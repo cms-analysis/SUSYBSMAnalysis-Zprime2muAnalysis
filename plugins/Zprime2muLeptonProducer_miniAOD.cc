@@ -500,8 +500,9 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
   // the main path and the prescaled path.
   
   Zprime2muTriggerPathsAndFilters pandf(event);
-  if (!pandf.valid)
+  if (!pandf.valid) {
     throw cms::Exception("Zprime2muLeptonProducer_miniAOD") << "could not determine the HLT path and filter names for this event\n";
+  }
  
 
     edm::Handle<edm::TriggerResults> triggerBits;

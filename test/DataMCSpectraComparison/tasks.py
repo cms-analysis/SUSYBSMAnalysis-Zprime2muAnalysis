@@ -30,20 +30,8 @@ def do(cmd):
         ret = ret[0]
     return ret
 
-#latest_dataset = '/SingleMu/Run2012A-PromptReco-v1/AOD'
-#latest_dataset = '/SingleMu/Run2012B-PromptReco-v1/AOD'
-#latest_dataset = '/SingleMu/Run2012C-PromptReco-v1/AOD'
-#latest_dataset = '/SingleMu/Run2012C-PromptReco-v2/AOD'
-#latest_dataset = '/SingleMu/Run2012D-PromptReco-v1/AOD'
-#latest_dataset = '/SingleMu/Run2015A-PromptReco-v1/AOD'
-#latest_dataset = '/SingleMu/Run2015A-PromptReco-v1/AOD'
-#latest_dataset = '/ExpressPhysics/Run2015B-Express-v1/FEVT'
-#latest_dataset = '/SingleMuon/Run2015B-PromptReco-v1/AOD'
-latest_dataset = '/SingleMuon/Run2016C-PromptReco-v2/AOD'
-#lumi_masks = ['Run2012PlusDCSOnlyMuonsOnly', 'Run2012MuonsOnly'] #, 'DCSOnly', 'Run2012']
-#lumi_masks = ['DCSOnly', 'Run2015', 'Run2015MuonsOnly'] #, 'Run2012PlusDCSOnlyMuonsOnly', 'DCSOnly']
-lumi_masks = ['Run2016MuonsOnly'] #, 'Run2012PlusDCSOnlyMuonsOnly', 'DCSOnly']
-#lumi_masks = ['DCSOnly'] #, 'Run2012PlusDCSOnlyMuonsOnly', 'DCSOnly']
+latest_dataset = '/SingleMuon/Run2018A-PromptReco-v2/MINIAOD' # is this used anymore?
+lumi_masks = ['Run2018MuonsOnly']
 
 
 if cmd == 'setdirs':
@@ -58,9 +46,9 @@ elif cmd == 'maketagdirs':
     do('rm data mc plots')
     for which in ['data', 'mc', 'plots']:
         #d = '~/nobackup/zp2mu_ana_datamc_%s/%s' % (which,extra)
-        d = './zp2mu_ana_datamc_%s/%s' % (which,extra)
-        do('mkdir -p %s' % d)
-        do('ln -s %s %s' % (d, which))
+        #d = './zp2mu_ana_datamc_%s/%s' % (which,extra)
+        do('mkdir -p %s/%s' % (extra, which))
+        do('ln -s %s/%s %s' % (extra, which, which))
 
 elif cmd == 'checkevents':
     from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples

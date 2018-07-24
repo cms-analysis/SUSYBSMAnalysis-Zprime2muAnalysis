@@ -352,11 +352,13 @@ Zprime2muHistosVertexFromPAT::Zprime2muHistosVertexFromPAT(const edm::ParameterS
   DimuonMassVertexConstrained = fs->make<TH1F>("DimuonMassVertexConstrained", titlePrefix + "dimu. vertex-constrained mass", 2000, 0, 20000);
   DimuonMassVertexConstrainedWeight = fs->make<TH1F>("DimuonMassVertexConstrainedWeight", titlePrefix + "dimu. vertex-constrained mass", 2000, 0, 20000);
   // Mass plot in bins of log(mass)
-  const int    NMBINS = 100;
-  const double MMIN = 60., MMAX = 2100.;
+  // This binning selection gives binwidths of ~30 GeV at 3 TeV
+  // It can be rebinned and clipped as necessary after the fact
+  const int    NMBINS = 500;
+  const double MMIN = 50., MMAX = 10000.;
   double logMbins[NMBINS+1];
   for (int ibin = 0; ibin <= NMBINS; ibin++)
-    logMbins[ibin] = exp(log(MMIN) + (log(MMAX)-log(MMIN))*ibin/NMBINS);
+    logMbins[ibin] = pow(10,(log10(MMIN) + (log10(MMAX)-log10(MMIN))*ibin/NMBINS));
   DimuonMassVtxConstrainedLog = fs->make<TH1F>("DimuonMassVtxConstrainedLog", titlePrefix + "dimu vtx-constrained mass in log bins", NMBINS, logMbins);
   DimuonMassVtxConstrainedLogWeight = fs->make<TH1F>("DimuonMassVtxConstrainedLogWeight", titlePrefix + "dimu vtx-constrained mass in log bins", NMBINS, logMbins);
   DimuonMassConstrainedVsUn = fs->make<TH2F>("DimuonMassConstrainedVsUn", titlePrefix + "dimu. vertex-constrained vs. non-constrained mass", 200, 0, 3000, 200, 0, 3000);
@@ -534,8 +536,8 @@ void Zprime2muHistosVertexFromPAT::fillOfflineMuonHistos(const pat::Muon* mu) {
     NMuHits->Fill(hp.numberOfValidMuonHits());
 
     NHits->Fill(hp.numberOfValidHits());
-    NInvalidHits->Fill(hp.numberOfHits(reco::HitPattern::TRACK_HITS) - hp.numberOfValidHits());
-    //NInvalidHits->Fill(hp.numberOfHits() - hp.numberOfValidHits());
+    NInvalidHits->Fill(hp.numberOfAllHits(reco::HitPattern::TRACK_HITS) - hp.numberOfValidHits());
+    //NInvalidHits->Fill(hp.numberOfAllHits() - hp.numberOfValidHits());
     
     NPxLayers->Fill(hp.pixelLayersWithMeasurement());
     NStLayers->Fill(hp.stripLayersWithMeasurement());

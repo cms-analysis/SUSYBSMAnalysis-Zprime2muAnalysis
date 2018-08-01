@@ -24,13 +24,23 @@ muonTriggerMatchHLTMuonsMiniAOD = cms.EDProducer('PATTriggerMatcherDRLessByR',
 #trigger_pt_threshold = 45
 #offline_pt_threshold = 48 #?
 trigger_pt_threshold = 50
+trigger_pt_threshold_HLTMu50 = 50
+trigger_pt_threshold_oldHLTMu100 = 50
+trigger_pt_threshold_HLTTkMu100 = 50
 offline_pt_threshold = 53 #?
 trigger_paths = ['HLT_Mu50_v%i' % i for i in (6, 7, 8, 9, 10, 11)]
 #trigger_paths = ['HLT_Mu45_eta2p1_v%i' % i for i in (1,2)]
 #trigger_paths = ['HLT_Mu45_eta2p1_v1']
 #trigger_paths = ['HLT_Mu50_v1']
 #trigger_match = 'userFloat("TriggerMatchPt") > %(trigger_pt_threshold)i && abs(userFloat("TriggerMatchEta")) < 2.1' % locals()
-trigger_match = 'userFloat("TriggerMatchPt") > %(trigger_pt_threshold)i ' % locals()
+trigger_match = 'userFloat("TriggerMatchPt_HLTMu50") > %(trigger_pt_threshold)i ' % locals()
+trigger_match_2018 = '(userFloat("TriggerMatchPt_HLTMu50") > %(trigger_pt_threshold_HLTMu50)i '\
+        '|| userFloat("TriggerMatchPt_oldHLTMu100") > %(trigger_pt_threshold_oldHLTMu100)i '\
+        '|| userFloat("TriggerMatchPt_HLTTkMu100") > %(trigger_pt_threshold_HLTTkMu100)i) '%locals()
+#trigger_match_2018_test = '(userFloat("TriggerMatch_HLTMu50")>0 '\
+#        '|| userFloat("TriggerMatch_HLTTkMu100")>0 '\
+#        '|| userFloat("TriggerMatch_oldHLTMu100")>0 )'
+trigger_match_2018_test = 'userFloat("TriggerMatchPt")>0'
 #trigger_match = '1>0'
 
 #overall_prescale = 1

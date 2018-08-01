@@ -148,9 +148,9 @@ class Drawer:
         # Defaults for the dileptons, cutsets, and mass ranges for the
         # ASCII table.
         self.quantities_to_compare = ['DileptonMass', 'DimuonMassVertexConstrained']
-        self.dileptons = ['MuonsPlusMuonsMinus', 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
+        self.dileptons = ['MuonsPlusMuonsMinus']#, 'MuonsSameSign', 'MuonsAllSigns', 'MuonsElectronsOppSign', 'MuonsElectronsSameSign', 'MuonsElectronsAllSigns']
 #        self.cutsets = ['VBTF', 'OurNew', 'OurOld', 'Simple', 'EmuVeto', 'OurNoIso', 'OurMuPrescaled', 'VBTFMuPrescaled']
-        self.cutsets = ['Our2012', 'Simple']
+        self.cutsets = ['Our2018']#['Our2012', 'Simple']
         self.mass_ranges_for_table = [(50,)]
 #        self.mass_ranges_for_table = [(60,120), (120,200), (200,400), (400,600), (600,900), (900,1300), (1300,1800), (1800,), (120,), (200,), (400,), (600,),]
 
@@ -232,7 +232,7 @@ class Drawer:
             if quantity_to_compare == 'DileptonMass':
                 return 5
         if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained', 'DileptonPt', 'LeptonPt']:
-            return 5
+            return 10
 #            return 50
 #        if quantity_to_compare in ['RelCombIso', 'RelIsoSumPt']:
 #            return 5
@@ -270,13 +270,22 @@ class Drawer:
         if 'MuonsSameSign' in dilepton:
             if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained']:
                 return 50, 1000
-        if quantity_to_compare in ['DileptonMass', 'DimuonMassVertexConstrained']:
-            return 50, 1000
-#            return 60, 2000
-#            return 120, 1120
-        elif quantity_to_compare in ['DileptonPt', 'LeptonPt']:
-            return 0, 700
+        if quantity_to_compare in \
+                [\
+                'DileptonMass', 'DimuonMassVertexConstrained',\
+                'DileptonMass_bb','DimuonMassVertexConstrained_bb',\
+                'DileptonMass_be','DimuonMassVertexConstrained_be',\
+                'DileptonMass_ee','DimuonMassVertexConstrained_ee',\
+                'DimuonMassVtxConstrainedLog','DimuonMassVtxConstrainedLog_bb',\
+                'DimuonMassVtxConstrainedLog_be','DimuonMassVtxConstrainedLog_ee'
+                ]: return 50, 3500
+        elif quantity_to_compare == 'LeptonPt':
+            return 0, 2000
+        elif quantity_to_compare == 'DileptonPt':
+            return 0, 1000
         elif quantity_to_compare == 'LeptonEta':
+            return -2.5,2.5
+        elif quantity_to_compare == 'DileptonRap':
             return -3,3
         return None
 
@@ -971,7 +980,7 @@ class Drawer:
             print quantity_to_compare
             
             if quantity_to_compare != 'DileptonMass':
-                cutsets = ['OurNew', 'Our2012', 'OurMuPrescaledNew', 'OurMuPrescaled2012']
+                cutsets = ['Our2018']
             else:
                 cutsets = self.cutsets
             

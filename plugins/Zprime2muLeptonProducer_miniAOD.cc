@@ -49,6 +49,9 @@ private:
   double electron_muon_veto_dR;
   std::vector<std::pair<float,float> > muon_eta_phis;
   double trigger_match_max_dR;
+  bool use_filters_for_trigger_matching;
+  std::vector<std::string> trigger_filters;
+  std::vector<std::string> prescaled_trigger_filters;
   
   edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
   edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> trigger_summary_src_;
@@ -78,7 +81,9 @@ Zprime2muLeptonProducer_miniAOD::Zprime2muLeptonProducer_miniAOD(const edm::Para
     electron_muon_veto_dR(cfg.getParameter<double>("electron_muon_veto_dR")),
     //trigger_summary_src(cfg.getParameter<edm::InputTag>("trigger_summary_src")),
     trigger_match_max_dR(cfg.getParameter<double>("trigger_match_max_dR")),
-    
+    trigger_filters(cfg.getParameter<std::vector<std::string>>("trigger_filters")),
+    prescaled_trigger_filters(cfg.getParameter<std::vector<std::string>>("prescaled_trigger_filters")),
+
     triggerBits_(consumes<edm::TriggerResults>(cfg.getParameter<edm::InputTag>("bits"))),
     trigger_summary_src_(consumes<pat::TriggerObjectStandAloneCollection>(cfg.getParameter<edm::InputTag>("trigger_summary"))),
     triggerPrescales_(consumes<pat::PackedTriggerPrescales>(cfg.getParameter<edm::InputTag>("prescales"))),
@@ -88,6 +93,13 @@ Zprime2muLeptonProducer_miniAOD::Zprime2muLeptonProducer_miniAOD(const edm::Para
   consumes<edm::View<reco::Candidate>>(muon_view_src);
   consumes<pat::MuonCollection>(muon_src);
   consumes<reco::CandViewMatchMap >(muon_photon_match_src);
+
+  use_filters_for_trigger_matching = false;
+  if(trigger_filters.size()>0 && prescaled_trigger_filters.size()>0) {
+    std::cout << "\n trigger_filters.size()=          " << trigger_filters.size() << "\n";
+    std::cout <<   " prescaled_trigger_filters.size()=" << prescaled_trigger_filters.size() << "\n\n";
+    use_filters_for_trigger_matching = true;
+  }
 
   if (cfg.existsAs<std::vector<std::string> >("muon_tracks_for_momentum"))
     muon_tracks_for_momentum = cfg.getParameter<std::vector<std::string> >("muon_tracks_for_momentum");
@@ -390,10 +402,14 @@ std::pair<pat::Muon*,int> Zprime2muLeptonProducer_miniAOD::doLepton(const edm::E
   // pair of function calls, there will be new user floats:
   // {TriggerMatch, prescaledTriggerMatch} x {Pt, Eta, Phi,
   // Charge}. (Maybe embed whole candidates later.)
-  
-   embedTriggerMatch(new_mu, "",          L3_muons,           L3_muons_matched);
-//   embedTriggerMatch_or(new_mu, "",         L3_muons, L3_muons_2,        L3_muons_matched, L3_muons_matched_2);
-  embedTriggerMatch(new_mu, "prescaled", prescaled_L3_muons, prescaled_L3_muons_matched);
+  if(use_filters_for_trigger_matching) {
+
+  }
+  else {
+    embedTriggerMatch(new_mu, "",          L3_muons,           L3_muons_matched);
+    //embedTriggerMatch_or(new_mu, "",         L3_muons, L3_muons_2,        L3_muons_matched, L3_muons_matched_2);
+    embedTriggerMatch(new_mu, "prescaled", prescaled_L3_muons, prescaled_L3_muons_matched);
+  }
 
   // Evaluate cuts here with string object selector, and any code that
   // cannot be done in the string object selector (none so far).
@@ -504,17 +520,52 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
     throw cms::Exception("Zprime2muLeptonProducer_miniAOD") << "could not determine the HLT path and filter names for this event\n";
  
 
-    edm::Handle<edm::TriggerResults> triggerBits;
-    edm::Handle<pat::TriggerObjectStandAloneCollection> trigger_summary_src;
-    edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
+  edm::Handle<edm::TriggerResults> triggerBits;
+  edm::Handle<pat::TriggerObjectStandAloneCollection> trigger_summary_src;
+  edm::Handle<pat::PackedTriggerPrescales> triggerPrescales;
 
-    event.getByToken(triggerBits_, triggerBits);
-    event.getByToken(trigger_summary_src_, trigger_summary_src);
-    event.getByToken(triggerPrescales_, triggerPrescales);
-    
-    const edm::TriggerNames &names = event.triggerNames(*triggerBits);
+  event.getByToken(triggerBits_, triggerBits);
+  event.getByToken(trigger_summary_src_, trigger_summary_src);
+  event.getByToken(triggerPrescales_, triggerPrescales);
+
+  const edm::TriggerNames &names = event.triggerNames(*triggerBits);
     
 
+  if(use_filters_for_trigger_matching) {
+    L3_muons.clear();
+    prescaled_L3_muons.clear();
+    for(pat::TriggerObjectStandAlone obj : *trigger_summary_src) {
+      obj.unpackPathNames(names);
+      obj.unpackFilterLabels(event, *trigger_bits); // for 2017~
+  
+      for (unsigned h = 0; h < obj.filterLabels().size(); ++h) {
+
+        bool is_fired = false;
+        for(unsigned i_f=0; i_f<trigger_filters.size(); ++i_f) {
+          if (obj.filterLabels()[h] == trigger_filters[i_f]){ 
+            is_fired = true;
+            break;
+          }
+        }
+        if(is_fired)  L3_muons.push_back(obj);
+
+        bool is_prescaled_fired = false;
+        for(unsigned i_f=0; i_f<prescaled_trigger_filters.size(); ++i_f) {
+          if (obj.filterLabels()[h] == prescaled_trigger_filters[i_f]){ 
+            is_prescaled_fired = true;
+            break;
+          }
+        }
+        if(is_prescaled_fired)  prescaled_L3_muons.push_back(obj);
+
+      }
+    }
+    L3_muons_matched.clear();
+    L3_muons_matched.resize(L3_muons.size(), 0);
+    prescaled_L3_muons_matched.clear();
+    prescaled_L3_muons_matched.resize(prescaled_L3_muons.size(), 0);
+  }
+  else { // get trigger object using old way
     int j = 0;
     
     L3_muons.clear();
@@ -562,7 +613,8 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
 //    std::cout<<"L3_muons.size()"<<L3_muons.size()<<std::endl;
 //    std::cout<<"prescaled filter "<<pandf.prescaled_filter<<std::endl;
 //    std::cout<<"prescaled_L3_muons.size()"<<prescaled_L3_muons.size()<<std::endl;
-    
+  }
+
     // Using the main choice for momentum assignment, make the primary
     // collection of muons, which will have branch name
     // e.g. leptons:muons.
@@ -585,12 +637,20 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
     // leptons:picky, ...
     for (size_t i = 0; i < muon_tracks_for_momentum.size(); ++i) {
       // Reset the flags so the matching can be redone.
+      if(use_filters_for_trigger_matching) {
+        L3_muons_matched.clear();
+        L3_muons_matched.resize(L3_muons.size(), 0);
+        prescaled_L3_muons_matched.clear();
+        prescaled_L3_muons_matched.resize(prescaled_L3_muons.size(), 0);
+      }
+      else { // get trigger object using old way
         L3_muons_matched.clear();
         L3_muons_matched.resize(L3_muons.size(), 0);
 //         L3_muons_matched_2.clear();
 //         L3_muons_matched_2.resize(L3_muons_2.size(), 0);
         prescaled_L3_muons_matched.clear();
         prescaled_L3_muons_matched.resize(prescaled_L3_muons.size(), 0);
+      }
       
       muon_track_for_momentum = muon_tracks_for_momentum[i];
       doLeptons<pat::Muon>(event, muon_src, muon_view_src, muon_track_for_momentum);

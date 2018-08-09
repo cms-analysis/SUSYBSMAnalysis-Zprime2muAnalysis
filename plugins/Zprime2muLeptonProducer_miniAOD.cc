@@ -537,7 +537,7 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
     prescaled_L3_muons.clear();
     for(pat::TriggerObjectStandAlone obj : *trigger_summary_src) {
       obj.unpackPathNames(names);
-      obj.unpackFilterLabels(event, *trigger_bits); // for 2017~
+      obj.unpackFilterLabels(event, *triggerBits); // for 2017~
   
       for (unsigned h = 0; h < obj.filterLabels().size(); ++h) {
 

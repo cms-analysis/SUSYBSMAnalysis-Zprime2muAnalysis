@@ -534,8 +534,8 @@ void Zprime2muHistosVertexFromPAT::fillOfflineMuonHistos(const pat::Muon* mu) {
     NMuHits->Fill(hp.numberOfValidMuonHits());
 
     NHits->Fill(hp.numberOfValidHits());
-    NInvalidHits->Fill(hp.numberOfHits(reco::HitPattern::TRACK_HITS) - hp.numberOfValidHits());
-    //NInvalidHits->Fill(hp.numberOfHits() - hp.numberOfValidHits());
+    NInvalidHits->Fill(hp.numberOfAllHits(reco::HitPattern::TRACK_HITS) - hp.numberOfValidHits());
+    //NInvalidHits->Fill(hp.numberOfAllHits() - hp.numberOfValidHits());
     
     NPxLayers->Fill(hp.pixelLayersWithMeasurement());
     NStLayers->Fill(hp.stripLayersWithMeasurement());

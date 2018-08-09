@@ -57,8 +57,8 @@ void TFMultiD::setup(const char *name, Double_t (*fcn)(Double_t *, Double_t *),
     for (Int_t i = 0; i < fNdim; i++)
       fXmin[i] = fXmax[i] = 0;
 
- const char *funcname = gCling->Getp2f2funcname((void*)fcn);  
- //const char *funcname = "function"; // Federica
+ //const char *funcname = gCling->Getp2f2funcname((void*)fcn);  
+ const char *funcname = "function"; // Federica
   if (funcname) {
     fType = 2;
     SetTitle(funcname);

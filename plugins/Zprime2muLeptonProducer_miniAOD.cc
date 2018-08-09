@@ -403,7 +403,8 @@ std::pair<pat::Muon*,int> Zprime2muLeptonProducer_miniAOD::doLepton(const edm::E
   // {TriggerMatch, prescaledTriggerMatch} x {Pt, Eta, Phi,
   // Charge}. (Maybe embed whole candidates later.)
   if(use_filters_for_trigger_matching) {
-
+    embedTriggerMatch(new_mu, "",          L3_muons,           L3_muons_matched);
+    embedTriggerMatch(new_mu, "prescaled", prescaled_L3_muons, prescaled_L3_muons_matched);
   }
   else {
     embedTriggerMatch(new_mu, "",          L3_muons,           L3_muons_matched);

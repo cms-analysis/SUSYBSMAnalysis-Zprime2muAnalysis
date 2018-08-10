@@ -218,66 +218,6 @@ for cut_name, Selection in cuts.iteritems():
         path_list.append(alldil * dil * histos)
 
 
-       #define the list of MC samples to be read here. be careful that if WWinclusive or tautau sample are not commented it will apply the filters when running locally.
-
-    samples = [
-#         ('dy50to120', '/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_EXO50_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-#         ('dy120to200', '/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo51_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-#         ('dy200to400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo52_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-#         ('dy400to800', '/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo53_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-#         ('dy800to1400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_800_1400/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo54_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-#         ('dy1400to2300', '/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo55_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-#    ('dy2300to3500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo56_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-#         ('dy3500to4500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_3500_4500/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo57_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-#    ('dy4500to6000', '/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo58_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-#  
-
-#         ('dyPt100to250', '/DYJetsToLL_Pt-100To250_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext5-v1/MINIAODSIM'),
-#         ('dyPt250to400', '/DYJetsToLL_Pt-250To400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext5-v1/MINIAODSIM'),
-#         ('dyPt400to650', '/DYJetsToLL_Pt-400To650_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('dyPt650', '/DYJetsToLL_Pt-650ToInf_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-
-#         ('WZ', '/WZ_TuneCUETP8M1_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('WZ_ext', '/WZ_TuneCUETP8M1_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM'),
-#         
-#         ('ZZ', '/ZZ_TuneCUETP8M1_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('ZZ_ext', '/ZZ_TuneCUETP8M1_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM'),
-# 
-#         ('WWinclusive', '/WWTo2L2Nu_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('WW200to600', '/WWTo2L2Nu_Mll_200To600_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('WW600to1200', '/WWTo2L2Nu_Mll_600To1200_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('WW1200to2500', '/WWTo2L2Nu_Mll_1200To2500_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('WW2500', '/WWTo2L2Nu_Mll_2500ToInf_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-# 
-#         ('dyInclusive50', '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_HCALDebug_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-# 
-#         ('Wjets', '/WJetsToLNu_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-# 
-#         ('ttbar_lep', '/TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('ttbar_lep50to500', '/TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('ttbar_lep_500to800', '/TTToLL_MLL_500To800_TuneCUETP8M1_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('ttbar_lep_800to1200', '/TTToLL_MLL_800To1200_TuneCUETP8M1_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('ttbar_lep_1200to1800', '/TTToLL_MLL_1200To1800_TuneCUETP8M1_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('ttbar_lep1800toInf', '/TTToLL_MLL_1800ToInf_TuneCUETP8M1_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-# 
-#         ('Wantitop', '/ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM'),
-#         ('tW', '/ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM'),
-# 
-# ###        ('qcd50to80', '/QCD_Pt_50to80_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('qcd80to120', '/QCD_Pt_80to120_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('qcd120to170', '/QCD_Pt_120to170_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('qcd170to300', '/QCD_Pt_170to300_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('qcd300to470', '/QCD_Pt_300to470_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('qcd470to600', '/QCD_Pt_470to600_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('qcd600to800', '/QCD_Pt_600to800_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('qcd800to1000', '/QCD_Pt_800to1000_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('qcd1000to1400', '/QCD_Pt_1000to1400_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('qcd1400to1800', '/QCD_Pt_1400to1800_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('qcd1800to2400', '/QCD_Pt_1800to2400_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('qcd2400to3200', '/QCD_Pt_2400to3200_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-#         ('qcd3200', '/QCD_Pt_3200toInf_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v3/MINIAODSIM'),
-        
-        ]
 
     # Finally, make the path for this set of cuts.
     pathname = 'path' + cut_name
@@ -289,71 +229,6 @@ for cut_name, Selection in cuts.iteritems():
         pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
 
 
-    for name, ana_dataset in samples:
-        
-        if 'dy50to120' and ZSkim in name:
-            if miniAOD:
-                process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
-                process.DYGenMassFilter = cms.EDFilter('DyPt_ZSkim',
-                                   src = cms.InputTag('prunedGenParticles'),
-                                   min_mass = cms.double(0),
-                                   max_mass = cms.double(100), 
-                                   )
-            else:
-                process.DYGenMassFilter = cms.EDFilter('DyPt_ZSkim',
-                                   src = cms.InputTag('prunedMCLeptons'),
-                                   min_mass = cms.double(0),
-                                   max_mass = cms.double(100), 
-                                   )   
-            pobj = process.DYGenMassFilter * pobj
-
-        if 'ttbar_lep50to500' in name:
-                if miniAOD:
-                    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
-                    process.DYGenMassFilter = cms.EDFilter('TTbarSelection',
-                                       src = cms.InputTag('prunedGenParticles'),
-                                       min_mass = cms.double(50),
-                                       max_mass = cms.double(500), 
-                                       )
-                else:
-                    process.DYGenMassFilter = cms.EDFilter('TTbarSelection',
-                                       src = cms.InputTag('prunedMCLeptons'),
-                                       min_mass = cms.double(50),
-                                       max_mass = cms.double(500), 
-                                       )   
-                pobj = process.DYGenMassFilter * pobj
-            
-        if 'WWinclusive' in name:
-            if miniAOD:
-                process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
-                process.DYGenMassFilter = cms.EDFilter('DibosonGenMass',
-                                       src = cms.InputTag('prunedGenParticles'),
-                                       min_mass = cms.double(50),
-                                       max_mass = cms.double(200), 
-                                       )
-            else:
-                process.DYGenMassFilter = cms.EDFilter('DibosonGenMass',
-                                       src = cms.InputTag('prunedMCLeptons'),
-                                       min_mass = cms.double(50),
-                                       max_mass = cms.double(200),
-                                       )   
-            pobj = process.DYGenMassFilter * pobj
-                 
-        if 'dyInclusive50' in name:
-            if miniAOD:
-                process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
-                process.DYGenMassFilter = cms.EDFilter('TauTauSelection',
-                                       src = cms.InputTag('prunedGenParticles'),                                      
-                                       )
-            else:
-                process.DYGenMassFilter = cms.EDFilter('TauTauSelection',
-                                       src = cms.InputTag('prunedMCLeptons'),                                      
-                                       ) 
-                
-            pobj = process.DYGenMassFilter * pobj
-
-
-        
     if 'VBTF' not in cut_name and cut_name != 'Simple':
         if not miniAOD:
             pobj = process.goodDataFilter * pobj
@@ -372,6 +247,134 @@ for cut_name, Selection in cuts.iteritems():
         else:
             ####### Now it seems that there are no prescaled path ########
             pobj = process.PrescaleToCommon * pobj 
+
+    # This is a MC-specific bloc of code
+    # define the list of MC samples to be read here. be careful that if WWinclusive or tautau sample are not commented it will apply the filters when running locally.
+
+    if 'no_mc' not in sys.argv:
+        samples = [
+             #('dy50to120', '/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_EXO50_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
+             #('dy120to200', '/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo51_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
+             #('dy200to400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo52_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
+             #('dy400to800', '/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo53_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
+             #('dy800to1400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_800_1400/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo54_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
+             #('dy1400to2300', '/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo55_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
+        #('dy2300to3500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo56_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
+             #('dy3500to4500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_3500_4500/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo57_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
+        #('dy4500to6000', '/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo58_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
+      
+
+             #('dyPt100to250', '/DYJetsToLL_Pt-100To250_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext5-v1/MINIAODSIM'),
+             #('dyPt250to400', '/DYJetsToLL_Pt-250To400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext5-v1/MINIAODSIM'),
+             #('dyPt400to650', '/DYJetsToLL_Pt-400To650_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('dyPt650', '/DYJetsToLL_Pt-650ToInf_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+
+             #('WZ', '/WZ_TuneCUETP8M1_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('WZ_ext', '/WZ_TuneCUETP8M1_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM'),
+             
+             #('ZZ', '/ZZ_TuneCUETP8M1_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('ZZ_ext', '/ZZ_TuneCUETP8M1_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM'),
+     
+             #('WWinclusive', '/WWTo2L2Nu_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('WW200to600', '/WWTo2L2Nu_Mll_200To600_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('WW600to1200', '/WWTo2L2Nu_Mll_600To1200_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('WW1200to2500', '/WWTo2L2Nu_Mll_1200To2500_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('WW2500', '/WWTo2L2Nu_Mll_2500ToInf_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+     
+             #('dyInclusive50', '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_HCALDebug_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+     
+             #('Wjets', '/WJetsToLNu_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+     
+             #('ttbar_lep', '/TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('ttbar_lep50to500', '/TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('ttbar_lep_500to800', '/TTToLL_MLL_500To800_TuneCUETP8M1_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('ttbar_lep_800to1200', '/TTToLL_MLL_800To1200_TuneCUETP8M1_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('ttbar_lep_1200to1800', '/TTToLL_MLL_1200To1800_TuneCUETP8M1_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('ttbar_lep1800toInf', '/TTToLL_MLL_1800ToInf_TuneCUETP8M1_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+     
+             #('Wantitop', '/ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM'),
+             #('tW', '/ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM'),
+     
+             ##('qcd50to80', '/QCD_Pt_50to80_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('qcd80to120', '/QCD_Pt_80to120_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('qcd120to170', '/QCD_Pt_120to170_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('qcd170to300', '/QCD_Pt_170to300_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('qcd300to470', '/QCD_Pt_300to470_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('qcd470to600', '/QCD_Pt_470to600_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('qcd600to800', '/QCD_Pt_600to800_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('qcd800to1000', '/QCD_Pt_800to1000_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('qcd1000to1400', '/QCD_Pt_1000to1400_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('qcd1400to1800', '/QCD_Pt_1400to1800_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('qcd1800to2400', '/QCD_Pt_1800to2400_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('qcd2400to3200', '/QCD_Pt_2400to3200_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+             #('qcd3200', '/QCD_Pt_3200toInf_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v3/MINIAODSIM'),
+            
+            ]
+        for name, ana_dataset in samples:
+            
+            if 'dy50to120' and ZSkim in name:
+                if miniAOD:
+                    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
+                    process.DYGenMassFilter = cms.EDFilter('DyPt_ZSkim',
+                                       src = cms.InputTag('prunedGenParticles'),
+                                       min_mass = cms.double(0),
+                                       max_mass = cms.double(100), 
+                                       )
+                else:
+                    process.DYGenMassFilter = cms.EDFilter('DyPt_ZSkim',
+                                       src = cms.InputTag('prunedMCLeptons'),
+                                       min_mass = cms.double(0),
+                                       max_mass = cms.double(100), 
+                                       )   
+                pobj = process.DYGenMassFilter * pobj
+
+            if 'ttbar_lep50to500' in name:
+                    if miniAOD:
+                        process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
+                        process.DYGenMassFilter = cms.EDFilter('TTbarSelection',
+                                           src = cms.InputTag('prunedGenParticles'),
+                                           min_mass = cms.double(50),
+                                           max_mass = cms.double(500), 
+                                           )
+                    else:
+                        process.DYGenMassFilter = cms.EDFilter('TTbarSelection',
+                                           src = cms.InputTag('prunedMCLeptons'),
+                                           min_mass = cms.double(50),
+                                           max_mass = cms.double(500), 
+                                           )   
+                    pobj = process.DYGenMassFilter * pobj
+                
+            if 'WWinclusive' in name:
+                if miniAOD:
+                    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
+                    process.DYGenMassFilter = cms.EDFilter('DibosonGenMass',
+                                           src = cms.InputTag('prunedGenParticles'),
+                                           min_mass = cms.double(50),
+                                           max_mass = cms.double(200), 
+                                           )
+                else:
+                    process.DYGenMassFilter = cms.EDFilter('DibosonGenMass',
+                                           src = cms.InputTag('prunedMCLeptons'),
+                                           min_mass = cms.double(50),
+                                           max_mass = cms.double(200),
+                                           )   
+                pobj = process.DYGenMassFilter * pobj
+                     
+            if 'dyInclusive50' in name:
+                if miniAOD:
+                    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
+                    process.DYGenMassFilter = cms.EDFilter('TauTauSelection',
+                                           src = cms.InputTag('prunedGenParticles'),                                      
+                                           )
+                else:
+                    process.DYGenMassFilter = cms.EDFilter('TauTauSelection',
+                                           src = cms.InputTag('prunedMCLeptons'),                                      
+                                           ) 
+                    
+                pobj = process.DYGenMassFilter * pobj
+
+
+        
     path = cms.Path(pobj)
     setattr(process, pathname, path)
 
@@ -389,7 +392,7 @@ def ntuplify(process, fill_gen_info=False):
                                 jet_src = cms.InputTag("slimmedJets"),
                                 beamspot_src = cms.InputTag('offlineBeamSpot'),
                                 vertices_src = cms.InputTag('offlineSlimmedPrimaryVertices'),
-                                 #TriggerResults_src = cms.InputTag('TriggerResults', '', 'PAT'),    #mc
+                                #TriggerResults_src = cms.InputTag('TriggerResults', '', 'PAT'),    #mc
                                 TriggerResults_src = cms.InputTag('TriggerResults', '', 'RECO'),    #data
                                 genEventInfo = cms.untracked.InputTag('generator'),
                                 metFilter = cms.VInputTag( cms.InputTag("Flag_HBHENoiseFilter"), 
@@ -427,6 +430,7 @@ def ntuplify(process, fill_gen_info=False):
                 process.pathSimple *= process.SimpleNtupler * process.SimpleNtuplerEmu
 
 # to have ntuples also running in interactive way
+process.GlobalTag.globaltag = '101X_dataRun2_Prompt_v11'
 ntuplify(process)
 
 def printify(process):
@@ -469,7 +473,7 @@ def for_data(process):
 
 def for_mc(process, hlt_process_name, fill_gen_info):
     # Change to MC for 2018 when it's available
-    #process.GlobalTag.globaltag = '101X_dataRun2_Prompt_v11'
+    #process.GlobalTag.globaltag = ''
     ntuplify(process, fill_gen_info)
     # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
     switch_hlt_process_name(process, hlt_process_name)
@@ -522,7 +526,7 @@ if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
 from CRABClient.UserUtilities import config, getUsernameFromSiteDB
 config = config()
-config.General.requestName = 'ana_datamc_%(name)s_20180722_2'
+config.General.requestName = 'ana_datamc_%(name)s_20180802'
 config.General.workArea = 'crab'
 #config.General.transferLogs = True
 config.JobType.pluginName = 'Analysis'
@@ -553,15 +557,17 @@ config.Site.storageSite = 'T2_CH_CERN'
             # Good to use
             # PPD recommendation for 2018A PromptReco 
             # 06Jun2018-v1 + PromptReco-v3
-            #('SingleMuonRun2018A-06June2018-v1', '/SingleMuon/Run2018A-06Jun2018-v1/MINIAOD'), 
-            #('SingleMuonRun2018A-PromptReco-v3', '/SingleMuon/Run2018A-PromptReco-v3/MINIAOD'),
-            #('SingleMuonRun2018B-PromptReco-v1', '/SingleMuon/Run2018B-PromptReco-v1/MINIAOD'),
-            # Need to rerun since dataset not fully in JSON yet. Still need runs >= 318877
-            #('SingleMuonRun2018B-PromptReco-v2', '/SingleMuon/Run2018B-PromptReco-v2/MINIAOD'),
-            # not in JSON yet
-            #('SingleMuonRun2018C-PromptReco-v1', '/SingleMuon/Run2018C-PromptReco-v1/MINIAOD'),
-            #('SingleMuonRun2018C-PromptReco-v2', '/SingleMuon/Run2018C-PromptReco-v2/MINIAOD'),
-            #('SingleMuonRun2018C-PromptReco-v3', '/SingleMuon/Run2018C-PromptReco-v3/MINIAOD'),
+            ('SingleMuonRun2018A-06June2018-v1', '/SingleMuon/Run2018A-06Jun2018-v1/MINIAOD'), 
+            ('SingleMuonRun2018A-PromptReco-v3', '/SingleMuon/Run2018A-PromptReco-v3/MINIAOD'),
+            ('SingleMuonRun2018B-PromptReco-v1', '/SingleMuon/Run2018B-PromptReco-v1/MINIAOD'),
+            ('SingleMuonRun2018B-PromptReco-v2', '/SingleMuon/Run2018B-PromptReco-v2/MINIAOD'),
+            ('SingleMuonRun2018C-PromptReco-v1', '/SingleMuon/Run2018C-PromptReco-v1/MINIAOD'),
+            ('SingleMuonRun2018C-PromptReco-v2', '/SingleMuon/Run2018C-PromptReco-v2/MINIAOD'),
+            # not fully in JSON yet only includes up to 319851 (full C-v3 is up to 320191)
+            ('SingleMuonRun2018C-PromptReco-v3', '/SingleMuon/Run2018C-PromptReco-v3/MINIAOD'),
+            # Not in JSON at all, no 2018D-PromptReco-v1?
+            #('SingleMuonRun2018D-PromptReco-v2', '/SingleMuon/Run2018D-PromptReco-v2/MINIAOD'),
+
 
         ]
 

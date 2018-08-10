@@ -1416,7 +1416,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
         // Check for passing Our201XSel here
         // Not all these flags are necessary, as each year of data are
         // analyzed in a release specific to that year. 
-        bool DimuonSel = t.cos_angle > -0.9998 && (t.lep_id[0]*t.lep_id[1])<0 && t.vertex_chi2 < 20.;
+        bool DimuonSel = t.vertex_m > 50 && t.cos_angle > -0.9998 && (t.lep_id[0]*t.lep_id[1])<0 && t.vertex_chi2 < 20.;
         bool TriggerSel15 = t.lep_triggerMatchPt_Mu50[0]>0 || t.lep_triggerMatchPt_Mu50[1]>0;
         //
         // 2016 needed Mu50 || TkMu50 this flag not included here
@@ -1425,12 +1425,15 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
         // on what was matched to the offline muon object in the embedTriggerMatch_or 
         // method in Zprime2muLeptonProducer_miniAOD.cc
         bool TriggerSel18 = t.lep_triggerMatchPt[0]>0 || t.lep_triggerMatchPt[1]>0;
-        bool LeptonSel = t.lep_pt[0] > 53.                         && t.lep_pt[1] > 53 && 
+        // Define for backwards compatibility, but not used at moment
+        //bool TriggerSel = t.lep_triggerMatchPt[0]>50. || t.lep_triggerMatchPt[1]>50.;
+        
+        bool LeptonSel = t.lep_pt[0] > 53.                         && t.lep_pt[1] > 53. && 
                          fabs(t.lep_eta[0])<2.4                    && fabs(t.lep_eta[1])<2.4 &&
                          t.lep_isGlobalMuon[0]                     && t.lep_isGlobalMuon[1] &&
                          t.lep_isTrackerMuon[0]                    && t.lep_isTrackerMuon[1] &&
-                         (t.lep_sumPt[0]/t.lep_tk_pt[0])<0.1         && (t.lep_sumPt[1]/t.lep_tk_pt[1])<0.1 &&
-                         (t.lep_pt_err[0]/t.lep_pt[0])<0.3           && (t.lep_pt_err[1]/t.lep_pt[1])<0.3 &&
+                         (t.lep_sumPt[0]/t.lep_tk_pt[0])<0.1       && (t.lep_sumPt[1]/t.lep_tk_pt[1])<0.1 &&
+                         (t.lep_pt_err[0]/t.lep_pt[0])<0.3         && (t.lep_pt_err[1]/t.lep_pt[1])<0.3 &&
                          fabs(t.lep_dB[0])<0.2                     && fabs(t.lep_dB[1])<0.2 &&
                          t.lep_glb_numberOfValidPixelHits[0]>0     && t.lep_glb_numberOfValidPixelHits[1]>0 && 
                          t.lep_glb_numberOfValidTrackerLayers[0]>0 && t.lep_glb_numberOfValidTrackerLayers[1]>0;

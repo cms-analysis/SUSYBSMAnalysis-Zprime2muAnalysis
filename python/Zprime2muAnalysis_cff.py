@@ -18,8 +18,8 @@ goodDataFiltersMiniAOD = [primaryVertexMiniAOD]
 
 
 from MuonPhotonMatch_cff import muonPhotonMatch, muonPhotonMatchMiniAOD
-from OurSelection2016_cff import allDimuons, dimuons, loose_cut
-#from OurSelectionDec2012_cff import allDimuons, dimuons, loose_cut
+# This default selection gets overwritten in histos.py
+from OurSelection2018_cff import allDimuons, dimuons, loose_cut
 
 leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          muon_src = cms.InputTag('cleanPatMuonsTriggerMatch'), #JMTBAD changeme after new PAT tuples
@@ -36,20 +36,18 @@ leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          trigger_summary_src = cms.InputTag('hltTriggerSummaryAOD', '', 'HLT'),
                          )
 leptonsMini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
-                              muon_src = cms.InputTag('slimmedMuons'), #JMTBAD changeme after new PAT tuples
+                              muon_src = cms.InputTag('slimmedMuons'),
                               electron_src = cms.InputTag('slimmedElectrons'),
                               electron_id = cms.InputTag('egmGsfElectronIDs:heepElectronID-HEEPV60'),
-                              muon_srcSecond = cms.InputTag('slimmedMuons'), #JMTBAD changeme after new PAT tuples
+                              muon_srcSecond = cms.InputTag('slimmedMuons'),
                               muon_cuts = cms.string(loose_cut),
                               muon_track_for_momentum = cms.string('TunePNew'),
                               muon_track_for_momentum_CSC = cms.string('Inner'),
                               muon_photon_match_src = cms.InputTag('muonPhotonMatchMiniAOD'),
                               electron_muon_veto_dR = cms.double(-1),
                               trigger_match_max_dR = cms.double(0.2),
-#                              trigger_summary = cms.InputTag('selectedPatTrigger'), # to run on 2016 MC
-                              trigger_summary = cms.InputTag('slimmedPatTrigger'), # to run on 2017 Data
-#                              bits = cms.InputTag("TriggerResults","","HLT2"),##mc reHLT
-                              bits = cms.InputTag("TriggerResults","","HLT"),#data
+                              trigger_summary = cms.InputTag('slimmedPatTrigger'), # could need to change for 2018 MC
+                              bits = cms.InputTag("TriggerResults","","HLT"),
                               prescales = cms.InputTag("patTrigger"),
                               )
 

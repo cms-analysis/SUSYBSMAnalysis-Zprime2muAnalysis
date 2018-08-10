@@ -44,6 +44,7 @@ prescaled_offline_pt_threshold = 27
 prescaled_trigger_paths = ['HLT_Mu27_v%i' % i for i in (6, 7, 8, 9, 10, 11)]
 prescaled_trigger_match = trigger_match.replace('Trigger', 'prescaledTrigger').replace('%i' % trigger_pt_threshold, '%i' % prescaled_trigger_pt_threshold)
 
+
 # -- for updated plugins/Zprime2muLeptonProducer_miniAOD.cc
 # Mu50:     hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q::HLT
 # OldMu100: hltL3fL1sMu22Or25L1f0L2f10QL3Filtered100Q::HLT
@@ -53,28 +54,43 @@ prescaled_trigger_match = trigger_match.replace('Trigger', 'prescaledTrigger').r
 # Mu27      hltL3fL1sMu25L1f0L2f10QL3Filtered27Q::HLT (???)
 # TkMu27:   hltL3fL1sMu22Or25f0TkFiltered27Q::HLT
 
+def make_string_cut_for_trigger_matching( list_filters, list_filters_pt ):
+  cut = ''
+  if len(list_filters) != len(list_filters_pt):
+    print 'len(list_filters) != len(list_filters_pt) -> return ', cut
+    return cut
+  for i, f in enumerate(list_filters):
+    if f != list_filters[-1]:
+      cut += 'userFloat("%sTriggerMatchPt")>=%i || ' % (list_filters[i], list_filters_pt[i])
+    else:
+      cut += 'userFloat("%sTriggerMatchPt")>=%i ' % (list_filters[i], list_filters_pt[i])
+  return cut
+
 trigger_filters = [
                     'hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q',
                     'hltL3fL1sMu22Or25L1f0L2f10QL3Filtered100Q',
                     'hltL3fL1sMu25f0TkFiltered100Q'
                   ]
 trigger_filters_pt = [
-                        50,
-                        100,
-                        100
+                    50,
+                    100,
+                    100
                   ]
 prescaled_trigger_filters = [
-                    'hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q',
-                    'hltL3fL1sMu22Or25f0TkFiltered27Q'
+                    'hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q'
                   ]
 prescaled_trigger_filters_pt = [
-                    27,
                     27
                   ]
 
-trigger_match_2018 = 'userFloat("%sTriggerMatchPt") >= %i || ' \
-                     'userFloat("%sTriggerMatchPt") >= %i || ' \
-                     'userFloat("%sTriggerMatchPt") >= %i ' % tuple([i for pair in zip(trigger_filters, trigger_filters_pt) for i in pair])
+trigger_match_2018 = make_string_cut_for_trigger_matching( trigger_filters, trigger_filters_pt )
+prescaled_trigger_match_2018 = make_string_cut_for_trigger_matching( prescaled_trigger_filters, prescaled_trigger_filters_pt )
+
+#trigger_match_2018 = 'userFloat("%sTriggerMatchPt") >= %i || ' \
+#                     'userFloat("%sTriggerMatchPt") >= %i || ' \
+#                     'userFloat("%sTriggerMatchPt") >= %i ' % tuple([i for pair in zip(trigger_filters, trigger_filters_pt) for i in pair])
+
+
 
 ### ==== Unpack trigger, and match ==== Not needed
 

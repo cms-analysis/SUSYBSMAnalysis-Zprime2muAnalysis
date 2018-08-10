@@ -58,11 +58,23 @@ trigger_filters = [
                     'hltL3fL1sMu22Or25L1f0L2f10QL3Filtered100Q',
                     'hltL3fL1sMu25f0TkFiltered100Q'
                   ]
+trigger_filters_pt = [
+                        50,
+                        100,
+                        100
+                  ]
 prescaled_trigger_filters = [
                     'hltL3fL1sMu22Or25L1f0L2f10QL3Filtered27Q',
                     'hltL3fL1sMu22Or25f0TkFiltered27Q'
                   ]
+prescaled_trigger_filters_pt = [
+                    27,
+                    27
+                  ]
 
+trigger_match_2018 = 'userFloat("%sTriggerMatchPt") >= %i || ' \
+                     'userFloat("%sTriggerMatchPt") >= %i || ' \
+                     'userFloat("%sTriggerMatchPt") >= %i ' % tuple([i for pair in zip(trigger_filters, trigger_filters_pt) for i in pair])
 
 ### ==== Unpack trigger, and match ==== Not needed
 

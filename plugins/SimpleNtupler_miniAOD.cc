@@ -1406,7 +1406,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
         }
 
         // Check for passing Our201XSel here
-        bool DimuonSel = t.cos_angle > -0.9998 && (t.lep_id[0]*t.lep_id[1])<0 && t.vertex_chi2 < 20. && vertex_m > 50.;
+        bool DimuonSel = t.cos_angle > -0.9998 && (t.lep_id[0]*t.lep_id[1])<0 && t.vertex_chi2 < 20. && t.vertex_m > 50.;
         bool TriggerSel = t.lep_triggerMatchPt[0]>0. || t.lep_triggerMatchPt[1]>0.;
         bool LeptonSel = t.lep_pt[0] > 53.                         && t.lep_pt[1] > 53 && 
                          fabs(t.lep_eta[0])<2.4                    && fabs(t.lep_eta[1])<2.4 &&

@@ -150,8 +150,15 @@ private:
     float lep_tuneP_chi2[2];
     float lep_tuneP_ndf[2];
     float lep_tuneP_qOverPt[2];
-    float lep_triggerMatchPt[2];
-    float lep_triggerMatchEta[2];
+    float lep_Mu50_triggerMatchPt[2];
+    float lep_Mu50_triggerMatchEta[2];
+    float lep_Mu50_triggerMatchPhi[2];
+    float lep_OldMu100_triggerMatchPt[2];
+    float lep_OldMu100_triggerMatchEta[2];
+    float lep_OldMu100_triggerMatchPhi[2];
+    float lep_TkMu100_triggerMatchPt[2];
+    float lep_TkMu100_triggerMatchEta[2];
+    float lep_TkMu100_triggerMatchPhi[2];
     float lep_chi2dof[2];
     float lep_dB[2];
     float lep_sumPt[2];
@@ -407,8 +414,15 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
   tree->Branch("lep_tuneP_chi2", t.lep_tuneP_chi2, "lep_tuneP_chi2[2]/F");
   tree->Branch("lep_tuneP_ndf", t.lep_tuneP_ndf, "lep_tuneP_ndf[2]/F");
   tree->Branch("lep_tuneP_qOverPt", t.lep_tuneP_qOverPt, "lep_tuneP_qOverPt[2]/F");
-  tree->Branch("lep_triggerMatchPt", t.lep_triggerMatchPt, "lep_triggerMatchPt[2]/F");
-  tree->Branch("lep_triggerMatchEta", t.lep_triggerMatchEta, "lep_triggerMatchEta[2]/F");
+  tree->Branch("lep_Mu50_triggerMatchPt", t.lep_Mu50_triggerMatchPt, "lep_Mu50_triggerMatchPt[2]/F");
+  tree->Branch("lep_Mu50_triggerMatchEta", t.lep_Mu50_triggerMatchEta, "lep_Mu50_triggerMatchEta[2]/F");
+  tree->Branch("lep_Mu50_triggerMatchPhi", t.lep_Mu50_triggerMatchPhi, "lep_Mu50_triggerMatchPhi[2]/F");
+  tree->Branch("lep_OldMu100_triggerMatchPt", t.lep_OldMu100_triggerMatchPt, "lep_OldMu100_triggerMatchPt[2]/F");
+  tree->Branch("lep_OldMu100_triggerMatchEta", t.lep_OldMu100_triggerMatchEta, "lep_OldMu100_triggerMatchEta[2]/F");
+  tree->Branch("lep_OldMu100_triggerMatchPhi", t.lep_OldMu100_triggerMatchPhi, "lep_OldMu100_triggerMatchPhi[2]/F");
+  tree->Branch("lep_TkMu100_triggerMatchPt", t.lep_TkMu100_triggerMatchPt, "lep_TkMu100_triggerMatchPt[2]/F");
+  tree->Branch("lep_TkMu100_triggerMatchEta", t.lep_TkMu100_triggerMatchEta, "lep_TkMu100_triggerMatchEta[2]/F");
+  tree->Branch("lep_TkMu100_triggerMatchPhi", t.lep_TkMu100_triggerMatchPhi, "lep_TkMu100_triggerMatchPhi[2]/F");
   tree->Branch("lep_chi2dof", t.lep_chi2dof, "lep_chi2dof[2]/F");
   tree->Branch("lep_dB", t.lep_dB, "lep_dB[2]/F");
   tree->Branch("lep_sumPt", t.lep_sumPt, "lep_sumPt[2]/F");
@@ -515,9 +529,9 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
 
 //  tree->SetAlias("trigger_match_0", "lep_triggerMatchPt[0] > " triggerMatchMinPt " && abs(lep_triggerMatchEta[0]) < " triggerMatchMaxEta);
 //  tree->SetAlias("trigger_match_1", "lep_triggerMatchPt[1] > " triggerMatchMinPt " && abs(lep_triggerMatchEta[1]) < " triggerMatchMaxEta);
-  tree->SetAlias("trigger_match_0", "lep_triggerMatchPt[0] > " triggerMatchMinPt );
-  tree->SetAlias("trigger_match_1", "lep_triggerMatchPt[1] > " triggerMatchMinPt );
-  tree->SetAlias("triggerMatched", "trigger_match_0 || trigger_match_1");
+  //tree->SetAlias("trigger_match_0", "lep_triggerMatchPt[0] > " triggerMatchMinPt );
+  //tree->SetAlias("trigger_match_1", "lep_triggerMatchPt[1] > " triggerMatchMinPt );
+  //tree->SetAlias("triggerMatched", "trigger_match_0 || trigger_match_1");
 
   // tree->SetAlias("GoodData", "GoodDataRan && HLTPhysicsDeclared && NoScraping && GoodVtx");
   tree->SetAlias("GoodData", "GoodDataRan && HLTPhysicsDeclared && GoodVtx");
@@ -535,8 +549,8 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
     "lep_chi2dof[X] < 10 && "						\
     "lep_tk_numberOfValidPixelHits[X] >= 1 && "				\
     "lep_glb_muonStationsWithValidHits[X] >= 2 && "			\
-    "lep_isTrackerMuon[X] && "						\
-    "lep_triggerMatchPt[X] > " triggerMatchMinPt;
+    "lep_isTrackerMuon[X] && ";
+    //"lep_triggerMatchPt[X] > " triggerMatchMinPt;
 
   TString vbtf =
     "lep_isGlobalMuon[X] && "						\
@@ -804,18 +818,15 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
     edm::Handle<pat::CompositeCandidateCollection> dils;
     event.getByLabel(dimu_src, dils);
 
-    //t.Our2012Sel = false;
+    // Flags indicating if dimuon passing selection has been found in event
     bool found2012 = false;
-    //t.Our2016Sel = false;
     bool found2016 = false;
-    //t.Our2018Sel = false;
     bool found2018 = false;
     //
     // Loop over dil candidates in dils
     //
     BOOST_FOREACH(const pat::CompositeCandidate& dil, *dils) {
         
-        // The dils come pre-sorted so that the first in the list is the one to use
         t.dil_mass = dil.mass();
         t.dil_pt = dil.pt();
         t.dil_rap = dil.rapidity();
@@ -926,8 +937,15 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
                 t.lep_tuneP_chi2[w] = -999;
                 t.lep_tuneP_ndf[w] = -999;
                 t.lep_tuneP_qOverPt[w] = -999;
-                t.lep_triggerMatchPt[w] = -999;
-                t.lep_triggerMatchEta[w] = -999;
+                t.lep_Mu50_triggerMatchPt[w] = -999;
+                t.lep_Mu50_triggerMatchEta[w] = -999;
+                t.lep_Mu50_triggerMatchPhi[w] = -999;
+                t.lep_OldMu100_triggerMatchPt[w] = -999;
+                t.lep_OldMu100_triggerMatchEta[w] = -999;
+                t.lep_OldMu100_triggerMatchPhi[w] = -999;
+                t.lep_TkMu100_triggerMatchPt[w] = -999;
+                t.lep_TkMu100_triggerMatchEta[w] = -999;
+                t.lep_TkMu100_triggerMatchPhi[w] = -999;
                 t.lep_chi2dof[w] = -999;
                 t.lep_dB[w] = -999;
                 t.lep_sumPt[w] = -999;
@@ -1230,8 +1248,15 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
                 //
                 // Trigger Match Information
                 //
-                t.lep_triggerMatchPt[w]  = userFloat(*mu, "TriggerMatchPt",  -999);
-                t.lep_triggerMatchEta[w] = userFloat(*mu, "TriggerMatchEta", -999);
+                t.lep_Mu50_triggerMatchPt[w]  = userFloat(*mu, "Mu50_TriggerMatchPt",  -999);
+                t.lep_Mu50_triggerMatchEta[w] = userFloat(*mu, "Mu50_TriggerMatchEta", -999);
+                t.lep_Mu50_triggerMatchPhi[w] = userFloat(*mu, "Mu50_TriggerMatchPhi", -999);
+                t.lep_OldMu100_triggerMatchPt[w]  = userFloat(*mu, "OldMu100_TriggerMatchPt",  -999);
+                t.lep_OldMu100_triggerMatchEta[w] = userFloat(*mu, "OldMu100_TriggerMatchEta", -999);
+                t.lep_OldMu100_triggerMatchPhi[w] = userFloat(*mu, "OldMu100_TriggerMatchPhi", -999);
+                t.lep_TkMu100_triggerMatchPt[w]  = userFloat(*mu, "TkMu100_TriggerMatchPt",  -999);
+                t.lep_TkMu100_triggerMatchEta[w] = userFloat(*mu, "TkMu100_TriggerMatchEta", -999);
+                t.lep_TkMu100_triggerMatchPhi[w] = userFloat(*mu, "TkMu100_TriggerMatchPhi", -999);
                 //
                 // Misc. event quantities
                 //
@@ -1406,8 +1431,9 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
         }
 
         // Check for passing Our201XSel here
-        bool DimuonSel = t.cos_angle > -0.9998 && (t.lep_id[0]*t.lep_id[1])<0 && t.vertex_chi2 < 20. && t.vertex_m > 50.;
-        bool TriggerSel = t.lep_triggerMatchPt[0]>0. || t.lep_triggerMatchPt[1]>0.;
+        bool DimuonSel = t.cos_angle > -0.9998 && (t.lep_id[0]*t.lep_id[1])<0 && t.vertex_chi2 < 20.;// && t.vertex_m > 50.;
+        bool TriggerSel15 = t.lep_Mu50_triggerMatchPt[0]>0. || t.lep_Mu50_triggerMatchPt[1]>0.;
+        bool TriggerSel18 = (t.lep_Mu50_triggerMatchPt[0]>0. || t.lep_OldMu100_triggerMatchPt[0]>0. || t.lep_TkMu100_triggerMatchPt[0]>0.) || (t.lep_Mu50_triggerMatchPt[1]>0. || t.lep_OldMu100_triggerMatchPt[1]>0. || t.lep_TkMu100_triggerMatchPt[1]>0.);
         bool LeptonSel = t.lep_pt[0] > 53.                         && t.lep_pt[1] > 53 && 
                          fabs(t.lep_eta[0])<2.4                    && fabs(t.lep_eta[1])<2.4 &&
                          t.lep_isGlobalMuon[0]                     && t.lep_isGlobalMuon[1] &&
@@ -1416,7 +1442,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
                          (t.lep_pt_err[0]/t.lep_pt[0])<0.3         && (t.lep_pt_err[1]/t.lep_pt[1])<0.3 &&
                          fabs(t.lep_dB[0])<0.2                     && fabs(t.lep_dB[1])<0.2 &&
                          t.lep_glb_numberOfValidPixelHits[0]>0     && t.lep_glb_numberOfValidPixelHits[1]>0 && 
-                         t.lep_glb_numberOfValidTrackerLayers[0]>0 && t.lep_glb_numberOfValidTrackerLayers[1]>0;
+                         t.lep_glb_numberOfValidTrackerLayers[0]>5 && t.lep_glb_numberOfValidTrackerLayers[1]>5;
         // Matched stations selection changed in 2016 to mitigate loss due to cracks and chimneys in muon stations
         bool matchedStations12 = t.lep_numberOfMatchedStations[0]>1 && t.lep_numberOfMatchedStations[1]>1;
         bool matchedStations16 = (t.lep_numberOfMatchedStations[0]>1
@@ -1434,34 +1460,34 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
                                 (t.lep_glb_numberOfValidMuonHits[1]>0 || t.lep_tuneP_numberOfValidMuonHits[1]>0);
 
 
-        bool BaseSel = DimuonSel && TriggerSel && LeptonSel; // && GoodDataRan && GoodVtx; // are good data and good vtx necessary?
+        bool BaseSel = DimuonSel && LeptonSel; // && GoodDataRan && GoodVtx; // are good data and good vtx necessary?
         // Obviously, only one dimuon can be selected per event
         // Since the dil candidates come pre-sorted according to highest rank (sum(lep_pt))
         // we give the Our201*Sel flag to the dimuon that passes the selection
         // first and any subsequent dils that pass the selection are not to be selected
-        if (found2012) t.Our2012Sel = 0;
+        if (found2012) t.Our2012Sel = false; // already found dimuon in event
         else {
-            if (BaseSel && matchedStations12 && numValidMuHits12) {
-                t.Our2012Sel = 1;
+            if (BaseSel && TriggerSel15 && matchedStations12 && numValidMuHits12) {
+                t.Our2012Sel = true;
                 found2012 = true;
             }
             else {
-                t.Our2012Sel = 0;
+                t.Our2012Sel = false;
             }
         }
-        if (found2016) t.Our2016Sel = 0;
+        if (found2016) t.Our2016Sel = false; // already found dimuon in event
         else {
-            if (BaseSel && matchedStations16 && numValidMuHits12) {
-                t.Our2016Sel = 1;
+            if (BaseSel && TriggerSel15 && matchedStations16 && numValidMuHits12) {
+                t.Our2016Sel = true;
                 found2016 = true;
             }
             else {
-                t.Our2016Sel = 0;
+                t.Our2016Sel = false;
             }
         }
-        if (found2018) t.Our2018Sel = 0;
+        if (found2018) t.Our2018Sel = false; // already found dimuon in event
         else {
-            if (BaseSel && matchedStations16 && numValidMuHits18) {
+            if (BaseSel && TriggerSel18 && matchedStations16 && numValidMuHits18) {
                 t.Our2018Sel = true;
                 found2018 = true;
             }

@@ -14,9 +14,9 @@ process.source.fileNames = [
            ]
 process.maxEvents.input = -1
 #process.options.wantSummary = cms.untracked.bool(True)# false di default
-process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
+process.MessageLogger.cerr.FwkReport.reportEvery = 10000 # default 1000
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold, trigger_filters, trigger_path_names, prescaled_trigger_filters, prescaled_trigger_path_names, prescaled_trigger_match_2018
 
 # Since the prescaled trigger comes with different prescales in
 # different runs/lumis, this filter prescales it to a common factor to
@@ -148,8 +148,14 @@ for cut_name, Selection in cuts.iteritems():
         muon_cuts = Selection.loose_cut.replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
     else:
         muon_cuts = Selection.loose_cut
+
     if miniAOD:
         leptons = process.leptonsMini.clone(muon_cuts = muon_cuts)
+        if len(trigger_filters)>0 and (cut_name=='Our2018' or cut_name=='Simple'):
+            leptons.trigger_filters = trigger_filters
+            leptons.trigger_path_names = trigger_path_names
+            leptons.prescaled_trigger_filters = prescaled_trigger_filters
+            leptons.prescaled_trigger_path_names = prescaled_trigger_path_names
     else:
         leptons = process.leptons.clone(muon_cuts = muon_cuts)
 
@@ -206,7 +212,10 @@ for cut_name, Selection in cuts.iteritems():
         elif 'MuPrescaled' in cut_name:
             alldil.loose_cut = alldil.loose_cut.value().replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
             assert alldil.tight_cut == trigger_match
-            alldil.tight_cut = prescaled_trigger_match
+            if len(prescaled_trigger_filters)>0:
+                alldil.tight_cut = prescaled_trigger_match_2018
+            else:
+                alldil.tight_cut = prescaled_trigger_match
 
         # Histos now just needs to know which leptons and dileptons to use.
         histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))

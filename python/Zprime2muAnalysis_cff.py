@@ -49,6 +49,8 @@ leptonsMini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
                               trigger_summary = cms.InputTag('slimmedPatTrigger'), # could need to change for 2018 MC
                               bits = cms.InputTag("TriggerResults","","HLT"),
                               prescales = cms.InputTag("patTrigger"),
+                              trigger_filters = cms.vstring(),
+                              prescaled_trigger_filters = cms.vstring()
                               )
 
 Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)

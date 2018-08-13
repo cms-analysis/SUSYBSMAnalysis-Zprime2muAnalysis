@@ -36,7 +36,7 @@ import FWCore.ParameterSet.Config as cms
 # the above cuts ("loose" is then a misnomer), and at least one must
 # pass the trigger match requirement (the only "tight" cut).
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, offline_pt_threshold
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, offline_pt_threshold, trigger_match_2018
 
 loose_cut = 'isGlobalMuon && ' \
             'isTrackerMuon && ' \
@@ -46,12 +46,13 @@ loose_cut = 'isGlobalMuon && ' \
             'isolationR03.sumPt / innerTrack.pt < 0.10 && ' \
             'globalTrack.hitPattern.trackerLayersWithMeasurement > 5 && ' \
             'globalTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \
-            '(globalTrack.hitPattern.numberOfValidMuonHits > 0 || tunePMuonBestTrack.hitPattern.numberOfValidMuonHits > 0) && ' \
+            '( (globalTrack.hitPattern.numberOfValidMuonHits > 0) || (tunePMuonBestTrack.hitPattern.numberOfValidMuonHits > 0) ) && ' \
             '( numberOfMatchedStations > 1 || (numberOfMatchedStations == 1 && !(stationMask == 1 || stationMask == 16)) || (numberOfMatchedStations == 1 && (stationMask == 1 || stationMask == 16) && numberOfMatchedRPCLayers > 2))'
 
 loose_cut = loose_cut % offline_pt_threshold
 
-tight_cut = trigger_match
+tight_cut = trigger_match_2018
+#tight_cut = trigger_match
 
 allDimuons = cms.EDProducer('Zprime2muCombiner',
                             decay = cms.string('leptons:muons@+ leptons:muons@-'),

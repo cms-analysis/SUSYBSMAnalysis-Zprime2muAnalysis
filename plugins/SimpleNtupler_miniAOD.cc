@@ -150,13 +150,8 @@ private:
     float lep_tuneP_chi2[2];
     float lep_tuneP_ndf[2];
     float lep_tuneP_qOverPt[2];
-    float lep_triggerMatchPt_Mu50[2];
-    float lep_triggerMatchPt_TkMu100[2];
-    float lep_triggerMatchPt_oldMu100[2];
-    float lep_triggerMatchCharge[2];
     float lep_triggerMatchPt[2];
     float lep_triggerMatchEta[2];
-    float lep_triggerMatchPhi[2];
     float lep_chi2dof[2];
     float lep_dB[2];
     float lep_sumPt[2];
@@ -412,13 +407,8 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
   tree->Branch("lep_tuneP_chi2", t.lep_tuneP_chi2, "lep_tuneP_chi2[2]/F");
   tree->Branch("lep_tuneP_ndf", t.lep_tuneP_ndf, "lep_tuneP_ndf[2]/F");
   tree->Branch("lep_tuneP_qOverPt", t.lep_tuneP_qOverPt, "lep_tuneP_qOverPt[2]/F");
-  tree->Branch("lep_triggerMatchPt_Mu50", t.lep_triggerMatchPt_Mu50, "lep_triggerMatchPt_Mu50[2]/F");
-  tree->Branch("lep_triggerMatchPt_TkMu100", t.lep_triggerMatchPt_TkMu100, "lep_triggerMatchPt_TkMu100[2]/F");
-  tree->Branch("lep_triggerMatchPt_oldMu100", t.lep_triggerMatchPt_oldMu100, "lep_triggerMatchPt_oldMu100[2]/F");
-  tree->Branch("lep_triggerMatchCharge", t.lep_triggerMatchCharge, "lep_triggerMatchCharge[2]/F");
   tree->Branch("lep_triggerMatchPt", t.lep_triggerMatchPt, "lep_triggerMatchPt[2]/F");
   tree->Branch("lep_triggerMatchEta", t.lep_triggerMatchEta, "lep_triggerMatchEta[2]/F");
-  tree->Branch("lep_triggerMatchPhi", t.lep_triggerMatchPhi, "lep_triggerMatchPhi[2]/F");
   tree->Branch("lep_chi2dof", t.lep_chi2dof, "lep_chi2dof[2]/F");
   tree->Branch("lep_dB", t.lep_dB, "lep_dB[2]/F");
   tree->Branch("lep_sumPt", t.lep_sumPt, "lep_sumPt[2]/F");
@@ -936,13 +926,8 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
                 t.lep_tuneP_chi2[w] = -999;
                 t.lep_tuneP_ndf[w] = -999;
                 t.lep_tuneP_qOverPt[w] = -999;
-                t.lep_triggerMatchPt_Mu50[w] = -999;
-                t.lep_triggerMatchPt_TkMu100[w] = -999;
-                t.lep_triggerMatchPt_oldMu100[w] = -999;
-                t.lep_triggerMatchCharge[w] = -999;
                 t.lep_triggerMatchPt[w] = -999;
                 t.lep_triggerMatchEta[w] = -999;
-                t.lep_triggerMatchPhi[w] = -999;
                 t.lep_chi2dof[w] = -999;
                 t.lep_dB[w] = -999;
                 t.lep_sumPt[w] = -999;
@@ -1206,6 +1191,16 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
                     t.lep_tuneP_chi2[w] = -999;
                     t.lep_tuneP_ndf[w] = -999;
                     t.lep_tuneP_qOverPt[w] = -999;
+                    t.lep_tuneP_numberOfValidMuonHits[w] = -999;
+                    t.lep_tuneP_numberOfValidMuonDTHits[w] = -999;
+                    t.lep_tuneP_numberOfValidMuonCSCHits[w] = -999;
+                    t.lep_tuneP_numberOfValidMuonRPCHits[w] = -999;
+                    t.lep_tuneP_muonStationsWithValidHits[w] = -999;
+                    t.lep_tuneP_dtStationsWithValidHits[w] = -999;
+                    t.lep_tuneP_cscStationsWithValidHits[w] = -999;
+                    t.lep_tuneP_rpcStationsWithValidHits[w] = -999;
+                    t.lep_tuneP_innermostMuonStationWithValidHits[w] = -999;
+                    t.lep_tuneP_outermostMuonStationWithValidHits[w] = -999;
                 }
                 else {
                     t.lep_tuneP_p[w] = mu->tunePMuonBestTrack()->p();
@@ -1219,10 +1214,12 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
                     t.lep_tuneP_chi2[w] = mu->tunePMuonBestTrack()->chi2();
                     t.lep_tuneP_ndf[w] = mu->tunePMuonBestTrack()->ndof();
                     t.lep_tuneP_qOverPt[w] = (mu->charge())/(mu->tunePMuonBestTrack()->pt());
+                    // Valid Muon (all), DT, CSC, RPC hits
                     t.lep_tuneP_numberOfValidMuonHits[w] = mu->tunePMuonBestTrack()->hitPattern().numberOfValidMuonHits();
                     t.lep_tuneP_numberOfValidMuonDTHits[w] = mu->tunePMuonBestTrack()->hitPattern().numberOfValidMuonDTHits();
                     t.lep_tuneP_numberOfValidMuonCSCHits[w] = mu->tunePMuonBestTrack()->hitPattern().numberOfValidMuonCSCHits();
                     t.lep_tuneP_numberOfValidMuonRPCHits[w] = mu->tunePMuonBestTrack()->hitPattern().numberOfValidMuonRPCHits();
+                    // Valid Muon, DT, CSC, RPC, innermost, outermost Station Hits
                     t.lep_tuneP_muonStationsWithValidHits[w] = mu->tunePMuonBestTrack()->hitPattern().muonStationsWithValidHits();
                     t.lep_tuneP_dtStationsWithValidHits[w] = mu->tunePMuonBestTrack()->hitPattern().dtStationsWithValidHits();
                     t.lep_tuneP_cscStationsWithValidHits[w] = mu->tunePMuonBestTrack()->hitPattern().cscStationsWithValidHits();
@@ -1233,14 +1230,8 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
                 //
                 // Trigger Match Information
                 //
-                t.lep_triggerMatchPt_Mu50[w]     = userFloat(*mu, "TriggerMatchPt_HLTMu50",  -999);
-                t.lep_triggerMatchPt_TkMu100[w]  = userFloat(*mu, "TriggerMatchPt_HLTTkMu100",  -999);
-                t.lep_triggerMatchPt_oldMu100[w] = userFloat(*mu, "TriggerMatchPt_oldHLTMu100",  -999);
-                // This information is for HLT object that has smallest dR to the offline muon
-                t.lep_triggerMatchCharge[w]  = userFloat(*mu, "TriggerMatchCharge",  -999);
                 t.lep_triggerMatchPt[w]  = userFloat(*mu, "TriggerMatchPt",  -999);
                 t.lep_triggerMatchEta[w] = userFloat(*mu, "TriggerMatchEta", -999);
-                t.lep_triggerMatchPhi[w] = userFloat(*mu, "TriggerMatchPhi", -999);
                 //
                 // Misc. event quantities
                 //
@@ -1255,7 +1246,8 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
                 t.lep_pfIsoDB[w] = mu->pfIsolationR04().sumChargedHadronPt + 
                                    std::max(mu->pfIsolationR04().sumNeutralHadronEt + 
                                             mu->pfIsolationR04().sumPhotonEt - 
-                                            0.5*mu->pfIsolationR04().sumPUPt,0.0);
+                                            0.5*mu->pfIsolationR04().sumPUPt
+                                        ,0.0);
                 if (mu->isTimeValid()) {
                     t.lep_timeNdof[w] = mu->time().nDof;
                     t.lep_timeInOut[w] = mu->time().timeAtIpInOut;
@@ -1414,21 +1406,9 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
         }
 
         // Check for passing Our201XSel here
-        // Not all these flags are necessary, as each year of data are
-        // analyzed in a release specific to that year. 
-        bool DimuonSel = t.vertex_m > 50 && t.cos_angle > -0.9998 && (t.lep_id[0]*t.lep_id[1])<0 && t.vertex_chi2 < 20.;
-        bool TriggerSel15 = t.lep_triggerMatchPt_Mu50[0]>0 || t.lep_triggerMatchPt_Mu50[1]>0;
-        //
-        // 2016 needed Mu50 || TkMu50 this flag not included here
-        //
-        // lep_triggerMatchPt is one of Mu50, TkMu100, or oldMu100 depending 
-        // on what was matched to the offline muon object in the embedTriggerMatch_or 
-        // method in Zprime2muLeptonProducer_miniAOD.cc
-        bool TriggerSel18 = t.lep_triggerMatchPt[0]>0 || t.lep_triggerMatchPt[1]>0;
-        // Define for backwards compatibility, but not used at moment
-        //bool TriggerSel = t.lep_triggerMatchPt[0]>50. || t.lep_triggerMatchPt[1]>50.;
-        
-        bool LeptonSel = t.lep_pt[0] > 53.                         && t.lep_pt[1] > 53. && 
+        bool DimuonSel = t.cos_angle > -0.9998 && (t.lep_id[0]*t.lep_id[1])<0 && t.vertex_chi2 < 20. && vertex_m > 50.;
+        bool TriggerSel = t.lep_triggerMatchPt[0]>0. || t.lep_triggerMatchPt[1]>0.;
+        bool LeptonSel = t.lep_pt[0] > 53.                         && t.lep_pt[1] > 53 && 
                          fabs(t.lep_eta[0])<2.4                    && fabs(t.lep_eta[1])<2.4 &&
                          t.lep_isGlobalMuon[0]                     && t.lep_isGlobalMuon[1] &&
                          t.lep_isTrackerMuon[0]                    && t.lep_isTrackerMuon[1] &&
@@ -1454,14 +1434,14 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
                                 (t.lep_glb_numberOfValidMuonHits[1]>0 || t.lep_tuneP_numberOfValidMuonHits[1]>0);
 
 
-        bool BaseSel = DimuonSel && LeptonSel; // && GoodDataRan && GoodVtx; // are good data and good vtx necessary?
+        bool BaseSel = DimuonSel && TriggerSel && LeptonSel; // && GoodDataRan && GoodVtx; // are good data and good vtx necessary?
         // Obviously, only one dimuon can be selected per event
-        // Since the dil candidates come pre-sorted according to highest rank (sum of lep_pt),
-        // we give the Our201*Sel flag to the dimuon that passes the selection first.
-        // Any subsequent dils that pass the selection cannot be selected.
+        // Since the dil candidates come pre-sorted according to highest rank (sum(lep_pt))
+        // we give the Our201*Sel flag to the dimuon that passes the selection
+        // first and any subsequent dils that pass the selection are not to be selected
         if (found2012) t.Our2012Sel = 0;
         else {
-            if (BaseSel && TriggerSel15 && matchedStations12 && numValidMuHits12) {
+            if (BaseSel && matchedStations12 && numValidMuHits12) {
                 t.Our2012Sel = 1;
                 found2012 = true;
             }
@@ -1471,7 +1451,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
         }
         if (found2016) t.Our2016Sel = 0;
         else {
-            if (BaseSel && TriggerSel15 && matchedStations16 && numValidMuHits12) {
+            if (BaseSel && matchedStations16 && numValidMuHits12) {
                 t.Our2016Sel = 1;
                 found2016 = true;
             }
@@ -1481,7 +1461,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
         }
         if (found2018) t.Our2018Sel = 0;
         else {
-            if (BaseSel && TriggerSel18 && matchedStations16 && numValidMuHits18) {
+            if (BaseSel && matchedStations16 && numValidMuHits18) {
                 t.Our2018Sel = true;
                 found2018 = true;
             }
@@ -1491,7 +1471,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
         }
         
         // For testing
-        //std::cout << t.run << " " << t.lumi << " " << t.event << " " << t.vertex_m << " " << t.lep_glb_numberOfValidMuonHits[0] << " " << t.lep_glb_numberOfValidMuonHits[1] << " " << t.lep_tuneP_numberOfValidMuonHits[0] << " " << t.lep_tuneP_numberOfValidMuonHits[1] << std::endl;
+        //std::cout << t.run << " " << t.lumi << " " << t.event << " " << t.vertex_m << " " << t.lep_pt[0]+t.lep_pt[1] << " " << t.Our2018Sel << std::endl;;
 
         tree->Fill();
 

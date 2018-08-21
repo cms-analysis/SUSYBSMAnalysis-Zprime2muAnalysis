@@ -158,8 +158,8 @@ elif cmd == 'gatherdata':
         #os.mkdir(wdir)
         hadd(os.path.join('data', 'zp2mu_histos_Run2018_All_PromptReco.root'), files)
 
-        for dir in dirs:
-            do('crab status -d %(dir)s ; crab report -d %(dir)s ' % locals())
+        #for dir in dirs:
+        #    do('crab status -d %(dir)s ; crab report -d %(dir)s ' % locals())
 
         jsons = [os.path.join(dir, 'results/processedLumis.json') for dir in dirs]
         print jsons
@@ -174,8 +174,13 @@ elif cmd == 'gatherdata':
                                         
         reduce(lambda x,y: x|y, (LumiList(j) for j in jsons)).writeJSON('json/ana_datamc_data.forlumi.json' % locals())
         #do('brilcalc lumi --normtag /afs/cern.ch/user/l/lumipro/public/normtag_file/normtag_DATACERT.json -u /pb  -i %(wdir)s/ana_datamc_data.forlumi.json  > %(wdir)s/ana_datamc_data.lumi -b "STABLE BEAMS" ' % locals())
-        do('brilcalc lumi -u /fb  -i json/ana_datamc_data.forlumi.json  > lumi/ana_datamc_data.lumi -b "STABLE BEAMS" ' % locals())
-        do('tail -5 lumi/ana_datamc_data.lumi' % locals())
+        #do('brilcalc lumi -u /fb  -i json/ana_datamc_data.forlumi.json  > lumi/ana_datamc_data.lumi -b "STABLE BEAMS" ' % locals())
+        #do('tail -5 lumi/ana_datamc_data.lumi' % locals())
+
+        do('mv json/ana_datamc_data.forlumi.json json/Processed_Run2018_All_PromptReco.json')
+        do('brilcalc lumi -u /fb  -i json/Processed_Run2018_All_PromptReco.json  > lumi/Run_2018_All_PromptReco.lumi -b "STABLE BEAMS" ' % locals())
+        do('tail -5 lumi/Run_2018_All_PromptReco.lumi' % locals())
+
         print 'done with', lumi_mask, '\n'
 
         #do('lumiCalc2.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())

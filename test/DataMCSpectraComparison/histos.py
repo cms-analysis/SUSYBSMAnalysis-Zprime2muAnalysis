@@ -535,7 +535,7 @@ if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
 from CRABClient.UserUtilities import config, getUsernameFromSiteDB
 config = config()
-config.General.requestName = 'ana_datamc_%(name)s_20180802'
+config.General.requestName = 'ana_datamc_%(name)s_20180817_3'
 config.General.workArea = 'crab'
 #config.General.transferLogs = True
 config.JobType.pluginName = 'Analysis'
@@ -572,9 +572,8 @@ config.Site.storageSite = 'T2_CH_CERN'
             ('SingleMuonRun2018B-PromptReco-v2', '/SingleMuon/Run2018B-PromptReco-v2/MINIAOD'),
             ('SingleMuonRun2018C-PromptReco-v1', '/SingleMuon/Run2018C-PromptReco-v1/MINIAOD'),
             ('SingleMuonRun2018C-PromptReco-v2', '/SingleMuon/Run2018C-PromptReco-v2/MINIAOD'),
-            # not fully in JSON yet only includes up to 319851 (full C-v3 is up to 320191)
             ('SingleMuonRun2018C-PromptReco-v3', '/SingleMuon/Run2018C-PromptReco-v3/MINIAOD'),
-            # Not in JSON at all, no 2018D-PromptReco-v1?
+            # Not in JSON yet, no 2018D-PromptReco-v1?
             #('SingleMuonRun2018D-PromptReco-v2', '/SingleMuon/Run2018D-PromptReco-v2/MINIAOD'),
 
 

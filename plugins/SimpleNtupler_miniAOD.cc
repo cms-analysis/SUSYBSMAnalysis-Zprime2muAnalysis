@@ -1433,11 +1433,12 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
         // Check for passing Our201XSel here
         bool DimuonSel = t.cos_angle > -0.9998 && (t.lep_id[0]*t.lep_id[1])<0 && t.vertex_chi2 < 20.;// && t.vertex_m > 50.;
         bool TriggerSel15 = t.lep_Mu50_triggerMatchPt[0]>0. || t.lep_Mu50_triggerMatchPt[1]>0.;
-        bool TriggerSel18 = (t.lep_Mu50_triggerMatchPt[0]>0. || t.lep_OldMu100_triggerMatchPt[0]>0. || t.lep_TkMu100_triggerMatchPt[0]>0.) || (t.lep_Mu50_triggerMatchPt[1]>0. || t.lep_OldMu100_triggerMatchPt[1]>0. || t.lep_TkMu100_triggerMatchPt[1]>0.);
+        bool TriggerSel18 = ((t.lep_Mu50_triggerMatchPt[0]>0. || t.lep_OldMu100_triggerMatchPt[0]>0. || t.lep_TkMu100_triggerMatchPt[0]>0.) 
+                          || (t.lep_Mu50_triggerMatchPt[1]>0. || t.lep_OldMu100_triggerMatchPt[1]>0. || t.lep_TkMu100_triggerMatchPt[1]>0.));
         bool LeptonSel = t.lep_pt[0] > 53.                         && t.lep_pt[1] > 53 && 
                          fabs(t.lep_eta[0])<2.4                    && fabs(t.lep_eta[1])<2.4 &&
-                         t.lep_isGlobalMuon[0]                     && t.lep_isGlobalMuon[1] &&
-                         t.lep_isTrackerMuon[0]                    && t.lep_isTrackerMuon[1] &&
+                         t.lep_isGlobalMuon[0]==1                  && t.lep_isGlobalMuon[1]==1 &&
+                         t.lep_isTrackerMuon[0]==1                 && t.lep_isTrackerMuon[1]==1 &&
                          (t.lep_sumPt[0]/t.lep_tk_pt[0])<0.1       && (t.lep_sumPt[1]/t.lep_tk_pt[1])<0.1 &&
                          (t.lep_pt_err[0]/t.lep_pt[0])<0.3         && (t.lep_pt_err[1]/t.lep_pt[1])<0.3 &&
                          fabs(t.lep_dB[0])<0.2                     && fabs(t.lep_dB[1])<0.2 &&
@@ -1452,12 +1453,12 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
                                  (t.lep_numberOfMatchedStations[1]>1
                                     || (t.lep_numberOfMatchedStations[1]==1 && !(t.lep_stationMask[1]== 1 || t.lep_stationMask[1]==16))
                                     || (t.lep_numberOfMatchedStations[1]==1 &&  (t.lep_stationMask[1]== 1 || t.lep_stationMask[1]==16) 
-                                            && t.lep_numberOfMatchedRPCLayers[0]>2));
+                                            && t.lep_numberOfMatchedRPCLayers[1]>2));
         // Number of valid muon hits was changed in 2018 to account for problems in valid muon hit assignment in global tracks
         // Should have been for the tuneP track in any case, since it's what's used for momentum assignment
         bool numValidMuHits12 = t.lep_glb_numberOfValidMuonHits[0]>0 && t.lep_glb_numberOfValidMuonHits[1]>0;
-        bool numValidMuHits18 = (t.lep_glb_numberOfValidMuonHits[0]>0 || t.lep_tuneP_numberOfValidMuonHits[0]>0) &&
-                                (t.lep_glb_numberOfValidMuonHits[1]>0 || t.lep_tuneP_numberOfValidMuonHits[1]>0);
+        bool numValidMuHits18 = ((t.lep_glb_numberOfValidMuonHits[0]>0 || t.lep_tuneP_numberOfValidMuonHits[0]>0) &&
+                                 (t.lep_glb_numberOfValidMuonHits[1]>0 || t.lep_tuneP_numberOfValidMuonHits[1]>0));
 
 
         bool BaseSel = DimuonSel && LeptonSel; // && GoodDataRan && GoodVtx; // are good data and good vtx necessary?

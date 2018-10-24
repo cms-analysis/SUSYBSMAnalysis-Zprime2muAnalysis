@@ -123,6 +123,9 @@
 <library file="DileptonPreselector.cc" name="DileptonPreselector">
   <use name="DataFormats/PatCandidates"/>
 </library> 
+<library file="DielectronPreselector.cc" name="DielectronPreselector">
+  <use name="DataFormats/PatCandidates"/>
+</library> 
 # count events and event weights
 <library file="EventCounter.cc" name="EventCounter">
     <use name="SimDataFormats/GeneratorProducts"/>

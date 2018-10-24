@@ -38,7 +38,7 @@ leptons = cms.EDProducer('Zprime2muLeptonProducer',
 leptonsMini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
                               muon_src = cms.InputTag('slimmedMuons'), #JMTBAD changeme after new PAT tuples
                               electron_src = cms.InputTag('slimmedElectrons'),
-                              electron_id = cms.InputTag('egmGsfElectronIDs:heepElectronID-HEEPV60'),
+                              electron_id = cms.InputTag('egmGsfElectronIDs:heepElectronID-HEEPV70'),
                               muon_srcSecond = cms.InputTag('slimmedMuons'), #JMTBAD changeme after new PAT tuples
                               muon_cuts = cms.string(loose_cut),
                               muon_track_for_momentum = cms.string('TunePNew'),
@@ -71,7 +71,7 @@ from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 def electrons_miniAOD(process):
     switchOnVIDElectronIdProducer(process, DataFormat.MiniAOD)
     # my_id_module is the 
-    my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV60_cff']
+    my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.heepElectronID_HEEPV70_cff']
     for idmod in my_id_modules:
         setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 

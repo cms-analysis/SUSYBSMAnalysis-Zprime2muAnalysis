@@ -559,7 +559,12 @@ config.Site.storageSite = 'T2_IT_Bari'
 # 						('SingleMuonRun2017C-PromptReco-v2', '/SingleMuon/Run2017C-PromptReco-v2/MINIAOD'),
 #						('SingleMuonRun2017C-PromptReco-v3', '/SingleMuon/Run2017C-PromptReco-v3/MINIAOD'),
 # 						('SingleMuonRun2017D-PromptReco-v1', '/SingleMuon/Run2017D-PromptReco-v1/MINIAOD'),
-						('SingleMuonRun2017E-PromptReco-v1', '/SingleMuon/Run2017E-PromptReco-v1/MINIAOD'),
+						#('SingleMuonRun2017E-PromptReco-v1', '/SingleMuon/Run2017E-PromptReco-v1/MINIAOD'),
+						('DoubleEG2017B-17Nov2017-v1', '/DoubleEG/Run2017B-17Nov2017-v1/MINIAOD'),
+						('DoubleEG2017C-17Nov2017-v1', '/DoubleEG/Run2017C-17Nov2017-v1/MINIAOD'),
+						('DoubleEG2017D-17Nov2017-v1', '/DoubleEG/Run2017D-17Nov2017-v1/MINIAOD'),
+						('DoubleEG2017E-17Nov2017-v1', '/DoubleEG/Run2017E-17Nov2017-v1/MINIAOD'),
+						('DoubleEG2017F-17Nov2017-v1', '/DoubleEG/Run2017F-17Nov2017-v1/MINIAOD'),
 
             ]
 

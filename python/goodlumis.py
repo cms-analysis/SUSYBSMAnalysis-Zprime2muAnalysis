@@ -12,7 +12,6 @@ last_rereco_run = 321777
 last_prompt_run = 321777
 last_run = 321777 #last DCS run or last analyzed run
 
-
 # Sometimes the same run-range json gets made in other versions.
 prompt_version = ''
 

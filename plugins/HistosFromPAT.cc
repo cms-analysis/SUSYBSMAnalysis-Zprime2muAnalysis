@@ -50,10 +50,13 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   void fillDileptonHistos(const pat::CompositeCandidate&, const edm::Event&, double);
   void fillDileptonHistos(const pat::CompositeCandidateCollection&, const edm::Event&, double);
   double getSmearedMass(const pat::CompositeCandidate&, double);
+  double turnOn(double, double);
+  double L1TurnOn(double, double);
 
   edm::InputTag lepton_src;
   edm::InputTag dilepton_src;
   const bool leptonsFromDileptons;
+  const bool doElectrons;
   edm::InputTag beamspot_src;
   edm::InputTag vertex_src;
   const bool use_bs_and_pv;
@@ -82,8 +85,9 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
     double _kFactor;
     double _kFactor_bb;
     double _kFactor_be;
+    double _eleMCFac_bb;
+    double _eleMCFac_be;
     double _scaleUncert = 0.01;
-
   TH1F* NBeamSpot;
   TH1F* NVertices;
   TH1F* NLeptons;
@@ -131,6 +135,23 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TProfile* DileptonPtVsEta;
   TH1F* ChiDilepton;
   TH1F* CosThetaStarDilepton;
+
+
+  TH1F* DielectronMass;
+  TH1F* DielectronMass_bb;
+  TH1F* DielectronMass_be;
+  TH1F* DielectronMass_ee;
+  TH1F* DielectronMass_CSPos;
+  TH1F* DielectronMass_bb_CSPos;
+  TH1F* DielectronMass_be_CSPos;
+  TH1F* DielectronMass_ee_CSPos;
+  TH1F* DielectronMass_CSNeg;
+  TH1F* DielectronMass_bb_CSNeg;
+  TH1F* DielectronMass_be_CSNeg;
+  TH1F* DielectronMass_ee_CSNeg;
+
+
+
   TH1F* DileptonMass;
   TH1F* DileptonMass_bb;
   TH1F* DileptonMass_be;
@@ -213,6 +234,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   : lepton_src(cfg.getParameter<edm::InputTag>("lepton_src")),
     dilepton_src(cfg.getParameter<edm::InputTag>("dilepton_src")),
     leptonsFromDileptons(cfg.getParameter<bool>("leptonsFromDileptons")),
+    doElectrons(cfg.getParameter<bool>("doElectrons")),
     beamspot_src(cfg.getParameter<edm::InputTag>("beamspot_src")),
     vertex_src(cfg.getParameter<edm::InputTag>("vertex_src")),
     use_bs_and_pv(cfg.getParameter<bool>("use_bs_and_pv")),
@@ -343,6 +365,22 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   CosThetaStarDilepton   = fs->make<TH1F>("CosThetaStarDilepton",            titlePrefix + "dil. cos theta star", 100, -1, 1);
 
   // Dilepton invariant mass.
+  DielectronMass            = fs->make<TH1F>("DielectronMass",            titlePrefix + "dil. mass", 20000, 0, 20000);
+  DielectronMass_bb         = fs->make<TH1F>("DielectronMass_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
+  DielectronMass_be         = fs->make<TH1F>("DielectronMass_be",            titlePrefix + "dil. mass barrel-endcaps", 20000, 0, 20000);
+  DielectronMass_ee         = fs->make<TH1F>("DielectronMass_ee",            titlePrefix + "dil. mass endcaps-endcaps", 20000, 0, 20000);
+  DielectronMass_CSPos            = fs->make<TH1F>("DielectronMass_CSPos",            titlePrefix + "dil. mass for positive cos theta star", 20000, 0, 20000);
+  DielectronMass_bb_CSPos         = fs->make<TH1F>("DielectronMass_bb_CSPos",            titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+  DielectronMass_be_CSPos         = fs->make<TH1F>("DielectronMass_be_CSPos",            titlePrefix + "dil. mass barrel-endcaps for positive cos theta star", 20000, 0, 20000);
+  DielectronMass_ee_CSPos         = fs->make<TH1F>("DielectronMass_ee_CSPos",            titlePrefix + "dil. mass endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
+  DielectronMass_CSNeg            = fs->make<TH1F>("DielectronMass_CSNeg",            titlePrefix + "dil. mass for negative cos theta star", 20000, 0, 20000);
+  DielectronMass_bb_CSNeg         = fs->make<TH1F>("DielectronMass_bb_CSNeg",            titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+  DielectronMass_be_CSNeg         = fs->make<TH1F>("DielectronMass_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
+  DielectronMass_ee_CSNeg         = fs->make<TH1F>("DielectronMass_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
+
+
+
+
   DileptonMass            = fs->make<TH1F>("DileptonMass",            titlePrefix + "dil. mass", 20000, 0, 20000);
   DileptonMass_bb         = fs->make<TH1F>("DileptonMass_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
   DileptonMass_be         = fs->make<TH1F>("DileptonMass_be",            titlePrefix + "dil. mass barrel-endcaps and endcaps-endcaps", 20000, 0, 20000);
@@ -436,6 +474,97 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
      kFactorGraph_be = fs->make<TH1F>("kFactorperevent_be", titlePrefix + "kFactor per event be", 50, 0.4,1.4);
 }
 
+double Zprime2muHistosFromPAT::L1TurnOn(double eta, double et){
+
+	double result = 1;
+	double P0 = 0;
+	double P1 = 0;
+	double P2 = 0;
+	double P3 = 0;
+	double P4 = 0;
+	double P5 = 0;
+	if (fabs(eta) < 1.4442){
+		P0 = 0.745;
+		P1 = 35.3;
+		P2 = 3.33;
+		P3 = 0.584;
+		P4 = 115;
+		P5 = 169;
+	}
+	else if (fabs(eta) < 2.5){
+		P0 = 0.875;
+		P1 = 35.2;
+		P2 = 4.45;
+		P3 = 0.086;
+		P4 = 41.1;
+		P5 = 11.5;
+	}
+	result = 0.5*P0*(1 + TMath::Erf((et-P1)/(pow(2,0.5)*P2))) + 0.5*P3*(1 + TMath::Erf( (et-P4)/(pow(2,0.5)*P5)));
+	return result;
+
+}
+
+double Zprime2muHistosFromPAT::turnOn(double eta, double et){
+
+	double result = 1.;
+	double P0 = 0;
+	double P1 = 0;
+	double P2 = 0;
+	double P3 = 0;
+	double P4 = 0;
+	double P5 = 0;
+	if (fabs(eta) < 0.79){
+		P0 = 0.8617;
+		P1 = 33.84;
+		P2 = 0.4828;
+		P3 = 0.1381;
+		P4 = 34.6;
+		P5 = 1.758;
+	}
+	else if (fabs(eta) < 1.1){
+		P0 = 0.9257;
+		P1 = 34.04;
+		P2 = 0.6257;
+		P3 = 0.07419;
+		P4 = 34.24;
+		P5 = 2.363;
+	}
+	else if (fabs(eta) < 1.4442){
+		P0 = 0.9283;
+		P1 = 34.36;
+		P2 = 0.805;
+		P3 = 0.07154;
+		P4 = 33.73;
+		P5 = 2.604;
+	}
+	else if (fabs(eta) < 1.7){
+		P0 = 0.525;
+		P1 = 34.38;
+		P2 = 0.7307;
+		P3 = 0.4732;
+		P4 = 35.5;
+		P5 = 2.053;
+	}
+	else if (fabs(eta) < 2.1){
+		P0 = 0.4136;
+		P1 = 35.88;
+		P2 = 1.956;
+		P3 = 0.5853;
+		P4 = 34.66;
+		P5 = 0.7886;
+	}
+	else if (fabs(eta) < 2.5){
+		P0 = 0.5594;
+		P1 = 34.44;
+		P2 = 1.025;
+		P3 = 0.4383;
+		P4 = 36.53;
+		P5 = 2.355;
+	}
+
+	result = 0.5*P0*(1 + TMath::Erf((et-P1)/(pow(2,0.5)*P2))) + 0.5*P3*(1 + TMath::Erf( (et-P4)/(pow(2,0.5)*P5)));
+	return result;
+}	
 
 double Zprime2muHistosFromPAT::getSmearedMass(const pat::CompositeCandidate& dil, double gM){
 
@@ -563,7 +692,6 @@ void Zprime2muHistosFromPAT::fillOfflineElectronHistos(const pat::Electron* lep)
 
 void Zprime2muHistosFromPAT::fillLeptonHistos(const reco::CandidateBaseRef& lep) {
   fillBasicLeptonHistos(lep);
-  
   const pat::Muon* muon = toConcretePtr<pat::Muon>(lep);
   if (muon) fillOfflineMuonHistos(muon);
   
@@ -670,7 +798,52 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 	  DimuonMuonPtErrOverPtM500->Fill(ptError(tk1)/tk1->pt(), _madgraphWeight*_kFactor);
 	}
       }
+    } 
+
+    const pat::Electron* ele0 = toConcretePtr<pat::Electron>(lep0);
+    const pat::Electron* ele1 = toConcretePtr<pat::Electron>(lep1);
+    if (ele0 && ele1) {
+	_eleMCFac_bb = 1;
+  	_eleMCFac_be = 1;
+	if (fill_gen_info){
+		double trigFac1 = turnOn(ele0->superCluster()->eta(),ele0->et());
+		double trigFac2 = turnOn(ele1->superCluster()->eta(),ele1->et());
+		double L1TrigFac1 = turnOn(ele0->superCluster()->eta(),ele0->et());
+		double L1TrigFac2 = turnOn(ele1->superCluster()->eta(),ele1->et());
+		_eleMCFac_bb = 0.968 * trigFac1 * trigFac2 * (L1TrigFac1 + L1TrigFac2 - L1TrigFac1*L1TrigFac2);
+		_eleMCFac_be = 0.969 * trigFac1 * trigFac2 * (L1TrigFac1 + L1TrigFac2 - L1TrigFac1*L1TrigFac2);
+
+	}
+	DielectronMass->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
+        if (cos_cs >= 0) DielectronMass_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
+        else DielectronMass_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
+
+	if (ele0->superCluster()->eta() < 1.4442 && ele1->superCluster()->eta() < 1.4442) {
+		DielectronMass_bb->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
+        	if (cos_cs >= 0) DielectronMass_bb_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
+        	else DielectronMass_bb_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
+
+	}
+	else if ((ele0->superCluster()->eta() < 1.4442 && ele1->superCluster()->eta() > 1.566) ||(ele0->superCluster()->eta() > 1.566 && ele1->superCluster()->eta() < 1.4442)) {
+		DielectronMass_be->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
+        	if (cos_cs >= 0) DielectronMass_be_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
+        	else DielectronMass_be_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
+
+	}
+        else if (ele0->superCluster()->eta() > 1.566 && ele1->superCluster()->eta() > 1.566) {
+		DielectronMass_ee->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
+        	if (cos_cs >= 0) {
+			DielectronMass_ee_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
+		}
+        	else
+		{ 
+			 DielectronMass_ee_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
+		}
+
+	}
+
     }
+
   }
 
   DileptonDaughterIds->Fill(dil.daughter(0)->pdgId(), dil.daughter(1)->pdgId(), _madgraphWeight*_kFactor);
@@ -781,8 +954,6 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
     dbg_t.lumi = event.luminosityBlock();
     dbg_t.event = event.id().event();
   }
-
-
 //  edm::Handle<int> hltPrescale;
 //  edm::Handle<int> l1Prescale;
 
@@ -830,9 +1001,10 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
     edm::LogWarning("DileptonHandleInvalid") << "tried to get " << dilepton_src << " and failed!";
   else {
     if (leptonsFromDileptons)
-        if (_usekFactor){
-    	hardInteraction->Fill(event);
     	if (fill_gen_info) {
+	        if (_usekFactor){
+    			hardInteraction->Fill(event);
+
 // 			if(hardInteraction->IsValid()){
 			if(hardInteraction->IsValidForRes()){
     			gM = (hardInteraction->lepPlusNoIB->p4() + hardInteraction->lepMinusNoIB->p4()).mass();
@@ -866,26 +1038,32 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
 // 			 		   	_kFactor = 1.039 - 0.0001313 * gM + 4.733e-08 * pow(gM,2) - 7.385e-12 * pow(gM,3);
 // 			 		   	_kFactor_bb = 1.012 - 9.968e-5 * gM + 3.321e-08 * pow(gM,2) - 5.694e-12 * pow(gM,3);
 // 			 		   	_kFactor_be = 1.056 - 0.0001537 * gM + 6.071e-08 * pow(gM,2) - 9.093e-12 * pow(gM,3);
-// 			 	}
-				if(gM < 150){
-					_kFactor = 1;
-					_kFactor_bb = 1;
-					_kFactor_be = 1;
+// 			 	}i
+ 			 	if (doElectrons){
+					_kFactor = 1.0678 - 0.000120666 * gM + 3.22646e-08 * pow(gM,2) - 3.94886e-12 * pow(gM,3);
+					_kFactor_bb = 1.0678 - 0.000120666 * gM + 3.22646e-08 * pow(gM,2) - 3.94886e-12 * pow(gM,3);
+					_kFactor_be = 1.0678 - 0.000120666 * gM + 3.22646e-08 * pow(gM,2) - 3.94886e-12 * pow(gM,3);
 				}
-				if(gM > 150){
-			 		   	_kFactor = 1.053 - 0.0001552 * gM + 5.661e-08 * pow(gM,2) - 8.382e-12 * pow(gM,3);
-			 		   	_kFactor_bb = 1.032 - 0.000138 * gM + 4.827e-08 * pow(gM,2) - 7.321e-12 * pow(gM,3);
-			 		   	_kFactor_be = 1.064 - 0.0001674 * gM + 6.599e-08 * pow(gM,2) - 9.657e-12 * pow(gM,3);
-			 	}
+				else{
+					if(gM < 150){
+						_kFactor = 1;
+						_kFactor_bb = 1;
+						_kFactor_be = 1;
+					}
+					if(gM > 150){
+			 			   	_kFactor = 1.053 - 0.0001552 * gM + 5.661e-08 * pow(gM,2) - 8.382e-12 * pow(gM,3);
+			 		   		_kFactor_bb = 1.032 - 0.000138 * gM + 4.827e-08 * pow(gM,2) - 7.321e-12 * pow(gM,3);
+			 		   		_kFactor_be = 1.064 - 0.0001674 * gM + 6.599e-08 * pow(gM,2) - 9.657e-12 * pow(gM,3);
+			 		}
+				}
 			 	
 	    		//std::cout<<"----------------------------------------------------------- GEN MASS = " <<hardInteraction->resonance->mass()<<std::endl;
     			//std::cout<<"------------------------------------------------------------------ kFactor = "<<_kFactor<<" --- BB = "<<_kFactor_bb<<" --- BE = "<<_kFactor_be<<std::endl;
-    		} // hardInter
+ 	   		} // hardInter
     		else
     			std::cout<<"problems"<<std::endl;
     		} //gen_info
     	} //kFactor
-        
       fillLeptonHistosFromDileptons(*dileptons);
     
     fillDileptonHistos(*dileptons, event, gM);

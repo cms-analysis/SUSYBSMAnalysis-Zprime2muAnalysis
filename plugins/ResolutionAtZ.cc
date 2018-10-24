@@ -14,6 +14,7 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TrackUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 
 class ResolutionAtZ : public edm::EDAnalyzer {
  public:
@@ -35,7 +36,12 @@ class ResolutionAtZ : public edm::EDAnalyzer {
   TH2F* DileptonMass_2d_vsPt;
   TH2F* DileptonMass_2d_vsPt_BB;
   TH2F* DileptonMass_2d_vsPt_BE;
-
+  TH2F* DileptonMass_2d_vsPtPlus;
+  TH2F* DileptonMass_2d_vsPtPlus_BB;
+  TH2F* DileptonMass_2d_vsPtPlus_BE;
+  TH2F* DileptonMass_2d_vsPtMinus;
+  TH2F* DileptonMass_2d_vsPtMinus_BB;
+  TH2F* DileptonMass_2d_vsPtMinus_BE;
 };
 
 ResolutionAtZ::ResolutionAtZ(const edm::ParameterSet& cfg)
@@ -60,9 +66,15 @@ ResolutionAtZ::ResolutionAtZ(const edm::ParameterSet& cfg)
    DileptonMass_BB = fs->make<TH1F>("DileptonMass_BB", titlePrefix + "dil. mass", 2000, 0, 2000);
    DileptonMass_BE = fs->make<TH1F>("DileptonMass_BE", titlePrefix + "dil. mass", 2000, 0, 2000);
    
-   DileptonMass_2d_vsPt   = fs->make<TH2F>("DileptonMass_2d_vsPt", titlePrefix + " dil. mass vs pt"    , 200, 50., 150., 500., 0., 2000.);
-   DileptonMass_2d_vsPt_BB = fs->make<TH2F>("DileptonMass_2d_vsPt_BB", titlePrefix + " dil. mass vs pt", 200, 50., 150., 500., 0., 2000.);
-   DileptonMass_2d_vsPt_BE = fs->make<TH2F>("DileptonMass_2d_vsPt_BE", titlePrefix + " dil. mass vs pt", 200, 50., 150., 500., 0., 2000.);
+   DileptonMass_2d_vsPt         = fs->make<TH2F>("DileptonMass_2d_vsPt",         titlePrefix + " dil. mass vs pt"    , 200, 50., 150., 2000., 0., 2000.);
+   DileptonMass_2d_vsPt_BB      = fs->make<TH2F>("DileptonMass_2d_vsPt_BB",      titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
+   DileptonMass_2d_vsPt_BE      = fs->make<TH2F>("DileptonMass_2d_vsPt_BE",      titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
+   DileptonMass_2d_vsPtPlus     = fs->make<TH2F>("DileptonMass_2d_vsPtPlus",     titlePrefix + " dil. mass vs pt"    , 200, 50., 150., 2000., 0., 2000.);
+   DileptonMass_2d_vsPtPlus_BB  = fs->make<TH2F>("DileptonMass_2d_vsPtPlus_BB",  titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
+   DileptonMass_2d_vsPtPlus_BE  = fs->make<TH2F>("DileptonMass_2d_vsPtPlus_BE",  titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
+   DileptonMass_2d_vsPtMinus    = fs->make<TH2F>("DileptonMass_2d_vsPtMinus",    titlePrefix + " dil. mass vs pt"    , 200, 50., 150., 2000., 0., 2000.);
+   DileptonMass_2d_vsPtMinus_BB = fs->make<TH2F>("DileptonMass_2d_vsPtMinus_BB", titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
+   DileptonMass_2d_vsPtMinus_BE = fs->make<TH2F>("DileptonMass_2d_vsPtMinus_BE", titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
 }
 
 void ResolutionAtZ::fillDileptonMassResolution(const reco::CompositeCandidate& dil) {
@@ -71,16 +83,53 @@ void ResolutionAtZ::fillDileptonMassResolution(const reco::CompositeCandidate& d
   DileptonMass        ->Fill(mass);
   DileptonMass_2d_vsPt->Fill(mass, dil.daughter(0)->pt());
   DileptonMass_2d_vsPt->Fill(mass, dil.daughter(1)->pt());
-  
-  if (abs(dil.daughter(0)->eta()) < 1.2 && abs(dil.daughter(1)->eta()) < 1.2) { 
+  if (dil.daughter(0)->charge() > 0){
+    	DileptonMass_2d_vsPtPlus->Fill(mass, dil.daughter(0)->pt());
+  }
+  if (dil.daughter(1)->charge() > 0){
+    	DileptonMass_2d_vsPtPlus->Fill(mass, dil.daughter(1)->pt());
+  }
+  if (dil.daughter(0)->charge() < 0){
+    	DileptonMass_2d_vsPtMinus->Fill(mass, dil.daughter(0)->pt());
+  }
+  if (dil.daughter(1)->charge() < 0){
+   	DileptonMass_2d_vsPtMinus->Fill(mass, dil.daughter(1)->pt());
+  }
+
+  if (fabs(dil.daughter(0)->eta()) < 1.2 && fabs(dil.daughter(1)->eta()) < 1.2) { 
     DileptonMass_BB->Fill(mass);
     DileptonMass_2d_vsPt_BB->Fill(mass, dil.daughter(0)->pt());
     DileptonMass_2d_vsPt_BB->Fill(mass, dil.daughter(1)->pt());
+    if (dil.daughter(0)->charge() > 0){
+    	DileptonMass_2d_vsPtPlus_BB->Fill(mass, dil.daughter(0)->pt());
+    }
+    if (dil.daughter(1)->charge() > 0){
+    	DileptonMass_2d_vsPtPlus_BB->Fill(mass, dil.daughter(1)->pt());
+    }
+    if (dil.daughter(0)->charge() < 0){
+    	DileptonMass_2d_vsPtMinus_BB->Fill(mass, dil.daughter(0)->pt());
+    }
+    if (dil.daughter(1)->charge() < 0){
+    	DileptonMass_2d_vsPtMinus_BB->Fill(mass, dil.daughter(1)->pt());
+    }
   }
   else { 
     DileptonMass_BE->Fill(mass);
     DileptonMass_2d_vsPt_BE->Fill(mass, dil.daughter(0)->pt());
     DileptonMass_2d_vsPt_BE->Fill(mass, dil.daughter(1)->pt());
+    if (dil.daughter(0)->charge() > 0){
+    	DileptonMass_2d_vsPtPlus_BE->Fill(mass, dil.daughter(0)->pt());
+    }
+    if (dil.daughter(1)->charge() > 0){
+    	DileptonMass_2d_vsPtPlus_BE->Fill(mass, dil.daughter(1)->pt());
+    }
+    if (dil.daughter(0)->charge() < 0){
+    	DileptonMass_2d_vsPtMinus_BE->Fill(mass, dil.daughter(0)->pt());
+    }
+    if (dil.daughter(1)->charge() < 0){
+    	DileptonMass_2d_vsPtMinus_BE->Fill(mass, dil.daughter(1)->pt());
+    }
+
   }
 }
 
@@ -101,6 +150,7 @@ void ResolutionAtZ::analyze(const edm::Event& event, const edm::EventSetup& setu
   if (!dileptons.isValid())
     edm::LogWarning("DileptonHandleInvalid") << "tried to get " << dilepton_src << " and failed!";
   else {
+
     fillDileptonHistos(*dileptons);
   }
 }

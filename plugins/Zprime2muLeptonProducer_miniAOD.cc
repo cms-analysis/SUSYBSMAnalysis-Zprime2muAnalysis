@@ -493,7 +493,6 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
 	std::pair<T*,int> res = doLepton(event, Electrons);
 	if (res.first == 0)
 	  continue;
-	
 	res.first->addUserInt("cutFor", res.second);
 	new_leptons->push_back(*res.first);
 	delete res.first;

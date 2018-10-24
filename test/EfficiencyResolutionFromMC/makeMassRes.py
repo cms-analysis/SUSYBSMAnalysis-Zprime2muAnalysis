@@ -36,7 +36,7 @@ def loadHistos(inputfile,region,rebin):
     res = ROOT.TH2F()
     res.SetDirectory(0)
     ROOT.TH1.AddDirectory(ROOT.kFALSE)    
-    histoname = "Resolutiontunepnew"
+    histoname = "ResolutionTunePNew"
     if ("BB" in region):
         res = _file.Get("%s/DileptonMassResVMass_2d_BB" %(histoname)).Clone()
     elif ("BE" in region):

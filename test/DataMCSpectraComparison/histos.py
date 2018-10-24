@@ -9,20 +9,12 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_p
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFiltersMiniAOD
 
-process.source.fileNames =[#'file:./pat.root'
-#'/store/data/Run2017B/SingleMuon/MINIAOD/PromptReco-v1/000/297/057/00000/D21018A6-7956-E711-828D-02163E0123EE.root',
-		'/store/data/Run2017E/SingleMuon/MINIAOD/17Nov2017-v1/50000/000DCB8B-2ADD-E711-9100-008CFAF35AC0.root'
-#'/store/data/Run2017D/SingleMuon/MINIAOD/PromptReco-v1/000/302/031/00000/2411F4EE-2D8F-E711-B514-02163E0134D6.root'
-# '/store/mc/PhaseIFall16MiniAOD/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/MINIAODSIM/FlatPU28to62HcalNZSRAW_PhaseIFall16_exo52_90X_upgrade2017_realistic_v6_C1-v1/120000/304E419F-CC13-E711-93E9-FA163E0231A1.root'
-#'/store/data/Run2017E/SingleMuon/MINIAOD/PromptReco-v1/000/303/572/00000/487D9434-79A0-E711-BC5F-02163E01358B.root',
-#'/store/data/Run2017E/SingleMuon/MINIAOD/PromptReco-v1/000/303/573/00000/02129FCB-79A0-E711-92D1-02163E01A1CF.root'
-			   ]
+process.source.fileNames = [
+        #'/store/data/Run2018A/SingleMuon/MINIAOD/06Jun2018-v1/410000/CCA4DBD1-FF83-E811-988F-FA163E5991FE.root'
+        '/store/data/Run2018D/SingleMuon/MINIAOD/PromptReco-v2/000/322/068/00000/F8DCA3B9-41B0-E811-8B23-FA163E279E4C.root'
+           ]
 process.maxEvents.input = -1
-# process.GlobalTag.globaltag ='90X_upgrade2017_realistic_v6_C1' # MC --- change line 440
-# process.GlobalTag.globaltag ='92X_dataRun2_Prompt_v4' # Run 2017 #change line 440
-# process.GlobalTag.globaltag ='92X_dataRun2_Prompt_v8' # Run 2017CD #change line 440
-process.GlobalTag.globaltag ='94X_dataRun2_ReReco_EOY17_v2' # Run 2017E #change line 52
-#process.options.wantSummary = cms.untracked.bool(True)# false di default
+process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold

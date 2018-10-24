@@ -553,18 +553,23 @@ config.Site.storageSite = 'T2_IT_Bari'
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
 
         dataset_details = [
-# 						('SingleMuonRun2017B-PromptReco-v1', '/SingleMuon/Run2017B-PromptReco-v1/MINIAOD'),
-# 						('SingleMuonRun2017B-PromptReco-v2', '/SingleMuon/Run2017B-PromptReco-v2/MINIAOD'),
-# 						('SingleMuonRun2017C-PromptReco-v1', '/SingleMuon/Run2017C-PromptReco-v1/MINIAOD'),
-# 						('SingleMuonRun2017C-PromptReco-v2', '/SingleMuon/Run2017C-PromptReco-v2/MINIAOD'),
-#						('SingleMuonRun2017C-PromptReco-v3', '/SingleMuon/Run2017C-PromptReco-v3/MINIAOD'),
-# 						('SingleMuonRun2017D-PromptReco-v1', '/SingleMuon/Run2017D-PromptReco-v1/MINIAOD'),
-						#('SingleMuonRun2017E-PromptReco-v1', '/SingleMuon/Run2017E-PromptReco-v1/MINIAOD'),
-						('DoubleEG2017B-17Nov2017-v1', '/DoubleEG/Run2017B-17Nov2017-v1/MINIAOD'),
-						('DoubleEG2017C-17Nov2017-v1', '/DoubleEG/Run2017C-17Nov2017-v1/MINIAOD'),
-						('DoubleEG2017D-17Nov2017-v1', '/DoubleEG/Run2017D-17Nov2017-v1/MINIAOD'),
-						('DoubleEG2017E-17Nov2017-v1', '/DoubleEG/Run2017E-17Nov2017-v1/MINIAOD'),
-						('DoubleEG2017F-17Nov2017-v1', '/DoubleEG/Run2017F-17Nov2017-v1/MINIAOD'),
+            # what is this dataset? Use only run 315267?
+            #('SingleMuonRun2018A-22May2018-v1', '/SingleMuon/Run2018A-22May2018-v1/MINIAOD'), 
+            # To be replaced by 06June2018
+            #('SingleMuonRun2018A-PromptReco-v1', '/SingleMuon/Run2018A-PromptReco-v1/MINIAOD'), 
+            #('SingleMuonRun2018A-PromptReco-v2', '/SingleMuon/Run2018A-PromptReco-v2/MINIAOD'),
+
+            # Good to use
+            # PPD recommendation for 2018A PromptReco 
+            # 06Jun2018-v1 + PromptReco-v3
+            ('SingleMuonRun2018A-06June2018-v1', '/SingleMuon/Run2018A-06Jun2018-v1/MINIAOD'), 
+            ('SingleMuonRun2018A-PromptReco-v3', '/SingleMuon/Run2018A-PromptReco-v3/MINIAOD'),
+            ('SingleMuonRun2018B-PromptReco-v1', '/SingleMuon/Run2018B-PromptReco-v1/MINIAOD'),
+            ('SingleMuonRun2018B-PromptReco-v2', '/SingleMuon/Run2018B-PromptReco-v2/MINIAOD'),
+            ('SingleMuonRun2018C-PromptReco-v1', '/SingleMuon/Run2018C-PromptReco-v1/MINIAOD'),
+            ('SingleMuonRun2018C-PromptReco-v2', '/SingleMuon/Run2018C-PromptReco-v2/MINIAOD'),
+            ('SingleMuonRun2018C-PromptReco-v3', '/SingleMuon/Run2018C-PromptReco-v3/MINIAOD'),
+            ('SingleMuonRun2018D-PromptReco-v2', '/SingleMuon/Run2018D-PromptReco-v2/MINIAOD'),
 
             ]
 

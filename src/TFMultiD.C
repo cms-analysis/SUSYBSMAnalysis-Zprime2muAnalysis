@@ -56,6 +56,7 @@ void TFMultiD::setup(const char *name, Double_t (*fcn)(Double_t *, Double_t *),
   else
     for (Int_t i = 0; i < fNdim; i++)
       fXmin[i] = fXmax[i] = 0;
+
 // this line does not compile in 10_1_5
 // 'class TInterpreter' has no member named 'Getp2f2funcname'
 // TFMultiD.C is used in

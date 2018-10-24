@@ -450,11 +450,13 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   DimuonMassVertexConstrainedScaleDown_bb_CSNeg = fs->make<TH1F>("DimuonMassVertexConstrainedScaleDown_bb_CSNeg", titlePrefix + "dimu. vertex-constrained mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
   DimuonMassVertexConstrainedScaleDown_be_CSNeg = fs->make<TH1F>("DimuonMassVertexConstrainedScaleDown_be_CSNeg", titlePrefix + "dimu. vertex-constrained mass barrel-endcaps and endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
   // Mass plot in bins of log(mass)
-  const int    NMBINS = 100;
-  const double MMIN = 60., MMAX = 2100.;
+  // This binning selection gives binwidths of ~30 GeV at 3 TeV
+  // It can be rebinned and clipped as necessary after the fact
+  const int    NMBINS = 500;
+  const double MMIN = 50., MMAX = 10000.;
   double logMbins[NMBINS+1];
   for (int ibin = 0; ibin <= NMBINS; ibin++)
-    logMbins[ibin] = exp(log(MMIN) + (log(MMAX)-log(MMIN))*ibin/NMBINS);
+    logMbins[ibin] = pow(10,(log10(MMIN) + (log10(MMAX)-log10(MMIN))*ibin/NMBINS));
   DimuonMassVtxConstrainedLog = fs->make<TH1F>("DimuonMassVtxConstrainedLog", titlePrefix + "dimu vtx-constrained mass in log bins", NMBINS, logMbins);
   DimuonMassVtxConstrainedLog_bb = fs->make<TH1F>("DimuonMassVtxConstrainedLog_bb", titlePrefix + "dimu vtx-constrained mass in log bins barrel-barrel", NMBINS, logMbins);
   DimuonMassVtxConstrainedLog_be = fs->make<TH1F>("DimuonMassVtxConstrainedLog_be", titlePrefix + "dimu vtx-constrained mass in log bins barrel-endcaps", NMBINS, logMbins);

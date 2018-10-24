@@ -30,20 +30,8 @@ def do(cmd):
         ret = ret[0]
     return ret
 
-#latest_dataset = '/SingleMu/Run2012A-PromptReco-v1/AOD'
-#latest_dataset = '/SingleMu/Run2012B-PromptReco-v1/AOD'
-#latest_dataset = '/SingleMu/Run2012C-PromptReco-v1/AOD'
-#latest_dataset = '/SingleMu/Run2012C-PromptReco-v2/AOD'
-#latest_dataset = '/SingleMu/Run2012D-PromptReco-v1/AOD'
-#latest_dataset = '/SingleMu/Run2015A-PromptReco-v1/AOD'
-#latest_dataset = '/SingleMu/Run2015A-PromptReco-v1/AOD'
-#latest_dataset = '/ExpressPhysics/Run2015B-Express-v1/FEVT'
-#latest_dataset = '/SingleMuon/Run2015B-PromptReco-v1/AOD'
-latest_dataset = '/SingleMuon/Run2016C-PromptReco-v2/AOD'
-#lumi_masks = ['Run2012PlusDCSOnlyMuonsOnly', 'Run2012MuonsOnly'] #, 'DCSOnly', 'Run2012']
-#lumi_masks = ['DCSOnly', 'Run2015', 'Run2015MuonsOnly'] #, 'Run2012PlusDCSOnlyMuonsOnly', 'DCSOnly']
-lumi_masks = ['Run2016MuonsOnly'] #, 'Run2012PlusDCSOnlyMuonsOnly', 'DCSOnly']
-#lumi_masks = ['DCSOnly'] #, 'Run2012PlusDCSOnlyMuonsOnly', 'DCSOnly']
+latest_dataset = '/SingleMuon/Run2018A-PromptReco-v2/MINIAOD' # is this used anymore?
+lumi_masks = ['Run2018MuonsOnly']
 
 
 if cmd == 'setdirs':
@@ -58,9 +46,9 @@ elif cmd == 'maketagdirs':
     do('rm data mc plots')
     for which in ['data', 'mc', 'plots']:
         #d = '~/nobackup/zp2mu_ana_datamc_%s/%s' % (which,extra)
-        d = './zp2mu_ana_datamc_%s/%s' % (which,extra)
-        do('mkdir -p %s' % d)
-        do('ln -s %s %s' % (d, which))
+        #d = './zp2mu_ana_datamc_%s/%s' % (which,extra)
+        do('mkdir -p %s/%s' % (extra, which))
+        do('ln -s %s/%s %s' % (extra, which, which))
 
 elif cmd == 'checkevents':
     from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
@@ -98,6 +86,29 @@ elif cmd == 'getoutput':
         print sample.name
         do('crab getoutput -d crab/crab_ana_datamc_%(name)s --checksum=no ' % sample)
 
+elif cmd=='checkdata':
+    print cmd
+    extra = extra[0] if extra else ''
+    dirs = glob.glob('crab/crab_ana_datamc_Run2018MuonsOnly_SingleMuonRun2018*_%s'%extra)
+    for d in dirs:
+        print d
+        do('crab status %s'%d)
+elif cmd=='reportdata':
+    print cmd
+    extra = extra[0] if extra else ''
+    dirs = glob.glob('crab/crab_ana_datamc_Run2018MuonsOnly_SingleMuonRun2018*_%s'%extra)
+    for d in dirs:
+        print d
+        do('crab report %s'%d)
+elif cmd=='getdata':
+    print cmd
+    extra = extra[0] if extra else ''
+    dirs = glob.glob('crab/crab_ana_datamc_Run2018MuonsOnly_SingleMuonRun2018*_%s'%extra)
+    for d in dirs:
+        print d
+        do('crab getoutput %s'%d)
+
+
 #elif cmd == 'publishmc':
 #    from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
 #    for sample in samples:
@@ -133,23 +144,22 @@ elif cmd == 'gathermc':
             hadd('mc/ana_datamc_%s.root' % name, files)
 
 elif cmd == 'gatherdata':
-    extra = (extra[0] + '_') if extra else ''
-
+    # This command is to be run after getdata
+    extra = (extra[0]) if extra else ''
+    # Some of this assumes lumi_masks = ['Run2018MuonsOnly']
     for lumi_mask in lumi_masks:
         print lumi_mask
-#        dirs = glob.glob('crab/crab_ana_datamc_%s_ExpressPhysicsRun2015B*' % lumi_mask)
-        dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMuonRun2016*' % lumi_mask)
-#        dirs = glob.glob('crab/crab_ana_datamc_%s_ExpressPhysicsRun2015B-Express_251161_251252' % lumi_mask)
+        dirs = glob.glob('crab/crab_ana_datamc_%s_SingleMuonRun2018*_%s'%(lumi_mask,extra))
         files = []
         for d in dirs:
             files += glob.glob(os.path.join(d, 'results/*.root'))
 
-        wdir = os.path.join('data', lumi_mask)
-        os.mkdir(wdir)
-        hadd(os.path.join(wdir, 'ana_datamc_data.root'), files)
+        #wdir = os.path.join('data', lumi_mask)
+        #os.mkdir(wdir)
+        hadd(os.path.join('data', 'zp2mu_histos_Run2018_All_PromptReco.root'), files)
 
-#         for dir in dirs:
-#             do('crab status -d %(dir)s ; crab report -d %(dir)s ' % locals())
+        #for dir in dirs:
+        #    do('crab status -d %(dir)s ; crab report -d %(dir)s ' % locals())
 
         jsons = [os.path.join(dir, 'results/processedLumis.json') for dir in dirs]
         print jsons
@@ -162,9 +172,15 @@ elif cmd == 'gatherdata':
             else:
                 print cl
                                         
-        reduce(lambda x,y: x|y, (LumiList(j) for j in jsons)).writeJSON('%(wdir)s/ana_datamc_data.forlumi.json' % locals())
-        do('brilcalc lumi --normtag /afs/cern.ch/user/l/lumipro/public/normtag_file/normtag_DATACERT.json -u /pb  -i %(wdir)s/ana_datamc_data.forlumi.json  > %(wdir)s/ana_datamc_data.lumi -b "STABLE BEAMS" ' % locals())
-        do('tail -5 %(wdir)s/ana_datamc_data.lumi' % locals())
+        reduce(lambda x,y: x|y, (LumiList(j) for j in jsons)).writeJSON('json/ana_datamc_data.forlumi.json' % locals())
+        #do('brilcalc lumi --normtag /afs/cern.ch/user/l/lumipro/public/normtag_file/normtag_DATACERT.json -u /pb  -i %(wdir)s/ana_datamc_data.forlumi.json  > %(wdir)s/ana_datamc_data.lumi -b "STABLE BEAMS" ' % locals())
+        #do('brilcalc lumi -u /fb  -i json/ana_datamc_data.forlumi.json  > lumi/ana_datamc_data.lumi -b "STABLE BEAMS" ' % locals())
+        #do('tail -5 lumi/ana_datamc_data.lumi' % locals())
+
+        do('mv json/ana_datamc_data.forlumi.json json/Processed_Run2018_All_PromptReco.json')
+        do('brilcalc lumi -u /fb  -i json/Processed_Run2018_All_PromptReco.json  > lumi/Run_2018_All_PromptReco.lumi -b "STABLE BEAMS" ' % locals())
+        do('tail -5 lumi/Run_2018_All_PromptReco.lumi' % locals())
+
         print 'done with', lumi_mask, '\n'
 
         #do('lumiCalc2.py -i %(wdir)s/ana_datamc_data.forlumi.json overview > %(wdir)s/ana_datamc_data.lumi' % locals())

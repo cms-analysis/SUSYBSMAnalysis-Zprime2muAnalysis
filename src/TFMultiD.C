@@ -64,7 +64,7 @@ void TFMultiD::setup(const char *name, Double_t (*fcn)(Double_t *, Double_t *),
  // src/AsymFunctions.C
  // plugins/Zprime2muAsymmetry.cc
  // I doubt it has been used since before Run1...
- //const char *funcname = gCling->Getp2f2funcname((void*)fcn); 
+ //const char *funcname = gCling->Getp2f2funcname((void*)fcn);  
  const char *funcname = "function"; // Federica
   if (funcname) {
     fType = 2;

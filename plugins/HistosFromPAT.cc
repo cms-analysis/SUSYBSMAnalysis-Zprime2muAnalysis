@@ -808,8 +808,8 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 	if (fill_gen_info){
 		double trigFac1 = turnOn(ele0->superCluster()->eta(),ele0->et());
 		double trigFac2 = turnOn(ele1->superCluster()->eta(),ele1->et());
-		double L1TrigFac1 = turnOn(ele0->superCluster()->eta(),ele0->et());
-		double L1TrigFac2 = turnOn(ele1->superCluster()->eta(),ele1->et());
+		double L1TrigFac1 = L1TurnOn(ele0->superCluster()->eta(),ele0->et());
+		double L1TrigFac2 = L1TurnOn(ele1->superCluster()->eta(),ele1->et());
 		_eleMCFac_bb = 0.968 * trigFac1 * trigFac2 * (L1TrigFac1 + L1TrigFac2 - L1TrigFac1*L1TrigFac2);
 		_eleMCFac_be = 0.969 * trigFac1 * trigFac2 * (L1TrigFac1 + L1TrigFac2 - L1TrigFac1*L1TrigFac2);
 

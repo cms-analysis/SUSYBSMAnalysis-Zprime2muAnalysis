@@ -28,6 +28,12 @@ private:
       return lhs.mass() > rhs.mass();
     }
   };
+  struct z_mass_sort {
+    bool operator()(const pat::CompositeCandidate& lhs, const pat::CompositeCandidate& rhs) {
+      bool result = (fabs(91.187-lhs.mass()) < fabs(91.187-rhs.mass()));
+      return result;
+    }
+  };
 
   struct lepton_pt_sort {
     bool operator()(const pat::CompositeCandidate& lhs, const pat::CompositeCandidate& rhs) {
@@ -111,6 +117,7 @@ private:
 
   const unsigned max_candidates;
   const bool sort_by_pt;
+  const bool prefer_Z;
   const bool do_remove_overlap;
 
   const bool cut_on_back_to_back_cos_angle;
@@ -130,6 +137,7 @@ Zprime2muCompositeCandidatePicker::Zprime2muCompositeCandidatePicker(const edm::
     selector(cfg.getParameter<std::string>("cut")),
     max_candidates(cfg.getParameter<unsigned>("max_candidates")),
     sort_by_pt(cfg.getParameter<bool>("sort_by_pt")),
+    prefer_Z(cfg.getParameter<bool>("prefer_Z")),
     do_remove_overlap(cfg.getParameter<bool>("do_remove_overlap")),
     cut_on_back_to_back_cos_angle(cfg.existsAs<double>("back_to_back_cos_angle_min")),
     back_to_back_cos_angle_min(cut_on_back_to_back_cos_angle ? cfg.getParameter<double>("back_to_back_cos_angle_min") : -2),
@@ -318,10 +326,19 @@ void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::Ev
   }
 
   // Sort candidates so we keep either the ones with higher-pT
-  // muons or the ones with larger invariant mass.
-  if(sort_by_pt)
+  // muons or the ones with larger invariant mass. If desired, the pair within 20 GeV of the Z boson mass can be given preference
+  bool otherSort = true;
+  if (prefer_Z){
+	if (new_cands->size() > 0){
+    		sort(new_cands->begin(), new_cands->end(), z_mass_sort());
+		if (fabs((*new_cands->begin()).mass()-91.187) < 20){
+			 otherSort = false;
+		}
+	}
+  }
+  if(sort_by_pt && otherSort)
     sort(new_cands->begin(), new_cands->end(), lepton_pt_sort());
-  else
+  else if (otherSort)
     sort(new_cands->begin(), new_cands->end(), reverse_mass_sort());
 
   // Remove cands of lower invariant mass that are comprised of a

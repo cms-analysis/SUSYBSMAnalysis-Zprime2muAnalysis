@@ -128,8 +128,9 @@ pat::Electron* Zprime2muLeptonProducer_miniAOD::cloneAndSwitchElectronEnergy(con
   // weighted combination of the calorimeter and track-fit energy. See
   // the section "General Comments" at
   // https://twiki.cern.ch/twiki/bin/view/CMS/HEEPElectronID.
+  // Correcting further for energy scale and resolution as recommeded by EGamma https://twiki.cern.ch/twiki/bin/view/CMS/EgammaMiniAODV2#Applying_the_Energy_Scale_and_sm
   pat::Electron* el = electron.clone();
-  el->setP4(electron.p4() * (electron.caloEnergy() / electron.energy()));
+  el->setP4(electron.p4() * (electron.caloEnergy() / electron.energy()) * (electron.userFloat("ecalEnergyPostCorr") / electron.caloEnergy()));
   return el;
 }
 
@@ -482,6 +483,8 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
   
   if(patEles.isValid()){ 
     for(auto ele=patEles->begin();ele!=patEles->end();++ele){
+
+      
       const edm::Ptr<pat::Electron> elePtr(patEles,ele-patEles->begin()); //value map is keyed of edm::Ptrs so we need to make one
      
       //Electron selection is done here using VID

@@ -8,16 +8,17 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFilt
 process.source.fileNames =[#'file:./pat.root'
 #'/store/data/Run2017F/DoubleEG/MINIAOD/17Nov2017-v1/50000/00105BAD-63E0-E711-8640-02163E0146C5.root',
 #'/store/mc/RunIIFall17MiniAODv2/ZToEE_NNPDF31_13TeV-powheg_M_1400_2300/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/70000/8A226AAF-AC43-E811-AEF0-0CC47A4D764C.root',
-'/store/data/Run2017E/SingleMuon/MINIAOD/17Nov2017-v1/50000/000DCB8B-2ADD-E711-9100-008CFAF35AC0.root',
+#'/store/data/Run2017E/SingleMuon/MINIAOD/17Nov2017-v1/50000/000DCB8B-2ADD-E711-9100-008CFAF35AC0.root',
 #'/store/mc/PhaseIFall16MiniAOD/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/MINIAODSIM/FlatPU28to62HcalNZSRAW_PhaseIFall16_exo52_90X_upgrade2017_realistic_v6_C1-v1/120000/304E419F-CC13-E711-93E9-FA163E0231A1.root',
+'/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_50_120/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/70000/12BD4CC4-0751-E811-BCA9-0090FAA58D84.root',
 ]                          
 process.maxEvents.input = -1
 isMC = True
 process.GlobalTag.globaltag = '94X_mc2017_realistic_v14'
-#process.options.wantSummary = cms.untracked.bool(True)# false di default
+process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold, trigger_filters, trigger_path_names, prescaled_trigger_filters, prescaled_trigger_path_names, prescaled_trigger_match_2018, trigger_match_2018
 
 # Since the prescaled trigger comes with different prescales in
 # different runs/lumis, this filter prescales it to a common factor to
@@ -116,8 +117,14 @@ for cut_name, Selection in cuts.iteritems():
         muon_cuts = Selection.loose_cut
 
     leptons = process.leptonsMini.clone(muon_cuts = muon_cuts)
-    if isMC:
-	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
+    if len(trigger_filters)>0 and (cut_name=='Our2017' or cut_name=='Simple'):
+    	leptons.trigger_filters = trigger_filters
+	leptons.trigger_path_names = trigger_path_names
+	leptons.prescaled_trigger_filters = prescaled_trigger_filters
+	leptons.prescaled_trigger_path_names = prescaled_trigger_path_names
+
+#    if isMC:
+#	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
     if  Electrons:
 	    if cut_name == 'EmuVeto':
 		    leptons.electron_muon_veto_dR = 0.1
@@ -148,7 +155,8 @@ for cut_name, Selection in cuts.iteritems():
             alldil.checkCharge = cms.bool(False)
 
         dil = Selection.dimuons.clone(src = cms.InputTag(allname))
-
+	if len(trigger_filters) >  0 and (cut_name=='Our2017' or cut_name=='Simple'):
+		alldil.tight_cut = trigger_match_2018
         # Implement the differences to the selections; currently, as
         # in Zprime2muCombiner, the cuts in loose_cut and
         # tight_cut are the ones actually used to drop leptons, and
@@ -172,9 +180,11 @@ for cut_name, Selection in cuts.iteritems():
         elif 'MuPrescaled' in cut_name:
             alldil.loose_cut = alldil.loose_cut.value().replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
             assert alldil.tight_cut == trigger_match
-            alldil.tight_cut = prescaled_trigger_match
-
-    # Histos now just needs to know which leptons and dileptons to use.
+            if len(prescaled_trigger_filters)>0:
+                alldil.tight_cut = prescaled_trigger_match_2018
+            else:
+                alldil.tight_cut = prescaled_trigger_match
+     # Histos now just needs to know which leptons and dileptons to use.
       
 	histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
 

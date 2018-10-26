@@ -46,8 +46,9 @@ loose_cut = 'isGlobalMuon && ' \
             'isolationR03.sumPt / innerTrack.pt < 0.10 && ' \
             'globalTrack.hitPattern.trackerLayersWithMeasurement > 5 && ' \
             'globalTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \
-            'globalTrack.hitPattern.numberOfValidMuonHits > 0 && ' \
-            '( numberOfMatchedStations > 1 || (numberOfMatchedStations == 1 && !(stationMask == 1 || stationMask == 16)) || (numberOfMatchedStations == 1 && (stationMask == 1 || stationMask == 16) && numberOfMatchedRPCLayers > 2))'
+            '(globalTrack.hitPattern.numberOfValidMuonHits > 0 || tunePMuonBestTrack.hitPattern.numberOfValidMuonHits > 0 ) && ' \
+            '(( numberOfMatchedStations>1 ) || ( numberOfMatchedStations==1 && ( expectedNnumberOfMatchedStations<2 || !(stationMask==1 || stationMask==16) || numberOfMatchedRPCLayers>2)))'
+
 
 loose_cut = loose_cut % offline_pt_threshold
 
@@ -64,9 +65,9 @@ dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          src = cms.InputTag('allDimuons'),
                          cut = cms.string(''),
                          max_candidates = cms.uint32(1),
-                         prefer_Z = cms.bool(False),
                          sort_by_pt = cms.bool(True),
                          do_remove_overlap = cms.bool(True),
+                         prefer_Z = cms.bool(True),
                          back_to_back_cos_angle_min = cms.double(-0.9998), # this corresponds to the angle (pi - 0.02) rad = 178.9 deg
 #                         vertex_chi2_max = cms.double(10),
                          vertex_chi2_max = cms.double(20),

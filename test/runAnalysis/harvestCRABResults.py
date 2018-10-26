@@ -9,7 +9,7 @@ users = {
 	#"jan":["srm://grid-srm.physik.rwth-aachen.de:8443/srm/managerv2?SFN=/pnfs/physik.rwth-aachen.de/cms/store/user/jschulte/SingleMuon/"]
 	#"jan":["srm://grid-srm.physik.rwth-aachen.de:8443/srm/managerv2?SFN=/pnfs/physik.rwth-aachen.de/cms/store/user/jschulte/"]
 	#"jan":["gsiftp://cms-gridftp.rcac.purdue.edu/store/user/jschulte/92X"]
-	"jan":["gsiftp://cms-gridftp.rcac.purdue.edu/store/user/jschulte/DoubleEG"]
+	"jan":["gsiftp://cms-gridftp.rcac.purdue.edu/store/user/jschulte/"]
 	#"jan":["gsiftp://cms-gridftp.rcac.purdue.edu/store/user/jschulte/CRAB_UserFiles/ana_datamc_dyPt150To250_2Jets_2017"]
 #	"jan":["gsiftp://cms-gridftp.rcac.purdue.edu/store/user/jschulte/DYJetsToLL_Pt-50To100_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8"]
 

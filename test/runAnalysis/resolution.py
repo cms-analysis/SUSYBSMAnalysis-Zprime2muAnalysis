@@ -86,11 +86,16 @@ for cut_name, Selection in cuts.iteritems():
         muon_cuts = Selection.loose_cut
 
     leptons = process.leptonsMini.clone(muon_cuts = muon_cuts)
-    if isMC:
-	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
+#    if isMC:
+#	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
     if  Electrons:
 	    if cut_name == 'EmuVeto':
 		    leptons.electron_muon_veto_dR = 0.1
+    if len(trigger_filters)>0 and (cut_name=='Our2017' or cut_name=='Simple'):
+    	leptons.trigger_filters = trigger_filters
+	leptons.trigger_path_names = trigger_path_names
+	leptons.prescaled_trigger_filters = prescaled_trigger_filters
+	leptons.prescaled_trigger_path_names = prescaled_trigger_path_names
 
     # Keep using old TuneP for past selections
 #     if 'Dec2012' not in Selection.__file__:
@@ -142,8 +147,10 @@ for cut_name, Selection in cuts.iteritems():
         elif 'MuPrescaled' in cut_name:
             alldil.loose_cut = alldil.loose_cut.value().replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
             assert alldil.tight_cut == trigger_match
-            alldil.tight_cut = prescaled_trigger_match
-
+             if len(prescaled_trigger_filters)>0:
+                alldil.tight_cut = prescaled_trigger_match_2018
+            else:
+                alldil.tight_cut = prescaled_trigger_match
     # Histos now just needs to know which leptons and dileptons to use.
       
 	res    = ResolutionAtZ.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))

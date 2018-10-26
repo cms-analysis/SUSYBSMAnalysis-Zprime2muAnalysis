@@ -13,6 +13,7 @@ config.Data.outLFNDirBase = '/store/user/jschulte'
 #config.Data.ignoreLocality = True 
 #config.Site.whitelist = ["T2_IT_Bari"]
 config.Site.storageSite = 'T2_US_Purdue'
+config.JobType.maxMemoryMB  = 8000
 
 config.Data.splitting = 'EventAwareLumiBased'
 config.Data.totalUnits = -1

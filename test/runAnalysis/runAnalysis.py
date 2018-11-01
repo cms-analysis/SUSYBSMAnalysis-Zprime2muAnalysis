@@ -3,7 +3,7 @@ import argparse, subprocess, os
 
 
 def getFilterSnippet(name):
-
+	print name
 	ttbarFilter = '''
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
 process.DYGenMassFilter = cms.EDFilter('DibosonGenMass',
@@ -35,10 +35,10 @@ for path_name, path in process.paths.iteritems():
 
 	if "dyInclusive" in name:
 		return dyFilter
-	elif "ttbar_lep50to500" in name:
-		return ttbarFilter
-	elif "WWinclusive" in name:
-		return wwFilter
+#	elif "ttbar_lep50to500" in name:
+#		return ttbarFilter
+#	elif "WWinclusive" in name:
+#		return wwFilter
 	else:
 		return ""
 
@@ -127,6 +127,9 @@ def main():
 	parser.add_argument("-r", "--resolution", action="store_true", dest="resolution", default=False,help="run jobs for resolution studies")
 	parser.add_argument("-w", "--write", action="store_true", dest="write", default=False,help="write config but not execute")
 	parser.add_argument("-e", "--electrons", action="store_true", dest="electrons", default=False,help="run electrons")
+	parser.add_argument( "--ci2017", action="store_true", dest="ci2017", default=False,help="run CI MC for 2017")
+	parser.add_argument( "--2016", action="store_true", dest="do2016", default=False,help="run for 2016")
+	parser.add_argument( "--2018", action="store_true", dest="do2018", default=False,help="run for 2018")
 	args = parser.parse_args()
 	isMC = "True"
 	GT = "94X_mc2017_realistic_v14"
@@ -137,14 +140,16 @@ def main():
 	arguments["GT"] = GT
 	arguments["isMC"] = isMC
 	cmssw_cfg = open('setup.py').read()%arguments
-	
+	prefix = "muons_"	
 	if not args.resolution:
 		
 		if args.electrons:
+			prefix = "electrons_"
 			cmssw_cfg += open('histogrammerElectrons.py').read()
 		else:	
 			cmssw_cfg += open('histogrammerMuons.py').read()
 	else:
+		prefix = "resolution_"
 		cmssw_cfg += open('resolution.py').read()
 	
 	open('cmssw_cfg.py', 'wt').write(cmssw_cfg)
@@ -154,27 +159,59 @@ def main():
 			subprocess.call(['cmsRun','cmssw_cfg.py'])	
 		else:
 			if args.electrons and args.data:
-				from samples import data_electrons_2017 as samples
+				if args.do2018:
+					from samples import data_electrons_2018 as samples
+				elif args.do2016:	
+					from samples import data_electrons_2016 as samples
+				else:
+					from samples import data_electrons_2017 as samples
 			elif args.electrons and not args.data:
-				from samples import backgrounds_electrons_2017 as samples
+				if args.ci2017:	
+					from samples import ci_electrons_2017 as samples
+				else:
+					from samples import backgrounds_electrons_2017 as samples
 			elif args.data:
-				from samples import data_muons_2017 as samples
+				if args.do2018:
+					from samples import data_muons_2018 as samples
+				elif args.do2016:
+					from samples import data_muons_2016 as samples
+				else:
+					from samples import data_muons_2017 as samples
 			else:
-				from samples import backgrounds_muons_2017 as samples 
+				if args.ci2017:
+					from samples import ci_muons_2017 as samples 
+				else:	
+					from samples import backgrounds_muons_2017 as samples 
 			lumi_mask = ""
 			GT = "94X_mc2017_realistic_v14"
 			if args.data:
 				if args.electrons: 
 					lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt"
+					if args.do2018:
+						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-324420_13TeV_PromptReco_Collisions18_JSON.txt"
+					if args.do2016:	
+						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
 
 				else:
 					lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_MuonPhys.txt"
+					if args.do2018:
+						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-324420_13TeV_PromptReco_Collisions18_JSON_MuonPhys.txt"
+					if args.do2016:
+						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON_MuonPhys.txt"
 				GT = "94X_dataRun2_ReReco_EOY17_v6"
 			for dataset_name,  dataset in samples:
-			 	crab_cfg = getCRABCfg(dataset_name,dataset,lumi_mask)
+				cmssw_tmp = cmssw_cfg
+			 	crab_cfg = getCRABCfg(prefix+dataset_name,dataset,lumi_mask)
 		                open('crabConfig.py', 'wt').write(crab_cfg)
-				cmssw_cfg+=getFilterSnippet(dataset_name)
-				open('cmssw_cfg.py', 'wt').write(cmssw_cfg)
+				cmssw_tmp+=getFilterSnippet(dataset_name)
+				if "dy" in dataset_name:
+					if "HistosFromPAT.usekFactor = False" in cmssw_tmp:
+						cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.usekFactor = False','HistosFromPAT.usekFactor = True')
+				else:
+					if "HistosFromPAT.usekFactor = True" in cmssw_tmp:
+						cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.usekFactor = True','HistosFromPAT.usekFactor = False')
+				#print getFilterSnippet(dataset_name)
+				open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
             			if args.submit:
                 			os.system('crab submit -c crabConfig.py')
 
@@ -186,16 +223,17 @@ def main():
 				dbs = DbsApi('https://cmsweb.cern.ch/dbs/prod/global/DBSReader')
 			       
 				for name, ana_dataset in samples2:
+				    cmssw_tmp = cmssw_cfg
 				    fileDictList=dbs.listFiles(dataset=ana_dataset)
 				    
 				    print ("dataset %s has %d files" % (ana_dataset, len(fileDictList)))
 				   
 				# DBS client returns a list of dictionaries, but we want a list of Logical File Names
 				    lfnList = [ dic['logical_file_name'] for dic in fileDictList ]	
-				    crab_cfg = getCRABCfgWeirdSubmission(dataset_name,dataset,lfnList)
+				    crab_cfg = getCRABCfgWeirdSubmission(prefix+dataset_name,dataset,lfnList)
 				    open('crabConfig.py', 'wt').write(crab_cfg)
 				    #cmssw_cfg+=getFilterSnippet(dataset_name) # high mass tails not available yet
-				    open('cmssw_cfg.py', 'wt').write(cmssw_cfg)
+				    open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
 				    if args.submit:
 					os.system('crab submit -c crabConfig.py')
 

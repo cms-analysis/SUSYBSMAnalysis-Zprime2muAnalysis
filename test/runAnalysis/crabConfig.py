@@ -1,14 +1,14 @@
 
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'dileptonAna_tW'
+config.General.requestName = 'dileptonAna_electrons_tW'
 config.General.workArea = 'crab'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '/ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'
 config.Data.inputDBS = 'global'
 config.Data.publication = False
-config.Data.outputDatasetTag = 'dileptonAna_tW'
+config.Data.outputDatasetTag = 'dileptonAna_electrons_tW'
 config.Data.outLFNDirBase = '/store/user/jschulte'
 #config.Data.ignoreLocality = True 
 #config.Site.whitelist = ["T2_IT_Bari"]

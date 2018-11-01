@@ -53,6 +53,8 @@ leptonsMini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
                               trigger_path_names = cms.vstring(),
                               prescaled_trigger_filters = cms.vstring(),
                               prescaled_trigger_path_names = cms.vstring(),
+			      hlt_filter_ele = cms.string("hltDiEle33CaloIdLMWPMS2UnseededFilter"),
+			      l1_filter_ele = cms.string("hltL1sSingleAndDoubleEGNonIsoOrWithEG26WithJetAndTau"),
                               )
 
 Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)

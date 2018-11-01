@@ -9,15 +9,18 @@ struct Zprime2muPairSelector {
   StringCutObjectSelector<reco::Candidate, true> loose;
   StringCutObjectSelector<reco::Candidate, true> tight;
   const unsigned electron_cut_mask;
+  const bool ele_match_l1 = false;
   const std::string module_label;
 
   Zprime2muPairSelector(const std::string& loose_cut,
 			const std::string& tight_cut,
 			const unsigned el_mask,
+			const bool l1_match, 
 			const std::string& label)
     : loose(loose_cut),
       tight(tight_cut),
       electron_cut_mask(el_mask),
+      ele_match_l1(l1_match),
       module_label(label)
   {}
 
@@ -26,6 +29,11 @@ struct Zprime2muPairSelector {
     if (!el.hasUserInt("cutFor"))
       throw cms::Exception("BadCandidateForLeptonSelector") << "electron does not have cutFor userInt!\n";
     return (el.userInt("cutFor") & electron_cut_mask) == 0;
+  }
+  bool electron_l1(const reco::Candidate& cel) const {
+    const pat::Electron& el = static_cast<const pat::Electron&>(cel);
+    if (!(el.userFloat("L1TriggerMatchPt") > 0)) return false;
+    else return true;
   }
 
   bool operator()(const reco::Candidate& c1, const reco::Candidate& c2) const {
@@ -38,8 +46,10 @@ struct Zprime2muPairSelector {
 
     const bool e1 = typeid(c1) == typeid(pat::Electron);
     const bool e2 = typeid(c2) == typeid(pat::Electron);
-    if (e1 && e2)
-      return electron_ok(c1) && electron_ok(c2);
+    if (e1 && e2){
+	if (ele_match_l1) return electron_ok(c1) && electron_ok(c2) && (electron_l1(c1) || electron_l1(c2));
+	else              return electron_ok(c1) && electron_ok(c2);
+    }
     else if (e1)
       return electron_ok(c1) && loose(c2) && tight(c2);
     else if (e2)
@@ -65,6 +75,7 @@ namespace reco {
 	return Zprime2muPairSelector(cfg.getParameter<std::string>("loose_cut"),
 				     cfg.getParameter<std::string>("tight_cut"),
 				     cfg.existsAs<unsigned>("electron_cut_mask") ? cfg.getParameter<unsigned>("electron_cut_mask") : 0xFFFFFFFF,
+				     cfg.existsAs<unsigned>("ele_match_l1") ? cfg.getParameter<unsigned>("ele_match_l1") : false,
 				     cfg.getParameter<std::string>("@module_label"));
       }
     };

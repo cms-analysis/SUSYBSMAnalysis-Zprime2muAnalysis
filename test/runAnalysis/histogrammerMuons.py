@@ -7,7 +7,7 @@ HistosFromPAT.leptonsFromDileptons = True
 ####################################
 ####################################
 
-HistosFromPAT.usekFactor = False #### Set TRUE to use K Factor #####
+HistosFromPAT.usekFactor = True #### Set TRUE to use K Factor #####
 
 ####################################
 ####################################

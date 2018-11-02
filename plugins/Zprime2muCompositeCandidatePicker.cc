@@ -123,6 +123,9 @@ private:
   const bool cut_on_back_to_back_cos_angle;
   const double back_to_back_cos_angle_min;
 
+  const bool configure_z_window_size;
+  const double z_window_size;
+
   const bool cut_on_vertex_chi2;
   const double vertex_chi2_max;
 
@@ -141,6 +144,8 @@ Zprime2muCompositeCandidatePicker::Zprime2muCompositeCandidatePicker(const edm::
     do_remove_overlap(cfg.getParameter<bool>("do_remove_overlap")),
     cut_on_back_to_back_cos_angle(cfg.existsAs<double>("back_to_back_cos_angle_min")),
     back_to_back_cos_angle_min(cut_on_back_to_back_cos_angle ? cfg.getParameter<double>("back_to_back_cos_angle_min") : -2),
+    configure_z_window_size(cfg.existsAs<double>("z_window_size")),
+    z_window_size(configure_z_window_size ? cfg.getParameter<double>("z_window_size") : 20),
     cut_on_vertex_chi2(cfg.existsAs<double>("vertex_chi2_max")),
     vertex_chi2_max(cut_on_vertex_chi2 ? cfg.getParameter<double>("vertex_chi2_max") : 1e99),
     cut_on_dpt_over_pt(cfg.existsAs<double>("dpt_over_pt_max")),
@@ -331,7 +336,7 @@ void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::Ev
   if (prefer_Z){
 	if (new_cands->size() > 0){
     		sort(new_cands->begin(), new_cands->end(), z_mass_sort());
-		if (fabs((*new_cands->begin()).mass()-91.187) < 20){
+		if (fabs((*new_cands->begin()).mass()-91.187) < z_window_size){
 			 otherSort = false;
 		}
 	}

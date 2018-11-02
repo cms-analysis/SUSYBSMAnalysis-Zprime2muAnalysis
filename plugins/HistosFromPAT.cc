@@ -824,7 +824,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
         if (cos_cs >= 0) DielectronMass_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
         else DielectronMass_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
 
-	if (ele0->superCluster()->eta() < 1.4442 && ele1->superCluster()->eta() < 1.4442) {
+	if (fabs(ele0->superCluster()->eta()) < 1.4442 && fabs(ele1->superCluster()->eta()) < 1.4442) {
 		DielectronMass_bb->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
 		DielectronMass_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
         	if (cos_cs >= 0){
@@ -837,7 +837,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 		}
 
 	}
-	else if ((ele0->superCluster()->eta() < 1.4442 && ele1->superCluster()->eta() > 1.566) ||(ele0->superCluster()->eta() > 1.566 && ele1->superCluster()->eta() < 1.4442)) {
+	else if ((fabs(ele0->superCluster()->eta()) < 1.4442 && fabs(ele1->superCluster()->eta()) > 1.566) ||(fabs(ele0->superCluster()->eta()) > 1.566 && fabs(ele1->superCluster()->eta()) < 1.4442)) {
 		DielectronMass_be->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
 		DielectronMass_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
         	if (cos_cs >= 0) {
@@ -850,7 +850,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 		}
 
 	}
-        else if (ele0->superCluster()->eta() > 1.566 && ele1->superCluster()->eta() > 1.566) {
+        else if (fabs(ele0->superCluster()->eta()) > 1.566 && fabs(ele1->superCluster()->eta()) > 1.566) {
 		DielectronMass_ee->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
         	if (cos_cs >= 0) {
 			DielectronMass_ee_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);

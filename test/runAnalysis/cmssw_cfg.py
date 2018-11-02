@@ -13,8 +13,8 @@ process.source.fileNames =[#'file:./pat.root'
 #'/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_50_120/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/70000/12BD4CC4-0751-E811-BCA9-0090FAA58D84.root',
 ]                          
 process.maxEvents.input = -1
-isMC = True
-process.GlobalTag.globaltag = '94X_mc2017_realistic_v14'
+isMC = False
+process.GlobalTag.globaltag = '94X_dataRun2_ReReco_EOY17_v6'
 process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
 
@@ -121,6 +121,8 @@ for cut_name, Selection in cuts.iteritems():
 		delattr(getattr(process,name + 'Histos'),'hardInteraction')	
         	path_list.append(trig * alldil * dil * histos)
 	else:
+		alldil.tight_cut = cms.string("")	
+		alldil.ele_match_l1 = cms.bool(False)	
         	path_list.append(alldil * dil * histos)
 	
     # Finally, make the path for this set of cuts.

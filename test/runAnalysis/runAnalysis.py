@@ -95,14 +95,14 @@ config.JobType.maxMemoryMB  = 8000
 	data_config='''
 config.Data.splitting = 'LumiBased'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob = 100
+config.Data.unitsPerJob = 200
 config.Data.lumiMask = '%s'
 '''
 
 	mc_config='''
 config.Data.splitting = 'EventAwareLumiBased'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob  = 100000
+config.Data.unitsPerJob  = 400000
 '''
 	if lumi_mask =="":
 		result = crab_cfg%(name,dataset,name,mc_config)

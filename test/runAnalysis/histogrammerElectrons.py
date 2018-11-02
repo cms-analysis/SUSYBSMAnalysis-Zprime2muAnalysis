@@ -84,6 +84,8 @@ for cut_name, Selection in cuts.iteritems():
 		delattr(getattr(process,name + 'Histos'),'hardInteraction')	
         	path_list.append(trig * alldil * dil * histos)
 	else:
+		alldil.tight_cut = cms.string("")	
+		alldil.ele_match_l1 = cms.bool(False)	
         	path_list.append(alldil * dil * histos)
 	
     # Finally, make the path for this set of cuts.

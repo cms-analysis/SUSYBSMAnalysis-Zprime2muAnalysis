@@ -13,13 +13,15 @@
 #include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
 #include "DataFormats/Common/interface/ValueMap.h"
 #include "DataFormats/Common/interface/View.h"
+#include "DataFormats/PatCandidates/interface/VIDCutFlowResult.h"
 #include "DataFormats/L1Trigger/interface/L1EmParticle.h"
 #include "DataFormats/L1Trigger/interface/BXVector.h"
 #include "DataFormats/L1Trigger/interface/L1Candidate.h"
 #include "DataFormats/L1Trigger/interface/EGamma.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneralizedEndpoint.h"
 #include "TLorentzVector.h"
-
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/VIDCutCodes.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/CutNrs.h"
 
 class Zprime2muLeptonProducer_miniAOD : public edm::EDProducer {
 public:
@@ -41,7 +43,7 @@ private:
 
   template <typename T> edm::OrphanHandle<std::vector<T> > doLeptons(edm::Event&, const edm::InputTag&, const edm::InputTag&, const std::string&);
 
-  template <typename T> edm::OrphanHandle<std::vector<T> > doLeptons(edm::Event&, edm::Handle<edm::ValueMap<bool> >&, edm::Handle<edm::View<pat::Electron> >&, const std::string&);
+  template <typename T> edm::OrphanHandle<std::vector<T> > doLeptons(edm::Event&, edm::Handle<edm::ValueMap<unsigned int> >&, edm::Handle<edm::View<pat::Electron> >&, const std::string&);
 
   edm::InputTag muon_src;
   edm::InputTag muon_view_src;
@@ -85,8 +87,7 @@ private:
   std::vector<std::vector<int>> vec_prescaled_L3_muons_matched;
 
   edm::EDGetTokenT<edm::View<pat::Electron> > electronToken_;  
-  edm::EDGetTokenT<edm::ValueMap<bool> > vidToken_;
-  
+  edm::EDGetTokenT<edm::ValueMap<unsigned int> > vidBitmapToken_;
 };
 
 Zprime2muLeptonProducer_miniAOD::Zprime2muLeptonProducer_miniAOD(const edm::ParameterSet& cfg)
@@ -110,7 +111,7 @@ Zprime2muLeptonProducer_miniAOD::Zprime2muLeptonProducer_miniAOD(const edm::Para
     trigger_summary_src_(consumes<pat::TriggerObjectStandAloneCollection>(cfg.getParameter<edm::InputTag>("trigger_summary"))),
     triggerPrescales_(consumes<pat::PackedTriggerPrescales>(cfg.getParameter<edm::InputTag>("prescales"))),
     electronToken_(consumes<edm::View<pat::Electron> >(cfg.getParameter<edm::InputTag>("electron_src"))),
-    vidToken_(consumes<edm::ValueMap<bool> >(cfg.getParameter<edm::InputTag>("electron_id")))
+    vidBitmapToken_(consumes<edm::ValueMap<unsigned int> >(cfg.getParameter<edm::InputTag>("electron_id")))
 {
   consumes<edm::View<reco::Candidate>>(muon_view_src);
   consumes<pat::MuonCollection>(muon_src);
@@ -415,7 +416,7 @@ std::pair<pat::Electron*,int> Zprime2muLeptonProducer_miniAOD::doLepton(const ed
 
   // Store the minimum muon dR for later use.
   new_el->addUserFloat("min_muon_dR", float(min_muon_dR));
-
+  new_el->addUserFloat("etaSC",new_el->superCluster()->eta());
   // Evaluate cuts here with string object selector, and any code that
   // cannot be done in the string object selector (so far, just the
   // minimum muon dR above).
@@ -514,7 +515,7 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
 
 
 template <typename T>
-edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(edm::Event& event, edm::Handle<edm::ValueMap<bool> > &vid, edm::Handle<edm::View<pat::Electron> > &patEles, const std::string& instance_label) {
+edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(edm::Event& event, edm::Handle<edm::ValueMap<unsigned int> > &vidBitMap, edm::Handle<edm::View<pat::Electron> > &patEles, const std::string& instance_label) {
  
   typedef std::vector<T> TCollection;
  
@@ -539,13 +540,17 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
       //Electron selection is done here using VID
       //A bool true is returned if electron passes ID
       //and only in this case a new lepton is created
-      bool passID = (*vid)[elePtr];
+      unsigned int heepV70Bitmap = (*vidBitMap)[elePtr];
+      using HEEPV70 = VIDCutCodes<cutnrs::HEEPV70>; 
+      const bool passID = HEEPV70::pass(heepV70Bitmap,HEEPV70::ET,HEEPV70::IGNORE);
       if(passID) {	
 	const pat::Electron Electrons = *ele;
 	std::pair<T*,int> res = doLepton(event, Electrons);
 	if (res.first == 0)
 	  continue;
 	res.first->addUserInt("cutFor", res.second);
+//	cout << res.first->userFloat("HLT_TriggerMatchPt") << std::endl;
+//	cout << res.first->userFloat("L1_TriggerMatchPt") << std::endl;
 	new_leptons->push_back(*res.first);
 	delete res.first;
       }
@@ -746,8 +751,8 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
     // doLeptons<pat::Electron>(event, electron_src, electron_view_src, "electrons");
    
        
-    edm::Handle<edm::ValueMap<bool> > vid;
-    event.getByToken(vidToken_,vid);
+    edm::Handle<edm::ValueMap<unsigned int> > vidBitMap;
+    event.getByToken(vidBitmapToken_,vidBitMap);
         
     edm::Handle<edm::View<pat::Electron> > patEles;
     event.getByToken(electronToken_,patEles);
@@ -786,7 +791,7 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
     L1_electrons_matched.clear();
     L1_electrons_matched.resize(l1_objects_ele.size(), 0);
 
-    doLeptons<pat::Electron>(event, vid, patEles,"electrons");
+    doLeptons<pat::Electron>(event, vidBitMap, patEles,"electrons");
    
 }
 

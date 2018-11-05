@@ -1,14 +1,16 @@
 import FWCore.ParameterSet.Config as cms
 
-loose_cut = ''
+loose_cut = 'et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566) && userFloat("HLT_TriggerMatchPt") > 33'
 
-tight_cut = 'userFloat("HLTTriggerMatchPt") > 33'
+tight_cut = 'userFloat("L1_TriggerMatchPt") > 33'
 
 allDielectrons = cms.EDProducer('Zprime2muCombiner',
                             decay = cms.string('leptons:electrons@+ leptons:electrons@-'),
                             cut = cms.string(''),
-                            loose_cut = cms.string(loose_cut),
-                            tight_cut = cms.string(tight_cut),
+			    loose_cut = cms.string(""),
+			    tight_cut = cms.string(""),
+                            loose_cut_ele = cms.string(loose_cut),
+                            tight_cut_ele = cms.string(tight_cut),
 			    ele_match_l1 = cms.bool(True)
                             )
 

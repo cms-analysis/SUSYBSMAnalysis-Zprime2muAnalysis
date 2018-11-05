@@ -71,6 +71,7 @@ private:
     int lep_id[2];
     float lep_p[2];
     float lep_pt[2];
+    float lep_et[2];
     float lep_pt_err[2];
     float lep_px[2];
     float lep_py[2];
@@ -265,6 +266,7 @@ private:
   const edm::InputTag jet_src;
   const edm::InputTag vertices_src;
   const bool fill_gen_info;
+  const bool do_electrons;
   const edm::InputTag TriggerResults_src;
   const edm::InputTag genEventInfo_;
   std::vector<edm::InputTag> filterTags;
@@ -285,6 +287,7 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
     jet_src(cfg.getParameter<edm::InputTag>("jet_src")),
     vertices_src(cfg.getParameter<edm::InputTag>("vertices_src")),
     fill_gen_info(cfg.existsAs<edm::ParameterSet>("hardInteraction")),
+    do_electrons(cfg.getParameter<bool>("doElectrons")),  
     TriggerResults_src(cfg.getParameter<edm::InputTag>("TriggerResults_src")),
     genEventInfo_(cfg.getUntrackedParameter<edm::InputTag>("genEventInfo")),
     filterTags(cfg.getParameter<std::vector<edm::InputTag> > ("metFilter")),  
@@ -343,6 +346,7 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
   tree->Branch("lep_pz", t.lep_pz, "lep_pz[2]/F");
   tree->Branch("lep_E", t.lep_E, "lep_E[2]/F");
   tree->Branch("lep_eta", t.lep_eta, "lep_eta[2]/F");
+  tree->Branch("lep_et", t.lep_et, "lep_et[2]/F");
   tree->Branch("lep_phi", t.lep_phi, "lep_phi[2]/F");
   tree->Branch("lep_qOverPt", t.lep_qOverPt, "lep_qOverPt[2]/F");
   tree->Branch("lep_tk_p", t.lep_tk_p, "lep_tk_p[2]/F");
@@ -861,7 +865,12 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
 
             // Set lepton information
             t.lep_id[w] = dil.daughter(i)->pdgId();
-            t.lep_eta[w] = dil.daughter(i)->eta();
+	    if (do_electrons){
+                         const reco::CandidateBaseRef& lep = dileptonDaughter(dil, i);
+			 const pat::Electron* ele = toConcretePtr<pat::Electron>(lep);
+			 t.lep_eta[w] = ele->superCluster()->eta();
+	    }
+            else t.lep_eta[w] = dil.daughter(i)->eta();
             t.lep_phi[w] = dil.daughter(i)->phi();
 
             //
@@ -1000,6 +1009,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
                     assert(el);
                     t.lep_p[w] = dil.daughter(i)->p();
                     t.lep_pt[w] = dil.daughter(i)->pt();
+                    t.lep_et[w] = dil.daughter(i)->et();
                     t.lep_px[w] = dil.daughter(i)->px();
                     t.lep_py[w] = dil.daughter(i)->py();
                     t.lep_pz[w] = dil.daughter(i)->pz();

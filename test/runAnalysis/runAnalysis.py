@@ -65,7 +65,7 @@ config.Data.splitting = 'FileBased'
 config.Data.unitsPerJob = 1
 config.JobType.maxMemoryMB  = 8000
 '''
-	result = crab_cfg%(name,dataset,name,fileList)
+	result = crab_cfg%(name,name,fileList)
 	
 	return result
 
@@ -180,6 +180,8 @@ def main():
 			else:
 				if args.ci2017:
 					from samples import ci_muons_2017 as samples 
+				elif args.resolution:
+					from samples import resolution_2017 as samples 
 				else:	
 					from samples import backgrounds_muons_2017 as samples 
 			lumi_mask = ""
@@ -230,7 +232,7 @@ def main():
 				   
 				# DBS client returns a list of dictionaries, but we want a list of Logical File Names
 				    lfnList = [ dic['logical_file_name'] for dic in fileDictList ]	
-				    crab_cfg = getCRABCfgWeirdSubmission(prefix+dataset_name,dataset,lfnList)
+				    crab_cfg = getCRABCfgWeirdSubmission(prefix+name,dataset,lfnList)
 				    open('crabConfig.py', 'wt').write(crab_cfg)
 				    #cmssw_cfg+=getFilterSnippet(dataset_name) # high mass tails not available yet
 				    open('cmssw_cfg.py', 'wt').write(cmssw_tmp)

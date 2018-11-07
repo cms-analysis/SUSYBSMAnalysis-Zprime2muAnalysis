@@ -138,9 +138,7 @@ for cut_name, Selection in cuts.iteritems():
                 delattr(dil, 'vertex_chi2_max')
             if hasattr(dil, 'dpt_over_pt_max'):
                 delattr(dil, 'dpt_over_pt_max')
-        elif cut_name == 'OurNoIso':
-            alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', '')
-        elif 'MuPrescaled' in cut_name:
+       elif 'MuPrescaled' in cut_name:
             alldil.loose_cut = alldil.loose_cut.value().replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
             assert alldil.tight_cut == trigger_match
             if len(prescaled_trigger_filters)>0:
@@ -190,7 +188,8 @@ process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler_miniAOD',
 # 								TriggerResults_src = cms.InputTag('TriggerResults', '', 'PAT'),	#mc
 							TriggerResults_src = cms.InputTag('TriggerResults', '', 'RECO'),	#data
 				   genEventInfo = cms.untracked.InputTag('generator'),
-				   metFilter = cms.VInputTag( cms.InputTag("Flag_HBHENoiseFilter"), cms.InputTag("Flag_HBHENoiseIsoFilter"), cms.InputTag("Flag_EcalDeadCellTriggerPrimitiveFilter"), cms.InputTag("Flag_eeBadScFilter"), cms.InputTag("Flag_globalTightHalo2016Filter"))
+				   metFilter = cms.VInputTag( cms.InputTag("Flag_HBHENoiseFilter"), cms.InputTag("Flag_HBHENoiseIsoFilter"), cms.InputTag("Flag_EcalDeadCellTriggerPrimitiveFilter"), cms.InputTag("Flag_eeBadScFilter"), cms.InputTag("Flag_globalTightHalo2016Filter")),
+				   doElectrons = cms.bool(False),
 				   )
 
 if isMC:

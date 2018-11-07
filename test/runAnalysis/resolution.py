@@ -56,7 +56,7 @@ cuts = {
 	'Our2016'  : OurSelection2016,
 	'Our2017'  : OurSelection2017,
 	#'OurNoIso' : OurSelectionDec2012,
-	'Simple'   : OurSelectionDec2012, # The selection cuts in the module listed here are ignored below.
+	'Simple'   : OurSelection2017, # The selection cuts in the module listed here are ignored below.
 	#'OurMuPrescaledNew'  : OurSelectionNew,
 	#'OurMuPrescaled2012' : OurSelectionDec2012
 	}
@@ -123,6 +123,8 @@ for cut_name, Selection in cuts.iteritems():
             alldil.checkCharge = cms.bool(False)
 
         dil = Selection.dimuons.clone(src = cms.InputTag(allname))
+	if len(trigger_filters) >  0 and (cut_name=='Our2017' or cut_name=='Simple'):
+		alldil.tight_cut = trigger_match_2018
 
         # Implement the differences to the selections; currently, as
         # in Zprime2muCombiner, the cuts in loose_cut and
@@ -142,15 +144,13 @@ for cut_name, Selection in cuts.iteritems():
                 delattr(dil, 'vertex_chi2_max')
             if hasattr(dil, 'dpt_over_pt_max'):
                 delattr(dil, 'dpt_over_pt_max')
-        elif cut_name == 'OurNoIso':
-            alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', '')
-        elif 'MuPrescaled' in cut_name:
-            alldil.loose_cut = alldil.loose_cut.value().replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
-            assert alldil.tight_cut == trigger_match
-             if len(prescaled_trigger_filters)>0:
-                alldil.tight_cut = prescaled_trigger_match_2018
-            else:
-                alldil.tight_cut = prescaled_trigger_match
+	elif 'MuPrescaled' in cut_name:
+            	alldil.loose_cut = alldil.loose_cut.value().replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
+            	assert alldil.tight_cut == trigger_match
+		if len(prescaled_trigger_filters)>0:
+                	alldil.tight_cut = prescaled_trigger_match_2018
+            	else:
+                	alldil.tight_cut = prescaled_trigger_match
     # Histos now just needs to know which leptons and dileptons to use.
       
 	res    = ResolutionAtZ.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))

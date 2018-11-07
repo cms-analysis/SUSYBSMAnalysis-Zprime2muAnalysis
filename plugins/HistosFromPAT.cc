@@ -25,6 +25,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
+#include <SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h>
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/DileptonUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/GeneralUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
@@ -59,6 +60,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   const bool doElectrons;
   edm::InputTag beamspot_src;
   edm::InputTag vertex_src;
+  edm::InputTag pu_src;
   const bool use_bs_and_pv;
 
   struct debug_tree_t {
@@ -90,6 +92,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
     double _scaleUncert = 0.01;
   TH1F* NBeamSpot;
   TH1F* NVertices;
+  TH1F* NTrueInteractions;
   TH1F* NLeptons;
   TH2F* LeptonSigns;
   TH1F* LeptonEta;
@@ -240,6 +243,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
     doElectrons(cfg.getParameter<bool>("doElectrons")),
     beamspot_src(cfg.getParameter<edm::InputTag>("beamspot_src")),
     vertex_src(cfg.getParameter<edm::InputTag>("vertex_src")),
+    pu_src(cfg.getParameter<edm::InputTag>("pu_src")),
     use_bs_and_pv(cfg.getParameter<bool>("use_bs_and_pv")),
     dbg_tree(0),
     beamspot(0),
@@ -260,6 +264,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   consumes<pat::CompositeCandidateCollection>(dilepton_src);
   consumes<reco::BeamSpot>(beamspot_src);
   consumes<reco::VertexCollection>(vertex_src);
+  consumes<std::vector<PileupSummaryInfo>>(pu_src);
   mayConsume<GenEventInfoProduct>(edm::InputTag("generator"));
   if (fill_gen_info) consumes<std::vector<reco::GenParticle>>(hardInteraction->src);
  
@@ -281,7 +286,8 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
  
   // Whole-event things.
   NBeamSpot = fs->make<TH1F>("NBeamSpot", titlePrefix + "# beamspots/event",  2, 0,  2);
-  NVertices = fs->make<TH1F>("NVertices", titlePrefix + "# vertices/event",  40, 0, 40);
+  NVertices = fs->make<TH1F>("NVertices", titlePrefix + "# vertices/event",  120, 0, 120);
+  NTrueInteractions = fs->make<TH1F>("NTrueInteractiosn", titlePrefix + "# true interactions/event",  120, 0, 120);
 
   // Basic kinematics.
 
@@ -633,6 +639,23 @@ void Zprime2muHistosFromPAT::getBSandPV(const edm::Event& event) {
     }
   }
   NVertices->Fill(vertex_count, _madgraphWeight*_kFactor);
+
+  edm::Handle<std::vector< PileupSummaryInfo > >  PupInfo;
+  event.getByLabel(edm::InputTag("slimmedAddPileupInfo"), PupInfo);
+  std::vector<PileupSummaryInfo>::const_iterator PVI;
+
+  if(!(event.isRealData())){
+  	for(PVI = PupInfo->begin(); PVI != PupInfo->end(); ++PVI) {
+	
+		int BX = PVI->getBunchCrossing();
+	
+		if(BX == 0) { 
+	  		NTrueInteractions->Fill(PVI->getTrueNumInteractions());
+	  		continue;
+		}
+      	}
+  }
+
 }
 
 void Zprime2muHistosFromPAT::fillBasicLeptonHistos(const reco::CandidateBaseRef& lep) {
@@ -771,8 +794,14 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
   if (lep0.isNonnull() && lep1.isNonnull()) {
     DileptonDeltaPt->Fill(fabs(lep0->pt()) - fabs(lep1->pt()), _madgraphWeight*_kFactor);
     DileptonDeltaP ->Fill(fabs(lep0->p())  - fabs(lep1->p()), _madgraphWeight*_kFactor);
-
-     cos_cs = calcCosThetaCSAnal(lep0->pz(), lep0->energy(), lep1->pz(), lep1->energy(), dil.pt(), dil.pz(), dil.mass());
+     if (lep0->charge()*lep1->charge() == -1){
+	     if (lep0->charge() == -1) cos_cs = calcCosThetaCSAnal(lep0->pz(), lep0->energy(), lep1->pz(), lep1->energy(), dil.pt(), dil.pz(), dil.mass());
+	     else cos_cs = calcCosThetaCSAnal(lep1->pz(), lep1->energy(), lep0->pz(), lep0->energy(), dil.pt(), dil.pz(), dil.mass());
+     }
+     else{
+     	if (lep0->pt() > lep1->pt()) cos_cs = calcCosThetaCSAnal(lep0->pz(), lep0->energy(), lep1->pz(), lep1->energy(), dil.pt(), dil.pz(), dil.mass());
+	     else cos_cs = calcCosThetaCSAnal(lep1->pz(), lep1->energy(), lep0->pz(), lep0->energy(), dil.pt(), dil.pz(), dil.mass());
+     }
      CosThetaStarDilepton->Fill(cos_cs);
      //ChiDilepton->Fill((1+fabs(cos_cs))/(1-fabs(cos_cs)));
      ChiDilepton->Fill(exp(std::abs(lep0->p4().Rapidity()-lep1->p4().Rapidity())));

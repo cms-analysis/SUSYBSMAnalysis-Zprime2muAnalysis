@@ -1,8 +1,8 @@
 import FWCore.ParameterSet.Config as cms
 
-loose_cut = 'et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566) && userFloat("HLT_TriggerMatchPt") > 33'
+loose_cut = 'et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566) && userFloat("HLT_TriggerMatchEt") > 10'
 
-tight_cut = 'userFloat("L1_TriggerMatchPt") > 33'
+tight_cut = 'userFloat("L1_TriggerMatchEt") > userFloat("lowestUnprescaledL1")'
 
 allDielectrons = cms.EDProducer('Zprime2muCombiner',
                             decay = cms.string('leptons:electrons@+ leptons:electrons@-'),

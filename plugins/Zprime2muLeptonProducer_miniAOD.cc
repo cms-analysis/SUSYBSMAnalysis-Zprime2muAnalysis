@@ -22,6 +22,12 @@
 #include "TLorentzVector.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/VIDCutCodes.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/CutNrs.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PrescaleProvider.h"
+namespace l1ps{
+  std::string psFile = std::string(std::getenv("CMSSW_BASE")) + std::string("/src/SUSYBSMAnalysis/Zprime2muAnalysis/data/triggerData2017");
+  PrescaleProvider psProvider(psFile);
+  //PrescaleProvider psProvider("${CMSSW_BASE}/SUSYBSMAnalysis/Zprime2muAnalysis/data/triggerData2017");
+}
 
 class Zprime2muLeptonProducer_miniAOD : public edm::EDProducer {
 public:
@@ -29,6 +35,8 @@ public:
 
 private:
   virtual void produce(edm::Event&, const edm::EventSetup&);
+
+  float getLowestSingleL1EG(int,int) const;
 
   pat::Electron* cloneAndSwitchElectronEnergy(const pat::Electron&) const;
   pat::Muon*     cloneAndSwitchMuonTrack     (const pat::Muon&, const edm::Event& event)     const;
@@ -133,6 +141,25 @@ Zprime2muLeptonProducer_miniAOD::Zprime2muLeptonProducer_miniAOD(const edm::Para
 
   produces<pat::MuonCollection>("muons");
   produces<pat::ElectronCollection>("electrons");
+}
+
+float Zprime2muLeptonProducer_miniAOD::getLowestSingleL1EG(int runnr,int lumiSec)
+const {
+  std::vector<std::pair<std::string,float> > l1SingleEGSeeds={
+    {"L1_SingleEG32",32},
+    {"L1_SingleEG34",34},
+    {"L1_SingleEG36",36},
+    {"L1_SingleEG38",38},
+    {"L1_SingleEG40",40},
+    {"L1_SingleEG45",45}
+  };
+  for(auto & l1Seed : l1SingleEGSeeds){
+    if(l1ps::psProvider.l1Prescale(l1Seed.first,runnr,lumiSec)==1) return l1Seed.second;
+  }
+  return -1;
+
+
+
 }
 
 
@@ -299,11 +326,13 @@ void Zprime2muLeptonProducer_miniAOD::embedTriggerMatch(pat::Electron* new_ele, 
       if (id > 0) new_ele->addUserFloat(ex + "TriggerMatchCharge", -id/abs(id));
       else        new_ele->addUserFloat(ex + "TriggerMatchCharge",  0);
       new_ele->addUserFloat(ex + "TriggerMatchPt",     L3_ele.pt());
+      new_ele->addUserFloat(ex + "TriggerMatchEt",     L3_ele.et());
       new_ele->addUserFloat(ex + "TriggerMatchEta",    L3_ele.eta());
       new_ele->addUserFloat(ex + "TriggerMatchPhi",    L3_ele.phi());
   }
   else{
       new_ele->addUserFloat(ex + "TriggerMatchPt",    defaultpTvalue);
+      new_ele->addUserFloat(ex + "TriggerMatchEt",    defaultpTvalue);
   }
 
 }
@@ -417,6 +446,7 @@ std::pair<pat::Electron*,int> Zprime2muLeptonProducer_miniAOD::doLepton(const ed
   // Store the minimum muon dR for later use.
   new_el->addUserFloat("min_muon_dR", float(min_muon_dR));
   new_el->addUserFloat("etaSC",new_el->superCluster()->eta());
+  new_el->addUserFloat("lowestUnprescaledL1",getLowestSingleL1EG(event.id().run(), event.luminosityBlock()));
   // Evaluate cuts here with string object selector, and any code that
   // cannot be done in the string object selector (so far, just the
   // minimum muon dR above).
@@ -424,7 +454,8 @@ std::pair<pat::Electron*,int> Zprime2muLeptonProducer_miniAOD::doLepton(const ed
   
   //legacy variable keept as 0, which means that the lepton passes the cuts
   int cutFor = 0; //selection moved to doLeptons where this function doLepton is called only for electrons passes EleID
-  
+ 
+  //std::cout << new_el->et() << " " << new_el->superCluster()->eta() << std::endl; 
 
   return std::make_pair(new_el, cutFor);
 }
@@ -540,16 +571,18 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
       //Electron selection is done here using VID
       //A bool true is returned if electron passes ID
       //and only in this case a new lepton is created
+
       unsigned int heepV70Bitmap = (*vidBitMap)[elePtr];
       using HEEPV70 = VIDCutCodes<cutnrs::HEEPV70>; 
       const bool passID = HEEPV70::pass(heepV70Bitmap,HEEPV70::ET,HEEPV70::IGNORE);
+      //const bool passID = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::SIGMAIETAIETA,HEEPV70::E2X5OVER5X5,HEEPV70::HADEM,HEEPV70::ETA,HEEPV70::DETAINSEED,HEEPV70::DPHIIN,HEEPV70::TRKISO});
+      //const bool passID = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::SIGMAIETAIETA,HEEPV70::E2X5OVER5X5,HEEPV70::HADEM,HEEPV70::ETA,HEEPV70::DETAINSEED,HEEPV70::DPHIIN,HEEPV70::TRKISO,HEEPV70::EMHADD1ISO});
       if(passID) {	
 	const pat::Electron Electrons = *ele;
 	std::pair<T*,int> res = doLepton(event, Electrons);
 	if (res.first == 0)
 	  continue;
 	res.first->addUserInt("cutFor", res.second);
-//	cout << res.first->userFloat("HLT_TriggerMatchPt") << std::endl;
 //	cout << res.first->userFloat("L1_TriggerMatchPt") << std::endl;
 	new_leptons->push_back(*res.first);
 	delete res.first;

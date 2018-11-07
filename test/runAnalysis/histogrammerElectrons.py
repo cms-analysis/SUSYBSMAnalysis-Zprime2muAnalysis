@@ -84,7 +84,8 @@ for cut_name, Selection in cuts.iteritems():
 		delattr(getattr(process,name + 'Histos'),'hardInteraction')	
         	path_list.append(trig * alldil * dil * histos)
 	else:
-		alldil.tight_cut = cms.string("")	
+		alldil.loose_cut_ele = cms.string('et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566)')	
+		alldil.tight_cut_ele = cms.string("")	
 		alldil.ele_match_l1 = cms.bool(False)	
         	path_list.append(alldil * dil * histos)
 	
@@ -114,7 +115,8 @@ process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler_miniAOD',
 				   #TriggerResults_src = cms.InputTag('TriggerResults', '', 'PAT'),	#mc
 				   TriggerResults_src = cms.InputTag('TriggerResults', '', 'RECO'),	#data
 				   genEventInfo = cms.untracked.InputTag('generator'),
-				   metFilter = cms.VInputTag( cms.InputTag("Flag_HBHENoiseFilter"), cms.InputTag("Flag_HBHENoiseIsoFilter"), cms.InputTag("Flag_EcalDeadCellTriggerPrimitiveFilter"), cms.InputTag("Flag_eeBadScFilter"), cms.InputTag("Flag_globalTightHalo2016Filter"))
+				   metFilter = cms.VInputTag( cms.InputTag("Flag_HBHENoiseFilter"), cms.InputTag("Flag_HBHENoiseIsoFilter"), cms.InputTag("Flag_EcalDeadCellTriggerPrimitiveFilter"), cms.InputTag("Flag_eeBadScFilter"), cms.InputTag("Flag_globalTightHalo2016Filter")),
+				   doElectrons = cms.bool(True),
 				   )
 
 

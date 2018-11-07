@@ -44,7 +44,7 @@ struct Zprime2muPairSelector {
     // turn off cuts, so an electron passes if cutFor is 0. Muons must
     // pass the loose cuts, while at least one muon must pass the
     // tight selection.
-
+     
     const bool e1 = typeid(c1) == typeid(pat::Electron);
     const bool e2 = typeid(c2) == typeid(pat::Electron);
     if (e1 && e2){

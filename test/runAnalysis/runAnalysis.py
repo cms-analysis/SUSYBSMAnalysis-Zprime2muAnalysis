@@ -89,7 +89,7 @@ config.Data.outLFNDirBase = '/store/user/jschulte'
 #config.Data.ignoreLocality = True 
 #config.Site.whitelist = ["T2_IT_Bari"]
 config.Site.storageSite = 'T2_US_Purdue'
-config.JobType.maxMemoryMB  = 8000
+#config.JobType.maxMemoryMB  = 8000
 %s
 '''
 	data_config='''
@@ -102,7 +102,7 @@ config.Data.lumiMask = '%s'
 	mc_config='''
 config.Data.splitting = 'EventAwareLumiBased'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob  = 400000
+config.Data.unitsPerJob  = 20000
 '''
 	if lumi_mask =="":
 		result = crab_cfg%(name,dataset,name,mc_config)

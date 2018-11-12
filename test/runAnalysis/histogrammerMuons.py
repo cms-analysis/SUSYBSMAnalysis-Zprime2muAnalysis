@@ -177,34 +177,33 @@ for cut_name, Selection in cuts.iteritems():
     setattr(process, pathname, path)
 
 
+if addNTuples:
 
+	process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler_miniAOD',
+					   dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
+						met_src = cms.InputTag("slimmedMETs"),
+						jet_src = cms.InputTag("slimmedJets"),
+					   beamspot_src = cms.InputTag('offlineBeamSpot'),
+					   vertices_src = cms.InputTag('offlineSlimmedPrimaryVertices'),
+	# 								TriggerResults_src = cms.InputTag('TriggerResults', '', 'PAT'),	#mc
+								TriggerResults_src = cms.InputTag('TriggerResults', '', 'RECO'),	#data
+					   genEventInfo = cms.untracked.InputTag('generator'),
+					   metFilter = cms.VInputTag( cms.InputTag("Flag_HBHENoiseFilter"), cms.InputTag("Flag_HBHENoiseIsoFilter"), cms.InputTag("Flag_EcalDeadCellTriggerPrimitiveFilter"), cms.InputTag("Flag_eeBadScFilter"), cms.InputTag("Flag_globalTightHalo2016Filter")),
+					   doElectrons = cms.bool(False),
+					   )
 
-process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler_miniAOD',
-				   dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
-					met_src = cms.InputTag("slimmedMETs"),
-					jet_src = cms.InputTag("slimmedJets"),
-				   beamspot_src = cms.InputTag('offlineBeamSpot'),
-				   vertices_src = cms.InputTag('offlineSlimmedPrimaryVertices'),
-# 								TriggerResults_src = cms.InputTag('TriggerResults', '', 'PAT'),	#mc
-							TriggerResults_src = cms.InputTag('TriggerResults', '', 'RECO'),	#data
-				   genEventInfo = cms.untracked.InputTag('generator'),
-				   metFilter = cms.VInputTag( cms.InputTag("Flag_HBHENoiseFilter"), cms.InputTag("Flag_HBHENoiseIsoFilter"), cms.InputTag("Flag_EcalDeadCellTriggerPrimitiveFilter"), cms.InputTag("Flag_eeBadScFilter"), cms.InputTag("Flag_globalTightHalo2016Filter")),
-				   doElectrons = cms.bool(False),
-				   )
+	if isMC:
+		process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
+		obj = process.prunedMCLeptons
+		obj.src = cms.InputTag('prunedGenParticles')
 
-if isMC:
-	process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
-	obj = process.prunedMCLeptons
-	obj.src = cms.InputTag('prunedGenParticles')
-
-	from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction
-	process.SimpleNtupler.hardInteraction = hardInteraction
-	if hasattr(process, 'pathSimple'):
-		process.pathSimple *=obj * process.SimpleNtupler 
-else:
-	if hasattr(process, 'pathSimple'):
-		process.pathSimple *= process.SimpleNtupler 
+		from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction
+		process.SimpleNtupler.hardInteraction = hardInteraction
+		if hasattr(process, 'pathSimple'):
+			process.pathSimple *=obj * process.SimpleNtupler 
+	else:
+		if hasattr(process, 'pathSimple'):
+			process.pathSimple *= process.SimpleNtupler 
 if isMC:
 	switch_reco_process_name(process, "PAT") # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
     #switch_hlt_process_name(process, hlt_process_name) # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
-print process.dumpPython()

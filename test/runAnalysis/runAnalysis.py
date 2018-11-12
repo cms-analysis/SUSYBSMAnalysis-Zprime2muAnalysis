@@ -2,7 +2,7 @@ import argparse, subprocess, os
 
 
 
-def getFilterSnippet(name):
+def getFilterSnippet(name,doApply=False):
 	print name
 	ttbarFilter = '''
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
@@ -35,10 +35,10 @@ for path_name, path in process.paths.iteritems():
 
 	if "dyInclusive" in name:
 		return dyFilter
-#	elif "ttbar_lep50to500" in name:
-#		return ttbarFilter
-#	elif "WWinclusive" in name:
-#		return wwFilter
+	elif "ttbar_lep50to500" in name and doApply:
+		return ttbarFilter
+	elif "WWinclusive" in name and doApply:
+		return wwFilter
 	else:
 		return ""
 
@@ -102,7 +102,7 @@ config.Data.lumiMask = '%s'
 	mc_config='''
 config.Data.splitting = 'EventAwareLumiBased'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob  = 20000
+config.Data.unitsPerJob  = 100000
 '''
 	if lumi_mask =="":
 		result = crab_cfg%(name,dataset,name,mc_config)
@@ -130,7 +130,12 @@ def main():
 	parser.add_argument( "--ci2017", action="store_true", dest="ci2017", default=False,help="run CI MC for 2017")
 	parser.add_argument( "--2016", action="store_true", dest="do2016", default=False,help="run for 2016")
 	parser.add_argument( "--2018", action="store_true", dest="do2018", default=False,help="run for 2018")
+	parser.add_argument( "--addNTuples", action="store_true", dest="addNTuples", default=False,help="add nTuples to histogrammer workflow")
 	args = parser.parse_args()
+
+	if args.resolution and args.addNTuples:
+		print "warning, addNTuplets does nothing for resolution workflow"
+
 	isMC = "True"
 	GT = "94X_mc2017_realistic_v14"
 	if args.data:
@@ -139,6 +144,12 @@ def main():
 	arguments = {}
 	arguments["GT"] = GT
 	arguments["isMC"] = isMC
+	arguments["addNTuples"] = args.addNTuples
+	arguments["year"] = 2017
+	if args.do2016:
+		arguments["year"] = 2016
+	if args.do2018:
+		arguments["year"] = 2018
 	cmssw_cfg = open('setup.py').read()%arguments
 	prefix = "muons_"	
 	if not args.resolution:
@@ -151,7 +162,12 @@ def main():
 	else:
 		prefix = "resolution_"
 		cmssw_cfg += open('resolution.py').read()
-	
+	applyAllGenFilters = False
+	if args.do2016:
+		prefix = prefix + "_2016"
+		applyAllGenFilters = True
+	if args.do2018:
+		prefix = prefix + "_2018"	
 	open('cmssw_cfg.py', 'wt').write(cmssw_cfg)
 
 	if not args.write:
@@ -205,7 +221,7 @@ def main():
 				cmssw_tmp = cmssw_cfg
 			 	crab_cfg = getCRABCfg(prefix+dataset_name,dataset,lumi_mask)
 		                open('crabConfig.py', 'wt').write(crab_cfg)
-				cmssw_tmp+=getFilterSnippet(dataset_name)
+				cmssw_tmp+=getFilterSnippet(dataset_name,applyAllGenFilters)
 				if "dy" in dataset_name:
 					if "HistosFromPAT.usekFactor = False" in cmssw_tmp:
 						cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.usekFactor = False','HistosFromPAT.usekFactor = True')

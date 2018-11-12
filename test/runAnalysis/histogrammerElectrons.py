@@ -8,6 +8,7 @@ HistosFromPAT.usekFactor = False #### Set TRUE to use K Factor on DY. If used, t
 # sets below, we don't need to define a whole new module, since they
 # just change one or two cuts -- see below.
 import SUSYBSMAnalysis.Zprime2muAnalysis.ElectronSelection_cff as ElectronSelection
+import SUSYBSMAnalysis.Zprime2muAnalysis.ElectronSelection2016_cff as ElectronSelection2016
 
 
 
@@ -24,7 +25,10 @@ cuts = {
 	'ElectronSelection'  : ElectronSelection,
 	}
 	
-
+if year == 2016:
+	cuts = {
+	"ElectronSelection" : ElectronSelection2016,
+	}
 # Loop over all the cut sets defined and make the lepton, allDilepton
 # (combinatorics only), and dilepton (apply cuts) modules for them.
 for cut_name, Selection in cuts.iteritems():
@@ -105,39 +109,39 @@ for cut_name, Selection in cuts.iteritems():
     setattr(process, pathname, path)
 
 
-  
-process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler_miniAOD',
-				   dimu_src = cms.InputTag('ElectronSelectionElectronsAllSigns'),
-				   met_src = cms.InputTag("slimmedMETs"),
-				   jet_src = cms.InputTag("slimmedJets"),
-				   beamspot_src = cms.InputTag('offlineBeamSpot'),
-				   vertices_src = cms.InputTag('offlineSlimmedPrimaryVertices'),
-				   #TriggerResults_src = cms.InputTag('TriggerResults', '', 'PAT'),	#mc
-				   TriggerResults_src = cms.InputTag('TriggerResults', '', 'RECO'),	#data
-				   genEventInfo = cms.untracked.InputTag('generator'),
-				   metFilter = cms.VInputTag( cms.InputTag("Flag_HBHENoiseFilter"), cms.InputTag("Flag_HBHENoiseIsoFilter"), cms.InputTag("Flag_EcalDeadCellTriggerPrimitiveFilter"), cms.InputTag("Flag_eeBadScFilter"), cms.InputTag("Flag_globalTightHalo2016Filter")),
-				   doElectrons = cms.bool(True),
-				   )
+if addNTuples:
+	  
+	process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler_miniAOD',
+					   dimu_src = cms.InputTag('ElectronSelectionElectronsAllSigns'),
+					   met_src = cms.InputTag("slimmedMETs"),
+					   jet_src = cms.InputTag("slimmedJets"),
+					   beamspot_src = cms.InputTag('offlineBeamSpot'),
+					   vertices_src = cms.InputTag('offlineSlimmedPrimaryVertices'),
+					   #TriggerResults_src = cms.InputTag('TriggerResults', '', 'PAT'),	#mc
+					   TriggerResults_src = cms.InputTag('TriggerResults', '', 'RECO'),	#data
+					   genEventInfo = cms.untracked.InputTag('generator'),
+					   metFilter = cms.VInputTag( cms.InputTag("Flag_HBHENoiseFilter"), cms.InputTag("Flag_HBHENoiseIsoFilter"), cms.InputTag("Flag_EcalDeadCellTriggerPrimitiveFilter"), cms.InputTag("Flag_eeBadScFilter"), cms.InputTag("Flag_globalTightHalo2016Filter")),
+					   doElectrons = cms.bool(True),
+					   )
 
 
-if isMC:
-        #process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
-        #obj = process.prunedMCLeptons
-        #obj.src = cms.InputTag('prunedGenParticles')
- 
-	from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction_MiniAOD as hardInteraction
-	hardInteraction.doingElectrons = True
- 	process.SimpleNtupler.hardInteraction = hardInteraction
-	if hasattr(process, 'pathElectronSelection'):
-	    	#process.pathElectronSelection *=obj * process.SimpleNtupler 
-	    	process.pathElectronSelection *= process.SimpleNtupler 
+	if isMC:
+		#process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
+		#obj = process.prunedMCLeptons
+		#obj.src = cms.InputTag('prunedGenParticles')
+	 
+		from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction_MiniAOD as hardInteraction
+		hardInteraction.doingElectrons = True
+		process.SimpleNtupler.hardInteraction = hardInteraction
+		if hasattr(process, 'pathElectronSelection'):
+			#process.pathElectronSelection *=obj * process.SimpleNtupler 
+			process.pathElectronSelection *= process.SimpleNtupler 
 
-else:
-	if hasattr(process, 'pathElectronSelection'):
-    		process.pathElectronSelection *= process.SimpleNtupler 
+	else:
+		if hasattr(process, 'pathElectronSelection'):
+			process.pathElectronSelection *= process.SimpleNtupler 
 
 
 if isMC:
 	switch_reco_process_name(process, "PAT") # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
     #switch_hlt_process_name(process, hlt_process_name) # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
-print process.dumpPython()

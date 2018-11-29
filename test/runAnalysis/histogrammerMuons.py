@@ -80,6 +80,9 @@ for cut_name, Selection in cuts.iteritems():
         muon_cuts = Selection.loose_cut
 
     leptons = process.leptonsMini.clone(muon_cuts = muon_cuts)
+    if year == 2016 and isMC:
+	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
+
     if len(trigger_filters)>0 and (cut_name=='Our2017' or cut_name=='Simple'):
     	leptons.trigger_filters = trigger_filters
 	leptons.trigger_path_names = trigger_path_names

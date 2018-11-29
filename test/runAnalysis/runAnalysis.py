@@ -2,7 +2,7 @@ import argparse, subprocess, os
 
 
 
-def getFilterSnippet(name,doApply=False):
+def getFilterSnippet(name,args,doApply=False,year=2017):
 	print name
 	ttbarFilter = '''
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
@@ -32,13 +32,55 @@ process.DYGenMassFilter = cms.EDFilter('TauTauSelection',
 				       )
 for path_name, path in process.paths.iteritems():
 	getattr(process,path_name).insert(0,process.DYGenMassFilter)'''
-
+	CIFilter300 = '''
+process.DYGenMassFilter = cms.EDFilter('QScaleSelectror',
+				       src = cms.InputTag('generator'),
+				       min_mass = cms.double(300),
+				       max_mass = cms.double(800),
+				       )
+for path_name, path in process.paths.iteritems():
+	getattr(process,path_name).insert(0,process.DYGenMassFilter)'''
+	CIFilter800 = '''
+process.DYGenMassFilter = cms.EDFilter('QScaleSelectror',
+				       src = cms.InputTag('generator'),
+				       min_mass = cms.double(800),
+				       max_mass = cms.double(1300),
+				       )
+for path_name, path in process.paths.iteritems():
+	getattr(process,path_name).insert(0,process.DYGenMassFilter)'''
+	CIFilter1300 = '''
+process.DYGenMassFilter = cms.EDFilter('QScaleSelectror',
+				       src = cms.InputTag('generator'),
+				       min_mass = cms.double(1300),
+				       max_mass = cms.double(2000),
+				       )
+for path_name, path in process.paths.iteritems():
+	getattr(process,path_name).insert(0,process.DYGenMassFilter)'''
+	ZPtFilter = '''    
+process.DYGenMassFilter = cms.EDFilter('DyPt_ZSkim',
+                                       src = cms.InputTag('prunedGenParticles'),
+                                       min_mass = cms.double(0),
+                                       max_mass = cms.double(50), 
+                                       )
+'''
 	if "dyInclusive" in name:
-		return dyFilter
+		if args.resolution:
+			return ZPtFilter 
+		else:
+			return dyFilter
 	elif "ttbar_lep50to500" in name and doApply:
 		return ttbarFilter
 	elif "WWinclusive" in name and doApply:
 		return wwFilter
+	elif "CI" in name and year==2016:
+		if "M300" in name:
+			return CIFilter300
+		elif "M800" in name:
+			return CIFilter800
+		elif "M1300" in name and "ConLL" in name:
+			return CIFilter1300
+		else:
+			return ""
 	else:
 		return ""
 
@@ -48,7 +90,7 @@ def getCRABCfgWeirdSubmission(name,dataset,fileList):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crab'
+config.General.workArea = 'crab2'
 config.General.transferLogs = False
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'
@@ -78,7 +120,7 @@ def getCRABCfg(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crab'
+config.General.workArea = 'crab2'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -86,10 +128,11 @@ config.Data.inputDBS = 'global'
 config.Data.publication = False
 config.Data.outputDatasetTag = 'dileptonAna_%s'
 config.Data.outLFNDirBase = '/store/user/jschulte'
-#config.Data.ignoreLocality = True 
+#config.Data.ignoreLocality = True
+#config.General.instance = 'preprod' 
 #config.Site.whitelist = ["T2_IT_Bari"]
 config.Site.storageSite = 'T2_US_Purdue'
-#config.JobType.maxMemoryMB  = 8000
+config.JobType.maxMemoryMB  = 8000
 %s
 '''
 	data_config='''
@@ -127,6 +170,7 @@ def main():
 	parser.add_argument("-r", "--resolution", action="store_true", dest="resolution", default=False,help="run jobs for resolution studies")
 	parser.add_argument("-w", "--write", action="store_true", dest="write", default=False,help="write config but not execute")
 	parser.add_argument("-e", "--electrons", action="store_true", dest="electrons", default=False,help="run electrons")
+	parser.add_argument( "--ci2016", action="store_true", dest="ci2016", default=False,help="run CI MC for 2016")
 	parser.add_argument( "--ci2017", action="store_true", dest="ci2017", default=False,help="run CI MC for 2017")
 	parser.add_argument( "--2016", action="store_true", dest="do2016", default=False,help="run for 2016")
 	parser.add_argument( "--2018", action="store_true", dest="do2018", default=False,help="run for 2018")
@@ -135,6 +179,10 @@ def main():
 
 	if args.resolution and args.addNTuples:
 		print "warning, addNTuplets does nothing for resolution workflow"
+
+
+	if args.ci2016:
+		args.do2016 = True
 
 	isMC = "True"
 	GT = "94X_mc2017_realistic_v14"
@@ -164,12 +212,12 @@ def main():
 		cmssw_cfg += open('resolution.py').read()
 	applyAllGenFilters = False
 	if args.do2016:
-		prefix = prefix + "_2016"
+		prefix = prefix + "2016_"
 		applyAllGenFilters = True
 	if args.do2018:
-		prefix = prefix + "_2018"	
+		prefix = prefix + "2018_"	
 	open('cmssw_cfg.py', 'wt').write(cmssw_cfg)
-
+	print prefix
 	if not args.write:
 		if args.local:
 			subprocess.call(['cmsRun','cmssw_cfg.py'])	
@@ -184,6 +232,12 @@ def main():
 			elif args.electrons and not args.data:
 				if args.ci2017:	
 					from samples import ci_electrons_2017 as samples
+				if args.ci2016:	
+					from samples import ci_electrons_2016 as samples
+				elif args.do2016:
+					from samples import backgrounds_electrons_2016 as samples			
+				elif args.do2018:
+					from samples import backgrounds_electrons_2018 as samples
 				else:
 					from samples import backgrounds_electrons_2017 as samples
 			elif args.data:
@@ -196,8 +250,19 @@ def main():
 			else:
 				if args.ci2017:
 					from samples import ci_muons_2017 as samples 
+				elif args.ci2016:
+					from samples import ci_muons_2016 as samples 
 				elif args.resolution:
-					from samples import resolution_2017 as samples 
+					if args.do2016:
+						from samples import resolution_2016 as samples 
+					elif args.do2018:
+						from samples import resolution_2018 as samples 
+					else:	
+						from samples import resolution_2017 as samples 
+				elif args.do2016:	
+					from samples import backgrounds_muons_2016 as samples			
+				elif args.do2018:	
+					from samples import backgrounds_muons_2018 as samples
 				else:	
 					from samples import backgrounds_muons_2017 as samples 
 			lumi_mask = ""
@@ -206,14 +271,14 @@ def main():
 				if args.electrons: 
 					lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt"
 					if args.do2018:
-						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-324420_13TeV_PromptReco_Collisions18_JSON.txt"
+						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt"
 					if args.do2016:	
 						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
 
 				else:
 					lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_MuonPhys.txt"
 					if args.do2018:
-						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-324420_13TeV_PromptReco_Collisions18_JSON_MuonPhys.txt"
+						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON_MuonPhys.txt"
 					if args.do2016:
 						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON_MuonPhys.txt"
 				GT = "94X_dataRun2_ReReco_EOY17_v6"
@@ -221,7 +286,7 @@ def main():
 				cmssw_tmp = cmssw_cfg
 			 	crab_cfg = getCRABCfg(prefix+dataset_name,dataset,lumi_mask)
 		                open('crabConfig.py', 'wt').write(crab_cfg)
-				cmssw_tmp+=getFilterSnippet(dataset_name,applyAllGenFilters)
+				cmssw_tmp+=getFilterSnippet(dataset_name,args,applyAllGenFilters)
 				if "dy" in dataset_name:
 					if "HistosFromPAT.usekFactor = False" in cmssw_tmp:
 						cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.usekFactor = False','HistosFromPAT.usekFactor = True')
@@ -233,7 +298,7 @@ def main():
             			if args.submit:
                 			os.system('crab submit -c crabConfig.py')
 
-			if args.resolution and not args.data:
+			if args.resolution and not args.data and not args.do2016 and not args.do2018:
 				print "submitting also weird samples"
 				from samples import resolution_extra as samples2
 			

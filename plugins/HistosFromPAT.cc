@@ -613,8 +613,9 @@ double Zprime2muHistosFromPAT::getSmearedMass(const pat::CompositeCandidate& dil
 
 	
     TRandom3 *rand = new TRandom3(0);
-    return mass*rand->Gaus(1,extraSmear);
-
+    double result = mass*rand->Gaus(1,extraSmear);
+    delete rand;
+    return result;
 
 }
 

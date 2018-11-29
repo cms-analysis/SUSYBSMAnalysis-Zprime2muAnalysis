@@ -46,7 +46,8 @@ for cut_name, Selection in cuts.iteritems():
 	    
     leptons_name = cut_name + 'Leptons'
     leptons = process.leptonsMini.clone()
-
+    if year == 2016 and isMC:
+	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
 
     setattr(process, leptons_name, leptons)
     path_list.append(leptons)

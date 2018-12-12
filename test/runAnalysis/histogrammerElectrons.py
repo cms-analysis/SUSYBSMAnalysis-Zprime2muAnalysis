@@ -71,7 +71,15 @@ for cut_name, Selection in cuts.iteritems():
         # tight_cut are the ones actually used to drop leptons, and
         # not the ones passed into the LeptonProducer to set cutFor above.
         # Histos now just needs to know which leptons and dileptons to use.
-	histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True))
+	if isMC:
+		if year == 2018:
+			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2017","data_2018"))
+		elif year == 2017:	
+			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2017","data_2017"))
+		else:	
+			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2016","data_2016"))
+	else:	
+		histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True))
 	#if not isMC:
 	#	delattr(histos,'hardInteraction')
 

@@ -47,10 +47,10 @@ dils = [('MuonsPlusMuonsMinus',          '%(leptons_name)s:muons@+ %(leptons_nam
 # that doesn't have a trigger match, need to re-add a hltHighLevel
 # filter somewhere below.
 cuts = {
-	'Our2016'  : OurSelection2016,
+#	'Our2016'  : OurSelection2016,
 	'Our2017'  : OurSelection2017,
 	#'OurNoIso' : OurSelectionDec2012,
-	'Simple'   : OurSelection2017, # The selection cuts in the module listed here are ignored below.
+#	'Simple'   : OurSelection2017, # The selection cuts in the module listed here are ignored below.
 	#'OurMuPrescaledNew'  : OurSelectionNew,
 	#'OurMuPrescaled2012' : OurSelectionDec2012
 	}

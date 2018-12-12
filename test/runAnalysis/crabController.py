@@ -7,11 +7,19 @@ from CRABClient.UserUtilities import setConsoleLogLevel
 from CRABClient.ClientUtilities import LOGLEVEL_MUTE
 setConsoleLogLevel(LOGLEVEL_MUTE)
 
+import argparse
+
+
 def chunks(l, n):
     """Yield successive n-sized chunks from l."""
     for i in range(0, len(l), n):
         yield l[i:i + n]
 
+parser = argparse.ArgumentParser(description='tool to run dilepton analysis')
+	
+parser.add_argument("--forceMerge", action="store_true", dest="forceMerge", default=False, help="force merge even if not all files present")
+
+args = parser.parse_args()
 
 # With this function you can change the console log level at any time.
 for d in glob("crab2/*/"):
@@ -93,12 +101,17 @@ for d in glob("crab2/*/"):
 							jobIds += ",%d"%i
 					resGet = crabCommand("getoutput","--jobids", jobIds,dir=d)
 		print "got %d new output files, merging if necessary"%len(resGet['success'])
-		if len(resGet['failed']) == 0 and not len(resGet['success']) == 0:
-			haddCommand = ['hadd',"-f",d.split('/')[-2].split('crab_')[-1]+".root"]
+		if (args.forceMerge or len(finishedJobs) == nJobs ) and (len(resGet['failed']) == 0 and not len(resGet['success']) == 0):
+			if nJobs == 1:
+				cpCommand = ["cp", d+'/results/zp2mu_histos_1.root', d.split('/')[-2].split('crab_')[-1]+".root"]
+				print "only one output file, copying instead of merging"
+				subprocess.call(cpCommand)
+			else:
+				haddCommand = ['hadd',"-f",d.split('/')[-2].split('crab_')[-1]+".root"]
 		
-			for i in finishedJobs:
-				haddCommand.append(d+'/results/zp2mu_histos_%s.root'%i)		
-			subprocess.call(haddCommand)
+				for i in finishedJobs:
+					haddCommand.append(d+'/results/zp2mu_histos_%s.root'%i)		
+				subprocess.call(haddCommand)
 		else:
 			print "some downloads failed or no new files found - not merging the output"
 	    if len(failedJobs) != 0:

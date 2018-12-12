@@ -31,6 +31,7 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PATUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TrackUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PUUtilities.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"///
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymFunctions.h"
@@ -63,6 +64,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   edm::InputTag pu_src;
   const bool use_bs_and_pv;
 
+
   struct debug_tree_t {
     unsigned run;
     unsigned lumi;
@@ -90,8 +92,15 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
     double _eleMCFac_bb;
     double _eleMCFac_be;
     double _scaleUncert = 0.01;
+    double _scaleUncertEleBB = 0.02;
+    double _scaleUncertEleBE = 0.01;
+    int _nTrueInt = 0;
+    double _puWeight = 1.0;
+    double _puWeight_scaleUp = 1.0;
+    double _puWeight_scaleDown = 1.0;
   TH1F* NBeamSpot;
   TH1F* NVertices;
+  TH1F* NVerticesUnweighted;
   TH1F* NTrueInteractions;
   TH1F* NLeptons;
   TH2F* LeptonSigns;
@@ -156,6 +165,75 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TH1F* DielectronMass_be_CSNeg;
   TH1F* DielectronMass_ee_CSNeg;
 
+  TH1F* DielectronMassScaleUp;
+  TH1F* DielectronMassScaleUp_bbbe;
+  TH1F* DielectronMassScaleUp_bb;
+  TH1F* DielectronMassScaleUp_be;
+  TH1F* DielectronMassScaleUp_ee;
+  TH1F* DielectronMassScaleUp_CSPos;
+  TH1F* DielectronMassScaleUp_bb_CSPos;
+  TH1F* DielectronMassScaleUp_bbbe_CSPos;
+  TH1F* DielectronMassScaleUp_be_CSPos;
+  TH1F* DielectronMassScaleUp_ee_CSPos;
+  TH1F* DielectronMassScaleUp_CSNeg;
+  TH1F* DielectronMassScaleUp_bb_CSNeg;
+  TH1F* DielectronMassScaleUp_bbbe_CSNeg;
+  TH1F* DielectronMassScaleUp_be_CSNeg;
+  TH1F* DielectronMassScaleUp_ee_CSNeg;
+
+  TH1F* DielectronMassScaleDown;
+  TH1F* DielectronMassScaleDown_bbbe;
+  TH1F* DielectronMassScaleDown_bb;
+  TH1F* DielectronMassScaleDown_be;
+  TH1F* DielectronMassScaleDown_ee;
+  TH1F* DielectronMassScaleDown_CSPos;
+  TH1F* DielectronMassScaleDown_bb_CSPos;
+  TH1F* DielectronMassScaleDown_bbbe_CSPos;
+  TH1F* DielectronMassScaleDown_be_CSPos;
+  TH1F* DielectronMassScaleDown_ee_CSPos;
+  TH1F* DielectronMassScaleDown_CSNeg;
+  TH1F* DielectronMassScaleDown_bb_CSNeg;
+  TH1F* DielectronMassScaleDown_bbbe_CSNeg;
+  TH1F* DielectronMassScaleDown_be_CSNeg;
+  TH1F* DielectronMassScaleDown_ee_CSNeg;
+
+  TH1F* DielectronMassPUScaleUp;
+  TH1F* DielectronMassPUScaleUp_bbbe;
+  TH1F* DielectronMassPUScaleUp_bb;
+  TH1F* DielectronMassPUScaleUp_be;
+  TH1F* DielectronMassPUScaleUp_ee;
+  TH1F* DielectronMassPUScaleUp_CSPos;
+  TH1F* DielectronMassPUScaleUp_bb_CSPos;
+  TH1F* DielectronMassPUScaleUp_bbbe_CSPos;
+  TH1F* DielectronMassPUScaleUp_be_CSPos;
+  TH1F* DielectronMassPUScaleUp_ee_CSPos;
+  TH1F* DielectronMassPUScaleUp_CSNeg;
+  TH1F* DielectronMassPUScaleUp_bb_CSNeg;
+  TH1F* DielectronMassPUScaleUp_bbbe_CSNeg;
+  TH1F* DielectronMassPUScaleUp_be_CSNeg;
+  TH1F* DielectronMassPUScaleUp_ee_CSNeg;
+
+  TH1F* DielectronMassPUScaleDown;
+  TH1F* DielectronMassPUScaleDown_bbbe;
+  TH1F* DielectronMassPUScaleDown_bb;
+  TH1F* DielectronMassPUScaleDown_be;
+  TH1F* DielectronMassPUScaleDown_ee;
+  TH1F* DielectronMassPUScaleDown_CSPos;
+  TH1F* DielectronMassPUScaleDown_bb_CSPos;
+  TH1F* DielectronMassPUScaleDown_bbbe_CSPos;
+  TH1F* DielectronMassPUScaleDown_be_CSPos;
+  TH1F* DielectronMassPUScaleDown_ee_CSPos;
+  TH1F* DielectronMassPUScaleDown_CSNeg;
+  TH1F* DielectronMassPUScaleDown_bb_CSNeg;
+  TH1F* DielectronMassPUScaleDown_bbbe_CSNeg;
+  TH1F* DielectronMassPUScaleDown_be_CSNeg;
+  TH1F* DielectronMassPUScaleDown_ee_CSNeg;
+
+  TH2F* DielectronMassVsCS;
+  TH2F* DielectronMassVsCS_bbbe;
+  TH2F* DielectronMassVsCS_bb;
+  TH2F* DielectronMassVsCS_be;
+  TH2F* DielectronMassVsCS_ee;
 
 
   TH1F* DileptonMass;
@@ -215,6 +293,12 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TH1F* DimuonMassVertexConstrainedScaleDown_bb_CSNeg;
   TH1F* DimuonMassVertexConstrainedScaleDown_be_CSNeg;
 
+  TH2F* DimuonMassVertexConstrainedVsCS;
+  TH2F* DimuonMassVertexConstrainedVsCS_bb;
+  TH2F* DimuonMassVertexConstrainedVsCS_be;
+
+
+
   TH1F* DimuonMassVertexConstrainedWeight;
   TH1F* DimuonMassVtxConstrainedLog;
   TH1F* DimuonMassVtxConstrainedLog_bb;
@@ -233,7 +317,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
     
 	const bool fill_gen_info;
 	HardInteraction* hardInteraction;
-	
+  	std::vector<std::string> pu_info;  
 };
 
 Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
@@ -257,7 +341,8 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
     _kFactor_bb(1.),
     _kFactor_be(1.),
     fill_gen_info(cfg.existsAs<edm::ParameterSet>("hardInteraction")),
-    hardInteraction(fill_gen_info ? new HardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction")) : 0)
+    hardInteraction(fill_gen_info ? new HardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction")) : 0),
+    pu_info(cfg.getParameter<std::vector<std::string>>("pu_weights"))
 {
 
   consumes<reco::CandidateView>(lepton_src);
@@ -287,6 +372,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   // Whole-event things.
   NBeamSpot = fs->make<TH1F>("NBeamSpot", titlePrefix + "# beamspots/event",  2, 0,  2);
   NVertices = fs->make<TH1F>("NVertices", titlePrefix + "# vertices/event",  120, 0, 120);
+  NVerticesUnweighted = fs->make<TH1F>("NVerticesUnweighted", titlePrefix + "# vertices/event",  120, 0, 120);
   NTrueInteractions = fs->make<TH1F>("NTrueInteractiosn", titlePrefix + "# true interactions/event",  120, 0, 120);
 
   // Basic kinematics.
@@ -390,6 +476,75 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   DielectronMass_be_CSNeg         = fs->make<TH1F>("DielectronMass_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
   DielectronMass_ee_CSNeg         = fs->make<TH1F>("DielectronMass_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
 
+  DielectronMassScaleUp            = fs->make<TH1F>("DielectronMassScaleUp",            titlePrefix + "dil. mass", 20000, 0, 20000);
+  DielectronMassScaleUp_bbbe       = fs->make<TH1F>("DielectronMassScaleUp_bbbe",       titlePrefix + "dil. mass", 20000, 0, 20000);
+  DielectronMassScaleUp_bb         = fs->make<TH1F>("DielectronMassScaleUp_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
+  DielectronMassScaleUp_be         = fs->make<TH1F>("DielectronMassScaleUp_be",            titlePrefix + "dil. mass barrel-endcaps", 20000, 0, 20000);
+  DielectronMassScaleUp_ee         = fs->make<TH1F>("DielectronMassScaleUp_ee",            titlePrefix + "dil. mass endcaps-endcaps", 20000, 0, 20000);
+  DielectronMassScaleUp_CSPos            = fs->make<TH1F>("DielectronMassScaleUp_CSPos",            titlePrefix + "dil. mass for positive cos theta star", 20000, 0, 20000);
+  DielectronMassScaleUp_bb_CSPos         = fs->make<TH1F>("DielectronMassScaleUp_bb_CSPos",            titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+  DielectronMassScaleUp_bbbe_CSPos       = fs->make<TH1F>("DielectronMassScaleUp_bbbe_CSPos",          titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+  DielectronMassScaleUp_be_CSPos         = fs->make<TH1F>("DielectronMassScaleUp_be_CSPos",            titlePrefix + "dil. mass barrel-endcaps for positive cos theta star", 20000, 0, 20000);
+  DielectronMassScaleUp_ee_CSPos         = fs->make<TH1F>("DielectronMassScaleUp_ee_CSPos",            titlePrefix + "dil. mass endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
+  DielectronMassScaleUp_CSNeg            = fs->make<TH1F>("DielectronMassScaleUp_CSNeg",            titlePrefix + "dil. mass for negative cos theta star", 20000, 0, 20000);
+  DielectronMassScaleUp_bb_CSNeg         = fs->make<TH1F>("DielectronMassScaleUp_bb_CSNeg",            titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+  DielectronMassScaleUp_bbbe_CSNeg       = fs->make<TH1F>("DielectronMassScaleUp_bbbe_CSNeg",          titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+  DielectronMassScaleUp_be_CSNeg         = fs->make<TH1F>("DielectronMassScaleUp_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
+  DielectronMassScaleUp_ee_CSNeg         = fs->make<TH1F>("DielectronMassScaleUp_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
+
+  DielectronMassScaleDown            = fs->make<TH1F>("DielectronMassScaleDown",            titlePrefix + "dil. mass", 20000, 0, 20000);
+  DielectronMassScaleDown_bbbe       = fs->make<TH1F>("DielectronMassScaleDown_bbbe",       titlePrefix + "dil. mass", 20000, 0, 20000);
+  DielectronMassScaleDown_bb         = fs->make<TH1F>("DielectronMassScaleDown_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
+  DielectronMassScaleDown_be         = fs->make<TH1F>("DielectronMassScaleDown_be",            titlePrefix + "dil. mass barrel-endcaps", 20000, 0, 20000);
+  DielectronMassScaleDown_ee         = fs->make<TH1F>("DielectronMassScaleDown_ee",            titlePrefix + "dil. mass endcaps-endcaps", 20000, 0, 20000);
+  DielectronMassScaleDown_CSPos            = fs->make<TH1F>("DielectronMassScaleDown_CSPos",            titlePrefix + "dil. mass for positive cos theta star", 20000, 0, 20000);
+  DielectronMassScaleDown_bb_CSPos         = fs->make<TH1F>("DielectronMassScaleDown_bb_CSPos",            titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+  DielectronMassScaleDown_bbbe_CSPos       = fs->make<TH1F>("DielectronMassScaleDown_bbbe_CSPos",          titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+  DielectronMassScaleDown_be_CSPos         = fs->make<TH1F>("DielectronMassScaleDown_be_CSPos",            titlePrefix + "dil. mass barrel-endcaps for positive cos theta star", 20000, 0, 20000);
+  DielectronMassScaleDown_ee_CSPos         = fs->make<TH1F>("DielectronMassScaleDown_ee_CSPos",            titlePrefix + "dil. mass endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
+  DielectronMassScaleDown_CSNeg            = fs->make<TH1F>("DielectronMassScaleDown_CSNeg",            titlePrefix + "dil. mass for negative cos theta star", 20000, 0, 20000);
+  DielectronMassScaleDown_bb_CSNeg         = fs->make<TH1F>("DielectronMassScaleDown_bb_CSNeg",            titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+  DielectronMassScaleDown_bbbe_CSNeg       = fs->make<TH1F>("DielectronMassScaleDown_bbbe_CSNeg",          titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+  DielectronMassScaleDown_be_CSNeg         = fs->make<TH1F>("DielectronMassScaleDown_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
+  DielectronMassScaleDown_ee_CSNeg         = fs->make<TH1F>("DielectronMassScaleDown_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
+
+  DielectronMassPUScaleUp            = fs->make<TH1F>("DielectronMassPUScaleUp",            titlePrefix + "dil. mass", 20000, 0, 20000);
+  DielectronMassPUScaleUp_bbbe       = fs->make<TH1F>("DielectronMassPUScaleUp_bbbe",       titlePrefix + "dil. mass", 20000, 0, 20000);
+  DielectronMassPUScaleUp_bb         = fs->make<TH1F>("DielectronMassPUScaleUp_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
+  DielectronMassPUScaleUp_be         = fs->make<TH1F>("DielectronMassPUScaleUp_be",            titlePrefix + "dil. mass barrel-endcaps", 20000, 0, 20000);
+  DielectronMassPUScaleUp_ee         = fs->make<TH1F>("DielectronMassPUScaleUp_ee",            titlePrefix + "dil. mass endcaps-endcaps", 20000, 0, 20000);
+  DielectronMassPUScaleUp_CSPos            = fs->make<TH1F>("DielectronMassPUScaleUp_CSPos",            titlePrefix + "dil. mass for positive cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleUp_bb_CSPos         = fs->make<TH1F>("DielectronMassPUScaleUp_bb_CSPos",            titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleUp_bbbe_CSPos       = fs->make<TH1F>("DielectronMassPUScaleUp_bbbe_CSPos",          titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleUp_be_CSPos         = fs->make<TH1F>("DielectronMassPUScaleUp_be_CSPos",            titlePrefix + "dil. mass barrel-endcaps for positive cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleUp_ee_CSPos         = fs->make<TH1F>("DielectronMassPUScaleUp_ee_CSPos",            titlePrefix + "dil. mass endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleUp_CSNeg            = fs->make<TH1F>("DielectronMassPUScaleUp_CSNeg",            titlePrefix + "dil. mass for negative cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleUp_bb_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleUp_bb_CSNeg",            titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleUp_bbbe_CSNeg       = fs->make<TH1F>("DielectronMassPUScaleUp_bbbe_CSNeg",          titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleUp_be_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleUp_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleUp_ee_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleUp_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
+
+  DielectronMassPUScaleDown            = fs->make<TH1F>("DielectronMassPUScaleDown",            titlePrefix + "dil. mass", 20000, 0, 20000);
+  DielectronMassPUScaleDown_bbbe       = fs->make<TH1F>("DielectronMassPUScaleDown_bbbe",       titlePrefix + "dil. mass", 20000, 0, 20000);
+  DielectronMassPUScaleDown_bb         = fs->make<TH1F>("DielectronMassPUScaleDown_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
+  DielectronMassPUScaleDown_be         = fs->make<TH1F>("DielectronMassPUScaleDown_be",            titlePrefix + "dil. mass barrel-endcaps", 20000, 0, 20000);
+  DielectronMassPUScaleDown_ee         = fs->make<TH1F>("DielectronMassPUScaleDown_ee",            titlePrefix + "dil. mass endcaps-endcaps", 20000, 0, 20000);
+  DielectronMassPUScaleDown_CSPos            = fs->make<TH1F>("DielectronMassPUScaleDown_CSPos",            titlePrefix + "dil. mass for positive cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleDown_bb_CSPos         = fs->make<TH1F>("DielectronMassPUScaleDown_bb_CSPos",            titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleDown_bbbe_CSPos       = fs->make<TH1F>("DielectronMassPUScaleDown_bbbe_CSPos",          titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleDown_be_CSPos         = fs->make<TH1F>("DielectronMassPUScaleDown_be_CSPos",            titlePrefix + "dil. mass barrel-endcaps for positive cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleDown_ee_CSPos         = fs->make<TH1F>("DielectronMassPUScaleDown_ee_CSPos",            titlePrefix + "dil. mass endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleDown_CSNeg            = fs->make<TH1F>("DielectronMassPUScaleDown_CSNeg",            titlePrefix + "dil. mass for negative cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleDown_bb_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleDown_bb_CSNeg",            titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleDown_bbbe_CSNeg       = fs->make<TH1F>("DielectronMassPUScaleDown_bbbe_CSNeg",          titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleDown_be_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleDown_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
+  DielectronMassPUScaleDown_ee_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleDown_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
+
+  DielectronMassVsCS            = fs->make<TH2F>("DielectronMassVsCS",            titlePrefix + "dil. mass", 200, 0, 20000,100,-1,1);
+  DielectronMassVsCS_bbbe       = fs->make<TH2F>("DielectronMassVsCS_bbbe",       titlePrefix + "dil. mass", 200, 0, 20000,100,-1,1);
+  DielectronMassVsCS_bb         = fs->make<TH2F>("DielectronMassVsCS_bb",            titlePrefix + "dil. mass barrel-barrel", 200, 0, 20000,100,-1,1);
+  DielectronMassVsCS_be         = fs->make<TH2F>("DielectronMassVsCS_be",            titlePrefix + "dil. mass barrel-endcaps", 200, 0, 20000,100,-1,1);
+  DielectronMassVsCS_ee         = fs->make<TH2F>("DielectronMassVsCS_ee",            titlePrefix + "dil. mass endcaps-endcaps", 200, 0, 20000,100,-1,1);
 
 
 
@@ -464,6 +619,12 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   // Mass plot in bins of log(mass)
   // This binning selection gives binwidths of ~30 GeV at 3 TeV
   // It can be rebinned and clipped as necessary after the fact
+
+  DimuonMassVertexConstrainedVsCS = fs->make<TH2F>("DimuonMassVertexConstrainedVsCS", titlePrefix + "dimu. vertex-constrained mass", 200, 0, 20000,100,-1,1);
+  DimuonMassVertexConstrainedVsCS_bb = fs->make<TH2F>("DimuonMassVertexConstrainedVsCS_bb", titlePrefix + "dimu. vertex-constrained mass barrel-barrel", 200, 0, 20000,100,-1,1);
+  DimuonMassVertexConstrainedVsCS_be = fs->make<TH2F>("DimuonMassVertexConstrainedVsCS_be", titlePrefix + "dimu. vertex-constrained mass barrel-endcaps and endcaps-endcaps", 200, 0, 20000,100,-1,1);
+
+
   const int    NMBINS = 500;
   const double MMIN = 50., MMAX = 10000.;
   double logMbins[NMBINS+1];
@@ -623,6 +784,27 @@ double Zprime2muHistosFromPAT::getSmearedMass(const pat::CompositeCandidate& dil
 void Zprime2muHistosFromPAT::getBSandPV(const edm::Event& event) {
   // We store these as bare pointers. Should find better way, but
   // don't want to pass them around everywhere...
+  edm::Handle<std::vector< PileupSummaryInfo > >  PupInfo;
+  event.getByLabel(edm::InputTag("slimmedAddPileupInfo"), PupInfo);
+  std::vector<PileupSummaryInfo>::const_iterator PVI;
+
+  if(!(event.isRealData())){
+  	for(PVI = PupInfo->begin(); PVI != PupInfo->end(); ++PVI) {
+	
+		int BX = PVI->getBunchCrossing();
+	
+		if(BX == 0) {
+			_nTrueInt = PVI->getTrueNumInteractions(); 
+	  		NTrueInteractions->Fill(_nTrueInt);
+	  		continue;
+		}
+      	}
+  }
+  if (size(pu_info)> 0){
+	_puWeight = PU::MC_pileup_weight(_nTrueInt,pu_info[0],pu_info[1]);	
+	_puWeight_scaleUp = PU::MC_pileup_weight(_nTrueInt,pu_info[0],pu_info[1]+TString("_scaleUp"));	
+	_puWeight_scaleDown = PU::MC_pileup_weight(_nTrueInt,pu_info[0],pu_info[1]+TString("_scaleDown"));
+  }
   edm::Handle<reco::BeamSpot> hbs;
   event.getByLabel(beamspot_src, hbs);
   beamspot = hbs.isValid() ? &*hbs : 0; // nice and fragile
@@ -639,80 +821,66 @@ void Zprime2muHistosFromPAT::getBSandPV(const edm::Event& event) {
       ++vertex_count;
     }
   }
-  NVertices->Fill(vertex_count, _madgraphWeight*_kFactor);
+  NVertices->Fill(vertex_count, _madgraphWeight*_kFactor*_puWeight);
+  NVerticesUnweighted->Fill(vertex_count, _madgraphWeight*_kFactor);
 
-  edm::Handle<std::vector< PileupSummaryInfo > >  PupInfo;
-  event.getByLabel(edm::InputTag("slimmedAddPileupInfo"), PupInfo);
-  std::vector<PileupSummaryInfo>::const_iterator PVI;
-
-  if(!(event.isRealData())){
-  	for(PVI = PupInfo->begin(); PVI != PupInfo->end(); ++PVI) {
-	
-		int BX = PVI->getBunchCrossing();
-	
-		if(BX == 0) { 
-	  		NTrueInteractions->Fill(PVI->getTrueNumInteractions());
-	  		continue;
-		}
-      	}
-  }
 
 }
 
 void Zprime2muHistosFromPAT::fillBasicLeptonHistos(const reco::CandidateBaseRef& lep) {
-  LeptonEta->Fill(lep->eta(), _madgraphWeight*_kFactor);
-  LeptonRap->Fill(lep->rapidity(), _madgraphWeight*_kFactor);
-  LeptonPhi->Fill(lep->phi(), _madgraphWeight*_kFactor);
+  LeptonEta->Fill(lep->eta(), _madgraphWeight*_kFactor*_puWeight);
+  LeptonRap->Fill(lep->rapidity(), _madgraphWeight*_kFactor*_puWeight);
+  LeptonPhi->Fill(lep->phi(), _madgraphWeight*_kFactor*_puWeight);
 
-  LeptonPt->Fill(lep->pt(), _madgraphWeight*_kFactor);
-  LeptonPz->Fill(fabs(lep->pz()), _madgraphWeight*_kFactor);
-  LeptonP ->Fill(lep->p(), _madgraphWeight*_kFactor);
+  LeptonPt->Fill(lep->pt(), _madgraphWeight*_kFactor*_puWeight);
+  LeptonPz->Fill(fabs(lep->pz()), _madgraphWeight*_kFactor*_puWeight);
+  LeptonP ->Fill(lep->p(), _madgraphWeight*_kFactor*_puWeight);
 
-  LeptonPtVsEta->Fill(lep->eta(), lep->pt(), _madgraphWeight*_kFactor);
-  LeptonPVsEta ->Fill(lep->eta(), lep->p(), _madgraphWeight*_kFactor);
+  LeptonPtVsEta->Fill(lep->eta(), lep->pt(), _madgraphWeight*_kFactor*_puWeight);
+  LeptonPVsEta ->Fill(lep->eta(), lep->p(), _madgraphWeight*_kFactor*_puWeight);
 }
 
 void Zprime2muHistosFromPAT::fillOfflineMuonHistos(const pat::Muon* mu) {
   const reco::MuonIsolation& iso = mu->isolationR03();
-  IsoSumPt   ->Fill(iso.sumPt, _madgraphWeight*_kFactor);
-  RelIsoSumPt->Fill(iso.sumPt / mu->innerTrack()->pt(), _madgraphWeight*_kFactor);
-  IsoEcal    ->Fill(iso.emEt, _madgraphWeight*_kFactor);
-  IsoHcal    ->Fill(iso.hadEt + iso.hoEt, _madgraphWeight*_kFactor);
-  CombIso    ->Fill( iso.sumPt + iso.emEt + iso.hadEt + iso.hoEt, _madgraphWeight*_kFactor);
-  RelCombIso ->Fill((iso.sumPt + iso.emEt + iso.hadEt + iso.hoEt) / mu->innerTrack()->pt(), _madgraphWeight*_kFactor);
-  IsoNTracks ->Fill(iso.nTracks, _madgraphWeight*_kFactor);
-  IsoNJets   ->Fill(iso.nJets, _madgraphWeight*_kFactor);
+  IsoSumPt   ->Fill(iso.sumPt, _madgraphWeight*_kFactor*_puWeight);
+  RelIsoSumPt->Fill(iso.sumPt / mu->innerTrack()->pt(), _madgraphWeight*_kFactor*_puWeight);
+  IsoEcal    ->Fill(iso.emEt, _madgraphWeight*_kFactor*_puWeight);
+  IsoHcal    ->Fill(iso.hadEt + iso.hoEt, _madgraphWeight*_kFactor*_puWeight);
+  CombIso    ->Fill( iso.sumPt + iso.emEt + iso.hadEt + iso.hoEt, _madgraphWeight*_kFactor*_puWeight);
+  RelCombIso ->Fill((iso.sumPt + iso.emEt + iso.hadEt + iso.hoEt) / mu->innerTrack()->pt(), _madgraphWeight*_kFactor*_puWeight);
+  IsoNTracks ->Fill(iso.nTracks, _madgraphWeight*_kFactor*_puWeight);
+  IsoNJets   ->Fill(iso.nJets, _madgraphWeight*_kFactor*_puWeight);
 
-  CombIsoNoECAL   ->Fill( iso.sumPt + iso.hadEt + iso.hoEt, _madgraphWeight*_kFactor);
-  RelCombIsoNoECAL->Fill((iso.sumPt + iso.hadEt + iso.hoEt) / mu->innerTrack()->pt(), _madgraphWeight*_kFactor);
+  CombIsoNoECAL   ->Fill( iso.sumPt + iso.hadEt + iso.hoEt, _madgraphWeight*_kFactor*_puWeight);
+  RelCombIsoNoECAL->Fill((iso.sumPt + iso.hadEt + iso.hoEt) / mu->innerTrack()->pt(), _madgraphWeight*_kFactor*_puWeight);
 
   const reco::TrackRef track = patmuon::getPickedTrack(*mu);
   if (track.isAvailable()) {
-    Chi2dof->Fill(track->normalizedChi2(), _madgraphWeight*_kFactor);
+    Chi2dof->Fill(track->normalizedChi2(), _madgraphWeight*_kFactor*_puWeight);
 
     if (beamspot != 0) {
-      TrackD0BS->Fill(fabs(track->dxy(beamspot->position())), _madgraphWeight*_kFactor);
-      TrackDZBS->Fill(fabs(track->dz (beamspot->position())), _madgraphWeight*_kFactor);
+      TrackD0BS->Fill(fabs(track->dxy(beamspot->position())), _madgraphWeight*_kFactor*_puWeight);
+      TrackDZBS->Fill(fabs(track->dz (beamspot->position())), _madgraphWeight*_kFactor*_puWeight);
     }
 
     if (vertex != 0) {
-      TrackD0PV->Fill(fabs(track->dxy(vertex->position())), _madgraphWeight*_kFactor);
-      TrackDZPV->Fill(fabs(track->dz (vertex->position())), _madgraphWeight*_kFactor);
+      TrackD0PV->Fill(fabs(track->dxy(vertex->position())), _madgraphWeight*_kFactor*_puWeight);
+      TrackDZPV->Fill(fabs(track->dz (vertex->position())), _madgraphWeight*_kFactor*_puWeight);
     }
 
     const reco::HitPattern& hp = track->hitPattern();
-    NPxHits->Fill(hp.numberOfValidPixelHits(), _madgraphWeight*_kFactor);
-    NStHits->Fill(hp.numberOfValidStripHits(), _madgraphWeight*_kFactor);
-    NTkHits->Fill(hp.numberOfValidTrackerHits(), _madgraphWeight*_kFactor);
-    NMuHits->Fill(hp.numberOfValidMuonHits(), _madgraphWeight*_kFactor);
+    NPxHits->Fill(hp.numberOfValidPixelHits(), _madgraphWeight*_kFactor*_puWeight);
+    NStHits->Fill(hp.numberOfValidStripHits(), _madgraphWeight*_kFactor*_puWeight);
+    NTkHits->Fill(hp.numberOfValidTrackerHits(), _madgraphWeight*_kFactor*_puWeight);
+    NMuHits->Fill(hp.numberOfValidMuonHits(), _madgraphWeight*_kFactor*_puWeight);
 
-    NHits->Fill(hp.numberOfValidHits(), _madgraphWeight*_kFactor);
-    NInvalidHits->Fill(hp.numberOfAllHits(reco::HitPattern::TRACK_HITS) - hp.numberOfValidHits(), _madgraphWeight*_kFactor);
+    NHits->Fill(hp.numberOfValidHits(), _madgraphWeight*_kFactor*_puWeight);
+    NInvalidHits->Fill(hp.numberOfAllHits(reco::HitPattern::TRACK_HITS) - hp.numberOfValidHits(), _madgraphWeight*_kFactor*_puWeight);
     //NInvalidHits->Fill(hp.numberOfAllHits() - hp.numberOfValidHits());
     
-    NPxLayers->Fill(hp.pixelLayersWithMeasurement(), _madgraphWeight*_kFactor);
-    NStLayers->Fill(hp.stripLayersWithMeasurement(), _madgraphWeight*_kFactor);
-    NTkLayers->Fill(hp.trackerLayersWithMeasurement(), _madgraphWeight*_kFactor);
+    NPxLayers->Fill(hp.pixelLayersWithMeasurement(), _madgraphWeight*_kFactor*_puWeight);
+    NStLayers->Fill(hp.stripLayersWithMeasurement(), _madgraphWeight*_kFactor*_puWeight);
+    NTkLayers->Fill(hp.trackerLayersWithMeasurement(), _madgraphWeight*_kFactor*_puWeight);
   }
 }
 
@@ -758,8 +926,8 @@ void Zprime2muHistosFromPAT::fillLeptonHistosFromDileptons(const pat::CompositeC
     }
 
   // These become sanity checks.
-  NLeptons->Fill(nleptons, _madgraphWeight*_kFactor);
-  LeptonSigns->Fill(nleptons, total_q, _madgraphWeight*_kFactor);
+  NLeptons->Fill(nleptons, _madgraphWeight*_kFactor*_puWeight);
+  LeptonSigns->Fill(nleptons, total_q, _madgraphWeight*_kFactor*_puWeight);
 }
 
 void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& dil, const edm::Event& event, double gM) {
@@ -774,27 +942,27 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
     dbg_t.id = dil.daughter(0)->pdgId() + dil.daughter(1)->pdgId();
     dbg_tree->Fill();
   }
-  DileptonEta->Fill(dil.eta(), _madgraphWeight*_kFactor);
-  DileptonRap->Fill(dil.rapidity(), _madgraphWeight*_kFactor);
-  DileptonPhi->Fill(dil.phi(), _madgraphWeight*_kFactor);
+  DileptonEta->Fill(dil.eta(), _madgraphWeight*_kFactor*_puWeight);
+  DileptonRap->Fill(dil.rapidity(), _madgraphWeight*_kFactor*_puWeight);
+  DileptonPhi->Fill(dil.phi(), _madgraphWeight*_kFactor*_puWeight);
 
-  DileptonPt->Fill(dil.pt(), _madgraphWeight*_kFactor);
-  DileptonPz->Fill(fabs(dil.pz()), _madgraphWeight*_kFactor);
-  DileptonP ->Fill(dil.p(), _madgraphWeight*_kFactor);
+  DileptonPt->Fill(dil.pt(), _madgraphWeight*_kFactor*_puWeight);
+  DileptonPz->Fill(fabs(dil.pz()), _madgraphWeight*_kFactor*_puWeight);
+  DileptonP ->Fill(dil.p(), _madgraphWeight*_kFactor*_puWeight);
 
-  DileptonPtVsEta->Fill(dil.eta(), dil.pt(), _madgraphWeight*_kFactor);
-  DileptonPVsEta ->Fill(dil.eta(), dil.p(), _madgraphWeight*_kFactor);
+  DileptonPtVsEta->Fill(dil.eta(), dil.pt(), _madgraphWeight*_kFactor*_puWeight);
+  DileptonPVsEta ->Fill(dil.eta(), dil.p(), _madgraphWeight*_kFactor*_puWeight);
 
-  DileptonMass->Fill(dil.mass(), _madgraphWeight*_kFactor);
-  DileptonMassWeight->Fill(dil.mass(),_prescaleWeight*_madgraphWeight*_kFactor);//?
-  DileptonWithPhotonsMass->Fill(resonanceP4(dil).mass(), _madgraphWeight*_kFactor);
+  DileptonMass->Fill(dil.mass(), _madgraphWeight*_kFactor*_puWeight);
+  DileptonMassWeight->Fill(dil.mass(),_prescaleWeight*_madgraphWeight*_kFactor*_puWeight);//?
+  DileptonWithPhotonsMass->Fill(resonanceP4(dil).mass(), _madgraphWeight*_kFactor*_puWeight);
 
   const reco::CandidateBaseRef& lep0 = dileptonDaughter(dil, 0);
   const reco::CandidateBaseRef& lep1 = dileptonDaughter(dil, 1);
   double cos_cs = -999.;
   if (lep0.isNonnull() && lep1.isNonnull()) {
-    DileptonDeltaPt->Fill(fabs(lep0->pt()) - fabs(lep1->pt()), _madgraphWeight*_kFactor);
-    DileptonDeltaP ->Fill(fabs(lep0->p())  - fabs(lep1->p()), _madgraphWeight*_kFactor);
+    DileptonDeltaPt->Fill(fabs(lep0->pt()) - fabs(lep1->pt()), _madgraphWeight*_kFactor*_puWeight);
+    DileptonDeltaP ->Fill(fabs(lep0->p())  - fabs(lep1->p()), _madgraphWeight*_kFactor*_puWeight);
      if (lep0->charge()*lep1->charge() == -1){
 	     if (lep0->charge() == -1) cos_cs = calcCosThetaCSAnal(lep0->pz(), lep0->energy(), lep1->pz(), lep1->energy(), dil.pt(), dil.pz(), dil.mass());
 	     else cos_cs = calcCosThetaCSAnal(lep1->pz(), lep1->energy(), lep0->pz(), lep0->energy(), dil.pt(), dil.pz(), dil.mass());
@@ -806,17 +974,17 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
      CosThetaStarDilepton->Fill(cos_cs);
      //ChiDilepton->Fill((1+fabs(cos_cs))/(1-fabs(cos_cs)));
      ChiDilepton->Fill(exp(std::abs(lep0->p4().Rapidity()-lep1->p4().Rapidity())));
-     if (cos_cs >= 0) DileptonMass_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor);
-     else DileptonMass_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor);
+     if (cos_cs >= 0) DileptonMass_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_puWeight);
+     else DileptonMass_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_puWeight);
     const pat::Muon* mu0 = toConcretePtr<pat::Muon>(lep0);
     const pat::Muon* mu1 = toConcretePtr<pat::Muon>(lep1);
     if (mu0 && mu1) {
       const reco::Track* tk0 = patmuon::getPickedTrack(*mu0).get();
       const reco::Track* tk1 = patmuon::getPickedTrack(*mu1).get();
       if (tk0 && tk1) {
-	DimuonMuonPtErrors->Fill(ptError(tk0), ptError(tk1), _madgraphWeight*_kFactor);
-	DimuonMuonPtErrOverPt->Fill(ptError(tk0)/tk0->pt(), _madgraphWeight*_kFactor);
-	DimuonMuonPtErrOverPt->Fill(ptError(tk1)/tk1->pt(), _madgraphWeight*_kFactor);
+	DimuonMuonPtErrors->Fill(ptError(tk0), ptError(tk1), _madgraphWeight*_kFactor*_puWeight);
+	DimuonMuonPtErrOverPt->Fill(ptError(tk0)/tk0->pt(), _madgraphWeight*_kFactor*_puWeight);
+	DimuonMuonPtErrOverPt->Fill(ptError(tk1)/tk1->pt(), _madgraphWeight*_kFactor*_puWeight);
 	float mass = -999.;
 	// Use mass calculated with the vertex constraint when available
 	if (dil.hasUserFloat("vertexM"))
@@ -826,12 +994,12 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 	  mass = dil.mass();
 	}
 	if (mass > 200.) {
-	  DimuonMuonPtErrOverPtM200->Fill(ptError(tk0)/tk0->pt(), _madgraphWeight*_kFactor);
-	  DimuonMuonPtErrOverPtM200->Fill(ptError(tk1)/tk1->pt(), _madgraphWeight*_kFactor);
+	  DimuonMuonPtErrOverPtM200->Fill(ptError(tk0)/tk0->pt(), _madgraphWeight*_kFactor*_puWeight);
+	  DimuonMuonPtErrOverPtM200->Fill(ptError(tk1)/tk1->pt(), _madgraphWeight*_kFactor*_puWeight);
 	}
 	if (mass > 500.) {
-	  DimuonMuonPtErrOverPtM500->Fill(ptError(tk0)/tk0->pt(), _madgraphWeight*_kFactor);
-	  DimuonMuonPtErrOverPtM500->Fill(ptError(tk1)/tk1->pt(), _madgraphWeight*_kFactor);
+	  DimuonMuonPtErrOverPtM500->Fill(ptError(tk0)/tk0->pt(), _madgraphWeight*_kFactor*_puWeight);
+	  DimuonMuonPtErrOverPtM500->Fill(ptError(tk1)/tk1->pt(), _madgraphWeight*_kFactor*_puWeight);
 	}
       }
     } 
@@ -850,44 +1018,139 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 		_eleMCFac_be = 0.969 * trigFac1 * trigFac2 * (L1TrigFac1 + L1TrigFac2 - L1TrigFac1*L1TrigFac2);
 
 	}
-	DielectronMass->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
-        if (cos_cs >= 0) DielectronMass_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
-        else DielectronMass_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
+ 	double massScaleUp = 1.;
+	double massScaleDown = 1.;
+	if (fabs(ele0->superCluster()->eta()) < 1.4442 && fabs(ele1->superCluster()->eta()) < 1.4442) {
+		massScaleUp = _scaleUncertEleBB;
+		massScaleDown = 1+(1-_scaleUncertEleBB);
+	}
+	else{
+		massScaleUp = _scaleUncertEleBE;
+		massScaleDown = 1+(1-_scaleUncertEleBE);
+	}
+	DielectronMass->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+	DielectronMassVsCS->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+	DielectronMassScaleUp->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+	DielectronMassScaleDown->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+	DielectronMassPUScaleUp->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+	DielectronMassPUScaleDown->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+        if (cos_cs >= 0){
+		 DielectronMass_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		 DielectronMassScaleUp_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		 DielectronMassScaleDown_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		 DielectronMassPUScaleUp_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+		 DielectronMassPUScaleDown_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+	}
+        else{
+		 DielectronMass_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		 DielectronMassScaleUp_CSNeg->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		 DielectronMassScaleDown_CSNeg->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		 DielectronMassPUScaleUp_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+		 DielectronMassPUScaleDown_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+	}
 
 	if (fabs(ele0->superCluster()->eta()) < 1.4442 && fabs(ele1->superCluster()->eta()) < 1.4442) {
-		DielectronMass_bb->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
-		DielectronMass_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
+		DielectronMass_bb->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		DielectronMassVsCS_bb->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		DielectronMassScaleUp_bb->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		DielectronMassScaleDown_bb->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		DielectronMassPUScaleUp_bb->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+		DielectronMassPUScaleDown_bb->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+		DielectronMass_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		DielectronMassVsCS_bbbe->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		DielectronMassScaleUp_bbbe->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		DielectronMassScaleDown_bbbe->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		DielectronMassPUScaleUp_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+		DielectronMassPUScaleDown_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
         	if (cos_cs >= 0){
-			 DielectronMass_bb_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
-			 DielectronMass_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
+			 DielectronMass_bb_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+			 DielectronMassScaleUp_bb_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+			 DielectronMassScaleDown_bb_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+			 DielectronMassPUScaleUp_bb_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+			 DielectronMassPUScaleDown_bb_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+
+			 DielectronMass_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+			 DielectronMassScaleUp_bbbe_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+			 DielectronMassScaleDown_bbbe_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+			 DielectronMassPUScaleDown_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+			 DielectronMassPUScaleUp_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
 		}
         	else {
-			DielectronMass_bb_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
-			DielectronMass_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb);
+			DielectronMass_bb_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+			DielectronMassScaleUp_bb_CSNeg->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+			DielectronMassScaleDown_bb_CSNeg->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+			DielectronMassPUScaleUp_bb_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+			DielectronMassPUScaleDown_bb_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+
+			DielectronMass_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+			DielectronMassScaleUp_bbbe_CSNeg->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+			DielectronMassScaleDown_bbbe_CSNeg->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+			DielectronMassPUScaleUp_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+			DielectronMassPUScaleDown_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
 		}
 
 	}
 	else if ((fabs(ele0->superCluster()->eta()) < 1.4442 && fabs(ele1->superCluster()->eta()) > 1.566) ||(fabs(ele0->superCluster()->eta()) > 1.566 && fabs(ele1->superCluster()->eta()) < 1.4442)) {
-		DielectronMass_be->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
-		DielectronMass_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
+		DielectronMass_be->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+		DielectronMassVsCS_be->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		DielectronMassScaleUp_be->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+		DielectronMassScaleDown_be->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+		DielectronMassPUScaleUp_be->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+		DielectronMassPUScaleDown_be->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
+
+		DielectronMass_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+		DielectronMassVsCS_bbbe->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		DielectronMassScaleUp_bbbe->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+		DielectronMassScaleDown_bbbe->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+		DielectronMassPUScaleUp_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+		DielectronMassPUScaleDown_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
         	if (cos_cs >= 0) {
-			DielectronMass_be_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
-			DielectronMass_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
+			DielectronMass_be_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			DielectronMassScaleUp_be_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			DielectronMassScaleDown_be_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			DielectronMassPUScaleUp_be_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+			DielectronMassPUScaleDown_be_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
+
+			DielectronMass_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			DielectronMassScaleUp_bbbe_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			DielectronMassScaleDown_bbbe_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			DielectronMassPUScaleUp_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+			DielectronMassPUScaleDown_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
 		}
         	else{
-			 DielectronMass_be_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
-			 DielectronMass_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
+			 DielectronMass_be_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			 DielectronMassScaleUp_be_CSNeg->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			 DielectronMassScaleDown_be_CSNeg->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			 DielectronMassPUScaleUp_be_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+			 DielectronMassPUScaleDown_be_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
+
+			 DielectronMass_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			 DielectronMassPUScaleUp_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+			 DielectronMassPUScaleDown_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
 		}
 
 	}
         else if (fabs(ele0->superCluster()->eta()) > 1.566 && fabs(ele1->superCluster()->eta()) > 1.566) {
-		DielectronMass_ee->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
+		DielectronMass_ee->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+		DielectronMassVsCS_ee->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+		DielectronMassScaleUp_ee->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+		DielectronMassScaleDown_ee->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+		DielectronMassPUScaleUp_ee->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+		DielectronMassPUScaleDown_ee->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
         	if (cos_cs >= 0) {
-			DielectronMass_ee_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
+			DielectronMass_ee_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			DielectronMassScaleUp_ee_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			DielectronMassScaleDown_ee_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			DielectronMassPUScaleUp_ee_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+			DielectronMassPUScaleDown_ee_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
 		}
         	else
 		{ 
-			 DielectronMass_ee_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be);
+			 DielectronMass_ee_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			 DielectronMassScaleUp_ee_CSNeg->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			 DielectronMassScaleDown_ee_CSNeg->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+			 DielectronMassPUScaleUp_ee_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+			 DielectronMassPUScaleDown_ee_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
 		}
 
 	}
@@ -896,54 +1159,56 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 
   }
 
-  DileptonDaughterIds->Fill(dil.daughter(0)->pdgId(), dil.daughter(1)->pdgId(), _madgraphWeight*_kFactor);
+  DileptonDaughterIds->Fill(dil.daughter(0)->pdgId(), dil.daughter(1)->pdgId(), _madgraphWeight*_kFactor*_puWeight);
 
-  DileptonDaughterDeltaR->Fill(reco::deltaR(*dil.daughter(0), *dil.daughter(1)), _madgraphWeight*_kFactor);
-  DileptonDaughterDeltaPhi->Fill(reco::deltaPhi(dil.daughter(0)->phi(), dil.daughter(1)->phi()), _madgraphWeight*_kFactor);
+  DileptonDaughterDeltaR->Fill(reco::deltaR(*dil.daughter(0), *dil.daughter(1)), _madgraphWeight*_kFactor*_puWeight);
+  DileptonDaughterDeltaPhi->Fill(reco::deltaPhi(dil.daughter(0)->phi(), dil.daughter(1)->phi()), _madgraphWeight*_kFactor*_puWeight);
 
   if (dil.hasUserFloat("vertexM") && dil.hasUserFloat("vertexMError")) {
     float vertex_mass = dil.userFloat("vertexM");
     float vertex_mass_err = dil.userFloat("vertexMError");
       //std::cout<<" filling mass "<<vertex_mass<<std::endl;
     float smearedMass = getSmearedMass(dil,gM);
-    DimuonMassVertexConstrained->Fill(vertex_mass, _madgraphWeight*_kFactor);
-    DimuonMassVertexConstrainedSmear->Fill(smearedMass, _madgraphWeight*_kFactor);
-    DimuonMassVertexConstrainedScaleUp->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor);
-    DimuonMassVertexConstrainedScaleDown->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor);
+    DimuonMassVertexConstrained->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
+    DimuonMassVertexConstrainedVsCS->Fill(vertex_mass,cos_cs, _madgraphWeight*_kFactor*_puWeight);
+    DimuonMassVertexConstrainedSmear->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
+    DimuonMassVertexConstrainedScaleUp->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
+    DimuonMassVertexConstrainedScaleDown->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
     if (cos_cs > -998.){
-     if (cos_cs >= 0) DimuonMassVertexConstrained_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor);
-     else DimuonMassVertexConstrained_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor);
+     if (cos_cs >= 0) DimuonMassVertexConstrained_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
+     else DimuonMassVertexConstrained_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
     }
-    DimuonMassVtxConstrainedLog->Fill(vertex_mass, _madgraphWeight*_kFactor);
-    DimuonMassConstrainedVsUn->Fill(dil.mass(), vertex_mass, _madgraphWeight*_kFactor);
-    DimuonMassVertexConstrainedError->Fill(vertex_mass, vertex_mass_err, _madgraphWeight*_kFactor);
-    DimuonMassVertexConstrainedWeight->Fill(vertex_mass,_prescaleWeight*_madgraphWeight*_kFactor);
-    DimuonMassVtxConstrainedLogWeight->Fill(vertex_mass,_prescaleWeight*_madgraphWeight*_kFactor);
+    DimuonMassVtxConstrainedLog->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
+    DimuonMassConstrainedVsUn->Fill(dil.mass(), vertex_mass, _madgraphWeight*_kFactor*_puWeight);
+    DimuonMassVertexConstrainedError->Fill(vertex_mass, vertex_mass_err, _madgraphWeight*_kFactor*_puWeight);
+    DimuonMassVertexConstrainedWeight->Fill(vertex_mass,_prescaleWeight*_madgraphWeight*_kFactor*_puWeight);
+    DimuonMassVtxConstrainedLogWeight->Fill(vertex_mass,_prescaleWeight*_madgraphWeight*_kFactor*_puWeight);
 
   
     // plot per categories
   if (dil.daughter(0)->eta()<=1.2 && dil.daughter(1)->eta()<=1.2 && dil.daughter(0)->eta()>=-1.2 && dil.daughter(1)->eta()>=-1.2){
-        DimuonMassVertexConstrained_bb->Fill(vertex_mass,_madgraphWeight*_kFactor_bb);
-        DimuonMassVtxConstrainedLog_bb->Fill(vertex_mass, _madgraphWeight*_kFactor_bb);
-        DimuonMassVertexConstrainedSmear_bb->Fill(smearedMass, _madgraphWeight*_kFactor);
-        DimuonMassVertexConstrainedScaleUp_bb->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor);
-        DimuonMassVertexConstrainedScaleDown_bb->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor);
-       DileptonMass_bb->Fill(dil.mass(), _madgraphWeight*_kFactor_bb);
+        DimuonMassVertexConstrained_bb->Fill(vertex_mass,_madgraphWeight*_kFactor_bb*_puWeight);
+        DimuonMassVertexConstrainedVsCS_bb->Fill(vertex_mass,cos_cs,_madgraphWeight*_kFactor_bb*_puWeight);
+        DimuonMassVtxConstrainedLog_bb->Fill(vertex_mass, _madgraphWeight*_kFactor_bb*_puWeight);
+        DimuonMassVertexConstrainedSmear_bb->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
+        DimuonMassVertexConstrainedScaleUp_bb->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
+        DimuonMassVertexConstrainedScaleDown_bb->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
+       DileptonMass_bb->Fill(dil.mass(), _madgraphWeight*_kFactor_bb*_puWeight);
         if (cos_cs > -998.){
     		if (cos_cs >= 0){
-			 DimuonMassVertexConstrained_bb_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor);
-			 DimuonMassVertexConstrainedSmear_bb_CSPos->Fill(smearedMass, _madgraphWeight*_kFactor);
-    			 DimuonMassVertexConstrainedScaleUp_bb_CSPos->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor);
-    			 DimuonMassVertexConstrainedScaleDown_bb_CSPos->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor);
+			 DimuonMassVertexConstrained_bb_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
+			 DimuonMassVertexConstrainedSmear_bb_CSPos->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
+    			 DimuonMassVertexConstrainedScaleUp_bb_CSPos->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
+    			 DimuonMassVertexConstrainedScaleDown_bb_CSPos->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
 		}
      		else{
-			 DimuonMassVertexConstrained_bb_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor);
-		         DimuonMassVertexConstrainedSmear_bb_CSNeg->Fill(smearedMass, _madgraphWeight*_kFactor);
-    			 DimuonMassVertexConstrainedScaleUp_bb_CSNeg->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor);
-    			 DimuonMassVertexConstrainedScaleDown_bb_CSNeg->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor);
+			 DimuonMassVertexConstrained_bb_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
+		         DimuonMassVertexConstrainedSmear_bb_CSNeg->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
+    			 DimuonMassVertexConstrainedScaleUp_bb_CSNeg->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
+    			 DimuonMassVertexConstrainedScaleDown_bb_CSNeg->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
 		}
-   		if (cos_cs >= 0) DileptonMass_bb_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor);
-     		else DileptonMass_bb_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor);
+   		if (cos_cs >= 0) DileptonMass_bb_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_puWeight);
+     		else DileptonMass_bb_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_puWeight);
    	 }
 
 
@@ -951,27 +1216,28 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 }
 
  if (dil.daughter(0)->eta()<-1.2 || dil.daughter(1)->eta()<-1.2 || dil.daughter(0)->eta()>1.2 || dil.daughter(1)->eta()>1.2){
-        DimuonMassVertexConstrained_be->Fill(vertex_mass,_madgraphWeight*_kFactor_be);
-        DimuonMassVtxConstrainedLog_be->Fill(vertex_mass, _madgraphWeight*_kFactor_be);
-        DimuonMassVertexConstrainedSmear_be->Fill(smearedMass, _madgraphWeight*_kFactor);
-        DimuonMassVertexConstrainedScaleUp_be->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor);
-        DimuonMassVertexConstrainedScaleDown_be->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor);
-       DileptonMass_be->Fill(dil.mass(), _madgraphWeight*_kFactor_be);
+        DimuonMassVertexConstrained_be->Fill(vertex_mass,_madgraphWeight*_kFactor_be*_puWeight);
+        DimuonMassVertexConstrainedVsCS_be->Fill(vertex_mass,cos_cs,_madgraphWeight*_kFactor_be*_puWeight);
+        DimuonMassVtxConstrainedLog_be->Fill(vertex_mass, _madgraphWeight*_kFactor_be*_puWeight);
+        DimuonMassVertexConstrainedSmear_be->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
+        DimuonMassVertexConstrainedScaleUp_be->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
+        DimuonMassVertexConstrainedScaleDown_be->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
+       DileptonMass_be->Fill(dil.mass(), _madgraphWeight*_kFactor_be*_puWeight);
         if (cos_cs > -998.){
    		if (cos_cs >= 0){
-			DimuonMassVertexConstrained_be_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor);
-		        DimuonMassVertexConstrainedSmear_be_CSPos->Fill(smearedMass, _madgraphWeight*_kFactor);
-                        DimuonMassVertexConstrainedScaleUp_be_CSPos->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor);
-   			DimuonMassVertexConstrainedScaleDown_be_CSPos->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor);
+			DimuonMassVertexConstrained_be_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
+		        DimuonMassVertexConstrainedSmear_be_CSPos->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
+                        DimuonMassVertexConstrainedScaleUp_be_CSPos->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
+   			DimuonMassVertexConstrainedScaleDown_be_CSPos->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
 		}
      		else{
-			 DimuonMassVertexConstrained_be_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor);
-		         DimuonMassVertexConstrainedSmear_be_CSNeg->Fill(smearedMass, _madgraphWeight*_kFactor);
-        		 DimuonMassVertexConstrainedScaleUp_be_CSNeg->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor);
-    			 DimuonMassVertexConstrainedScaleDown_be_CSNeg->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor);
+			 DimuonMassVertexConstrained_be_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
+		         DimuonMassVertexConstrainedSmear_be_CSNeg->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
+        		 DimuonMassVertexConstrainedScaleUp_be_CSNeg->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
+    			 DimuonMassVertexConstrainedScaleDown_be_CSNeg->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
 		}
-    		if (cos_cs >= 0) DileptonMass_be_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor);
-     		else DileptonMass_be_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor);
+    		if (cos_cs >= 0) DileptonMass_be_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_puWeight);
+     		else DileptonMass_be_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_puWeight);
    	 }
 
 

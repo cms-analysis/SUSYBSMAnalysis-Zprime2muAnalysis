@@ -208,6 +208,13 @@ data_electrons_2017 = [
 	('DoubleEG2017E-31Mar2018-v1', '/DoubleEG/Run2017E-31Mar2018-v1/MINIAOD'),
 	('DoubleEG2017F-31Mar2018-v1', '/DoubleEG/Run2017F-31Mar2018-v1/MINIAOD'),
 ]
+data_electrons_2018 = [
+ 	('DoubleEGRun2018A-17Sep2018-v2', '/EGamma/Run2018A-22Jun2018-v1/MINIAOD'),
+ 	('DoubleEGRun2018B-17Sep2018-v1', '/EGamma/Run2018B-17Sep2018-v1/MINIAOD'),
+ 	('DoubleEGRun2018C-17Sep2018-v1', '/EGamma/Run2018C-17Sep2018-v1/MINIAOD'),
+ 	('DoubleEGRun2018D-PromptReco-v2', '/EGamma/Run2018D-PromptReco-v2/MINIAOD'),
+]
+
 resolution_2016 = [
 
  	('dy50to120', '/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),

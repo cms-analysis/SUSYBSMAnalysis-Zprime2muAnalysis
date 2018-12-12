@@ -90,7 +90,7 @@ def getCRABCfgWeirdSubmission(name,dataset,fileList):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crab2'
+config.General.workArea = 'crab'
 config.General.transferLogs = False
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'
@@ -138,14 +138,14 @@ config.JobType.maxMemoryMB  = 8000
 	data_config='''
 config.Data.splitting = 'LumiBased'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob = 200
+config.Data.unitsPerJob = 400
 config.Data.lumiMask = '%s'
 '''
 
 	mc_config='''
 config.Data.splitting = 'EventAwareLumiBased'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob  = 100000
+config.Data.unitsPerJob  = 500000
 '''
 	if lumi_mask =="":
 		result = crab_cfg%(name,dataset,name,mc_config)
@@ -154,6 +154,49 @@ config.Data.unitsPerJob  = 100000
 		result = crab_cfg%(name,dataset,name,data_cfg)
 	
 	return result
+
+
+def getCRABCfgAAA(name,dataset,lumi_mask=""):
+
+	crab_cfg = '''
+from CRABClient.UserUtilities import config
+config = config()
+config.General.requestName = 'dileptonAna_%s'
+config.General.workArea = 'crab2'
+config.JobType.pluginName = 'Analysis'
+config.JobType.psetName = 'cmssw_cfg.py'   
+config.Data.inputDataset =  '%s'
+config.Data.inputDBS = 'global'
+config.Data.publication = False
+config.Data.outputDatasetTag = 'dileptonAna_%s'
+config.Data.outLFNDirBase = '/store/user/jschulte'
+config.Data.ignoreLocality = True
+#config.General.instance = 'preprod' 
+config.Site.whitelist = ["T2_US_*"]
+config.Site.storageSite = 'T2_US_Purdue'
+config.JobType.maxMemoryMB  = 8000
+%s
+'''
+	data_config='''
+config.Data.splitting = 'LumiBased'
+config.Data.totalUnits = -1
+config.Data.unitsPerJob = 400
+config.Data.lumiMask = '%s'
+'''
+
+	mc_config='''
+config.Data.splitting = 'EventAwareLumiBased'
+config.Data.totalUnits = -1
+config.Data.unitsPerJob  = 500000
+'''
+	if lumi_mask =="":
+		result = crab_cfg%(name,dataset,name,mc_config)
+	else:
+		data_cfg = data_config%lumi_mask	
+		result = crab_cfg%(name,dataset,name,data_cfg)
+	
+	return result
+
 
 
 
@@ -232,7 +275,7 @@ def main():
 			elif args.electrons and not args.data:
 				if args.ci2017:	
 					from samples import ci_electrons_2017 as samples
-				if args.ci2016:	
+				elif args.ci2016:	
 					from samples import ci_electrons_2016 as samples
 				elif args.do2016:
 					from samples import backgrounds_electrons_2016 as samples			
@@ -284,7 +327,19 @@ def main():
 				GT = "94X_dataRun2_ReReco_EOY17_v6"
 			for dataset_name,  dataset in samples:
 				cmssw_tmp = cmssw_cfg
-			 	crab_cfg = getCRABCfg(prefix+dataset_name,dataset,lumi_mask)
+				os.system('dasgoclient --query="site dataset=%s" > sites.txt'%dataset)
+
+				with open("sites.txt") as f:
+    					content = f.readlines()
+				content = [x.strip() for x in content] 
+				nT2 = 0
+				for site in content:
+					if "T2" in site:
+						nT2 += 1				
+				if nT2 <= 1:
+			 		crab_cfg = getCRABCfgAAA(prefix+dataset_name,dataset,lumi_mask)
+			 	else:	
+					crab_cfg = getCRABCfg(prefix+dataset_name,dataset,lumi_mask)
 		                open('crabConfig.py', 'wt').write(crab_cfg)
 				cmssw_tmp+=getFilterSnippet(dataset_name,args,applyAllGenFilters)
 				if "dy" in dataset_name:
@@ -293,6 +348,9 @@ def main():
 				else:
 					if "HistosFromPAT.usekFactor = True" in cmssw_tmp:
 						cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.usekFactor = True','HistosFromPAT.usekFactor = False')
+				if not args.do2016 and not args.do2018 and not args.ci2017 and not args.data and not args.resolution and args.electrons:
+					print "trying"
+					cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
 				#print getFilterSnippet(dataset_name)
 				open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
             			if args.submit:

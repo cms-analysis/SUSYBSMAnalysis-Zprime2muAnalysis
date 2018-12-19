@@ -1021,11 +1021,11 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
  	double massScaleUp = 1.;
 	double massScaleDown = 1.;
 	if (fabs(ele0->superCluster()->eta()) < 1.4442 && fabs(ele1->superCluster()->eta()) < 1.4442) {
-		massScaleUp = _scaleUncertEleBB;
+		massScaleUp = 1+_scaleUncertEleBB;
 		massScaleDown = 1+(1-_scaleUncertEleBB);
 	}
 	else{
-		massScaleUp = _scaleUncertEleBE;
+		massScaleUp = 1+_scaleUncertEleBE;
 		massScaleDown = 1+(1-_scaleUncertEleBE);
 	}
 	DielectronMass->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);

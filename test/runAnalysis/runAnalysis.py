@@ -340,6 +340,11 @@ def main():
 			 		crab_cfg = getCRABCfgAAA(prefix+dataset_name,dataset,lumi_mask)
 			 	else:	
 					crab_cfg = getCRABCfg(prefix+dataset_name,dataset,lumi_mask)
+				if args.do2016 and ("Lam100kTeV" in dataset_name or "Lam10TeV"	in dataset_name):
+					crab_cfg = crab_cfg.replace("config.Data.inputDBS = 'global'","config.Data.inputDBS = 'phys03'")
+				if args.do2016 and dataset_name == "CITo2E_Lam1TeVConLR_M300":
+					crab_cfg = crab_cfg + '\n'					
+					crab_cfg = crab_cfg + 'config.Data.allowNonValidInputDataset = True'					
 		                open('crabConfig.py', 'wt').write(crab_cfg)
 				cmssw_tmp+=getFilterSnippet(dataset_name,args,applyAllGenFilters)
 				if "dy" in dataset_name:

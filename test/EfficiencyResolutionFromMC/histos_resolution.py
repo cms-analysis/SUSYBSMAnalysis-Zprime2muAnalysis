@@ -381,7 +381,7 @@ config.Site.storageSite = 'T2_CH_CERN'
             name = '%s_%s' % (lumi_name, dataset_name)
             print name
 
-            new_py = open('histos.py').read()
+            new_py = open('histos_resolutionMC.py').read()
             new_py += "\nfor_data(process)\n"
             open('histos_crab.py', 'wt').write(new_py)
 
@@ -401,7 +401,7 @@ config.Data.lumiMask = '%(lumi_mask)s' #######
             if not just_testing:
                 os.system('crab submit -c crabConfig.py')
             else:
-                cmd = 'diff histos.py histos_crab.py | less'
+                cmd = 'diff histos_resolutionMC.py histos_crab.py | less'
                 print cmd
                 os.system(cmd)
                 cmd = 'less crab.py'
@@ -425,7 +425,7 @@ config.Data.unitsPerJob  = 10000
         for name, ana_dataset in samples:
             print name
 
-            new_py = open('histos.py').read()
+            new_py = open('histos_resolutionMC.py').read()
             
             open('histos_crab.py', 'wt').write(new_py)
 
@@ -433,7 +433,7 @@ config.Data.unitsPerJob  = 10000
             if not just_testing:
                 os.system('crab submit -c crabConfig.py')
             else:
-                cmd = 'diff histos.py histos_crab.py | less'
+                cmd = 'diff histos_resolutionMC.py histos_crab.py | less'
                 print cmd
                 os.system(cmd)
                 cmd = 'less crabConfig.py'

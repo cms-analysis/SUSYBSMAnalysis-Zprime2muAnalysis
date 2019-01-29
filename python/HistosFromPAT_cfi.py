@@ -19,8 +19,11 @@ HistosFromPAT_MiniAOD = cms.EDAnalyzer('Zprime2muHistosFromPAT',
                                leptonsFromDileptons = cms.bool(False),
                                beamspot_src = cms.InputTag('offlineBeamSpot'),
                                vertex_src = cms.InputTag('offlineSlimmedPrimaryVertices'),
+                               pu_src = cms.InputTag('slimmedAddPileupInfo'),
                                use_bs_and_pv = cms.bool(True),
                                useMadgraphWeight = cms.bool(True),
                                usekFactor = cms.bool(False),
-                               hardInteraction = hardInteraction_MiniAOD,
+			       hardInteraction = hardInteraction_MiniAOD,
+                               doElectrons = cms.bool(False),
+                               pu_weights = cms.vstring()
 )

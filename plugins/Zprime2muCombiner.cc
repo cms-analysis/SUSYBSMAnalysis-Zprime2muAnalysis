@@ -8,15 +8,24 @@
 struct Zprime2muPairSelector {
   StringCutObjectSelector<reco::Candidate, true> loose;
   StringCutObjectSelector<reco::Candidate, true> tight;
+  StringCutObjectSelector<reco::Candidate, true> loose_ele;
+  StringCutObjectSelector<reco::Candidate, true> tight_ele;
   const unsigned electron_cut_mask;
+  const bool ele_match_l1 = false;
   const std::string module_label;
 
   Zprime2muPairSelector(const std::string& loose_cut,
 			const std::string& tight_cut,
+			const std::string& loose_cut_ele,
+			const std::string& tight_cut_ele,
 			const unsigned el_mask,
+			const bool l1_match, 
 			const std::string& label)
-    : loose(loose_cut),
+    : 
+      loose(loose_cut),
       tight(tight_cut),
+      loose_ele(loose_cut_ele),
+      tight_ele(tight_cut_ele),
       electron_cut_mask(el_mask),
       module_label(label)
   {}
@@ -35,11 +44,12 @@ struct Zprime2muPairSelector {
     // turn off cuts, so an electron passes if cutFor is 0. Muons must
     // pass the loose cuts, while at least one muon must pass the
     // tight selection.
-
+     
     const bool e1 = typeid(c1) == typeid(pat::Electron);
     const bool e2 = typeid(c2) == typeid(pat::Electron);
-    if (e1 && e2)
-      return electron_ok(c1) && electron_ok(c2);
+    if (e1 && e2){
+	return electron_ok(c1) && electron_ok(c2) && loose_ele(c1) && loose_ele(c2) && (tight_ele(c1) || tight_ele(c2));
+    }
     else if (e1)
       return electron_ok(c1) && loose(c2) && tight(c2);
     else if (e2)
@@ -64,7 +74,10 @@ namespace reco {
       static Zprime2muPairSelector make(const edm::ParameterSet& cfg) {
 	return Zprime2muPairSelector(cfg.getParameter<std::string>("loose_cut"),
 				     cfg.getParameter<std::string>("tight_cut"),
+				     cfg.existsAs<std::string>("loose_cut_ele") ? cfg.getParameter<std::string>("loose_cut_ele") : "",
+				     cfg.existsAs<std::string>("tight_cut_ele") ? cfg.getParameter<std::string>("tight_cut_ele") : "",
 				     cfg.existsAs<unsigned>("electron_cut_mask") ? cfg.getParameter<unsigned>("electron_cut_mask") : 0xFFFFFFFF,
+				     cfg.existsAs<bool>("ele_match_l1") ? cfg.getParameter<bool>("ele_match_l1") : false,
 				     cfg.getParameter<std::string>("@module_label"));
       }
     };

@@ -11,37 +11,20 @@ if miniAOD:
     from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
 else:
     from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
-# from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionDec2012_cff import loose_cut, trigger_match, tight_cut, allDimuons
-from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2016_cff import loose_cut, trigger_match, tight_cut, allDimuons
 
-#### if you run on data change HLT2 in
-##Zprime2muAnalysis_cff
-##(bits = cms.InputTag("TriggerResults","","HLT")) #### instead of HLT2 
+from SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2018_cff import loose_cut, trigger_match, tight_cut, allDimuons
+
 #### METFilterMiniAOD_cfi.py
 #### src = cms.InputTag("TriggerResults","","RECO"), #### instead of PAT
 
-
-readFiles = cms.untracked.vstring()
-secFiles = cms.untracked.vstring() 
-#process.source = cms.Source ("PoolSource",fileNames = readFiles, secondaryFileNames = secFiles)
-
 process.source = cms.Source ("PoolSource",
                              fileNames =  cms.untracked.vstring(
-
-'/store/data/Run2017B/SingleMuon/MINIAOD/PromptReco-v1/000/297/057/00000/D21018A6-7956-E711-828D-02163E0123EE.root',
-'/store/data/Run2017B/SingleMuon/MINIAOD/PromptReco-v1/000/297/057/00000/D4518E5E-8556-E711-8DE2-02163E011A3B.root',
-'/store/data/Run2017B/SingleMuon/MINIAOD/PromptReco-v1/000/297/057/00000/D472A679-8156-E711-ADEF-02163E01A6DE.root',
-'/store/data/Run2017B/SingleMuon/MINIAOD/PromptReco-v1/000/297/430/00000/0E2FC6B5-535A-E711-B20D-02163E013676.root',
-                                                                ),
-                             secondaryFileNames = secFiles)
-
-
-
-secFiles.extend( [
-               ] )
+                                 '/store/data/Run2018C/SingleMuon/MINIAOD/17Sep2018-v1/120000/FAB77E55-E1DE-0D43-A907-BD709A4B2B1D.root'
+                                 ),
+                             )
 
 process.maxEvents.input = -1
-process.GlobalTag.globaltag ='92X_dataRun2_Prompt_v4' 
+process.GlobalTag.globaltag ='dummy' # dummy value to be changed below
 #process.MessageLogger.cerr.FwkReport.reportEvery = 1 # default 1000
 
 # Define the numerators and denominators, removing cuts from the
@@ -59,7 +42,7 @@ cuts = [
     ('TkLayers','globalTrack.hitPattern.trackerLayersWithMeasurement > 5'),
     ('PxHits',  'globalTrack.hitPattern.numberOfValidPixelHits >= 1'),
     ('MuHits',  'globalTrack.hitPattern.numberOfValidMuonHits > 0'),
-#     ('MuMatch', ('numberOfMatchedStations > 1', 'isTrackerMuon')),
+    ('MuHits', '( (globalTrack.hitPattern.numberOfValidMuonHits > 0) || (tunePMuonBestTrack.hitPattern.numberOfValidMuonHits > 0) )'),
     ('MuMatch', ('( numberOfMatchedStations > 1 || (numberOfMatchedStations == 1 && !(stationMask == 1 || stationMask == 16)) || (numberOfMatchedStations == 1 && (stationMask == 1 || stationMask == 16) && numberOfMatchedRPCLayers > 2))', 'isTrackerMuon')),
     ]
 
@@ -100,7 +83,6 @@ if miniAOD:
     process.p = cms.Path(process.egmGsfElectronIDSequence*process.EventCounter * process.dileptonPreseletor * process.muonPhotonMatchMiniAOD * process.leptons * reduce(lambda x,y: x*y, [getattr(process, x) for x in alldimus]))
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
     for dataFilter in goodDataFiltersMiniAOD:
-        #setattr(process,dataFilter
         process.p *= dataFilter
 else:
     process.leptons = process.leptons.clone()
@@ -147,51 +129,46 @@ delattr(process.dimuonsNoCosm, 'back_to_back_cos_angle_min')
 process.NoCosm = HistosFromPAT.clone(dilepton_src = 'dimuonsNoCosm', leptonsFromDileptons = True)
 process.p *= process.allDimuonsNoCosm * process.dimuonsNoCosm * process.NoCosm
 
-f = file('outfile', 'w')
-f.write(process.dumpPython())
-f.close()
 if __name__ == '__main__' and 'submit' in sys.argv:
-    crab_cfg = '''
+    crab_cfg = \
+'''
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'ana_nminus1_%(name)s'
 config.General.workArea = 'crab'
-#config.General.transferLogs = True
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'nminus1effs.py'
-#config.JobType.priority = 1
 config.Data.inputDataset =  '%(ana_dataset)s' 
 config.Data.inputDBS = 'global'
 job_control
 config.Data.publication = False
 config.Data.outputDatasetTag = 'ana_nminus1_%(name)s'
-config.Data.outLFNDirBase = '/store/user/ferrico'
-#config.Site.storageSite = 'T2_IT_Bari'
-config.Site.storageSite = 'T2_IT_Bari'
+config.Data.outLFNDirBase = '/store/group/phys_exotica/dimuon/2018/nminus1effs/crab'
+config.Site.storageSite = 'T2_CH_CERN'
 '''
 
     just_testing = 'testing' in sys.argv
     if not 'no_data' in sys.argv:
-        #running on miniaod we don't need of googlumis as it was
-        #from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import Run2016G_ll
-        #Run2016G_ll.writeJSON('tmp.json')
-
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
-        
         dataset_details = [
-        
-# 						('SingleMuonRun2017B-PromptReco-v1', '/SingleMuon/Run2017B-PromptReco-v1/MINIAOD'),
-						('SingleMuonRun2017B-PromptReco-v2', '/SingleMuon/Run2017B-PromptReco-v2/MINIAOD'),
-						('SingleMuonRun2017C-PromptReco-v1', '/SingleMuon/Run2017C-PromptReco-v1/MINIAOD'),
-						('SingleMuonRun2017C-PromptReco-v2', '/SingleMuon/Run2017C-PromptReco-v2/MINIAOD'),
-# 						('SingleMuonRun2017C-PromptReco-v3', '/SingleMuon/Run2017C-PromptReco-v3/MINIAOD'),
+            # Prompt Reco for ABC
+            #('SingleMuonRun2018A-06June2018-v1', '/SingleMuon/Run2018A-06Jun2018-v1/MINIAOD'), 
+            #('SingleMuonRun2018A-PromptReco-v3', '/SingleMuon/Run2018A-PromptReco-v3/MINIAOD'),
+            #('SingleMuonRun2018B-PromptReco-v1', '/SingleMuon/Run2018B-PromptReco-v1/MINIAOD'),
+            #('SingleMuonRun2018B-PromptReco-v2', '/SingleMuon/Run2018B-PromptReco-v2/MINIAOD'),
+            #('SingleMuonRun2018C-PromptReco-v1', '/SingleMuon/Run2018C-PromptReco-v1/MINIAOD'),
+            #('SingleMuonRun2018C-PromptReco-v2', '/SingleMuon/Run2018C-PromptReco-v2/MINIAOD'),
+            #('SingleMuonRun2018C-PromptReco-v3', '/SingleMuon/Run2018C-PromptReco-v3/MINIAOD'),
 
-            ]
-
+            # PPD recommendation to use 17Sep2018 ReReco for ABC, Prompt for D
+            ('SingleMuonRun2018A-17Sep2018-v2', '/SingleMuon/Run2018A-17Sep2018-v2/MINIAOD'),
+            ('SingleMuonRun2018B-17Sep2018-v1', '/SingleMuon/Run2018B-17Sep2018-v1/MINIAOD'),
+            ('SingleMuonRun2018C-17Sep2018-v1', '/SingleMuon/Run2018C-17Sep2018-v1/MINIAOD'),
+            ('SingleMuonRun2018D-PromptReco-v2', '/SingleMuon/Run2018D-PromptReco-v2/MINIAOD'),
+        ]
         lumi_lists = [
-			'Run2017MuonsOnly',
+			'Run2018MuonsOnly',
 		]
-
         jobs = []
         for lumi_name in lumi_lists:
             ll = eval(lumi_name + '_ll') if lumi_name != 'NoLumiMask' else None
@@ -210,17 +187,17 @@ config.Site.storageSite = 'T2_IT_Bari'
             print lumi_mask
 
             new_py = open('nminus1effs.py').read()
-            new_py += "\nprocess.GlobalTag.globaltag = '92X_dataRun2_Prompt_v4'\n"  #### RunH
+            if '17Sept2018' in dataset_name:
+                new_py += "\nprocess.GlobalTag.globaltag = '102X_dataRun2_Sep2018Rereco_v1'\n"
+            else:
+                new_py += "\nprocess.GlobalTag.globaltag = '102X_dataRun2_Prompt_v11'\n"
             open('nminus1effs_crab.py', 'wt').write(new_py)
 
             new_crab_cfg = crab_cfg % locals()
-            job_control = '''
-config.Data.splitting = 'LumiBased'
-config.Data.totalUnits = -1
-config.Data.unitsPerJob = 100
-#config.Data.lumiMask = 'tmp.json' #######
-config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/PromptReco/Cert_294927-301567_13TeV_PromptReco_Collisions17_JSON_MuonPhys.txt'
-#config.Data.lumiMask = '%(lumi_mask)s' #######
+            job_control = \
+'''
+config.Data.splitting = 'Automatic'
+config.Data.lumiMask = '%(lumi_mask)s'
 ''' % locals()
 
             new_crab_cfg = new_crab_cfg.replace('job_control', job_control)
@@ -228,39 +205,30 @@ config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Coll
 
             if not just_testing:
                 os.system('crab submit -c crabConfig.py') #--dryrun
-
-#         if not just_testing:
-#             os.system('rm crabConfig.py nminus1effs_crab.py nminus1effs_crab.pyc tmp.json')
+                os.system('rm crabConfig.py nminus1effs_crab.py nminus1effs_crab.pyc tmp.json')
 
     if not 'no_mc' in sys.argv:
-        crab_cfg = crab_cfg.replace('job_control','''
+        from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
+        for sample in samples:
+            print sample.name
+            print sample.dataset
+            name = sample.name
+            ana_dataset = sample.dataset
+
+            new_py = open('nminus1effs.py').read()
+            new_py += "\nprocess.GlobalTag.globaltag = '102X_upgrade2018_realistic_v12'\n"  #### RunH
+            open('nminus1effs_crab.py', 'wt').write(new_py)
+
+            new_crab_cfg = crab_cfg % locals()
+            job_control = \
+'''
 config.Data.splitting = 'EventAwareLumiBased'
 config.Data.totalUnits = -1
 config.Data.unitsPerJob  = 100000
-''')
+'''
+            new_crab_cfg = new_crab_cfg.replace('job_control',job_control)
+            open('crabConfig.py','wt').write(new_crab_cfg)
 
-        from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import *
-        #samples =[DY120to200Powheg]
-        samples =[
- 				dy50to120, dy120to200, dy200to400, dy400to800, dy800to1400, 
- 				dy1400to2300, dy2300to3500, dy3500to4500, dy4500to6000,
- 				WZ, ZZ,
-				WZ_ext, ZZ_ext, 
- 				WW200to600, WW600to1200, WW1200to2500, WW2500,
- 				Wjets, Wantitop, tW,
- 				ttbar_lep_800to1200, ttbar_lep_1200to1800, ttbar_lep1800toInf, 
- 				qcd50to80, qcd80to120, qcd120to170, qcd170to300, qcd300to470, qcd470to600, 
- 				qcd600to800, qcd800to1000, qcd1000to1400, qcd1400to1800, qcd1800to2400, qcd2400to3200, qcd3200
-
-
-
-
-                  ]
-        for sample in samples:
-            #print sample.name
-            open('crabConfig.py', 'wt').write(crab_cfg % sample)
             if not just_testing:
                 os.system('crab submit -c crabConfig.py')
-                #os.system('crab submit -c crabConfig.py --dryrun')
-#         if not just_testing:
-#             os.system('rm crabConfig.py')
+                os.system('rm crabConfig.py nminus1effs_crab.py nminus1effs_crab.pyc')

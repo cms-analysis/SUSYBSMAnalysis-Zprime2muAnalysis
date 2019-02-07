@@ -7,7 +7,7 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.crabtools import dataset_from_publish_log
 miniAOD = True
 
 class sample(object):
-    def __init__(self, name, nice_name, dataset, nevents, color, syst_frac, cross_section, cross_section_uncert=0., k_factor=1, frac_neg_weight=0., filenames=None, scheduler='condor', hlt_process_name='HLT', ana_dataset=None, is_madgraph=False, is_zprime=False):
+    def __init__(self, name, nice_name, dataset, nevents, color, syst_frac, cross_section, cross_section_uncert=0.0, k_factor=1, frac_neg_weight=0.0, filenames=None, scheduler='condor', hlt_process_name='HLT', ana_dataset=None, is_madgraph=False, is_zprime=False):
         self.name = name
         self.nice_name = nice_name
         self.dataset = dataset
@@ -24,10 +24,19 @@ class sample(object):
         self.ana_dataset = ana_dataset
         self.is_madgraph = is_madgraph
         self.is_zprime = is_zprime
+        # Effective number of events in case of negatively weighted events
+        # Slide 32: 
+        # https://indico.cern.ch/event/790963/contributions/3306139/attachments/1791391/2919088/CMSWeek201902.pdf
+        self.nevents_eff = self.nevents * pow((1-2*self.frac_neg_weight),2)
 
+    # the total weight is partial_weight * integrated_luminosity
     @property
     def partial_weight(self):
-        return self.cross_section / float(self.nevents) * self.k_factor # the total weight is partial_weight * integrated_luminosity
+        return self.cross_section / float(self.nevents) * self.k_factor 
+
+    @property
+    def partial_weight_eff(self):
+        return self.cross_section / float(self.nevents_eff) * self.k_factor
 
     @property
     def filenames(self):
@@ -53,8 +62,9 @@ class tupleonlysample(sample):
         super(tupleonlysample, self).__init__(name, 'dummy', dataset, 1, 1, 1, 1, scheduler=scheduler, hlt_process_name=hlt_process_name)
 
 # XS, cross_section_uncert, frac_neg_weight for all MC samples taken from XSDB which is linked from the DAS page of each dataset
-samples = [
+# For example Drell-Yan samples:
 # https://cms-gen-dev.cern.ch/xsdb/?columns=57394461&currentPage=0&ordDirection=1&ordFieldName=process_name&pageSize=10&searchQuery=DAS%3DZToMuMu_NNPDF31_13TeV-powheg_M_%2A_%2A
+samples = [
     sample('dy50to120', 'DY50to120', '/ZToMuMu_NNPDF31_13TeV-powheg_M_50_120/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM', 2982000, 209 , 1., 2113.0, cross_section_uncert=0.9976,  k_factor=1., frac_neg_weight=0.00974),
     sample('dy120to200', 'DY120to200', '/ZToMuMu_NNPDF31_13TeV-powheg_M_120_200/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM', 100000, 210, 1., 20.55, cross_section_uncert=0.01372, k_factor=1., frac_neg_weight=0.00497),
     sample('dy200to400', 'DY200to400', '/ZToMuMu_NNPDF31_13TeV-powheg_M_200_400/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM', 100000, 211, 1., 2.886, cross_section_uncert=0.001993, k_factor=1., frac_neg_weight=0.00194),

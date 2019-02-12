@@ -2,7 +2,7 @@
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
-
+#include <iostream>
 class QScaleSelector : public edm::EDFilter {
  public:
   explicit QScaleSelector(const edm::ParameterSet&);
@@ -31,8 +31,7 @@ bool QScaleSelector::filter(edm::Event& event, const edm::EventSetup&) {
 
     edm::Handle<GenEventInfoProduct> genEvtInfo;
     event.getByLabel( src , genEvtInfo );
-    double qScale = genEvtInfo->qScale();  // in case of Pythia6, this will be pypars/pari(23)
-
+    double qScale = genEvtInfo->pdf()->scalePDF;  // in case of Pythia6, this will be pypars/pari(23)
    return qScale >= min_mass && qScale <=max_mass;
 }
  

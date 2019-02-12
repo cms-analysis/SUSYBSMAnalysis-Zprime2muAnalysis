@@ -265,6 +265,15 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TH1F* DimuonMassVertexConstrained_CSNeg;
   TH1F* DimuonMassVertexConstrained_bb_CSNeg;
   TH1F* DimuonMassVertexConstrained_be_CSNeg;
+  TH1F* DimuonMassVertexConstrainedMuonID;
+  TH1F* DimuonMassVertexConstrainedMuonID_bb;
+  TH1F* DimuonMassVertexConstrainedMuonID_be;
+  TH1F* DimuonMassVertexConstrainedMuonID_CSPos;
+  TH1F* DimuonMassVertexConstrainedMuonID_bb_CSPos;
+  TH1F* DimuonMassVertexConstrainedMuonID_be_CSPos;
+  TH1F* DimuonMassVertexConstrainedMuonID_CSNeg;
+  TH1F* DimuonMassVertexConstrainedMuonID_bb_CSNeg;
+  TH1F* DimuonMassVertexConstrainedMuonID_be_CSNeg;
   TH1F* DimuonMassVertexConstrainedSmear;
   TH1F* DimuonMassVertexConstrainedSmear_bb;
   TH1F* DimuonMassVertexConstrainedSmear_be;
@@ -587,15 +596,25 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   DimuonMassVertexConstrained_be_CSNeg = fs->make<TH1F>("DimuonMassVertexConstrained_be_CSNeg", titlePrefix + "dimu. vertex-constrained mass barrel-endcaps and endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
   DimuonMassVertexConstrainedWeight = fs->make<TH1F>("DimuonMassVertexConstrainedWeight", titlePrefix + "dimu. vertex-constrained mass", 20000, 0, 20000);
  
-  DimuonMassVertexConstrainedSmear = fs->make<TH1F>("DimuonMassVertexConstrainedSmear ", titlePrefix + "dimu. vertex-constrained mass", 20000, 0, 20000);
-  DimuonMassVertexConstrainedSmear_bb = fs->make<TH1F>("DimuonMassVertexConstrainedSmear _bb", titlePrefix + "dimu. vertex-constrained mass barrel-barrel", 20000, 0, 20000);
-  DimuonMassVertexConstrainedSmear_be = fs->make<TH1F>("DimuonMassVertexConstrainedSmear _be", titlePrefix + "dimu. vertex-constrained mass barrel-endcaps and endcaps-endcaps", 20000, 0, 20000);
-  DimuonMassVertexConstrainedSmear_CSPos = fs->make<TH1F>("DimuonMassVertexConstrainedSmear _CSPos", titlePrefix + "dimu. vertex-constrained mass for positive cos theta star", 20000, 0, 20000);
-  DimuonMassVertexConstrainedSmear_bb_CSPos = fs->make<TH1F>("DimuonMassVertexConstrainedSmear _bb_CSPos", titlePrefix + "dimu. vertex-constrained mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
-  DimuonMassVertexConstrainedSmear_be_CSPos = fs->make<TH1F>("DimuonMassVertexConstrainedSmear _be_CSPos", titlePrefix + "dimu. vertex-constrained mass barrel-endcaps and endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
-  DimuonMassVertexConstrainedSmear_CSNeg = fs->make<TH1F>("DimuonMassVertexConstrainedSmear _CSNeg", titlePrefix + "dimu. vertex-constrained mass for negative cos theta star", 20000, 0, 20000);
-  DimuonMassVertexConstrainedSmear_bb_CSNeg = fs->make<TH1F>("DimuonMassVertexConstrainedSmear _bb_CSNeg", titlePrefix + "dimu. vertex-constrained mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
-  DimuonMassVertexConstrainedSmear_be_CSNeg = fs->make<TH1F>("DimuonMassVertexConstrainedSmear _be_CSNeg", titlePrefix + "dimu. vertex-constrained mass barrel-endcaps and endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
+  DimuonMassVertexConstrainedMuonID = fs->make<TH1F>("DimuonMassVertexConstrainedMuonID", titlePrefix + "dimu. vertex-constrained mass", 20000, 0, 20000);
+  DimuonMassVertexConstrainedMuonID_bb = fs->make<TH1F>("DimuonMassVertexConstrainedMuonID_bb", titlePrefix + "dimu. vertex-constrained mass barrel-barrel", 20000, 0, 20000);
+  DimuonMassVertexConstrainedMuonID_be = fs->make<TH1F>("DimuonMassVertexConstrainedMuonID_be", titlePrefix + "dimu. vertex-constrained mass barrel-endcaps and endcaps-endcaps", 20000, 0, 20000);
+  DimuonMassVertexConstrainedMuonID_CSPos = fs->make<TH1F>("DimuonMassVertexConstrainedMuonID_CSPos", titlePrefix + "dimu. vertex-constrained mass for positive cos theta star", 20000, 0, 20000);
+  DimuonMassVertexConstrainedMuonID_bb_CSPos = fs->make<TH1F>("DimuonMassVertexConstrainedMuonID_bb_CSPos", titlePrefix + "dimu. vertex-constrained mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+  DimuonMassVertexConstrainedMuonID_be_CSPos = fs->make<TH1F>("DimuonMassVertexConstrainedMuonID_be_CSPos", titlePrefix + "dimu. vertex-constrained mass barrel-endcaps and endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
+  DimuonMassVertexConstrainedMuonID_CSNeg = fs->make<TH1F>("DimuonMassVertexConstrainedMuonID_CSNeg", titlePrefix + "dimu. vertex-constrained mass for negative cos theta star", 20000, 0, 20000);
+  DimuonMassVertexConstrainedMuonID_bb_CSNeg = fs->make<TH1F>("DimuonMassVertexConstrainedMuonID_bb_CSNeg", titlePrefix + "dimu. vertex-constrained mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+  DimuonMassVertexConstrainedMuonID_be_CSNeg = fs->make<TH1F>("DimuonMassVertexConstrainedMuonID_be_CSNeg", titlePrefix + "dimu. vertex-constrained mass barrel-endcaps and endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
+ 
+  DimuonMassVertexConstrainedSmear = fs->make<TH1F>("DimuonMassVertexConstrainedSmear", titlePrefix + "dimu. vertex-constrained mass", 20000, 0, 20000);
+  DimuonMassVertexConstrainedSmear_bb = fs->make<TH1F>("DimuonMassVertexConstrainedSmear_bb", titlePrefix + "dimu. vertex-constrained mass barrel-barrel", 20000, 0, 20000);
+  DimuonMassVertexConstrainedSmear_be = fs->make<TH1F>("DimuonMassVertexConstrainedSmear_be", titlePrefix + "dimu. vertex-constrained mass barrel-endcaps and endcaps-endcaps", 20000, 0, 20000);
+  DimuonMassVertexConstrainedSmear_CSPos = fs->make<TH1F>("DimuonMassVertexConstrainedSmear_CSPos", titlePrefix + "dimu. vertex-constrained mass for positive cos theta star", 20000, 0, 20000);
+  DimuonMassVertexConstrainedSmear_bb_CSPos = fs->make<TH1F>("DimuonMassVertexConstrainedSmear_bb_CSPos", titlePrefix + "dimu. vertex-constrained mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+  DimuonMassVertexConstrainedSmear_be_CSPos = fs->make<TH1F>("DimuonMassVertexConstrainedSmear_be_CSPos", titlePrefix + "dimu. vertex-constrained mass barrel-endcaps and endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
+  DimuonMassVertexConstrainedSmear_CSNeg = fs->make<TH1F>("DimuonMassVertexConstrainedSmear_CSNeg", titlePrefix + "dimu. vertex-constrained mass for negative cos theta star", 20000, 0, 20000);
+  DimuonMassVertexConstrainedSmear_bb_CSNeg = fs->make<TH1F>("DimuonMassVertexConstrainedSmear_bb_CSNeg", titlePrefix + "dimu. vertex-constrained mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+  DimuonMassVertexConstrainedSmear_be_CSNeg = fs->make<TH1F>("DimuonMassVertexConstrainedSmear_be_CSNeg", titlePrefix + "dimu. vertex-constrained mass barrel-endcaps and endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
   
   DimuonMassVertexConstrainedScaleUp = fs->make<TH1F>("DimuonMassVertexConstrainedScaleUp", titlePrefix + "dimu. vertex-constrained mass", 20000, 0, 20000);
   DimuonMassVertexConstrainedScaleUp_bb = fs->make<TH1F>("DimuonMassVertexConstrainedScaleUp_bb", titlePrefix + "dimu. vertex-constrained mass barrel-barrel", 20000, 0, 20000);
@@ -1165,6 +1184,19 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
   DileptonDaughterDeltaPhi->Fill(reco::deltaPhi(dil.daughter(0)->phi(), dil.daughter(1)->phi()), _madgraphWeight*_kFactor*_puWeight);
 
   if (dil.hasUserFloat("vertexM") && dil.hasUserFloat("vertexMError")) {
+
+
+    double SF1 = 1.0;
+    double SF2 = 1.0;
+    if (fabs(dil.daughter(0)->eta()) <= 1.6 && dil.daughter(0)->p() > 100)
+    	SF1 = (0.994 - 4.08e-6 * dil.daughter(0)->p())/(0.994 - 4.08e-6 * 100);
+    else if (fabs(dil.daughter(0)->eta()) > 1.6 && dil.daughter(0)->p() > 200)
+    	SF1 = ((0.9784 - 4.73e-5 * dil.daughter(0)->eta())/(0.9908 - 1.26e-5 * dil.daughter(0)->p())) / ((0.9784 - 4.73e-5 * 200)/(0.9908 - 1.26e-5 * 200)) ;
+    if (fabs(dil.daughter(1)->eta()) <= 1.6 && dil.daughter(1)->p() > 100)
+    	SF2 = (0.994 - 4.08e-6 * dil.daughter(1)->p())/(0.994 - 4.08e-6 * 100);
+    else if (fabs(dil.daughter(1)->eta()) > 1.6 && dil.daughter(1)->p() > 200)
+	SF2 = ((0.9784 - 4.73e-5 * dil.daughter(1)->p())/(0.9908 - 1.26e-5 * dil.daughter(1)->p())) / ((0.9784 - 4.73e-5 * 200)/(0.9908 - 1.26e-5 * 200) ) ;
+
     float vertex_mass = dil.userFloat("vertexM");
     float vertex_mass_err = dil.userFloat("vertexMError");
       //std::cout<<" filling mass "<<vertex_mass<<std::endl;
@@ -1172,6 +1204,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
     DimuonMassVertexConstrained->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
     DimuonMassVertexConstrainedVsCS->Fill(vertex_mass,cos_cs, _madgraphWeight*_kFactor*_puWeight);
     DimuonMassVertexConstrainedSmear->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
+    DimuonMassVertexConstrainedMuonID->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*SF1*SF2);
     DimuonMassVertexConstrainedScaleUp->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
     DimuonMassVertexConstrainedScaleDown->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
     if (cos_cs > -998.){
@@ -1191,19 +1224,22 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
         DimuonMassVertexConstrainedVsCS_bb->Fill(vertex_mass,cos_cs,_madgraphWeight*_kFactor_bb*_puWeight);
         DimuonMassVtxConstrainedLog_bb->Fill(vertex_mass, _madgraphWeight*_kFactor_bb*_puWeight);
         DimuonMassVertexConstrainedSmear_bb->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
+    	DimuonMassVertexConstrainedMuonID_bb->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*SF1*SF2);
         DimuonMassVertexConstrainedScaleUp_bb->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
         DimuonMassVertexConstrainedScaleDown_bb->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
-       DileptonMass_bb->Fill(dil.mass(), _madgraphWeight*_kFactor_bb*_puWeight);
+        DileptonMass_bb->Fill(dil.mass(), _madgraphWeight*_kFactor_bb*_puWeight);
         if (cos_cs > -998.){
     		if (cos_cs >= 0){
 			 DimuonMassVertexConstrained_bb_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
 			 DimuonMassVertexConstrainedSmear_bb_CSPos->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
+    			 DimuonMassVertexConstrainedMuonID_bb_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*SF1*SF2);
     			 DimuonMassVertexConstrainedScaleUp_bb_CSPos->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
     			 DimuonMassVertexConstrainedScaleDown_bb_CSPos->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
 		}
      		else{
 			 DimuonMassVertexConstrained_bb_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
 		         DimuonMassVertexConstrainedSmear_bb_CSNeg->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
+    			 DimuonMassVertexConstrainedMuonID_bb_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*SF1*SF2);
     			 DimuonMassVertexConstrainedScaleUp_bb_CSNeg->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
     			 DimuonMassVertexConstrainedScaleDown_bb_CSNeg->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
 		}
@@ -1220,6 +1256,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
         DimuonMassVertexConstrainedVsCS_be->Fill(vertex_mass,cos_cs,_madgraphWeight*_kFactor_be*_puWeight);
         DimuonMassVtxConstrainedLog_be->Fill(vertex_mass, _madgraphWeight*_kFactor_be*_puWeight);
         DimuonMassVertexConstrainedSmear_be->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
+    	DimuonMassVertexConstrainedMuonID_be->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*SF1*SF2);
         DimuonMassVertexConstrainedScaleUp_be->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
         DimuonMassVertexConstrainedScaleDown_be->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
        DileptonMass_be->Fill(dil.mass(), _madgraphWeight*_kFactor_be*_puWeight);
@@ -1227,6 +1264,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
    		if (cos_cs >= 0){
 			DimuonMassVertexConstrained_be_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
 		        DimuonMassVertexConstrainedSmear_be_CSPos->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
+    			DimuonMassVertexConstrainedMuonID_be_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*SF1*SF2);
                         DimuonMassVertexConstrainedScaleUp_be_CSPos->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
    			DimuonMassVertexConstrainedScaleDown_be_CSPos->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
 		}
@@ -1234,6 +1272,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 			 DimuonMassVertexConstrained_be_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
 		         DimuonMassVertexConstrainedSmear_be_CSNeg->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
         		 DimuonMassVertexConstrainedScaleUp_be_CSNeg->Fill(vertex_mass*(1+_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
+    			 DimuonMassVertexConstrainedMuonID_be_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*SF1*SF2);
     			 DimuonMassVertexConstrainedScaleDown_be_CSNeg->Fill(vertex_mass*(1-_scaleUncert), _madgraphWeight*_kFactor*_puWeight);
 		}
     		if (cos_cs >= 0) DileptonMass_be_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_puWeight);

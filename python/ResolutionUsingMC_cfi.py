@@ -6,7 +6,7 @@ ResolutionUsingMC = cms.EDAnalyzer('ResolutionUsingMC',
                                    hardInteraction = hardInteraction,
                                    lepton_src = cms.InputTag('leptons', 'muons'),
                                    dilepton_src = cms.InputTag('dimuons'),
-                                   leptonsFromDileptons = cms.bool(False),
+                                   leptonsFromDileptons = cms.bool(True),
                                    doQoverP = cms.bool(False),
                                    )
 
@@ -14,6 +14,6 @@ ResolutionUsingMC_MiniAOD = cms.EDAnalyzer('ResolutionUsingMC',
                                    hardInteraction = hardInteraction_MiniAOD,
                                    lepton_src = cms.InputTag('leptons', 'muons'),
                                    dilepton_src = cms.InputTag('dimuons'),
-                                   leptonsFromDileptons = cms.bool(False),
+                                   leptonsFromDileptons = cms.bool(True),
                                    doQoverP = cms.bool(False),
                                    )

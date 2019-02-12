@@ -1,14 +1,14 @@
 
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'dileptonAna_muons_2016_CITo2Mu_Lam16TeVDesLL_M300'
+config.General.requestName = 'dileptonAna_resolution_dy800to1400_2017'
 config.General.workArea = 'crab2'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
-config.Data.inputDataset =  '/CITo2Mu_M300_CUETP8M1_Lam16TeVDesLL_13TeV_Pythia8_Corrected-v4/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'
+config.Data.inputDataset =  '/ZToMuMu_NNPDF31_13TeV-powheg_M_800_1400/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'
 config.Data.inputDBS = 'global'
 config.Data.publication = False
-config.Data.outputDatasetTag = 'dileptonAna_muons_2016_CITo2Mu_Lam16TeVDesLL_M300'
+config.Data.outputDatasetTag = 'dileptonAna_resolution_dy800to1400_2017'
 config.Data.outLFNDirBase = '/store/user/jschulte'
 #config.Data.ignoreLocality = True
 #config.General.instance = 'preprod' 

@@ -12,7 +12,7 @@ process.DYGenMassFilter = cms.EDFilter('DibosonGenMass',
 			       max_mass = cms.double(500), 
 			       )
 for path_name, path in process.paths.iteritems():
-	getattr(process,path_name).insert(0,process.DYGenMassFilter)'''
+	getattr(process,path_name).insert(2,process.DYGenMassFilter)'''
 
 	wwFilter = '''
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
@@ -22,7 +22,7 @@ process.DYGenMassFilter = cms.EDFilter('DibosonGenMass',
 				       max_mass = cms.double(200), 
 				       )
 for path_name, path in process.paths.iteritems():
-	getattr(process,path_name).insert(0,process.DYGenMassFilter)'''
+	getattr(process,path_name).insert(2,process.DYGenMassFilter)'''
 
 	     
 	dyFilter = '''
@@ -31,38 +31,40 @@ process.DYGenMassFilter = cms.EDFilter('TauTauSelection',
 				       src = cms.InputTag('prunedGenParticles'),                                      
 				       )
 for path_name, path in process.paths.iteritems():
-	getattr(process,path_name).insert(0,process.DYGenMassFilter)'''
+	getattr(process,path_name).insert(2,process.DYGenMassFilter)'''
 	CIFilter300 = '''
-process.DYGenMassFilter = cms.EDFilter('QScaleSelectror',
+process.DYGenMassFilter = cms.EDFilter('QScaleSelector',
 				       src = cms.InputTag('generator'),
 				       min_mass = cms.double(300),
 				       max_mass = cms.double(800),
 				       )
 for path_name, path in process.paths.iteritems():
-	getattr(process,path_name).insert(0,process.DYGenMassFilter)'''
+	getattr(process,path_name).insert(2,process.DYGenMassFilter)'''
 	CIFilter800 = '''
-process.DYGenMassFilter = cms.EDFilter('QScaleSelectror',
+process.DYGenMassFilter = cms.EDFilter('QScaleSelector',
 				       src = cms.InputTag('generator'),
 				       min_mass = cms.double(800),
 				       max_mass = cms.double(1300),
 				       )
 for path_name, path in process.paths.iteritems():
-	getattr(process,path_name).insert(0,process.DYGenMassFilter)'''
+	getattr(process,path_name).insert(2,process.DYGenMassFilter)'''
 	CIFilter1300 = '''
-process.DYGenMassFilter = cms.EDFilter('QScaleSelectror',
+process.DYGenMassFilter = cms.EDFilter('QScaleSelector',
 				       src = cms.InputTag('generator'),
 				       min_mass = cms.double(1300),
 				       max_mass = cms.double(2000),
 				       )
 for path_name, path in process.paths.iteritems():
-	getattr(process,path_name).insert(0,process.DYGenMassFilter)'''
+	getattr(process,path_name).insert(2,process.DYGenMassFilter)'''
 	ZPtFilter = '''    
 process.DYGenMassFilter = cms.EDFilter('DyPt_ZSkim',
                                        src = cms.InputTag('prunedGenParticles'),
                                        min_mass = cms.double(0),
                                        max_mass = cms.double(50), 
                                        )
-'''
+for path_name, path in process.paths.iteritems():
+	getattr(process,path_name).insert(2,process.DYGenMassFilter)'''
+
 	if "dyInclusive" in name:
 		if args.resolution:
 			return ZPtFilter 
@@ -336,7 +338,7 @@ def main():
 				for site in content:
 					if "T2" in site:
 						nT2 += 1				
-				if nT2 <= 1:
+				if nT2 <= 0:
 			 		crab_cfg = getCRABCfgAAA(prefix+dataset_name,dataset,lumi_mask)
 			 	else:	
 					crab_cfg = getCRABCfg(prefix+dataset_name,dataset,lumi_mask)
@@ -346,7 +348,7 @@ def main():
 					crab_cfg = crab_cfg + '\n'					
 					crab_cfg = crab_cfg + 'config.Data.allowNonValidInputDataset = True'					
 		                open('crabConfig.py', 'wt').write(crab_cfg)
-				cmssw_tmp+=getFilterSnippet(dataset_name,args,applyAllGenFilters)
+				cmssw_tmp+=getFilterSnippet(dataset_name,args,applyAllGenFilters,year=arguments["year"])
 				if "dy" in dataset_name:
 					if "HistosFromPAT.usekFactor = False" in cmssw_tmp:
 						cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.usekFactor = False','HistosFromPAT.usekFactor = True')

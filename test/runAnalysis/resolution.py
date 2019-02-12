@@ -81,10 +81,10 @@ for trackType in tracks:
             leptons_name = cut_name + 'Leptons' + trackType
 	    if cut_name == 'Simple':
 		muon_cuts = ''
-	    elif 'MuPrescaled' in cut_name:
-		muon_cuts = Selection.loose_cut.replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
-	    else:
-		muon_cuts = Selection.loose_cut
+#	    elif 'MuPrescaled' in cut_name:
+	    muon_cuts = Selection.loose_cut.replace('pt > %s' % offline_pt_threshold, 'pt > 20')
+#	    else:
+#		muon_cuts = Selection.loose_cut
 
 	    leptons = process.leptonsMini.clone(muon_cuts = muon_cuts)
 	    leptons.muon_track_for_momentum = cms.string(trackType)
@@ -129,9 +129,9 @@ for trackType in tracks:
 		    alldil.checkCharge = cms.bool(False)
 
 		dil = Selection.dimuons.clone(src = cms.InputTag(allname))
-		if len(trigger_filters) >  0 and (cut_name=='Our2017' or cut_name=='Simple'):
-			alldil.tight_cut = trigger_match_2018
-
+		#if len(trigger_filters) >  0 and (cut_name=='Our2017' or cut_name=='Simple'):
+		alldil.tight_cut = ""
+		alldil.loose_cut = muon_cuts
 		# Implement the differences to the selections; currently, as
 		# in Zprime2muCombiner, the cuts in loose_cut and
 		# tight_cut are the ones actually used to drop leptons, and

@@ -23,6 +23,8 @@ args = parser.parse_args()
 
 # With this function you can change the console log level at any time.
 for d in glob("crab2/*/"):
+	#if not d == "crab2/crab_dileptonAna_muons_2018_SingleMuonRun2018D-PromptReco-v2/":
+	#	continue
 #	if not "CITo2Mu" in d: 
 #^		continue
 	print "check status of task %s"%d

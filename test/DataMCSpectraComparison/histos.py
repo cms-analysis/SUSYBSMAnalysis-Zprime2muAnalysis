@@ -8,6 +8,8 @@ import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFiltersMiniAOD
+from SUSYBSMAnalysis.Zprime2muAnalysis.NtupleFromPAT_cfi import NtupleFromPAT_MiniAOD,NtupleFromPAT
+from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
 
 process.source.fileNames = [
         #'/store/data/Run2018A/SingleMuon/MINIAOD/06Jun2018-v1/410000/CCA4DBD1-FF83-E811-988F-FA163E5991FE.root'
@@ -17,17 +19,7 @@ process.maxEvents.input = -1
 #process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 10000 # default 1000
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold, trigger_filters, trigger_path_names, prescaled_trigger_filters, prescaled_trigger_path_names, prescaled_trigger_match_2018
-
-# Since the prescaled trigger comes with different prescales in
-# different runs/lumis, this filter prescales it to a common factor to
-# make things simpler.
-process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrescaleToCommon_cff')
-process.PrescaleToCommon.trigger_paths = prescaled_trigger_paths
-process.PrescaleToCommon.overall_prescale = overall_prescale
-
-process.PrescaleToCommonMiniAOD.trigger_paths = prescaled_trigger_paths
-process.PrescaleToCommonMiniAOD.overall_prescale = overall_prescale
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold, trigger_filters, trigger_path_names, prescaled_trigger_filters, prescaled_trigger_path_names, prescaled_trigger_match_2018, trigger_match_2018
 
 # The histogramming module that will be cloned multiple times below
 # for making histograms with different cut/dilepton combinations.
@@ -37,32 +29,27 @@ if miniAOD:
     electrons_miniAOD(process)
 
     from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
+    ####################################
     HistosFromPAT.leptonsFromDileptons = True
-    ####################################
-    ####################################
-    ####################################
-    
     HistosFromPAT.usekFactor = False #### Set TRUE to use K Factor #####
-
     ####################################
-    ####################################
-    ####################################
-    
-    
-    ####################################
-    ####################################
-    ####################################
-    
     ZSkim = False #### Set TRUE to skim dy50to120 with a Z pt < 100 GeV #####
-
-    ####################################
-    ####################################
     ####################################
     
 else:
     from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT
     HistosFromPAT.leptonsFromDileptons = True
-    
+
+
+# Since the prescaled trigger comes with different prescales in
+# different runs/lumis, this filter prescales it to a common factor to
+# make things simpler.
+process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrescaleToCommon_cff')
+process.PrescaleToCommon.trigger_paths = prescaled_trigger_paths
+process.PrescaleToCommon.overall_prescale = overall_prescale
+process.PrescaleToCommonMiniAOD.trigger_paths = prescaled_trigger_paths
+process.PrescaleToCommonMiniAOD.overall_prescale = overall_prescale # 500 for 2018
+
 # These modules define the basic selection cuts. For the monitoring
 # sets below, we don't need to define a whole new module, since they
 # just change one or two cuts -- see below.
@@ -73,11 +60,6 @@ import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff as OurSelectionNew
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionDec2012_cff as OurSelectionDec2012
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2016_cff as OurSelection2016
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2018_cff as OurSelection2018
-
-
-
-
-
 
 # CandCombiner includes charge-conjugate decays with no way to turn it
 # off. To get e.g. mu+mu+ separate from mu-mu-, cut on the sum of the
@@ -93,13 +75,11 @@ dils = [('MuonsPlusMuonsMinus',          '%(leptons_name)s:muons@+ %(leptons_nam
 # that doesn't have a trigger match, need to re-add a hltHighLevel
 # filter somewhere below.
 cuts = {
-    'Our2012'  : OurSelectionDec2012,
-    'Our2016'  : OurSelection2016,
+    #'Our2012'  : OurSelectionDec2012,
+    #'Our2016'  : OurSelection2016,
     'Our2018'  : OurSelection2018,
-    #'OurNoIso' : OurSelectionDec2012,
-    'Simple'   : OurSelectionDec2012, # The selection cuts in the module listed here are ignored below.
-    #'OurMuPrescaledNew'  : OurSelectionNew,
-    #'OurMuPrescaled2012' : OurSelectionDec2012
+    'Our2018MuPrescaled' : OurSelection2018,
+    'Simple'   : OurSelection2018, # The selection cuts in the module listed here are ignored below.
     }
 
 if miniAOD and Electrons:
@@ -152,7 +132,7 @@ for cut_name, Selection in cuts.iteritems():
 
     if miniAOD:
         leptons = process.leptonsMini.clone(muon_cuts = muon_cuts)
-        if len(trigger_filters)>0 and (cut_name=='Our2018' or cut_name=='Simple'):
+        if (len(trigger_filters)>0 or len(prescaled_trigger_filters)>0) and ('Our2018' in cut_name or cut_name=='Simple'):
             leptons.trigger_filters = trigger_filters
             leptons.trigger_path_names = trigger_path_names
             leptons.prescaled_trigger_filters = prescaled_trigger_filters
@@ -202,6 +182,7 @@ for cut_name, Selection in cuts.iteritems():
             dil.max_candidates = 100
             dil.sort_by_pt = True
             dil.do_remove_overlap = False
+            dil.prefer_Z=False
             if hasattr(dil, 'back_to_back_cos_angle_min'):
                 delattr(dil, 'back_to_back_cos_angle_min')
             if hasattr(dil, 'vertex_chi2_max'):
@@ -212,7 +193,7 @@ for cut_name, Selection in cuts.iteritems():
             alldil.loose_cut = alldil.loose_cut.value().replace(' && isolationR03.sumPt / innerTrack.pt < 0.10', '')
         elif 'MuPrescaled' in cut_name:
             alldil.loose_cut = alldil.loose_cut.value().replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
-            assert alldil.tight_cut == trigger_match
+            assert alldil.tight_cut == trigger_match_2018
             if len(prescaled_trigger_filters)>0:
                 alldil.tight_cut = prescaled_trigger_match_2018
             else:
@@ -248,79 +229,19 @@ for cut_name, Selection in cuts.iteritems():
             #setattr(process,dataFilter 
             pobj = dataFilter * pobj
 
-
-    ####### Now it seems that there are no prescaled path ########
     if 'MuPrescaled' in cut_name:
         if miniAOD:
-            ####### Now it seems that there are no prescaled path ########
             pobj = process.PrescaleToCommonMiniAOD * pobj 
         else:
-            ####### Now it seems that there are no prescaled path ########
             pobj = process.PrescaleToCommon * pobj 
+
 
     # This is a MC-specific bloc of code
     # define the list of MC samples to be read here. be careful that if WWinclusive or tautau sample are not commented it will apply the filters when running locally.
 
     if 'no_mc' not in sys.argv:
-        samples = [
-             #('dy50to120', '/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_EXO50_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-             #('dy120to200', '/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo51_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-             #('dy200to400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo52_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-             #('dy400to800', '/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo53_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-             #('dy800to1400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_800_1400/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo54_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-             #('dy1400to2300', '/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo55_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-        #('dy2300to3500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo56_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-             #('dy3500to4500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_3500_4500/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo57_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-        #('dy4500to6000', '/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo58_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM'),
-      
-
-             #('dyPt100to250', '/DYJetsToLL_Pt-100To250_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext5-v1/MINIAODSIM'),
-             #('dyPt250to400', '/DYJetsToLL_Pt-250To400_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext5-v1/MINIAODSIM'),
-             #('dyPt400to650', '/DYJetsToLL_Pt-400To650_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('dyPt650', '/DYJetsToLL_Pt-650ToInf_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-
-             #('WZ', '/WZ_TuneCUETP8M1_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('WZ_ext', '/WZ_TuneCUETP8M1_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM'),
-             
-             #('ZZ', '/ZZ_TuneCUETP8M1_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('ZZ_ext', '/ZZ_TuneCUETP8M1_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM'),
-     
-             #('WWinclusive', '/WWTo2L2Nu_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('WW200to600', '/WWTo2L2Nu_Mll_200To600_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('WW600to1200', '/WWTo2L2Nu_Mll_600To1200_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('WW1200to2500', '/WWTo2L2Nu_Mll_1200To2500_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('WW2500', '/WWTo2L2Nu_Mll_2500ToInf_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-     
-             #('dyInclusive50', '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_HCALDebug_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-     
-             #('Wjets', '/WJetsToLNu_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-     
-             #('ttbar_lep', '/TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('ttbar_lep50to500', '/TTTo2L2Nu_TuneCUETP8M2_ttHtranche3_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('ttbar_lep_500to800', '/TTToLL_MLL_500To800_TuneCUETP8M1_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('ttbar_lep_800to1200', '/TTToLL_MLL_800To1200_TuneCUETP8M1_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('ttbar_lep_1200to1800', '/TTToLL_MLL_1200To1800_TuneCUETP8M1_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('ttbar_lep1800toInf', '/TTToLL_MLL_1800ToInf_TuneCUETP8M1_13TeV-powheg-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-     
-             #('Wantitop', '/ST_tW_antitop_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM'),
-             #('tW', '/ST_tW_top_5f_inclusiveDecays_13TeV-powheg-pythia8_TuneCUETP8M1/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM'),
-     
-             ##('qcd50to80', '/QCD_Pt_50to80_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('qcd80to120', '/QCD_Pt_80to120_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('qcd120to170', '/QCD_Pt_120to170_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('qcd170to300', '/QCD_Pt_170to300_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('qcd300to470', '/QCD_Pt_300to470_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('qcd470to600', '/QCD_Pt_470to600_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('qcd600to800', '/QCD_Pt_600to800_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('qcd800to1000', '/QCD_Pt_800to1000_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('qcd1000to1400', '/QCD_Pt_1000to1400_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('qcd1400to1800', '/QCD_Pt_1400to1800_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('qcd1800to2400', '/QCD_Pt_1800to2400_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('qcd2400to3200', '/QCD_Pt_2400to3200_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
-             #('qcd3200', '/QCD_Pt_3200toInf_TuneCUETP8M1_13TeV_pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v3/MINIAODSIM'),
-            
-            ]
-        for name, ana_dataset in samples:
+        for sample in samples:
+            name = sample.name
             
             if 'dy50to120' and ZSkim in name:
                 if miniAOD:
@@ -389,59 +310,39 @@ for cut_name, Selection in cuts.iteritems():
     setattr(process, pathname, path)
 
 
-def ntuplify(process, fill_gen_info=False):
-
+def ntuplify(process, cut='Simple', dil_name='MuonsAllSigns', fill_gen_info=False):
+    dimu_src_tag = cut+dil_name
     if miniAOD:
-        process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
-        obj = process.prunedMCLeptons
-        obj.src = cms.InputTag('prunedGenParticles')
-
-        process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler_miniAOD',
-                                dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
-                                met_src = cms.InputTag("slimmedMETs"),
-                                jet_src = cms.InputTag("slimmedJets"),
-                                beamspot_src = cms.InputTag('offlineBeamSpot'),
-                                vertices_src = cms.InputTag('offlineSlimmedPrimaryVertices'),
-                                #TriggerResults_src = cms.InputTag('TriggerResults', '', 'PAT'),    #mc
-                                TriggerResults_src = cms.InputTag('TriggerResults', '', 'RECO'),    #data
-                                genEventInfo = cms.untracked.InputTag('generator'),
-                                metFilter = cms.VInputTag( cms.InputTag("Flag_HBHENoiseFilter"), 
-                                cms.InputTag("Flag_HBHENoiseIsoFilter"), 
-                                cms.InputTag("Flag_EcalDeadCellTriggerPrimitiveFilter"), 
-                                cms.InputTag("Flag_eeBadScFilter"), 
-                                cms.InputTag("Flag_globalTightHalo2016Filter"))
-                                )
+        ntuple = NtupleFromPAT_MiniAOD.clone(dimu_src=cms.InputTag(dimu_src_tag))
 
     else:
-        process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler',
-                                dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
-                                met_src = cms.InputTag("patMETsPF"),
-                                jet_src = cms.InputTag("cleanPatJets"),
-                                beamspot_src = cms.InputTag('offlineBeamSpot'),
-                                vertices_src = cms.InputTag('offlinePrimaryVertices'),
-                                TriggerResults_src = cms.InputTag('TriggerResults', '', 'PAT'),
-                                genEventInfo = cms.untracked.InputTag('generator')
-                                )
-    if miniAOD and Electrons:
-        process.SimpleNtuplerEmu = process.SimpleNtupler.clone(dimu_src = cms.InputTag('SimpleMuonsElectronsAllSigns'))
+        ntuple = NtupleFromPAT.clone(dimu_src=cms.InputTag(dimu_src_tag))
+
+    if 'Prescaled' in cut: ntuple.doPrescales= cms.bool(True)
 
     if fill_gen_info:
         from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction
-        process.SimpleNtupler.hardInteraction = hardInteraction
-        
-    if hasattr(process, 'pathSimple'):
-        if miniAOD and fill_gen_info:
-            process.pathSimple *=obj * process.SimpleNtupler 
-            if Electrons:
-                process.pathSimple *=obj * process.SimpleNtupler * process.SimpleNtuplerEmu
+        ntuple.hardInteraction = hardInteraction
+        if miniAOD:
+            ntuple.TriggerResults_src = cms.InputTag('TriggerResults','','PAT')
+            process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
+            obj = process.prunedMCLeptons
+            obj.src = cms.InputTag('prunedGenParticles')
+
+    ntuple_name = cut+dil_name+'Ntuple'
+    setattr(process,ntuple_name,ntuple)
+    ntuplepath = getattr(process,ntuple_name)
+
+    if hasattr(process,'path'+cut): 
+        path = getattr(process,'path'+cut)
+        if fill_gen_info:
+            path *= obj * ntuplepath
         else:
-            process.pathSimple *= process.SimpleNtupler 
-            if Electrons:
-                process.pathSimple *= process.SimpleNtupler * process.SimpleNtuplerEmu
+            path *= ntuplepath
 
 # to have ntuples also running in interactive way
-process.GlobalTag.globaltag = '101X_dataRun2_Prompt_v11'
-ntuplify(process)
+#process.GlobalTag.globaltag = '101X_dataRun2_Prompt_v11'
+#ntuplify(process) # makes a SimpleMuonsAllSignsNtuple
 
 def printify(process):
     process.MessageLogger.categories.append('PrintEvent')
@@ -474,17 +375,25 @@ def printify(process):
 def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.CheckPrescale_cfi')
     process.CheckPrescale.trigger_paths = cms.vstring(*trigger_paths)
+    process.CheckPrescale.dump_prescales = cms.untracked.bool(False)
     process.pCheckPrescale = cms.Path(process.CheckPrescale)
 
 def for_data(process):
     process.GlobalTag.globaltag = '101X_dataRun2_Prompt_v11'
-    ntuplify(process)
-    #check_prescale(process, trigger_paths) ####### Now it seams that there are no prescaled path ########
+    ntuplify(process) # makes a SimpleMuonsAllSignsNtuple
+    ntuplify(process,cut='Our2018',dil_name='MuonsPlusMuonsMinus') # makes a Our2018MuonsPlusMuonsMinusNtuple
+    ntuplify(process,cut='Our2018MuPrescaled',dil_name='MuonsPlusMuonsMinus') # makes a Our2018MuonsPlusMuonsMinusNtuple
+    if Electrons:
+        ntuplify(process,cut='Simple',dil_name='MuonsElectronsAllSigns') # makes a Our2018MuonsElectronsAllSigns
+    #check_prescale(process, prescaled_trigger_paths)
 
 def for_mc(process, hlt_process_name, fill_gen_info):
     # Change to MC for 2018 when it's available
-    #process.GlobalTag.globaltag = ''
-    ntuplify(process, fill_gen_info)
+    process.GlobalTag.globaltag = '102X_upgrade2018_realistic_v12'
+    ntuplify(process,fill_gen_info=fill_gen_info) # makes a SimpleMuonsAllSignsNtuple
+    ntuplify(process,cut='Our2018',dil_name='MuonsPlusMuonsMinus',fill_gen_info=fill_gen_info) # makes a Our2018MuonsPlusMuonsMinusNtuple
+    if Electron:
+        ntuplify(process,cut='Simple',dil_name='MuonsElectronsAllSigns',fill_gen_info=fill_gen_info) # makes a Our2018MuonsElectronsAllSigns
     # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
     switch_hlt_process_name(process, hlt_process_name)
 
@@ -498,7 +407,7 @@ def get_dataset(run):
 
 if 'int_data' in sys.argv:
     for_data(process)
-    printify(process)
+    #printify(process)
     
 if 'int_mc' in sys.argv:
     for_mc(process, 'HLT', False)

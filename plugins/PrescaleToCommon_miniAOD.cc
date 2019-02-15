@@ -100,12 +100,12 @@ bool PrescaleToCommon_miniAOD::filter(edm::Event& event, const edm::EventSetup& 
   unsigned path_index = hlt_cfg.size();
   
  
-    const std::vector<std::string>& pathList = hlt_cfg.triggerNames();
-    std::cout<<"path size "<<pathList.size()<<std::endl;
+    //const std::vector<std::string>& pathList = hlt_cfg.triggerNames();
+    //std::cout<<"path size "<<pathList.size()<<std::endl;
     
   for (std::vector<std::string>::const_iterator path = trigger_paths.begin(), end = trigger_paths.end(); path != end; ++path) {
-      std::cout<<" trigger_path "<<*path<<std::endl;
-      std::cout<<" hlt_cfg.triggerIndex(*path) "<<hlt_cfg.triggerIndex(*path)<<" hlt_cfg.size() "<<hlt_cfg.size()<<std::endl;
+      //std::cout<<" trigger_path "<<*path<<std::endl;
+      //std::cout<<" hlt_cfg.triggerIndex(*path) "<<hlt_cfg.triggerIndex(*path)<<" hlt_cfg.size() "<<hlt_cfg.size()<<std::endl;
 
     unsigned ndx = hlt_cfg.triggerIndex(*path);
     if (ndx == hlt_cfg.size())
@@ -153,6 +153,7 @@ bool PrescaleToCommon_miniAOD::filter(edm::Event& event, const edm::EventSetup& 
 
 
   const int total_prescale_already = hltPrescale*L1Prescale_min;
+  //std::cout << "hltPrescale " << hltPrescale << " L1Prescale_min " << L1Prescale_min << " total prescale " << total_prescale_already << std::endl;
 
   if (total_prescale_already > overall_prescale)
     throw cms::Exception("PrescaleToCommon_miniAOD") << "total_prescale_already = " << total_prescale_already << " but overall_prescale requested is " << overall_prescale << "!\n";

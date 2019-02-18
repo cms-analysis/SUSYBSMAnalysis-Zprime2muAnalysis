@@ -8,6 +8,7 @@ ResolutionUsingMC = cms.EDAnalyzer('ResolutionUsingMC',
                                    dilepton_src = cms.InputTag('dimuons'),
                                    leptonsFromDileptons = cms.bool(False),
                                    doQoverP = cms.bool(False),
+                                   use_vertex_mass = cms.bool(False),
                                    )
 
 ResolutionUsingMC_MiniAOD = cms.EDAnalyzer('ResolutionUsingMC',
@@ -16,4 +17,5 @@ ResolutionUsingMC_MiniAOD = cms.EDAnalyzer('ResolutionUsingMC',
                                    dilepton_src = cms.InputTag('dimuons'),
                                    leptonsFromDileptons = cms.bool(False),
                                    doQoverP = cms.bool(False),
+                                   use_vertex_mass = cms.bool(False),
                                    )

@@ -25,7 +25,7 @@ class ResolutionUsingMC : public edm::EDAnalyzer {
   void fillLeptonResolution(const reco::GenParticle*, const reco::CandidateBaseRef&);
   void fillLeptonExtraMomentumResolution(const reco::GenParticle*, const reco::CandidateBaseRef&);
   void fillChargeResolution(const reco::GenParticle*, const reco::CandidateBaseRef&);
-  void fillDileptonMassResolution(const reco::CompositeCandidate&);
+  void fillDileptonMassResolution(const pat::CompositeCandidate&);
   void fillLeptonHistos(const reco::CandidateBaseRef&);
   void fillLeptonHistos(const edm::View<reco::Candidate>&);
   void fillLeptonHistosFromDileptons(const pat::CompositeCandidateCollection&);
@@ -36,6 +36,7 @@ class ResolutionUsingMC : public edm::EDAnalyzer {
   edm::InputTag dilepton_src;
   const bool leptonsFromDileptons;
   const bool doQoverP;
+  const bool use_vertex_mass;
 
   TH1F* LeptonEtaDiff;
   TH1F* LeptonPhiDiff;
@@ -112,7 +113,8 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
     lepton_src(cfg.getParameter<edm::InputTag>("lepton_src")),
     dilepton_src(cfg.getParameter<edm::InputTag>("dilepton_src")),
     leptonsFromDileptons(cfg.getParameter<bool>("leptonsFromDileptons")),
-    doQoverP(cfg.getParameter<bool>("doQoverP"))
+    doQoverP(cfg.getParameter<bool>("doQoverP")),
+    use_vertex_mass(cfg.getParameter<bool>("use_vertex_mass"))
 {
 
    consumes<reco::GenParticleCollection>(hardInteraction.src);
@@ -331,11 +333,12 @@ void ResolutionUsingMC::fillChargeResolution(const reco::GenParticle* gen_lep, c
     ChargeWrongVInvPt->Fill(1/gen_lep->pt());
 }
 
-void ResolutionUsingMC::fillDileptonMassResolution(const reco::CompositeCandidate& dil) {
+void ResolutionUsingMC::fillDileptonMassResolution(const pat::CompositeCandidate& dil) {
   if (!hardInteraction.IsValidForRes())
     return;
   
-  const double mass         = dil.mass();    
+  const double mass = use_vertex_mass ? dil.userFloat("vertexM") : dil.mass();
+  //const double mass         = dil.mass();    
   const double gen_mass     = (hardInteraction.lepPlusNoIB->p4() + hardInteraction.lepMinusNoIB->p4()).mass();
 
   const double res_mass     = resonanceP4(dil).mass();
@@ -381,7 +384,7 @@ void ResolutionUsingMC::fillDileptonMassResolution(const reco::CompositeCandidat
   DileptonMassResVMass   ->Fill(gen_mass,     rdil*rdil);
   DileptonResMassResVMass->Fill(gen_res_mass, rdilres*rdilres);
   ResonanceMassResVMass  ->Fill(gen_res_mass, rres*rres);
-  DileptonInvMassResVMass   ->Fill(gen_mass,  invmres*invmres);   
+  DileptonInvMassResVMass->Fill(gen_mass,     invmres*invmres);   
 }
 
 const reco::GenParticle* getGenParticle(const reco::CandidateBaseRef& lep) {

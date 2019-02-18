@@ -26,6 +26,9 @@ class EfficiencyFromMCMini : public edm::EDAnalyzer {
   const bool use_resonance_mass;
   const bool use_resonance_mass_denom;
   const edm::InputTag dimuon_src;
+  bool use_filters_for_trigger_matching;
+  std::vector<std::string> trigger_filters;
+  std::vector<std::string> trigger_path_names;
   edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> trigger_summary_src_;
   edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
   edm::InputTag l1GtObjectMap;
@@ -41,6 +44,10 @@ class EfficiencyFromMCMini : public edm::EDAnalyzer {
   HardInteraction hardInteraction;
 
   pat::TriggerObjectStandAloneCollection l3_mus;
+  //-- e.g. { {L3s passing Mu50}, {L3s passing OldMu100}, {L3s passing TkMu100} }
+  // or 
+  // { {L3s passing Mu27} }
+  std::vector<pat::TriggerObjectStandAloneCollection> vec_L3_muons;
 
 
   typedef std::pair<TH1F*, TH1F*> effhistos;
@@ -109,6 +116,8 @@ EfficiencyFromMCMini::EfficiencyFromMCMini(const edm::ParameterSet& cfg)
     use_resonance_mass(cfg.getParameter<bool>("use_resonance_mass")),
     use_resonance_mass_denom(cfg.getParameter<bool>("use_resonance_mass_denom")),
     dimuon_src(cfg.getParameter<edm::InputTag>("dimuon_src")),
+    trigger_filters(cfg.getParameter<std::vector<std::string>>("trigger_filters")),
+    trigger_path_names(cfg.getParameter<std::vector<std::string>>("trigger_path_names")),
     trigger_summary_src_(consumes<pat::TriggerObjectStandAloneCollection>(cfg.getParameter<edm::InputTag>("trigger_summary"))),
     triggerBits_(consumes<edm::TriggerResults>(cfg.getParameter<edm::InputTag>("bits"))),
     hlt_single_min_pt(cfg.getParameter<double>("hlt_single_min_pt")),
@@ -126,6 +135,11 @@ EfficiencyFromMCMini::EfficiencyFromMCMini(const edm::ParameterSet& cfg)
   consumes<pat::CompositeCandidateCollection>(dimuon_src);
 
 
+  use_filters_for_trigger_matching = false;
+  if(trigger_filters.size()>0) {// && prescaled_trigger_filters.size()>0) {
+    std::cout << "\n trigger_filters.size()          = " << trigger_filters.size() << "\n";
+    use_filters_for_trigger_matching = true;
+  }
   edm::Service<TFileService> fs;
 
   accnopt = make_eff_pair("AccNoPt", "Acceptance (no p_{T} cut) vs. mass");
@@ -152,19 +166,32 @@ EfficiencyFromMCMini::EfficiencyFromMCMini(const edm::ParameterSet& cfg)
     l1_path_effs_e.push_back(make_eff_pair(TString::Format("L1Path_e_%u_%s", unsigned(i), triggerDecision.l1_paths().at(i).c_str()), TString::Format("#varepsilon(%s) vs. mass", triggerDecision.l1_paths().at(i).c_str())));
   }
 
-  for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i) {
-    hlt_path_effs.push_back(make_eff_pair(TString::Format("HLTPath_%u_%s", unsigned(i), triggerDecision.hlt_paths().at(i).c_str()), TString::Format("#varepsilon(%s) vs. mass", triggerDecision.hlt_paths().at(i).c_str())));
-    hlt_path_effs_bb.push_back(make_eff_pair(TString::Format("HLTPath_bb_%u_%s", unsigned(i), triggerDecision.hlt_paths().at(i).c_str()), TString::Format("#varepsilon(%s) vs. mass", triggerDecision.hlt_paths().at(i).c_str())));
-    hlt_path_effs_e.push_back(make_eff_pair(TString::Format("HLTPath_e_%u_%s", unsigned(i), triggerDecision.hlt_paths().at(i).c_str()), TString::Format("#varepsilon(%s) vs. mass", triggerDecision.hlt_paths().at(i).c_str())));
+  if(use_filters_for_trigger_matching) {
+    for (size_t i = 0; i < trigger_path_names.size(); ++i) {
+      hlt_path_effs.push_back(make_eff_pair(TString::Format("HLTPath_%s", trigger_path_names.at(i).c_str()), TString::Format("#varepsilon(%s) vs. mass", trigger_path_names.at(i).c_str())));
+      hlt_path_effs_bb.push_back(make_eff_pair(TString::Format("HLTPath_bb_%s", trigger_path_names.at(i).c_str()), TString::Format("#varepsilon(%s) vs. mass", trigger_path_names.at(i).c_str())));
+      hlt_path_effs_e.push_back(make_eff_pair(TString::Format("HLTPath_e_%s", trigger_path_names.at(i).c_str()), TString::Format("#varepsilon(%s) vs. mass", trigger_path_names.at(i).c_str())));
+    }
+
+    hlt_or_eff  = make_eff_pair("HLTOrEff",  TString::Format("#varepsilon(%s) vs. mass", join(trigger_path_names, std::string(" || ")).c_str()));
+    hlt_or_eff_bb  = make_eff_pair("HLTOrEff_bb",  TString::Format("#varepsilon(%s) vs. mass", join(trigger_path_names, std::string(" || ")).c_str()));
+    hlt_or_eff_e  = make_eff_pair("HLTOrEff_e",  TString::Format("#varepsilon(%s) vs. mass", join(trigger_path_names, std::string(" || ")).c_str()));
+
+  } else {
+    for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i) {
+      hlt_path_effs.push_back(make_eff_pair(TString::Format("HLTPath_%u_%s", unsigned(i), triggerDecision.hlt_paths().at(i).c_str()), TString::Format("#varepsilon(%s) vs. mass", triggerDecision.hlt_paths().at(i).c_str())));
+      hlt_path_effs_bb.push_back(make_eff_pair(TString::Format("HLTPath_bb_%u_%s", unsigned(i), triggerDecision.hlt_paths().at(i).c_str()), TString::Format("#varepsilon(%s) vs. mass", triggerDecision.hlt_paths().at(i).c_str())));
+      hlt_path_effs_e.push_back(make_eff_pair(TString::Format("HLTPath_e_%u_%s", unsigned(i), triggerDecision.hlt_paths().at(i).c_str()), TString::Format("#varepsilon(%s) vs. mass", triggerDecision.hlt_paths().at(i).c_str())));
+    }
+    hlt_or_eff  = make_eff_pair("HLTOrEff",  TString::Format("#varepsilon(%s) vs. mass", join(triggerDecision.hlt_paths(), std::string(" || ")).c_str()));
+    hlt_or_eff_bb  = make_eff_pair("HLTOrEff_bb",  TString::Format("#varepsilon(%s) vs. mass", join(triggerDecision.hlt_paths(), std::string(" || ")).c_str()));
+    hlt_or_eff_e  = make_eff_pair("HLTOrEff_e",  TString::Format("#varepsilon(%s) vs. mass", join(triggerDecision.hlt_paths(), std::string(" || ")).c_str()));
+
   }
   
   l1_or_eff   = make_eff_pair("L1OrEff",   TString::Format("#varepsilon(%s) vs. mass", join(triggerDecision.l1_paths(),  std::string(" || ")).c_str()));
   l1_or_eff_bb   = make_eff_pair("L1OrEff_bb",   TString::Format("#varepsilon(%s) vs. mass", join(triggerDecision.l1_paths(),  std::string(" || ")).c_str()));
   l1_or_eff_e   = make_eff_pair("L1OrEff_e",   TString::Format("#varepsilon(%s) vs. mass", join(triggerDecision.l1_paths(),  std::string(" || ")).c_str()));
-
-  hlt_or_eff  = make_eff_pair("HLTOrEff",  TString::Format("#varepsilon(%s) vs. mass", join(triggerDecision.hlt_paths(), std::string(" || ")).c_str()));
-  hlt_or_eff_bb  = make_eff_pair("HLTOrEff_bb",  TString::Format("#varepsilon(%s) vs. mass", join(triggerDecision.hlt_paths(), std::string(" || ")).c_str()));
-  hlt_or_eff_e  = make_eff_pair("HLTOrEff_e",  TString::Format("#varepsilon(%s) vs. mass", join(triggerDecision.hlt_paths(), std::string(" || ")).c_str()));
 
   total_trig_eff = make_eff_pair("TotalTrigEff", TString::Format("#varepsilon((%s) && (%s)) vs. mass", join(triggerDecision.l1_paths(), std::string(" || ")).c_str(), join(triggerDecision.hlt_paths(), std::string(" || ")).c_str()));
   total_trig_eff_bb = make_eff_pair("TotalTrigEff_bb", TString::Format("#varepsilon((%s) && (%s)) vs. mass", join(triggerDecision.l1_paths(), std::string(" || ")).c_str(), join(triggerDecision.hlt_paths(), std::string(" || ")).c_str()));
@@ -182,6 +209,7 @@ void EfficiencyFromMCMini::analyze(const edm::Event& event, const edm::EventSetu
   edm::Handle<edm::TriggerResults> triggerBits;
   event.getByToken(trigger_summary_src_, trigger_summary_src);
   event.getByToken(triggerBits_, triggerBits);
+  const edm::TriggerNames &names = event.triggerNames(*triggerBits);
   
   if (!hardInteraction.IsValid()) {
     edm::LogWarning("EfficiencyFromMC") << "!hardInteraction.isValid()";
@@ -240,8 +268,13 @@ void EfficiencyFromMCMini::analyze(const edm::Event& event, const edm::EventSetu
   
   for (size_t i = 0; i < triggerDecision.l1_paths().size(); ++i)
     l1_path_effs[i].second->Fill(m);
-  for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i)
-    hlt_path_effs[i].second->Fill(m);
+  if (use_filters_for_trigger_matching) {
+      for (size_t i = 0; i < trigger_path_names.size(); ++i)
+        hlt_path_effs[i].second->Fill(m);
+  } else {
+      for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i)
+        hlt_path_effs[i].second->Fill(m);
+  }
   l1_or_eff.second->Fill(m);
   hlt_or_eff.second->Fill(m);
   total_trig_eff.second->Fill(m);
@@ -251,8 +284,13 @@ void EfficiencyFromMCMini::analyze(const edm::Event& event, const edm::EventSetu
 
     for (size_t i = 0; i < triggerDecision.l1_paths().size(); ++i)
       l1_path_effs_bb[i].second->Fill(m);
-    for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i)
-      hlt_path_effs_bb[i].second->Fill(m);
+    if (use_filters_for_trigger_matching) {
+      for (size_t i = 0; i < trigger_path_names.size(); ++i)
+        hlt_path_effs_bb[i].second->Fill(m);
+    } else {
+      for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i)
+        hlt_path_effs_bb[i].second->Fill(m);
+    }
     l1_or_eff_bb.second->Fill(m);
     hlt_or_eff_bb.second->Fill(m);
     total_trig_eff_bb.second->Fill(m);
@@ -263,8 +301,13 @@ void EfficiencyFromMCMini::analyze(const edm::Event& event, const edm::EventSetu
 
     for (size_t i = 0; i < triggerDecision.l1_paths().size(); ++i)
       l1_path_effs_e[i].second->Fill(m);
-    for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i)
-      hlt_path_effs_e[i].second->Fill(m);
+    if (use_filters_for_trigger_matching) {
+      for (size_t i = 0; i < trigger_path_names.size(); ++i)
+        hlt_path_effs_e[i].second->Fill(m);
+    } else {
+      for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i)
+        hlt_path_effs_e[i].second->Fill(m);
+    }
     l1_or_eff_e.second->Fill(m);
     hlt_or_eff_e.second->Fill(m);
     total_trig_eff_e.second->Fill(m);
@@ -299,31 +342,52 @@ void EfficiencyFromMCMini::analyze(const edm::Event& event, const edm::EventSetu
   bool hlt_pass_overridden = false;
  
   if (hlt_single_min_pt > 0 || hlt_single_max_eta > 0) {
-    Zprime2muTriggerPathsAndFilters pandf(event);
-    if (!pandf.valid) throw cms::Exception("Zprime2muTriggerPathsAndFilters") << "could not determine the HLT path and filter names for this event\n";
+    if (use_filters_for_trigger_matching) {
 
-    const edm::TriggerNames &names = event.triggerNames(*triggerBits);
-    int j = 0;
-    
-    l3_mus.clear();
-
-    for (pat::TriggerObjectStandAlone obj : *trigger_summary_src) { // note: not "const &" since we want to call unpackPathNames
+      vec_L3_muons.clear();
+      for(unsigned i_f=0; i_f<trigger_filters.size(); ++i_f) {
+        vec_L3_muons.push_back({});
+        vec_L3_muons.back().clear();
+      }
+      for(pat::TriggerObjectStandAlone obj : *trigger_summary_src) {
         obj.unpackPathNames(names);
-        obj.unpackFilterLabels(event, *triggerBits); // 92X
+        obj.unpackFilterLabels(event, *triggerBits); // for 2017~
+        for (unsigned h = 0; h < obj.filterLabels().size(); ++h) {
+          for(unsigned i_f=0; i_f<trigger_filters.size(); ++i_f) {
+            if (obj.filterLabels()[h] == trigger_filters[i_f]){ 
+              vec_L3_muons[i_f].push_back(obj);
+            }
+          }
+        }
+      }
+          //
+    } else {
 
-         for (unsigned h = 0; h < obj.filterLabels().size(); ++h) {
-           if (checking_prescaled_path && obj.filterLabels()[h] == pandf.prescaled_filter){
-           //FilterMatched[j] = 1;
-           l3_mus.push_back(obj);
-         }
-           if (!checking_prescaled_path && obj.filterLabels()[h] == pandf.filter){ 
-           //FilterMatched[j] = 1;
-           l3_mus.push_back(obj);
-         }
-           //trigger::TriggerObjectCollection l3_mus = get_L3_muons(event, checking_prescaled_path ? pandf.prescaled_filter : pandf.filter, trigger_summary_src);
-         }
-      j++;
-    
+        Zprime2muTriggerPathsAndFilters pandf(event);
+        if (!pandf.valid) throw cms::Exception("Zprime2muTriggerPathsAndFilters") << "could not determine the HLT path and filter names for this event\n";
+
+        int j = 0;
+        
+        l3_mus.clear();
+
+        for (pat::TriggerObjectStandAlone obj : *trigger_summary_src) { // note: not "const &" since we want to call unpackPathNames
+            obj.unpackPathNames(names);
+            obj.unpackFilterLabels(event, *triggerBits); // 92X
+
+             for (unsigned h = 0; h < obj.filterLabels().size(); ++h) {
+               if (checking_prescaled_path && obj.filterLabels()[h] == pandf.prescaled_filter){
+               //FilterMatched[j] = 1;
+               l3_mus.push_back(obj);
+             }
+               if (!checking_prescaled_path && obj.filterLabels()[h] == pandf.filter){ 
+               //FilterMatched[j] = 1;
+               l3_mus.push_back(obj);
+             }
+               //trigger::TriggerObjectCollection l3_mus = get_L3_muons(event, checking_prescaled_path ? pandf.prescaled_filter : pandf.filter, trigger_summary_src);
+             }
+          j++;
+        
+        }
     }
 
  
@@ -339,24 +403,38 @@ void EfficiencyFromMCMini::analyze(const edm::Event& event, const edm::EventSetu
     if (!pass) hlt_pass_overridden = true;
   }
 
-  for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i) {
-    if (triggerDecision.hlt_path_pass(i)) {
-      if (hlt_pass_overridden) edm::LogWarning("EfficiencyFromMC")
-      << "Trigger decision overruled by cuts on Level-3 muon!\n";
-      if (i == 0 && hlt_pass_overridden)
-      continue;
+  if (use_filters_for_trigger_matching) {
 
-      hlt_path_effs[i].first->Fill(m);
+    for (size_t i_f = 0; i_f < trigger_path_names.size(); ++i_f) {
+      if (vec_L3_muons[i_f].size()>0) {
+        hlt_path_effs[i_f].first->Fill(m);
+        if (aeta_minus <= 1.2 && aeta_plus <= 1.2) {
+          hlt_path_effs_bb[i_f].first->Fill(m);
+        } // BB
+        else {
+          hlt_path_effs_e[i_f].first->Fill(m);
+        } // BE + EE
+        hlt_or = true;
+      }
+    }
+  } else {
 
-      if (aeta_minus <= 1.2 && aeta_plus <= 1.2) {
-        hlt_path_effs_bb[i].first->Fill(m);
-      } // BB
+    for (size_t i = 0; i < triggerDecision.hlt_paths().size(); ++i) {
+      if (triggerDecision.hlt_path_pass(i)) {
+        if (hlt_pass_overridden) edm::LogWarning("EfficiencyFromMC")
+        << "Trigger decision overruled by cuts on Level-3 muon!\n";
+        if (i == 0 && hlt_pass_overridden)
+        continue;
 
-      else {
-        hlt_path_effs_e[i].first->Fill(m);
-      } // BE + EE
-
-      hlt_or = true;
+        hlt_path_effs[i].first->Fill(m);
+        if (aeta_minus <= 1.2 && aeta_plus <= 1.2) {
+          hlt_path_effs_bb[i].first->Fill(m);
+        } // BB
+        else {
+          hlt_path_effs_e[i].first->Fill(m);
+        } // BE + EE
+        hlt_or = true;
+      }
     }
   }
 

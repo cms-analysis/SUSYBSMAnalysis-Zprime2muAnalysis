@@ -36,7 +36,7 @@ import FWCore.ParameterSet.Config as cms
 # the above cuts ("loose" is then a misnomer), and at least one must
 # pass the trigger match requirement (the only "tight" cut).
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, offline_pt_threshold, trigger_match_2018
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, offline_pt_threshold, trigger_match_2018, prescaled_trigger_match_2018
 
 loose_cut = 'isGlobalMuon && ' \
             'isTrackerMuon && ' \
@@ -69,7 +69,6 @@ dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          prefer_Z = cms.bool(True),
                          do_remove_overlap = cms.bool(True),
                          back_to_back_cos_angle_min = cms.double(-0.9998), # this corresponds to the angle (pi - 0.02) rad = 178.9 deg
-#                         vertex_chi2_max = cms.double(10),
                          vertex_chi2_max = cms.double(20),
                          dpt_over_pt_max = cms.double(0.3)
                          )

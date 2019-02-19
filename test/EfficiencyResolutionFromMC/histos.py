@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 
-miniAOD = True
+################################################################################
 
-# intime_bin numbering: bin 0 = 0-5, bin 1 = 6-11, bin 2 = 12-26
-# late_bin numbering: bin 0 = 0-9, bin 2 = 10-26
-intime_bin, late_bin = -1, -1
+miniAOD = True
 check_prescaled_path = False
 do_all_track_fits = True
-
+ex = ''
 
 ################################################################################
 
 import sys, os
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import cms, process
+from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
 
 #process.maxEvents.input = 1000
 process.source.fileNames = [
@@ -21,8 +20,6 @@ process.source.fileNames = [
 process.options.wantSummary = False
 
 process.GlobalTag.globaltag = '102X_upgrade2018_realistic_v12'
-
-ex = ''
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
 HistosFromPAT.leptonsFromDileptons = True
@@ -174,46 +171,50 @@ if __name__ == '__main__' and 'submit' in sys.argv:
 from CRABClient.UserUtilities import config
 config = config()
 
-config.General.requestName = 'ana_effres_%(ex)s%(name)s'
+config.General.requestName = 'ana_effres_%(name)s%(extra)s'
 config.General.workArea = 'crab'
-#config.General.transferLogs = True
 
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'histos_crab.py'
-#config.JobType.priority = 1
 
 config.Data.inputDataset =  '%(dataset)s'
 config.Data.inputDBS = 'global'
 config.Data.splitting = 'EventAwareLumiBased'
-#config.Data.splitting = 'FileBased'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob  = 200000
-config.Data.publication = False
-config.Data.outputDatasetTag = 'ana_datamc_%(name)s'
-config.Data.outLFNDirBase = '/eos/cms/store/group/phys_exotica/dimuon/eff_res'
-config.Data.ignoreLocality = True
+config.Data.unitsPerJob  = 10000
+config.Data.outputDatasetTag = 'ana_effres_%(name)s'
+config.Data.outLFNDirBase = '/store/group/phys_exotica/dimuon/2018/effres'
 config.Site.storageSite = 'T2_CH_CERN'
                           
 '''
         
-    samples = [
-
-	    ('dy50to120', '/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_EXO50_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 50., 120.),
-    	('dy120to200', '/ZToMuMu_NNPDF30_13TeV-powheg_M_120_200/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo51_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 120, 200),
-	    ('dy200to400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_200_400/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo52_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 200, 400),
-    	('dy400to800', '/ZToMuMu_NNPDF30_13TeV-powheg_M_400_800/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo53_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 400, 800),
-	    ('dy800to1400', '/ZToMuMu_NNPDF30_13TeV-powheg_M_800_1400/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo54_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 800, 1400),
-    	('dy1400to2300', '/ZToMuMu_NNPDF30_13TeV-powheg_M_1400_2300/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo55_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 1400, 2300),
-	    ('dy2300to3500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_2300_3500/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo56_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 2300, 3500),
-    	('dy3500to4500', '/ZToMuMu_NNPDF30_13TeV-powheg_M_3500_4500/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo57_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 3500, 4500),
-	    ('dy4500to6000', '/ZToMuMu_NNPDF30_13TeV-powheg_M_4500_6000/PhaseIFall16MiniAOD-FlatPU28to62HcalNZSRAW_PhaseIFall16_exo58_90X_upgrade2017_realistic_v6_C1-v1/MINIAODSIM', 4500, 6000),
-              
-               
-        ]
+    # Only do DY MC samples and apply HardInteractionFilter
+    FilterInfo = {
+        #'name':        (  lo,    hi),
+	    'dy50to120':    (  50,   120),
+    	'dy120to200':   ( 120,   200),
+	    'dy200to400':   ( 200,   400),
+    	'dy400to800':   ( 400,   800),
+	    'dy800to1400':  ( 800,  1400),
+    	'dy1400to2300': (1400,  2300),
+	    'dy2300to3500': (2300,  3500),
+    	'dy3500to4500': (3500,  4500),
+	    'dy4500to6000': (4500,  6000),
+	    'dy6000toInf':  (6000, 10000),
+        }
+    dySamples = [sample for sample in samples if sample.name in FilterInfo.keys()]
 
     just_testing = 'testing' in sys.argv
 
-    for name, dataset, lo, hi in samples:
+    for sample in dySamples:
+
+        name = sample.name
+        dataset = sample.dataset
+        lo = FilterInfo[name][0]
+        hi = FilterInfo[name][1]
+        print name,lo,hi,dataset
+        extra = '_'+ if ex!='' else ''
+
         open('crabConfig.py', 'wt').write(crab_cfg % locals())
 
         new_py = open('histos.py').read()
@@ -225,4 +226,4 @@ config.Site.storageSite = 'T2_CH_CERN'
         
         if not just_testing:
             os.system('crab submit  -c crabConfig.py')
-#             os.system('rm crabConfig.py histos_crab.py histos_crab.pyc')
+            os.system('rm crabConfig.py histos_crab.py histos_crab.pyc')

@@ -3,9 +3,11 @@
 
 miniAOD = True
 Electrons = False
+ex = ''
 
-# Set global tags here
-dataGT = '102X_dataRun2_Prompt_v6'
+# https://twiki.cern.ch/twiki/bin/viewauth/CMS/PdmVAnalysisSummaryTable
+# Set temporary global tags here, may be changed later
+dataGT = '102X_dataRun2_Prompt_v11'
 MCGT = '102X_upgrade2018_realistic_v12'
 
 import sys, os, FWCore.ParameterSet.Config as cms
@@ -448,21 +450,20 @@ if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'ana_datamc_%(name)s'
+config.General.requestName = 'ana_datamc_%(name)s%(extra)s'
 config.General.workArea = 'crab'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'histos_crab.py'   
 config.Data.inputDataset =  '%(ana_dataset)s'
 config.Data.inputDBS = 'global'
 job_control
-config.Data.publication = False
 config.Data.outputDatasetTag = 'ana_datamc_%(name)s'
-config.Data.outLFNDirBase = '/eos/cms/store/group/phys_exotica/dimuon/datamc'
+config.Data.outLFNDirBase = '/store/group/phys_exotica/dimuon/2018/datamc'
 config.Site.storageSite = 'T2_CH_CERN'
 '''
     
     just_testing = 'testing' in sys.argv
-        
+    extra = '_'+ex if ex!='' else ''
     # Run on data.
     if 'no_data' not in sys.argv:
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
@@ -485,9 +486,9 @@ config.Site.storageSite = 'T2_CH_CERN'
             #('SingleMuonRun2018C-PromptReco-v2', '/SingleMuon/Run2018C-PromptReco-v2/MINIAOD'),
             #('SingleMuonRun2018C-PromptReco-v3', '/SingleMuon/Run2018C-PromptReco-v3/MINIAOD'),
             # Good to use
-            ('SingleMuonRun2018A-17Sep2018-v2', '/SingleMuon/Run2018A-17Sep2018-v2/MINIAOD'),
-            ('SingleMuonRun2018B-17Sep2018-v1', '/SingleMuon/Run2018B-17Sep2018-v1/MINIAOD'),
-            ('SingleMuonRun2018C-17Sep2018-v1', '/SingleMuon/Run2018C-17Sep2018-v1/MINIAOD'),
+            ('SingleMuonRun2018A-17Sep2018-v2',  '/SingleMuon/Run2018A-17Sep2018-v2/MINIAOD'),
+            ('SingleMuonRun2018B-17Sep2018-v1',  '/SingleMuon/Run2018B-17Sep2018-v1/MINIAOD'),
+            ('SingleMuonRun2018C-17Sep2018-v1',  '/SingleMuon/Run2018C-17Sep2018-v1/MINIAOD'),
             ('SingleMuonRun2018D-PromptReco-v2', '/SingleMuon/Run2018D-PromptReco-v2/MINIAOD'),
 
 
@@ -512,6 +513,10 @@ config.Site.storageSite = 'T2_CH_CERN'
 
             new_py = open('histos.py').read()
             new_py += "\nfor_data(process)\n"
+            if '17Sept2018' in dataset_name:
+                new_py += "\nprocess.GlobalTag.globaltag = '102X_dataRun2_Sep2018Rereco_v1'\n"
+            else:
+                new_py += "\nprocess.GlobalTag.globaltag = '102X_dataRun2_Prompt_v11'\n"
             open('histos_crab.py', 'wt').write(new_py)
 
             new_crab_cfg = crab_cfg % locals()

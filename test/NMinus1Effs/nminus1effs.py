@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 miniAOD = True
+ex=''
 
 import sys, os, FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
@@ -134,20 +135,20 @@ if __name__ == '__main__' and 'submit' in sys.argv:
 '''
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'ana_nminus1_%(name)s'
+config.General.requestName = 'ana_nminus1_%(name)s%(extra)s'
 config.General.workArea = 'crab'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'nminus1effs.py'
 config.Data.inputDataset =  '%(ana_dataset)s' 
 config.Data.inputDBS = 'global'
 job_control
-config.Data.publication = False
 config.Data.outputDatasetTag = 'ana_nminus1_%(name)s'
-config.Data.outLFNDirBase = '/store/group/phys_exotica/dimuon/2018/nminus1effs/crab'
+config.Data.outLFNDirBase = '/store/group/phys_exotica/dimuon/2018/nminus1effs'
 config.Site.storageSite = 'T2_CH_CERN'
 '''
 
     just_testing = 'testing' in sys.argv
+    extra = '_'+ex if ex!='' else ''
     if not 'no_data' in sys.argv:
         from SUSYBSMAnalysis.Zprime2muAnalysis.goodlumis import *
         dataset_details = [
@@ -161,9 +162,9 @@ config.Site.storageSite = 'T2_CH_CERN'
             #('SingleMuonRun2018C-PromptReco-v3', '/SingleMuon/Run2018C-PromptReco-v3/MINIAOD'),
 
             # PPD recommendation to use 17Sep2018 ReReco for ABC, Prompt for D
-            ('SingleMuonRun2018A-17Sep2018-v2', '/SingleMuon/Run2018A-17Sep2018-v2/MINIAOD'),
-            ('SingleMuonRun2018B-17Sep2018-v1', '/SingleMuon/Run2018B-17Sep2018-v1/MINIAOD'),
-            ('SingleMuonRun2018C-17Sep2018-v1', '/SingleMuon/Run2018C-17Sep2018-v1/MINIAOD'),
+            ('SingleMuonRun2018A-17Sep2018-v2',  '/SingleMuon/Run2018A-17Sep2018-v2/MINIAOD'),
+            ('SingleMuonRun2018B-17Sep2018-v1',  '/SingleMuon/Run2018B-17Sep2018-v1/MINIAOD'),
+            ('SingleMuonRun2018C-17Sep2018-v1',  '/SingleMuon/Run2018C-17Sep2018-v1/MINIAOD'),
             ('SingleMuonRun2018D-PromptReco-v2', '/SingleMuon/Run2018D-PromptReco-v2/MINIAOD'),
         ]
         lumi_lists = [

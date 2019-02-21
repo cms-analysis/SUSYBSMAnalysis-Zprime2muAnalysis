@@ -4,7 +4,9 @@
 
 miniAOD = True
 check_prescaled_path = False
-do_all_track_fits = True
+# User beware: note do_all_track_fits=True can potentially cause memory problems on CRAB
+# Remove unnecessary EDAnalyzers or cut sets from the path
+do_all_track_fits = False 
 ex = ''
 
 ################################################################################
@@ -213,7 +215,7 @@ config.Site.storageSite = 'T2_CH_CERN'
         lo = FilterInfo[name][0]
         hi = FilterInfo[name][1]
         print name,lo,hi,dataset
-        extra = '_'+ if ex!='' else ''
+        extra = '_'+ex if ex!='' else ''
 
         open('crabConfig.py', 'wt').write(crab_cfg % locals())
 

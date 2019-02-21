@@ -396,7 +396,7 @@ def for_mc(process, hlt_process_name, fill_gen_info):
     ntuplify(process,fill_gen_info=fill_gen_info) 
     # make a Our2018MuonsPlusMuonsMinusNtuple
     ntuplify(process,cut='Our2018',dil_name='MuonsPlusMuonsMinus',fill_gen_info=fill_gen_info)
-    if Electron:
+    if Electrons:
         # make a Our2018MuonsElectronsAllSigns
         ntuplify(process,cut='Simple',dil_name='MuonsElectronsAllSigns',fill_gen_info=fill_gen_info) 
     # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)

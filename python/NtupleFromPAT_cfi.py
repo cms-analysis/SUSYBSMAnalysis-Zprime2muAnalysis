@@ -9,7 +9,6 @@ NtupleFromPAT_MiniAOD = cms.EDAnalyzer('SimpleNtupler_miniAOD',
                         doElectrons = cms.bool(False),
                         # This is re-set in histos.py for MC
                         TriggerResults_src = cms.InputTag('TriggerResults', '', 'RECO'),
-                        doPrescales = cms.bool(False),
                         genEventInfo = cms.untracked.InputTag('generator'),
                         metFilter = cms.VInputTag(
                             cms.InputTag("Flag_HBHENoiseFilter"), 

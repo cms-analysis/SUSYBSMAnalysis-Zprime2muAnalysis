@@ -7,7 +7,6 @@ ex = ''
 
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/PdmVAnalysisSummaryTable
 # Set temporary global tags here, may be changed later
-dataGT = '102X_dataRun2_Prompt_v11'
 MCGT = '102X_upgrade2018_realistic_v12'
 
 import sys, os, FWCore.ParameterSet.Config as cms
@@ -68,11 +67,11 @@ import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2018_cff as OurSelection201
 # off. To get e.g. mu+mu+ separate from mu-mu-, cut on the sum of the
 # pdgIds (= -26 for mu+mu+).
 dils = [
-    ('MuonsPlusMuonsMinus',  '%(leptons_name)s:muons@+ %(leptons_name)s:muons@-', 'daughter(0).pdgId() + daughter(1).pdgId() == 0'),
-    ('MuonsPlusMuonsPlus',   '%(leptons_name)s:muons@+ %(leptons_name)s:muons@+', 'daughter(0).pdgId() + daughter(1).pdgId() == -26'),
-    ('MuonsMinusMuonsMinus', '%(leptons_name)s:muons@- %(leptons_name)s:muons@-', 'daughter(0).pdgId() + daughter(1).pdgId() == 26'),
-    ('MuonsSameSign',        '%(leptons_name)s:muons@- %(leptons_name)s:muons@-', ''),
-    ('MuonsAllSigns',        '%(leptons_name)s:muons@- %(leptons_name)s:muons@-', ''),
+    ('MuonsPlusMuonsMinus', '%(leptons_name)s:muons@+ %(leptons_name)s:muons@-','daughter(0).pdgId() + daughter(1).pdgId() == 0'),
+    ('MuonsPlusMuonsPlus',  '%(leptons_name)s:muons@+ %(leptons_name)s:muons@+','daughter(0).pdgId() + daughter(1).pdgId() == -26'),
+    ('MuonsMinusMuonsMinus','%(leptons_name)s:muons@- %(leptons_name)s:muons@-','daughter(0).pdgId() + daughter(1).pdgId() == 26'),
+    ('MuonsSameSign',       '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',''),
+    ('MuonsAllSigns',       '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',''),
     ]
 
 # Define sets of cuts for which to make plots. If using a selection
@@ -88,18 +87,18 @@ cuts = {
 
 if miniAOD and Electrons:
     dils = [\
-        ('MuonsPlusMuonsMinus',          '%(leptons_name)s:muons@+ %(leptons_name)s:muons@-',         'daughter(0).pdgId() + daughter(1).pdgId() == 0'),
-        ('MuonsPlusMuonsPlus',           '%(leptons_name)s:muons@+ %(leptons_name)s:muons@+',         'daughter(0).pdgId() + daughter(1).pdgId() == -26'),
-        ('MuonsMinusMuonsMinus',         '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',         'daughter(0).pdgId() + daughter(1).pdgId() == 26'),
-        ('MuonsSameSign',                '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',         ''),
-        ('MuonsAllSigns',                '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',         ''),
-        ('MuonsPlusElectronsMinus',      '%(leptons_name)s:muons@+ %(leptons_name)s:electrons@-',     'daughter(0).pdgId() + daughter(1).pdgId() == -2'),
-        ('MuonsMinusElectronsPlus',      '%(leptons_name)s:muons@- %(leptons_name)s:electrons@+',     'daughter(0).pdgId() + daughter(1).pdgId() == 2'),
-        ('MuonsPlusElectronsPlus',       '%(leptons_name)s:muons@+ %(leptons_name)s:electrons@+',     'daughter(0).pdgId() + daughter(1).pdgId() == -24'),
-        ('MuonsMinusElectronsMinus',     '%(leptons_name)s:muons@- %(leptons_name)s:electrons@-',     'daughter(0).pdgId() + daughter(1).pdgId() == 24'),
-        ('MuonsElectronsOppSign',        '%(leptons_name)s:muons@+ %(leptons_name)s:electrons@-',     ''),
-        ('MuonsElectronsSameSign',       '%(leptons_name)s:muons@+ %(leptons_name)s:electrons@+',     ''),
-        ('MuonsElectronsAllSigns',       '%(leptons_name)s:muons@+ %(leptons_name)s:electrons@+',     ''),
+        ('MuonsPlusMuonsMinus',     '%(leptons_name)s:muons@+ %(leptons_name)s:muons@-',    'daughter(0).pdgId() + daughter(1).pdgId() == 0'),
+        ('MuonsPlusMuonsPlus',      '%(leptons_name)s:muons@+ %(leptons_name)s:muons@+',    'daughter(0).pdgId() + daughter(1).pdgId() == -26'),
+        ('MuonsMinusMuonsMinus',    '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',    'daughter(0).pdgId() + daughter(1).pdgId() == 26'),
+        ('MuonsSameSign',           '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',    ''),
+        ('MuonsAllSigns',           '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',    ''),
+        ('MuonsPlusElectronsMinus', '%(leptons_name)s:muons@+ %(leptons_name)s:electrons@-','daughter(0).pdgId() + daughter(1).pdgId() == -2'),
+        ('MuonsMinusElectronsPlus', '%(leptons_name)s:muons@- %(leptons_name)s:electrons@+','daughter(0).pdgId() + daughter(1).pdgId() == 2'),
+        ('MuonsPlusElectronsPlus',  '%(leptons_name)s:muons@+ %(leptons_name)s:electrons@+','daughter(0).pdgId() + daughter(1).pdgId() == -24'),
+        ('MuonsMinusElectronsMinus','%(leptons_name)s:muons@- %(leptons_name)s:electrons@-','daughter(0).pdgId() + daughter(1).pdgId() == 24'),
+        ('MuonsElectronsOppSign',   '%(leptons_name)s:muons@+ %(leptons_name)s:electrons@-',''),
+        ('MuonsElectronsSameSign',  '%(leptons_name)s:muons@+ %(leptons_name)s:electrons@+',''),
+        ('MuonsElectronsAllSigns',  '%(leptons_name)s:muons@+ %(leptons_name)s:electrons@+',''),
         ]
     
     cuts = {
@@ -212,8 +211,6 @@ for cut_name, Selection in cuts.iteritems():
         setattr(process, name + 'Histos', histos)
         path_list.append(alldil * dil * histos)
 
-
-
     # Finally, make the path for this set of cuts.
     pathname = 'path' + cut_name
     if miniAOD:
@@ -222,7 +219,6 @@ for cut_name, Selection in cuts.iteritems():
         pobj = process.EventCounter * process.dileptonPreselector *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
     else:
         pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
-
 
     if 'VBTF' not in cut_name and cut_name != 'Simple':
         if not miniAOD:
@@ -238,90 +234,41 @@ for cut_name, Selection in cuts.iteritems():
         else:
             pobj = process.PrescaleToCommon * pobj 
 
-
-    # This is a MC-specific bloc of code
-    # define the list of MC samples to be read here. be careful that if WWinclusive or tautau sample are not commented it will apply the filters when running locally.
-
-    if 'no_mc' not in sys.argv:
-        for sample in samples:
-            name = sample.name
-            
-            if 'dy50to120' in name and ZSkim:
-                if miniAOD:
-                    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
-                    process.DYGenMassFilter = cms.EDFilter('DyPt_ZSkim',
-                                       src = cms.InputTag('prunedGenParticles'),
-                                       min_mass = cms.double(0),
-                                       max_mass = cms.double(100), 
-                                       )
-                else:
-                    process.DYGenMassFilter = cms.EDFilter('DyPt_ZSkim',
-                                       src = cms.InputTag('prunedMCLeptons'),
-                                       min_mass = cms.double(0),
-                                       max_mass = cms.double(100), 
-                                       )   
-                pobj = process.DYGenMassFilter * pobj
-
-            if 'ttbar_lep50to500' in name:
-                    if miniAOD:
-                        process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
-                        process.DYGenMassFilter = cms.EDFilter('TTbarSelection',
-                                           src = cms.InputTag('prunedGenParticles'),
-                                           min_mass = cms.double(50),
-                                           max_mass = cms.double(500), 
-                                           )
-                    else:
-                        process.DYGenMassFilter = cms.EDFilter('TTbarSelection',
-                                           src = cms.InputTag('prunedMCLeptons'),
-                                           min_mass = cms.double(50),
-                                           max_mass = cms.double(500), 
-                                           )   
-                    pobj = process.DYGenMassFilter * pobj
-                
-            if 'WWinclusive' in name:
-                if miniAOD:
-                    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
-                    process.DYGenMassFilter = cms.EDFilter('DibosonGenMass',
-                                           src = cms.InputTag('prunedGenParticles'),
-                                           min_mass = cms.double(50),
-                                           max_mass = cms.double(200), 
-                                           )
-                else:
-                    process.DYGenMassFilter = cms.EDFilter('DibosonGenMass',
-                                           src = cms.InputTag('prunedMCLeptons'),
-                                           min_mass = cms.double(50),
-                                           max_mass = cms.double(200),
-                                           )   
-                pobj = process.DYGenMassFilter * pobj
-                     
-            if 'dyInclusive50' in name:
-                if miniAOD:
-                    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
-                    process.DYGenMassFilter = cms.EDFilter('TauTauSelection',
-                                           src = cms.InputTag('prunedGenParticles'),                                      
-                                           )
-                else:
-                    process.DYGenMassFilter = cms.EDFilter('TauTauSelection',
-                                           src = cms.InputTag('prunedMCLeptons'),                                      
-                                           ) 
-                    
-                pobj = process.DYGenMassFilter * pobj
-
-
-        
     path = cms.Path(pobj)
     setattr(process, pathname, path)
 
+
+def apply_gen_filters(process,sampleName):
+    from SUSYBSMAnalysis.Zprime2muAnalysis.MCFilters_cfi import DYPtZskim, TTbarGenMassFilter, DibosonGenMassFilter, TauTauFilter
+    addFilter = False
+    if miniAOD:
+        process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
+    if ('dy50to120' in sampleName or 'dyInclusive' in sampleName) and ZSkim:
+        mcFilter = DYPtZskim.clone()
+        addFilter = True
+    elif 'ttbar_lep50to500' in sampleName:
+        mcFilter = TTbarGenMassFilter.clone()
+        addFilter = True
+    elif 'WWinclusive' in sampleName:
+        mcFilter = DibosonGenMassFilter.clone()
+        addFilter = True
+    elif 'dyInclusive50' in sampleName:
+        mcFilter = TauTauFilter.clone()
+        addFilter = True
+    if addFilter:
+        if not miniAOD:
+            mcFilter.src = cms.InputTag('prunedMCLeptons')
+        setattr(process,sampleName+'Filter',mcFilter)
+        mcFilterPath = getattr(process,sampleName+'Filter')
+        for path_name, path in process.paths.iteritems():
+            getattr(process,path_name).insert(0,mcFilterPath)
 
 def ntuplify(process, cut='Simple', dil_name='MuonsAllSigns', fill_gen_info=False):
     dimu_src_tag = cut+dil_name
     if miniAOD:
         ntuple = NtupleFromPAT_MiniAOD.clone(dimu_src=cms.InputTag(dimu_src_tag))
-
     else:
         ntuple = NtupleFromPAT.clone(dimu_src=cms.InputTag(dimu_src_tag))
-
-    if 'Prescaled' in cut: ntuple.doPrescales= cms.bool(True)
 
     if fill_gen_info:
         from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction
@@ -378,7 +325,6 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.pCheckPrescale = cms.Path(process.CheckPrescale)
 
 def for_data(process):
-    process.GlobalTag.globaltag = dataGT
     # make a SimpleMuonsAllSignsNtuple
     ntuplify(process) 
     # make a Our2018MuonsPlusMuonsMinusNtuple
@@ -490,8 +436,6 @@ config.Site.storageSite = 'T2_CH_CERN'
             ('SingleMuonRun2018B-17Sep2018-v1',  '/SingleMuon/Run2018B-17Sep2018-v1/MINIAOD'),
             ('SingleMuonRun2018C-17Sep2018-v1',  '/SingleMuon/Run2018C-17Sep2018-v1/MINIAOD'),
             ('SingleMuonRun2018D-PromptReco-v2', '/SingleMuon/Run2018D-PromptReco-v2/MINIAOD'),
-
-
         ]
 
         lumi_lists = ['Run2018MuonsOnly']
@@ -553,11 +497,12 @@ config.Data.unitsPerJob  = 10000
        
         for sample in samples:
             name = sample.name
-            ana_dataset = sample.ana_dataset
+            ana_dataset = sample.dataset
             print name, ana_dataset
 
             new_py = open('histos.py').read()
             new_py += "\nfor_mc(process,'HLT',True)\n"
+            new_py += "\napply_gen_filters(process,\"%(name)s\")\n"%locals()
             open('histos_crab.py', 'wt').write(new_py)
 
             open('crabConfig.py', 'wt').write(crab_cfg % locals())

@@ -1,11 +1,11 @@
-!/usr/bin/env python
+#!/usr/bin/env python
 import FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_reco_process_name
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFiltersMiniAOD
 
-process.source.fileNames =['[{"code":2,"error":"DBS unable to unmarshal the data into DAS record, api=files_via_dataset, data=\u0026lt;!DOCTYPE HTML PUBLIC \u0026#34;-//IETF//DTD HTML 2.0//EN\u0026#34;\u0026gt;\n\u0026lt;html\u0026gt;\u0026lt;head\u0026gt;\n\u0026lt;title\u0026gt;502 Proxy Error\u0026lt;/title\u0026gt;\n\u0026lt;/head\u0026gt;\u0026lt;body\u0026gt;\n\u0026lt;h1\u0026gt;Proxy Error\u0026lt;/h1\u0026gt;\n\u0026lt;p\u0026gt;The proxy server received an invalid\r\nresponse from an upstream server.\u0026lt;br /\u0026gt;\r\nThe proxy server could not handle the request \u0026lt;em\u0026gt;\u0026lt;a href=\u0026#34;/auth/complete/dbs/prod/global/DBSReader/files/\u0026#34;\u0026gt;GET\u0026amp;nbsp;/auth/complete/dbs/prod/global/DBSReader/files/\u0026lt;/a\u0026gt;\u0026lt;/em\u0026gt;.\u0026lt;p\u0026gt;\nReason: \u0026lt;strong\u0026gt;Error reading from remote server\u0026lt;/strong\u0026gt;\u0026lt;/p\u0026gt;\u0026lt;/p\u0026gt;\n\u0026lt;/body\u0026gt;\u0026lt;/html\u0026gt;\n, error=invalid character \u0026#39;\u0026lt;\u0026#39; looking for beginning of value","type":"DBS upstream error"}]']
+process.source.fileNames =['/store/mc/RunIISummer16MiniAODv2/ADDGravToLL_LambdaT-3000_M-1700_13TeV-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/100000/BEF61610-2CD3-E611-818D-0026B95A4CB3.root']
 
 process.maxEvents.input = -1
 isMC = True

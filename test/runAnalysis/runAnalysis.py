@@ -56,15 +56,6 @@ process.DYGenMassFilter = cms.EDFilter('QScaleSelector',
 				       )
 for path_name, path in process.paths.iteritems():
 	getattr(process,path_name).insert(2,process.DYGenMassFilter)'''
-        ADDFilter1700 = '''
-process.DYGenMassFilter = cms.EDFilter('QScaleSelector',
-                                       src = cms.InputTag('generator'),
-                                       min_mass = cms.double(1700),
-                                       max_mass = cms.double(7000)
-                                       )
-for path_name, path in process.paths.iteritems():
-        getattr(process,path_name).insert(2,process.DYGenMassFilter)'''
-
 	ZPtFilter = '''    
 process.DYGenMassFilter = cms.EDFilter('DyPt_ZSkim',
                                        src = cms.InputTag('prunedGenParticles'),
@@ -92,8 +83,6 @@ for path_name, path in process.paths.iteritems():
 			return CIFilter1300
 		else:
 			return ""
-	elif args.add2016:
-		return ADDFilter1700
 	else:
 		return ""
 
@@ -257,9 +246,7 @@ def main():
 		arguments["year"] = 2018
 	cmssw_cfg = open('setup.py').read()%arguments
 	prefix = "muons_"	
-	if args.add2016:
-		cmssw_cfg = cmssw_cfg + "\nfrom Configuration.AlCa.GlobalTag import GlobalTag \nprocess.GlobalTag = GlobalTag(process.GlobalTag, 'auto:startup', '') \n"
-
+	
 	if not args.resolution:
 		
 		if args.electrons:
@@ -330,7 +317,7 @@ def main():
 			lumi_mask = ""
 			GT = "94X_mc2017_realistic_v14"
 			if args.add2016:
-				GT = "84X_mcRun2_asymptotic_2016_TranchelV_v6"
+				GT = "80X_mcRun2_asymptotic_2016_TrancheIV_v6"
 			if args.data:
 				if args.electrons: 
 					lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt"
@@ -391,13 +378,7 @@ def main():
 				#print getFilterSnippet(dataset_name)
 				open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
             			if args.submit:
-                			#os.system('crab submit -c crabConfig.py')
-					os.system('cmsRun cmssw_cfg.py')
-					fnamere = "dileptonAna_%s%s.root"%(prefix, dataset_name)
-                                        if "muon" in fnamere: fnamere = fnamere.replace("LL", "2Mu")
-                                        else: fnamere = fnamere.replace("LL", "2E")
-                                        os.system('mv zp2mu_histos.root %s'%fnamere)
-                                        #print "Test passed for: " + dataset_name
+                			os.system('crab submit -c crabConfig.py')
 
 			if args.resolution and not args.data and not args.do2016 and not args.do2018:
 				print "submitting also weird samples"

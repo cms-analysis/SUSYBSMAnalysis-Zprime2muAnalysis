@@ -100,7 +100,7 @@ config.JobType.psetName = 'cmssw_cfg.py'
 config.Data.inputDBS = 'global'
 config.Data.publication = False
 config.Data.outputDatasetTag = 'dileptonAna_%s'
-config.Data.outLFNDirBase = '/store/user/jschulte'
+config.Data.outLFNDirBase = '/store/user/zhangfa/ADD2016MC'
 config.Site.storageSite = 'T2_US_Purdue'
 config.Site.whitelist = ['T2_ES_IFCA','T2_US_Nebraska','T2_US_UCSD']
 #config.Site.whitelist = ['T1_US_FNAL']
@@ -129,7 +129,7 @@ config.Data.inputDataset =  '%s'
 config.Data.inputDBS = 'global'
 config.Data.publication = False
 config.Data.outputDatasetTag = 'dileptonAna_%s'
-config.Data.outLFNDirBase = '/store/user/jschulte'
+config.Data.outLFNDirBase = '/store/user/zhangfa/ADD2016MC'
 #config.Data.ignoreLocality = True
 #config.General.instance = 'preprod' 
 #config.Site.whitelist = ["T2_IT_Bari"]
@@ -171,7 +171,7 @@ config.Data.inputDataset =  '%s'
 config.Data.inputDBS = 'global'
 config.Data.publication = False
 config.Data.outputDatasetTag = 'dileptonAna_%s'
-config.Data.outLFNDirBase = '/store/user/jschulte'
+config.Data.outLFNDirBase = '/store/user/zhangfa/ADD2016MC'
 config.Data.ignoreLocality = True
 #config.General.instance = 'preprod' 
 config.Site.whitelist = ["T2_US_*"]
@@ -220,13 +220,14 @@ def main():
 	parser.add_argument( "--2016", action="store_true", dest="do2016", default=False,help="run for 2016")
 	parser.add_argument( "--2018", action="store_true", dest="do2018", default=False,help="run for 2018")
 	parser.add_argument( "--addNTuples", action="store_true", dest="addNTuples", default=False,help="add nTuples to histogrammer workflow")
+        parser.add_argument( "--add2016", action="store_true", dest="add2016", default=False, help="run ADD MC for 2016")
 	args = parser.parse_args()
 
 	if args.resolution and args.addNTuples:
 		print "warning, addNTuplets does nothing for resolution workflow"
 
 
-	if args.ci2016:
+	if args.ci2016 or args.add2016:
 		args.do2016 = True
 
 	isMC = "True"
@@ -245,6 +246,7 @@ def main():
 		arguments["year"] = 2018
 	cmssw_cfg = open('setup.py').read()%arguments
 	prefix = "muons_"	
+	
 	if not args.resolution:
 		
 		if args.electrons:
@@ -310,8 +312,12 @@ def main():
 					from samples import backgrounds_muons_2018 as samples
 				else:	
 					from samples import backgrounds_muons_2017 as samples 
+			if args.add2016:
+				from samples import add_2016 as samples
 			lumi_mask = ""
 			GT = "94X_mc2017_realistic_v14"
+			if args.add2016:
+				GT = "80X_mcRun2_asymptotic_2016_TrancheIV_v6"
 			if args.data:
 				if args.electrons: 
 					lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt"
@@ -358,6 +364,17 @@ def main():
 				if not args.do2016 and not args.do2018 and not args.ci2017 and not args.data and not args.resolution and args.electrons:
 					print "trying"
 					cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
+
+                                # write add filename information
+				if args.add2016:
+                                	os.system('dasgoclient -query="file dataset=%s | grep file.name" > myfiles.txt'%dataset)
+                                	with open('myfiles.txt') as fin:
+                                        	content = fin.readlines()
+                                	content = [x.strip() for x in content]
+					print content[0]
+					fin.close()
+					cmssw_tmp = cmssw_tmp.replace('/store/data/Run2017F/DoubleEG/MINIAOD/17Nov2017-v1/50000/00105BAD-63E0-E711-8640-02163E0146C5.root', content[0])
+
 				#print getFilterSnippet(dataset_name)
 				open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
             			if args.submit:

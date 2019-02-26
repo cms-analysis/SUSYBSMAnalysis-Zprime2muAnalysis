@@ -842,3 +842,23 @@ ci_muons_2016 = [
 
 
 ]
+
+add_2016 = [
+
+('ADDGravToLL_LambdaT3000_M1700', '/ADDGravToLL_LambdaT-3000_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+('ADDGravToLL_LambdaT3500_M1700', '/ADDGravToLL_LambdaT-3500_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+('ADDGravToLL_LambdaT4000_M1700', '/ADDGravToLL_LambdaT-4000_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+('ADDGravToLL_LambdaT4500_M1700', '/ADDGravToLL_LambdaT-4500_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+('ADDGravToLL_LambdaT5000_M1700', '/ADDGravToLL_LambdaT-5000_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+('ADDGravToLL_LambdaT5500_M1700', '/ADDGravToLL_LambdaT-5500_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+('ADDGravToLL_LambdaT6000_M1700', '/ADDGravToLL_LambdaT-6000_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+('ADDGravToLL_LambdaT6500_M1700', '/ADDGravToLL_LambdaT-6500_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+('ADDGravToLL_LambdaT7000_M1700', '/ADDGravToLL_LambdaT-7000_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+('ADDGravToLL_LambdaT7500_M1700', '/ADDGravToLL_LambdaT-7500_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+('ADDGravToLL_LambdaT8000_M1700', '/ADDGravToLL_LambdaT-8000_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+('ADDGravToLL_LambdaT8500_M1700', '/ADDGravToLL_LambdaT-8500_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+('ADDGravToLL_LambdaT9000_M1700', '/ADDGravToLL_LambdaT-9000_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+('ADDGravToLL_LambdaT10000_M1700', '/ADDGravToLL_LambdaT-10000_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+
+]
+

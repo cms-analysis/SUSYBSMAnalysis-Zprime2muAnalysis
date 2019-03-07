@@ -32,7 +32,6 @@ ResolutionUsingMC.doQoverP = cms.bool(True)
 ResolutionUsingMC.hardInteraction.src = cms.InputTag('prunedGenParticles')
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.EfficiencyFromMC_cfi import EfficiencyFromMCMini as EfficiencyFromMC
-EfficiencyFromMC.check_l1=cms.bool(False)
 EfficiencyFromMC.use_resonance_mass = cms.bool(True)
 EfficiencyFromMC.use_resonance_mass_denom = cms.bool(True)
 
@@ -193,16 +192,16 @@ config.Site.storageSite = 'T2_CH_CERN'
     # Only do DY MC samples and apply HardInteractionFilter
     FilterInfo = {
         #'name':        (  lo,    hi),
-	    'dy50to120':    (  50,   120),
-    	'dy120to200':   ( 120,   200),
-	    'dy200to400':   ( 200,   400),
-    	'dy400to800':   ( 400,   800),
-	    'dy800to1400':  ( 800,  1400),
-    	'dy1400to2300': (1400,  2300),
-	    'dy2300to3500': (2300,  3500),
-    	'dy3500to4500': (3500,  4500),
-	    'dy4500to6000': (4500,  6000),
-	    'dy6000toInf':  (6000, 10000),
+        'dy50to120':    (  50,   120),
+        'dy120to200':   ( 120,   200),
+        'dy200to400':   ( 200,   400),
+        'dy400to800':   ( 400,   800),
+        'dy800to1400':  ( 800,  1400),
+        'dy1400to2300': (1400,  2300),
+        'dy2300to3500': (2300,  3500),
+        'dy3500to4500': (3500,  4500),
+        'dy4500to6000': (4500,  6000),
+        'dy6000toInf':  (6000, 10000),
         }
     dySamples = [sample for sample in samples if sample.name in FilterInfo.keys()]
 
@@ -227,5 +226,5 @@ config.Site.storageSite = 'T2_CH_CERN'
         open('histos_crab.py', 'wt').write(new_py)
         
         if not just_testing:
-            os.system('crab submit  -c crabConfig.py')
+            os.system('crab submit -c crabConfig.py')
             os.system('rm crabConfig.py histos_crab.py histos_crab.pyc')

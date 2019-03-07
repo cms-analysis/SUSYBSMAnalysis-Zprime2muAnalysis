@@ -3,7 +3,7 @@
 
 miniAOD = True
 Electrons = False
-ex = ''
+ex = '20190301'
 
 # https://twiki.cern.ch/twiki/bin/viewauth/CMS/PdmVAnalysisSummaryTable
 # Set temporary global tags here, may be changed later
@@ -18,7 +18,8 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
 
 process.source.fileNames = [
         #'/store/data/Run2018A/SingleMuon/MINIAOD/06Jun2018-v1/410000/CCA4DBD1-FF83-E811-988F-FA163E5991FE.root'
-        '/store/data/Run2018D/SingleMuon/MINIAOD/PromptReco-v2/000/322/068/00000/F8DCA3B9-41B0-E811-8B23-FA163E279E4C.root'
+        #'/store/data/Run2018D/SingleMuon/MINIAOD/PromptReco-v2/000/322/068/00000/F8DCA3B9-41B0-E811-8B23-FA163E279E4C.root'
+        '/store/mc/RunIIAutumn18MiniAOD/ZToMuMu_NNPDF31_13TeV-powheg_M_50_120/MINIAODSIM/102X_upgrade2018_realistic_v15-v2/120000/078DB2B1-40DD-634D-A3CF-D2E377CAFA48.root'
            ]
 
 process.maxEvents.input = -1
@@ -220,13 +221,6 @@ for cut_name, Selection in cuts.iteritems():
     else:
         pobj = process.muonPhotonMatch * reduce(lambda x,y: x*y, path_list)
 
-    if 'VBTF' not in cut_name and cut_name != 'Simple':
-        if not miniAOD:
-            pobj = process.goodDataFilter * pobj
-    else:
-        process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
-        for dataFilter in goodDataFiltersMiniAOD:
-            pobj = dataFilter * pobj
 
     if 'MuPrescaled' in cut_name:
         if miniAOD:
@@ -324,7 +318,19 @@ def check_prescale(process, trigger_paths, hlt_process_name='HLT'):
     process.CheckPrescale.dump_prescales = cms.untracked.bool(False)
     process.pCheckPrescale = cms.Path(process.CheckPrescale)
 
+def add_filters(process,is_mc=True):
+    for cut_name, Selection in cuts.iteritems():
+        path_name = 'path'+cut_name
+        if hasattr(process,path_name) and cut_name != 'Simple':
+            process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
+            for dataFilter in goodDataFiltersMiniAOD:
+                if is_mc:
+                    dataFilter.src = cms.InputTag('TriggerResults','','PAT') # to submit MC
+                getattr(process,path_name).insert(0,dataFilter)
+
 def for_data(process):
+    # Add filters
+    add_filters(process,is_mc=False)
     # make a SimpleMuonsAllSignsNtuple
     ntuplify(process) 
     # make a Our2018MuonsPlusMuonsMinusNtuple
@@ -338,6 +344,8 @@ def for_data(process):
 
 def for_mc(process, hlt_process_name, fill_gen_info):
     process.GlobalTag.globaltag = MCGT
+    # Add filters
+    add_filters(process)
     # make a SimpleMuonsAllSignsNtuple
     ntuplify(process,fill_gen_info=fill_gen_info) 
     # make a Our2018MuonsPlusMuonsMinusNtuple
@@ -361,7 +369,7 @@ if 'int_data' in sys.argv:
     #printify(process)
     
 if 'int_mc' in sys.argv:
-    for_mc(process, 'HLT', False)
+    for_mc(process, 'HLT', True)
     #printify(process)
     
 if 'gogo' in sys.argv:
@@ -394,7 +402,7 @@ if 'gogo' in sys.argv:
 
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
-from CRABClient.UserUtilities import config
+from CRABClient.UserUtilities import config,getUsernameFromSiteDB
 config = config()
 config.General.requestName = 'ana_datamc_%(name)s%(extra)s'
 config.General.workArea = 'crab'
@@ -402,11 +410,13 @@ config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'histos_crab.py'   
 config.Data.inputDataset =  '%(ana_dataset)s'
 config.Data.inputDBS = 'global'
+config.Data.publication = False
 job_control
 config.Data.outputDatasetTag = 'ana_datamc_%(name)s'
-config.Data.outLFNDirBase = '/store/group/phys_exotica/dimuon/2018/datamc'
+config.Data.outLFNDirBase = '/store/user/'+getUsernameFromSiteDB()
 config.Site.storageSite = 'T2_CH_CERN'
 '''
+#config.Data.outLFNDirBase = '/store/group/phys_exotica/dimuon/2018/datamc'
     
     just_testing = 'testing' in sys.argv
     extra = '_'+ex if ex!='' else ''
@@ -457,7 +467,7 @@ config.Site.storageSite = 'T2_CH_CERN'
 
             new_py = open('histos.py').read()
             new_py += "\nfor_data(process)\n"
-            if '17Sept2018' in dataset_name:
+            if '17Sep2018' in dataset_name:
                 new_py += "\nprocess.GlobalTag.globaltag = '102X_dataRun2_Sep2018Rereco_v1'\n"
             else:
                 new_py += "\nprocess.GlobalTag.globaltag = '102X_dataRun2_Prompt_v11'\n"

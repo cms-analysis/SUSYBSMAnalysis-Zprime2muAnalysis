@@ -773,11 +773,17 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
     if (fill_gen_info) {
         // This only works for DY/Z'/RSG events, and really just for PYTHIA!
         hardInteraction->Fill(event);
-        int EventWeight = 1.;
+        double EventWeight = 1.;
         edm::Handle<GenEventInfoProduct> gen_ev_info;
         event.getByLabel(genEventInfo_, gen_ev_info);
-        EventWeight = gen_ev_info->weight();
-        t.genWeight = ( EventWeight > 0 ) ? 1 : -1;
+        if (gen_ev_info.isValid()) {
+            EventWeight = gen_ev_info->weight();
+            t.genWeight = ( EventWeight > 0.0 ) ? 1.0 : -1.0;
+        }
+        else {
+            EventWeight = 1.0;
+            t.genWeight = 1.0;
+        }
         //
         // Store Generator Level information
         //

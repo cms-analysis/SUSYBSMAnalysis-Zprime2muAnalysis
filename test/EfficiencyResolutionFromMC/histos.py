@@ -2,8 +2,6 @@
 
 ################################################################################
 
-miniAOD = True
-check_prescaled_path = False
 # User beware: note do_all_track_fits=True can potentially cause memory problems on CRAB
 # Remove unnecessary EDAnalyzers or cut sets from the path
 do_all_track_fits = False 
@@ -17,7 +15,8 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.MCSamples import samples
 
 #process.maxEvents.input = 1000
 process.source.fileNames = [
-            '/store/mc/RunIIAutumn18MiniAOD/ZToMuMu_NNPDF31_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v2/110000/2BBCC514-3E29-1D40-BCA5-B0F0D09FD08C.root',
+        #    '/store/mc/RunIIAutumn18MiniAOD/ZToMuMu_NNPDF31_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v2/110000/2BBCC514-3E29-1D40-BCA5-B0F0D09FD08C.root',
+        '/store/mc/RunIIAutumn18MiniAOD/ZToMuMu_NNPDF31_13TeV-powheg_M_50_120/MINIAODSIM/102X_upgrade2018_realistic_v15-v2/120000/078DB2B1-40DD-634D-A3CF-D2E377CAFA48.root'
                             ]
 process.options.wantSummary = False
 
@@ -26,10 +25,9 @@ process.GlobalTag.globaltag = '102X_upgrade2018_realistic_v12'
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
 HistosFromPAT.leptonsFromDileptons = True
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.ResolutionUsingMC_cfi import ResolutionUsingMC
+from SUSYBSMAnalysis.Zprime2muAnalysis.ResolutionUsingMC_cfi import ResolutionUsingMC_MiniAOD as ResolutionUsingMC
 ResolutionUsingMC.leptonsFromDileptons = cms.bool(True)
 ResolutionUsingMC.doQoverP = cms.bool(True)
-ResolutionUsingMC.hardInteraction.src = cms.InputTag('prunedGenParticles')
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.EfficiencyFromMC_cfi import EfficiencyFromMCMini as EfficiencyFromMC
 EfficiencyFromMC.use_resonance_mass = cms.bool(True)
@@ -45,7 +43,7 @@ if do_all_track_fits:
 else:
     tracks = [('muons','')]
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold, trigger_filters, trigger_path_names, prescaled_trigger_filters, prescaled_trigger_path_names, prescaled_trigger_match_2018, trigger_match_2018
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, trigger_pt_threshold, offline_pt_threshold,prescaled_trigger_pt_threshold, prescaled_offline_pt_threshold, trigger_filters, trigger_path_names, prescaled_trigger_filters, prescaled_trigger_path_names, prescaled_trigger_match_2018, trigger_match_2018
 
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2018_cff as OurSelection2018
 cuts = {
@@ -70,7 +68,7 @@ for cut_name, Selection in cuts.iteritems():
     path_list = []
 
     leptons_name = cut_name+'Leptons'
-    if miniAOD: path_list.append(process.egmGsfElectronIDSequence)
+    path_list.append(process.egmGsfElectronIDSequence)
     if cut_name == 'Simple':
         muon_cuts = ''
     elif 'AtZ' in cut_name:
@@ -135,16 +133,19 @@ for cut_name, Selection in cuts.iteritems():
             Resolution = ResolutionUsingMC.clone()
             ResolutionVertex = ResolutionUsingMC.clone(use_vertex_mass=cms.bool(True))
 
+            Efficiency = EfficiencyFromMC.clone()
             if 'AtZ' in cut_name:
-                EfficiencyFromMC.trigger_filters = prescaled_trigger_filters
-                EfficiencyFromMC.trigger_path_names = prescaled_trigger_path_names
-                EfficiencyFromMC.dimuon_src = cms.InputTag(name)
-                Efficiency = EfficiencyFromMC.clone()
+                Efficiency.trigger_filters = prescaled_trigger_filters
+                Efficiency.trigger_path_names = prescaled_trigger_path_names
+                Efficiency.hlt_single_min_pt = prescaled_trigger_pt_threshold
+                Efficiency.acceptance_min_pt = prescaled_offline_pt_threshold
+                Efficiency.dimuon_src = cms.InputTag(name)
             else:
-                EfficiencyFromMC.trigger_filters = trigger_filters
-                EfficiencyFromMC.trigger_path_names = trigger_path_names
-                EfficiencyFromMC.dimuon_src = cms.InputTag(name)
-                Efficiency = EfficiencyFromMC.clone(trigger_filters=trigger_filters, trigger_path_names=trigger_path_names)
+                Efficiency.trigger_filters = trigger_filters
+                Efficiency.trigger_path_names = trigger_path_names
+                Efficiency.hlt_single_min_pt = trigger_pt_threshold
+                Efficiency.acceptance_min_pt = offline_pt_threshold
+                Efficiency.dimuon_src = cms.InputTag(name)
 
             setattr(process,allname,alldil)
             setattr(process,name,dil)
@@ -169,7 +170,7 @@ for cut_name, Selection in cuts.iteritems():
 import sys, os
 if __name__ == '__main__' and 'submit' in sys.argv:
     crab_cfg = '''
-from CRABClient.UserUtilities import config
+from CRABClient.UserUtilities import config,getUsernameFromSiteDB
 config = config()
 
 config.General.requestName = 'ana_effres_%(name)s%(extra)s'
@@ -180,14 +181,16 @@ config.JobType.psetName = 'histos_crab.py'
 
 config.Data.inputDataset =  '%(dataset)s'
 config.Data.inputDBS = 'global'
+config.Data.publication = False
 config.Data.splitting = 'EventAwareLumiBased'
 config.Data.totalUnits = -1
 config.Data.unitsPerJob  = 10000
 config.Data.outputDatasetTag = 'ana_effres_%(name)s'
-config.Data.outLFNDirBase = '/store/group/phys_exotica/dimuon/2018/effres'
+config.Data.outLFNDirBase = '/store/user/'+getUsernameFromSiteDB()
 config.Site.storageSite = 'T2_CH_CERN'
                           
 '''
+#config.Data.outLFNDirBase = '/store/group/phys_exotica/dimuon/2018/effres'
         
     # Only do DY MC samples and apply HardInteractionFilter
     FilterInfo = {

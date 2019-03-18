@@ -47,7 +47,7 @@ loose_cut = 'isGlobalMuon && ' \
             'globalTrack.hitPattern.trackerLayersWithMeasurement > 5 && ' \
             'globalTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \
             '( (globalTrack.hitPattern.numberOfValidMuonHits > 0) || (tunePMuonBestTrack.hitPattern.numberOfValidMuonHits > 0) ) && ' \
-            '( numberOfMatchedStations > 1 || (numberOfMatchedStations == 1 && !(stationMask == 1 || stationMask == 16)) || (numberOfMatchedStations == 1 && (stationMask == 1 || stationMask == 16) && numberOfMatchedRPCLayers > 2))'
+            '(( numberOfMatchedStations>1 ) || ( numberOfMatchedStations==1 && ( expectedNnumberOfMatchedStations<2 || !(stationMask==1 || stationMask==16) || numberOfMatchedRPCLayers>2)))'
 
 loose_cut = loose_cut % offline_pt_threshold
 

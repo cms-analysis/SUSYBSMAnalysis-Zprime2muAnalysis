@@ -32,7 +32,8 @@ private:
     int hlt;
   };
 
-  tree_t last_t, t;
+  //tree_t last_t, t;
+  tree_t t;
   TTree* tree;
 };
 
@@ -85,19 +86,18 @@ void CheckPrescale::analyze(const edm::Event& event, const edm::EventSetup& setu
       std::pair<int, int> prescales;
       prescales.first=1;
       std::pair<std::vector<std::pair<std::string,int> >,int> prescalesInDetail;
+      // Combined L1T (pair.first) and HLT (pair.second) prescales per HLT path
       prescalesInDetail = hltPrescaleProvider_.prescaleValuesInDetail(event, setup, *trigger_path);
-    //std::cout << "trigger path " << *trigger_path << " has L1/HLT prescales: " << prescales.first << "/" << prescales.second << "   event r/l/e: " << event.id().run() << "/" << event.luminosityBlock() << "/" << event.id().event() << " orbitNum: " << event.orbitNumber() << " BX: " << event.bunchCrossing() << " seconds since the epoch: " << event.time().unixTime() << "\n";
 
      
+      // In case of a complex Boolean expression as L1 seed
       for (unsigned int i=0; i<prescalesInDetail.first.size(); ++i) {
-          //std::cout<<" prescalesInDetail.first[i].first "<<prescalesInDetail.first[i].first<<" prescalesInDetail.first[i].second "<<prescalesInDetail.first[i].second<<std::endl;
           prescales.first *= prescalesInDetail.first[i].second;
-          //std::cout<<" prescales.first "<<prescales.first<<std::endl;
       }
       
-      //std::cout<<" prescalesInDetail.second "<<prescalesInDetail.second<<std::endl;
       prescales.second = prescalesInDetail.second;
 
+      /*
     if (prescales.first != 1 || prescales.second != 1) {
       std::ostringstream out;
       out << "trigger path " << *trigger_path << " has prescale != 1! L1 prescale = " << prescales.first << "  HLT prescale: " << prescales.second;
@@ -106,6 +106,7 @@ void CheckPrescale::analyze(const edm::Event& event, const edm::EventSetup& setu
       else
         edm::LogWarning("CheckPrescale") << out.str();
     }
+    */
 
     if (dump_prescales) {
       memset(&t, 0, sizeof(tree_t));
@@ -123,7 +124,7 @@ void CheckPrescale::analyze(const edm::Event& event, const edm::EventSetup& setu
       //else
         tree->Fill();
       
-      last_t = t;
+      //last_t = t;
     }
   }
 

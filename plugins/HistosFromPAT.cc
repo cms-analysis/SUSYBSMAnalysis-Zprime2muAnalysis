@@ -149,91 +149,93 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TH1F* CosThetaStarDilepton;
 
 
-  TH1F* DielectronMass;
-  TH1F* DielectronMass_bbbe;
-  TH1F* DielectronMass_bb;
-  TH1F* DielectronMass_be;
-  TH1F* DielectronMass_ee;
-  TH1F* DielectronMass_CSPos;
-  TH1F* DielectronMass_bb_CSPos;
-  TH1F* DielectronMass_bbbe_CSPos;
-  TH1F* DielectronMass_be_CSPos;
-  TH1F* DielectronMass_ee_CSPos;
-  TH1F* DielectronMass_CSNeg;
-  TH1F* DielectronMass_bb_CSNeg;
-  TH1F* DielectronMass_bbbe_CSNeg;
-  TH1F* DielectronMass_be_CSNeg;
-  TH1F* DielectronMass_ee_CSNeg;
+  //if (doElectrons) {
+      TH1F* DielectronMass;
+      TH1F* DielectronMass_bbbe;
+      TH1F* DielectronMass_bb;
+      TH1F* DielectronMass_be;
+      TH1F* DielectronMass_ee;
+      TH1F* DielectronMass_CSPos;
+      TH1F* DielectronMass_bb_CSPos;
+      TH1F* DielectronMass_bbbe_CSPos;
+      TH1F* DielectronMass_be_CSPos;
+      TH1F* DielectronMass_ee_CSPos;
+      TH1F* DielectronMass_CSNeg;
+      TH1F* DielectronMass_bb_CSNeg;
+      TH1F* DielectronMass_bbbe_CSNeg;
+      TH1F* DielectronMass_be_CSNeg;
+      TH1F* DielectronMass_ee_CSNeg;
 
-  TH1F* DielectronMassScaleUp;
-  TH1F* DielectronMassScaleUp_bbbe;
-  TH1F* DielectronMassScaleUp_bb;
-  TH1F* DielectronMassScaleUp_be;
-  TH1F* DielectronMassScaleUp_ee;
-  TH1F* DielectronMassScaleUp_CSPos;
-  TH1F* DielectronMassScaleUp_bb_CSPos;
-  TH1F* DielectronMassScaleUp_bbbe_CSPos;
-  TH1F* DielectronMassScaleUp_be_CSPos;
-  TH1F* DielectronMassScaleUp_ee_CSPos;
-  TH1F* DielectronMassScaleUp_CSNeg;
-  TH1F* DielectronMassScaleUp_bb_CSNeg;
-  TH1F* DielectronMassScaleUp_bbbe_CSNeg;
-  TH1F* DielectronMassScaleUp_be_CSNeg;
-  TH1F* DielectronMassScaleUp_ee_CSNeg;
+      TH1F* DielectronMassScaleUp;
+      TH1F* DielectronMassScaleUp_bbbe;
+      TH1F* DielectronMassScaleUp_bb;
+      TH1F* DielectronMassScaleUp_be;
+      TH1F* DielectronMassScaleUp_ee;
+      TH1F* DielectronMassScaleUp_CSPos;
+      TH1F* DielectronMassScaleUp_bb_CSPos;
+      TH1F* DielectronMassScaleUp_bbbe_CSPos;
+      TH1F* DielectronMassScaleUp_be_CSPos;
+      TH1F* DielectronMassScaleUp_ee_CSPos;
+      TH1F* DielectronMassScaleUp_CSNeg;
+      TH1F* DielectronMassScaleUp_bb_CSNeg;
+      TH1F* DielectronMassScaleUp_bbbe_CSNeg;
+      TH1F* DielectronMassScaleUp_be_CSNeg;
+      TH1F* DielectronMassScaleUp_ee_CSNeg;
 
-  TH1F* DielectronMassScaleDown;
-  TH1F* DielectronMassScaleDown_bbbe;
-  TH1F* DielectronMassScaleDown_bb;
-  TH1F* DielectronMassScaleDown_be;
-  TH1F* DielectronMassScaleDown_ee;
-  TH1F* DielectronMassScaleDown_CSPos;
-  TH1F* DielectronMassScaleDown_bb_CSPos;
-  TH1F* DielectronMassScaleDown_bbbe_CSPos;
-  TH1F* DielectronMassScaleDown_be_CSPos;
-  TH1F* DielectronMassScaleDown_ee_CSPos;
-  TH1F* DielectronMassScaleDown_CSNeg;
-  TH1F* DielectronMassScaleDown_bb_CSNeg;
-  TH1F* DielectronMassScaleDown_bbbe_CSNeg;
-  TH1F* DielectronMassScaleDown_be_CSNeg;
-  TH1F* DielectronMassScaleDown_ee_CSNeg;
+      TH1F* DielectronMassScaleDown;
+      TH1F* DielectronMassScaleDown_bbbe;
+      TH1F* DielectronMassScaleDown_bb;
+      TH1F* DielectronMassScaleDown_be;
+      TH1F* DielectronMassScaleDown_ee;
+      TH1F* DielectronMassScaleDown_CSPos;
+      TH1F* DielectronMassScaleDown_bb_CSPos;
+      TH1F* DielectronMassScaleDown_bbbe_CSPos;
+      TH1F* DielectronMassScaleDown_be_CSPos;
+      TH1F* DielectronMassScaleDown_ee_CSPos;
+      TH1F* DielectronMassScaleDown_CSNeg;
+      TH1F* DielectronMassScaleDown_bb_CSNeg;
+      TH1F* DielectronMassScaleDown_bbbe_CSNeg;
+      TH1F* DielectronMassScaleDown_be_CSNeg;
+      TH1F* DielectronMassScaleDown_ee_CSNeg;
 
-  TH1F* DielectronMassPUScaleUp;
-  TH1F* DielectronMassPUScaleUp_bbbe;
-  TH1F* DielectronMassPUScaleUp_bb;
-  TH1F* DielectronMassPUScaleUp_be;
-  TH1F* DielectronMassPUScaleUp_ee;
-  TH1F* DielectronMassPUScaleUp_CSPos;
-  TH1F* DielectronMassPUScaleUp_bb_CSPos;
-  TH1F* DielectronMassPUScaleUp_bbbe_CSPos;
-  TH1F* DielectronMassPUScaleUp_be_CSPos;
-  TH1F* DielectronMassPUScaleUp_ee_CSPos;
-  TH1F* DielectronMassPUScaleUp_CSNeg;
-  TH1F* DielectronMassPUScaleUp_bb_CSNeg;
-  TH1F* DielectronMassPUScaleUp_bbbe_CSNeg;
-  TH1F* DielectronMassPUScaleUp_be_CSNeg;
-  TH1F* DielectronMassPUScaleUp_ee_CSNeg;
+      TH1F* DielectronMassPUScaleUp;
+      TH1F* DielectronMassPUScaleUp_bbbe;
+      TH1F* DielectronMassPUScaleUp_bb;
+      TH1F* DielectronMassPUScaleUp_be;
+      TH1F* DielectronMassPUScaleUp_ee;
+      TH1F* DielectronMassPUScaleUp_CSPos;
+      TH1F* DielectronMassPUScaleUp_bb_CSPos;
+      TH1F* DielectronMassPUScaleUp_bbbe_CSPos;
+      TH1F* DielectronMassPUScaleUp_be_CSPos;
+      TH1F* DielectronMassPUScaleUp_ee_CSPos;
+      TH1F* DielectronMassPUScaleUp_CSNeg;
+      TH1F* DielectronMassPUScaleUp_bb_CSNeg;
+      TH1F* DielectronMassPUScaleUp_bbbe_CSNeg;
+      TH1F* DielectronMassPUScaleUp_be_CSNeg;
+      TH1F* DielectronMassPUScaleUp_ee_CSNeg;
 
-  TH1F* DielectronMassPUScaleDown;
-  TH1F* DielectronMassPUScaleDown_bbbe;
-  TH1F* DielectronMassPUScaleDown_bb;
-  TH1F* DielectronMassPUScaleDown_be;
-  TH1F* DielectronMassPUScaleDown_ee;
-  TH1F* DielectronMassPUScaleDown_CSPos;
-  TH1F* DielectronMassPUScaleDown_bb_CSPos;
-  TH1F* DielectronMassPUScaleDown_bbbe_CSPos;
-  TH1F* DielectronMassPUScaleDown_be_CSPos;
-  TH1F* DielectronMassPUScaleDown_ee_CSPos;
-  TH1F* DielectronMassPUScaleDown_CSNeg;
-  TH1F* DielectronMassPUScaleDown_bb_CSNeg;
-  TH1F* DielectronMassPUScaleDown_bbbe_CSNeg;
-  TH1F* DielectronMassPUScaleDown_be_CSNeg;
-  TH1F* DielectronMassPUScaleDown_ee_CSNeg;
+      TH1F* DielectronMassPUScaleDown;
+      TH1F* DielectronMassPUScaleDown_bbbe;
+      TH1F* DielectronMassPUScaleDown_bb;
+      TH1F* DielectronMassPUScaleDown_be;
+      TH1F* DielectronMassPUScaleDown_ee;
+      TH1F* DielectronMassPUScaleDown_CSPos;
+      TH1F* DielectronMassPUScaleDown_bb_CSPos;
+      TH1F* DielectronMassPUScaleDown_bbbe_CSPos;
+      TH1F* DielectronMassPUScaleDown_be_CSPos;
+      TH1F* DielectronMassPUScaleDown_ee_CSPos;
+      TH1F* DielectronMassPUScaleDown_CSNeg;
+      TH1F* DielectronMassPUScaleDown_bb_CSNeg;
+      TH1F* DielectronMassPUScaleDown_bbbe_CSNeg;
+      TH1F* DielectronMassPUScaleDown_be_CSNeg;
+      TH1F* DielectronMassPUScaleDown_ee_CSNeg;
 
-  TH2F* DielectronMassVsCS;
-  TH2F* DielectronMassVsCS_bbbe;
-  TH2F* DielectronMassVsCS_bb;
-  TH2F* DielectronMassVsCS_be;
-  TH2F* DielectronMassVsCS_ee;
+      TH2F* DielectronMassVsCS;
+      TH2F* DielectronMassVsCS_bbbe;
+      TH2F* DielectronMassVsCS_bb;
+      TH2F* DielectronMassVsCS_be;
+      TH2F* DielectronMassVsCS_ee;
+    //}
 
 
   TH1F* DileptonMass;
@@ -459,92 +461,94 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   ChiDilepton            = fs->make<TH1F>("ChiDilepton",            titlePrefix + "dil. chi", 100, 0, 20);
   CosThetaStarDilepton   = fs->make<TH1F>("CosThetaStarDilepton",            titlePrefix + "dil. cos theta star", 100, -1, 1);
 
-  // Dilepton invariant mass.
-  DielectronMass            = fs->make<TH1F>("DielectronMass",            titlePrefix + "dil. mass", 20000, 0, 20000);
-  DielectronMass_bbbe       = fs->make<TH1F>("DielectronMass_bbbe",       titlePrefix + "dil. mass", 20000, 0, 20000);
-  DielectronMass_bb         = fs->make<TH1F>("DielectronMass_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
-  DielectronMass_be         = fs->make<TH1F>("DielectronMass_be",            titlePrefix + "dil. mass barrel-endcaps", 20000, 0, 20000);
-  DielectronMass_ee         = fs->make<TH1F>("DielectronMass_ee",            titlePrefix + "dil. mass endcaps-endcaps", 20000, 0, 20000);
-  DielectronMass_CSPos            = fs->make<TH1F>("DielectronMass_CSPos",            titlePrefix + "dil. mass for positive cos theta star", 20000, 0, 20000);
-  DielectronMass_bb_CSPos         = fs->make<TH1F>("DielectronMass_bb_CSPos",            titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
-  DielectronMass_bbbe_CSPos       = fs->make<TH1F>("DielectronMass_bbbe_CSPos",          titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
-  DielectronMass_be_CSPos         = fs->make<TH1F>("DielectronMass_be_CSPos",            titlePrefix + "dil. mass barrel-endcaps for positive cos theta star", 20000, 0, 20000);
-  DielectronMass_ee_CSPos         = fs->make<TH1F>("DielectronMass_ee_CSPos",            titlePrefix + "dil. mass endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
-  DielectronMass_CSNeg            = fs->make<TH1F>("DielectronMass_CSNeg",            titlePrefix + "dil. mass for negative cos theta star", 20000, 0, 20000);
-  DielectronMass_bb_CSNeg         = fs->make<TH1F>("DielectronMass_bb_CSNeg",            titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
-  DielectronMass_bbbe_CSNeg       = fs->make<TH1F>("DielectronMass_bbbe_CSNeg",          titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
-  DielectronMass_be_CSNeg         = fs->make<TH1F>("DielectronMass_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
-  DielectronMass_ee_CSNeg         = fs->make<TH1F>("DielectronMass_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
+  if (doElectrons) {
+      // Dilepton invariant mass.
+      DielectronMass            = fs->make<TH1F>("DielectronMass",            titlePrefix + "dil. mass", 20000, 0, 20000);
+      DielectronMass_bbbe       = fs->make<TH1F>("DielectronMass_bbbe",       titlePrefix + "dil. mass", 20000, 0, 20000);
+      DielectronMass_bb         = fs->make<TH1F>("DielectronMass_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
+      DielectronMass_be         = fs->make<TH1F>("DielectronMass_be",            titlePrefix + "dil. mass barrel-endcaps", 20000, 0, 20000);
+      DielectronMass_ee         = fs->make<TH1F>("DielectronMass_ee",            titlePrefix + "dil. mass endcaps-endcaps", 20000, 0, 20000);
+      DielectronMass_CSPos            = fs->make<TH1F>("DielectronMass_CSPos",            titlePrefix + "dil. mass for positive cos theta star", 20000, 0, 20000);
+      DielectronMass_bb_CSPos         = fs->make<TH1F>("DielectronMass_bb_CSPos",            titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+      DielectronMass_bbbe_CSPos       = fs->make<TH1F>("DielectronMass_bbbe_CSPos",          titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+      DielectronMass_be_CSPos         = fs->make<TH1F>("DielectronMass_be_CSPos",            titlePrefix + "dil. mass barrel-endcaps for positive cos theta star", 20000, 0, 20000);
+      DielectronMass_ee_CSPos         = fs->make<TH1F>("DielectronMass_ee_CSPos",            titlePrefix + "dil. mass endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
+      DielectronMass_CSNeg            = fs->make<TH1F>("DielectronMass_CSNeg",            titlePrefix + "dil. mass for negative cos theta star", 20000, 0, 20000);
+      DielectronMass_bb_CSNeg         = fs->make<TH1F>("DielectronMass_bb_CSNeg",            titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+      DielectronMass_bbbe_CSNeg       = fs->make<TH1F>("DielectronMass_bbbe_CSNeg",          titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+      DielectronMass_be_CSNeg         = fs->make<TH1F>("DielectronMass_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
+      DielectronMass_ee_CSNeg         = fs->make<TH1F>("DielectronMass_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
 
-  DielectronMassScaleUp            = fs->make<TH1F>("DielectronMassScaleUp",            titlePrefix + "dil. mass", 20000, 0, 20000);
-  DielectronMassScaleUp_bbbe       = fs->make<TH1F>("DielectronMassScaleUp_bbbe",       titlePrefix + "dil. mass", 20000, 0, 20000);
-  DielectronMassScaleUp_bb         = fs->make<TH1F>("DielectronMassScaleUp_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
-  DielectronMassScaleUp_be         = fs->make<TH1F>("DielectronMassScaleUp_be",            titlePrefix + "dil. mass barrel-endcaps", 20000, 0, 20000);
-  DielectronMassScaleUp_ee         = fs->make<TH1F>("DielectronMassScaleUp_ee",            titlePrefix + "dil. mass endcaps-endcaps", 20000, 0, 20000);
-  DielectronMassScaleUp_CSPos            = fs->make<TH1F>("DielectronMassScaleUp_CSPos",            titlePrefix + "dil. mass for positive cos theta star", 20000, 0, 20000);
-  DielectronMassScaleUp_bb_CSPos         = fs->make<TH1F>("DielectronMassScaleUp_bb_CSPos",            titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
-  DielectronMassScaleUp_bbbe_CSPos       = fs->make<TH1F>("DielectronMassScaleUp_bbbe_CSPos",          titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
-  DielectronMassScaleUp_be_CSPos         = fs->make<TH1F>("DielectronMassScaleUp_be_CSPos",            titlePrefix + "dil. mass barrel-endcaps for positive cos theta star", 20000, 0, 20000);
-  DielectronMassScaleUp_ee_CSPos         = fs->make<TH1F>("DielectronMassScaleUp_ee_CSPos",            titlePrefix + "dil. mass endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
-  DielectronMassScaleUp_CSNeg            = fs->make<TH1F>("DielectronMassScaleUp_CSNeg",            titlePrefix + "dil. mass for negative cos theta star", 20000, 0, 20000);
-  DielectronMassScaleUp_bb_CSNeg         = fs->make<TH1F>("DielectronMassScaleUp_bb_CSNeg",            titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
-  DielectronMassScaleUp_bbbe_CSNeg       = fs->make<TH1F>("DielectronMassScaleUp_bbbe_CSNeg",          titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
-  DielectronMassScaleUp_be_CSNeg         = fs->make<TH1F>("DielectronMassScaleUp_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
-  DielectronMassScaleUp_ee_CSNeg         = fs->make<TH1F>("DielectronMassScaleUp_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
+      DielectronMassScaleUp            = fs->make<TH1F>("DielectronMassScaleUp",            titlePrefix + "dil. mass", 20000, 0, 20000);
+      DielectronMassScaleUp_bbbe       = fs->make<TH1F>("DielectronMassScaleUp_bbbe",       titlePrefix + "dil. mass", 20000, 0, 20000);
+      DielectronMassScaleUp_bb         = fs->make<TH1F>("DielectronMassScaleUp_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
+      DielectronMassScaleUp_be         = fs->make<TH1F>("DielectronMassScaleUp_be",            titlePrefix + "dil. mass barrel-endcaps", 20000, 0, 20000);
+      DielectronMassScaleUp_ee         = fs->make<TH1F>("DielectronMassScaleUp_ee",            titlePrefix + "dil. mass endcaps-endcaps", 20000, 0, 20000);
+      DielectronMassScaleUp_CSPos            = fs->make<TH1F>("DielectronMassScaleUp_CSPos",            titlePrefix + "dil. mass for positive cos theta star", 20000, 0, 20000);
+      DielectronMassScaleUp_bb_CSPos         = fs->make<TH1F>("DielectronMassScaleUp_bb_CSPos",            titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+      DielectronMassScaleUp_bbbe_CSPos       = fs->make<TH1F>("DielectronMassScaleUp_bbbe_CSPos",          titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+      DielectronMassScaleUp_be_CSPos         = fs->make<TH1F>("DielectronMassScaleUp_be_CSPos",            titlePrefix + "dil. mass barrel-endcaps for positive cos theta star", 20000, 0, 20000);
+      DielectronMassScaleUp_ee_CSPos         = fs->make<TH1F>("DielectronMassScaleUp_ee_CSPos",            titlePrefix + "dil. mass endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
+      DielectronMassScaleUp_CSNeg            = fs->make<TH1F>("DielectronMassScaleUp_CSNeg",            titlePrefix + "dil. mass for negative cos theta star", 20000, 0, 20000);
+      DielectronMassScaleUp_bb_CSNeg         = fs->make<TH1F>("DielectronMassScaleUp_bb_CSNeg",            titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+      DielectronMassScaleUp_bbbe_CSNeg       = fs->make<TH1F>("DielectronMassScaleUp_bbbe_CSNeg",          titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+      DielectronMassScaleUp_be_CSNeg         = fs->make<TH1F>("DielectronMassScaleUp_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
+      DielectronMassScaleUp_ee_CSNeg         = fs->make<TH1F>("DielectronMassScaleUp_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
 
-  DielectronMassScaleDown            = fs->make<TH1F>("DielectronMassScaleDown",            titlePrefix + "dil. mass", 20000, 0, 20000);
-  DielectronMassScaleDown_bbbe       = fs->make<TH1F>("DielectronMassScaleDown_bbbe",       titlePrefix + "dil. mass", 20000, 0, 20000);
-  DielectronMassScaleDown_bb         = fs->make<TH1F>("DielectronMassScaleDown_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
-  DielectronMassScaleDown_be         = fs->make<TH1F>("DielectronMassScaleDown_be",            titlePrefix + "dil. mass barrel-endcaps", 20000, 0, 20000);
-  DielectronMassScaleDown_ee         = fs->make<TH1F>("DielectronMassScaleDown_ee",            titlePrefix + "dil. mass endcaps-endcaps", 20000, 0, 20000);
-  DielectronMassScaleDown_CSPos            = fs->make<TH1F>("DielectronMassScaleDown_CSPos",            titlePrefix + "dil. mass for positive cos theta star", 20000, 0, 20000);
-  DielectronMassScaleDown_bb_CSPos         = fs->make<TH1F>("DielectronMassScaleDown_bb_CSPos",            titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
-  DielectronMassScaleDown_bbbe_CSPos       = fs->make<TH1F>("DielectronMassScaleDown_bbbe_CSPos",          titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
-  DielectronMassScaleDown_be_CSPos         = fs->make<TH1F>("DielectronMassScaleDown_be_CSPos",            titlePrefix + "dil. mass barrel-endcaps for positive cos theta star", 20000, 0, 20000);
-  DielectronMassScaleDown_ee_CSPos         = fs->make<TH1F>("DielectronMassScaleDown_ee_CSPos",            titlePrefix + "dil. mass endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
-  DielectronMassScaleDown_CSNeg            = fs->make<TH1F>("DielectronMassScaleDown_CSNeg",            titlePrefix + "dil. mass for negative cos theta star", 20000, 0, 20000);
-  DielectronMassScaleDown_bb_CSNeg         = fs->make<TH1F>("DielectronMassScaleDown_bb_CSNeg",            titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
-  DielectronMassScaleDown_bbbe_CSNeg       = fs->make<TH1F>("DielectronMassScaleDown_bbbe_CSNeg",          titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
-  DielectronMassScaleDown_be_CSNeg         = fs->make<TH1F>("DielectronMassScaleDown_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
-  DielectronMassScaleDown_ee_CSNeg         = fs->make<TH1F>("DielectronMassScaleDown_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
+      DielectronMassScaleDown            = fs->make<TH1F>("DielectronMassScaleDown",            titlePrefix + "dil. mass", 20000, 0, 20000);
+      DielectronMassScaleDown_bbbe       = fs->make<TH1F>("DielectronMassScaleDown_bbbe",       titlePrefix + "dil. mass", 20000, 0, 20000);
+      DielectronMassScaleDown_bb         = fs->make<TH1F>("DielectronMassScaleDown_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
+      DielectronMassScaleDown_be         = fs->make<TH1F>("DielectronMassScaleDown_be",            titlePrefix + "dil. mass barrel-endcaps", 20000, 0, 20000);
+      DielectronMassScaleDown_ee         = fs->make<TH1F>("DielectronMassScaleDown_ee",            titlePrefix + "dil. mass endcaps-endcaps", 20000, 0, 20000);
+      DielectronMassScaleDown_CSPos            = fs->make<TH1F>("DielectronMassScaleDown_CSPos",            titlePrefix + "dil. mass for positive cos theta star", 20000, 0, 20000);
+      DielectronMassScaleDown_bb_CSPos         = fs->make<TH1F>("DielectronMassScaleDown_bb_CSPos",            titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+      DielectronMassScaleDown_bbbe_CSPos       = fs->make<TH1F>("DielectronMassScaleDown_bbbe_CSPos",          titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+      DielectronMassScaleDown_be_CSPos         = fs->make<TH1F>("DielectronMassScaleDown_be_CSPos",            titlePrefix + "dil. mass barrel-endcaps for positive cos theta star", 20000, 0, 20000);
+      DielectronMassScaleDown_ee_CSPos         = fs->make<TH1F>("DielectronMassScaleDown_ee_CSPos",            titlePrefix + "dil. mass endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
+      DielectronMassScaleDown_CSNeg            = fs->make<TH1F>("DielectronMassScaleDown_CSNeg",            titlePrefix + "dil. mass for negative cos theta star", 20000, 0, 20000);
+      DielectronMassScaleDown_bb_CSNeg         = fs->make<TH1F>("DielectronMassScaleDown_bb_CSNeg",            titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+      DielectronMassScaleDown_bbbe_CSNeg       = fs->make<TH1F>("DielectronMassScaleDown_bbbe_CSNeg",          titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+      DielectronMassScaleDown_be_CSNeg         = fs->make<TH1F>("DielectronMassScaleDown_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
+      DielectronMassScaleDown_ee_CSNeg         = fs->make<TH1F>("DielectronMassScaleDown_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
 
-  DielectronMassPUScaleUp            = fs->make<TH1F>("DielectronMassPUScaleUp",            titlePrefix + "dil. mass", 20000, 0, 20000);
-  DielectronMassPUScaleUp_bbbe       = fs->make<TH1F>("DielectronMassPUScaleUp_bbbe",       titlePrefix + "dil. mass", 20000, 0, 20000);
-  DielectronMassPUScaleUp_bb         = fs->make<TH1F>("DielectronMassPUScaleUp_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
-  DielectronMassPUScaleUp_be         = fs->make<TH1F>("DielectronMassPUScaleUp_be",            titlePrefix + "dil. mass barrel-endcaps", 20000, 0, 20000);
-  DielectronMassPUScaleUp_ee         = fs->make<TH1F>("DielectronMassPUScaleUp_ee",            titlePrefix + "dil. mass endcaps-endcaps", 20000, 0, 20000);
-  DielectronMassPUScaleUp_CSPos            = fs->make<TH1F>("DielectronMassPUScaleUp_CSPos",            titlePrefix + "dil. mass for positive cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleUp_bb_CSPos         = fs->make<TH1F>("DielectronMassPUScaleUp_bb_CSPos",            titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleUp_bbbe_CSPos       = fs->make<TH1F>("DielectronMassPUScaleUp_bbbe_CSPos",          titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleUp_be_CSPos         = fs->make<TH1F>("DielectronMassPUScaleUp_be_CSPos",            titlePrefix + "dil. mass barrel-endcaps for positive cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleUp_ee_CSPos         = fs->make<TH1F>("DielectronMassPUScaleUp_ee_CSPos",            titlePrefix + "dil. mass endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleUp_CSNeg            = fs->make<TH1F>("DielectronMassPUScaleUp_CSNeg",            titlePrefix + "dil. mass for negative cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleUp_bb_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleUp_bb_CSNeg",            titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleUp_bbbe_CSNeg       = fs->make<TH1F>("DielectronMassPUScaleUp_bbbe_CSNeg",          titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleUp_be_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleUp_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleUp_ee_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleUp_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleUp            = fs->make<TH1F>("DielectronMassPUScaleUp",            titlePrefix + "dil. mass", 20000, 0, 20000);
+      DielectronMassPUScaleUp_bbbe       = fs->make<TH1F>("DielectronMassPUScaleUp_bbbe",       titlePrefix + "dil. mass", 20000, 0, 20000);
+      DielectronMassPUScaleUp_bb         = fs->make<TH1F>("DielectronMassPUScaleUp_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
+      DielectronMassPUScaleUp_be         = fs->make<TH1F>("DielectronMassPUScaleUp_be",            titlePrefix + "dil. mass barrel-endcaps", 20000, 0, 20000);
+      DielectronMassPUScaleUp_ee         = fs->make<TH1F>("DielectronMassPUScaleUp_ee",            titlePrefix + "dil. mass endcaps-endcaps", 20000, 0, 20000);
+      DielectronMassPUScaleUp_CSPos            = fs->make<TH1F>("DielectronMassPUScaleUp_CSPos",            titlePrefix + "dil. mass for positive cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleUp_bb_CSPos         = fs->make<TH1F>("DielectronMassPUScaleUp_bb_CSPos",            titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleUp_bbbe_CSPos       = fs->make<TH1F>("DielectronMassPUScaleUp_bbbe_CSPos",          titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleUp_be_CSPos         = fs->make<TH1F>("DielectronMassPUScaleUp_be_CSPos",            titlePrefix + "dil. mass barrel-endcaps for positive cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleUp_ee_CSPos         = fs->make<TH1F>("DielectronMassPUScaleUp_ee_CSPos",            titlePrefix + "dil. mass endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleUp_CSNeg            = fs->make<TH1F>("DielectronMassPUScaleUp_CSNeg",            titlePrefix + "dil. mass for negative cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleUp_bb_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleUp_bb_CSNeg",            titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleUp_bbbe_CSNeg       = fs->make<TH1F>("DielectronMassPUScaleUp_bbbe_CSNeg",          titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleUp_be_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleUp_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleUp_ee_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleUp_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
 
-  DielectronMassPUScaleDown            = fs->make<TH1F>("DielectronMassPUScaleDown",            titlePrefix + "dil. mass", 20000, 0, 20000);
-  DielectronMassPUScaleDown_bbbe       = fs->make<TH1F>("DielectronMassPUScaleDown_bbbe",       titlePrefix + "dil. mass", 20000, 0, 20000);
-  DielectronMassPUScaleDown_bb         = fs->make<TH1F>("DielectronMassPUScaleDown_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
-  DielectronMassPUScaleDown_be         = fs->make<TH1F>("DielectronMassPUScaleDown_be",            titlePrefix + "dil. mass barrel-endcaps", 20000, 0, 20000);
-  DielectronMassPUScaleDown_ee         = fs->make<TH1F>("DielectronMassPUScaleDown_ee",            titlePrefix + "dil. mass endcaps-endcaps", 20000, 0, 20000);
-  DielectronMassPUScaleDown_CSPos            = fs->make<TH1F>("DielectronMassPUScaleDown_CSPos",            titlePrefix + "dil. mass for positive cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleDown_bb_CSPos         = fs->make<TH1F>("DielectronMassPUScaleDown_bb_CSPos",            titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleDown_bbbe_CSPos       = fs->make<TH1F>("DielectronMassPUScaleDown_bbbe_CSPos",          titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleDown_be_CSPos         = fs->make<TH1F>("DielectronMassPUScaleDown_be_CSPos",            titlePrefix + "dil. mass barrel-endcaps for positive cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleDown_ee_CSPos         = fs->make<TH1F>("DielectronMassPUScaleDown_ee_CSPos",            titlePrefix + "dil. mass endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleDown_CSNeg            = fs->make<TH1F>("DielectronMassPUScaleDown_CSNeg",            titlePrefix + "dil. mass for negative cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleDown_bb_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleDown_bb_CSNeg",            titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleDown_bbbe_CSNeg       = fs->make<TH1F>("DielectronMassPUScaleDown_bbbe_CSNeg",          titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleDown_be_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleDown_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
-  DielectronMassPUScaleDown_ee_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleDown_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleDown            = fs->make<TH1F>("DielectronMassPUScaleDown",            titlePrefix + "dil. mass", 20000, 0, 20000);
+      DielectronMassPUScaleDown_bbbe       = fs->make<TH1F>("DielectronMassPUScaleDown_bbbe",       titlePrefix + "dil. mass", 20000, 0, 20000);
+      DielectronMassPUScaleDown_bb         = fs->make<TH1F>("DielectronMassPUScaleDown_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
+      DielectronMassPUScaleDown_be         = fs->make<TH1F>("DielectronMassPUScaleDown_be",            titlePrefix + "dil. mass barrel-endcaps", 20000, 0, 20000);
+      DielectronMassPUScaleDown_ee         = fs->make<TH1F>("DielectronMassPUScaleDown_ee",            titlePrefix + "dil. mass endcaps-endcaps", 20000, 0, 20000);
+      DielectronMassPUScaleDown_CSPos            = fs->make<TH1F>("DielectronMassPUScaleDown_CSPos",            titlePrefix + "dil. mass for positive cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleDown_bb_CSPos         = fs->make<TH1F>("DielectronMassPUScaleDown_bb_CSPos",            titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleDown_bbbe_CSPos       = fs->make<TH1F>("DielectronMassPUScaleDown_bbbe_CSPos",          titlePrefix + "dil. mass barrel-barrel for positive cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleDown_be_CSPos         = fs->make<TH1F>("DielectronMassPUScaleDown_be_CSPos",            titlePrefix + "dil. mass barrel-endcaps for positive cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleDown_ee_CSPos         = fs->make<TH1F>("DielectronMassPUScaleDown_ee_CSPos",            titlePrefix + "dil. mass endcaps-endcaps for positive cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleDown_CSNeg            = fs->make<TH1F>("DielectronMassPUScaleDown_CSNeg",            titlePrefix + "dil. mass for negative cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleDown_bb_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleDown_bb_CSNeg",            titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleDown_bbbe_CSNeg       = fs->make<TH1F>("DielectronMassPUScaleDown_bbbe_CSNeg",          titlePrefix + "dil. mass barrel-barrel for negative cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleDown_be_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleDown_be_CSNeg",            titlePrefix + "dil. mass barrel-endcaps for negative cos theta star", 20000, 0, 20000);
+      DielectronMassPUScaleDown_ee_CSNeg         = fs->make<TH1F>("DielectronMassPUScaleDown_ee_CSNeg",            titlePrefix + "dil. mass endcaps-endcaps for negative cos theta star", 20000, 0, 20000);
 
-  DielectronMassVsCS            = fs->make<TH2F>("DielectronMassVsCS",            titlePrefix + "dil. mass", 200, 0, 20000,100,-1,1);
-  DielectronMassVsCS_bbbe       = fs->make<TH2F>("DielectronMassVsCS_bbbe",       titlePrefix + "dil. mass", 200, 0, 20000,100,-1,1);
-  DielectronMassVsCS_bb         = fs->make<TH2F>("DielectronMassVsCS_bb",            titlePrefix + "dil. mass barrel-barrel", 200, 0, 20000,100,-1,1);
-  DielectronMassVsCS_be         = fs->make<TH2F>("DielectronMassVsCS_be",            titlePrefix + "dil. mass barrel-endcaps", 200, 0, 20000,100,-1,1);
-  DielectronMassVsCS_ee         = fs->make<TH2F>("DielectronMassVsCS_ee",            titlePrefix + "dil. mass endcaps-endcaps", 200, 0, 20000,100,-1,1);
+      DielectronMassVsCS            = fs->make<TH2F>("DielectronMassVsCS",            titlePrefix + "dil. mass", 200, 0, 20000,100,-1,1);
+      DielectronMassVsCS_bbbe       = fs->make<TH2F>("DielectronMassVsCS_bbbe",       titlePrefix + "dil. mass", 200, 0, 20000,100,-1,1);
+      DielectronMassVsCS_bb         = fs->make<TH2F>("DielectronMassVsCS_bb",            titlePrefix + "dil. mass barrel-barrel", 200, 0, 20000,100,-1,1);
+      DielectronMassVsCS_be         = fs->make<TH2F>("DielectronMassVsCS_be",            titlePrefix + "dil. mass barrel-endcaps", 200, 0, 20000,100,-1,1);
+      DielectronMassVsCS_ee         = fs->make<TH2F>("DielectronMassVsCS_ee",            titlePrefix + "dil. mass endcaps-endcaps", 200, 0, 20000,100,-1,1);
+  }
 
 
 
@@ -893,8 +897,10 @@ void Zprime2muHistosFromPAT::fillLeptonHistos(const reco::CandidateBaseRef& lep)
   const pat::Muon* muon = toConcretePtr<pat::Muon>(lep);
   if (muon) fillOfflineMuonHistos(muon);
   
-  const pat::Electron* electron = toConcretePtr<pat::Electron>(lep);
-  if (electron) fillOfflineElectronHistos(electron);
+  if (doElectrons) {
+      const pat::Electron* electron = toConcretePtr<pat::Electron>(lep);
+      if (electron) fillOfflineElectronHistos(electron);
+  }
 }
 
 void Zprime2muHistosFromPAT::fillLeptonHistos(const edm::View<reco::Candidate>& leptons) {
@@ -1004,160 +1010,162 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
       }
     } 
 
-    const pat::Electron* ele0 = toConcretePtr<pat::Electron>(lep0);
-    const pat::Electron* ele1 = toConcretePtr<pat::Electron>(lep1);
-    if (ele0 && ele1) {
-	_eleMCFac_bb = 1;
-  	_eleMCFac_be = 1;
-	if (fill_gen_info){
-		double trigFac1 = turnOn(ele0->superCluster()->eta(),ele0->et());
-		double trigFac2 = turnOn(ele1->superCluster()->eta(),ele1->et());
-		double L1TrigFac1 = L1TurnOn(ele0->superCluster()->eta(),ele0->et());
-		double L1TrigFac2 = L1TurnOn(ele1->superCluster()->eta(),ele1->et());
-		_eleMCFac_bb = 0.968 * trigFac1 * trigFac2 * (L1TrigFac1 + L1TrigFac2 - L1TrigFac1*L1TrigFac2);
-		_eleMCFac_be = 0.969 * trigFac1 * trigFac2 * (L1TrigFac1 + L1TrigFac2 - L1TrigFac1*L1TrigFac2);
+    if (doElectrons) {
+        const pat::Electron* ele0 = toConcretePtr<pat::Electron>(lep0);
+        const pat::Electron* ele1 = toConcretePtr<pat::Electron>(lep1);
+        if (ele0 && ele1) {
+        _eleMCFac_bb = 1;
+        _eleMCFac_be = 1;
+        if (fill_gen_info){
+            double trigFac1 = turnOn(ele0->superCluster()->eta(),ele0->et());
+            double trigFac2 = turnOn(ele1->superCluster()->eta(),ele1->et());
+            double L1TrigFac1 = L1TurnOn(ele0->superCluster()->eta(),ele0->et());
+            double L1TrigFac2 = L1TurnOn(ele1->superCluster()->eta(),ele1->et());
+            _eleMCFac_bb = 0.968 * trigFac1 * trigFac2 * (L1TrigFac1 + L1TrigFac2 - L1TrigFac1*L1TrigFac2);
+            _eleMCFac_be = 0.969 * trigFac1 * trigFac2 * (L1TrigFac1 + L1TrigFac2 - L1TrigFac1*L1TrigFac2);
 
-	}
- 	double massScaleUp = 1.;
-	double massScaleDown = 1.;
-	if (fabs(ele0->superCluster()->eta()) < 1.4442 && fabs(ele1->superCluster()->eta()) < 1.4442) {
-		massScaleUp = 1+_scaleUncertEleBB;
-		massScaleDown = 1-_scaleUncertEleBB;
-	}
-	else{
-		massScaleUp = 1+_scaleUncertEleBE;
-		massScaleDown = 1-_scaleUncertEleBE;
-	}
-	DielectronMass->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-	DielectronMassVsCS->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-	DielectronMassScaleUp->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-	DielectronMassScaleDown->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-	DielectronMassPUScaleUp->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
-	DielectronMassPUScaleDown->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
-        if (cos_cs >= 0){
-		 DielectronMass_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		 DielectronMassScaleUp_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		 DielectronMassScaleDown_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		 DielectronMassPUScaleUp_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
-		 DielectronMassPUScaleDown_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
-	}
+        }
+        double massScaleUp = 1.;
+        double massScaleDown = 1.;
+        if (fabs(ele0->superCluster()->eta()) < 1.4442 && fabs(ele1->superCluster()->eta()) < 1.4442) {
+            massScaleUp = 1+_scaleUncertEleBB;
+            massScaleDown = 1-_scaleUncertEleBB;
+        }
         else{
-		 DielectronMass_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		 DielectronMassScaleUp_CSNeg->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		 DielectronMassScaleDown_CSNeg->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		 DielectronMassPUScaleUp_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
-		 DielectronMassPUScaleDown_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+            massScaleUp = 1+_scaleUncertEleBE;
+            massScaleDown = 1-_scaleUncertEleBE;
+        }
+        DielectronMass->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+        DielectronMassVsCS->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+        DielectronMassScaleUp->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+        DielectronMassScaleDown->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+        DielectronMassPUScaleUp->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+        DielectronMassPUScaleDown->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+            if (cos_cs >= 0){
+             DielectronMass_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+             DielectronMassScaleUp_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+             DielectronMassScaleDown_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+             DielectronMassPUScaleUp_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+             DielectronMassPUScaleDown_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+        }
+            else{
+             DielectronMass_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+             DielectronMassScaleUp_CSNeg->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+             DielectronMassScaleDown_CSNeg->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+             DielectronMassPUScaleUp_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+             DielectronMassPUScaleDown_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+        }
+
+        if (fabs(ele0->superCluster()->eta()) < 1.4442 && fabs(ele1->superCluster()->eta()) < 1.4442) {
+            DielectronMass_bb->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+            DielectronMassVsCS_bb->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+            DielectronMassScaleUp_bb->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+            DielectronMassScaleDown_bb->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+            DielectronMassPUScaleUp_bb->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+            DielectronMassPUScaleDown_bb->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+            DielectronMass_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+            DielectronMassVsCS_bbbe->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+            DielectronMassScaleUp_bbbe->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+            DielectronMassScaleDown_bbbe->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+            DielectronMassPUScaleUp_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+            DielectronMassPUScaleDown_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+                if (cos_cs >= 0){
+                 DielectronMass_bb_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+                 DielectronMassScaleUp_bb_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+                 DielectronMassScaleDown_bb_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+                 DielectronMassPUScaleUp_bb_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+                 DielectronMassPUScaleDown_bb_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+
+                 DielectronMass_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+                 DielectronMassScaleUp_bbbe_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+                 DielectronMassScaleDown_bbbe_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+                 DielectronMassPUScaleDown_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+                 DielectronMassPUScaleUp_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+            }
+                else {
+                DielectronMass_bb_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+                DielectronMassScaleUp_bb_CSNeg->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+                DielectronMassScaleDown_bb_CSNeg->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+                DielectronMassPUScaleUp_bb_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+                DielectronMassPUScaleDown_bb_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+
+                DielectronMass_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+                DielectronMassScaleUp_bbbe_CSNeg->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+                DielectronMassScaleDown_bbbe_CSNeg->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+                DielectronMassPUScaleUp_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
+                DielectronMassPUScaleDown_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+            }
+
+        }
+        else if ((fabs(ele0->superCluster()->eta()) < 1.4442 && fabs(ele1->superCluster()->eta()) > 1.566) ||(fabs(ele0->superCluster()->eta()) > 1.566 && fabs(ele1->superCluster()->eta()) < 1.4442)) {
+            DielectronMass_be->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+            DielectronMassVsCS_be->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+            DielectronMassScaleUp_be->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+            DielectronMassScaleDown_be->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+            DielectronMassPUScaleUp_be->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+            DielectronMassPUScaleDown_be->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
+
+            DielectronMass_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+            DielectronMassVsCS_bbbe->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+            DielectronMassScaleUp_bbbe->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+            DielectronMassScaleDown_bbbe->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+            DielectronMassPUScaleUp_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+            DielectronMassPUScaleDown_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
+                if (cos_cs >= 0) {
+                DielectronMass_be_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                DielectronMassScaleUp_be_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                DielectronMassScaleDown_be_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                DielectronMassPUScaleUp_be_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+                DielectronMassPUScaleDown_be_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
+
+                DielectronMass_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                DielectronMassScaleUp_bbbe_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                DielectronMassScaleDown_bbbe_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                DielectronMassPUScaleUp_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+                DielectronMassPUScaleDown_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
+            }
+                else{
+                 DielectronMass_be_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                 DielectronMassScaleUp_be_CSNeg->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                 DielectronMassScaleDown_be_CSNeg->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                 DielectronMassPUScaleUp_be_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+                 DielectronMassPUScaleDown_be_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
+
+                 DielectronMass_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                 DielectronMassPUScaleUp_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+                 DielectronMassPUScaleDown_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
+            }
+
+        }
+            else if (fabs(ele0->superCluster()->eta()) > 1.566 && fabs(ele1->superCluster()->eta()) > 1.566) {
+            DielectronMass_ee->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+            DielectronMassVsCS_ee->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
+            DielectronMassScaleUp_ee->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+            DielectronMassScaleDown_ee->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+            DielectronMassPUScaleUp_ee->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+            DielectronMassPUScaleDown_ee->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
+                if (cos_cs >= 0) {
+                DielectronMass_ee_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                DielectronMassScaleUp_ee_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                DielectronMassScaleDown_ee_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                DielectronMassPUScaleUp_ee_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+                DielectronMassPUScaleDown_ee_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
+            }
+                else
+            { 
+                 DielectronMass_ee_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                 DielectronMassScaleUp_ee_CSNeg->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                 DielectronMassScaleDown_ee_CSNeg->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
+                 DielectronMassPUScaleUp_ee_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
+                 DielectronMassPUScaleDown_ee_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
+		}
+
 	}
 
-	if (fabs(ele0->superCluster()->eta()) < 1.4442 && fabs(ele1->superCluster()->eta()) < 1.4442) {
-		DielectronMass_bb->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		DielectronMassVsCS_bb->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		DielectronMassScaleUp_bb->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		DielectronMassScaleDown_bb->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		DielectronMassPUScaleUp_bb->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
-		DielectronMassPUScaleDown_bb->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
-		DielectronMass_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		DielectronMassVsCS_bbbe->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		DielectronMassScaleUp_bbbe->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		DielectronMassScaleDown_bbbe->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		DielectronMassPUScaleUp_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
-		DielectronMassPUScaleDown_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
-        	if (cos_cs >= 0){
-			 DielectronMass_bb_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-			 DielectronMassScaleUp_bb_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-			 DielectronMassScaleDown_bb_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-			 DielectronMassPUScaleUp_bb_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
-			 DielectronMassPUScaleDown_bb_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
+    } // if ele0 && ele1
+    } // doElectrons
 
-			 DielectronMass_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-			 DielectronMassScaleUp_bbbe_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-			 DielectronMassScaleDown_bbbe_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-			 DielectronMassPUScaleDown_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
-			 DielectronMassPUScaleUp_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
-		}
-        	else {
-			DielectronMass_bb_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-			DielectronMassScaleUp_bb_CSNeg->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-			DielectronMassScaleDown_bb_CSNeg->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-			DielectronMassPUScaleUp_bb_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
-			DielectronMassPUScaleDown_bb_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
-
-			DielectronMass_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-			DielectronMassScaleUp_bbbe_CSNeg->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-			DielectronMassScaleDown_bbbe_CSNeg->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-			DielectronMassPUScaleUp_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleUp);
-			DielectronMassPUScaleDown_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight_scaleDown);
-		}
-
-	}
-	else if ((fabs(ele0->superCluster()->eta()) < 1.4442 && fabs(ele1->superCluster()->eta()) > 1.566) ||(fabs(ele0->superCluster()->eta()) > 1.566 && fabs(ele1->superCluster()->eta()) < 1.4442)) {
-		DielectronMass_be->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-		DielectronMassVsCS_be->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		DielectronMassScaleUp_be->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-		DielectronMassScaleDown_be->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-		DielectronMassPUScaleUp_be->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
-		DielectronMassPUScaleDown_be->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
-
-		DielectronMass_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-		DielectronMassVsCS_bbbe->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		DielectronMassScaleUp_bbbe->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-		DielectronMassScaleDown_bbbe->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-		DielectronMassPUScaleUp_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
-		DielectronMassPUScaleDown_bbbe->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
-        	if (cos_cs >= 0) {
-			DielectronMass_be_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			DielectronMassScaleUp_be_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			DielectronMassScaleDown_be_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			DielectronMassPUScaleUp_be_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
-			DielectronMassPUScaleDown_be_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
-
-			DielectronMass_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			DielectronMassScaleUp_bbbe_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			DielectronMassScaleDown_bbbe_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			DielectronMassPUScaleUp_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
-			DielectronMassPUScaleDown_bbbe_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
-		}
-        	else{
-			 DielectronMass_be_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			 DielectronMassScaleUp_be_CSNeg->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			 DielectronMassScaleDown_be_CSNeg->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			 DielectronMassPUScaleUp_be_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
-			 DielectronMassPUScaleDown_be_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
-
-			 DielectronMass_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			 DielectronMassPUScaleUp_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
-			 DielectronMassPUScaleDown_bbbe_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
-		}
-
-	}
-        else if (fabs(ele0->superCluster()->eta()) > 1.566 && fabs(ele1->superCluster()->eta()) > 1.566) {
-		DielectronMass_ee->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-		DielectronMassVsCS_ee->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac_bb*_puWeight);
-		DielectronMassScaleUp_ee->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-		DielectronMassScaleDown_ee->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-		DielectronMassPUScaleUp_ee->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
-		DielectronMassPUScaleDown_ee->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
-        	if (cos_cs >= 0) {
-			DielectronMass_ee_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			DielectronMassScaleUp_ee_CSPos->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			DielectronMassScaleDown_ee_CSPos->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			DielectronMassPUScaleUp_ee_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
-			DielectronMassPUScaleDown_ee_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
-		}
-        	else
-		{ 
-			 DielectronMass_ee_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			 DielectronMassScaleUp_ee_CSNeg->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			 DielectronMassScaleDown_ee_CSNeg->Fill(dil.mass()*massScaleDown, _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight);
-			 DielectronMassPUScaleUp_ee_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleUp);
-			 DielectronMassPUScaleDown_ee_CSNeg->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac_be*_puWeight_scaleDown);
-		}
-
-	}
-
-    }
-
-  }
+  } // if lep0.isNonnull() && lep1.isNonnull()
 
   DileptonDaughterIds->Fill(dil.daughter(0)->pdgId(), dil.daughter(1)->pdgId(), _madgraphWeight*_kFactor*_puWeight);
 

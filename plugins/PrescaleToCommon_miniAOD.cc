@@ -28,6 +28,7 @@ private:
   const std::vector<std::string> trigger_paths;
   const int overall_prescale;
   const bool assume_simulation_has_prescale_1;
+  const bool debugInfo;
   HLTConfigProvider hlt_cfg;
   TH1F* randoms;
   bool _disable;
@@ -44,6 +45,7 @@ PrescaleToCommon_miniAOD::PrescaleToCommon_miniAOD(const edm::ParameterSet& cfg)
     trigger_paths(cfg.getParameter<std::vector<std::string> >("trigger_paths")),
     overall_prescale(cfg.getParameter<int>("overall_prescale")),
     assume_simulation_has_prescale_1(cfg.getParameter<bool>("assume_simulation_has_prescale_1")),
+    debugInfo(cfg.getParameter<bool>("debugInfo")),
     _disable(cfg.getUntrackedParameter<bool>("disable",false)),
     hltPrescaleProvider_(cfg, consumesCollector(), *this)
 {
@@ -100,12 +102,16 @@ bool PrescaleToCommon_miniAOD::filter(edm::Event& event, const edm::EventSetup& 
   unsigned path_index = hlt_cfg.size();
   
  
+  if (debugInfo) {
     const std::vector<std::string>& pathList = hlt_cfg.triggerNames();
     std::cout<<"path size "<<pathList.size()<<std::endl;
+  }
     
   for (std::vector<std::string>::const_iterator path = trigger_paths.begin(), end = trigger_paths.end(); path != end; ++path) {
-      std::cout<<" trigger_path "<<*path<<std::endl;
-      std::cout<<" hlt_cfg.triggerIndex(*path) "<<hlt_cfg.triggerIndex(*path)<<" hlt_cfg.size() "<<hlt_cfg.size()<<std::endl;
+      if (debugInfo) {
+          std::cout<<" trigger_path "<<*path<<std::endl;
+          std::cout<<" hlt_cfg.triggerIndex(*path) "<<hlt_cfg.triggerIndex(*path)<<" hlt_cfg.size() "<<hlt_cfg.size()<<std::endl;
+      }
 
     unsigned ndx = hlt_cfg.triggerIndex(*path);
     if (ndx == hlt_cfg.size())
@@ -129,8 +135,12 @@ bool PrescaleToCommon_miniAOD::filter(edm::Event& event, const edm::EventSetup& 
   event.getByLabel(TriggerResults_src, hlt_results);
   if (!hlt_results->accept(path_index))
     return false;
-  //std::cout<<" hlt_results->accept(path_index) "<<hlt_results->accept(path_index)<<std::endl;
-  //std::cout<<" hlt_cfg.prescaleValues(event, setup, trigger_path) "<<hlt_cfg.prescaleValues(event, setup, trigger_path).second<<std::endl;
+  if (debugInfo) {
+      std::cout<<" hlt_results->accept(path_index) "<<hlt_results->accept(path_index)<<std::endl;
+      // HLTConfigProvider does not have these methods anymore. They were moved to HLTPrescaleProvider in 2015.
+      //std::cout<<" hlt_cfg.prescaleValues(event, setup, trigger_path) "<<hlt_cfg.prescaleValues(event, setup, trigger_path).second<<std::endl;  
+     std::cout<<" hltPrescaleProvider_.prescaleValues(event, setup, trigger_path) "<<hltPrescaleProvider_.prescaleValues(event, setup, trigger_path).second<<std::endl;
+  }
 
   double hltPrescale = 1;
  // double L1Prescale_max = 1;
@@ -153,6 +163,9 @@ bool PrescaleToCommon_miniAOD::filter(edm::Event& event, const edm::EventSetup& 
 
 
   const int total_prescale_already = hltPrescale*L1Prescale_min;
+  if (debugInfo) {
+      std::cout << "hltPrescale " << hltPrescale << " L1Prescale_min " << L1Prescale_min << " total prescale " << total_prescale_already << std::endl;
+  }
 
   if (total_prescale_already > overall_prescale)
     throw cms::Exception("PrescaleToCommon_miniAOD") << "total_prescale_already = " << total_prescale_already << " but overall_prescale requested is " << overall_prescale << "!\n";

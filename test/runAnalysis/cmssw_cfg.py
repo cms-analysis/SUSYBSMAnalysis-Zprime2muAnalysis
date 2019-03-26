@@ -5,12 +5,16 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_reco_
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFiltersMiniAOD
 
-process.source.fileNames =['/store/mc/RunIISummer16MiniAODv2/ADDGravToLL_LambdaT-3000_M-1700_13TeV-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/100000/BEF61610-2CD3-E611-818D-0026B95A4CB3.root']
+process.source.fileNames =[
+#'/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_50_120/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/70000/12BD4CC4-0751-E811-BCA9-0090FAA58D84.root',
+'/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_50_120/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/90000/92EF203E-9F45-E811-B41B-A0369FC522F0.root'
+]
+
 
 process.maxEvents.input = -1
 isMC = True
 addNTuples = False
-year = 2016
+year = 2017
 process.GlobalTag.globaltag = '94X_mc2017_realistic_v14'
 process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
@@ -41,7 +45,7 @@ HistosFromPAT.leptonsFromDileptons = True
 ####################################
 ####################################
 
-HistosFromPAT.usekFactor = False #### Set TRUE to use K Factor #####
+HistosFromPAT.usekFactor = True #### Set TRUE to use K Factor #####
 
 ####################################
 ####################################
@@ -184,7 +188,7 @@ for cut_name, Selection in cuts.iteritems():
                 alldil.tight_cut = prescaled_trigger_match
      # Histos now just needs to know which leptons and dileptons to use.
       
-	histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
+	histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name), year = cms.int32(2017))
 
         # Add all these modules to the process and the path list.
         setattr(process, allname, alldil)
@@ -244,11 +248,3 @@ if addNTuples:
 if isMC:
 	switch_reco_process_name(process, "PAT") # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
     #switch_hlt_process_name(process, hlt_process_name) # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
-
-process.DYGenMassFilter = cms.EDFilter('QScaleSelector',
-                                       src = cms.InputTag('generator'),
-                                       min_mass = cms.double(1700),
-                                       max_mass = cms.double(7000)
-                                       )
-for path_name, path in process.paths.iteritems():
-        getattr(process,path_name).insert(2,process.DYGenMassFilter)

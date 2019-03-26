@@ -353,7 +353,10 @@ def main():
 			
 			# get luminosity mask
 			lumi_mask = getLumiMask(args)
-			
+	
+	
+			# here for test only,
+			samples = [('dy50to120', '/ZToMuMu_NNPDF31_13TeV-powheg_M_50_120/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/MINIAODSIM') ]		
 			# process each sample
 			for dataset_name,  dataset in samples:
 				cmssw_tmp = cmssw_cfg
@@ -391,7 +394,7 @@ def main():
 					cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
 
                                 # write add filename information
-				if args.add2016:
+				if True: #args.add2016:
                                 	os.system('dasgoclient -query="file dataset=%s | grep file.name" > myfiles.txt'%dataset)
                                 	with open('myfiles.txt') as fin:
                                         	content = fin.readlines()
@@ -403,8 +406,10 @@ def main():
 				#print getFilterSnippet(dataset_name)
 				open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
             			if args.submit:
-                			os.system('crab submit -c crabConfig.py')
-
+                			#os.system('crab submit -c crabConfig.py')
+					#os.system("cmsRun cmssw_cfg.py")
+					print "DONE!"
+			
 			if args.resolution and not args.data and not args.do2016 and not args.do2018:
 				print "submitting also weird samples"
 				from samples import resolution_extra as samples2

@@ -51,7 +51,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   void fillLeptonHistosFromDileptons(const pat::CompositeCandidateCollection&);
   void fillDileptonHistos(const pat::CompositeCandidate&, const edm::Event&, double);
   void fillDileptonHistos(const pat::CompositeCandidateCollection&, const edm::Event&, double);
-  double getSmearedMass(const pat::CompositeCandidate&, double);
+  double getSmearedMass(const pat::CompositeCandidate&, double, int);
   double turnOn(double, double);
   double L1TurnOn(double, double);
 
@@ -147,7 +147,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TProfile* DileptonPtVsEta;
   TH1F* ChiDilepton;
   TH1F* CosThetaStarDilepton;
-
+  TH1F* CosThetaStarInteraction;
 
   TH1F* DielectronMass;
   TH1F* DielectronMass_bbbe;
@@ -327,6 +327,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
 	const bool fill_gen_info;
 	HardInteraction* hardInteraction;
   	std::vector<std::string> pu_info;  
+	int year_info;
 };
 
 Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
@@ -351,7 +352,8 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
     _kFactor_be(1.),
     fill_gen_info(cfg.existsAs<edm::ParameterSet>("hardInteraction")),
     hardInteraction(fill_gen_info ? new HardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction")) : 0),
-    pu_info(cfg.getParameter<std::vector<std::string>>("pu_weights"))
+    pu_info(cfg.getParameter<std::vector<std::string>>("pu_weights")),
+    year_info(cfg.getParameter<int>("year"))
 {
 
   consumes<reco::CandidateView>(lepton_src);
@@ -467,6 +469,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
    //
   ChiDilepton            = fs->make<TH1F>("ChiDilepton",            titlePrefix + "dil. chi", 100, 0, 20);
   CosThetaStarDilepton   = fs->make<TH1F>("CosThetaStarDilepton",            titlePrefix + "dil. cos theta star", 100, -1, 1);
+  CosThetaStarInteraction = fs->make<TH1F>("CosThetaStarInteraction", 	     titlePrefix + "dil. cos theta int", 100, -1, 1);
 
   // Dilepton invariant mass.
   DielectronMass            = fs->make<TH1F>("DielectronMass",            titlePrefix + "dil. mass", 20000, 0, 20000);
@@ -666,7 +669,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
      kFactorGraph_be = fs->make<TH1F>("kFactorperevent_be", titlePrefix + "kFactor per event be", 50, 0.4,1.4);
 }
 
-double Zprime2muHistosFromPAT::L1TurnOn(double eta, double et){
+double Zprime2muHistosFromPAT::L1TurnOn(double eta, double et, int year){
 
 	double result = 1;
 	double P0 = 0;
@@ -696,7 +699,7 @@ double Zprime2muHistosFromPAT::L1TurnOn(double eta, double et){
 
 }
 
-double Zprime2muHistosFromPAT::turnOn(double eta, double et){
+double Zprime2muHistosFromPAT::turnOn(double eta, double et, int year){
 
 	double result = 1.;
 	double P0 = 0;
@@ -758,7 +761,7 @@ double Zprime2muHistosFromPAT::turnOn(double eta, double et){
 	return result;
 }	
 
-double Zprime2muHistosFromPAT::getSmearedMass(const pat::CompositeCandidate& dil, double gM){
+double Zprime2muHistosFromPAT::getSmearedMass(const pat::CompositeCandidate& dil, double gM, int year){
 
     double a = 0.;
     double b = 0.;
@@ -991,6 +994,11 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 	     else cos_cs = calcCosThetaCSAnal(lep1->pz(), lep1->energy(), lep0->pz(), lep0->energy(), dil.pt(), dil.pz(), dil.mass());
      }
      CosThetaStarDilepton->Fill(cos_cs);
+     double cos_int = 0.0;
+     if (lep0->charge() > 0) {cos_int = fabs(lep0->pz())*1.0/fabs(lep0->p());}
+     else {cos_int = fabs(lep1->pz())*1.0/fabs(lep1->p());}
+     if (lep0->pz() + lep1->pz() < 0) {cos_int *= -1;}
+     CosThetaStarInteraction->Fill(cos_int);
      //ChiDilepton->Fill((1+fabs(cos_cs))/(1-fabs(cos_cs)));
      ChiDilepton->Fill(exp(std::abs(lep0->p4().Rapidity()-lep1->p4().Rapidity())));
      if (cos_cs >= 0) DileptonMass_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_puWeight);
@@ -1029,10 +1037,10 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 	_eleMCFac_bb = 1;
   	_eleMCFac_be = 1;
 	if (fill_gen_info){
-		double trigFac1 = turnOn(ele0->superCluster()->eta(),ele0->et());
-		double trigFac2 = turnOn(ele1->superCluster()->eta(),ele1->et());
-		double L1TrigFac1 = L1TurnOn(ele0->superCluster()->eta(),ele0->et());
-		double L1TrigFac2 = L1TurnOn(ele1->superCluster()->eta(),ele1->et());
+		double trigFac1 = turnOn(ele0->superCluster()->eta(),ele0->et(), year_info);
+		double trigFac2 = turnOn(ele1->superCluster()->eta(),ele1->et(), year_info);
+		double L1TrigFac1 = L1TurnOn(ele0->superCluster()->eta(),ele0->et(), year_info);
+		double L1TrigFac2 = L1TurnOn(ele1->superCluster()->eta(),ele1->et(), year_info);
 		_eleMCFac_bb = 0.968 * trigFac1 * trigFac2 * (L1TrigFac1 + L1TrigFac2 - L1TrigFac1*L1TrigFac2);
 		_eleMCFac_be = 0.969 * trigFac1 * trigFac2 * (L1TrigFac1 + L1TrigFac2 - L1TrigFac1*L1TrigFac2);
 
@@ -1200,7 +1208,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
     float vertex_mass = dil.userFloat("vertexM");
     float vertex_mass_err = dil.userFloat("vertexMError");
       //std::cout<<" filling mass "<<vertex_mass<<std::endl;
-    float smearedMass = getSmearedMass(dil,gM);
+    float smearedMass = getSmearedMass(dil,gM,year_info);
     DimuonMassVertexConstrained->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
     DimuonMassVertexConstrainedVsCS->Fill(vertex_mass,cos_cs, _madgraphWeight*_kFactor*_puWeight);
     DimuonMassVertexConstrainedSmear->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);

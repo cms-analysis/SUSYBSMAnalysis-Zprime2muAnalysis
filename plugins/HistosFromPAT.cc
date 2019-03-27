@@ -147,7 +147,6 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TProfile* DileptonPtVsEta;
   TH1F* ChiDilepton;
   TH1F* CosThetaStarDilepton;
-  TH1F* CosThetaStarInteraction;
 
   TH1F* DielectronMass;
   TH1F* DielectronMass_bbbe;
@@ -469,7 +468,6 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
    //
   ChiDilepton            = fs->make<TH1F>("ChiDilepton",            titlePrefix + "dil. chi", 100, 0, 20);
   CosThetaStarDilepton   = fs->make<TH1F>("CosThetaStarDilepton",            titlePrefix + "dil. cos theta star", 100, -1, 1);
-  CosThetaStarInteraction = fs->make<TH1F>("CosThetaStarInteraction", 	     titlePrefix + "dil. cos theta int", 100, -1, 1);
 
   // Dilepton invariant mass.
   DielectronMass            = fs->make<TH1F>("DielectronMass",            titlePrefix + "dil. mass", 20000, 0, 20000);
@@ -994,11 +992,6 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 	     else cos_cs = calcCosThetaCSAnal(lep1->pz(), lep1->energy(), lep0->pz(), lep0->energy(), dil.pt(), dil.pz(), dil.mass());
      }
      CosThetaStarDilepton->Fill(cos_cs);
-     double cos_int = 0.0;
-     if (lep0->charge() > 0) {cos_int = fabs(lep0->pz())*1.0/fabs(lep0->p());}
-     else {cos_int = fabs(lep1->pz())*1.0/fabs(lep1->p());}
-     if (lep0->pz() + lep1->pz() < 0) {cos_int *= -1;}
-     CosThetaStarInteraction->Fill(cos_int);
      //ChiDilepton->Fill((1+fabs(cos_cs))/(1-fabs(cos_cs)));
      ChiDilepton->Fill(exp(std::abs(lep0->p4().Rapidity()-lep1->p4().Rapidity())));
      if (cos_cs >= 0) DileptonMass_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_puWeight);

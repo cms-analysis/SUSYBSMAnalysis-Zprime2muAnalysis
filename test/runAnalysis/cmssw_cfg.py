@@ -7,15 +7,15 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFilt
 
 process.source.fileNames =[
 #'/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_50_120/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/70000/12BD4CC4-0751-E811-BCA9-0090FAA58D84.root',
-'/store/data/Run2018D/SingleMuon/MINIAOD/PromptReco-v2/000/320/569/00000/3C8C28E7-1A96-E811-BA8D-02163E012DD8.root'
+'/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_800_1400/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/70000/5CA2C969-F142-E811-9793-0025905A60F4.root'
 ]
 
 
 process.maxEvents.input = -1
-isMC = False
+isMC = True
 addNTuples = False
-year = 2018
-process.GlobalTag.globaltag = '94X_dataRun2_ReReco_EOY17_v6'
+year = 2017
+process.GlobalTag.globaltag = '94X_mc2017_realistic_v14'
 process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
 

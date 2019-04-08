@@ -366,7 +366,7 @@ def main():
 					cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
 
                                 # write add filename information
-				if True: #args.add2016:
+				if args.add2016:
                                 	os.system('dasgoclient -query="file dataset=%s | grep file.name" > myfiles.txt'%dataset)
                                 	with open('myfiles.txt') as fin:
                                         	content = fin.readlines()
@@ -378,10 +378,7 @@ def main():
 				#print getFilterSnippet(dataset_name)
 				open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
             			if args.submit:
-                			#os.system('crab submit -c crabConfig.py')
-					os.system("cmsRun cmssw_cfg.py")
-					fname = "%s.root"%dataset_name
-					os.system("mv zp2mu_histos.root %s"%fname)
+                			os.system('crab submit -c crabConfig.py')
 
 			if args.resolution and not args.data and not args.do2016 and not args.do2018:
 				print "submitting also weird samples"

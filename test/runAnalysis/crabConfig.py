@@ -1,14 +1,14 @@
 
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'dileptonAna_resolution_2018_SingleMuonRun2018D-PromptReco-v2'
+config.General.requestName = 'dileptonAna_resolution_dy800to1400_2017'
 config.General.workArea = 'crab2'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
-config.Data.inputDataset =  '/SingleMuon/Run2018D-PromptReco-v2/MINIAOD'
+config.Data.inputDataset =  '/ZToMuMu_NNPDF31_13TeV-powheg_M_800_1400/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'
 config.Data.inputDBS = 'global'
 config.Data.publication = False
-config.Data.outputDatasetTag = 'dileptonAna_resolution_2018_SingleMuonRun2018D-PromptReco-v2'
+config.Data.outputDatasetTag = 'dileptonAna_resolution_dy800to1400_2017'
 config.Data.outLFNDirBase = '/store/user/zhangfa/ADD2016MC'
 #config.Data.ignoreLocality = True
 #config.General.instance = 'preprod' 
@@ -16,8 +16,7 @@ config.Data.outLFNDirBase = '/store/user/zhangfa/ADD2016MC'
 config.Site.storageSite = 'T2_US_Purdue'
 config.JobType.maxMemoryMB  = 8000
 
-config.Data.splitting = 'LumiBased'
+config.Data.splitting = 'EventAwareLumiBased'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob = 400
-config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON_MuonPhys.txt'
+config.Data.unitsPerJob  = 500000
 

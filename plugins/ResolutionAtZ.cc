@@ -53,6 +53,9 @@ class ResolutionAtZ : public edm::EDAnalyzer {
   TH2F* DileptonMass_2d_vsPMinus_BB;
   TH2F* DileptonMass_2d_vsPMinus_BE;
 
+  TH2F* DileptonMass_2d_vsPt_BB_neweta;
+  TH2F* DileptonMass_2d_vsPt_BE_neweta;
+
 };
 
 ResolutionAtZ::ResolutionAtZ(const edm::ParameterSet& cfg)
@@ -96,6 +99,9 @@ ResolutionAtZ::ResolutionAtZ(const edm::ParameterSet& cfg)
    DileptonMass_2d_vsPMinus    = fs->make<TH2F>("DileptonMass_2d_vsPMinus",    titlePrefix + " dil. mass vs p"    , 200, 50., 150., 2000., 0., 2000.);
    DileptonMass_2d_vsPMinus_BB = fs->make<TH2F>("DileptonMass_2d_vsPMinus_BB", titlePrefix + " dil. mass vs p", 200, 50., 150., 2000., 0., 2000.);
    DileptonMass_2d_vsPMinus_BE = fs->make<TH2F>("DileptonMass_2d_vsPMinus_BE", titlePrefix + " dil. mass vs p", 200, 50., 150., 2000., 0., 2000.);
+
+   DileptonMass_2d_vsPt_BB_neweta = fs->make<TH2F>("DileptonMass_2d_vsPt_BB_neweta", titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
+   DileptonMass_2d_vsPt_BE_neweta = fs->make<TH2F>("DileptonMass_2d_vsPt_BE_neweta", titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
 }
 
 void ResolutionAtZ::fillDileptonMassResolution(const reco::CompositeCandidate& dil) {
@@ -170,6 +176,16 @@ void ResolutionAtZ::fillDileptonMassResolution(const reco::CompositeCandidate& d
     }
 
   }
+
+  if (fabs(dil.daughter(0)->eta()) < 1.6 && fabs(dil.daughter(1)->eta()) < 1.6) {
+    DileptonMass_2d_vsPt_BB_neweta->Fill(mass, dil.daughter(0)->pt());
+    DileptonMass_2d_vsPt_BB_neweta->Fill(mass, dil.daughter(1)->pt());
+  } else {
+    DileptonMass_2d_vsPt_BE_neweta->Fill(mass, dil.daughter(0)->pt());
+    DileptonMass_2d_vsPt_BE_neweta->Fill(mass, dil.daughter(1)->pt());
+  }
+
+  
 }
 
 

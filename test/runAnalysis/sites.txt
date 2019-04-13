@@ -1,5 +1,3 @@
-T0_CH_CERN_Export
-T0_CH_CERN_MSS
-T1_US_FNAL_Disk
-T2_PL_Swierk
-T2_UK_London_IC
+T1_IT_CNAF_Buffer
+T1_IT_CNAF_MSS
+T2_US_Purdue

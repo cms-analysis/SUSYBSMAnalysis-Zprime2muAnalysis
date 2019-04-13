@@ -52,8 +52,8 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   void fillDileptonHistos(const pat::CompositeCandidate&, const edm::Event&, double);
   void fillDileptonHistos(const pat::CompositeCandidateCollection&, const edm::Event&, double);
   double getSmearedMass(const pat::CompositeCandidate&, double, int);
-  double turnOn(double, double);
-  double L1TurnOn(double, double);
+  double turnOn(double, double, int);
+  double L1TurnOn(double, double, int);
 
   edm::InputTag lepton_src;
   edm::InputTag dilepton_src;

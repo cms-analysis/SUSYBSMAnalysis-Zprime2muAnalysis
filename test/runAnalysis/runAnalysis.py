@@ -91,7 +91,7 @@ def getCRABCfgWeirdSubmission(name,dataset,fileList):
 	crab_cfg = '''
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'dileptonAna_%s'
+config.General.requestName = 'dileptonAna_%s_2017_whystuck'
 config.General.workArea = 'crab'
 config.General.transferLogs = False
 config.JobType.pluginName = 'Analysis'
@@ -99,11 +99,10 @@ config.JobType.psetName = 'cmssw_cfg.py'
 #config.JobType.priority = 1
 config.Data.inputDBS = 'global'
 config.Data.publication = False
-config.Data.outputDatasetTag = 'dileptonAna_%s'
-config.Data.outLFNDirBase = '/store/user/zhangfa/ADD2016MC'
-config.Site.storageSite = 'T2_US_Purdue'
-config.Site.whitelist = ['T2_ES_IFCA','T2_US_Nebraska','T2_US_UCSD']
-#config.Site.whitelist = ['T1_US_FNAL']
+config.Data.outputDatasetTag = 'dileptonAna_%s_whystuck'
+config.Data.outLFNDirBase = '/store/user/zhangfa/DYMC2017resNOMUOrerun'
+config.Site.storageSite = 'T3_US_FNALLPC'
+config.Site.whitelist = ['T2_ES_IFCA','T2_US_MIT','T2_US_UCSD']
 config.Data.userInputFiles = %s
 config.Data.splitting = 'FileBased'
 config.Data.unitsPerJob = 1
@@ -121,19 +120,18 @@ def getCRABCfg(name,dataset,lumi_mask=""):
 	crab_cfg = '''
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'dileptonAna_%s'
+config.General.requestName = 'dileptonAna_%s_2017_whystuck'
 config.General.workArea = 'crab2'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
 config.Data.inputDBS = 'global'
 config.Data.publication = False
-config.Data.outputDatasetTag = 'dileptonAna_%s'
-config.Data.outLFNDirBase = '/store/user/zhangfa/ADD2016MC'
+config.Data.outputDatasetTag = 'dileptonAna_%s_whystuck'
+config.Data.outLFNDirBase = '/store/user/zhangfa/DYMC2017resNOMUOrerun'
 #config.Data.ignoreLocality = True
 #config.General.instance = 'preprod' 
-#config.Site.whitelist = ["T2_IT_Bari"]
-config.Site.storageSite = 'T2_US_Purdue'
+config.Site.storageSite = 'T3_US_FNALLPC'
 config.JobType.maxMemoryMB  = 8000
 %s
 '''
@@ -163,19 +161,19 @@ def getCRABCfgAAA(name,dataset,lumi_mask=""):
 	crab_cfg = '''
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'dileptonAna_%s'
+config.General.requestName = 'dileptonAna_%s_2017_whystuck'
 config.General.workArea = 'crab2'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
 config.Data.inputDBS = 'global'
 config.Data.publication = False
-config.Data.outputDatasetTag = 'dileptonAna_%s'
-config.Data.outLFNDirBase = '/store/user/zhangfa/ADD2016MC'
+config.Data.outputDatasetTag = 'dileptonAna_%s_whystuck'
+config.Data.outLFNDirBase = '/store/user/zhangfa/DYMC2017resNOMUOrerun'
 config.Data.ignoreLocality = True
 #config.General.instance = 'preprod' 
 config.Site.whitelist = ["T2_US_*"]
-config.Site.storageSite = 'T2_US_Purdue'
+config.Site.storageSite = 'T3_US_FNALLPC'
 config.JobType.maxMemoryMB  = 8000
 %s
 '''
@@ -395,12 +393,14 @@ def main():
 				   
 				# DBS client returns a list of dictionaries, but we want a list of Logical File Names
 				    lfnList = [ dic['logical_file_name'] for dic in fileDictList ]	
-				    crab_cfg = getCRABCfgWeirdSubmission(prefix+name,dataset,lfnList)
+				    crab_cfg = getCRABCfgWeirdSubmission(prefix+name,ana_dataset,lfnList)
 				    open('crabConfig.py', 'wt').write(crab_cfg)
 				    #cmssw_cfg+=getFilterSnippet(dataset_name) # high mass tails not available yet
+				    #cmssw_tmp = cmssw_tmp.replace('/store/data/Run2017F/DoubleEG/MINIAOD/17Nov2017-v1/50000/00105BAD-63E0-E711-8640-02163E0146C5.root', lfnList[0])
 				    open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
 				    if args.submit:
 					os.system('crab submit -c crabConfig.py')
+					#print "Test!"
 
 
 main()

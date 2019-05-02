@@ -1,4 +1,77 @@
-import argparse, subprocess, os, sys
+import argparse, subprocess, os	
+
+
+# get lumi_mask
+# especially for data
+def getLumiMask(args):
+	lumi_mask = ""
+        if args.data:
+		if args.electrons:
+			lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt"
+                	if args.do2018:
+                        	lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt"
+                	if args.do2016:
+                        	lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
+                else:
+                        lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_MuonPhys.txt"
+                        if args.do2018:
+                                lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON_MuonPhys.txt"
+                        if args.do2016:
+                                lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON_MuonPhys.txt"
+
+	return lumi_mask
+
+
+# function to return dictionary of
+# Primary DataSet name : Logical DataSet name
+def getSample(args):
+	if args.electrons and args.data:
+        	if args.do2018:
+			from samples import data_electrons_2018 as ret
+		elif args.do2016:
+                        from samples import data_electrons_2016 as ret
+                else:
+                        from samples import data_electrons_2017 as ret
+        elif args.electrons and not args.data:
+                if args.ci2017:
+                        from samples import ci_electrons_2017 as ret
+                elif args.ci2016:
+                        from samples import ci_electrons_2016 as ret
+                elif args.do2016:
+                        from samples import backgrounds_electrons_2016 as ret
+                elif args.do2018:
+                        from samples import backgrounds_electrons_2018 as ret
+                else:
+                        from samples import backgrounds_electrons_2017 as ret
+        elif args.data:
+                if args.do2018:
+                        from samples import data_muons_2018 as ret
+                elif args.do2016:
+                        from samples import data_muons_2016 as ret
+        	else:
+                	from samples import data_muons_2017 as ret
+        else:
+                if args.ci2017:
+                        from samples import ci_muons_2017 as ret
+                elif args.ci2016:
+                        from samples import ci_muons_2016 as ret
+                elif args.resolution:
+                        if args.do2016:
+                	        from samples import resolution_2016 as ret
+                        elif args.do2018:
+                                from samples import resolution_2018 as ret
+                        else:
+                                from samples import resolution_2017 as ret
+                elif args.do2016:
+                        from samples import backgrounds_muons_2016 as ret
+                elif args.do2018:
+                        from samples import backgrounds_muons_2018 as ret
+                else:
+                        from samples import backgrounds_muons_2017 as ret
+        if args.add2016:
+                from samples import add_2016 as ret
+
+	return ret
 
 
 
@@ -86,12 +159,13 @@ for path_name, path in process.paths.iteritems():
 	else:
 		return ""
 
+
 def getCRABCfgWeirdSubmission(name,dataset,fileList):
 
 	crab_cfg = '''
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'dileptonAna_%s_2017_whystuck'
+config.General.requestName = 'dileptonAna_%s'
 config.General.workArea = 'crab'
 config.General.transferLogs = False
 config.JobType.pluginName = 'Analysis'
@@ -99,10 +173,11 @@ config.JobType.psetName = 'cmssw_cfg.py'
 #config.JobType.priority = 1
 config.Data.inputDBS = 'global'
 config.Data.publication = False
-config.Data.outputDatasetTag = 'dileptonAna_%s_whystuck'
-config.Data.outLFNDirBase = '/store/user/zhangfa/DYMC2017resNOMUOrerun'
-config.Site.storageSite = 'T3_US_FNALLPC'
-config.Site.whitelist = ['T2_ES_IFCA','T2_US_MIT','T2_US_UCSD']
+config.Data.outputDatasetTag = 'dileptonAna_%s'
+config.Data.outLFNDirBase = '/store/user/zhangfa/ADD2016MC'
+config.Site.storageSite = 'T2_US_Purdue'
+config.Site.whitelist = ['T2_ES_IFCA','T2_US_Nebraska','T2_US_UCSD']
+#config.Site.whitelist = ['T1_US_FNAL']
 config.Data.userInputFiles = %s
 config.Data.splitting = 'FileBased'
 config.Data.unitsPerJob = 1
@@ -114,24 +189,24 @@ config.JobType.maxMemoryMB  = 8000
 
 
 
-
 def getCRABCfg(name,dataset,lumi_mask=""):
 
 	crab_cfg = '''
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'dileptonAna_%s_2017_whystuck'
+config.General.requestName = 'dileptonAna_%s'
 config.General.workArea = 'crab2'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
 config.Data.inputDBS = 'global'
 config.Data.publication = False
-config.Data.outputDatasetTag = 'dileptonAna_%s_whystuck'
-config.Data.outLFNDirBase = '/store/user/zhangfa/DYMC2017resNOMUOrerun'
+config.Data.outputDatasetTag = 'dileptonAna_%s'
+config.Data.outLFNDirBase = '/store/user/zhangfa/ADD2016MC'
 #config.Data.ignoreLocality = True
 #config.General.instance = 'preprod' 
-config.Site.storageSite = 'T3_US_FNALLPC'
+#config.Site.whitelist = ["T2_IT_Bari"]
+config.Site.storageSite = 'T2_US_Purdue'
 config.JobType.maxMemoryMB  = 8000
 %s
 '''
@@ -156,24 +231,25 @@ config.Data.unitsPerJob  = 500000
 	return result
 
 
+
 def getCRABCfgAAA(name,dataset,lumi_mask=""):
 
 	crab_cfg = '''
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'dileptonAna_%s_2017_whystuck'
+config.General.requestName = 'dileptonAna_%s'
 config.General.workArea = 'crab2'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
 config.Data.inputDBS = 'global'
 config.Data.publication = False
-config.Data.outputDatasetTag = 'dileptonAna_%s_whystuck'
-config.Data.outLFNDirBase = '/store/user/zhangfa/DYMC2017resNOMUOrerun'
+config.Data.outputDatasetTag = 'dileptonAna_%s'
+config.Data.outLFNDirBase = '/store/user/zhangfa/ADD2016MC'
 config.Data.ignoreLocality = True
 #config.General.instance = 'preprod' 
 config.Site.whitelist = ["T2_US_*"]
-config.Site.storageSite = 'T3_US_FNALLPC'
+config.Site.storageSite = 'T2_US_Purdue'
 config.JobType.maxMemoryMB  = 8000
 %s
 '''
@@ -208,10 +284,7 @@ def main():
 	parser.add_argument("-v", "--verbose", action="store_true", dest="verbose", default=False,
 						  help="Verbose mode.")
 	parser.add_argument("-d", "--data", action="store_true", dest="data", default=False,help="run on data")
-	#parser.add_argument("-l", "--local", action="store_true", dest="local", default=False,help="run locally")
-	#parser.add_argument("--allLocal", action="store_true", dest="allLocal", default=False,help="run a full list of samples locally")
-	parser.add_argument("--file", action="store", dest="inputFile", type=str  , default="",help="file to run over locally")
-	parser.add_argument("--dataset", action="store", dest="inputDataset", type=str , default="",help="dataset to run over locally")
+	parser.add_argument("-l", "--local", action="store_true", dest="local", default=False,help="run locally")
 	parser.add_argument("-s", "--submit", action="store_true", dest="submit", default=False,help="submit to CRAB")
 	parser.add_argument("-r", "--resolution", action="store_true", dest="resolution", default=False,help="run jobs for resolution studies")
 	parser.add_argument("-w", "--write", action="store_true", dest="write", default=False,help="write config but not execute")
@@ -223,8 +296,6 @@ def main():
 	parser.add_argument( "--addNTuples", action="store_true", dest="addNTuples", default=False,help="add nTuples to histogrammer workflow")
         parser.add_argument( "--add2016", action="store_true", dest="add2016", default=False, help="run ADD MC for 2016")
 	args = parser.parse_args()
-
-
 
 	if args.resolution and args.addNTuples:
 		print "warning, addNTuplets does nothing for resolution workflow"
@@ -266,104 +337,51 @@ def main():
 		applyAllGenFilters = True
 	if args.do2018:
 		prefix = prefix + "2018_"	
-#	open('cmssw_cfg.py', 'wt').write(cmssw_cfg)
-#	print prefix
+	open('cmssw_cfg.py', 'wt').write(cmssw_cfg)
+	print prefix
 	if not args.write:
-		#if args.local:
-		#	subprocess.call(['cmsRun','cmssw_cfg.py'])	
-		#else:
-			if args.electrons and args.data:
-				if args.do2018:
-					from samples import data_electrons_2018 as samples
-				elif args.do2016:	
-					from samples import data_electrons_2016 as samples
-				else:
-					from samples import data_electrons_2017 as samples
-			elif args.electrons and not args.data:
-				if args.ci2017:	
-					from samples import ci_electrons_2017 as samples
-				elif args.ci2016:	
-					from samples import ci_electrons_2016 as samples
-				elif args.do2016:
-					from samples import backgrounds_electrons_2016 as samples			
-				elif args.do2018:
-					from samples import backgrounds_electrons_2018 as samples
-				else:
-					from samples import backgrounds_electrons_2017 as samples
-			elif args.data:
-				if args.do2018:
-					from samples import data_muons_2018 as samples
-				elif args.do2016:
-					from samples import data_muons_2016 as samples
-				else:
-					from samples import data_muons_2017 as samples
-			else:
-				if args.ci2017:
-					from samples import ci_muons_2017 as samples 
-				elif args.ci2016:
-					from samples import ci_muons_2016 as samples 
-				elif args.resolution:
-					if args.do2016:
-						from samples import resolution_2016 as samples 
-					elif args.do2018:
-						from samples import resolution_2018 as samples 
-					else:	
-						from samples import resolution_2017 as samples 
-				elif args.do2016:	
-					from samples import backgrounds_muons_2016 as samples			
-				elif args.do2018:	
-					from samples import backgrounds_muons_2018 as samples
-				else:	
-					from samples import backgrounds_muons_2017 as samples 
-			if args.add2016:
-				from samples import add_2016 as samples
-
-			if not args.inputFile == "":
-				print "running over single file %s"%args.inputFile
-				samples = [("dummy", args.inputFile)]
-				if args.submit:
-					print "can't submit jobs over a single file, switching to local"
-					args.submit = False
-			elif not args.inputDataset == "":
-				validSample = False
-				for sample in samples:
-					if args.inputDataset == sample[1]:
-						validSample = True
-						samples = [sample]
-				if validSample:
-					print "running over sample %s"%args.inputDataset
-				else:
-					print "sample does not fit the chosen configuration, please reconsider"
-					sys.exit()
-
-
-			lumi_mask = ""
-			GT = "94X_mc2017_realistic_v14"
-			if args.add2016:
-				GT = "80X_mcRun2_asymptotic_2016_TrancheIV_v6"
-			if args.data:
-				if args.electrons: 
-					lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt"
-					if args.do2018:
-						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt"
-					if args.do2016:	
-						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
-
-				else:
-					lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_MuonPhys.txt"
-					if args.do2018:
-						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON_MuonPhys.txt"
-					if args.do2016:
-						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON_MuonPhys.txt"
-				GT = "94X_dataRun2_ReReco_EOY17_v6"
-
+		if args.local:
+			subprocess.call(['cmsRun','cmssw_cfg.py'])	
+		else:
+			# get sample map
+			samples = getSample(args)
 			
-
-
+			# get Global Tag
+			GT = "94X_mc2017_realistic_v14"
+			if args.add2016: GT = "80X_mcRun2_asymptotic_2016_TrancheIV_v6"
+			if args.data: GT = "94X_dataRun2_ReReco_EOY17_v6"
+			
+			# get luminosity mask
+			lumi_mask = getLumiMask(args)
+	
+	
+			# here for test only,
+			samples = [('dy50to120', '/ZToMuMu_NNPDF31_13TeV-powheg_M_50_120/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/MINIAODSIM') ]		
+			# process each sample
 			for dataset_name,  dataset in samples:
 				cmssw_tmp = cmssw_cfg
+				os.system('dasgoclient --query="site dataset=%s" > sites.txt'%dataset)
 
+				# write crab site config info
+				with open("sites.txt") as f:
+    					content = f.readlines()
+				content = [x.strip() for x in content] 
+				nT2 = 0
+				for site in content:
+					if "T2" in site:
+						nT2 += 1				
+				if nT2 <= 0:
+			 		crab_cfg = getCRABCfgAAA(prefix+dataset_name,dataset,lumi_mask)
+			 	else:	
+					crab_cfg = getCRABCfg(prefix+dataset_name,dataset,lumi_mask)
+				if args.do2016 and ("Lam100kTeV" in dataset_name or "Lam10TeV"	in dataset_name):
+					crab_cfg = crab_cfg.replace("config.Data.inputDBS = 'global'","config.Data.inputDBS = 'phys03'")
+				if args.do2016 and dataset_name == "CITo2E_Lam1TeVConLR_M300":
+					crab_cfg = crab_cfg + '\n'					
+					crab_cfg = crab_cfg + 'config.Data.allowNonValidInputDataset = True'					
+		                open('crabConfig.py', 'wt').write(crab_cfg)
 
+				# get mass filter
 				cmssw_tmp+=getFilterSnippet(dataset_name,args,applyAllGenFilters,year=arguments["year"])
 				if "dy" in dataset_name:
 					if "HistosFromPAT.usekFactor = False" in cmssw_tmp:
@@ -375,51 +393,23 @@ def main():
 					print "trying"
 					cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
 
-			
+                                # write add filename information
+				if True: #args.add2016:
+                                	os.system('dasgoclient -query="file dataset=%s | grep file.name" > myfiles.txt'%dataset)
+                                	with open('myfiles.txt') as fin:
+                                        	content = fin.readlines()
+                                	content = [x.strip() for x in content]
+					print content[0]
+					fin.close()
+					cmssw_tmp = cmssw_tmp.replace('/store/data/Run2017F/DoubleEG/MINIAOD/17Nov2017-v1/50000/00105BAD-63E0-E711-8640-02163E0146C5.root', content[0])
+
+				#print getFilterSnippet(dataset_name)
+				open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
             			if args.submit:
-					os.system('dasgoclient --query="site dataset=%s" > sites.txt'%dataset)
-
-					with open("sites.txt") as f:
-						content = f.readlines()
-					content = [x.strip() for x in content] 
-					nT2 = 0
-					for site in content:
-						if "T2" in site:
-							nT2 += 1				
-					if nT2 <= 0:
-						crab_cfg = getCRABCfgAAA(prefix+dataset_name,dataset,lumi_mask)
-					else:	
-						crab_cfg = getCRABCfg(prefix+dataset_name,dataset,lumi_mask)
-					if args.do2016 and ("Lam100kTeV" in dataset_name or "Lam10TeV"	in dataset_name):
-						crab_cfg = crab_cfg.replace("config.Data.inputDBS = 'global'","config.Data.inputDBS = 'phys03'")
-					if args.do2016 and dataset_name == "CITo2E_Lam1TeVConLR_M300":
-						crab_cfg = crab_cfg + '\n'					
-						crab_cfg = crab_cfg + 'config.Data.allowNonValidInputDataset = True'					
-					open('crabConfig.py', 'wt').write(crab_cfg)
-
-					#print getFilterSnippet(dataset_name)
-					open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
-					os.system('crab submit -c crabConfig.py')
-
-
-				else:
-					# write add filename information
-					if dataset_name == "dummy":
-						cmssw_tmp = cmssw_tmp.replace('dummyFile', dataset)
-					else:
-						os.system('dasgoclient -query="file dataset=%s | grep file.name" > myfiles.txt'%dataset)
-						with open('myfiles.txt') as fin:
-							content = fin.readlines()
-						content = [x.strip() for x in content]
-						print content[0]
-						fin.close()
-						cmssw_tmp = cmssw_tmp.replace('dummyFile', content[0])
-
-					open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
-
-					subprocess.call(['cmsRun','cmssw_cfg.py'])	
-
-
+                			#os.system('crab submit -c crabConfig.py')
+					#os.system("cmsRun cmssw_cfg.py")
+					print "DONE!"
+			
 			if args.resolution and not args.data and not args.do2016 and not args.do2018:
 				print "submitting also weird samples"
 				from samples import resolution_extra as samples2
@@ -435,14 +425,13 @@ def main():
 				   
 				# DBS client returns a list of dictionaries, but we want a list of Logical File Names
 				    lfnList = [ dic['logical_file_name'] for dic in fileDictList ]	
-				    crab_cfg = getCRABCfgWeirdSubmission(prefix+name,ana_dataset,lfnList)
+				    crab_cfg = getCRABCfgWeirdSubmission(prefix+name,dataset,lfnList)
 				    open('crabConfig.py', 'wt').write(crab_cfg)
 				    #cmssw_cfg+=getFilterSnippet(dataset_name) # high mass tails not available yet
-				    #cmssw_tmp = cmssw_tmp.replace('/store/data/Run2017F/DoubleEG/MINIAOD/17Nov2017-v1/50000/00105BAD-63E0-E711-8640-02163E0146C5.root', lfnList[0])
 				    open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
 				    if args.submit:
 					os.system('crab submit -c crabConfig.py')
-					#print "Test!"
 
 
-main()
+if __name__ == '__main__':
+	main()	

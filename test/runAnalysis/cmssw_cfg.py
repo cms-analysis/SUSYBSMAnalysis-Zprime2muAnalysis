@@ -41,7 +41,7 @@ HistosFromPAT.leptonsFromDileptons = True
 ####################################
 ####################################
 
-HistosFromPAT.usekFactor = False #### Set TRUE to use K Factor #####
+HistosFromPAT.usekFactor = True #### Set TRUE to use K Factor #####
 
 ####################################
 ####################################
@@ -184,7 +184,7 @@ for cut_name, Selection in cuts.iteritems():
                 alldil.tight_cut = prescaled_trigger_match
      # Histos now just needs to know which leptons and dileptons to use.
       
-	histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
+	histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name), year = cms.int32(2017))
 
         # Add all these modules to the process and the path list.
         setattr(process, allname, alldil)

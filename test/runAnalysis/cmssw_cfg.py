@@ -5,12 +5,12 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_reco_
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFiltersMiniAOD
 
-process.source.fileNames =['/store/mc/RunIISummer16MiniAODv2/ADDGravToLL_LambdaT-3000_M-1700_13TeV-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/100000/BEF61610-2CD3-E611-818D-0026B95A4CB3.root']
+process.source.fileNames =['dummyFile']
 
 process.maxEvents.input = -1
 isMC = True
 addNTuples = False
-year = 2016
+year = 2017
 process.GlobalTag.globaltag = '94X_mc2017_realistic_v14'
 process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
@@ -244,11 +244,3 @@ if addNTuples:
 if isMC:
 	switch_reco_process_name(process, "PAT") # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
     #switch_hlt_process_name(process, hlt_process_name) # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
-
-process.DYGenMassFilter = cms.EDFilter('QScaleSelector',
-                                       src = cms.InputTag('generator'),
-                                       min_mass = cms.double(1700),
-                                       max_mass = cms.double(7000)
-                                       )
-for path_name, path in process.paths.iteritems():
-        getattr(process,path_name).insert(2,process.DYGenMassFilter)

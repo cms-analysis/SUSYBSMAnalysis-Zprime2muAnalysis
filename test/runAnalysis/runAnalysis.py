@@ -1,4 +1,4 @@
-import argparse, subprocess, os	
+import argparse, subprocess, os, sys
 
 
 
@@ -210,7 +210,10 @@ def main():
 	parser.add_argument("-v", "--verbose", action="store_true", dest="verbose", default=False,
 						  help="Verbose mode.")
 	parser.add_argument("-d", "--data", action="store_true", dest="data", default=False,help="run on data")
-	parser.add_argument("-l", "--local", action="store_true", dest="local", default=False,help="run locally")
+	#parser.add_argument("-l", "--local", action="store_true", dest="local", default=False,help="run locally")
+	#parser.add_argument("--allLocal", action="store_true", dest="allLocal", default=False,help="run a full list of samples locally")
+	parser.add_argument("--file", action="store", dest="inputFile", type=str  , default="",help="file to run over locally")
+	parser.add_argument("--dataset", action="store", dest="inputDataset", type=str , default="",help="dataset to run over locally")
 	parser.add_argument("-s", "--submit", action="store_true", dest="submit", default=False,help="submit to CRAB")
 	parser.add_argument("-r", "--resolution", action="store_true", dest="resolution", default=False,help="run jobs for resolution studies")
 	parser.add_argument("-w", "--write", action="store_true", dest="write", default=False,help="write config but not execute")
@@ -222,6 +225,8 @@ def main():
 	parser.add_argument( "--addNTuples", action="store_true", dest="addNTuples", default=False,help="add nTuples to histogrammer workflow")
         parser.add_argument( "--add2016", action="store_true", dest="add2016", default=False, help="run ADD MC for 2016")
 	args = parser.parse_args()
+
+
 
 	if args.resolution and args.addNTuples:
 		print "warning, addNTuplets does nothing for resolution workflow"
@@ -263,12 +268,12 @@ def main():
 		applyAllGenFilters = True
 	if args.do2018:
 		prefix = prefix + "2018_"	
-	open('cmssw_cfg.py', 'wt').write(cmssw_cfg)
-	print prefix
+#	open('cmssw_cfg.py', 'wt').write(cmssw_cfg)
+#	print prefix
 	if not args.write:
-		if args.local:
-			subprocess.call(['cmsRun','cmssw_cfg.py'])	
-		else:
+		#if args.local:
+		#	subprocess.call(['cmsRun','cmssw_cfg.py'])	
+		#else:
 			if args.electrons and args.data:
 				if args.do2018:
 					from samples import data_electrons_2018 as samples
@@ -314,6 +319,26 @@ def main():
 					from samples import backgrounds_muons_2017 as samples 
 			if args.add2016:
 				from samples import add_2016 as samples
+
+			if not args.inputFile == "":
+				print "running over single file %s"%args.inputFile
+				samples = [("dummy", args.inputFile)]
+				if args.submit:
+					print "can't submit jobs over a single file, switching to local"
+					args.submit = False
+			elif not args.inputDataset == "":
+				validSample = False
+				for sample in samples:
+					if args.inputDataset == sample[1]:
+						validSample = True
+						samples = [sample]
+				if validSample:
+					print "running over sample %s"%args.inputDataset
+				else:
+					print "sample does not fit the chosen configuration, please reconsider"
+					sys.exit()
+
+
 			lumi_mask = ""
 			GT = "94X_mc2017_realistic_v14"
 			if args.add2016:
@@ -333,27 +358,14 @@ def main():
 					if args.do2016:
 						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON_MuonPhys.txt"
 				GT = "94X_dataRun2_ReReco_EOY17_v6"
+
+			
+
+
 			for dataset_name,  dataset in samples:
 				cmssw_tmp = cmssw_cfg
-				os.system('dasgoclient --query="site dataset=%s" > sites.txt'%dataset)
 
-				with open("sites.txt") as f:
-    					content = f.readlines()
-				content = [x.strip() for x in content] 
-				nT2 = 0
-				for site in content:
-					if "T2" in site:
-						nT2 += 1				
-				if nT2 <= 0:
-			 		crab_cfg = getCRABCfgAAA(prefix+dataset_name,dataset,lumi_mask)
-			 	else:	
-					crab_cfg = getCRABCfg(prefix+dataset_name,dataset,lumi_mask)
-				if args.do2016 and ("Lam100kTeV" in dataset_name or "Lam10TeV"	in dataset_name):
-					crab_cfg = crab_cfg.replace("config.Data.inputDBS = 'global'","config.Data.inputDBS = 'phys03'")
-				if args.do2016 and dataset_name == "CITo2E_Lam1TeVConLR_M300":
-					crab_cfg = crab_cfg + '\n'					
-					crab_cfg = crab_cfg + 'config.Data.allowNonValidInputDataset = True'					
-		                open('crabConfig.py', 'wt').write(crab_cfg)
+
 				cmssw_tmp+=getFilterSnippet(dataset_name,args,applyAllGenFilters,year=arguments["year"])
 				if "dy" in dataset_name:
 					if "HistosFromPAT.usekFactor = False" in cmssw_tmp:
@@ -365,20 +377,50 @@ def main():
 					print "trying"
 					cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
 
-                                # write add filename information
-				if args.add2016:
-                                	os.system('dasgoclient -query="file dataset=%s | grep file.name" > myfiles.txt'%dataset)
-                                	with open('myfiles.txt') as fin:
-                                        	content = fin.readlines()
-                                	content = [x.strip() for x in content]
-					print content[0]
-					fin.close()
-					cmssw_tmp = cmssw_tmp.replace('/store/data/Run2017F/DoubleEG/MINIAOD/17Nov2017-v1/50000/00105BAD-63E0-E711-8640-02163E0146C5.root', content[0])
-
-				#print getFilterSnippet(dataset_name)
-				open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
+			
             			if args.submit:
-                			os.system('crab submit -c crabConfig.py')
+					os.system('dasgoclient --query="site dataset=%s" > sites.txt'%dataset)
+
+					with open("sites.txt") as f:
+						content = f.readlines()
+					content = [x.strip() for x in content] 
+					nT2 = 0
+					for site in content:
+						if "T2" in site:
+							nT2 += 1				
+					if nT2 <= 0:
+						crab_cfg = getCRABCfgAAA(prefix+dataset_name,dataset,lumi_mask)
+					else:	
+						crab_cfg = getCRABCfg(prefix+dataset_name,dataset,lumi_mask)
+					if args.do2016 and ("Lam100kTeV" in dataset_name or "Lam10TeV"	in dataset_name):
+						crab_cfg = crab_cfg.replace("config.Data.inputDBS = 'global'","config.Data.inputDBS = 'phys03'")
+					if args.do2016 and dataset_name == "CITo2E_Lam1TeVConLR_M300":
+						crab_cfg = crab_cfg + '\n'					
+						crab_cfg = crab_cfg + 'config.Data.allowNonValidInputDataset = True'					
+					open('crabConfig.py', 'wt').write(crab_cfg)
+
+					#print getFilterSnippet(dataset_name)
+					open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
+					os.system('crab submit -c crabConfig.py')
+
+
+				else:
+					# write add filename information
+					if dataset_name == "dummy":
+						cmssw_tmp = cmssw_tmp.replace('dummyFile', dataset)
+					else:
+						os.system('dasgoclient -query="file dataset=%s | grep file.name" > myfiles.txt'%dataset)
+						with open('myfiles.txt') as fin:
+							content = fin.readlines()
+						content = [x.strip() for x in content]
+						print content[0]
+						fin.close()
+						cmssw_tmp = cmssw_tmp.replace('dummyFile', content[0])
+
+					open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
+
+					subprocess.call(['cmsRun','cmssw_cfg.py'])	
+
 
 			if args.resolution and not args.data and not args.do2016 and not args.do2018:
 				print "submitting also weird samples"

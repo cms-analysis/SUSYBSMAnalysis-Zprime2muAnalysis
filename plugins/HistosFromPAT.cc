@@ -1318,7 +1318,7 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
   }
 //  edm::Handle<int> hltPrescale;
 //  edm::Handle<int> l1Prescale;
-    hardInteraction->Fill(event);
+    if (fill_gen_info) hardInteraction->Fill(event);
 
 
 
@@ -1335,7 +1335,7 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
 //    std::cout<<totalPrescale<<std::endl;
     edm::Handle<GenEventInfoProduct> gen_ev_info;
     event.getByLabel(edm::InputTag("generator"), gen_ev_info);
-    _LRWeight = lrWeightProducer.calculateWeight(event,hardInteraction,gen_ev_info->alphaQED()); 
+    if (gen_ev_info.isValid()) _LRWeight = lrWeightProducer.calculateWeight(event,hardInteraction,gen_ev_info->alphaQED()); 
     WeightLR->Fill(_LRWeight);
     if (_useMadgraphWeight) {
         eventWeight = 1.;

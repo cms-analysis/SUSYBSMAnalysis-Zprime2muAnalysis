@@ -158,6 +158,31 @@ for cut_name, Selection in cuts.iteritems():
         setattr(process, name + 'Histos', histos)
         path_list.append(alldil * dil * histos)
 
+	if 'ConLR' in sampleName or 'DesLR' in sampleName or 'ConRL' in sampleName or 'DesRL' in sampleName:
+		L = 10000	
+		if '16TeV' in sampleName:
+			L = 16000
+		if '100kTeV' in sampleName:
+			L = 100000000
+		if '1TeV' in sampleName:
+			L = 1000
+		if '22TeV' in sampleName:
+			L = 22000
+		if '24TeV' in sampleName:
+			L = 24000
+		if '28TeV' in sampleName:
+			L = 28000
+		if '32TeV' in sampleName:
+			L = 32000
+		if '34TeV' in sampleName:
+			L = 34000
+		if '40TeV' in sampleName:
+			L = 40000
+		histos.lrWeightProducer.Lambda = L	
+		histos.lrWeightProducer.calculate = True
+		histos.lrWeightProducer.doingElectrons = False
+		if "RL" in name:
+			histos.lrWeightProducer.doingLR = False
 
     # Finally, make the path for this set of cuts.
     pathname = 'path' + cut_name

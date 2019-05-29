@@ -247,19 +247,18 @@ def main():
 		arguments["year"] = 2016
 	if args.do2018:
 		arguments["year"] = 2018
-	cmssw_cfg = open('setup.py').read()%arguments
-	prefix = "muons_"	
-	
+	lphaQEDprefix = "muons_"	
+	cmssw_cfg = open('setup.py').read()
 	if not args.resolution:
 		
 		if args.electrons:
 			prefix = "electrons_"
-			cmssw_cfg += open('histogrammerElectrons.py').read()
+			analyzer= open('histogrammerElectrons.py').read()
 		else:	
-			cmssw_cfg += open('histogrammerMuons.py').read()
+			analyzer= open('histogrammerMuons.py').read()
 	else:
 		prefix = "resolution_"
-		cmssw_cfg += open('resolution.py').read()
+		analyzer= open('resolution.py').read()
 	applyAllGenFilters = False
 	if args.do2016:
 		prefix = prefix + "2016_"
@@ -361,8 +360,10 @@ def main():
 
 
 			for dataset_name,  dataset in samples:
+				arguments['name'] = dataset_name
 				cmssw_tmp = cmssw_cfg
-
+				cmssw_tmp = cmssw_tmp%arguments
+				cmssw_tmp += analyzer
 
 				cmssw_tmp+=getFilterSnippet(dataset_name,args,applyAllGenFilters,year=arguments["year"])
 				if "dy" in dataset_name:
@@ -371,7 +372,7 @@ def main():
 				else:
 					if "HistosFromPAT.usekFactor = True" in cmssw_tmp:
 						cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.usekFactor = True','HistosFromPAT.usekFactor = False')
-				if not args.do2016 and not args.do2018 and not args.ci2017 and not args.data and not args.resolution and args.electrons:
+				if not args.do2016 and not args.do2018 and not args.ci2017 and not args.data and not args.resolution and args.electrons and not dataset_name == 'dummy':
 					print "trying"
 					cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
 

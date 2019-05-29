@@ -34,6 +34,7 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PUUtilities.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"///
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/LRWeightProducer.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/AsymFunctions.h"
 
 class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
@@ -85,6 +86,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
     double eventWeight;///
     bool _useMadgraphWeight;///
     double _madgraphWeight;///
+    double _LRWeight;///
     bool _usekFactor;
     double _kFactor;
     double _kFactor_bb;
@@ -319,6 +321,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
     TH1F* DimuonMassVtx_prob;
     //weight
     TH1F* WeightMadGraph;///
+    TH1F* WeightLR;///
     TH1F *kFactorGraph;
     TH1F *kFactorGraph_bb;
     TH1F *kFactorGraph_be;
@@ -327,6 +330,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
 	HardInteraction* hardInteraction;
   	std::vector<std::string> pu_info;  
 	int year_info;
+ 	LRWeightProducer lrWeightProducer;
 };
 
 Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
@@ -352,7 +356,8 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
     fill_gen_info(cfg.existsAs<edm::ParameterSet>("hardInteraction")),
     hardInteraction(fill_gen_info ? new HardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction")) : 0),
     pu_info(cfg.getParameter<std::vector<std::string>>("pu_weights")),
-    year_info(cfg.getParameter<int>("year"))
+    year_info(cfg.getParameter<int>("year")),
+    lrWeightProducer(cfg.getParameter<edm::ParameterSet>("lrWeightProducer"))
 {
 
   consumes<reco::CandidateView>(lepton_src);
@@ -360,7 +365,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   consumes<reco::BeamSpot>(beamspot_src);
   consumes<reco::VertexCollection>(vertex_src);
   consumes<std::vector<PileupSummaryInfo>>(pu_src);
-  mayConsume<GenEventInfoProduct>(edm::InputTag("generator"));
+  consumes<GenEventInfoProduct>(edm::InputTag("generator"));
   if (fill_gen_info) consumes<std::vector<reco::GenParticle>>(hardInteraction->src);
  
 
@@ -662,6 +667,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
     
      //weight
      WeightMadGraph = fs->make<TH1F>("weightperevent", titlePrefix + "weight per event", 4, -2,2);
+     WeightLR = fs->make<TH1F>("LR weights for CI", titlePrefix + "LR/RL weights", 200, -2,2);
      kFactorGraph = fs->make<TH1F>("kFactorperevent", titlePrefix + "kFactor per event", 50, 0.4,1.4);
      kFactorGraph_bb = fs->make<TH1F>("kFactorperevent_bb", titlePrefix + "kFactor per event bb", 50, 0.4,1.4);
      kFactorGraph_be = fs->make<TH1F>("kFactorperevent_be", titlePrefix + "kFactor per event be", 50, 0.4,1.4);
@@ -1312,6 +1318,10 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
   }
 //  edm::Handle<int> hltPrescale;
 //  edm::Handle<int> l1Prescale;
+    hardInteraction->Fill(event);
+
+
+
 
 //  event.getByLabel(edm::InputTag("getPrescales","HLTPrescale","Zprime2muAnalysis"), hltPrescale);
 //  event.getByLabel(edm::InputTag("getPrescales","L1Prescale","Zprime2muAnalysis"), l1Prescale);
@@ -1323,11 +1333,13 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
 //    std::cout<<*hltPrescale<<std::endl;
 //    std::cout<<l1Prescale<<std::endl;
 //    std::cout<<totalPrescale<<std::endl;
+    edm::Handle<GenEventInfoProduct> gen_ev_info;
+    event.getByLabel(edm::InputTag("generator"), gen_ev_info);
+    _LRWeight = lrWeightProducer.calculateWeight(event,hardInteraction,gen_ev_info->alphaQED()); 
+    WeightLR->Fill(_LRWeight);
     if (_useMadgraphWeight) {
         eventWeight = 1.;
 	_madgraphWeight = 1.; 
-        edm::Handle<GenEventInfoProduct> gen_ev_info;
-        event.getByLabel(edm::InputTag("generator"), gen_ev_info);
 	if (gen_ev_info.isValid()){
         	eventWeight = gen_ev_info->weight();
         	_madgraphWeight = ( eventWeight > 0 ) ? 1 : -1;
@@ -1335,7 +1347,7 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
         WeightMadGraph->Fill(_madgraphWeight);
     }
     
-
+  _madgraphWeight = _madgraphWeight*_LRWeight;
   if (use_bs_and_pv)
     getBSandPV(event);
 
@@ -1348,7 +1360,6 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
     if (!leptonsFromDileptons)
       fillLeptonHistos(*leptons);
   }
-
   edm::Handle<pat::CompositeCandidateCollection> dileptons;
   event.getByLabel(dilepton_src, dileptons);
   
@@ -1359,8 +1370,8 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
     if (leptonsFromDileptons)
     	if (fill_gen_info) {
 	        if (_usekFactor){
-    			hardInteraction->Fill(event);
 
+    			hardInteraction->Fill(event);
 // 			if(hardInteraction->IsValid()){
 			if(hardInteraction->IsValidForRes()){
     			gM = (hardInteraction->lepPlusNoIB->p4() + hardInteraction->lepMinusNoIB->p4()).mass();

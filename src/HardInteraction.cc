@@ -69,7 +69,6 @@ void HardInteraction::Fill(const edm::Event& event) {
 void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
   // Reset everything before filling.
   Clear();
-
   // Look in the doc lines for the hard-interaction resonance and
   // leptons.
   int counter=0;

@@ -9,6 +9,7 @@ HistosFromPAT.usekFactor = False #### Set TRUE to use K Factor on DY. If used, t
 # just change one or two cuts -- see below.
 import SUSYBSMAnalysis.Zprime2muAnalysis.ElectronSelection_cff as ElectronSelection
 import SUSYBSMAnalysis.Zprime2muAnalysis.ElectronSelection2016_cff as ElectronSelection2016
+import SUSYBSMAnalysis.Zprime2muAnalysis.ElectronSelection2018_cff as ElectronSelection2018
 
 
 
@@ -29,6 +30,11 @@ if year == 2016:
 	cuts = {
 	"ElectronSelection" : ElectronSelection2016,
 	}
+if year == 2018:
+	cuts = {
+	"ElectronSelection" : ElectronSelection2018,
+	}
+
 # Loop over all the cut sets defined and make the lepton, allDilepton
 # (combinatorics only), and dilepton (apply cuts) modules for them.
 for cut_name, Selection in cuts.iteritems():
@@ -84,6 +90,32 @@ for cut_name, Selection in cuts.iteritems():
 	#	delattr(histos,'hardInteraction')
 
 	histos.hardInteraction.doingElectrons = True
+	if 'ConLR' in sampleName or 'DesLR' in sampleName or 'ConRL' in sampleName or 'DesRL' in sampleName:
+		L = 10000	
+		if '16TeV' in sampleName:
+			L = 16000
+		if '100kTeV' in sampleName:
+			L = 100000000
+		if '1TeV' in sampleName:
+			L = 1000
+		if '22TeV' in sampleName:
+			L = 22000
+		if '24TeV' in sampleName:
+			L = 24000
+		if '28TeV' in sampleName:
+			L = 28000
+		if '32TeV' in sampleName:
+			L = 32000
+		if '34TeV' in sampleName:
+			L = 34000
+		if '40TeV' in sampleName:
+			L = 40000
+		histos.lrWeightProducer.Lambda = L	
+		histos.lrWeightProducer.calculate = True
+		histos.lrWeightProducer.doingElectrons = True
+		if "RL" in name:
+			histos.lrWeightProducer.doingLR = False
+	
         # Add all these modules to the process and the path list.
         setattr(process, allname, alldil)
         setattr(process, name, dil)

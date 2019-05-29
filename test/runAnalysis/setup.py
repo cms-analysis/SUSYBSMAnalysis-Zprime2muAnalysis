@@ -11,6 +11,7 @@ process.maxEvents.input = -1
 isMC = %(isMC)s
 addNTuples = %(addNTuples)s
 year = %(year)d
+sampleName = '%(name)s'
 process.GlobalTag.globaltag = '%(GT)s'
 process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000

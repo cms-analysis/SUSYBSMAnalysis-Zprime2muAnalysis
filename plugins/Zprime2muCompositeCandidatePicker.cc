@@ -290,10 +290,8 @@ std::pair<bool, float> Zprime2muCompositeCandidatePicker::dpt_over_pt(const pat:
 void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::EventSetup& setup) {
   edm::Handle<pat::CompositeCandidateCollection> cands;
   event.getByLabel(src, cands);
-  
   // does this get cached correctly? do we care?
   setup.get<TransientTrackRecord>().get("TransientTrackBuilder", ttkb);
-
   std::unique_ptr<pat::CompositeCandidateCollection> new_cands(new pat::CompositeCandidateCollection);
 
   // Copy all the candidates that pass the specified cuts into the new

@@ -181,7 +181,7 @@ for cut_name, Selection in cuts.iteritems():
 		histos.lrWeightProducer.Lambda = L	
 		histos.lrWeightProducer.calculate = True
 		histos.lrWeightProducer.doingElectrons = False
-		if "RL" in name:
+		if "RL" in sampleName:
 			histos.lrWeightProducer.doingLR = False
 
     # Finally, make the path for this set of cuts.

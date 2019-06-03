@@ -56,6 +56,13 @@ class ResolutionAtZ : public edm::EDAnalyzer {
   TH2F* DileptonMass_2d_vsPt_BB_neweta;
   TH2F* DileptonMass_2d_vsPt_BE_neweta;
 
+  TH2F* DileptonMass_2d_vsPt_BB_neweta_negPhi;
+  TH2F* DileptonMass_2d_vsPt_BE_neweta_negPhi;
+  TH2F* DileptonMass_2d_vsPt_BB_neweta_midPhi;
+  TH2F* DileptonMass_2d_vsPt_BE_neweta_midPhi;
+  TH2F* DileptonMass_2d_vsPt_BB_neweta_posPhi;
+  TH2F* DileptonMass_2d_vsPt_BE_neweta_posPhi;
+
 };
 
 ResolutionAtZ::ResolutionAtZ(const edm::ParameterSet& cfg)
@@ -102,6 +109,14 @@ ResolutionAtZ::ResolutionAtZ(const edm::ParameterSet& cfg)
 
    DileptonMass_2d_vsPt_BB_neweta = fs->make<TH2F>("DileptonMass_2d_vsPt_BB_neweta", titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
    DileptonMass_2d_vsPt_BE_neweta = fs->make<TH2F>("DileptonMass_2d_vsPt_BE_neweta", titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
+
+   DileptonMass_2d_vsPt_BB_neweta_negPhi = fs->make<TH2F>("DileptonMass_2d_vsPt_BB_neweta_midPhi", titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
+   DileptonMass_2d_vsPt_BE_neweta_negPhi = fs->make<TH2F>("DileptonMass_2d_vsPt_BE_neweta_midPhi", titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
+   DileptonMass_2d_vsPt_BB_neweta_midPhi = fs->make<TH2F>("DileptonMass_2d_vsPt_BB_neweta_midPhi", titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
+   DileptonMass_2d_vsPt_BE_neweta_midPhi = fs->make<TH2F>("DileptonMass_2d_vsPt_BE_neweta_midPhi", titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
+   DileptonMass_2d_vsPt_BB_neweta_midPhi = fs->make<TH2F>("DileptonMass_2d_vsPt_BB_neweta_midPhi", titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
+   DileptonMass_2d_vsPt_BE_neweta_midPhi = fs->make<TH2F>("DileptonMass_2d_vsPt_BE_neweta_midPhi", titlePrefix + " dil. mass vs pt", 200, 50., 150., 2000., 0., 2000.);
+
 }
 
 void ResolutionAtZ::fillDileptonMassResolution(const reco::CompositeCandidate& dil) {
@@ -183,6 +198,13 @@ void ResolutionAtZ::fillDileptonMassResolution(const reco::CompositeCandidate& d
   } else {
     DileptonMass_2d_vsPt_BE_neweta->Fill(mass, dil.daughter(0)->pt());
     DileptonMass_2d_vsPt_BE_neweta->Fill(mass, dil.daughter(1)->pt());
+
+    if (dil.daughter(0)->phi()* (180.0/3.141592653589793238463) < -60.) DileptonMass_2d_vsPt_BE_neweta_negPhi->Fill(mass, dil.daughter(0)->pt());
+    if (dil.daughter(1)->phi()* (180.0/3.141592653589793238463) < -60.) DileptonMass_2d_vsPt_BE_neweta_negPhi->Fill(mass, dil.daughter(1)->pt());
+    if (dil.daughter(0)->phi()* (180.0/3.141592653589793238463) >= -60. && dil.daughter(0)->phi()* (180.0/3.141592653589793238463) < 60.) DileptonMass_2d_vsPt_BE_neweta_midPhi->Fill(mass, dil.daughter(0)->pt());
+    if (dil.daughter(1)->phi()* (180.0/3.141592653589793238463) >= -60. && dil.daughter(1)->phi()* (180.0/3.141592653589793238463) < 60.) DileptonMass_2d_vsPt_BE_neweta_midPhi->Fill(mass, dil.daughter(1)->pt());
+    if (dil.daughter(0)->phi()* (180.0/3.141592653589793238463) >= 60.) DileptonMass_2d_vsPt_BE_neweta_posPhi->Fill(mass, dil.daughter(0)->pt());
+    if (dil.daughter(1)->phi()* (180.0/3.141592653589793238463) >= 60.) DileptonMass_2d_vsPt_BE_neweta_posPhi->Fill(mass, dil.daughter(1)->pt());
   }
 
   

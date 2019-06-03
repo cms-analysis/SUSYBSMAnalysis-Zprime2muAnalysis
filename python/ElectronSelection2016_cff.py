@@ -1,6 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 
-loose_cut = 'et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566)'
+loose_cut = 'et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566) && userInt("cutFor") == 1'
 
 tight_cut = ''
 

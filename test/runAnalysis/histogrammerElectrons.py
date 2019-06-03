@@ -113,7 +113,7 @@ for cut_name, Selection in cuts.iteritems():
 		histos.lrWeightProducer.Lambda = L	
 		histos.lrWeightProducer.calculate = True
 		histos.lrWeightProducer.doingElectrons = True
-		if "RL" in name:
+		if "RL" in sampleName:
 			histos.lrWeightProducer.doingLR = False
 	
         # Add all these modules to the process and the path list.

@@ -86,7 +86,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
     double eventWeight;///
     bool _useMadgraphWeight;///
     double _madgraphWeight;///
-    double _LRWeight;///
+    double _LRWeight = 1.;///
     bool _usekFactor;
     double _kFactor;
     double _kFactor_bb;

@@ -75,7 +75,7 @@ private:
   edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
   edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> trigger_summary_src_;
   edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_;
-  
+
   pat::TriggerObjectStandAloneCollection L3_muons;
   pat::TriggerObjectStandAloneCollection L3_muons_2;
   pat::TriggerObjectStandAloneCollection prescaled_L3_muons;
@@ -96,6 +96,7 @@ private:
 
   edm::EDGetTokenT<edm::View<pat::Electron> > electronToken_;  
   edm::EDGetTokenT<edm::ValueMap<unsigned int> > vidBitmapToken_;
+  edm::EDGetTokenT<double> rhoToken_;
 };
 
 Zprime2muLeptonProducer_miniAOD::Zprime2muLeptonProducer_miniAOD(const edm::ParameterSet& cfg)
@@ -119,7 +120,8 @@ Zprime2muLeptonProducer_miniAOD::Zprime2muLeptonProducer_miniAOD(const edm::Para
     trigger_summary_src_(consumes<pat::TriggerObjectStandAloneCollection>(cfg.getParameter<edm::InputTag>("trigger_summary"))),
     triggerPrescales_(consumes<pat::PackedTriggerPrescales>(cfg.getParameter<edm::InputTag>("prescales"))),
     electronToken_(consumes<edm::View<pat::Electron> >(cfg.getParameter<edm::InputTag>("electron_src"))),
-    vidBitmapToken_(consumes<edm::ValueMap<unsigned int> >(cfg.getParameter<edm::InputTag>("electron_id")))
+    vidBitmapToken_(consumes<edm::ValueMap<unsigned int> >(cfg.getParameter<edm::InputTag>("electron_id"))),
+    rhoToken_ (consumes<double> (cfg.getParameter<edm::InputTag>("rho")))
 {
   consumes<edm::View<reco::Candidate>>(muon_view_src);
   consumes<pat::MuonCollection>(muon_src);
@@ -575,14 +577,40 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
       unsigned int heepV70Bitmap = (*vidBitMap)[elePtr];
       using HEEPV70 = VIDCutCodes<cutnrs::HEEPV70>; 
       const bool passID = HEEPV70::pass(heepV70Bitmap,HEEPV70::ET,HEEPV70::IGNORE);
+      bool passEmHadIso2018 = false;
+      bool passHOverE2018 = false;
+      edm::Handle<double> rho_;
+      event.getByToken(rhoToken_,rho_);
+      const float rho = *rho_;
+      double sc_et = ele->caloEnergy()*sin( ele->theta() ) ; 
+      if (fabs(ele->superCluster()->eta()) < 1.4442){
+
+		passEmHadIso2018 = (ele->dr03HcalDepth1TowerSumEt() + ele->dr03EcalRecHitSumEt()) < (2 + 0.03*sc_et + 0.28*rho);
+		
+		passHOverE2018 = ele->hadronicOverEm() < (1./ele->caloEnergy() + 0.05);
+      }
+      else if (fabs(ele->superCluster()->eta()) > 1.562 && fabs(ele->superCluster()->eta()) < 2.5 ){
+
+		passEmHadIso2018 = (ele->dr03HcalDepth1TowerSumEt() + ele->dr03EcalRecHitSumEt()) < (2.5 + std::max(0.,0.03*(sc_et-50)) + (0.15+0.07*fabs(ele->superCluster()->eta()))*rho);
+		
+		passHOverE2018 = ele->hadronicOverEm() < ((-0.4+0.4*fabs(ele->superCluster()->eta())*rho)/ele->caloEnergy() + 0.05);
+
+
+     }
+      std::cout << passEmHadIso2018 << " " << passHOverE2018 << std::endl;
+      const bool passID2018 = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::HADEM,HEEPV70::EMHADD1ISO},HEEPV70::IGNORE) && passEmHadIso2018 && passHOverE2018;
       //const bool passID = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::SIGMAIETAIETA,HEEPV70::E2X5OVER5X5,HEEPV70::HADEM,HEEPV70::ETA,HEEPV70::DETAINSEED,HEEPV70::DPHIIN,HEEPV70::TRKISO});
       //const bool passID = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::SIGMAIETAIETA,HEEPV70::E2X5OVER5X5,HEEPV70::HADEM,HEEPV70::ETA,HEEPV70::DETAINSEED,HEEPV70::DPHIIN,HEEPV70::TRKISO,HEEPV70::EMHADD1ISO});
-      if(passID) {	
+      if (!passID == passID2018) std::cout << passID << " " << passID2018 << std::endl;
+      std::cout << passID2018 << std::endl;
+      if(passID || passID2018) {	
 	const pat::Electron Electrons = *ele;
 	std::pair<T*,int> res = doLepton(event, Electrons);
 	if (res.first == 0)
 	  continue;
-	res.first->addUserInt("cutFor", res.second);
+        res.first->addUserInt("cutFor", passID);
+	res.first->addUserInt("cutFor2018", passID2018);
+        std::cout << res.first->et() << std::endl;
 //	cout << res.first->userFloat("L1_TriggerMatchPt") << std::endl;
 	new_leptons->push_back(*res.first);
 	delete res.first;

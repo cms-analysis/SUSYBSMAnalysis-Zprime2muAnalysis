@@ -99,14 +99,15 @@ config.JobType.psetName = 'cmssw_cfg.py'
 #config.JobType.priority = 1
 config.Data.inputDBS = 'global'
 config.Data.publication = False
-config.Data.outputDatasetTag = 'dileptonAna_%s_whystuck'
-config.Data.outLFNDirBase = '/store/user/zhangfa/DYMC2017resNOMUOrerun'
-config.Site.storageSite = 'T3_US_FNALLPC'
-config.Site.whitelist = ['T2_ES_IFCA','T2_US_MIT','T2_US_UCSD']
+config.Data.outputDatasetTag = 'dileptonAna_%s'
+config.Data.outLFNDirBase = '/store/user/jschulte'
+config.Site.storageSite = 'T2_US_Purdue'
+#config.Site.whitelist = ['T2_ES_IFCA','T2_US_MIT','T2_US_UCSD']
 config.Data.userInputFiles = %s
 config.Data.splitting = 'FileBased'
 config.Data.unitsPerJob = 1
 config.JobType.maxMemoryMB  = 8000
+config.JobType.allowUndistributedCMSSW = True
 '''
 	result = crab_cfg%(name,name,fileList)
 	
@@ -120,19 +121,20 @@ def getCRABCfg(name,dataset,lumi_mask=""):
 	crab_cfg = '''
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'dileptonAna_%s_2017_whystuck'
+config.General.requestName = 'dileptonAna_%s'
 config.General.workArea = 'crab2'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
 config.Data.inputDBS = 'global'
 config.Data.publication = False
-config.Data.outputDatasetTag = 'dileptonAna_%s_whystuck'
-config.Data.outLFNDirBase = '/store/user/zhangfa/DYMC2017resNOMUOrerun'
+config.Data.outputDatasetTag = 'dileptonAna_%s'
+config.Data.outLFNDirBase = '/store/user/jschulte/'
 #config.Data.ignoreLocality = True
 #config.General.instance = 'preprod' 
-config.Site.storageSite = 'T3_US_FNALLPC'
+config.Site.storageSite = 'T2_US_Purdue'
 config.JobType.maxMemoryMB  = 8000
+config.JobType.allowUndistributedCMSSW = True
 %s
 '''
 	data_config='''
@@ -161,20 +163,21 @@ def getCRABCfgAAA(name,dataset,lumi_mask=""):
 	crab_cfg = '''
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'dileptonAna_%s_2017_whystuck'
+config.General.requestName = 'dileptonAna_%s'
 config.General.workArea = 'crab2'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
 config.Data.inputDBS = 'global'
 config.Data.publication = False
-config.Data.outputDatasetTag = 'dileptonAna_%s_whystuck'
-config.Data.outLFNDirBase = '/store/user/zhangfa/DYMC2017resNOMUOrerun'
+config.Data.outputDatasetTag = 'dileptonAna_%s'
+config.Data.outLFNDirBase = '/store/user/jschulte/'
 config.Data.ignoreLocality = True
 #config.General.instance = 'preprod' 
 config.Site.whitelist = ["T2_US_*"]
-config.Site.storageSite = 'T3_US_FNALLPC'
+config.Site.storageSite = 'T2_US_Purdue'
 config.JobType.maxMemoryMB  = 8000
+config.JobType.allowUndistributedCMSSW = True
 %s
 '''
 	data_config='''
@@ -214,14 +217,18 @@ def main():
 	parser.add_argument("--dataset", action="store", dest="inputDataset", type=str , default="",help="dataset to run over locally")
 	parser.add_argument("-s", "--submit", action="store_true", dest="submit", default=False,help="submit to CRAB")
 	parser.add_argument("-r", "--resolution", action="store_true", dest="resolution", default=False,help="run jobs for resolution studies")
+	parser.add_argument("--pdf", action="store_true", dest="pdf", default=False,help="produce trees for PDF studies")
 	parser.add_argument("-w", "--write", action="store_true", dest="write", default=False,help="write config but not execute")
 	parser.add_argument("-e", "--electrons", action="store_true", dest="electrons", default=False,help="run electrons")
 	parser.add_argument( "--ci2016", action="store_true", dest="ci2016", default=False,help="run CI MC for 2016")
 	parser.add_argument( "--ci2017", action="store_true", dest="ci2017", default=False,help="run CI MC for 2017")
+	parser.add_argument( "--ci2018", action="store_true", dest="ci2018", default=False,help="run CI MC for 2018")
 	parser.add_argument( "--2016", action="store_true", dest="do2016", default=False,help="run for 2016")
 	parser.add_argument( "--2018", action="store_true", dest="do2018", default=False,help="run for 2018")
 	parser.add_argument( "--addNTuples", action="store_true", dest="addNTuples", default=False,help="add nTuples to histogrammer workflow")
         parser.add_argument( "--add2016", action="store_true", dest="add2016", default=False, help="run ADD MC for 2016")
+        parser.add_argument( "--add2017", action="store_true", dest="add2017", default=False, help="run ADD MC for 2017")
+        parser.add_argument( "--add2018", action="store_true", dest="add2018", default=False, help="run ADD MC for 2018")
 	args = parser.parse_args()
 
 
@@ -247,18 +254,24 @@ def main():
 		arguments["year"] = 2016
 	if args.do2018:
 		arguments["year"] = 2018
-	lphaQEDprefix = "muons_"	
+	prefix = "muons_"	
 	cmssw_cfg = open('setup.py').read()
-	if not args.resolution:
+
+	if args.resolution:
+		prefix = "resolution_"
+		analyzer= open('resolution.py').read()
+	elif args.pdf:
+		prefix = "pdf_"
+		analyzer= open('pdfStudies.py').read()
+
+
+	else:
 		
 		if args.electrons:
 			prefix = "electrons_"
 			analyzer= open('histogrammerElectrons.py').read()
 		else:	
 			analyzer= open('histogrammerMuons.py').read()
-	else:
-		prefix = "resolution_"
-		analyzer= open('resolution.py').read()
 	applyAllGenFilters = False
 	if args.do2016:
 		prefix = prefix + "2016_"
@@ -281,8 +294,16 @@ def main():
 			elif args.electrons and not args.data:
 				if args.ci2017:	
 					from samples import ci_electrons_2017 as samples
+				elif args.ci2018:	
+					from samples import ci_electrons_2017 as samples
 				elif args.ci2016:	
 					from samples import ci_electrons_2016 as samples
+				elif args.add2017:	
+					from samples import add_2017 as samples
+				elif args.add2018:	
+					from samples import add_2017 as samples
+				elif args.add2016:	
+					from samples import add_2016 as samples
 				elif args.do2016:
 					from samples import backgrounds_electrons_2016 as samples			
 				elif args.do2018:
@@ -299,8 +320,16 @@ def main():
 			else:
 				if args.ci2017:
 					from samples import ci_muons_2017 as samples 
+				elif args.ci2018:
+					from samples import ci_muons_2017 as samples 
 				elif args.ci2016:
 					from samples import ci_muons_2016 as samples 
+				elif args.add2017:
+					from samples import add_2017 as samples 
+				elif args.add2017:
+					from samples import add_2017 as samples 
+				elif args.add2016:
+					from samples import add_2016 as samples 
 				elif args.resolution:
 					if args.do2016:
 						from samples import resolution_2016 as samples 
@@ -314,8 +343,6 @@ def main():
 					from samples import backgrounds_muons_2018 as samples
 				else:	
 					from samples import backgrounds_muons_2017 as samples 
-			if args.add2016:
-				from samples import add_2016 as samples
 
 			if not args.inputFile == "":
 				print "running over single file %s"%args.inputFile

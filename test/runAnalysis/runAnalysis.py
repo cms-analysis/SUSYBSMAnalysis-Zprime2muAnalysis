@@ -122,7 +122,7 @@ def getCRABCfg(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crab2'
+config.General.workArea = 'crab'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -135,6 +135,7 @@ config.Data.outLFNDirBase = '/store/user/jschulte/'
 config.Site.storageSite = 'T2_US_Purdue'
 config.JobType.maxMemoryMB  = 8000
 config.JobType.allowUndistributedCMSSW = True
+config.Site.blacklist = ['T2_US_Caltech']
 %s
 '''
 	data_config='''
@@ -164,7 +165,7 @@ def getCRABCfgAAA(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crab2'
+config.General.workArea = 'crab'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -175,6 +176,7 @@ config.Data.outLFNDirBase = '/store/user/jschulte/'
 config.Data.ignoreLocality = True
 #config.General.instance = 'preprod' 
 config.Site.whitelist = ["T2_US_*"]
+config.Site.blacklist = ['T2_US_Caltech']
 config.Site.storageSite = 'T2_US_Purdue'
 config.JobType.maxMemoryMB  = 8000
 config.JobType.allowUndistributedCMSSW = True
@@ -272,12 +274,12 @@ def main():
 			analyzer= open('histogrammerElectrons.py').read()
 		else:	
 			analyzer= open('histogrammerMuons.py').read()
-	applyAllGenFilters = False
+	applyAllGenFilters = True
 	if args.do2016:
 		prefix = prefix + "2016_"
-		applyAllGenFilters = True
 	if args.do2018:
 		prefix = prefix + "2018_"	
+		applyAllGenFilters = False
 #	open('cmssw_cfg.py', 'wt').write(cmssw_cfg)
 #	print prefix
 	if not args.write:
@@ -391,7 +393,7 @@ def main():
 				cmssw_tmp = cmssw_cfg
 				cmssw_tmp = cmssw_tmp%arguments
 				cmssw_tmp += analyzer
-
+				
 				cmssw_tmp+=getFilterSnippet(dataset_name,args,applyAllGenFilters,year=arguments["year"])
 				if "dy" in dataset_name:
 					if "HistosFromPAT.usekFactor = False" in cmssw_tmp:
@@ -402,8 +404,12 @@ def main():
 				if not args.do2016 and not args.do2018 and not args.ci2017 and not args.data and not args.resolution and args.electrons and not dataset_name == 'dummy':
 					print "trying"
 					cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
+				if args.do2018 and 'dy' in dataset_name and not dataset_name == "dyInclusive50":
+					cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2018_flat')
+				toReweight = ['WW200to600','WW600to1200','WW1200to2500','WW2500','ttbar_lep_500to800_ext','ttbar_lep_500to800','ttbar_lep_800to1200','ttbar_lep_1200to1800','ttbar_lep1800toInf']
+				if args.do2018 and dataset_name in toReweight:
+					cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2017')
 
-			
             			if args.submit:
 					os.system('dasgoclient --query="site dataset=%s" > sites.txt'%dataset)
 

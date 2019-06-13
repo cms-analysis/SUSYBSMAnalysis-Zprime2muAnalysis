@@ -65,6 +65,18 @@ def make_string_cut_for_trigger_matching( list_path_names, list_filters_pt ):
     else:
       cut += 'userFloat("%s_TriggerMatchPt")>=%i ' % (list_path_names[i], list_filters_pt[i])
   return cut
+trigger_filters2016 = [
+                    'hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q',
+		    'hltL3fL1sMu25f0TkFiltered50Q',
+                  ]
+trigger_path_names2016 = [
+        'Mu50',
+        'TkMu50'
+        ]
+trigger_filters_pt2016 = [
+                    50,
+                    50,
+                  ]
 
 trigger_filters = [
                     'hltL3fL1sMu22Or25L1f0L2f10QL3Filtered50Q',
@@ -91,6 +103,7 @@ prescaled_trigger_filters_pt = [
                     27
                   ]
 
+trigger_match_2016 = make_string_cut_for_trigger_matching( trigger_path_names2016, trigger_filters_pt2016 )
 trigger_match_2018 = make_string_cut_for_trigger_matching( trigger_path_names, trigger_filters_pt )
 prescaled_trigger_match_2018 = make_string_cut_for_trigger_matching( prescaled_trigger_path_names, prescaled_trigger_filters_pt )
 

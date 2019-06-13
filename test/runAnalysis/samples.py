@@ -11,17 +11,37 @@ backgrounds_muons_2018 = [
     ('dy6000toInf', '/ZToMuMu_NNPDF31_13TeV-powheg_M_6000_Inf/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM'),
 
      	('WZ', '/WZ_TuneCP5_13TeV-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v3/MINIAODSIM'),
+     	('WZ3LNu', '/WZTo3LNu_TuneCP5_13TeV-powheg-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15_ext1-v2/MINIAODSIM'),
+     	('WZ2L2Q', '/WZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM'),
      	
  	    ('ZZ', '/ZZ_TuneCP5_13TeV-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM'),
+ 	    ('ZZ2L2Nu', '/ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15_ext1-v2/MINIAODSIM'),
+ 	    ('ZZ2L2Nu_ext', '/ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15_ext2-v2/MINIAODSIM'),
+ 	    ('ZZ2L2Q', '/ZZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM'),
+ 	    ('ZZ4L', '/ZZTo4L_TuneCP5_13TeV_powheg_pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15_ext1-v2/MINIAODSIM'),
+ 	    ('ZZ4L_ext', '/ZZTo4L_TuneCP5_13TeV_powheg_pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15_ext2-v2/MINIAODSIM'),
+
+
+
  
      	('WWinclusive', '/WW_TuneCP5_13TeV-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM'),
+   	('WW200to600', '/WWTo2L2Nu_MLL_200To600_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+     	('WW600to1200', '/WWTo2L2Nu_MLL_600To1200_v3_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+ 	('WW1200to2500', '/WWTo2L2Nu_MLL_1200To2500_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+     	('WW2500', '/WWTo2L2Nu_MLL_2500ToInf_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
  
      	('dyInclusive50', '/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM'),
  
  	    ('Wjets', '/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM'),
  
      	('ttbar_lep', '/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM'),
- 
+   	('ttbar_lep_500to800_ext', '/TTToLL_MLL_500To800_41to65_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+   	('ttbar_lep_500to800', '/TTToLL_MLL_500To800_0to20_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+ 	('ttbar_lep_800to1200', '/TTToLL_MLL_800To1200_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+ 	('ttbar_lep_1200to1800', '/TTToLL_MLL_1200To1800_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+	('ttbar_lep1800toInf','/TTToLL_MLL_1800ToInf_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+
+
  	    ('Wantitop', '/ST_tW_antitop_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15_ext1-v3/MINIAODSIM'),
      	('tW', '/ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15_ext1-v3/MINIAODSIM'),
  
@@ -45,7 +65,7 @@ backgrounds_muons_2017 = [
 	    ('ZZ', '/ZZ_TuneCP5_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
  
      	('WWinclusive', '/WW_TuneCP5_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
-  	('WW200to600', '/WWTo2L2Nu_Mll_200To600_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+  	('WW200to600', '/WWTo2L2Nu_MLL_200To600_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
      	('WW600to1200', '/WWTo2L2Nu_MLL_600To1200_v3_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
  	('WW1200to2500', '/WWTo2L2Nu_MLL_1200To2500_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
      	('WW2500', '/WWTo2L2Nu_MLL_2500ToInf_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
@@ -56,7 +76,8 @@ backgrounds_muons_2017 = [
  	    ('Wjets_ext', '/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14_ext1-v2/MINIAODSIM'),
  
      	('ttbar_lep', '/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
-   	('ttbar_lep_500to800', '/TTToLL_MLL_500To800_41to65_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+   	('ttbar_lep_500to800_ext', '/TTToLL_MLL_500To800_41to65_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+   	('ttbar_lep_500to800', '/TTToLL_MLL_500To800_0to20_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
  	('ttbar_lep_800to1200', '/TTToLL_MLL_800To1200_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
  	('ttbar_lep_1200to1800', '/TTToLL_MLL_1200To1800_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
 	('ttbar_lep1800toInf','/TTToLL_MLL_1800ToInf_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
@@ -135,8 +156,7 @@ backgrounds_electrons_2017 = [
  	    ('ZZ', '/ZZ_TuneCP5_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
  
      	('WWinclusive', '/WW_TuneCP5_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
-      	('WWinclusive', '/WW_TuneCP5_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
-  	('WW200to600', '/WWTo2L2Nu_Mll_200To600_13TeV-powheg/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+  	('WW200to600', '/WWTo2L2Nu_MLL_200To600_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
      	('WW600to1200', '/WWTo2L2Nu_MLL_600To1200_v3_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
  	('WW1200to2500', '/WWTo2L2Nu_MLL_1200To2500_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
      	('WW2500', '/WWTo2L2Nu_MLL_2500ToInf_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
@@ -146,14 +166,20 @@ backgrounds_electrons_2017 = [
  	    ('Wjets_ext', '/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14_ext1-v2/MINIAODSIM'),
  
      	('ttbar_lep', '/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
-  	('ttbar_lep_500to800', '/TTToLL_MLL_500To800_41to65_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+  	('ttbar_lep_500to800_ext', '/TTToLL_MLL_500To800_41to65_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+  	('ttbar_lep_500to800', '/TTToLL_MLL_500To800_0to20_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
  	('ttbar_lep_800to1200', '/TTToLL_MLL_800To1200_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
  	('ttbar_lep_1200to1800', '/TTToLL_MLL_1200To1800_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
 	('ttbar_lep1800toInf','/TTToLL_MLL_1800ToInf_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
 #
  	    ('Wantitop', '/ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
      	('tW', '/ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
- 
+ 	('GJets_HT40To100','/GJets_HT-40To100_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/MINIAODSIM'), 
+	('GJets_HT100To200','/GJets_HT-100To200_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'), 
+	('GJets_HT200To400','/GJets_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'), 
+	('GJets_HT400To600','/GJets_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'), 
+	('GJets_HT600ToInf','/GJets_HT-600ToInf_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/MINIAODSIM'), 
+
 ]
 
 backgrounds_electrons_2018 = [
@@ -169,20 +195,45 @@ backgrounds_electrons_2018 = [
     ('dy6000toInf', '/ZToEE_NNPDF30_13TeV-powheg_M_6000_Inf/RunIIAutumn18MiniAOD-NZSPU0to70_102X_upgrade2018_realistic_v15-v1/MINIAODSIM'),
 
      	('WZ', '/WZ_TuneCP5_13TeV-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v3/MINIAODSIM'),
-     	
+     	('WZ3LNu', '/WZTo3LNu_TuneCP5_13TeV-powheg-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15_ext1-v2/MINIAODSIM'),
+     	('WZ2L2Q', '/WZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM'),
+ 
  	    ('ZZ', '/ZZ_TuneCP5_13TeV-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM'),
+ 	    ('ZZ2L2Nu', '/ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15_ext1-v2/MINIAODSIM'),
+ 	    ('ZZ2L2Nu_ext', '/ZZTo2L2Nu_TuneCP5_13TeV_powheg_pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15_ext2-v2/MINIAODSIM'),
+ 	    ('ZZ2L2Q', '/ZZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM'),
+ 	    ('ZZ4L', '/ZZTo4L_TuneCP5_13TeV_powheg_pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15_ext1-v2/MINIAODSIM'),
+ 	    ('ZZ4L_ext', '/ZZTo4L_TuneCP5_13TeV_powheg_pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15_ext2-v2/MINIAODSIM'),
+
+
+
+
  
      	('WWinclusive', '/WW_TuneCP5_13TeV-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM'),
+   	('WW200to600', '/WWTo2L2Nu_MLL_200To600_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+     	('WW600to1200', '/WWTo2L2Nu_MLL_600To1200_v3_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+ 	('WW1200to2500', '/WWTo2L2Nu_MLL_1200To2500_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+     	('WW2500', '/WWTo2L2Nu_MLL_2500ToInf_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
  
      	('dyInclusive50', '/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM'),
  
  	    ('Wjets', '/WJetsToLNu_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v2/MINIAODSIM'),
  
      	('ttbar_lep', '/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM'),
- 
+   	('ttbar_lep_500to800_ext', '/TTToLL_MLL_500To800_41to65_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+   	('ttbar_lep_500to800', '/TTToLL_MLL_500To800_0to20_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+ 	('ttbar_lep_800to1200', '/TTToLL_MLL_800To1200_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+ 	('ttbar_lep_1200to1800', '/TTToLL_MLL_1200To1800_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+	('ttbar_lep1800toInf','/TTToLL_MLL_1800ToInf_NNPDF31_13TeV-powheg/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'),
+
+
  	    ('Wantitop', '/ST_tW_antitop_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15_ext1-v3/MINIAODSIM'),
      	('tW', '/ST_tW_top_5f_NoFullyHadronicDecays_TuneCP5_13TeV-powheg-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15_ext1-v3/MINIAODSIM'),
- 
+	
+	('GJets_HT40To100','/GJets_HT-40To100_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM'), 
+	('GJets_HT200To400','/GJets_HT-200To400_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM'), 
+	('GJets_HT400To600','/GJets_HT-400To600_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM'), 
+	('GJets_HT600ToInf','/GJets_HT-600ToInf_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15_ext1-v2/MINIAODSIM'), 
 ]
 backgrounds_electrons_2016 = [
  	    ('dy50to120', '/ZToEE_NNPDF30_13TeV-powheg_M_50_120/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
@@ -239,6 +290,18 @@ backgrounds_electrons_2016 = [
 ]
 
 data_muons_2016 = [
+
+ 	('SingleMuonRun2016B-23Sep2016_v3', '/SingleMuon/Run2016B-23Sep2016-v3/MINIAOD'),
+ 	('SingleMuonRun2016C-23Sep2016-v1', '/SingleMuon/Run2016C-23Sep2016-v1/MINIAOD'),
+ 	('SingleMuonRun2016D-23Sep2016-v1', '/SingleMuon/Run2016D-23Sep2016-v1/MINIAOD'),
+ 	('SingleMuonRun2016E-23Sep2016-v1', '/SingleMuon/Run2016E-23Sep2016-v1/MINIAOD'),
+ 	('SingleMuonRun2016F-23Sep2016-v1', '/SingleMuon/Run2016F-23Sep2016-v1/MINIAOD'),
+ 	('SingleMuonRun2016G-23Sep2016-v1', '/SingleMuon/Run2016G-23Sep2016-v1/MINIAOD'),
+ 	('SingleMuonRun2016H-PromptReco-v1', '/SingleMuon/Run2016H-PromptReco-v1/MINIAOD'),
+ 	('SingleMuonRun2016H-PromptReco-v2', '/SingleMuon/Run2016H-PromptReco-v2/MINIAOD'),
+ 	('SingleMuonRun2016H-PromptReco-v3', '/SingleMuon/Run2016H-PromptReco-v3/MINIAOD'),
+
+
  	('SingleMuonRun2016B-17Jul2018_ver1-v1', '/SingleMuon/Run2016B-17Jul2018_ver1-v1/MINIAOD'),
  	('SingleMuonRun2016B-17Jul2018_ver2-v1', '/SingleMuon/Run2016B-17Jul2018_ver2-v1/MINIAOD'),
  	('SingleMuonRun2016C-17Jul2017-v1', '/SingleMuon/Run2016C-17Jul2018-v1/MINIAOD'),
@@ -251,14 +314,24 @@ data_muons_2016 = [
 
 
 data_electrons_2016 = [
- 	('DoubleEG2016B-17Jul2018_ver1-v1', '/DoubleEG/Run2016B-17Jul2018_ver1-v1/MINIAOD'),
- 	('DoubleEG2016B-17Jul2018_ver2-v1', '/DoubleEG/Run2016B-17Jul2018_ver2-v1/MINIAOD'),
- 	('DoubleEG2016C-17Jul2017-v1', '/DoubleEG/Run2016C-17Jul2018-v1/MINIAOD'),
- 	('DoubleEG2016D-17Jul2017-v1', '/DoubleEG/Run2016D-17Jul2018-v1/MINIAOD'),
- 	('DoubleEG2016E-17Jul2017-v1', '/DoubleEG/Run2016E-17Jul2018-v1/MINIAOD'),
- 	('DoubleEG2016F-17Jul2017-v1', '/DoubleEG/Run2016F-17Jul2018-v1/MINIAOD'),
- 	('DoubleEG2016G-17Jul2017-v1', '/DoubleEG/Run2016G-17Jul2018-v1/MINIAOD'),
- 	('DoublEG2016H-17Jul2017-v1', '/DoubleEG/Run2016H-17Jul2018-v1/MINIAOD'),
+ 	('DoubleEG2016B-03Feb2017_ver2-v2', '/DoubleEG/Run2016B-03Feb2017_ver2-v2/MINIAOD'),
+ 	('DoubleEG2016C-03Feb2017-v1', '/DoubleEG/Run2016C-03Feb2017-v1/MINIAOD'),
+ 	('DoubleEG2016D-03Feb2017-v1', '/DoubleEG/Run2016D-03Feb2017-v1/MINIAOD'),
+ 	('DoubleEG2016E-03Feb2017-v1', '/DoubleEG/Run2016E-03Feb2017-v1/MINIAOD'),
+ 	('DoubleEG2016F-03Feb2017-v1', '/DoubleEG/Run2016F-03Feb2017-v1/MINIAOD'),
+ 	('DoubleEG2016G-03Feb2017-v1', '/DoubleEG/Run2016G-03Feb2017-v1/MINIAOD'),
+ 	('DoubleEG2016H-03Feb2017_ver2-v1', '/DoubleEG/Run2016H-03Feb2017_ver2-v1/MINIAOD'),
+ 	('DoubleEG2016H-03Feb2017_ver3-v1', '/DoubleEG/Run2016H-03Feb2017_ver3-v1/MINIAOD'),
+
+
+# 	('DoubleEG2016B-17Jul2018_ver1-v1', '/DoubleEG/Run2016B-17Jul2018_ver1-v1/MINIAOD'),
+# 	('DoubleEG2016B-17Jul2018_ver2-v1', '/DoubleEG/Run2016B-17Jul2018_ver2-v1/MINIAOD'),
+# 	('DoubleEG2016C-17Jul2018-v1', '/DoubleEG/Run2016C-17Jul2018-v1/MINIAOD'),
+# 	('DoubleEG2016D-17Jul2018-v1', '/DoubleEG/Run2016D-17Jul2018-v1/MINIAOD'),
+# 	('DoubleEG2016E-17Jul2018-v1', '/DoubleEG/Run2016E-17Jul2018-v1/MINIAOD'),
+# 	('DoubleEG2016F-17Jul2018-v1', '/DoubleEG/Run2016F-17Jul2018-v1/MINIAOD'),
+# 	('DoubleEG2016G-17Jul2018-v1', '/DoubleEG/Run2016G-17Jul2018-v1/MINIAOD'),
+# 	('DoubleEG2016H-17Jul2018-v1', '/DoubleEG/Run2016H-17Jul2018-v1/MINIAOD'),
 ]
 data_muons_2017 = [
  	('SingleMuonRun2017B-31Mar2018-v1', '/SingleMuon/Run2017B-31Mar2018-v1/MINIAOD'),
@@ -284,7 +357,7 @@ data_electrons_2018 = [
  	('DoubleEGRun2018A-17Sep2018-v2', '/EGamma/Run2018A-22Jun2018-v1/MINIAOD'),
  	('DoubleEGRun2018B-17Sep2018-v1', '/EGamma/Run2018B-17Sep2018-v1/MINIAOD'),
  	('DoubleEGRun2018C-17Sep2018-v1', '/EGamma/Run2018C-17Sep2018-v1/MINIAOD'),
- 	('DoubleEGRun2018D-PromptReco-v2', '/EGamma/Run2018D-22Jan2019-v2/MINIAOD'),
+ 	('DoubleEGRun2018D-22Jan2019-v2', '/EGamma/Run2018D-22Jan2019-v2/MINIAOD'),
 ]
 
 resolution_2016 = [
@@ -1027,17 +1100,22 @@ add_2016 = [
 
 add_2017 = [
 ('ADDGravToLL_LambdaT-100000_M-1300To2000', '/ADDGravToLL_LambdaT-100000_M-1300To2000_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
+('ADDGravToLL_LambdaT-100000_M-2000ToInf', '/ADDGravToLL_LambdaT-100000_M-2000ToInf_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-100000_M-300To800', '/ADDGravToLL_LambdaT-100000_M-300To800_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
+('ADDGravToLL_LambdaT-100000_M-800To1300', '/ADDGravToLL_LambdaT-100000_M-800To1300_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-10000_M-1300To2000', '/ADDGravToLL_LambdaT-10000_M-1300To2000_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-10000_M-2000ToInf', '/ADDGravToLL_LambdaT-10000_M-2000ToInf_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-10000_M-300To800', '/ADDGravToLL_LambdaT-10000_M-300To800_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-10000_M-800To1300', '/ADDGravToLL_LambdaT-10000_M-800To1300_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-11000_M-1300To2000', '/ADDGravToLL_LambdaT-11000_M-1300To2000_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
+('ADDGravToLL_LambdaT-11000_M-2000ToInf', '/ADDGravToLL_LambdaT-11000_M-2000ToInf_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-11000_M-300To800', '/ADDGravToLL_LambdaT-11000_M-300To800_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-11000_M-800To1300', '/ADDGravToLL_LambdaT-11000_M-800To1300_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-12000_M-2000ToInf', '/ADDGravToLL_LambdaT-12000_M-2000ToInf_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-12000_M-300To800', '/ADDGravToLL_LambdaT-12000_M-300To800_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-12000_M-800To1300', '/ADDGravToLL_LambdaT-12000_M-800To1300_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
+('ADDGravToLL_LambdaT-4000_M-1300To2000', '/ADDGravToLL_LambdaT-4000_M-1300To2000_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
+('ADDGravToLL_LambdaT-4000_M-800To1300', '/ADDGravToLL_LambdaT-4000_M-800To1300_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-5000_M-1300To2000', '/ADDGravToLL_LambdaT-5000_M-1300To2000_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-5000_M-2000ToInf', '/ADDGravToLL_LambdaT-5000_M-2000ToInf_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-5000_M-300To800', '/ADDGravToLL_LambdaT-5000_M-300To800_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
@@ -1053,6 +1131,7 @@ add_2017 = [
 ('ADDGravToLL_LambdaT-8000_M-2000ToInf', '/ADDGravToLL_LambdaT-8000_M-2000ToInf_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-8000_M-300To800', '/ADDGravToLL_LambdaT-8000_M-300To800_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-8000_M-800To1300', '/ADDGravToLL_LambdaT-8000_M-800To1300_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
+('ADDGravToLL_LambdaT-9000_M-1300To2000', '/ADDGravToLL_LambdaT-9000_M-1300To2000_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-9000_M-2000ToInf', '/ADDGravToLL_LambdaT-9000_M-2000ToInf_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-9000_M-300To800', '/ADDGravToLL_LambdaT-9000_M-300To800_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-9000_M-800To1300', '/ADDGravToLL_LambdaT-9000_M-800To1300_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,

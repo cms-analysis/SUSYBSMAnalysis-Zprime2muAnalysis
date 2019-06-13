@@ -11,8 +11,14 @@ import SUSYBSMAnalysis.Zprime2muAnalysis.ElectronSelection_cff as ElectronSelect
 import SUSYBSMAnalysis.Zprime2muAnalysis.ElectronSelection2016_cff as ElectronSelection2016
 import SUSYBSMAnalysis.Zprime2muAnalysis.ElectronSelection2018_cff as ElectronSelection2018
 
-
-
+from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
+if year == 2016:
+    setupEgammaPostRecoSeq(process, era='2016-Legacy')
+if year == 2017:
+    setupEgammaPostRecoSeq(process, era='2017-Nov17ReReco')
+if year == 2018:
+	print "setting up"
+	setupEgammaPostRecoSeq(process, era='2018-Prompt')
 
 
 
@@ -52,9 +58,12 @@ for cut_name, Selection in cuts.iteritems():
 	    
     leptons_name = cut_name + 'Leptons'
     leptons = process.leptonsMini.clone()
-    if year == 2016 and isMC:
+    if year == 2016 and (isMC or "03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName):
 	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
+    if year == 2018:
+	leptons.hlt_filter_ele = cms.string('hltDiEle25CaloIdLMWPMS2UnseededFilter')
 
+    leptons.electron_src = cms.InputTag('slimmedElectrons',"","Zprime2muAnalysis")
     setattr(process, leptons_name, leptons)
     path_list.append(leptons)
 	
@@ -79,11 +88,11 @@ for cut_name, Selection in cuts.iteritems():
         # Histos now just needs to know which leptons and dileptons to use.
 	if isMC:
 		if year == 2018:
-			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2017","data_2018"))
+			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2018","data_2018"), year = cms.int32(year))
 		elif year == 2017:	
-			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2017","data_2017"))
+			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2017","data_2017"), year = cms.int32(year))
 		else:	
-			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2016","data_2016"))
+			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2016","data_2016"), year = cms.int32(year))
 	else:	
 		histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True))
 	#if not isMC:
@@ -110,6 +119,10 @@ for cut_name, Selection in cuts.iteritems():
 			L = 34000
 		if '40TeV' in sampleName:
 			L = 40000
+		if "Con" in sampleName:
+			histos.lrWeightProducer.interference = -1
+		else:	
+			histos.lrWeightProducer.interference = 1
 		histos.lrWeightProducer.Lambda = L	
 		histos.lrWeightProducer.calculate = True
 		histos.lrWeightProducer.doingElectrons = True
@@ -123,7 +136,10 @@ for cut_name, Selection in cuts.iteritems():
 	if not isMC:
 		#del histos.hardInteraction
 		#histos.useMadgraphWeight  = False
+		
 		trig = Selection.dielectronHLT
+		if "DoubleEG2016H" in sampleName:
+			trig.triggerConditions = cms.vstring("HLT_DoubleEle33_CaloIdL_MW_v*")
 		trigName = cut_name + "HLTFilter"
         	setattr(process, trigName, trig)
 		delattr(getattr(process,name + 'Histos'),'hardInteraction')	
@@ -138,7 +154,7 @@ for cut_name, Selection in cuts.iteritems():
     pathname = 'path' + cut_name
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DielectronPreselector_cfi')
     process.load("SUSYBSMAnalysis.Zprime2muAnalysis.EventCounter_cfi")
-    pobj = process.EventCounter * process.dielectronPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+    pobj = process.egammaPostRecoSeq * process.EventCounter * process.dielectronPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
 
 
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')

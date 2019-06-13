@@ -24,6 +24,7 @@ struct LRWeightProducer {
   // Whether doing electrons.
   const bool doingElectrons;
   const int lambda;
+  const int interference;
   const bool doingLR;
   const bool calculate;
   // The lepton flavor to look for (e.g. 13 for muons, 11 for electrons).

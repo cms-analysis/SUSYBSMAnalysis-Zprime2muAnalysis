@@ -27,7 +27,7 @@ dielectrons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          dpt_over_pt_max = cms.double(999999999999)
                          )
 dielectronHLT = cms.EDFilter("TriggerResultsFilter",
-    	triggerConditions = cms.vstring("HLT_DoubleEle33_CaloIdL_MW_v*"),
+    	triggerConditions = cms.vstring("HLT_DoubleEle33_CaloIdL_MW_v*","HLT_DoubleEle33_CaloIdL_GsfTrkIdVL_v*"),
 	hltResults = cms.InputTag("TriggerResults","","HLT"),
 	l1tResults = cms.InputTag("gtStage2Digis")
 	)

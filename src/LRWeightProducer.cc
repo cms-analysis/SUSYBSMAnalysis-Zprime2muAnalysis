@@ -7,6 +7,7 @@
 LRWeightProducer::LRWeightProducer(const edm::ParameterSet cfg)
   : doingElectrons(cfg.getParameter<bool>("doingElectrons")),
     lambda(cfg.getParameter<int>("Lambda")),
+    interference(cfg.getParameter<int>("interference")),
     doingLR(cfg.getParameter<bool>("doingLR")),
     calculate(cfg.getParameter<bool>("calculate")),
     leptonFlavor(doingElectrons ? 11 : 13),
@@ -40,7 +41,7 @@ double LRWeightProducer::calculateWeight(const edm::Event& event, HardInteractio
   int idNew=leptonMinusId;
 
   double qCLambda2 = lambda*lambda;
-  int qCetaLR =-1;
+  int qCetaLR = interference;
 
   double sH = (hardInteraction->quark->p4() + hardInteraction->antiquark->p4()).mag2();
   double tH = (hardInteraction->quark->p4() - hardInteraction->lepMinusNoIB->p4()).mag2();

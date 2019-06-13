@@ -20,13 +20,21 @@ parser = argparse.ArgumentParser(description='tool to run dilepton analysis')
 parser.add_argument("--forceMerge", action="store_true", dest="forceMerge", default=False, help="force merge even if not all files present")
 
 args = parser.parse_args()
+doneTasks = []
+if os.path.isfile('crab/doneTasks.txt'):
+	with open('crab/doneTasks.txt') as f:
+    		doneTasks = f.readlines()
+	doneTasks = [x.strip() for x in doneTasks] 
+
 
 # With this function you can change the console log level at any time.
-for d in glob("crab2/*/"):
+for d in glob("crab/*/"):
 	#if not d == "crab2/crab_dileptonAna_muons_2018_SingleMuonRun2018D-PromptReco-v2/":
 	#	continue
 #	if not "CITo2Mu" in d: 
 #^		continue
+	if d in doneTasks:
+		continue
 	print "check status of task %s"%d
 	res = crabCommand('status',dir=d)
 	if res.get("jobList"):
@@ -44,10 +52,13 @@ for d in glob("crab2/*/"):
 		print "some jobs done, checking output"
 		fileCount = len(glob(d+'/results/*.root'))
 		if fileCount == nJobs:
-			"all files already downloaded, doing nothing"
+			print "all files already downloaded, listing as done"
+			f=open("crab/doneTasks.txt", "a+")
+			f.write('%s\n'%d)
+			f.close()
 			continue
 		if fileCount == 0:
-			"no files downloaded yet, starting"
+			print "no files downloaded yet, starting"
 			if nJobs < 500:
 				#subprocess.call(["crab",'getoutput',d])
 				resGet = crabCommand("getoutput",dir=d)

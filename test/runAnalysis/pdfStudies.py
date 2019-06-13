@@ -1,34 +1,35 @@
 #!/usr/bin/env python
 Electrons = False
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
-HistosFromPAT.leptonsFromDileptons = True
-####################################
-####################################
-####################################
-
-HistosFromPAT.usekFactor = True #### Set TRUE to use K Factor #####
-
-####################################
-####################################
-####################################
-
-
-####################################
-####################################
-####################################
-
-ZSkim = False #### Set TRUE to skim dy50to120 with a Z pt < 100 GeV #####
-
-####################################
-####################################
-####################################
-
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff as OurSelectionNew
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2016_cff as OurSelection2016
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2017_cff as OurSelection2017
 
+process.pdfTreeMaker = cms.EDAnalyzer("PDFTreeMaker",
+                                      datasetCode=cms.int32(-1),
+                                      genPartsTag=cms.InputTag("prunedGenParticles"),
+                                      pdfWeightsTag=cms.InputTag("pdfWeights:NNPDF31"),
+                                      pdfWeightsTag2=cms.InputTag("pdfWeights:NNPDF30"),
+				      genEvtInfoTag=cms.InputTag("generator"),
+                                      decayParticlePID=cms.int32(13)
+                                      )
 
+process.pdfTreeMaker.datasetCode = 1
+ 
+
+process.pdfWeights = cms.EDProducer("PdfWeightProducer",
+                                    # Fix POWHEG if buggy (this PDF set will also appear on output,
+                                    # so only two more PDF sets can be added in PdfSetNames if not "")
+                                    #FixPOWHEG = cms.untracked.string("cteq66.LHgrid"),
+                                    #GenTag = cms.untracked.InputTag("genParticles"),
+                                    PdfInfoTag = cms.untracked.InputTag("generator"),
+                                    PdfSetNames = cms.untracked.vstring(
+                                        "NNPDF31_nnlo_as_0118",
+                                        "NNPDF30_nlo_as_0118",
+                                    #  "MRST2006nnlo.LHgrid",
+                                    #   "NNPDF10_100.LHgrid"
+                                        )
+      )
 
 
 
@@ -37,23 +38,20 @@ import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2017_cff as OurSelection201
 # off. To get e.g. mu+mu+ separate from mu-mu-, cut on the sum of the
 # pdgIds (= -26 for mu+mu+).
 dils = [('MuonsPlusMuonsMinus',          '%(leptons_name)s:muons@+ %(leptons_name)s:muons@-',         'daughter(0).pdgId() + daughter(1).pdgId() == 0'),
-	('MuonsPlusMuonsPlus',           '%(leptons_name)s:muons@+ %(leptons_name)s:muons@+',         'daughter(0).pdgId() + daughter(1).pdgId() == -26'),
-	('MuonsMinusMuonsMinus',         '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',         'daughter(0).pdgId() + daughter(1).pdgId() == 26'),
-	('MuonsSameSign',                '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',         ''),
-	('MuonsAllSigns',                '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',         ''),
 	]
 
 # Define sets of cuts for which to make plots. If using a selection
 # that doesn't have a trigger match, need to re-add a hltHighLevel
 # filter somewhere below.
 cuts = {
+#	'Our2016'  : OurSelection2016,
 	'Our2017'  : OurSelection2017,
+	#'OurNoIso' : OurSelectionDec2012,
+#	'Simple'   : OurSelection2017, # The selection cuts in the module listed here are ignored below.
+	#'OurMuPrescaledNew'  : OurSelectionNew,
+	#'OurMuPrescaled2012' : OurSelectionDec2012
 	}
-if year == 2016:
-	cuts = {
-		'Our2016'  : OurSelection2016,
-		'Our2017'  : OurSelection2017,
-		}
+
 # Loop over all the cut sets defined and make the lepton, allDilepton
 # (combinatorics only), and dilepton (apply cuts) modules for them.
 for cut_name, Selection in cuts.iteritems():
@@ -79,7 +77,7 @@ for cut_name, Selection in cuts.iteritems():
         muon_cuts = Selection.loose_cut
 
     leptons = process.leptonsMini.clone(muon_cuts = muon_cuts)
-    if year == 2016 and (isMC or "03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName):
+    if year == 2016 and isMC:
 	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
 
     if len(trigger_filters)>0 and (cut_name=='Our2017' or cut_name=='Simple'):
@@ -87,12 +85,6 @@ for cut_name, Selection in cuts.iteritems():
 	leptons.trigger_path_names = trigger_path_names
 	leptons.prescaled_trigger_filters = prescaled_trigger_filters
 	leptons.prescaled_trigger_path_names = prescaled_trigger_path_names
-    if len(trigger_filters)>0 and year == 2016:
-    	leptons.trigger_filters = trigger_filters2016
-	leptons.trigger_path_names = trigger_path_names2016
-	leptons.prescaled_trigger_filters = prescaled_trigger_filters
-	leptons.prescaled_trigger_path_names = prescaled_trigger_path_names
-
 
 #    if isMC:
 #	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
@@ -126,11 +118,8 @@ for cut_name, Selection in cuts.iteritems():
             alldil.checkCharge = cms.bool(False)
 
         dil = Selection.dimuons.clone(src = cms.InputTag(allname))
-	if len(trigger_filters) >  0 and (cut_name=='Our2017' or cut_name=='Our2016' or cut_name=='Simple'):
-		if year == 2016:
-			alldil.tight_cut = trigger_match_2016
-		else:
-			alldil.tight_cut = trigger_match_2018
+	if len(trigger_filters) >  0 and (cut_name=='Our2017' or cut_name=='Simple'):
+		alldil.tight_cut = trigger_match_2018
         # Implement the differences to the selections; currently, as
         # in Zprime2muCombiner, the cuts in loose_cut and
         # tight_cut are the ones actually used to drop leptons, and
@@ -157,43 +146,14 @@ for cut_name, Selection in cuts.iteritems():
             else:
                 alldil.tight_cut = prescaled_trigger_match
      # Histos now just needs to know which leptons and dileptons to use.
-      
-	histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name), year = cms.int32(year))
+     
+	pdfTree = process.pdfTreeMaker.clone() 
+	pdfTree.dilepton_src = cms.InputTag(name)
         # Add all these modules to the process and the path list.
         setattr(process, allname, alldil)
         setattr(process, name, dil)
-        setattr(process, name + 'Histos', histos)
-	if not isMC:
-		delattr(getattr(process,name + 'Histos'),'hardInteraction')	
-
-        path_list.append(alldil * dil * histos)
-
-	if 'ConLR' in sampleName or 'DesLR' in sampleName or 'ConRL' in sampleName or 'DesRL' in sampleName:
-		L = 10000	
-		if '16TeV' in sampleName:
-			L = 16000
-		if '100kTeV' in sampleName:
-			L = 100000000
-		if '1TeV' in sampleName:
-			L = 1000
-		if '22TeV' in sampleName:
-			L = 22000
-		if '24TeV' in sampleName:
-			L = 24000
-		if '28TeV' in sampleName:
-			L = 28000
-		if '32TeV' in sampleName:
-			L = 32000
-		if '34TeV' in sampleName:
-			L = 34000
-		if '40TeV' in sampleName:
-			L = 40000
-		histos.lrWeightProducer.Lambda = L	
-		histos.lrWeightProducer.calculate = True
-		histos.lrWeightProducer.doingElectrons = False
-		if "RL" in sampleName:
-			histos.lrWeightProducer.doingLR = False
-
+        setattr(process, name + 'PDFTrees', pdfTree)
+        path_list.append(alldil * dil * process.pdfWeights * pdfTree)
     # Finally, make the path for this set of cuts.
     pathname = 'path' + cut_name
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DileptonPreselector_cfi')
@@ -215,33 +175,6 @@ for cut_name, Selection in cuts.iteritems():
     setattr(process, pathname, path)
 
 
-if addNTuples:
-
-	process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler_miniAOD',
-					   dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
-						met_src = cms.InputTag("slimmedMETs"),
-						jet_src = cms.InputTag("slimmedJets"),
-					   beamspot_src = cms.InputTag('offlineBeamSpot'),
-					   vertices_src = cms.InputTag('offlineSlimmedPrimaryVertices'),
-	# 								TriggerResults_src = cms.InputTag('TriggerResults', '', 'PAT'),	#mc
-								TriggerResults_src = cms.InputTag('TriggerResults', '', 'RECO'),	#data
-					   genEventInfo = cms.untracked.InputTag('generator'),
-					   metFilter = cms.VInputTag( cms.InputTag("Flag_HBHENoiseFilter"), cms.InputTag("Flag_HBHENoiseIsoFilter"), cms.InputTag("Flag_EcalDeadCellTriggerPrimitiveFilter"), cms.InputTag("Flag_eeBadScFilter"), cms.InputTag("Flag_globalTightHalo2016Filter")),
-					   doElectrons = cms.bool(False),
-					   )
-
-	if isMC:
-		process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
-		obj = process.prunedMCLeptons
-		obj.src = cms.InputTag('prunedGenParticles')
-
-		from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction
-		process.SimpleNtupler.hardInteraction = hardInteraction
-		if hasattr(process, 'pathSimple'):
-			process.pathSimple *=obj * process.SimpleNtupler 
-	else:
-		if hasattr(process, 'pathSimple'):
-			process.pathSimple *= process.SimpleNtupler 
 if isMC:
 	switch_reco_process_name(process, "PAT") # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
     #switch_hlt_process_name(process, hlt_process_name) # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)

@@ -53,6 +53,7 @@ private:
 
   template <typename T> edm::OrphanHandle<std::vector<T> > doLeptons(edm::Event&, edm::Handle<edm::ValueMap<unsigned int> >&, edm::Handle<edm::View<pat::Electron> >&, const std::string&);
 
+  edm::InputTag vtx_src;
   edm::InputTag muon_src;
   edm::InputTag muon_view_src;
   StringCutObjectSelector<pat::Muon> muon_selector;
@@ -100,7 +101,8 @@ private:
 };
 
 Zprime2muLeptonProducer_miniAOD::Zprime2muLeptonProducer_miniAOD(const edm::ParameterSet& cfg)
-  : muon_src(cfg.getParameter<edm::InputTag>("muon_src")),
+  : vtx_src(cfg.getParameter<edm::InputTag>("vtx_src")),
+    muon_src(cfg.getParameter<edm::InputTag>("muon_src")),
     muon_view_src(cfg.getParameter<edm::InputTag>("muon_src")),
     muon_selector(cfg.getParameter<std::string>("muon_cuts")),
     muon_track_for_momentum(cfg.getParameter<std::string>("muon_track_for_momentum")),
@@ -125,6 +127,7 @@ Zprime2muLeptonProducer_miniAOD::Zprime2muLeptonProducer_miniAOD(const edm::Para
 {
   consumes<edm::View<reco::Candidate>>(muon_view_src);
   consumes<pat::MuonCollection>(muon_src);
+  consumes<reco::VertexCollection>(vtx_src);
   consumes<reco::CandViewMatchMap >(muon_photon_match_src);
 
   use_filters_for_trigger_matching = false;
@@ -561,7 +564,12 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
     return edm::OrphanHandle<std::vector<T> >();
   }
   
-  
+  edm::Handle<reco::VertexCollection> vertices;
+  event.getByLabel(vtx_src, vertices);
+  edm::Handle<double> rho_;
+  event.getByToken(rhoToken_,rho_);
+  const float rho = *rho_;
+ 
   std::unique_ptr<TCollection> new_leptons(new TCollection);
   
   if(patEles.isValid()){ 
@@ -574,35 +582,97 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
       //A bool true is returned if electron passes ID
       //and only in this case a new lepton is created
 
-      unsigned int heepV70Bitmap = (*vidBitMap)[elePtr];
-      using HEEPV70 = VIDCutCodes<cutnrs::HEEPV70>; 
-      const bool passID = HEEPV70::pass(heepV70Bitmap,HEEPV70::ET,HEEPV70::IGNORE);
+      //unsigned int heepV70Bitmap = (*vidBitMap)[elePtr];
+      //using HEEPV70 = VIDCutCodes<cutnrs::HEEPV70>; 
+      //const bool passID = HEEPV70::pass(heepV70Bitmap,HEEPV70::ET,HEEPV70::IGNORE);
+      //const bool passID = ele->electronID("heepElectronID-HEEPV70");
+      //const bool passID = HEEPV70::pass(heepV70Bitmap,HEEPV70);
       bool passEmHadIso2018 = false;
       bool passHOverE2018 = false;
-      edm::Handle<double> rho_;
-      event.getByToken(rhoToken_,rho_);
-      const float rho = *rho_;
-      double sc_et = ele->caloEnergy()*sin( ele->theta() ) ; 
+      bool passEmHadIso = false;
+      bool passHOverE = false;
+      bool passShowerShape = false;
+      bool passSieie = false;
+      bool passEcalDriven = false;
+      bool passDEtaIn = false;
+      bool passDPhiIn = false;
+      bool passTrackIso = false;
+      bool passMissingHits = false;
+      bool passDXY = false;
+      
+      double sc_et = ele->superCluster()->energy()*sin( ele->theta() ) ;
+      if (ele->hasUserFloat("ecalEnergyPostCorr"))  sc_et = ele->userFloat("ecalEnergyPostCorr")*sin( ele->theta() ) ;
+
       if (fabs(ele->superCluster()->eta()) < 1.4442){
-
+		if (ele->full5x5_e1x5()/ele->full5x5_e5x5() > 0.83 || ele->full5x5_e2x5Max()/ele->full5x5_e5x5() > 0.94) passShowerShape = true;
+		//if (ele->scE1x5()/ele->scE5x5() > 0.83 || ele->scE2x5Max()/ele->scE5x5() > 0.94) passShowerShape = true;
+		//if (ele->e1x5()/ele->e5x5() > 0.83 || ele->e2x5Max()/ele->e5x5() > 0.94) passShowerShape = true;
+               
+		passEmHadIso = (ele->dr03HcalDepth1TowerSumEt() + ele->dr03EcalRecHitSumEt()) < (2 + 0.03*sc_et + 0.28*rho);
 		passEmHadIso2018 = (ele->dr03HcalDepth1TowerSumEt() + ele->dr03EcalRecHitSumEt()) < (2 + 0.03*sc_et + 0.28*rho);
-		
-		passHOverE2018 = ele->hadronicOverEm() < (1./ele->caloEnergy() + 0.05);
-      }
-      else if (fabs(ele->superCluster()->eta()) > 1.562 && fabs(ele->superCluster()->eta()) < 2.5 ){
 
+		//passHOverE = ele->hadronicOverEm() < (1./ele->userFloat("ecalEnergyPostCorr") + 0.05);
+		//passHOverE2018 = ele->hadronicOverEm() < (1./ele->userFloat("ecalEnergyPostCorr") + 0.05);
+
+		passHOverE = ele->hadronicOverEm() < (1./ele->superCluster()->energy() + 0.05);
+		passHOverE2018 = ele->hadronicOverEm() < (1./ele->superCluster()->energy() + 0.05);
+
+		passSieie = true;
+                passEcalDriven = int(ele->ecalDrivenSeed());
+		passDEtaIn = fabs(ele->deltaEtaSeedClusterTrackAtVtx()) < 0.004;
+	        passDPhiIn = fabs(ele->deltaPhiSuperClusterTrackAtVtx()) < 0.06;
+
+//		passDEtaIn = ele->deltaEtaSuperClusterTrackAtVtx() < 0.004;
+//	        passDPhiIn = ele->deltaPhiSuperClusterTrackAtVtx() < 0.06;
+//
+		if (ele->hasUserFloat("heepTrkPtIso")) passTrackIso = ele->userFloat("heepTrkPtIso") < 5;
+	        passMissingHits = ele->gsfTrack()->hitPattern().numberOfLostHits(reco::HitPattern::MISSING_INNER_HITS) < 2;
+		passDXY = fabs(ele->gsfTrack()->dxy(vertices->at( 0 ).position())) < 0.02;
+      }
+      else if (fabs(ele->superCluster()->eta()) > 1.566 && fabs(ele->superCluster()->eta()) < 2.5 ){
+		passShowerShape = true;
+		passEmHadIso = (ele->dr03HcalDepth1TowerSumEt() + ele->dr03EcalRecHitSumEt()) < (2.5 + std::max(0.,0.03*(sc_et-50)) + 0.28*rho);
 		passEmHadIso2018 = (ele->dr03HcalDepth1TowerSumEt() + ele->dr03EcalRecHitSumEt()) < (2.5 + std::max(0.,0.03*(sc_et-50)) + (0.15+0.07*fabs(ele->superCluster()->eta()))*rho);
 		
-		passHOverE2018 = ele->hadronicOverEm() < ((-0.4+0.4*fabs(ele->superCluster()->eta())*rho)/ele->caloEnergy() + 0.05);
+//		passHOverE = ele->hadronicOverEm() < (5./ele->userFloat("ecalEnergyPostCorr") + 0.05);
+//		passHOverE2018 = ele->hadronicOverEm() < ((-0.4+0.4*fabs(ele->superCluster()->eta())*rho)/ele->userFloat("ecalEnergyPostCorr") + 0.05);
+		passHOverE = ele->hadronicOverEm() < (5./ele->superCluster()->energy() + 0.05);
+		passHOverE2018 = ele->hadronicOverEm() < ((-0.4+0.4*fabs(ele->superCluster()->eta())*rho)/ele->superCluster()->energy() + 0.05);
 
 
+		passSieie = ele->full5x5_sigmaIetaIeta() < 0.03;
+                passEcalDriven = int(ele->ecalDrivenSeed());
+//		passDEtaIn = ele->deltaEtaSuperClusterTrackAtVtx() < 0.006;
+//	        passDPhiIn = ele->deltaPhiSuperClusterTrackAtVtx() < 0.06;
+
+		passDEtaIn = fabs(ele->deltaEtaSeedClusterTrackAtVtx()) < 0.006;
+	        passDPhiIn = fabs(ele->deltaPhiSuperClusterTrackAtVtx()) < 0.06;
+		if (ele->hasUserFloat("heepTrkPtIso")) passTrackIso = ele->userFloat("heepTrkPtIso") < 5;
+	        passMissingHits = ele->gsfTrack()->hitPattern().numberOfLostHits(reco::HitPattern::MISSING_INNER_HITS) < 2;
+		passDXY = fabs(ele->gsfTrack()->dxy(vertices->at( 0 ).position())) < 0.05;
      }
-      std::cout << passEmHadIso2018 << " " << passHOverE2018 << std::endl;
-      const bool passID2018 = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::HADEM,HEEPV70::EMHADD1ISO},HEEPV70::IGNORE) && passEmHadIso2018 && passHOverE2018;
+      const bool passID = passEmHadIso && passHOverE && passShowerShape && passSieie && passEcalDriven && passDEtaIn && passDPhiIn && passTrackIso && passMissingHits && passDXY;
+      const bool passID2018 = passEmHadIso2018 && passHOverE2018 && passShowerShape && passSieie && passEcalDriven && passDEtaIn && passDPhiIn && passTrackIso && passMissingHits && passDXY;
+      //const bool passID2018 = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::HADEM,HEEPV70::EMHADD1ISO},HEEPV70::IGNORE) && passEmHadIso2018 && passHOverE2018;
       //const bool passID = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::SIGMAIETAIETA,HEEPV70::E2X5OVER5X5,HEEPV70::HADEM,HEEPV70::ETA,HEEPV70::DETAINSEED,HEEPV70::DPHIIN,HEEPV70::TRKISO});
       //const bool passID = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::SIGMAIETAIETA,HEEPV70::E2X5OVER5X5,HEEPV70::HADEM,HEEPV70::ETA,HEEPV70::DETAINSEED,HEEPV70::DPHIIN,HEEPV70::TRKISO,HEEPV70::EMHADD1ISO});
-      if (!passID == passID2018) std::cout << passID << " " << passID2018 << std::endl;
-      std::cout << passID2018 << std::endl;
+      /*std::cout << "pass: " << passID << "pass2018: " << passID2018 << std::endl;
+      std::cout << "HEEP" << std::endl;
+      std::cout << "passShowerShape " << passShowerShape << std::endl;
+      std::cout << "passHOverE " << passHOverE << std::endl;
+      std::cout << "passHOverE2018 " << passHOverE2018 << std::endl;
+      std::cout << "passEmHadIso " << passEmHadIso << std::endl;
+      std::cout << "passEmHadIso2018 " << passEmHadIso2018 << std::endl;
+      std::cout << "passSieie " << passSieie << std::endl;
+      std::cout << "passEcalDriven " << passEcalDriven << std::endl;
+      std::cout << "passDEtaIn " << passDEtaIn << std::endl;
+      std::cout << "passDPhiIn " << passDPhiIn << std::endl;
+      std::cout << "passTrackIso " << passTrackIso << std::endl;
+      std::cout << "passMissingHits " << passMissingHits << std::endl;
+      std::cout << "passDXY " << passDXY << std::endl;
+      std::cout << "ET " << sc_et << std::endl;
+     */ 
+//      if (!passID == passID2018) std::cout << passID << " " << passID2018 << std::endl;
       if(passID || passID2018) {	
 	const pat::Electron Electrons = *ele;
 	std::pair<T*,int> res = doLepton(event, Electrons);
@@ -610,8 +680,6 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
 	  continue;
         res.first->addUserInt("cutFor", passID);
 	res.first->addUserInt("cutFor2018", passID2018);
-        std::cout << res.first->et() << std::endl;
-//	cout << res.first->userFloat("L1_TriggerMatchPt") << std::endl;
 	new_leptons->push_back(*res.first);
 	delete res.first;
       }

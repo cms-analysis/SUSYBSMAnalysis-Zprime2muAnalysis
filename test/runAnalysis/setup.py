@@ -16,7 +16,7 @@ process.GlobalTag.globaltag = '%(GT)s'
 process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold, trigger_filters, trigger_filters2016, trigger_path_names, trigger_path_names2016, prescaled_trigger_filters, prescaled_trigger_path_names, prescaled_trigger_match_2018, trigger_match_2018, trigger_match_2016
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold, trigger_filters, trigger_filters2016, trigger_path_names, trigger_path_names2016, prescaled_trigger_filters, prescaled_trigger_path_names, prescaled_trigger_match_2018, trigger_match_2018, trigger_match_2016,trigger_path_full_names, trigger_path_full_names2016
 
 # Since the prescaled trigger comes with different prescales in
 # different runs/lumis, this filter prescales it to a common factor to

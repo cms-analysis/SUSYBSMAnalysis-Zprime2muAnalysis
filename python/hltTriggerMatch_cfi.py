@@ -73,6 +73,10 @@ trigger_path_names2016 = [
         'Mu50',
         'TkMu50'
         ]
+trigger_path_full_names2016 = [
+        'HLT_Mu50_v*',
+        'HLT_TkMu50_v*'
+        ]
 trigger_filters_pt2016 = [
                     50,
                     50,
@@ -88,6 +92,12 @@ trigger_path_names = [
         'OldMu100',
         'TkMu100'
         ]
+trigger_path_full_names = [
+        'HLT_Mu50_v*',
+        'HLT_OldMu100_v*',
+        'HLT_TkMu100_v*'
+        ]
+
 trigger_filters_pt = [
                     50,
                     100,

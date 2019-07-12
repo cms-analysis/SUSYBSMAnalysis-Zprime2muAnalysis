@@ -71,6 +71,7 @@ class ResolutionUsingMC : public edm::EDAnalyzer {
   TH2F* LeptonInvPtResVPtGen_2d_BO;
   TH2F* LeptonInvPtResVPtGen_2d_E;
   TH2F* LeptonInvPtResVPtGen_2d_EO;
+  TH2F* LeptonInvPtResVPtGen_2d_E2;
   TH2F* LeptonInvPtResVPtGen_2d_O;
   TProfile* LeptonInvPtResVPtGen;
   TProfile* LeptonInvPResVPGen;
@@ -176,12 +177,13 @@ ResolutionUsingMC::ResolutionUsingMC(const edm::ParameterSet& cfg)
   LeptonInvPtResVPtWeighted_2d_EO = fs->make<TH2F>("LeptonInvPtResVPtWeighted_2d_EO", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  300,0, 3000,1500, -1, 1.5);
   LeptonInvPtResVPtWeighted_2d_O = fs->make<TH2F>("LeptonInvPtResVPtWeighted_2d_O", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  300,0, 3000,1500, -1, 1.5);
     
-  LeptonInvPtResVPtGen_2d    = fs->make<TH2F>("LeptonInvPtResVPtGen_2d",    titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  300,0, 3000,1500, -1, 1.5);
-  LeptonInvPtResVPtGen_2d_B  = fs->make<TH2F>("LeptonInvPtResVPtGen_2d_B",  titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  300,0, 3000,1500, -1, 1.5);
-  LeptonInvPtResVPtGen_2d_BO = fs->make<TH2F>("LeptonInvPtResVPtGen_2d_BO", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  300,0, 3000,1500, -1, 1.5);
-  LeptonInvPtResVPtGen_2d_E  = fs->make<TH2F>("LeptonInvPtResVPtGen_2d_E",  titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  300,0, 3000,1500, -1, 1.5);
-  LeptonInvPtResVPtGen_2d_EO = fs->make<TH2F>("LeptonInvPtResVPtGen_2d_EO", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  300,0, 3000,1500, -1, 1.5);
-  LeptonInvPtResVPtGen_2d_O = fs->make<TH2F>("LeptonInvPtResVPtGen_2d_O", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  300,0, 3000,1500, -1, 1.5);
+  LeptonInvPtResVPtGen_2d    = fs->make<TH2F>("LeptonInvPtResVPtGen_2d",    titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  600,0, 3000,1500, -1, 1.5);
+  LeptonInvPtResVPtGen_2d_B  = fs->make<TH2F>("LeptonInvPtResVPtGen_2d_B",  titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  600,0, 3000,1500, -1, 1.5);
+  LeptonInvPtResVPtGen_2d_BO = fs->make<TH2F>("LeptonInvPtResVPtGen_2d_BO", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  600,0, 3000,1500, -1, 1.5);
+  LeptonInvPtResVPtGen_2d_E2  = fs->make<TH2F>("LeptonInvPtResVPtGen_2d_E2",  titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  600,0, 3000,1500, -1, 1.5);
+  LeptonInvPtResVPtGen_2d_E  = fs->make<TH2F>("LeptonInvPtResVPtGen_2d_E",  titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  600,0, 3000,1500, -1, 1.5);
+  LeptonInvPtResVPtGen_2d_EO = fs->make<TH2F>("LeptonInvPtResVPtGen_2d_EO", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  600,0, 3000,1500, -1, 1.5);
+  LeptonInvPtResVPtGen_2d_O = fs->make<TH2F>("LeptonInvPtResVPtGen_2d_O", titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT",  600,0, 3000,1500, -1, 1.5);
   LeptonInvPtResVPtGen       = fs->make<TProfile>("LeptonInvPtResVPtGen",   titlePrefix + "(1/pT - 1/gen pT)/(1/gen pT) vs. gen pT", 50, 0, 1000, -0.5, 0.5);
   LeptonInvPResVPGen         = fs->make<TProfile>("LeptonInvPResVPGen",     titlePrefix + "(1/p - 1/gen p)/(1/gen p) vs. gen p",     50, 0, 1000, -0.5, 0.5);
   
@@ -417,6 +419,7 @@ void ResolutionUsingMC::fillLeptonExtraMomentumResolution(const reco::GenParticl
   if(fabs(gen_lep->eta())>1.2)LeptonInvPtResVPtGen_2d_E->Fill(gen_lep->pt(), inv_pt_res);
   if(fabs(gen_lep->eta())>0.9)LeptonInvPtResVPtGen_2d_EO->Fill(gen_lep->pt(), inv_pt_res);
   if(fabs(gen_lep->eta())>0.9 && fabs(gen_lep->eta()) < 1.2)LeptonInvPtResVPtGen_2d_O->Fill(gen_lep->pt(), inv_pt_res);
+  if(fabs(gen_lep->eta())>1.2 && fabs(gen_lep->eta()) < 1.6)LeptonInvPtResVPtGen_2d_E2->Fill(gen_lep->pt(), inv_pt_res);
 
   LeptonInvPResVPGen_2d->Fill(gen_lep->p(), inv_p_res);
   if(fabs(gen_lep->eta())<0.9)LeptonInvPResVPGen_2d_B->Fill(gen_lep->p(), inv_p_res);

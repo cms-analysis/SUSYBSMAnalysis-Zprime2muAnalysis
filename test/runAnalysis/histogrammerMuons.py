@@ -8,6 +8,7 @@ HistosFromPAT.leptonsFromDileptons = True
 ####################################
 
 HistosFromPAT.usekFactor = True #### Set TRUE to use K Factor #####
+HistosFromPAT.useTTBarWeight = True #### Set TRUE to use NNPDF Weights for ttbar #####
 
 ####################################
 ####################################
@@ -27,6 +28,7 @@ ZSkim = False #### Set TRUE to skim dy50to120 with a Z pt < 100 GeV #####
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff as OurSelectionNew
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2016_cff as OurSelection2016
 import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2017_cff as OurSelection2017
+import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2018_cff as OurSelection2018
 
 
 
@@ -48,6 +50,7 @@ dils = [('MuonsPlusMuonsMinus',          '%(leptons_name)s:muons@+ %(leptons_nam
 # filter somewhere below.
 cuts = {
 	'Our2017'  : OurSelection2017,
+	'Our2018'  : OurSelection2018,
 	}
 if year == 2016:
 	cuts = {
@@ -82,14 +85,16 @@ for cut_name, Selection in cuts.iteritems():
     if year == 2016 and (isMC or "03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName):
 	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
 
-    if len(trigger_filters)>0 and (cut_name=='Our2017' or cut_name=='Simple'):
+    if len(trigger_filters)>0 and (cut_name=='Our2017' or cut_name=='Simple' or cut_name == 'Our2018'):
     	leptons.trigger_filters = trigger_filters
 	leptons.trigger_path_names = trigger_path_names
+        leptons.trigger_path_full_names = trigger_path_full_names
 	leptons.prescaled_trigger_filters = prescaled_trigger_filters
 	leptons.prescaled_trigger_path_names = prescaled_trigger_path_names
     if len(trigger_filters)>0 and year == 2016:
     	leptons.trigger_filters = trigger_filters2016
 	leptons.trigger_path_names = trigger_path_names2016
+        leptons.trigger_path_full_names = trigger_path_full_names2016
 	leptons.prescaled_trigger_filters = prescaled_trigger_filters
 	leptons.prescaled_trigger_path_names = prescaled_trigger_path_names
 
@@ -193,7 +198,11 @@ for cut_name, Selection in cuts.iteritems():
 		histos.lrWeightProducer.doingElectrons = False
 		if "RL" in sampleName:
 			histos.lrWeightProducer.doingLR = False
-
+		if 'Con' in sampleName:
+			histos.lrWeightProducer.interference = -1
+		else:	
+			histos.lrWeightProducer.interference = 1
+	
     # Finally, make the path for this set of cuts.
     pathname = 'path' + cut_name
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DileptonPreselector_cfi')
@@ -218,7 +227,7 @@ for cut_name, Selection in cuts.iteritems():
 if addNTuples:
 
 	process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler_miniAOD',
-					   dimu_src = cms.InputTag('SimpleMuonsAllSigns'),
+					   dimu_src = cms.InputTag('Our2018MuonsPlusMuonsMinus'),
 						met_src = cms.InputTag("slimmedMETs"),
 						jet_src = cms.InputTag("slimmedJets"),
 					   beamspot_src = cms.InputTag('offlineBeamSpot'),
@@ -237,11 +246,14 @@ if addNTuples:
 
 		from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction
 		process.SimpleNtupler.hardInteraction = hardInteraction
-		if hasattr(process, 'pathSimple'):
-			process.pathSimple *=obj * process.SimpleNtupler 
+		if hasattr(process, 'pathOur2018'):
+			process.pathOur2018 *=obj * process.SimpleNtupler 
 	else:
-		if hasattr(process, 'pathSimple'):
-			process.pathSimple *= process.SimpleNtupler 
+		if hasattr(process, 'pathOur2018'):
+			process.pathOur2018 *= process.SimpleNtupler 
 if isMC:
 	switch_reco_process_name(process, "PAT") # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
     #switch_hlt_process_name(process, hlt_process_name) # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
+
+
+print process.dumpPython()

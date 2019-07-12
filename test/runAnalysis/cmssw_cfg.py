@@ -8,15 +8,15 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFilt
 process.source.fileNames =['dummyFile']
 
 process.maxEvents.input = -1
-isMC = False
+isMC = True
 addNTuples = False
-year = 2018
-sampleName = 'DoubleEGRun2018D-22Jan2019-v2'
-process.GlobalTag.globaltag = '94X_dataRun2_ReReco_EOY17_v6'
+year = 2017
+sampleName = 'GJets_HT600ToInf'
+process.GlobalTag.globaltag = '94X_mc2017_realistic_v17'
 process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold, trigger_filters, trigger_filters2016, trigger_path_names, trigger_path_names2016, prescaled_trigger_filters, prescaled_trigger_path_names, prescaled_trigger_match_2018, trigger_match_2018, trigger_match_2016
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, prescaled_trigger_match, trigger_paths, prescaled_trigger_paths, overall_prescale, offline_pt_threshold, prescaled_offline_pt_threshold, trigger_filters, trigger_filters2016, trigger_path_names, trigger_path_names2016, prescaled_trigger_filters, prescaled_trigger_path_names, prescaled_trigger_match_2018, trigger_match_2018, trigger_match_2016,trigger_path_full_names, trigger_path_full_names2016
 
 # Since the prescaled trigger comes with different prescales in
 # different runs/lumis, this filter prescales it to a common factor to
@@ -37,7 +37,7 @@ electrons_miniAOD(process)
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
 HistosFromPAT.leptonsFromDileptons = True
 HistosFromPAT.usekFactor = False #### Set TRUE to use K Factor on DY. If used, the k factor will be applied to ALL samples submitted. #####
-
+HistosFromPAT.useTTBarWeight = False #### Set TRUE to use NNPDF Weights for ttbar #####
 	
 # These modules define the basic selection cuts. For the monitoring
 # sets below, we don't need to define a whole new module, since they
@@ -125,7 +125,7 @@ for cut_name, Selection in cuts.iteritems():
 		if year == 2018:
 			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2018","data_2018"), year = cms.int32(year))
 		elif year == 2017:	
-			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2017","data_2017"), year = cms.int32(year))
+			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("GJets_HT600ToInf","data_2017"), year = cms.int32(year))
 		else:	
 			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2016","data_2016"), year = cms.int32(year))
 	else:	

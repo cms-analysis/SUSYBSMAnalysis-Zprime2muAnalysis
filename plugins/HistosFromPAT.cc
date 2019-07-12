@@ -52,6 +52,8 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   void fillLeptonHistosFromDileptons(const pat::CompositeCandidateCollection&);
   void fillDileptonHistos(const pat::CompositeCandidate&, const edm::Event&, double);
   void fillDileptonHistos(const pat::CompositeCandidateCollection&, const edm::Event&, double);
+  double ScaleUncert(double, bool, int);
+  double getRecoWeight(double, bool, int);
   double getSmearedMass(const pat::CompositeCandidate&, double, int, bool);
   double HEEPSF(double, int);
   double turnOn(double, double, int);
@@ -89,6 +91,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
     double _madgraphWeight;///
     double _LRWeight = 1.;///
     bool _usekFactor;
+    bool _useTTBarWeight;
     double _kFactor;
     double _kFactor_bb;
     double _kFactor_be;
@@ -351,6 +354,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
     _useMadgraphWeight(cfg.getParameter<bool>("useMadgraphWeight")),///
     _madgraphWeight(1.),///
     _usekFactor(cfg.getParameter<bool>("usekFactor")),
+    _useTTBarWeight(cfg.getParameter<bool>("useTTBarWeight")),
     _kFactor(1.),
     _kFactor_bb(1.),
     _kFactor_be(1.),
@@ -673,6 +677,139 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
      kFactorGraph_bb = fs->make<TH1F>("kFactorperevent_bb", titlePrefix + "kFactor per event bb", 50, 0.4,1.4);
      kFactorGraph_be = fs->make<TH1F>("kFactorperevent_be", titlePrefix + "kFactor per event be", 50, 0.4,1.4);
 }
+
+double Zprime2muHistosFromPAT::ScaleUncert(double mass, bool isBB, int year){
+
+	if (year == 2016){
+		if (isBB) return 0.01;
+		else return 0.03;
+	}
+	else if (year == 2017){
+		if (isBB) return 1. - (1.00037 -1.70128e-06*mass + 3.09916e-09*pow(mass,2) -1.32999e-12*pow(mass,3) +  2.99434e-16*pow(mass,4) + -2.28065e-20*pow(mass,5));
+		else return 1. - (1.00263 - 1.04029e-05*mass + 8.9214e-09*pow(mass,2) -3.4176e-12*pow(mass,3) +  6.07934e-16*pow(mass,4)  -3.73738e-20*pow(mass,5));
+	}
+	else if (year == 2018){
+		if (isBB) return 1. - (0.999032 + 3.36979e-06*mass -3.4122e-09*pow(mass,2) + 1.62541e-12*pow(mass,3)  - 3.12864e-16*pow(mass,4) + 2.18417e-20*pow(mass,5));
+		else return 1. - (1.00051 - 2.21167e-06*mass + 2.21347e-09*pow(mass,2) -7.72178e-13*pow(mass,3) +  1.28101e-16*pow(mass,4)  - 8.32675e-21*pow(mass,5));
+	}
+	return 1.0;
+
+}
+
+double Zprime2muHistosFromPAT::getRecoWeight(double mass, bool isBB, int year_info){
+
+	if (isBB) return 0.99;
+
+	else{
+		double a = 0;
+		double eff_a = 0;
+		double b = 0;
+		double eff_b = 0;
+		double c = 0;
+		double eff_c = 0;
+		double d = 0;
+		double eff_d = 0;
+		double e = 0;
+		double eff_e = 0;
+		double f = 0;
+
+		double eff_default = 0;
+		double eff_syst = 0;
+
+		if (year_info == 2017){
+
+			if (mass <= 450){
+				a =  13.39;
+				b =  6.696;
+				c = -4.855e+06;
+				d = -7.431e+06;
+				e = -108.8;
+				f = -1.138;
+				eff_default = a - b * TMath::Exp( -( (mass - c) / d) ) + e * pow(mass,f);
+			}
+			else{
+				eff_a     =  0.3148;
+				eff_b     =  0.04447;
+				eff_c     =  1.42;
+				eff_d     = -5108.;
+				eff_e     =  713.5;
+				eff_default = eff_a + eff_b * pow(mass,eff_c) * TMath::Exp(- ((mass - eff_d ) / eff_e) );
+			}
+			if (mass <= 450){
+				a =  1.33901e+01;
+				b =  6.69687e+00;
+				c = -4.85589e+06;
+				d = -7.43036e+06;
+				e = -1.14263e+02;
+				f = -1.15028e+00;
+				eff_syst= a - b * TMath::Exp( -( (mass - c) / d) ) + e * pow(mass,f);
+			}
+			else{
+				eff_a     =  3.07958e-01;
+				eff_b     =  4.63280e-02;
+				eff_c     =  1.35632e+00;
+				eff_d     = -5.00475e+03;
+				eff_e     =  7.38088e+02;
+				eff_syst =  eff_a + eff_b * pow(mass,eff_c) * TMath::Exp(- ((mass - eff_d ) / eff_e) );
+			}
+
+
+			return 1. - eff_default/eff_syst;
+
+
+		}
+
+		else{
+
+			if (mass <= 450){
+				a =  13.39;
+				b =  6.696;
+				c = -4.855e+06;
+				d = -7.431e+06;
+				e = -108.8;
+				f = -1.138;
+				eff_default = a - b * TMath::Exp( -( (mass - c) / d) ) + e * pow(mass,f);
+			}
+			else{
+				eff_a     =  0.3148;
+				eff_b     =  0.04447;
+				eff_c     =  1.42;
+				eff_d     = -5108.;
+				eff_e     =  713.5;
+				eff_default = eff_a + eff_b * pow(mass,eff_c) * TMath::Exp(- ((mass - eff_d ) / eff_e) );
+			}
+			if (mass <= 450){
+				a =  1.33901e+01;
+				b =  6.69687e+00;
+				c = -4.85589e+06;
+				d = -7.43036e+06;
+				e = -1.14263e+02;
+				f = -1.15028e+00;
+				eff_syst = a - b * TMath::Exp( -( (mass - c) / d) ) + e * pow(mass,f);
+			}
+			else{
+				eff_a     =  3.07958e-01;
+				eff_b     =  4.63280e-02;
+				eff_c     =  1.35632e+00;
+				eff_d     = -5.00475e+03;
+				eff_e     =  7.38088e+02;
+				eff_syst =  eff_a + eff_b * pow(mass,eff_c) * TMath::Exp(- ((mass - eff_d ) / eff_e) );
+
+			}
+
+		         return 1. - eff_default/eff_syst;
+
+
+		}
+
+
+	}
+
+	
+
+
+}
+
 double Zprime2muHistosFromPAT::HEEPSF(double eta,  int year){
 	double result = 1;
 	if (year == 2017){
@@ -1011,12 +1148,15 @@ double Zprime2muHistosFromPAT::getSmearedMass(const pat::CompositeCandidate& dil
 
     double extraSmear = res*0.567;
     double extraSmearSyst = res*0.567;
-    if (syst && (year == 2017 || year ==2018)) extraSmear = res*0.42098099719583537;
+    if (syst && (year == 2017 || year ==2018)) extraSmearSyst = res*0.42098099719583537;
 
 	
     TRandom3 *rand = new TRandom3(0);
-    double result = mass*rand->Gaus(1,extraSmear);
-    if (syst) result = result*rand->Gaus(1,extraSmearSyst);
+    double result = mass;
+    if (!(fabs(dil.daughter(0)->eta())<=1.2 && fabs(dil.daughter(1)->eta())<=1.2)){
+	result = mass*rand->Gaus(1,extraSmear);
+    	if (syst) result = result*rand->Gaus(1,extraSmearSyst);
+    }
     delete rand;
     return result;
 }
@@ -1413,7 +1553,9 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 
   if (dil.hasUserFloat("vertexM") && dil.hasUserFloat("vertexMError")) {
 
-
+    float vertex_mass = dil.userFloat("vertexM");
+    float vertex_mass_err = dil.userFloat("vertexMError");
+ 
     double SF1 = 1.0;
     double SF2 = 1.0;
     if (fabs(dil.daughter(0)->eta()) <= 1.6 && dil.daughter(0)->p() > 100)
@@ -1425,23 +1567,27 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
     else if (fabs(dil.daughter(1)->eta()) > 1.6 && dil.daughter(1)->p() > 200)
 	SF2 = ((0.9784 - 4.73e-5 * dil.daughter(1)->p())/(0.9908 - 1.26e-5 * dil.daughter(1)->p())) / ((0.9784 - 4.73e-5 * 200)/(0.9908 - 1.26e-5 * 200) ) ;
 
+    double recoWeight = SF1*SF2;
+
+    if (year_info == 2017 || year_info == 2018){
+	if (dil.daughter(0)->eta()<-1.2 || dil.daughter(1)->eta()<-1.2 || dil.daughter(0)->eta()>1.2 || dil.daughter(1)->eta()>1.2) recoWeight = getRecoWeight(vertex_mass,true,year_info);
+	else recoWeight = getRecoWeight(vertex_mass,false,year_info);
+    }
+    
     
 
-    float vertex_mass = dil.userFloat("vertexM");
-    float vertex_mass_err = dil.userFloat("vertexMError");
-      //std::cout<<" filling mass "<<vertex_mass<<std::endl;
+     //std::cout<<" filling mass "<<vertex_mass<<std::endl;
     if (fill_gen_info) vertex_mass = getSmearedMass(dil,gM,year_info,false);
     float smearedMass = getSmearedMass(dil,gM,year_info,true);
 
-    if (year_info == 2017 || year_info == 2018){
-	_scaleUncertBB = 0.02;
-	_scaleUncertBE = 0.02;
-    }
-
+    //if (year_info == 2017 || year_info == 2018){
+    _scaleUncertBB = ScaleUncert(vertex_mass, true, year_info);
+    _scaleUncertBE = ScaleUncert(vertex_mass, false, year_info);
+    //}
     DimuonMassVertexConstrained->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
     DimuonMassVertexConstrainedVsCS->Fill(vertex_mass,cos_cs, _madgraphWeight*_kFactor*_puWeight);
     DimuonMassVertexConstrainedSmear->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
-    DimuonMassVertexConstrainedMuonID->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*SF1*SF2);
+    DimuonMassVertexConstrainedMuonID->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*recoWeight);
     DimuonMassVertexConstrainedScaleUp->Fill(vertex_mass*(1+_scaleUncertBB), _madgraphWeight*_kFactor*_puWeight);
     DimuonMassVertexConstrainedScaleDown->Fill(vertex_mass*(1-_scaleUncertBB), _madgraphWeight*_kFactor*_puWeight);
     if (cos_cs > -998.){
@@ -1461,7 +1607,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
         DimuonMassVertexConstrainedVsCS_bb->Fill(vertex_mass,cos_cs,_madgraphWeight*_kFactor_bb*_puWeight);
         DimuonMassVtxConstrainedLog_bb->Fill(vertex_mass, _madgraphWeight*_kFactor_bb*_puWeight);
         DimuonMassVertexConstrainedSmear_bb->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
-    	DimuonMassVertexConstrainedMuonID_bb->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*SF1*SF2);
+    	DimuonMassVertexConstrainedMuonID_bb->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*recoWeight);
         DimuonMassVertexConstrainedScaleUp_bb->Fill(vertex_mass*(1+_scaleUncertBB), _madgraphWeight*_kFactor*_puWeight);
         DimuonMassVertexConstrainedScaleDown_bb->Fill(vertex_mass*(1-_scaleUncertBB), _madgraphWeight*_kFactor*_puWeight);
         DileptonMass_bb->Fill(dil.mass(), _madgraphWeight*_kFactor_bb*_puWeight);
@@ -1469,14 +1615,14 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
     		if (cos_cs >= 0){
 			 DimuonMassVertexConstrained_bb_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
 			 DimuonMassVertexConstrainedSmear_bb_CSPos->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
-    			 DimuonMassVertexConstrainedMuonID_bb_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*SF1*SF2);
+    			 DimuonMassVertexConstrainedMuonID_bb_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*recoWeight);
     			 DimuonMassVertexConstrainedScaleUp_bb_CSPos->Fill(vertex_mass*(1+_scaleUncertBB), _madgraphWeight*_kFactor*_puWeight);
     			 DimuonMassVertexConstrainedScaleDown_bb_CSPos->Fill(vertex_mass*(1-_scaleUncertBB), _madgraphWeight*_kFactor*_puWeight);
 		}
      		else{
 			 DimuonMassVertexConstrained_bb_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
 		         DimuonMassVertexConstrainedSmear_bb_CSNeg->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
-    			 DimuonMassVertexConstrainedMuonID_bb_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*SF1*SF2);
+    			 DimuonMassVertexConstrainedMuonID_bb_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*recoWeight);
     			 DimuonMassVertexConstrainedScaleUp_bb_CSNeg->Fill(vertex_mass*(1+_scaleUncertBB), _madgraphWeight*_kFactor*_puWeight);
     			 DimuonMassVertexConstrainedScaleDown_bb_CSNeg->Fill(vertex_mass*(1-_scaleUncertBB), _madgraphWeight*_kFactor*_puWeight);
 		}
@@ -1493,7 +1639,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
         DimuonMassVertexConstrainedVsCS_be->Fill(vertex_mass,cos_cs,_madgraphWeight*_kFactor_be*_puWeight);
         DimuonMassVtxConstrainedLog_be->Fill(vertex_mass, _madgraphWeight*_kFactor_be*_puWeight);
         DimuonMassVertexConstrainedSmear_be->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
-    	DimuonMassVertexConstrainedMuonID_be->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*SF1*SF2);
+    	DimuonMassVertexConstrainedMuonID_be->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*recoWeight);
         DimuonMassVertexConstrainedScaleUp_be->Fill(vertex_mass*(1+_scaleUncertBE), _madgraphWeight*_kFactor*_puWeight);
         DimuonMassVertexConstrainedScaleDown_be->Fill(vertex_mass*(1-_scaleUncertBE), _madgraphWeight*_kFactor*_puWeight);
        DileptonMass_be->Fill(dil.mass(), _madgraphWeight*_kFactor_be*_puWeight);
@@ -1501,7 +1647,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
    		if (cos_cs >= 0){
 			DimuonMassVertexConstrained_be_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
 		        DimuonMassVertexConstrainedSmear_be_CSPos->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
-    			DimuonMassVertexConstrainedMuonID_be_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*SF1*SF2);
+    			DimuonMassVertexConstrainedMuonID_be_CSPos->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*recoWeight);
                         DimuonMassVertexConstrainedScaleUp_be_CSPos->Fill(vertex_mass*(1+_scaleUncertBE), _madgraphWeight*_kFactor*_puWeight);
    			DimuonMassVertexConstrainedScaleDown_be_CSPos->Fill(vertex_mass*(1-_scaleUncertBE), _madgraphWeight*_kFactor*_puWeight);
 		}
@@ -1509,7 +1655,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 			 DimuonMassVertexConstrained_be_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
 		         DimuonMassVertexConstrainedSmear_be_CSNeg->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
         		 DimuonMassVertexConstrainedScaleUp_be_CSNeg->Fill(vertex_mass*(1+_scaleUncertBE), _madgraphWeight*_kFactor*_puWeight);
-    			 DimuonMassVertexConstrainedMuonID_be_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*SF1*SF2);
+    			 DimuonMassVertexConstrainedMuonID_be_CSNeg->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight*recoWeight);
     			 DimuonMassVertexConstrainedScaleDown_be_CSNeg->Fill(vertex_mass*(1-_scaleUncertBE), _madgraphWeight*_kFactor*_puWeight);
 		}
     		if (cos_cs >= 0) DileptonMass_be_CSPos->Fill(dil.mass(), _madgraphWeight*_kFactor*_puWeight);
@@ -1586,24 +1732,42 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
   if (!dileptons.isValid())
     edm::LogWarning("DileptonHandleInvalid") << "tried to get " << dilepton_src << " and failed!";
   else {
-    if (leptonsFromDileptons)
+    if (leptonsFromDileptons){
     	if (fill_gen_info) {
 	        if (_usekFactor){
     			hardInteraction->Fill(event);
 			if(hardInteraction->IsValidForRes()){
-    			gM = (hardInteraction->lepPlusNoIB->p4() + hardInteraction->lepMinusNoIB->p4()).mass();
+    				gM = (hardInteraction->lepPlusNoIB->p4() + hardInteraction->lepMinusNoIB->p4()).mass();
 				double NNPDFFac = 1.;
 				double NNPDFFac_bb = 1.;
 				double NNPDFFac_be = 1.;
+				double gen_lead_pt = 0.;
 				if (year_info == 2017){
-					NNPDFFac = 0.930987  + 3.3976e-05 * gM + 4.49588e-08 * pow(gM,2) + -3.4485e-11 * pow(gM,3) + 1.01382e-14 * pow(gM,4) + -8.21792e-19 * pow(gM,5);
-					NNPDFFac_bb = 0.914053  + 7.91618e-05 * gM + 2.19722e-08 * pow(gM,2) + -3.49212e-11 * pow(gM,3) + 1.22504e-14 * pow(gM,4) + -1.07347e-18 * pow(gM,5);
-					NNPDFFac_be = 0.933214  + 3.76813e-05 * gM + 1.95612e-08 * pow(gM,2) + -1.2688e-11 * pow(gM,3) + 3.69867e-15 * pow(gM,4) + -2.62212e-19 * pow(gM,5);
-				}					
+					if (gM < 120){
+						gen_lead_pt = (hardInteraction->lepPlusNoIB->pt()*(hardInteraction->lepPlusNoIB->pt()>hardInteraction->lepMinusNoIB->pt()) + hardInteraction->lepMinusNoIB->pt()*(hardInteraction->lepMinusNoIB->pt()>hardInteraction->lepPlusNoIB->pt()));
+						NNPDFFac =((gen_lead_pt<30)*0.9 + (gen_lead_pt>30 && gen_lead_pt<100)*((1.8245728118) + (-0.0537728412909)*pow(gen_lead_pt,1) + (0.000731365981935)*pow(gen_lead_pt,2) + (7.16669312495e-06)*pow(gen_lead_pt,3) + (-1.99723894101e-07)*pow(gen_lead_pt,4) + (1.0112316789e-09)*pow(gen_lead_pt,5)) + (gen_lead_pt>100)*(1.01849023288));
+						NNPDFFac_bb = ((gen_lead_pt<30)*0.9 + (gen_lead_pt>30 && gen_lead_pt<100)*((1.91383074609) + (-0.0596201865777)*pow(gen_lead_pt,1) + (0.000811074027001)*pow(gen_lead_pt,2) + (7.90677720686e-06)*pow(gen_lead_pt,3) + (-2.21489848717e-07)*pow(gen_lead_pt,4) + (1.12700571973e-09)*pow(gen_lead_pt,5)) + (gen_lead_pt>100)*(1.00484010198));                                                                                            
+						NNPDFFac_be = ((gen_lead_pt<30)*0.9 + (gen_lead_pt>30 && gen_lead_pt<100)*((1.71913319508) + (-0.0481243962238)*pow(gen_lead_pt,1) + (0.000666286154366)*pow(gen_lead_pt,2) + (6.45776405133e-06)*pow(gen_lead_pt,3) + (-1.82202504311e-07)*pow(gen_lead_pt,4) + (9.24567381899e-10)*pow(gen_lead_pt,5)) + (gen_lead_pt>100)*(1.02790393101));                                                                                                                                                          
+
+					}
+					else{
+						NNPDFFac = ((0.918129) + (6.92702e-05)*pow(gM,1) + (1.62175e-08)*pow(gM,2) + (-2.47833e-11)*pow(gM,3) + (8.75707e-15)*pow(gM,4) + (-7.53019e-19)*pow(gM,5));
+						NNPDFFac_bb = ((0.914053) + (7.91618e-05)*pow(gM,1) + (2.19722e-08)*pow(gM,2) + (-3.49212e-11)*pow(gM,3) + (1.22504e-14)*pow(gM,4) + (-1.07347e-18)*pow(gM,5));                                           				     NNPDFFac_be = ((0.933214) + (3.76813e-05)*pow(gM,1) + (1.95612e-08)*pow(gM,2) + (-1.2688e-11)*pow(gM,3) + (3.69867e-15)*pow(gM,4) + (-2.62212e-19)*pow(gM,5)); 
+					}
+
+				}
 				if (year_info == 2018){
-					NNPDFFac = 0.930848  + 3.56791e-05 * gM + 4.21363e-08 * pow(gM,2) + -3.28165e-11 * pow(gM,3) + 9.74322e-15 * pow(gM,4) + -7.89945e-19 * pow(gM,5);
-					NNPDFFac_bb = 0.911563  + 0.000113313 * gM + -2.35833e-08 * pow(gM,2) + -1.44584e-11 * pow(gM,3) + 8.41748e-15  * pow(gM,4) + -8.16574e-19 * pow(gM,5);
-					NNPDFFac_be = 0.934502  + 2.21259e-05 * gM + 4.14656e-08 * pow(gM,2) + -2.26011e-11 * pow(gM,3) + 5.58804e-15 * pow(gM,4) + -3.92687e-19 * pow(gM,5);
+					if (gM < 120){
+                                                gen_lead_pt = (hardInteraction->lepPlusNoIB->pt()*(hardInteraction->lepPlusNoIB->pt()>hardInteraction->lepMinusNoIB->pt()) + hardInteraction->lepMinusNoIB->pt()*(hardInteraction->lepMinusNoIB->pt()>hardInteraction->lepPlusNoIB->pt()));
+						NNPDFFac = ((gen_lead_pt<30)*0.9 + (gen_lead_pt>30 && gen_lead_pt<100)*((1.69147781688) + (-0.0473286496053)*pow(gen_lead_pt,1) + (0.000661599919558)*pow(gen_lead_pt,2) + (6.33324308996e-06)*pow(gen_lead_pt,3) + (-1.80459280586e-07)*pow(gen_lead_pt,4) + (9.19632449685e-10)*pow(gen_lead_pt,5)) + (gen_lead_pt>100)*(1.02344217328));
+						NNPDFFac_bb = ((gen_lead_pt<30)*0.9 + (gen_lead_pt>30 && gen_lead_pt<100)*((1.65477513925) + (-0.0472097707001)*pow(gen_lead_pt,1) + (0.000681831627146)*pow(gen_lead_pt,2) + (6.15645344304e-06)*pow(gen_lead_pt,3) + (-1.82810037593e-07)*pow(gen_lead_pt,4) + (9.43667804224e-10)*pow(gen_lead_pt,5)) + (gen_lead_pt>100)*(1.01489199674));
+						NNPDFFac_be =((gen_lead_pt<30)*0.9 + (gen_lead_pt>30 && gen_lead_pt<100)*((1.60977951604) + (-0.0426122819079)*pow(gen_lead_pt,1) + (0.000599273084801)*pow(gen_lead_pt,2) + (5.88395881526e-06)*pow(gen_lead_pt,3) + (-1.66414436738e-07)*pow(gen_lead_pt,4) + (8.4690800397e-10)*pow(gen_lead_pt,5)) + (gen_lead_pt>100)*(1.02846360871));
+					}
+					else{
+						NNPDFFac = ((0.919027) + (5.98337e-05)*pow(gM,1) + (2.56077e-08)*pow(gM,2) + (-2.82876e-11)*pow(gM,3) + (9.2782e-15)*pow(gM,4) + (-7.77529e-19)*pow(gM,5));                                  
+						NNPDFFac_bb = ((0.911563) + (0.000113313)*pow(gM,1) + (-2.35833e-08)*pow(gM,2) + (-1.44584e-11)*pow(gM,3) + (8.41748e-15)*pow(gM,4) + (-8.16574e-19)*pow(gM,5));
+						NNPDFFac_be = ((0.934502) + (2.21259e-05)*pow(gM,1) + (4.14656e-08)*pow(gM,2) + (-2.26011e-11)*pow(gM,3) + (5.58804e-15)*pow(gM,4) + (-3.92687e-19)*pow(gM,5));
+					}
 				}		
  			 	if (doElectrons){
 					_kFactor = (1.0678 - 0.000120666 * gM + 3.22646e-08 * pow(gM,2) - 3.94886e-12 * pow(gM,3))*NNPDFFac;
@@ -1624,12 +1788,35 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
 				}
 			 	
  	   		} // hardInter
-    		else
-    			std::cout<<"problems"<<std::endl;
+    			else std::cout<<"problems"<<std::endl;
+    		} //k-Factor
+
+	        else if (_useTTBarWeight){
+    			hardInteraction->Fill(event);
+			if(hardInteraction->IsValidForRes()){
+ 	   			gM = (hardInteraction->lepPlusNoIB->p4() + hardInteraction->lepMinusNoIB->p4()).mass();
+				double NNPDFFac = 1.;
+				double NNPDFFac_bb = 1.;
+				double NNPDFFac_be = 1.;
+				if (year_info == 2017){
+					NNPDFFac = ((gM<120)*1. + (gM>120 && gM<3000)*((0.994078695151) + (2.64819793287e-05)*pow(gM,1) + (-3.73996461024e-08)*pow(gM,2) + (-1.11452866827e-11)*pow(gM,3)) + (gM>3000)*(0.436005));
+					NNPDFFac_bb = ((gM<120)*1. + (gM>120 && gM<3000)*((0.994078695151) + (2.64819793287e-05)*pow(gM,1) + (-3.73996461024e-08)*pow(gM,2) + (-1.11452866827e-11)*pow(gM,3)) + (gM>3000)*(0.436005));
+					NNPDFFac_be =((gM<120)*1. + (gM>120 && gM<3000)*((0.994078695151) + (2.64819793287e-05)*pow(gM,1) + (-3.73996461024e-08)*pow(gM,2) + (-1.11452866827e-11)*pow(gM,3)) + (gM>3000)*(0.436005)); 
+				}
+				if (year_info == 2018){
+					NNPDFFac = ((gM<120)*1. + (gM>120 && gM<3000)*((0.994078695151) + (2.64819793287e-05)*pow(gM,1) + (-3.73996461024e-08)*pow(gM,2) + (-1.11452866827e-11)*pow(gM,3)) + (gM>3000)*(0.436005));
+					NNPDFFac_bb =((gM<120)*1. + (gM>120 && gM<3000)*((0.994078695151) + (2.64819793287e-05)*pow(gM,1) + (-3.73996461024e-08)*pow(gM,2) + (-1.11452866827e-11)*pow(gM,3)) + (gM>3000)*(0.436005));
+					NNPDFFac_be =((gM<120)*1. + (gM>120 && gM<3000)*((0.994078695151) + (2.64819793287e-05)*pow(gM,1) + (-3.73996461024e-08)*pow(gM,2) + (-1.11452866827e-11)*pow(gM,3)) + (gM>3000)*(0.436005));
+				}
+				_kFactor = 1*NNPDFFac;
+				_kFactor_bb = 1*NNPDFFac_bb;
+				_kFactor_be = 1*NNPDFFac_be;
+ 	   		} // hardInter
+    			//else std::cout<<"problems"<<std::endl;
     		} //gen_info
     	} //kFactor
       fillLeptonHistosFromDileptons(*dileptons);
-    
+    }
     fillDileptonHistos(*dileptons, event, gM);
   }
 }

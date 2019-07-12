@@ -21,28 +21,32 @@ parser.add_argument("--forceMerge", action="store_true", dest="forceMerge", defa
 
 args = parser.parse_args()
 doneTasks = []
-if os.path.isfile('crab/doneTasks.txt'):
-	with open('crab/doneTasks.txt') as f:
+folder = 'crabNew'
+if os.path.isfile('%s/doneTasks.txt'%folder):
+	with open('%s/doneTasks.txt'%folder) as f:
     		doneTasks = f.readlines()
 	doneTasks = [x.strip() for x in doneTasks] 
 
-
 # With this function you can change the console log level at any time.
-for d in glob("crab/*/"):
-	#if not d == "crab2/crab_dileptonAna_muons_2018_SingleMuonRun2018D-PromptReco-v2/":
-	#	continue
-#	if not "CITo2Mu" in d: 
-#^		continue
+for d in glob("%s/*/"%folder):
+#	if not "crab_dileptonAna_electrons_2016_DoubleEG2016B-17Jul2018_ver2-v1" in d: 
+#		continue
 	if d in doneTasks:
 		continue
 	print "check status of task %s"%d
 	res = crabCommand('status',dir=d)
 	if res.get("jobList"):
-	    nJobs = len(res.get("jobList"))
+	    jobList = [] 
+	    for entry in res.get("jobList"):
+		if not '-' in entry[1]:
+			jobList.append(entry)
+		
+	    nJobs = len(jobList)
 	    nFinishedJobs = 0
 	    failedJobs = []
 	    finishedJobs = []
-	    for job in res.get("jobList"):
+	    for job in jobList:
+		if '-' in job[1]: continue
 		if job[0] == 'finished':
 			finishedJobs.append(job[1])
 		elif job[0] == "failed":
@@ -53,11 +57,11 @@ for d in glob("crab/*/"):
 		fileCount = len(glob(d+'/results/*.root'))
 		if fileCount == nJobs:
 			print "all files already downloaded, listing as done"
-			f=open("crab/doneTasks.txt", "a+")
+			f=open("%s/doneTasks.txt"%folder, "a+")
 			f.write('%s\n'%d)
 			f.close()
 			continue
-		if fileCount == 0:
+		'''if fileCount == 0:
 			print "no files downloaded yet, starting"
 			if nJobs < 500:
 				#subprocess.call(["crab",'getoutput',d])
@@ -74,47 +78,48 @@ for d in glob("crab/*/"):
 				subprocess.call(["crab",'getoutput',d, "--jobids", "1-500"])
 				subprocess.call(["crab",'getoutput',d, "--jobids", "501-1000"])
 				subprocess.call(["crab",'getoutput',d, "--jobids", "1001-%d"%nJobs])
-
+		'''
+		#else:
+		jobIds = ""
+		jobsToGet = []
+		for i in range(1,nJobs+1):
+			if not os.path.isfile(d+'/results/zp2mu_histos_%d.root'%i) and str(i) in finishedJobs:
+				jobsToGet.append(i)
+		if len(jobsToGet) == 0:
+			print "no new files to get"
+			resGet = {}
+			resGet["failed"] = {}
+			resGet["success"] = {}
 		else:
-			jobIds = ""
-			jobsToGet = []
- 			for i in range(1,nJobs+1):
-				if not os.path.isfile(d+'/results/zp2mu_histos_%d.root'%i) and str(i) in finishedJobs:
-					jobsToGet.append(i)
-			if len(jobsToGet) == 0:
-				print "no new files to get"
+			print jobsToGet
+			print "getting %d additional files"%len(jobsToGet)
+			if len(jobsToGet) > 500:
+				sublists = chunks(jobsToGet,499)
 				resGet = {}
-				resGet["failed"] = {}
-				resGet["success"] = {}
-			else:
-				print jobsToGet
-				print "getting %d additional files"%len(jobsToGet)
-				if len(jobsToGet) > 500:
-					sublists = chunks(jobsToGet,499)
-					resGet = {}
-					resGet['success'] = []
-					resGet['failed'] = []
-					for sublist in sublists:
-						jobIds = ""
-					
-						for i in sublist:	
-							if jobIds == "":
-								jobIds += "%d"%i
-							else:
-								jobIds += ",%d"%i
-
-						resGetTemp = crabCommand("getoutput","--jobids", jobIds,dir=d)
-						resGet['failed'].update( resGetTemp['failed'])
-						resGet['success'].update(resGetTemp['success'])
-				else:
-					for i in jobsToGet:	
+				#resGet['success'] = []
+				#resGet['failed'] = []
+				for sublist in sublists:
+					jobIds = ""
+				
+					for i in sublist:	
 						if jobIds == "":
-							jobIds += "%s"%i
+							jobIds += "%d"%i
 						else:
 							jobIds += ",%d"%i
-					resGet = crabCommand("getoutput","--jobids", jobIds,dir=d)
+
+					resGetTemp = crabCommand("getoutput","--jobids", jobIds,dir=d)
+					resGet['failed'].update( resGetTemp['failed'])
+					resGet['success'].update(resGetTemp['success'])
+			else:
+				for i in jobsToGet:	
+					if jobIds == "":
+						jobIds += "%s"%i
+					else:
+						jobIds += ",%d"%i
+				resGet = crabCommand("getoutput","--checksum=no","--jobids", jobIds,dir=d)
 		print "got %d new output files, merging if necessary"%len(resGet['success'])
-		if (args.forceMerge or len(finishedJobs) == nJobs ) and (len(resGet['failed']) == 0 and not len(resGet['success']) == 0):
+		print len(finishedJobs), nJobs
+		if args.forceMerge or (len(finishedJobs) == nJobs  and (len(resGet['failed']) == 0 and not len(resGet['success']) == 0)):
 			if nJobs == 1:
 				cpCommand = ["cp", d+'/results/zp2mu_histos_1.root', d.split('/')[-2].split('crab_')[-1]+".root"]
 				print "only one output file, copying instead of merging"

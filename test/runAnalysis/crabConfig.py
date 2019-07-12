@@ -1,24 +1,25 @@
 
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'dileptonAna_electrons_2018_DoubleEGRun2018D-22Jan2019-v2'
-config.General.workArea = 'crab'
+config.General.requestName = 'dileptonAna_electrons_GJets_HT600ToInf'
+config.General.workArea = 'crabNew'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
-config.Data.inputDataset =  '/EGamma/Run2018D-22Jan2019-v2/MINIAOD'
+config.Data.inputDataset =  '/GJets_HT-600ToInf_TuneCP5_13TeV-madgraphMLM-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/MINIAODSIM'
 config.Data.inputDBS = 'global'
 config.Data.publication = False
-config.Data.outputDatasetTag = 'dileptonAna_electrons_2018_DoubleEGRun2018D-22Jan2019-v2'
+config.Data.outputDatasetTag = 'dileptonAna_electrons_GJets_HT600ToInf'
 config.Data.outLFNDirBase = '/store/user/jschulte/'
-#config.Data.ignoreLocality = True
+config.Data.ignoreLocality = True
+config.Data.allowNonValidInputDataset = True
 #config.General.instance = 'preprod' 
+config.Site.whitelist = ["T2_US_*"]
+config.Site.blacklist = ['T2_US_Caltech']
 config.Site.storageSite = 'T2_US_Purdue'
 config.JobType.maxMemoryMB  = 8000
 config.JobType.allowUndistributedCMSSW = True
-config.Site.blacklist = ['T2_US_Caltech']
 
-config.Data.splitting = 'LumiBased'
+config.Data.splitting = 'EventAwareLumiBased'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob = 400
-config.Data.lumiMask = '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt'
+config.Data.unitsPerJob  = 500000
 

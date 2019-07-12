@@ -2,7 +2,7 @@
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
 HistosFromPAT.leptonsFromDileptons = True
 HistosFromPAT.usekFactor = False #### Set TRUE to use K Factor on DY. If used, the k factor will be applied to ALL samples submitted. #####
-
+HistosFromPAT.useTTBarWeight = True #### Set TRUE to use NNPDF Weights for ttbar #####
 	
 # These modules define the basic selection cuts. For the monitoring
 # sets below, we don't need to define a whole new module, since they

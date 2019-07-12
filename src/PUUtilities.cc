@@ -6026,7 +6026,7 @@ std::map<TString,double*>::value_type( "data_2018_scaleDown", data_2018_scaleDow
 std::map<TString,double*>::value_type( "data_2018_scaleUp", data_2018_scaleUp)
 };
 
-	const static std::map<TString,double*> map_pu(init_value, init_value+47);
+	const static std::map<TString,double*> map_pu(init_value, init_value+49);
 
 	double MC_pileup_weight(int NumTrueInteraction, TString mc, TString data_scale){
 		if (NumTrueInteraction < 0 || NumTrueInteraction > 120 ) return 1;

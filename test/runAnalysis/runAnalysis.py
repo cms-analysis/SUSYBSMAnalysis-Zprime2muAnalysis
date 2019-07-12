@@ -92,7 +92,7 @@ def getCRABCfgWeirdSubmission(name,dataset,fileList):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s_2017_whystuck'
-config.General.workArea = 'crab'
+config.General.workArea = 'crabNext'
 config.General.transferLogs = False
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'
@@ -122,18 +122,19 @@ def getCRABCfg(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crab'
+config.General.workArea = 'crabNew'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
 config.Data.inputDBS = 'global'
 config.Data.publication = False
+config.Data.allowNonValidInputDataset = True
 config.Data.outputDatasetTag = 'dileptonAna_%s'
 config.Data.outLFNDirBase = '/store/user/jschulte/'
 #config.Data.ignoreLocality = True
 #config.General.instance = 'preprod' 
 config.Site.storageSite = 'T2_US_Purdue'
-config.JobType.maxMemoryMB  = 8000
+config.JobType.maxMemoryMB  = 4000
 config.JobType.allowUndistributedCMSSW = True
 config.Site.blacklist = ['T2_US_Caltech']
 %s
@@ -141,7 +142,7 @@ config.Site.blacklist = ['T2_US_Caltech']
 	data_config='''
 config.Data.splitting = 'LumiBased'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob = 400
+config.Data.unitsPerJob = 100
 config.Data.lumiMask = '%s'
 '''
 
@@ -165,7 +166,7 @@ def getCRABCfgAAA(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crab'
+config.General.workArea = 'crabNew'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -174,6 +175,7 @@ config.Data.publication = False
 config.Data.outputDatasetTag = 'dileptonAna_%s'
 config.Data.outLFNDirBase = '/store/user/jschulte/'
 config.Data.ignoreLocality = True
+config.Data.allowNonValidInputDataset = True
 #config.General.instance = 'preprod' 
 config.Site.whitelist = ["T2_US_*"]
 config.Site.blacklist = ['T2_US_Caltech']
@@ -183,9 +185,10 @@ config.JobType.allowUndistributedCMSSW = True
 %s
 '''
 	data_config='''
-config.Data.splitting = 'LumiBased'
+#config.Data.splitting = 'LumiBased'
+config.Data.splitting = 'Automatic'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob = 400
+config.Data.unitsPerJob = 100
 config.Data.lumiMask = '%s'
 '''
 
@@ -228,9 +231,9 @@ def main():
 	parser.add_argument( "--2016", action="store_true", dest="do2016", default=False,help="run for 2016")
 	parser.add_argument( "--2018", action="store_true", dest="do2018", default=False,help="run for 2018")
 	parser.add_argument( "--addNTuples", action="store_true", dest="addNTuples", default=False,help="add nTuples to histogrammer workflow")
-        parser.add_argument( "--add2016", action="store_true", dest="add2016", default=False, help="run ADD MC for 2016")
-        parser.add_argument( "--add2017", action="store_true", dest="add2017", default=False, help="run ADD MC for 2017")
-        parser.add_argument( "--add2018", action="store_true", dest="add2018", default=False, help="run ADD MC for 2018")
+	parser.add_argument( "--add2016", action="store_true", dest="add2016", default=False, help="run ADD MC for 2016")
+	parser.add_argument( "--add2017", action="store_true", dest="add2017", default=False, help="run ADD MC for 2017")
+	parser.add_argument( "--add2018", action="store_true", dest="add2018", default=False, help="run ADD MC for 2018")
 	args = parser.parse_args()
 
 
@@ -238,14 +241,17 @@ def main():
 	if args.resolution and args.addNTuples:
 		print "warning, addNTuplets does nothing for resolution workflow"
 
+	if args.ci2018 or args.add2018:
+		args.do2018 = True
 
 	if args.ci2016 or args.add2016:
 		args.do2016 = True
 
 	isMC = "True"
-	GT = "94X_mc2017_realistic_v14"
+	#GT = "94X_mc2017_realistic_v14"
+	GT = "94X_mc2017_realistic_v17"
 	if args.data:
-		GT = "94X_dataRun2_ReReco_EOY17_v6"
+		GT = "94X_dataRun2_v11"
 		isMC = 'False'
 	arguments = {}
 	arguments["GT"] = GT
@@ -254,8 +260,15 @@ def main():
 	arguments["year"] = 2017
 	if args.do2016:
 		arguments["year"] = 2016
+		GT = '80X_mcRun2_asymptotic_2016_miniAODv2_v1'
+		if not isMC:
+			GT = '80X_dataRun2_2016SeptRepro_v6'
 	if args.do2018:
 		arguments["year"] = 2018
+		GT = '102X_upgrade2018_realistic_v18'
+		if not isMC:
+			GT = '102X_dataRun2_Sep2018ABC_v2'
+	
 	prefix = "muons_"	
 	cmssw_cfg = open('setup.py').read()
 
@@ -303,7 +316,7 @@ def main():
 				elif args.add2017:	
 					from samples import add_2017 as samples
 				elif args.add2018:	
-					from samples import add_2017 as samples
+					from samples import add_2018 as samples
 				elif args.add2016:	
 					from samples import add_2016 as samples
 				elif args.do2016:
@@ -326,8 +339,8 @@ def main():
 					from samples import ci_muons_2017 as samples 
 				elif args.ci2016:
 					from samples import ci_muons_2016 as samples 
-				elif args.add2017:
-					from samples import add_2017 as samples 
+				elif args.add2018:
+					from samples import add_2018 as samples 
 				elif args.add2017:
 					from samples import add_2017 as samples 
 				elif args.add2016:
@@ -373,19 +386,18 @@ def main():
 				if args.electrons: 
 					lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON.txt"
 					if args.do2018:
-						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON.txt"
+						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/ReReco/Cert_314472-325175_13TeV_17SeptEarlyReReco2018ABC_PromptEraD_Collisions18_JSON.txt"
 					if args.do2016:	
 						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt"
 
 				else:
 					lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions17/13TeV/ReReco/Cert_294927-306462_13TeV_EOY2017ReReco_Collisions17_JSON_MuonPhys.txt"
 					if args.do2018:
-						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/PromptReco/Cert_314472-325175_13TeV_PromptReco_Collisions18_JSON_MuonPhys.txt"
+						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions18/13TeV/ReReco/Cert_314472-325175_13TeV_17SeptEarlyReReco2018ABC_PromptEraD_Collisions18_JSON_MuonPhys.txt"
 					if args.do2016:
 						lumi_mask = "/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/ReReco/Final/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON_MuonPhys.txt"
 				GT = "94X_dataRun2_ReReco_EOY17_v6"
 
-			
 
 
 			for dataset_name,  dataset in samples:
@@ -401,16 +413,24 @@ def main():
 				else:
 					if "HistosFromPAT.usekFactor = True" in cmssw_tmp:
 						cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.usekFactor = True','HistosFromPAT.usekFactor = False')
+				if "ttbar" in dataset_name:
+					if "HistosFromPAT.useTTBarWeight = False" in cmssw_tmp:
+						cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.useTTBarWeight = False','HistosFromPAT.useTTBarWeight = True')
+				else:
+					if "HistosFromPAT.useTTBarWeight = True" in cmssw_tmp:
+						cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.useTTBarWeight = True','HistosFromPAT.useTTBarWeight = False')
+
 				if not args.do2016 and not args.do2018 and not args.ci2017 and not args.data and not args.resolution and args.electrons and not dataset_name == 'dummy':
 					print "trying"
 					cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
-				if args.do2018 and 'dy' in dataset_name and not dataset_name == "dyInclusive50":
-					cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2018_flat')
+				#if args.do2018 and 'dy' in dataset_name and not dataset_name == "dyInclusive50":
+				#	cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2018_flat')
 				toReweight = ['WW200to600','WW600to1200','WW1200to2500','WW2500','ttbar_lep_500to800_ext','ttbar_lep_500to800','ttbar_lep_800to1200','ttbar_lep_1200to1800','ttbar_lep1800toInf']
 				if args.do2018 and dataset_name in toReweight:
 					cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2017')
 
-            			if args.submit:
+				if args.submit:
+					print dataset
 					os.system('dasgoclient --query="site dataset=%s" > sites.txt'%dataset)
 
 					with open("sites.txt") as f:
@@ -441,13 +461,21 @@ def main():
 					if dataset_name == "dummy":
 						cmssw_tmp = cmssw_tmp.replace('dummyFile', dataset)
 					else:
-						os.system('dasgoclient -query="file dataset=%s | grep file.name" > myfiles.txt'%dataset)
+						if 'CITo2Mu_Lam10TeV' in dataset_name and args.ci2016:
+							print 'here'	
+							os.system('dasgoclient -query="file dataset=%s instance=prod/phys03| grep file.name" > myfiles.txt'%dataset)
+						else:	
+							os.system('dasgoclient -query="file dataset=%s | grep file.name" > myfiles.txt'%dataset)
 						with open('myfiles.txt') as fin:
 							content = fin.readlines()
 						content = [x.strip() for x in content]
-						print content[0]
+						files = "["
+						for fileName in content:
+							files += "'%s'"%fileName
+							files += ","
+						files += "]"
 						fin.close()
-						cmssw_tmp = cmssw_tmp.replace('dummyFile', content[0])
+						cmssw_tmp = cmssw_tmp.replace("['dummyFile']", files)
 
 					open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
 
@@ -462,7 +490,11 @@ def main():
 				dbs = DbsApi('https://cmsweb.cern.ch/dbs/prod/global/DBSReader')
 			       
 				for name, ana_dataset in samples2:
+				    arguments['name'] = name
 				    cmssw_tmp = cmssw_cfg
+				    cmssw_tmp = cmssw_tmp%arguments
+				    cmssw_tmp += analyzer
+
 				    fileDictList=dbs.listFiles(dataset=ana_dataset)
 				    
 				    print ("dataset %s has %d files" % (ana_dataset, len(fileDictList)))

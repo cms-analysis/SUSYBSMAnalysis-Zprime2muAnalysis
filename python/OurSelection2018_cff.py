@@ -36,7 +36,7 @@ import FWCore.ParameterSet.Config as cms
 # the above cuts ("loose" is then a misnomer), and at least one must
 # pass the trigger match requirement (the only "tight" cut).
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, offline_pt_threshold, trigger_match_2018
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import offline_pt_threshold, trigger_match_2018, prescaled_trigger_match_2018
 
 loose_cut = 'isGlobalMuon && ' \
             'isTrackerMuon && ' \
@@ -47,12 +47,11 @@ loose_cut = 'isGlobalMuon && ' \
             'globalTrack.hitPattern.trackerLayersWithMeasurement > 5 && ' \
             'globalTrack.hitPattern.numberOfValidPixelHits >= 1 && ' \
             '( (globalTrack.hitPattern.numberOfValidMuonHits > 0) || (tunePMuonBestTrack.hitPattern.numberOfValidMuonHits > 0) ) && ' \
-            '( numberOfMatchedStations > 1 || (numberOfMatchedStations == 1 && !(stationMask == 1 || stationMask == 16)) || (numberOfMatchedStations == 1 && (stationMask == 1 || stationMask == 16) && numberOfMatchedRPCLayers > 2))'
+            '(( numberOfMatchedStations>1 ) || ( numberOfMatchedStations==1 && ( expectedNnumberOfMatchedStations<2 || !(stationMask==1 || stationMask==16) || numberOfMatchedRPCLayers>2)))'
 
 loose_cut = loose_cut % offline_pt_threshold
 
 tight_cut = trigger_match_2018
-#tight_cut = trigger_match
 
 allDimuons = cms.EDProducer('Zprime2muCombiner',
                             decay = cms.string('leptons:muons@+ leptons:muons@-'),
@@ -66,9 +65,9 @@ dimuons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          cut = cms.string(''),
                          max_candidates = cms.uint32(1),
                          sort_by_pt = cms.bool(True),
+                         prefer_Z = cms.bool(True),
                          do_remove_overlap = cms.bool(True),
                          back_to_back_cos_angle_min = cms.double(-0.9998), # this corresponds to the angle (pi - 0.02) rad = 178.9 deg
-#                         vertex_chi2_max = cms.double(10),
                          vertex_chi2_max = cms.double(20),
                          dpt_over_pt_max = cms.double(0.3)
                          )

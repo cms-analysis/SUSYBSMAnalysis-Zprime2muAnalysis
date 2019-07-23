@@ -48,6 +48,7 @@ struct Zprime2muPairSelector {
     const bool e1 = typeid(c1) == typeid(pat::Electron);
     const bool e2 = typeid(c2) == typeid(pat::Electron);
     if (e1 && e2){
+	//std::cout << loose_ele(c1) << " " << loose_ele(c2) << " " << tight_ele(c1) << " " << tight_ele(c2) << std::endl;
 	return loose_ele(c1) && loose_ele(c2) && (tight_ele(c1) || tight_ele(c2));
     }
     else if (e1)

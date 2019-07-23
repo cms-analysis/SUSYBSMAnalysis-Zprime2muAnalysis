@@ -25,7 +25,7 @@ process.pdfWeights = cms.EDProducer("PdfWeightProducer",
                                     PdfInfoTag = cms.untracked.InputTag("generator"),
                                     PdfSetNames = cms.untracked.vstring(
                                         "NNPDF31_nnlo_as_0118",
-                                        "NNPDF30_nlo_as_0118",
+                                        "NNPDF30_lo_as_0130",
                                     #  "MRST2006nnlo.LHgrid",
                                     #   "NNPDF10_100.LHgrid"
                                         )
@@ -158,7 +158,7 @@ for cut_name, Selection in cuts.iteritems():
     pathname = 'path' + cut_name
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DileptonPreselector_cfi')
     process.load("SUSYBSMAnalysis.Zprime2muAnalysis.EventCounter_cfi")
-    pobj = process.EventCounter * process.dileptonPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+    pobj = process.EventCounter *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
 
 
 

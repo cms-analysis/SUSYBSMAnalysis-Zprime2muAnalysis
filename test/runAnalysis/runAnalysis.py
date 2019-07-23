@@ -122,7 +122,7 @@ def getCRABCfg(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crabNew'
+config.General.workArea = 'crabNew3'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -399,7 +399,7 @@ def main():
 				GT = "94X_dataRun2_ReReco_EOY17_v6"
 
 
-
+			#lumi_mask = '/afs/cern.ch/work/j/jschulte/test/CMSSW_10_2_15_patch1/src/SUSYBSMAnalysis/Zprime2muAnalysis/test/runAnalysis/crabNew2/crab_dileptonAna_electrons_2018_DoubleEGRun2018C-17Sep2018-v1/results/notFinishedLumis.json'
 			for dataset_name,  dataset in samples:
 				arguments['name'] = dataset_name
 				cmssw_tmp = cmssw_cfg
@@ -426,7 +426,7 @@ def main():
 				#if args.do2018 and 'dy' in dataset_name and not dataset_name == "dyInclusive50":
 				#	cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2018_flat')
 				toReweight = ['WW200to600','WW600to1200','WW1200to2500','WW2500','ttbar_lep_500to800_ext','ttbar_lep_500to800','ttbar_lep_800to1200','ttbar_lep_1200to1800','ttbar_lep1800toInf']
-				if args.do2018 and dataset_name in toReweight:
+				if (args.do2018 and dataset_name in toReweight) or (args.do2018 and 'CITo2E' in dataset_name):
 					cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2017')
 
 				if args.submit:

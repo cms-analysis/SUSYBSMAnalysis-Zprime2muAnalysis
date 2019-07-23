@@ -38,7 +38,7 @@ private:
    
     unsigned run;
     unsigned lumi;
-    unsigned event;
+    unsigned long  event;
     float genWeight;
     float beamspot_x;
     float beamspot_x_err;
@@ -307,7 +307,7 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
   tree = fs->make<TTree>("t", "");
   tree->Branch("run", &t.run, "run/i");
   tree->Branch("lumi", &t.lumi, "lumi/i");
-  tree->Branch("event", &t.event, "event/i");
+  tree->Branch("event", &t.event, "event/l");
   tree->Branch("beamspot_x", &t.beamspot_x, "beamspot_x/F");
   tree->Branch("beamspot_x_err", &t.beamspot_x_err, "beamspot_x_err/F");
   tree->Branch("beamspot_y", &t.beamspot_y, "beamspot_y/F");
@@ -705,7 +705,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
     t.run = event.id().run();
     t.lumi = event.luminosityBlock();
     t.event = event.id().event();
-
+ 
     // Get Trigger information
 
 

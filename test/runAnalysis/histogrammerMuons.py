@@ -238,7 +238,6 @@ if addNTuples:
 					   metFilter = cms.VInputTag( cms.InputTag("Flag_HBHENoiseFilter"), cms.InputTag("Flag_HBHENoiseIsoFilter"), cms.InputTag("Flag_EcalDeadCellTriggerPrimitiveFilter"), cms.InputTag("Flag_eeBadScFilter"), cms.InputTag("Flag_globalTightHalo2016Filter")),
 					   doElectrons = cms.bool(False),
 					   )
-
 	if isMC:
 		process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
 		obj = process.prunedMCLeptons
@@ -246,11 +245,22 @@ if addNTuples:
 
 		from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction
 		process.SimpleNtupler.hardInteraction = hardInteraction
-		if hasattr(process, 'pathOur2018'):
-			process.pathOur2018 *=obj * process.SimpleNtupler 
+		if year == 2016:
+			process.SimpleNtupler.dimu_src = cms.InputTag('Our2016MuonsPlusMuonsMinus')
+			if hasattr(process, 'pathOur2016'):
+				process.pathOur2016 *=obj * process.SimpleNtupler 
+		else:
+			if hasattr(process, 'pathOur2018'):
+				process.pathOur2018 *=obj * process.SimpleNtupler 
 	else:
-		if hasattr(process, 'pathOur2018'):
-			process.pathOur2018 *= process.SimpleNtupler 
+		if year == 2016:
+			process.SimpleNtupler.dimu_src = cms.InputTag('Our2016MuonsPlusMuonsMinus')
+			if hasattr(process, 'pathOur2016'):
+				process.pathOur2016 *= process.SimpleNtupler 
+		else:
+			if hasattr(process, 'pathOur2018'):
+				process.pathOur2018 *=  process.SimpleNtupler 
+
 if isMC:
 	switch_reco_process_name(process, "PAT") # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
     #switch_hlt_process_name(process, hlt_process_name) # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)

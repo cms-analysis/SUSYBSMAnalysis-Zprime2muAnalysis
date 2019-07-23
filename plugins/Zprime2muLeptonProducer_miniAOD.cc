@@ -307,14 +307,15 @@ void Zprime2muLeptonProducer_miniAOD::embedTriggerMatch(pat::Muon* new_mu, std::
 void Zprime2muLeptonProducer_miniAOD::embedTriggerMatch(pat::Electron* new_ele, std::string ex, const pat::TriggerObjectStandAloneCollection& hlt_objects_ele, std::vector<int>& L3_matched_ele) {
   int best = -1;
   float defaultpTvalue = -1.;
-  float best_dR = trigger_match_max_dR;
+  float best_dR = 0.2;
+  if (ex.find("HLT")) best_dR = 0.1;
+  else best_dR = 0.3;
   //std::cout << "size of L3 collection: " << L3.size() << std::endl;
   for (size_t i = 0; i < hlt_objects_ele.size(); ++i) {
     // Skip those already used.
     if (L3_matched_ele[i])
       continue;
-
-    const float dR = reco::deltaR(hlt_objects_ele[i], *new_ele);
+    const float dR = reco::deltaR(hlt_objects_ele[i].eta(),hlt_objects_ele[i].phi(), new_ele->superCluster()->eta(), new_ele->superCluster()->phi())  ;
     if (dR < best_dR) {
       best = int(i);
       best_dR = dR;
@@ -656,7 +657,7 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
       //const bool passID2018 = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::HADEM,HEEPV70::EMHADD1ISO},HEEPV70::IGNORE) && passEmHadIso2018 && passHOverE2018;
       //const bool passID = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::SIGMAIETAIETA,HEEPV70::E2X5OVER5X5,HEEPV70::HADEM,HEEPV70::ETA,HEEPV70::DETAINSEED,HEEPV70::DPHIIN,HEEPV70::TRKISO});
       //const bool passID = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::SIGMAIETAIETA,HEEPV70::E2X5OVER5X5,HEEPV70::HADEM,HEEPV70::ETA,HEEPV70::DETAINSEED,HEEPV70::DPHIIN,HEEPV70::TRKISO,HEEPV70::EMHADD1ISO});
-      /*std::cout << "pass: " << passID << "pass2018: " << passID2018 << std::endl;
+  /*    std::cout << "pass: " << passID << "pass2018: " << passID2018 << std::endl;
       std::cout << "HEEP" << std::endl;
       std::cout << "passShowerShape " << passShowerShape << std::endl;
       std::cout << "passHOverE " << passHOverE << std::endl;
@@ -671,13 +672,15 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
       std::cout << "passMissingHits " << passMissingHits << std::endl;
       std::cout << "passDXY " << passDXY << std::endl;
       std::cout << "ET " << sc_et << std::endl;
-     */ 
+      std::cout << "eta " << ele->superCluster()->eta() << std::endl; */
 //      if (!passID == passID2018) std::cout << passID << " " << passID2018 << std::endl;
+	
       if(passID || passID2018) {	
 	const pat::Electron Electrons = *ele;
 	std::pair<T*,int> res = doLepton(event, Electrons);
 	if (res.first == 0)
 	  continue;
+        res.first->addUserFloat("SC_Et", sc_et);
         res.first->addUserInt("cutFor", passID);
 	res.first->addUserInt("cutFor2018", passID2018);
 	new_leptons->push_back(*res.first);

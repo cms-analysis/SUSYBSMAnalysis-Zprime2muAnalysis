@@ -5,14 +5,14 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_reco_
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFiltersMiniAOD
 
-process.source.fileNames =['dummyFile']
+process.source.fileNames =['/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/98B0F542-46E3-354E-AB1C-1CE6B628FA3C.root','/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/90A1E876-74D8-9F40-AE43-EE196B7340BA.root','/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/11706ED5-6329-A44D-9D10-351894ACCC33.root','/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/21ED12DF-D09E-934D-816E-823C78270A35.root','/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/2130FD6B-F606-BC4F-888A-2307D44394A1.root','/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/6378624F-3254-134B-BE6B-F5EF6CF61F56.root','/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/1CA1451E-C161-134D-B348-9CE72F391ED6.root','/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/DEA6200A-0E48-3140-81C2-DB586BBB3AD4.root','/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/B5BA6B92-BB47-EA42-B8BB-7E23A1D0F81C.root','/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/92C6EED9-1EEB-4649-95E1-A5C384130A3C.root','/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/9005E89E-3B8F-A646-91EF-389E4BFC65CF.root','/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/4E6C494F-D7C4-1D4E-B94F-EE44519A1383.root','/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/6465BD3A-CB94-4D44-AAC6-59DDC35BF79E.root','/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/575DB39C-70D2-CC40-8C34-FCCB6D01F549.root','/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/4DF361B5-ACA1-B54B-A0A6-CAD1C749B58F.root','/store/relval/CMSSW_10_6_0_pre4/SingleMuon/MINIAOD/106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/10000/BACEDA32-10B3-524A-99F3-4E01226F1CD1.root',]
 
 process.maxEvents.input = -1
-isMC = True
+isMC = False
 addNTuples = False
 year = 2017
-sampleName = 'GJets_HT600ToInf'
-process.GlobalTag.globaltag = '94X_mc2017_realistic_v17'
+sampleName = 'RelValRunB'
+process.GlobalTag.globaltag = '94X_dataRun2_v11'
 process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
 
@@ -34,204 +34,219 @@ process.PrescaleToCommonMiniAOD.overall_prescale = overall_prescale
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import electrons_miniAOD
 electrons_miniAOD(process)
 #!/usr/bin/env python
-from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
-HistosFromPAT.leptonsFromDileptons = True
-HistosFromPAT.usekFactor = False #### Set TRUE to use K Factor on DY. If used, the k factor will be applied to ALL samples submitted. #####
-HistosFromPAT.useTTBarWeight = False #### Set TRUE to use NNPDF Weights for ttbar #####
-	
-# These modules define the basic selection cuts. For the monitoring
-# sets below, we don't need to define a whole new module, since they
-# just change one or two cuts -- see below.
-import SUSYBSMAnalysis.Zprime2muAnalysis.ElectronSelection_cff as ElectronSelection
-import SUSYBSMAnalysis.Zprime2muAnalysis.ElectronSelection2016_cff as ElectronSelection2016
-import SUSYBSMAnalysis.Zprime2muAnalysis.ElectronSelection2018_cff as ElectronSelection2018
+Electrons = False
 
-from RecoEgamma.EgammaTools.EgammaPostRecoTools import setupEgammaPostRecoSeq
-if year == 2016:
-    setupEgammaPostRecoSeq(process, era='2016-Legacy')
-if year == 2017:
-    setupEgammaPostRecoSeq(process, era='2017-Nov17ReReco')
-if year == 2018:
-	print "setting up"
-	setupEgammaPostRecoSeq(process, era='2018-Prompt')
+from SUSYBSMAnalysis.Zprime2muAnalysis.ResolutionAtZ_cfi import ResolutionAtZ
+ResolutionAtZ.leptonsFromDileptons = True
+ResolutionAtZ.doQoverP = True
+
+from SUSYBSMAnalysis.Zprime2muAnalysis.ResolutionUsingMC_cfi import ResolutionUsingMC_MiniAOD as ResolutionUsingMC
+ResolutionUsingMC.leptonsFromDileptons = True
+ResolutionUsingMC.doQoverP = True
 
 
+####################################
+####################################
+####################################
 
-dils = [
-	('ElectronsOppSign',        '%(leptons_name)s:electrons@+ %(leptons_name)s:electrons@-',     ''),
-	('ElectronsSameSign',       '%(leptons_name)s:electrons@+ %(leptons_name)s:electrons@+',     ''),
-	('ElectronsAllSigns',       '%(leptons_name)s:electrons@+ %(leptons_name)s:electrons@+',     ''),
+
+####################################
+####################################
+####################################
+
+
+####################################
+####################################
+####################################
+
+ZSkim = False #### Set TRUE to skim dy50to120 with a Z pt < 100 GeV #####
+
+####################################
+####################################
+####################################
+
+import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelectionNew_cff as OurSelectionNew
+import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2016_cff as OurSelection2016
+import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2017_cff as OurSelection2017
+
+
+
+
+
+
+# CandCombiner includes charge-conjugate decays with no way to turn it
+# off. To get e.g. mu+mu+ separate from mu-mu-, cut on the sum of the
+# pdgIds (= -26 for mu+mu+).
+dils = [('MuonsPlusMuonsMinus',          '%(leptons_name)s:muons@+ %(leptons_name)s:muons@-',         'daughter(0).pdgId() + daughter(1).pdgId() == 0'),
+	#('MuonsPlusMuonsPlus',           '%(leptons_name)s:muons@+ %(leptons_name)s:muons@+',         'daughter(0).pdgId() + daughter(1).pdgId() == -26'),
+	#('MuonsMinusMuonsMinus',         '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',         'daughter(0).pdgId() + daughter(1).pdgId() == 26'),
+	#('MuonsSameSign',                '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',         ''),
+	#('MuonsAllSigns',                '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',         ''),
 	]
 
+# Define sets of cuts for which to make plots. If using a selection
+# that doesn't have a trigger match, need to re-add a hltHighLevel
+# filter somewhere below.
+
 cuts = {
-	'ElectronSelection'  : ElectronSelection,
+	'Our2017'  : OurSelection2017,
 	}
-	
 if year == 2016:
 	cuts = {
-	"ElectronSelection" : ElectronSelection2016,
-	}
-if year == 2018:
-	cuts = {
-	"ElectronSelection" : ElectronSelection2018,
-	}
+		'Our2016'  : OurSelection2016,
+		'Our2017'  : OurSelection2017,
+		}
 
+
+tracks = ["Inner","Global","Outer","TPFMS","DYT","Picky","TunePNew"]
 # Loop over all the cut sets defined and make the lepton, allDilepton
 # (combinatorics only), and dilepton (apply cuts) modules for them.
-for cut_name, Selection in cuts.iteritems():
-	# Keep track of modules to put in the path for this set of cuts.
-    path_list = []
+for trackType in tracks:
+	for cut_name, Selection in cuts.iteritems():
+		# Keep track of modules to put in the path for this set of cuts.
+	    path_list = []
 
-    # Clone the LeptonProducer to make leptons with the set of cuts
-    # we're doing here flagged.  I.e., muon_cuts in LeptonProducer
-    # just marks each muon with a userInt "cutFor" that is 0 if it
-    # passes the cuts, and non-0 otherwise; it does not actually drop
-    # any of the muons. The cutFor flag actually gets ignored by the
-    # LooseTightPairSelector in use for all the cuts above, at
-    # present
-    path_list.append(process.egmGsfElectronIDSequence)
-	    
-    leptons_name = cut_name + 'Leptons'
-    leptons = process.leptonsMini.clone()
-    if year == 2016 and (isMC or "03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName):
-	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
-    if year == 2018:
-	leptons.hlt_filter_ele = cms.string('hltDiEle25CaloIdLMWPMS2UnseededFilter')
+	    # Clone the LeptonProducer to make leptons with the set of cuts
+	    # we're doing here flagged.  I.e., muon_cuts in LeptonProducer
+	    # just marks each muon with a userInt "cutFor" that is 0 if it
+	    # passes the cuts, and non-0 otherwise; it does not actually drop
+	    # any of the muons. The cutFor flag actually gets ignored by the
+	    # LooseTightPairSelector in use for all the cuts above, at
+	    # present.
+	    path_list.append(process.egmGsfElectronIDSequence)
+		    
+            leptons_name = cut_name + 'Leptons' + trackType
+	    if cut_name == 'Simple':
+		muon_cuts = ''
+#	    elif 'MuPrescaled' in cut_name:
+#	    muon_cuts = Selection.loose_cut.replace('pt > %s' % offline_pt_threshold, 'pt > 20')
+#	    print muon_cuts
+#	    else:
+	    muon_cuts = Selection.loose_cut
 
-    leptons.electron_src = cms.InputTag('slimmedElectrons',"","Zprime2muAnalysis")
-    setattr(process, leptons_name, leptons)
-    path_list.append(leptons)
-	
-    # Make all the combinations of dileptons we defined above.
-    for dil_name, dil_decay, dil_cut in dils:
+	    leptons = process.leptonsMini.clone(muon_cuts = muon_cuts)
+	    leptons.muon_track_for_momentum = cms.string(trackType)
+	#    if isMC:
+	#	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
+	    if year == 2016 and isMC:
+		leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
 
-        # Unique names for the modules: allname for the allDileptons,
-        # and name for dileptons.
-        name = cut_name + dil_name
-        allname = 'all' + name
 
-        alldil = Selection.allDielectrons.clone(decay = dil_decay % locals(), cut = dil_cut)
-        if 'AllSigns' in dil_name:
-            alldil.checkCharge = cms.bool(False)
+	    if  Electrons:
+		    if cut_name == 'EmuVeto':
+			    leptons.electron_muon_veto_dR = 0.1
+	    if len(trigger_filters)>0 and (cut_name=='Our2017' or cut_name=='Simple'):
+		leptons.trigger_filters = trigger_filters
+		leptons.trigger_path_names = trigger_path_names
+		leptons.prescaled_trigger_filters = prescaled_trigger_filters
+		leptons.prescaled_trigger_path_names = prescaled_trigger_path_names
+	    if len(trigger_filters)>0 and year == 2016:
+		leptons.trigger_filters = trigger_filters2016
+		leptons.trigger_path_names = trigger_path_names2016
+		leptons.prescaled_trigger_filters = prescaled_trigger_filters
+		leptons.prescaled_trigger_path_names = prescaled_trigger_path_names
 
-        dil = Selection.dielectrons.clone(src = cms.InputTag(allname))
-	
-	# Implement the differences to the selections; currently, as
-        # in Zprime2muCombiner, the cuts in loose_cut and
-        # tight_cut are the ones actually used to drop leptons, and
-        # not the ones passed into the LeptonProducer to set cutFor above.
-        # Histos now just needs to know which leptons and dileptons to use.
-	if isMC:
-		if year == 2018:
-			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2018","data_2018"), year = cms.int32(year))
-		elif year == 2017:	
-			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("GJets_HT600ToInf","data_2017"), year = cms.int32(year))
+
+	    # Keep using old TuneP for past selections
+	#     if 'Dec2012' not in Selection.__file__:
+	#         leptons.muon_track_for_momentum = cms.string('TunePNew')
+	    setattr(process, leptons_name, leptons)
+	    path_list.append(leptons)
+
+	    # Make all the combinations of dileptons we defined above.
+	    for dil_name, dil_decay, dil_cut in dils:
+		# For the EmuVeto path, we only care about e-mu events.
+		if cut_name == 'EmuVeto' and 'Electron' not in dil_name:
+		    continue
+
+		# For the MuPrescaled paths, we don't care about e-mu events.
+		if 'MuPrescaled' in cut_name and 'Electron' in dil_name:
+		    continue
+
+		# Unique names for the modules: allname for the allDileptons,
+		# and name for dileptons.
+		name = cut_name + dil_name + trackType	
+		allname = 'all' + name
+
+		alldil = Selection.allDimuons.clone(decay = dil_decay % locals(), cut = dil_cut)
+		if 'AllSigns' in dil_name:
+		    alldil.checkCharge = cms.bool(False)
+
+		dil = Selection.dimuons.clone(src = cms.InputTag(allname))
+		print trigger_match_2018
+		if len(trigger_filters) >  0 and (cut_name=='Our2017' or cut_name=='Our2016' or cut_name=='Simple'):
+			if year == 2016:
+				alldil.tight_cut = trigger_match_2016
+			else:
+				alldil.tight_cut = trigger_match_2018
+
+		#if len(trigger_filters) >  0 and (cut_name=='Our2017' or cut_name=='Simple'):
+		#	alldil.tight_cut = ""
+		alldil.loose_cut = muon_cuts
+		# Implement the differences to the selections; currently, as
+		# in Zprime2muCombiner, the cuts in loose_cut and
+		# tight_cut are the ones actually used to drop leptons, and
+		# not the ones passed into the LeptonProducer to set cutFor above.
+		if cut_name == 'Simple':
+		    alldil.electron_cut_mask = cms.uint32(0)
+		    #alldil.loose_cut = 'isGlobalMuon && pt > 20.'#to be changed for first runs
+		    alldil.loose_cut = 'isGlobalMuon && pt > 20.'
+		    alldil.tight_cut = ''
+		    dil.max_candidates = 100
+		    dil.sort_by_pt = True
+		    dil.do_remove_overlap = False
+		    if hasattr(dil, 'back_to_back_cos_angle_min'):
+			delattr(dil, 'back_to_back_cos_angle_min')
+		    if hasattr(dil, 'vertex_chi2_max'):
+			delattr(dil, 'vertex_chi2_max')
+		    if hasattr(dil, 'dpt_over_pt_max'):
+			delattr(dil, 'dpt_over_pt_max')
+		elif 'MuPrescaled' in cut_name:
+			alldil.loose_cut = alldil.loose_cut.value().replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
+			assert alldil.tight_cut == trigger_match
+			if len(prescaled_trigger_filters)>0:
+				alldil.tight_cut = prescaled_trigger_match_2018
+			else:
+				alldil.tight_cut = prescaled_trigger_match
+	    # Histos now just needs to know which leptons and dileptons to use.
+	      
+		res    = ResolutionAtZ.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
+		resMC  = ResolutionUsingMC.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name))
+
+
+		# Add all these modules to the process and the path list.
+		setattr(process, allname, alldil)
+		setattr(process, name, dil)
+		setattr(process, name + 'Resolution', res)
+		if isMC:
+			setattr(process, name + 'ResolutionMC', resMC)
+			path_list.append(alldil * dil * res * resMC)
 		else:	
-			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2016","data_2016"), year = cms.int32(year))
-	else:	
-		histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True))
-	#if not isMC:
-	#	delattr(histos,'hardInteraction')
-
-	histos.hardInteraction.doingElectrons = True
-	if 'ConLR' in sampleName or 'DesLR' in sampleName or 'ConRL' in sampleName or 'DesRL' in sampleName:
-		L = 10000	
-		if '16TeV' in sampleName:
-			L = 16000
-		if '100kTeV' in sampleName:
-			L = 100000000
-		if '1TeV' in sampleName:
-			L = 1000
-		if '22TeV' in sampleName:
-			L = 22000
-		if '24TeV' in sampleName:
-			L = 24000
-		if '28TeV' in sampleName:
-			L = 28000
-		if '32TeV' in sampleName:
-			L = 32000
-		if '34TeV' in sampleName:
-			L = 34000
-		if '40TeV' in sampleName:
-			L = 40000
-		if "Con" in sampleName:
-			histos.lrWeightProducer.interference = -1
-		else:	
-			histos.lrWeightProducer.interference = 1
-		histos.lrWeightProducer.Lambda = L	
-		histos.lrWeightProducer.calculate = True
-		histos.lrWeightProducer.doingElectrons = True
-		if "RL" in sampleName:
-			histos.lrWeightProducer.doingLR = False
-	
-        # Add all these modules to the process and the path list.
-        setattr(process, allname, alldil)
-        setattr(process, name, dil)
-        setattr(process, name + 'Histos', histos)
-	if not isMC:
-		#del histos.hardInteraction
-		#histos.useMadgraphWeight  = False
-		
-		trig = Selection.dielectronHLT
-		if "DoubleEG2016H" in sampleName:
-			trig.triggerConditions = cms.vstring("HLT_DoubleEle33_CaloIdL_MW_v*")
-		trigName = cut_name + "HLTFilter"
-        	setattr(process, trigName, trig)
-		delattr(getattr(process,name + 'Histos'),'hardInteraction')	
-        	path_list.append(trig * alldil * dil * histos)
-	else:
-		alldil.loose_cut_ele = cms.string('et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566)')	
-		alldil.tight_cut_ele = cms.string("")	
-		alldil.ele_match_l1 = cms.bool(False)	
-        	path_list.append(alldil * dil * histos)
-	
-    # Finally, make the path for this set of cuts.
-    pathname = 'path' + cut_name
-    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DielectronPreselector_cfi')
-    process.load("SUSYBSMAnalysis.Zprime2muAnalysis.EventCounter_cfi")
-    pobj = process.egammaPostRecoSeq * process.EventCounter * process.dielectronPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+			path_list.append(alldil * dil * res)
 
 
-    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
-    for dataFilter in goodDataFiltersMiniAOD:
-	#setattr(process,dataFilter 
-	pobj = dataFilter * pobj
-
-    path = cms.Path(pobj)
-    setattr(process, pathname, path)
-
-
-if addNTuples:
-	  
-	process.SimpleNtupler = cms.EDAnalyzer('SimpleNtupler_miniAOD',
-					   dimu_src = cms.InputTag('ElectronSelectionElectronsAllSigns'),
-					   met_src = cms.InputTag("slimmedMETs"),
-					   jet_src = cms.InputTag("slimmedJets"),
-					   beamspot_src = cms.InputTag('offlineBeamSpot'),
-					   vertices_src = cms.InputTag('offlineSlimmedPrimaryVertices'),
-					   #TriggerResults_src = cms.InputTag('TriggerResults', '', 'PAT'),	#mc
-					   TriggerResults_src = cms.InputTag('TriggerResults', '', 'RECO'),	#data
-					   genEventInfo = cms.untracked.InputTag('generator'),
-					   metFilter = cms.VInputTag( cms.InputTag("Flag_HBHENoiseFilter"), cms.InputTag("Flag_HBHENoiseIsoFilter"), cms.InputTag("Flag_EcalDeadCellTriggerPrimitiveFilter"), cms.InputTag("Flag_eeBadScFilter"), cms.InputTag("Flag_globalTightHalo2016Filter")),
-					   doElectrons = cms.bool(True),
-					   )
+	    # Finally, make the path for this set of cuts.
+	    pathname = 'path' + cut_name + trackType
+	    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DileptonPreselector_cfi')
+	    process.load("SUSYBSMAnalysis.Zprime2muAnalysis.EventCounter_cfi")
+	    process.dileptonPreseletor.ptCut = cms.double(20)	
+	    pobj = process.EventCounter * process.dileptonPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
 
 
-	if isMC:
-		#process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
-		#obj = process.prunedMCLeptons
-		#obj.src = cms.InputTag('prunedGenParticles')
-	 
-		from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction_MiniAOD as hardInteraction
-		hardInteraction.doingElectrons = True
-		process.SimpleNtupler.hardInteraction = hardInteraction
-		if hasattr(process, 'pathElectronSelection'):
-			#process.pathElectronSelection *=obj * process.SimpleNtupler 
-			process.pathElectronSelection *= process.SimpleNtupler 
 
-	else:
-		if hasattr(process, 'pathElectronSelection'):
-			process.pathElectronSelection *= process.SimpleNtupler 
+	    if 'VBTF' not in cut_name and cut_name != 'Simple':
+		process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
+		for dataFilter in goodDataFiltersMiniAOD:
+			#setattr(process,dataFilter 
+			pobj = dataFilter * pobj
+
+
+	    if 'MuPrescaled' in cut_name: ####### Now it seams that there are no prescaled path ########
+		pobj = process.PrescaleToCommonMiniAOD * pobj ####### Now it seams that there are no prescaled path ########
+	    path = cms.Path(pobj)
+	    setattr(process, pathname, path)
+
+
 
 
 if isMC:

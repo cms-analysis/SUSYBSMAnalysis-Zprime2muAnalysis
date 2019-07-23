@@ -241,6 +241,8 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   TH2F* DielectronMassVsCS_ee;
 
 
+  TH1F* GenMass;
+  
   TH1F* DileptonMass;
   TH1F* DileptonMass_bb;
   TH1F* DileptonMass_be;
@@ -568,6 +570,8 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
 
 
 
+  GenMass                 = fs->make<TH1F>("GenMass",            titlePrefix + "dil. mass", 20000, 0, 20000);
+  
   DileptonMass            = fs->make<TH1F>("DileptonMass",            titlePrefix + "dil. mass", 20000, 0, 20000);
   DileptonMass_bb         = fs->make<TH1F>("DileptonMass_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
   DileptonMass_be         = fs->make<TH1F>("DileptonMass_be",            titlePrefix + "dil. mass barrel-endcaps and endcaps-endcaps", 20000, 0, 20000);
@@ -753,8 +757,7 @@ double Zprime2muHistosFromPAT::getRecoWeight(double mass, bool isBB, int year_in
 				eff_syst =  eff_a + eff_b * pow(mass,eff_c) * TMath::Exp(- ((mass - eff_d ) / eff_e) );
 			}
 
-
-			return 1. - eff_default/eff_syst;
+			return eff_syst/eff_default;
 
 
 		}
@@ -797,7 +800,7 @@ double Zprime2muHistosFromPAT::getRecoWeight(double mass, bool isBB, int year_in
 
 			}
 
-		         return 1. - eff_default/eff_syst;
+		        return eff_syst/eff_default;
 
 
 		}
@@ -1182,7 +1185,7 @@ void Zprime2muHistosFromPAT::getBSandPV(const edm::Event& event) {
       	}
   }
   if (size(pu_info)> 0){
-	_puWeight = PU::MC_pileup_weight(_nTrueInt,pu_info[0],pu_info[1]);	
+	_puWeight = PU::MC_pileup_weight(_nTrueInt,pu_info[0],pu_info[1]);
 	_puWeight_scaleUp = PU::MC_pileup_weight(_nTrueInt,pu_info[0],pu_info[1]+TString("_scaleUp"));	
 	_puWeight_scaleDown = PU::MC_pileup_weight(_nTrueInt,pu_info[0],pu_info[1]+TString("_scaleDown"));
   }
@@ -1313,7 +1316,7 @@ void Zprime2muHistosFromPAT::fillLeptonHistosFromDileptons(const pat::CompositeC
 
 void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& dil, const edm::Event& event, double gM) {
 
-    
+   GenMass->Fill(gM); 
 	kFactorGraph->Fill(_kFactor);
 	kFactorGraph_bb->Fill(_kFactor_bb);
 	kFactorGraph_be->Fill(_kFactor_be);
@@ -1570,8 +1573,8 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
     double recoWeight = SF1*SF2;
 
     if (year_info == 2017 || year_info == 2018){
-	if (dil.daughter(0)->eta()<-1.2 || dil.daughter(1)->eta()<-1.2 || dil.daughter(0)->eta()>1.2 || dil.daughter(1)->eta()>1.2) recoWeight = getRecoWeight(vertex_mass,true,year_info);
-	else recoWeight = getRecoWeight(vertex_mass,false,year_info);
+	if (dil.daughter(0)->eta()<-1.2 || dil.daughter(1)->eta()<-1.2 || dil.daughter(0)->eta()>1.2 || dil.daughter(1)->eta()>1.2) recoWeight = getRecoWeight(vertex_mass,false,year_info);
+	else recoWeight = getRecoWeight(vertex_mass,true,year_info);
     }
     
     
@@ -1728,14 +1731,18 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
   }
   edm::Handle<pat::CompositeCandidateCollection> dileptons;
   event.getByLabel(dilepton_src, dileptons);
-  double gM = -1; 
+  double gM = -1;
+  if (fill_gen_info) {
+    	hardInteraction->Fill(event);
+ 	if(hardInteraction->IsValidForRes()) gM = (hardInteraction->lepPlusNoIB->p4() + hardInteraction->lepMinusNoIB->p4()).mass();
+  }
+
   if (!dileptons.isValid())
     edm::LogWarning("DileptonHandleInvalid") << "tried to get " << dilepton_src << " and failed!";
   else {
     if (leptonsFromDileptons){
     	if (fill_gen_info) {
 	        if (_usekFactor){
-    			hardInteraction->Fill(event);
 			if(hardInteraction->IsValidForRes()){
     				gM = (hardInteraction->lepPlusNoIB->p4() + hardInteraction->lepMinusNoIB->p4()).mass();
 				double NNPDFFac = 1.;

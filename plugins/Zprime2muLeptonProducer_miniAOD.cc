@@ -70,7 +70,7 @@ private:
   std::vector<std::string> trigger_path_names;
   std::vector<std::string> prescaled_trigger_filters;
   std::vector<std::string> prescaled_trigger_path_names;
-  std::string hlt_filter_ele;
+  std::vector<std::string> hlt_filter_ele;
   std::string l1_filter_ele;
   
   edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
@@ -115,7 +115,7 @@ Zprime2muLeptonProducer_miniAOD::Zprime2muLeptonProducer_miniAOD(const edm::Para
     trigger_path_names(cfg.getParameter<std::vector<std::string>>("trigger_path_names")),
     prescaled_trigger_filters(cfg.getParameter<std::vector<std::string>>("prescaled_trigger_filters")),
     prescaled_trigger_path_names(cfg.getParameter<std::vector<std::string>>("prescaled_trigger_path_names")),
-    hlt_filter_ele(cfg.getParameter<std::string>("hlt_filter_ele")),
+    hlt_filter_ele(cfg.getParameter<std::vector<std::string>>("hlt_filter_ele")),
     l1_filter_ele(cfg.getParameter<std::string>("l1_filter_ele")),
 
     triggerBits_(consumes<edm::TriggerResults>(cfg.getParameter<edm::InputTag>("bits"))),
@@ -638,8 +638,8 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
 //		passHOverE = ele->hadronicOverEm() < (5./ele->userFloat("ecalEnergyPostCorr") + 0.05);
 //		passHOverE2018 = ele->hadronicOverEm() < ((-0.4+0.4*fabs(ele->superCluster()->eta())*rho)/ele->userFloat("ecalEnergyPostCorr") + 0.05);
 		passHOverE = ele->hadronicOverEm() < (5./ele->superCluster()->energy() + 0.05);
-		passHOverE2018 = ele->hadronicOverEm() < ((-0.4+0.4*fabs(ele->superCluster()->eta())*rho)/ele->superCluster()->energy() + 0.05);
-
+		//passHOverE2018 = ele->hadronicOverEm() < ((-0.4+0.4*fabs(ele->superCluster()->eta())*rho)/ele->superCluster()->energy() + 0.05);
+		passHOverE2018 = ele->hadronicOverEm() < ((-0.4+0.4*fabs(ele->superCluster()->eta()))*rho/ele->superCluster()->energy() + 0.05);
 
 		passSieie = ele->full5x5_sigmaIetaIeta() < 0.03;
                 passEcalDriven = int(ele->ecalDrivenSeed());
@@ -657,11 +657,14 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
       //const bool passID2018 = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::HADEM,HEEPV70::EMHADD1ISO},HEEPV70::IGNORE) && passEmHadIso2018 && passHOverE2018;
       //const bool passID = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::SIGMAIETAIETA,HEEPV70::E2X5OVER5X5,HEEPV70::HADEM,HEEPV70::ETA,HEEPV70::DETAINSEED,HEEPV70::DPHIIN,HEEPV70::TRKISO});
       //const bool passID = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::SIGMAIETAIETA,HEEPV70::E2X5OVER5X5,HEEPV70::HADEM,HEEPV70::ETA,HEEPV70::DETAINSEED,HEEPV70::DPHIIN,HEEPV70::TRKISO,HEEPV70::EMHADD1ISO});
-  /*    std::cout << "pass: " << passID << "pass2018: " << passID2018 << std::endl;
+      /*std::cout << "pass: " << passID << "pass2018: " << passID2018 << std::endl;
       std::cout << "HEEP" << std::endl;
       std::cout << "passShowerShape " << passShowerShape << std::endl;
       std::cout << "passHOverE " << passHOverE << std::endl;
       std::cout << "passHOverE2018 " << passHOverE2018 << std::endl;
+      std::cout << "H/E val" << ele->hadronicOverEm() << std::endl;
+      std::cout << "H/E ele" << ((-0.4+0.4*fabs(ele->superCluster()->eta()))*rho/ele->superCluster()->energy() + 0.05) << std::endl;
+      std::cout << "rho " << rho << std::endl;
       std::cout << "passEmHadIso " << passEmHadIso << std::endl;
       std::cout << "passEmHadIso2018 " << passEmHadIso2018 << std::endl;
       std::cout << "passSieie " << passSieie << std::endl;
@@ -672,8 +675,8 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
       std::cout << "passMissingHits " << passMissingHits << std::endl;
       std::cout << "passDXY " << passDXY << std::endl;
       std::cout << "ET " << sc_et << std::endl;
-      std::cout << "eta " << ele->superCluster()->eta() << std::endl; */
-//      if (!passID == passID2018) std::cout << passID << " " << passID2018 << std::endl;
+      std::cout << "eta " << ele->superCluster()->eta() << std::endl; 
+      if (!passID == passID2018) std::cout << passID << " " << passID2018 << std::endl;*/
 	
       if(passID || passID2018) {	
 	const pat::Electron Electrons = *ele;
@@ -901,9 +904,11 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
 	  
 	 //this should not be hard coded! 
 	//std::cout << obj.filterLabels()[h] << std::endl;   
-	if (obj.filterLabels()[h] == hlt_filter_ele){ 
-	    //FilterMatched[j] = 1;
-	    hlt_objects_ele.push_back(obj);
+	for (unsigned int l = 0; l < hlt_filter_ele.size(); l++){
+		if (obj.filterLabels()[h] == hlt_filter_ele[l]){ 
+	    	//FilterMatched[j] = 1;
+	   	 hlt_objects_ele.push_back(obj);
+	}
     }
 //     if (obj.filterLabels()[h] == pandf.filter_2){
 //          //FilterMatched[j] = 1;

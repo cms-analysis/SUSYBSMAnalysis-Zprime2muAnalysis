@@ -61,7 +61,10 @@ for cut_name, Selection in cuts.iteritems():
     if year == 2016 and (isMC or "03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName):
 	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
     if year == 2018:
-	leptons.hlt_filter_ele = cms.string('hltDiEle25CaloIdLMWPMS2UnseededFilter')
+	leptons.hlt_filter_ele = cms.vstring('hltDiEle25CaloIdLMWPMS2UnseededFilter')
+    if year == 2016:
+	leptons.hlt_filter_ele = cms.vstring('hltDiEle33CaloIdLMWPMS2UnseededFilter','hltDiEle33CaloIdLGsfTrkIdVLDPhiUnseededFilter')
+
 
     leptons.electron_src = cms.InputTag('slimmedElectrons',"","Zprime2muAnalysis")
     setattr(process, leptons_name, leptons)

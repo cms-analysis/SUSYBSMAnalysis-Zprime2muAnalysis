@@ -21,7 +21,7 @@ parser.add_argument("--forceMerge", action="store_true", dest="forceMerge", defa
 
 args = parser.parse_args()
 doneTasks = []
-folder = 'crabNew2'
+folder = 'crabNew5'
 if os.path.isfile('%s/doneTasks.txt'%folder):
 	with open('%s/doneTasks.txt'%folder) as f:
     		doneTasks = f.readlines()

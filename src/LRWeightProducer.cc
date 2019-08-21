@@ -76,7 +76,7 @@ double LRWeightProducer::calculateWeight(const edm::Event& event, HardInteractio
   double tmPe2QfQl = 4. * M_PI * alpEM * ef[idAbs] * ef[idNew];
   double qCPropGm = 1./sH;
   //Second term.Model depended variables are defined using incoming quark and outgoing fermion information                                                 
-     double tmPe2s2c2 = 4. * M_PI * alpEM;
+     double tmPe2s2c2 = 4. * M_PI * alpEM / (0.2223 * 0.7777 );
      double denomPropZ = pow((sH - qCmZ2), 2) + qCmZ2 * qCGZ2;
      double qCrePropZ  = (sH - qCmZ2) / denomPropZ;
      double qCimPropZ = -qCmZ * qCGZ / denomPropZ;

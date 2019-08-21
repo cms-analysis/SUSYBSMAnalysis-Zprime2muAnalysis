@@ -243,8 +243,8 @@ if addNTuples:
 		obj = process.prunedMCLeptons
 		obj.src = cms.InputTag('prunedGenParticles')
 
-		from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction
-		process.SimpleNtupler.hardInteraction = hardInteraction
+		from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction_MiniAOD
+		process.SimpleNtupler.hardInteraction = hardInteraction_MiniAOD
 		if year == 2016:
 			process.SimpleNtupler.dimu_src = cms.InputTag('Our2016MuonsPlusMuonsMinus')
 			if hasattr(process, 'pathOur2016'):

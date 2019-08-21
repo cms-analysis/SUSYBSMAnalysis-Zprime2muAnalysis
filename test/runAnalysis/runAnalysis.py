@@ -6,7 +6,7 @@ def getFilterSnippet(name,args,doApply=False,year=2017):
 	print name
 	ttbarFilter = '''
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
-process.DYGenMassFilter = cms.EDFilter('DibosonGenMass',
+process.DYGenMassFilter = cms.EDFilter('TTbarSelection',
 			       src = cms.InputTag('prunedGenParticles'),
 			       min_mass = cms.double(50),
 			       max_mass = cms.double(500), 
@@ -70,7 +70,7 @@ for path_name, path in process.paths.iteritems():
 			return ZPtFilter 
 		else:
 			return dyFilter
-	elif "ttbar_lep50to500" in name and doApply:
+	elif name == "ttbar_lep" and doApply:
 		return ttbarFilter
 	elif "WWinclusive" in name and doApply:
 		return wwFilter
@@ -122,7 +122,7 @@ def getCRABCfg(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crabNew3'
+config.General.workArea = 'crabNew5'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -166,7 +166,7 @@ def getCRABCfgAAA(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crabNew'
+config.General.workArea = 'crabNew5'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -292,7 +292,6 @@ def main():
 		prefix = prefix + "2016_"
 	if args.do2018:
 		prefix = prefix + "2018_"	
-		applyAllGenFilters = False
 #	open('cmssw_cfg.py', 'wt').write(cmssw_cfg)
 #	print prefix
 	if not args.write:

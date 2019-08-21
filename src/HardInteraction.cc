@@ -111,7 +111,10 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
         }
       }
     }
-    if (genp->isHardProcess()) {//it was 3 //it was else if
+    if (abs(pdgId) == leptonFlavor) std::cout << pdgId << " " << genp->isPromptFinalState() <<  std::endl;
+    if (abs(pdgId) == leptonFlavor && !(genp->isPromptFinalState())) std::cout << pdgId << " " << genp->mother()->pdgId() <<  std::endl;
+    //if (genp->isHardProcess()) {//it was 3 //it was else if
+    if (genp->isPromptFinalState() || genp->isDirectPromptTauDecayProductFinalState()) {//it was 3 //it was else if
       if (pdgId == leptonFlavor) {
         // We found the l-. Make sure we didn't find a second one.
         if (lepMinusNoIB != 0 && !shutUp)

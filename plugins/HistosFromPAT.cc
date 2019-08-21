@@ -570,7 +570,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
 
 
 
-  GenMass                 = fs->make<TH1F>("GenMass",            titlePrefix + "dil. mass", 20000, 0, 20000);
+  GenMass                 = fs->make<TH1F>("GenMass",            titlePrefix + "dil. mass", 20000, -10 , 20000);
   
   DileptonMass            = fs->make<TH1F>("DileptonMass",            titlePrefix + "dil. mass", 20000, 0, 20000);
   DileptonMass_bb         = fs->make<TH1F>("DileptonMass_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
@@ -1587,6 +1587,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
     _scaleUncertBB = ScaleUncert(vertex_mass, true, year_info);
     _scaleUncertBE = ScaleUncert(vertex_mass, false, year_info);
     //}
+    //std::cout <<  _madgraphWeight << " " << _kFactor << " " << _puWeight << std::endl;
     DimuonMassVertexConstrained->Fill(vertex_mass, _madgraphWeight*_kFactor*_puWeight);
     DimuonMassVertexConstrainedVsCS->Fill(vertex_mass,cos_cs, _madgraphWeight*_kFactor*_puWeight);
     DimuonMassVertexConstrainedSmear->Fill(smearedMass, _madgraphWeight*_kFactor*_puWeight);
@@ -1713,6 +1714,7 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
         	eventWeight = gen_ev_info->weight();
         	_madgraphWeight = ( eventWeight > 0 ) ? 1 : -1;
 	}
+
         WeightMadGraph->Fill(_madgraphWeight);
     }
     
@@ -1736,6 +1738,9 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
     	hardInteraction->Fill(event);
  	if(hardInteraction->IsValidForRes()) gM = (hardInteraction->lepPlusNoIB->p4() + hardInteraction->lepMinusNoIB->p4()).mass();
   }
+  _kFactor = 1.;
+  _kFactor_bb = 1.;
+  _kFactor_be = 1.;
 
   if (!dileptons.isValid())
     edm::LogWarning("DileptonHandleInvalid") << "tried to get " << dilepton_src << " and failed!";

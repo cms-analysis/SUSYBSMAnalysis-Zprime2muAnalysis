@@ -385,7 +385,6 @@ data_muons_2017 = [
  	('SingleMuonRun2017D-31Mar2018-v1', '/SingleMuon/Run2017D-31Mar2018-v1/MINIAOD'),
  	('SingleMuonRun2017E-31Mar2018-v1', '/SingleMuon/Run2017E-31Mar2018-v1/MINIAOD'),
 	('SingleMuonRun2017F-31Mar2018-v1', '/SingleMuon/Run2017F-31Mar2018-v1/MINIAOD'),
-	('RelValRunB', '/SingleMuon/CMSSW_10_6_0_pre4-106X_dataRun2_tracker2017_v3_rsb_RelVal_sigMu2017B-v1/MINIAOD'),
 ]
 data_muons_2018 = [
  	('SingleMuonRun2018A-17Sep2018-v2', '/SingleMuon/Run2018A-17Sep2018-v2/MINIAOD'),

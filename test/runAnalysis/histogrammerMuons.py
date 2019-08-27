@@ -32,6 +32,55 @@ import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2018_cff as OurSelection201
 
 
 
+# Since the prescaled trigger comes with different prescales in
+# different runs/lumis, this filter prescales it to a common factor to
+# make things simpler.
+
+
+if year == 2016:
+    prescaled_trigger_match = prescaled_trigger_match_2016
+    prescaled_trigger_filters = prescaled_trigger_filters_16
+    prescaled_trigger_path_names = prescaled_trigger_path_names_16
+    prescaled_trigger_path_full_names = prescaled_trigger_path_full_names_16
+    prescale_common_path_name_list = prescaled_trigger_path_name_list_16
+    overall_prescale = overall_prescale_2016
+elif year == 2017 or (year==2018 and (sampleName == "WW200to600" or sampleName == "WW600to1200" or sampleName == "WW1200to2500" or sampleName == "WW2500" or sampleName == "ttbar_lep_500to800_ext" or sampleName == "ttbar_lep_500to800" or sampleName == "ttbar_lep_800to1200" or sampleName == "ttbar_lep_1200to1800" or sampleName == "ttbar_lep_1800toInf")):
+    prescaled_trigger_match = prescaled_trigger_match_2018
+    prescaled_trigger_filters = prescaled_trigger_filters_18
+    prescaled_trigger_path_names = prescaled_trigger_path_names_18
+    prescaled_trigger_path_full_names = prescaled_trigger_path_full_names_18
+    prescale_common_path_name_list = prescaled_trigger_path_name_list_17
+    overall_prescale = overall_prescale_2017
+else:
+    prescaled_trigger_match = prescaled_trigger_match_2018
+    prescaled_trigger_filters = prescaled_trigger_filters_18
+    prescaled_trigger_path_names = prescaled_trigger_path_names_18
+    prescaled_trigger_path_full_names = prescaled_trigger_path_full_names_18
+    prescale_common_path_name_list = prescaled_trigger_path_name_list_18
+    overall_prescale = overall_prescale_2018
+
+process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrescaleToCommon_cff')
+
+process.PrescaleToCommonMiniAOD.trigger_paths = prescale_common_path_name_list
+process.PrescaleToCommonMiniAOD.overall_prescale = overall_prescale # 500 for 2018
+
+
+#if (year == 2016 or year == 2018) and isMC:
+if isMC:
+    getattr(process,'PrescaleToCommonMiniAOD').Prescale_src = cms.InputTag('patTrigger','','PAT')
+    getattr(process,'PrescaleToCommonMiniAOD').L1Prescale_min_src = cms.InputTag('patTrigger','l1min','PAT')
+    getattr(process,'PrescaleToCommonMiniAOD').L1Prescale_max_src = cms.InputTag('patTrigger','l1max','PAT')
+elif  year == 2017:
+    getattr(process,'PrescaleToCommonMiniAOD').Prescale_src = cms.InputTag('patTrigger','','PAT')
+    getattr(process,'PrescaleToCommonMiniAOD').L1Prescale_min_src = cms.InputTag('patTrigger','l1min','PAT')
+    getattr(process,'PrescaleToCommonMiniAOD').L1Prescale_max_src = cms.InputTag('patTrigger','l1max','PAT')
+elif year == 2018:
+    getattr(process,'PrescaleToCommonMiniAOD').Prescale_src = cms.InputTag('patTrigger','','RECO')
+    getattr(process,'PrescaleToCommonMiniAOD').L1Prescale_min_src = cms.InputTag('patTrigger','l1min','RECO')
+    getattr(process,'PrescaleToCommonMiniAOD').L1Prescale_max_src = cms.InputTag('patTrigger','l1max','RECO')
+
+
+
 
 
 
@@ -39,10 +88,10 @@ import SUSYBSMAnalysis.Zprime2muAnalysis.OurSelection2018_cff as OurSelection201
 # off. To get e.g. mu+mu+ separate from mu-mu-, cut on the sum of the
 # pdgIds (= -26 for mu+mu+).
 dils = [('MuonsPlusMuonsMinus',          '%(leptons_name)s:muons@+ %(leptons_name)s:muons@-',         'daughter(0).pdgId() + daughter(1).pdgId() == 0'),
-	('MuonsPlusMuonsPlus',           '%(leptons_name)s:muons@+ %(leptons_name)s:muons@+',         'daughter(0).pdgId() + daughter(1).pdgId() == -26'),
-	('MuonsMinusMuonsMinus',         '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',         'daughter(0).pdgId() + daughter(1).pdgId() == 26'),
-	('MuonsSameSign',                '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',         ''),
-	('MuonsAllSigns',                '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',         ''),
+#	('MuonsPlusMuonsPlus',           '%(leptons_name)s:muons@+ %(leptons_name)s:muons@+',         'daughter(0).pdgId() + daughter(1).pdgId() == -26'),
+#	('MuonsMinusMuonsMinus',         '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',         'daughter(0).pdgId() + daughter(1).pdgId() == 26'),
+#	('MuonsSameSign',                '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',         ''),
+#	('MuonsAllSigns',                '%(leptons_name)s:muons@- %(leptons_name)s:muons@-',         ''),
 	]
 
 # Define sets of cuts for which to make plots. If using a selection
@@ -51,12 +100,24 @@ dils = [('MuonsPlusMuonsMinus',          '%(leptons_name)s:muons@+ %(leptons_nam
 cuts = {
 	'Our2017'  : OurSelection2017,
 	'Our2018'  : OurSelection2018,
+	'Our2017MuPrescaled'  : OurSelection2017,
+	'Our2018MuPrescaled'  : OurSelection2018,
+	'Our2017MuPrescaledCommon'  : OurSelection2017,
+	'Our2018MuPrescaledCommon'  : OurSelection2018,
 	}
 if year == 2016:
 	cuts = {
 		'Our2016'  : OurSelection2016,
 		'Our2017'  : OurSelection2017,
+		'Our2016MuPrescaled'  : OurSelection2016,
+		'Our2017MuPrescaled'  : OurSelection2017,
+		'Our2016MuPrescaledCommon'  : OurSelection2016,
+		'Our2017MuPrescaledCommon'  : OurSelection2017,
+
 		}
+
+
+
 # Loop over all the cut sets defined and make the lepton, allDilepton
 # (combinatorics only), and dilepton (apply cuts) modules for them.
 for cut_name, Selection in cuts.iteritems():
@@ -85,18 +146,21 @@ for cut_name, Selection in cuts.iteritems():
     if year == 2016 and (isMC or "03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName):
 	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
 
-    if len(trigger_filters)>0 and (cut_name=='Our2017' or cut_name=='Simple' or cut_name == 'Our2018'):
+    if len(trigger_filters)>0 and (cut_name=='Our2017' or cut_name=='Our2017MuPrescaled' or cut_name=='Our2017MuPrescaledCommon' or cut_name=='Simple' or cut_name == 'Our2018' or cut_name=='Our2018MuPrescaled' or cut_name=='Our2018MuPrescaledCommon'):
     	leptons.trigger_filters = trigger_filters
 	leptons.trigger_path_names = trigger_path_names
         leptons.trigger_path_full_names = trigger_path_full_names
 	leptons.prescaled_trigger_filters = prescaled_trigger_filters
 	leptons.prescaled_trigger_path_names = prescaled_trigger_path_names
+#        leptons.prescaled_trigger_path_full_names = prescaled_trigger_path_full_names
     if len(trigger_filters)>0 and year == 2016:
     	leptons.trigger_filters = trigger_filters2016
 	leptons.trigger_path_names = trigger_path_names2016
         leptons.trigger_path_full_names = trigger_path_full_names2016
 	leptons.prescaled_trigger_filters = prescaled_trigger_filters
 	leptons.prescaled_trigger_path_names = prescaled_trigger_path_names
+ #       leptons.prescaled_trigger_path_full_names = prescaled_trigger_path_full_names
+
 
 
 #    if isMC:
@@ -156,11 +220,9 @@ for cut_name, Selection in cuts.iteritems():
                 delattr(dil, 'dpt_over_pt_max')
        	elif 'MuPrescaled' in cut_name:
             alldil.loose_cut = alldil.loose_cut.value().replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
-            assert alldil.tight_cut == trigger_match
-            if len(prescaled_trigger_filters)>0:
-                alldil.tight_cut = prescaled_trigger_match_2018
-            else:
-                alldil.tight_cut = prescaled_trigger_match
+            alldil.tight_cut = prescaled_trigger_match
+
+
      # Histos now just needs to know which leptons and dileptons to use.
       
 	histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'muons'), dilepton_src = cms.InputTag(name), year = cms.int32(year))
@@ -216,10 +278,17 @@ for cut_name, Selection in cuts.iteritems():
 	for dataFilter in goodDataFiltersMiniAOD:
 		#setattr(process,dataFilter 
 		pobj = dataFilter * pobj
+    if 'Common' in cut_name:
 
+        ptc_name = 'PrescaleToCommon'
 
-    if 'MuPrescaled' in cut_name: ####### Now it seams that there are no prescaled path ########
-    	pobj = process.PrescaleToCommonMiniAOD * pobj ####### Now it seams that there are no prescaled path ########
+        ptc = process.PrescaleToCommonMiniAOD.clone()
+
+        setattr(process, ptc_name, ptc)
+
+        pobj = getattr(process,ptc_name) * pobj 
+    #if 'MuPrescaled' in cut_name: ####### Now it seams that there are no prescaled path ########
+    #	pobj = process.PrescaleToCommon * pobj ####### Now it seams that there are no prescaled path ########
     path = cms.Path(pobj)
     setattr(process, pathname, path)
 

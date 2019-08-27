@@ -1764,7 +1764,8 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
 					}
 					else{
 						NNPDFFac = ((0.918129) + (6.92702e-05)*pow(gM,1) + (1.62175e-08)*pow(gM,2) + (-2.47833e-11)*pow(gM,3) + (8.75707e-15)*pow(gM,4) + (-7.53019e-19)*pow(gM,5));
-						NNPDFFac_bb = ((0.914053) + (7.91618e-05)*pow(gM,1) + (2.19722e-08)*pow(gM,2) + (-3.49212e-11)*pow(gM,3) + (1.22504e-14)*pow(gM,4) + (-1.07347e-18)*pow(gM,5));                                           				     NNPDFFac_be = ((0.933214) + (3.76813e-05)*pow(gM,1) + (1.95612e-08)*pow(gM,2) + (-1.2688e-11)*pow(gM,3) + (3.69867e-15)*pow(gM,4) + (-2.62212e-19)*pow(gM,5)); 
+						NNPDFFac_bb = ((0.914053) + (7.91618e-05)*pow(gM,1) + (2.19722e-08)*pow(gM,2) + (-3.49212e-11)*pow(gM,3) + (1.22504e-14)*pow(gM,4) + (-1.07347e-18)*pow(gM,5));
+						NNPDFFac_be = ((0.933214) + (3.76813e-05)*pow(gM,1) + (1.95612e-08)*pow(gM,2) + (-1.2688e-11)*pow(gM,3) + (3.69867e-15)*pow(gM,4) + (-2.62212e-19)*pow(gM,5)); 
 					}
 
 				}

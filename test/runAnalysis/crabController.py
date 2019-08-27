@@ -21,7 +21,7 @@ parser.add_argument("--forceMerge", action="store_true", dest="forceMerge", defa
 
 args = parser.parse_args()
 doneTasks = []
-folder = 'crabNew5'
+folder = 'crab'
 if os.path.isfile('%s/doneTasks.txt'%folder):
 	with open('%s/doneTasks.txt'%folder) as f:
     		doneTasks = f.readlines()
@@ -65,7 +65,7 @@ for d in glob("%s/*/"%folder):
 			f=open("%s/doneTasks.txt"%folder, "a+")
 			f.write('%s\n'%d)
 			f.close()
-			continue
+			if not args.forceMerge: continue
 		'''if fileCount == 0:
 			print "no files downloaded yet, starting"
 			if nJobs < 500:

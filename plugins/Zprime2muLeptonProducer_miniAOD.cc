@@ -263,7 +263,6 @@ pat::Muon* Zprime2muLeptonProducer_miniAOD::cloneAndSwitchMuonTrack(const pat::M
   mu->setVertex(vtx);
 
   mu->addUserInt("trackUsedForMomentum", type);
-  
   return mu;
 }
 
@@ -760,7 +759,7 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
         }
 
         for(unsigned i_f=0; i_f<prescaled_trigger_filters.size(); ++i_f) {
-          if (obj.filterLabels()[h] == prescaled_trigger_filters[i_f]){ 
+          if (obj.filterLabels()[h] == prescaled_trigger_filters[i_f]){
             vec_prescaled_L3_muons[i_f].push_back(obj);
           }
         }
@@ -905,6 +904,7 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
 	 //this should not be hard coded! 
 	//std::cout << obj.filterLabels()[h] << std::endl;   
 	for (unsigned int l = 0; l < hlt_filter_ele.size(); l++){
+		if ( (event.id().run() < 276453 || event.id().run() > 278822) && hlt_filter_ele[l] == "hltDiEle33CaloIdLGsfTrkIdVLDPhiUnseededFilter" ) continue;
 		if (obj.filterLabels()[h] == hlt_filter_ele[l]){ 
 	    	//FilterMatched[j] = 1;
 	   	 hlt_objects_ele.push_back(obj);

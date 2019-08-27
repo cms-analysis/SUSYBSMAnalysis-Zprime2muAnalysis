@@ -122,7 +122,7 @@ def getCRABCfg(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crabNew5'
+config.General.workArea = 'crabRecovery'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -166,7 +166,7 @@ def getCRABCfgAAA(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crabNew5'
+config.General.workArea = 'crabRecovery'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -398,7 +398,7 @@ def main():
 				GT = "94X_dataRun2_ReReco_EOY17_v6"
 
 
-			#lumi_mask = '/afs/cern.ch/work/j/jschulte/test/CMSSW_10_2_15_patch1/src/SUSYBSMAnalysis/Zprime2muAnalysis/test/runAnalysis/crabNew2/crab_dileptonAna_electrons_2018_DoubleEGRun2018C-17Sep2018-v1/results/notFinishedLumis.json'
+			lumi_mask = '/afs/cern.ch/work/j/jschulte/test/CMSSW_10_2_15_patch1/src/SUSYBSMAnalysis/Zprime2muAnalysis/test/runAnalysis/crab/crab_dileptonAna_muons_2016_SingleMuonRun2016B-23Sep2016_v3/results/notFinishedLumis.json'
 			for dataset_name,  dataset in samples:
 				arguments['name'] = dataset_name
 				cmssw_tmp = cmssw_cfg

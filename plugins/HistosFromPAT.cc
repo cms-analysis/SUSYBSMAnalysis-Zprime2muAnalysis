@@ -32,6 +32,7 @@
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/ToConcrete.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/TrackUtilities.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/PUUtilities.h"
+#include "SUSYBSMAnalysis/Zprime2muAnalysis/src/triggerTurnOnElectrons.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"///
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/HardInteraction.h"
 #include "SUSYBSMAnalysis/Zprime2muAnalysis/src/LRWeightProducer.h"
@@ -104,6 +105,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
     double _puWeight = 1.0;
     double _puWeight_scaleUp = 1.0;
     double _puWeight_scaleDown = 1.0;
+    double _prefireWeight = 1.0;
   TH1F* NBeamSpot;
   TH1F* NVertices;
   TH1F* NVerticesUnweighted;
@@ -337,6 +339,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
   	std::vector<std::string> pu_info;  
 	int year_info;
  	LRWeightProducer lrWeightProducer;
+  	edm::InputTag prefire_src;
 };
 
 Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
@@ -364,7 +367,8 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
     hardInteraction(fill_gen_info ? new HardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction")) : 0),
     pu_info(cfg.getParameter<std::vector<std::string>>("pu_weights")),
     year_info(cfg.getParameter<int>("year")),
-    lrWeightProducer(cfg.getParameter<edm::ParameterSet>("lrWeightProducer"))
+    lrWeightProducer(cfg.getParameter<edm::ParameterSet>("lrWeightProducer")),
+    prefire_src(cfg.getParameter<edm::InputTag>("prefireWeights"))
 {
 
   consumes<reco::CandidateView>(lepton_src);
@@ -374,7 +378,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   consumes<std::vector<PileupSummaryInfo>>(pu_src);
   consumes<GenEventInfoProduct>(edm::InputTag("generator"));
   if (fill_gen_info) consumes<std::vector<reco::GenParticle>>(hardInteraction->src);
- 
+  if ((year_info==2016 || year_info==2017) && doElectrons) consumes<double>(prefire_src);
 
 
   std::string title_prefix = cfg.getUntrackedParameter<std::string>("titlePrefix", "");
@@ -1399,22 +1403,33 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
     if (ele0 && ele1) {
   	_eleMCFac = 1;
 	if (fill_gen_info){
-		double trigFac1 = turnOn(ele0->superCluster()->eta(),ele0->et(), year_info);
-		double trigFac2 = turnOn(ele1->superCluster()->eta(),ele1->et(), year_info);
-		double L1TrigFac1 = L1TurnOn(ele0->superCluster()->eta(),ele0->et(), year_info);
-		double L1TrigFac2 = L1TurnOn(ele1->superCluster()->eta(),ele1->et(), year_info);
-		double heepFac1 = HEEPSF(ele0->superCluster()->eta(),year_info);
-		double heepFac2 = HEEPSF(ele1->superCluster()->eta(),year_info);
-		_eleMCFac = heepFac1 * heepFac2 * trigFac1 * trigFac2 * (L1TrigFac1 + L1TrigFac2 - L1TrigFac1*L1TrigFac2);
+		bool e1_pass_trigger = true;
+		bool e2_pass_trigger = true;
+		if     (year_info==2016)e1_pass_trigger=trigEle_2016::passTrig(ele0->et(), ele0->superCluster()->eta()) ;
+		else if(year_info==2017)e1_pass_trigger=trigEle_2017::passTrig(ele0->et(), ele0->superCluster()->eta()) ;
+		else if(year_info==2018)e1_pass_trigger=trigEle_2018::passTrig(ele0->et(), ele0->superCluster()->eta(), "Run_all" , true) ;
+		if     (year_info==2016)e2_pass_trigger=trigEle_2016::passTrig(ele1->et(), ele1->superCluster()->eta()) ;
+		else if(year_info==2017)e2_pass_trigger=trigEle_2017::passTrig(ele1->et(), ele1->superCluster()->eta()) ;
+		else if(year_info==2018)e2_pass_trigger=trigEle_2018::passTrig(ele1->et(), ele1->superCluster()->eta(), "Run_all" , true) ;
+		//double trigFac1 = turnOn(ele0->superCluster()->eta(),ele0->et(), year_info);
+		//double trigFac2 = turnOn(ele1->superCluster()->eta(),ele1->et(), year_info);
+		//double L1TrigFac1 = L1TurnOn(ele0->superCluster()->eta(),ele0->et(), year_info);
+		//double L1TrigFac2 = L1TurnOn(ele1->superCluster()->eta(),ele1->et(), year_info);
+		//double heepFac1 = HEEPSF(ele0->superCluster()->eta(),year_info);
+		//double heepFac2 = HEEPSF(ele1->superCluster()->eta(),year_info);
+		_eleMCFac = _prefireWeight;
+		if (!(e1_pass_trigger && e2_pass_trigger)) _eleMCFac = 0;
 
 	}
  	double massScaleUp = 1.;
 	double massScaleDown = 1.;
 	if (fabs(ele0->superCluster()->eta()) < 1.4442 && fabs(ele1->superCluster()->eta()) < 1.4442) {
+		_kFactor = _kFactor_bb;
 		massScaleUp = 1+_scaleUncertEleBB;
 		massScaleDown = 1-_scaleUncertEleBB;
 	}
 	else{
+		_kFactor = _kFactor_be;
 		massScaleUp = 1+_scaleUncertEleBE;
 		massScaleDown = 1-_scaleUncertEleBE;
 	}
@@ -1723,6 +1738,13 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
     getBSandPV(event);
 
   edm::Handle<edm::View<reco::Candidate> > leptons;
+
+
+  if (fill_gen_info && (year_info == 2016 || year_info == 2017)){
+  	edm::Handle< double > theprefweight;
+  	event.getByLabel(prefire_src, theprefweight ) ;
+  	_prefireWeight =(*theprefweight);
+  }
   event.getByLabel(lepton_src, leptons);
 
   if (!leptons.isValid())
@@ -1783,6 +1805,18 @@ void Zprime2muHistosFromPAT::analyze(const edm::Event& event, const edm::EventSe
 					}
 				}		
  			 	if (doElectrons){
+					if (year_info == 2017 or year_info == 2018){
+						NNPDFFac = 1.;	
+						NNPDFFac_bb=(gM<5000) ? 0.8934+0.0002193 *gM-1.961e-7*pow(gM,2)+8.704e-11*pow(gM,3)-1.551e-14*pow(gM,4)+1.112e-18*pow(gM,5) : 1.74865;
+						NNPDFFac_be=(gM<5000) ? 0.8989+0.000182  *gM-1.839e-7*pow(gM,2)+1.026e-10*pow(gM,3)-2.361e-14*pow(gM,4)+1.927e-18*pow(gM,5) : 1.302025;
+
+					}
+					else{
+						NNPDFFac=1.;
+						NNPDFFac_bb=1.;
+						NNPDFFac_be=1.;
+					}
+
 					_kFactor = (1.0678 - 0.000120666 * gM + 3.22646e-08 * pow(gM,2) - 3.94886e-12 * pow(gM,3))*NNPDFFac;
 					_kFactor_bb = (1.0678 - 0.000120666 * gM + 3.22646e-08 * pow(gM,2) - 3.94886e-12 * pow(gM,3))*NNPDFFac_bb;
 					_kFactor_be = (1.0678 - 0.000120666 * gM + 3.22646e-08 * pow(gM,2) - 3.94886e-12 * pow(gM,3))*NNPDFFac_be;

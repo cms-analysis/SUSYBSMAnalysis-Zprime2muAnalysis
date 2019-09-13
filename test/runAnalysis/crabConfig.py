@@ -1,25 +1,25 @@
 
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'dileptonAna_muons_2016_SingleMuonRun2016B-23Sep2016_v3'
-config.General.workArea = 'crabRecovery'
+config.General.requestName = 'dileptonAna_electrons_dy6000toInf'
+config.General.workArea = 'crab'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
-config.Data.inputDataset =  '/SingleMuon/Run2016B-23Sep2016-v3/MINIAOD'
+config.Data.inputDataset =  '/ZToEE_NNPDF31_13TeV-powheg_M_6000_Inf/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM'
 config.Data.inputDBS = 'global'
 config.Data.publication = False
-config.Data.allowNonValidInputDataset = True
-config.Data.outputDatasetTag = 'dileptonAna_muons_2016_SingleMuonRun2016B-23Sep2016_v3'
+config.Data.outputDatasetTag = 'dileptonAna_electrons_dy6000toInf'
 config.Data.outLFNDirBase = '/store/user/jschulte/'
-#config.Data.ignoreLocality = True
+config.Data.ignoreLocality = True
+config.Data.allowNonValidInputDataset = True
 #config.General.instance = 'preprod' 
-config.Site.storageSite = 'T2_US_Purdue'
-config.JobType.maxMemoryMB  = 4000
-config.JobType.allowUndistributedCMSSW = True
+config.Site.whitelist = ["T2_US_*"]
 config.Site.blacklist = ['T2_US_Caltech']
+config.Site.storageSite = 'T2_US_Purdue'
+config.JobType.maxMemoryMB  = 8000
+config.JobType.allowUndistributedCMSSW = True
 
-config.Data.splitting = 'LumiBased'
+config.Data.splitting = 'EventAwareLumiBased'
 config.Data.totalUnits = -1
-config.Data.unitsPerJob = 100
-config.Data.lumiMask = '/afs/cern.ch/work/j/jschulte/test/CMSSW_10_2_15_patch1/src/SUSYBSMAnalysis/Zprime2muAnalysis/test/runAnalysis/crab/crab_dileptonAna_muons_2016_SingleMuonRun2016B-23Sep2016_v3/results/notFinishedLumis.json'
+config.Data.unitsPerJob  = 500000
 

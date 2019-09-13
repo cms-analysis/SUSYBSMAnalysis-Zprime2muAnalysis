@@ -2685,7 +2685,7 @@ double Rereco_B_scaleUp[120]={
 0.000000e+00,
 0.000000e+00
 };
-double dy6000toInt[120]={
+double dy6000toInf[120]={
 3.761359e-02,
 1.273847e-03,
 2.958936e-03,
@@ -5999,7 +5999,7 @@ std::map<TString,double*>::value_type( "tW", tW),
 std::map<TString,double*>::value_type( "Rereco_B", Rereco_B),
 std::map<TString,double*>::value_type( "dy400to800", dy400to800),
 std::map<TString,double*>::value_type( "Rereco_B_scaleUp", Rereco_B_scaleUp),
-std::map<TString,double*>::value_type( "dy6000toInt", dy6000toInt),
+std::map<TString,double*>::value_type( "dy6000toInf", dy6000toInf),
 std::map<TString,double*>::value_type( "Rereco_C_scaleUp", Rereco_C_scaleUp),
 std::map<TString,double*>::value_type( "data_2017_scaleUp", data_2017_scaleUp),
 std::map<TString,double*>::value_type( "Rereco_F", Rereco_F),

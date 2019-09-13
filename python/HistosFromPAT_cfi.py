@@ -30,4 +30,5 @@ HistosFromPAT_MiniAOD = cms.EDAnalyzer('Zprime2muHistosFromPAT',
                                pu_weights = cms.vstring(),
 			       year = cms.int32(2017),
               		       lrWeightProducer = LRWeightProducer,
+			       prefireWeights = cms.InputTag("prefiringweight:nonPrefiringProb") 
 )

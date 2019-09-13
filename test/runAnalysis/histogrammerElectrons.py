@@ -20,7 +20,16 @@ if year == 2018:
 	print "setting up"
 	setupEgammaPostRecoSeq(process, era='2018-Prompt')
 
+from PhysicsTools.PatUtils.l1ECALPrefiringWeightProducer_cfi import l1ECALPrefiringWeightProducer
+if year == 2016 or year == 2017:
+	process.prefiringweight = l1ECALPrefiringWeightProducer.clone(
+    		DataEra = cms.string("2017BtoF"), #Use 2016BtoH for 2016
+    		UseJetEMPt = cms.bool(False),
+    		PrefiringRateSystematicUncty = cms.double(0.2),
+    		SkipWarnings = False)
 
+	if year==2016:
+    		process.prefiringweight.DataEra = cms.string("2016BtoH")
 
 dils = [
 	('ElectronsOppSign',        '%(leptons_name)s:electrons@+ %(leptons_name)s:electrons@-',     ''),
@@ -58,7 +67,7 @@ for cut_name, Selection in cuts.iteritems():
 	    
     leptons_name = cut_name + 'Leptons'
     leptons = process.leptonsMini.clone()
-    if year == 2016 and (isMC or "03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName):
+    if year == 2016 and ("03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName or "dy2300to3500" in sampleName):
 	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
     if year == 2018:
 	leptons.hlt_filter_ele = cms.vstring('hltDiEle25CaloIdLMWPMS2UnseededFilter')
@@ -149,15 +158,19 @@ for cut_name, Selection in cuts.iteritems():
         	path_list.append(trig * alldil * dil * histos)
 	else:
 		alldil.loose_cut_ele = cms.string('et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566)')	
-		alldil.tight_cut_ele = cms.string("")	
-		alldil.ele_match_l1 = cms.bool(False)	
+		alldil.tight_cut_ele = cms.string("")
+		if not year == 2017:	
+			alldil.ele_match_l1 = cms.bool(False)	
         	path_list.append(alldil * dil * histos)
 	
     # Finally, make the path for this set of cuts.
     pathname = 'path' + cut_name
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DielectronPreselector_cfi')
     process.load("SUSYBSMAnalysis.Zprime2muAnalysis.EventCounter_cfi")
-    pobj = process.egammaPostRecoSeq * process.EventCounter * process.dielectronPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+    if year == 2016 or year == 2017:
+    	pobj = process.egammaPostRecoSeq * process.prefiringweight * process.EventCounter * process.dielectronPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+    else:	
+	pobj = process.egammaPostRecoSeq * process.EventCounter * process.dielectronPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
 
 
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')

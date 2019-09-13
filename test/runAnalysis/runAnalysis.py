@@ -91,8 +91,8 @@ def getCRABCfgWeirdSubmission(name,dataset,fileList):
 	crab_cfg = '''
 from CRABClient.UserUtilities import config
 config = config()
-config.General.requestName = 'dileptonAna_%s_2017_whystuck'
-config.General.workArea = 'crabNext'
+config.General.requestName = 'dileptonAna_%s'
+config.General.workArea = 'crab'
 config.General.transferLogs = False
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'
@@ -122,7 +122,7 @@ def getCRABCfg(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crabRecovery'
+config.General.workArea = 'crab'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -166,7 +166,7 @@ def getCRABCfgAAA(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crabRecovery'
+config.General.workArea = 'crab'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -185,8 +185,8 @@ config.JobType.allowUndistributedCMSSW = True
 %s
 '''
 	data_config='''
-#config.Data.splitting = 'LumiBased'
-config.Data.splitting = 'Automatic'
+config.Data.splitting = 'LumiBased'
+#config.Data.splitting = 'Automatic'
 config.Data.totalUnits = -1
 config.Data.unitsPerJob = 100
 config.Data.lumiMask = '%s'
@@ -398,7 +398,7 @@ def main():
 				GT = "94X_dataRun2_ReReco_EOY17_v6"
 
 
-			lumi_mask = '/afs/cern.ch/work/j/jschulte/test/CMSSW_10_2_15_patch1/src/SUSYBSMAnalysis/Zprime2muAnalysis/test/runAnalysis/crab/crab_dileptonAna_muons_2016_SingleMuonRun2016B-23Sep2016_v3/results/notFinishedLumis.json'
+#			lumi_mask = '/afs/cern.ch/work/j/jschulte/test/CMSSW_10_2_15_patch1/src/SUSYBSMAnalysis/Zprime2muAnalysis/test/runAnalysis/crab/crab_dileptonAna_muons_2016_SingleMuonRun2016B-23Sep2016_v3/results/notFinishedLumis.json'
 			for dataset_name,  dataset in samples:
 				arguments['name'] = dataset_name
 				cmssw_tmp = cmssw_cfg
@@ -424,7 +424,7 @@ def main():
 					cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
 				#if args.do2018 and 'dy' in dataset_name and not dataset_name == "dyInclusive50":
 				#	cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2018_flat')
-				toReweight = ['WW200to600','WW600to1200','WW1200to2500','WW2500','ttbar_lep_500to800_ext','ttbar_lep_500to800','ttbar_lep_800to1200','ttbar_lep_1200to1800','ttbar_lep1800toInf']
+				toReweight = ['WW200to600','WW600to1200','WW1200to2500','WW2500',"ttbar_lep_ext","ttbar_lep",'ttbar_lep_500to800_ext','ttbar_lep_500to800','ttbar_lep_800to1200','ttbar_lep_1200to1800','ttbar_lep1800toInf']
 				if (args.do2018 and dataset_name in toReweight) or (args.do2018 and 'CITo2E' in dataset_name):
 					cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2017')
 
@@ -479,6 +479,59 @@ def main():
 					open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
 
 					subprocess.call(['cmsRun','cmssw_cfg.py'])	
+
+			if args.do2016 and not args.resolution and not args.data:
+				print "submitting also weird samples"
+				from samples import backgrounds_electrons_2016_extra as samples2
+			
+				from dbs.apis.dbsClient import DbsApi
+				dbs = DbsApi('https://cmsweb.cern.ch/dbs/prod/global/DBSReader')
+			       
+				for name, ana_dataset in samples2:
+					arguments['name'] = dataset_name
+					cmssw_tmp = cmssw_cfg
+					cmssw_tmp = cmssw_tmp%arguments
+					cmssw_tmp += analyzer
+					
+					cmssw_tmp+=getFilterSnippet(dataset_name,args,applyAllGenFilters,year=arguments["year"])
+					if "dy" in dataset_name:
+						if "HistosFromPAT.usekFactor = False" in cmssw_tmp:
+							cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.usekFactor = False','HistosFromPAT.usekFactor = True')
+					else:
+						if "HistosFromPAT.usekFactor = True" in cmssw_tmp:
+							cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.usekFactor = True','HistosFromPAT.usekFactor = False')
+					if "ttbar" in dataset_name:
+						if "HistosFromPAT.useTTBarWeight = False" in cmssw_tmp:
+							cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.useTTBarWeight = False','HistosFromPAT.useTTBarWeight = True')
+					else:
+						if "HistosFromPAT.useTTBarWeight = True" in cmssw_tmp:
+							cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.useTTBarWeight = True','HistosFromPAT.useTTBarWeight = False')
+
+					if not args.do2016 and not args.do2018 and not args.ci2017 and not args.data and not args.resolution and args.electrons and not dataset_name == 'dummy':
+						print "trying"
+						cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
+					#if args.do2018 and 'dy' in dataset_name and not dataset_name == "dyInclusive50":
+					#	cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2018_flat')
+					toReweight = ['WW200to600','WW600to1200','WW1200to2500','WW2500',"ttbar_lep_ext","ttbar_lep",'ttbar_lep_500to800_ext','ttbar_lep_500to800','ttbar_lep_800to1200','ttbar_lep_1200to1800','ttbar_lep1800toInf']
+					if (args.do2018 and dataset_name in toReweight) or (args.do2018 and 'CITo2E' in dataset_name):
+						cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2017')
+
+
+				        fileDictList=dbs.listFiles(dataset=ana_dataset)
+				    
+				        print ("dataset %s has %d files" % (ana_dataset, len(fileDictList)))
+				   
+				        # DBS client returns a list of dictionaries, but we want a list of Logical File Names
+				        lfnList = [ dic['logical_file_name'] for dic in fileDictList ]	
+				        crab_cfg = getCRABCfgWeirdSubmission(prefix+name,ana_dataset,lfnList)
+				        open('crabConfig.py', 'wt').write(crab_cfg)
+				        #cmssw_cfg+=getFilterSnippet(dataset_name) # high mass tails not available yet
+				        #cmssw_tmp = cmssw_tmp.replace('/store/data/Run2017F/DoubleEG/MINIAOD/17Nov2017-v1/50000/00105BAD-63E0-E711-8640-02163E0146C5.root', lfnList[0])
+				        open('cmssw_cfg.py', 'wt').write(cmssw_tmp)
+				        if args.submit:
+						os.system('crab submit -c crabConfig.py')
+						#print "Test!"
+
 
 
 			if args.resolution and not args.data and not args.do2016 and not args.do2018:

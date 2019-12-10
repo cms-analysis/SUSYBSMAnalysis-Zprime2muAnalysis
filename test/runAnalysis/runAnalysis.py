@@ -70,7 +70,7 @@ for path_name, path in process.paths.iteritems():
 			return ZPtFilter 
 		else:
 			return dyFilter
-	elif name == "ttbar_lep" and doApply:
+	elif (name == "ttbar_lep" or name == "ttbar_lep_ext" or name == "ttbar_lep50to500") and doApply:
 		return ttbarFilter
 	elif "WWinclusive" in name and doApply:
 		return wwFilter
@@ -106,7 +106,7 @@ config.Site.storageSite = 'T2_US_Purdue'
 config.Data.userInputFiles = %s
 config.Data.splitting = 'FileBased'
 config.Data.unitsPerJob = 1
-config.JobType.maxMemoryMB  = 8000
+#config.JobType.maxMemoryMB  = 8000
 config.JobType.allowUndistributedCMSSW = True
 '''
 	result = crab_cfg%(name,name,fileList)
@@ -122,7 +122,7 @@ def getCRABCfg(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crab'
+config.General.workArea = 'crab2'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -134,7 +134,7 @@ config.Data.outLFNDirBase = '/store/user/jschulte/'
 #config.Data.ignoreLocality = True
 #config.General.instance = 'preprod' 
 config.Site.storageSite = 'T2_US_Purdue'
-config.JobType.maxMemoryMB  = 4000
+#config.JobType.maxMemoryMB  = 4000
 config.JobType.allowUndistributedCMSSW = True
 config.Site.blacklist = ['T2_US_Caltech']
 %s
@@ -166,7 +166,7 @@ def getCRABCfgAAA(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crab'
+config.General.workArea = 'crab2'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -180,7 +180,7 @@ config.Data.allowNonValidInputDataset = True
 config.Site.whitelist = ["T2_US_*"]
 config.Site.blacklist = ['T2_US_Caltech']
 config.Site.storageSite = 'T2_US_Purdue'
-config.JobType.maxMemoryMB  = 8000
+#config.JobType.maxMemoryMB  = 8000
 config.JobType.allowUndistributedCMSSW = True
 %s
 '''
@@ -223,6 +223,7 @@ def main():
 	parser.add_argument("-s", "--submit", action="store_true", dest="submit", default=False,help="submit to CRAB")
 	parser.add_argument("-r", "--resolution", action="store_true", dest="resolution", default=False,help="run jobs for resolution studies")
 	parser.add_argument("--pdf", action="store_true", dest="pdf", default=False,help="produce trees for PDF studies")
+	parser.add_argument("--genMass", action="store_true", dest="genMass", default=False,help="produce trees for genMas studies")
 	parser.add_argument("-w", "--write", action="store_true", dest="write", default=False,help="write config but not execute")
 	parser.add_argument("-e", "--electrons", action="store_true", dest="electrons", default=False,help="run electrons")
 	parser.add_argument( "--ci2016", action="store_true", dest="ci2016", default=False,help="run CI MC for 2016")
@@ -279,6 +280,9 @@ def main():
 		prefix = "pdf_"
 		analyzer= open('pdfStudies.py').read()
 
+	elif args.pdf:
+		prefix = "genMass_"
+		analyzer= open('genMass.py').read()
 
 	else:
 		
@@ -400,6 +404,10 @@ def main():
 
 #			lumi_mask = '/afs/cern.ch/work/j/jschulte/test/CMSSW_10_2_15_patch1/src/SUSYBSMAnalysis/Zprime2muAnalysis/test/runAnalysis/crab/crab_dileptonAna_muons_2016_SingleMuonRun2016B-23Sep2016_v3/results/notFinishedLumis.json'
 			for dataset_name,  dataset in samples:
+				
+				if args.do2018 and args.electrons and dataset_name == "dy50to120":
+					lumi_mask="dy2018JSON.txt"
+				
 				arguments['name'] = dataset_name
 				cmssw_tmp = cmssw_cfg
 				cmssw_tmp = cmssw_tmp%arguments
@@ -412,21 +420,24 @@ def main():
 				else:
 					if "HistosFromPAT.usekFactor = True" in cmssw_tmp:
 						cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.usekFactor = True','HistosFromPAT.usekFactor = False')
-				if "ttbar" in dataset_name:
+				if "ttbar" in dataset_name and not args.do2016:
 					if "HistosFromPAT.useTTBarWeight = False" in cmssw_tmp:
 						cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.useTTBarWeight = False','HistosFromPAT.useTTBarWeight = True')
 				else:
 					if "HistosFromPAT.useTTBarWeight = True" in cmssw_tmp:
 						cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.useTTBarWeight = True','HistosFromPAT.useTTBarWeight = False')
 
-				if not args.do2016 and not args.do2018 and not args.ci2017 and not args.data and not args.resolution and args.electrons and not dataset_name == 'dummy':
+				if not args.do2016 and not args.ci2017 and not args.ci2016 and not args.ci2018 and not args.add2016 and not args.add2017 and not args.add2018 and not args.data and not args.resolution and args.electrons and not dataset_name == 'dummy':
 					print "trying"
-					cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
+					if args.do2018:
+						cmssw_tmp = cmssw_tmp.replace('mc_2018',dataset_name)
+					else:
+						cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
 				#if args.do2018 and 'dy' in dataset_name and not dataset_name == "dyInclusive50":
 				#	cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2018_flat')
-				toReweight = ['WW200to600','WW600to1200','WW1200to2500','WW2500',"ttbar_lep_ext","ttbar_lep",'ttbar_lep_500to800_ext','ttbar_lep_500to800','ttbar_lep_800to1200','ttbar_lep_1200to1800','ttbar_lep1800toInf']
-				if (args.do2018 and dataset_name in toReweight) or (args.do2018 and 'CITo2E' in dataset_name):
-					cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2017')
+				#toReweight = ['WW200to600','WW600to1200','WW1200to2500','WW2500',"ttbar_lep_ext","ttbar_lep",'ttbar_lep_500to800_ext','ttbar_lep_500to800','ttbar_lep_800to1200','ttbar_lep_1200to1800','ttbar_lep1800toInf']
+				#if (args.do2018 and dataset_name in toReweight) or (args.do2018 and 'CITo2E' in dataset_name):
+				#	cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2017')
 
 				if args.submit:
 					print dataset
@@ -480,7 +491,7 @@ def main():
 
 					subprocess.call(['cmsRun','cmssw_cfg.py'])	
 
-			if args.do2016 and not args.resolution and not args.data:
+			if args.do2016 and not args.resolution and not args.data and not args.ci2016 and not args.add2016:
 				print "submitting also weird samples"
 				from samples import backgrounds_electrons_2016_extra as samples2
 			

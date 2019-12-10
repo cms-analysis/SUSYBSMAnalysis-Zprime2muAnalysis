@@ -42,5 +42,13 @@ namespace trigEle_2018{
 }
   
 
+namespace trigEle33l1{
+
+
+  float turnOnfunction(float Et, float p0, float p1, float p2, float p3, float p4, float p5);
+  float turnOn_MW(float scEt,float scEta, TString run, bool isDoubleEle25);
+  bool passTrig(float scEt,float scEta, TString run, bool isEle25);
+
+}
 
 #endif

@@ -21,7 +21,7 @@ parser.add_argument("--forceMerge", action="store_true", dest="forceMerge", defa
 
 args = parser.parse_args()
 doneTasks = []
-folder = 'crab'
+folder = 'crab2'
 if os.path.isfile('%s/doneTasks.txt'%folder):
 	with open('%s/doneTasks.txt'%folder) as f:
     		doneTasks = f.readlines()
@@ -35,7 +35,11 @@ for d in glob("%s/*/"%folder):
 	#if d == 'crabNew2/crab_dileptonAna_muons_SingleMuonRun2017D-31Mar2018-v1/': continue
 	#if d == 'crabNew2/crab_dileptonAna_muons_SingleMuonRun2017F-31Mar2018-v1/': continue
 	#if d == 'crabNew2/crab_dileptonAna_muons_2016_SingleMuonRun2016B-23Sep2016_v3/': continue
-	if d == 'crabNew2/crab_dileptonAna_muons_SingleMuonRun2017F-31Mar2018-v1/': continue
+	#if d == 'crab/crab_dileptonAna_electrons_ttbar_lep_500to800_ext/': continue
+	#if d == 'crab/crab_dileptonAna_electrons_2016_ZZ2L2Nu/': continue
+	#if d == 'crab/crab_dileptonAna_electrons_2016_WW2500/': continue
+	#if d == 'crab/crab_dileptonAna_electrons_2016_Wjets/': continue
+	#if d == 'crab/crab_dileptonAna_electrons_2016_Wantitop/': continue
 	if d in doneTasks:
 		continue
 	print "check status of task %s"%d

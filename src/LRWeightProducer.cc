@@ -36,10 +36,8 @@ double LRWeightProducer::calculateWeight(const edm::Event& event, HardInteractio
  if (!hardInteraction->IsValidForRes()) return 1.;
  int quarkId=hardInteraction->quark->pdgId();
  int idAbs=quarkId;
-
   int leptonMinusId=hardInteraction->lepMinusNoIB->pdgId();
   int idNew=leptonMinusId;
-
   double qCLambda2 = lambda*lambda;
   int qCetaLR = interference;
 

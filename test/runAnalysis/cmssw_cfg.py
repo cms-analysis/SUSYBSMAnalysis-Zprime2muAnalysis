@@ -5,13 +5,15 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_reco_
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFiltersMiniAOD
 
-process.source.fileNames =['dummyFile']
+process.source.fileNames =["/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_50_120/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/BADD8688-A562-3940-83BD-C0D1416DFB09.root"]
+
+process.source.eventsToProcess = cms.untracked.VEventRange("1:6009-1:6009")
 
 process.maxEvents.input = -1
 isMC = True
 addNTuples = False
-year = 2017
-sampleName = 'dy6000toInf'
+year = 2018
+sampleName = 'dy50to120'
 process.GlobalTag.globaltag = '94X_mc2017_realistic_v17'
 process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
@@ -94,7 +96,7 @@ for cut_name, Selection in cuts.iteritems():
 	    
     leptons_name = cut_name + 'Leptons'
     leptons = process.leptonsMini.clone()
-    if year == 2016 and ("03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName or "dy2300to3500" in sampleName):
+    if year == 2016 and ("03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName or "dy2300to3500" in sampleName or "CI" in sampleName or "ADD" in sampleName):
 	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
     if year == 2018:
 	leptons.hlt_filter_ele = cms.vstring('hltDiEle25CaloIdLMWPMS2UnseededFilter')
@@ -117,7 +119,6 @@ for cut_name, Selection in cuts.iteritems():
         alldil = Selection.allDielectrons.clone(decay = dil_decay % locals(), cut = dil_cut)
         if 'AllSigns' in dil_name:
             alldil.checkCharge = cms.bool(False)
-
         dil = Selection.dielectrons.clone(src = cms.InputTag(allname))
 	
 	# Implement the differences to the selections; currently, as
@@ -127,9 +128,9 @@ for cut_name, Selection in cuts.iteritems():
         # Histos now just needs to know which leptons and dileptons to use.
 	if isMC:
 		if year == 2018:
-			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2018","data_2018"), year = cms.int32(year))
+			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("dy50to120","data_2018"), year = cms.int32(year))
 		elif year == 2017:	
-			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("dy6000toInf","data_2017"), year = cms.int32(year))
+			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2017","data_2017"), year = cms.int32(year))
 		else:	
 			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2016","data_2016"), year = cms.int32(year))
 	else:	
@@ -138,6 +139,7 @@ for cut_name, Selection in cuts.iteritems():
 	#	delattr(histos,'hardInteraction')
 
 	histos.hardInteraction.doingElectrons = True
+
 	if 'ConLR' in sampleName or 'DesLR' in sampleName or 'ConRL' in sampleName or 'DesRL' in sampleName:
 		L = 10000	
 		if '16TeV' in sampleName:
@@ -184,10 +186,15 @@ for cut_name, Selection in cuts.iteritems():
 		delattr(getattr(process,name + 'Histos'),'hardInteraction')	
         	path_list.append(trig * alldil * dil * histos)
 	else:
-		alldil.loose_cut_ele = cms.string('et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566)')	
+		if year == 2018:
+			alldil.loose_cut_ele = cms.string('et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566) && userInt("cutFor2018") == 1')	
+		else:
+			alldil.loose_cut_ele = cms.string('et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566) && userInt("cutFor") == 1')	
 		alldil.tight_cut_ele = cms.string("")
-		if not year == 2017:	
-			alldil.ele_match_l1 = cms.bool(False)	
+		#if not year == 2017:	
+		alldil.ele_match_l1 = cms.bool(False)
+		if "CI" in sampleName or "ADD" in sampleName:
+			getattr(process, name + 'Histos', histos).hardInteraction.matchTaus = cms.bool(False)
         	path_list.append(alldil * dil * histos)
 	
     # Finally, make the path for this set of cuts.
@@ -195,18 +202,18 @@ for cut_name, Selection in cuts.iteritems():
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DielectronPreselector_cfi')
     process.load("SUSYBSMAnalysis.Zprime2muAnalysis.EventCounter_cfi")
     if year == 2016 or year == 2017:
-    	pobj = process.egammaPostRecoSeq * process.prefiringweight * process.EventCounter * process.dielectronPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+    	pobj = process.EventCounter * process.egammaPostRecoSeq * process.prefiringweight * process.dielectronPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
     else:	
-	pobj = process.egammaPostRecoSeq * process.EventCounter * process.dielectronPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+	pobj = process.EventCounter * process.egammaPostRecoSeq * process.dielectronPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
 
+    path = cms.Path(pobj)
+    setattr(process, pathname, path)
 
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
     for dataFilter in goodDataFiltersMiniAOD:
 	#setattr(process,dataFilter 
-	pobj = dataFilter * pobj
+	getattr(process,pathname).insert(1,dataFilter)
 
-    path = cms.Path(pobj)
-    setattr(process, pathname, path)
 
 
 if addNTuples:

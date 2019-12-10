@@ -1,3 +1,0 @@
-T1_IT_CNAF_Buffer
-T1_IT_CNAF_MSS
-T1_US_FNAL_Disk

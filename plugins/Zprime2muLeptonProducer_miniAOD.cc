@@ -656,7 +656,7 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
       //const bool passID2018 = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::HADEM,HEEPV70::EMHADD1ISO},HEEPV70::IGNORE) && passEmHadIso2018 && passHOverE2018;
       //const bool passID = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::SIGMAIETAIETA,HEEPV70::E2X5OVER5X5,HEEPV70::HADEM,HEEPV70::ETA,HEEPV70::DETAINSEED,HEEPV70::DPHIIN,HEEPV70::TRKISO});
       //const bool passID = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::SIGMAIETAIETA,HEEPV70::E2X5OVER5X5,HEEPV70::HADEM,HEEPV70::ETA,HEEPV70::DETAINSEED,HEEPV70::DPHIIN,HEEPV70::TRKISO,HEEPV70::EMHADD1ISO});
-      std::cout << "pass: " << passID << "pass2018: " << passID2018 << std::endl;
+/*      std::cout << "pass: " << passID << "pass2018: " << passID2018 << std::endl;
       std::cout << "HEEP" << std::endl;
       std::cout << "passShowerShape " << passShowerShape << std::endl;
       std::cout << "passHOverE " << passHOverE << std::endl;
@@ -676,7 +676,7 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
       std::cout << "ET " << sc_et << std::endl;
       std::cout << "eta " << ele->superCluster()->eta() << std::endl; 
       if (!passID == passID2018) std::cout << passID << " " << passID2018 << std::endl;
-	
+*/	
       if(passID || passID2018) {	
 	const pat::Electron Electrons = *ele;
 	std::pair<T*,int> res = doLepton(event, Electrons);

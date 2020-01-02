@@ -180,7 +180,7 @@ config.Data.allowNonValidInputDataset = True
 config.Site.whitelist = ["T2_US_*"]
 config.Site.blacklist = ['T2_US_Caltech']
 config.Site.storageSite = 'T2_US_Purdue'
-#config.JobType.maxMemoryMB  = 8000
+#config.JobType.maxMemoryMB  = 4000
 config.JobType.allowUndistributedCMSSW = True
 %s
 '''
@@ -433,6 +433,9 @@ def main():
 						cmssw_tmp = cmssw_tmp.replace('mc_2018',dataset_name)
 					else:
 						cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
+
+				if args.ci2018:
+						cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2017')
 				#if args.do2018 and 'dy' in dataset_name and not dataset_name == "dyInclusive50":
 				#	cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2018_flat')
 				#toReweight = ['WW200to600','WW600to1200','WW1200to2500','WW2500',"ttbar_lep_ext","ttbar_lep",'ttbar_lep_500to800_ext','ttbar_lep_500to800','ttbar_lep_800to1200','ttbar_lep_1200to1800','ttbar_lep1800toInf']
@@ -450,7 +453,7 @@ def main():
 					for site in content:
 						if "T2" in site:
 							nT2 += 1				
-					if nT2 <= 0:
+					if nT2 <= 1:
 						crab_cfg = getCRABCfgAAA(prefix+dataset_name,dataset,lumi_mask)
 					else:	
 						crab_cfg = getCRABCfg(prefix+dataset_name,dataset,lumi_mask)

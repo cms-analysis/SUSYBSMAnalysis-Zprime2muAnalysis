@@ -122,7 +122,7 @@ def getCRABCfg(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crab2'
+config.General.workArea = 'crab'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -166,7 +166,7 @@ def getCRABCfgAAA(name,dataset,lumi_mask=""):
 from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
-config.General.workArea = 'crab2'
+config.General.workArea = 'crab'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -223,6 +223,7 @@ def main():
 	parser.add_argument("-s", "--submit", action="store_true", dest="submit", default=False,help="submit to CRAB")
 	parser.add_argument("-r", "--resolution", action="store_true", dest="resolution", default=False,help="run jobs for resolution studies")
 	parser.add_argument("--pdf", action="store_true", dest="pdf", default=False,help="produce trees for PDF studies")
+	parser.add_argument("--genMassOther", action="store_true", dest="genMassOther", default=False,help="produce gen mass histograms for other backgrounds")
 	parser.add_argument("--genMass", action="store_true", dest="genMass", default=False,help="produce trees for genMas studies")
 	parser.add_argument("-w", "--write", action="store_true", dest="write", default=False,help="write config but not execute")
 	parser.add_argument("-e", "--electrons", action="store_true", dest="electrons", default=False,help="run electrons")
@@ -280,9 +281,16 @@ def main():
 		prefix = "pdf_"
 		analyzer= open('pdfStudies.py').read()
 
-	elif args.pdf:
+	elif args.genMass:
 		prefix = "genMass_"
+		if args.electrons:
+			prefix += "electrons_"
 		analyzer= open('genMass.py').read()
+	elif args.genMassOther:
+		prefix = "genMassOther_"
+		if args.electrons:
+			prefix += "electrons_"	
+		analyzer= open('genMassOther.py').read()
 
 	else:
 		
@@ -343,7 +351,7 @@ def main():
 				elif args.ci2016:
 					from samples import ci_muons_2016 as samples 
 				elif args.add2018:
-					from samples import add_2018 as samples 
+					from samples import add_2017 as samples 
 				elif args.add2017:
 					from samples import add_2017 as samples 
 				elif args.add2016:
@@ -404,7 +412,8 @@ def main():
 
 #			lumi_mask = '/afs/cern.ch/work/j/jschulte/test/CMSSW_10_2_15_patch1/src/SUSYBSMAnalysis/Zprime2muAnalysis/test/runAnalysis/crab/crab_dileptonAna_muons_2016_SingleMuonRun2016B-23Sep2016_v3/results/notFinishedLumis.json'
 			for dataset_name,  dataset in samples:
-				
+				#print dataset_name, "bkub"
+				#//if not ("LR" in dataset_name or "RL" in dataset_name): continue	
 				if args.do2018 and args.electrons and dataset_name == "dy50to120":
 					lumi_mask="dy2018JSON.txt"
 				
@@ -414,6 +423,8 @@ def main():
 				cmssw_tmp += analyzer
 				
 				cmssw_tmp+=getFilterSnippet(dataset_name,args,applyAllGenFilters,year=arguments["year"])
+				if args.genMassOther:
+					cmssw_tmp = cmssw_tmp.replace('getattr(process,path_name).insert(2,process.DYGenMassFilter)','getattr(process,path_name).insert(1,process.DYGenMassFilter)')
 				if "dy" in dataset_name:
 					if "HistosFromPAT.usekFactor = False" in cmssw_tmp:
 						cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.usekFactor = False','HistosFromPAT.usekFactor = True')
@@ -434,7 +445,7 @@ def main():
 					else:
 						cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
 
-				if args.ci2018:
+				if args.ci2018 or args.add2018:
 						cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2017')
 				#if args.do2018 and 'dy' in dataset_name and not dataset_name == "dyInclusive50":
 				#	cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2018_flat')
@@ -443,7 +454,6 @@ def main():
 				#	cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2017')
 
 				if args.submit:
-					print dataset
 					os.system('dasgoclient --query="site dataset=%s" > sites.txt'%dataset)
 
 					with open("sites.txt") as f:

@@ -6,6 +6,8 @@
 <use name="DataFormats/PatCandidates"/>
 <use name="FWCore/Framework"/>
 <use name="FWCore/ParameterSet"/>
+<library file="SimpleNtupler_miniAOD.cc" name="SimpleNtupler_miniAOD">
+</library>
 <export>
   <lib name="1"/>
 </export>

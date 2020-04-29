@@ -44,7 +44,7 @@ if year == 2016:
     prescaled_trigger_path_full_names = prescaled_trigger_path_full_names_16
     prescale_common_path_name_list = prescaled_trigger_path_name_list_16
     overall_prescale = overall_prescale_2016
-elif year == 2017 or (year==2018 and (sampleName == "WW200to600" or sampleName == "WW600to1200" or sampleName == "WW1200to2500" or sampleName == "WW2500" or sampleName == "ttbar_lep_500to800_ext" or sampleName == "ttbar_lep_500to800" or sampleName == "ttbar_lep_800to1200" or sampleName == "ttbar_lep_1200to1800" or sampleName == "ttbar_lep_1800toInf")):
+elif year == 2017 or (year==2018 and (sampleName == "WW200to600" or sampleName == "WW600to1200" or sampleName == "WW1200to2500" or sampleName == "WW2500" or sampleName == "ttbar_lep_500to800_ext" or sampleName == "ttbar_lep_500to800" or sampleName == "ttbar_lep_800to1200" or sampleName == "ttbar_lep_1200to1800" or sampleName == "ttbar_lep_1800toInf" or "CI" in sampleName or "ADD" in sampleName)):
     prescaled_trigger_match = prescaled_trigger_match_2018
     prescaled_trigger_filters = prescaled_trigger_filters_18
     prescaled_trigger_path_names = prescaled_trigger_path_names_18
@@ -242,8 +242,10 @@ for cut_name, Selection in cuts.iteritems():
         setattr(process, name, dil)
         setattr(process, name + 'Histos', histos)
 	if not isMC:
-		delattr(getattr(process,name + 'Histos'),'hardInteraction')	
-
+		delattr(getattr(process,name + 'Histos'),'hardInteraction')
+	else:
+		if "CI" in sampleName or "ADD" in sampleName:
+			getattr(process, name + 'Histos', histos).hardInteraction.matchTaus = cms.bool(False)
         path_list.append(alldil * dil * histos)
 
 	if 'ConLR' in sampleName or 'DesLR' in sampleName or 'ConRL' in sampleName or 'DesRL' in sampleName:

@@ -57,7 +57,7 @@ private:
     float dil_lep_pt[2];
     float cos_angle;
     float vertex_chi2;
-    float os_cs;
+    float cos_cs;
     float chi_dilepton;
     float phi_cs;
     float vertex_m;
@@ -254,8 +254,7 @@ private:
     bool Our2012Sel;
     bool Our2016Sel;
     bool Our2018Sel;
-    float  gen_deltap4[4];
-    float gen_CS;
+
   };
 
   tree_t t;
@@ -520,11 +519,7 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
     tree->Branch("gen_lep_noib_E", t.gen_lep_noib_E, "gen_lep_noib_E[2]/F");
     tree->Branch("gen_lep_noib_eta", t.gen_lep_noib_eta, "gen_lep_noib_eta[2]/F");
     tree->Branch("gen_lep_noib_phi", t.gen_lep_noib_phi, "gen_lep_noib_phi[2]/F");
-    //tree->Branch("gen_lep_noib_qOverPt", t.gen_lep_noib_qOverPt, "gen_lep_noib_qOverPt[2]/F");
-    tree->Branch("gen_deltap4", t.gen_deltap4,"t.gen_deltap4[4]/I");
-    tree->Branch("gen_CS", t.gen_CS,"t.gen_CS/F");
-
-    
+    tree->Branch("gen_lep_noib_qOverPt", t.gen_lep_noib_qOverPt, "gen_lep_noib_qOverPt[2]/F");
   }
 
   tree->SetAlias("OppSign",  "lep_id[0]*lep_id[1] < 0");
@@ -801,12 +796,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
             t.gen_lep_eta[1] = hardInteraction->lepPlusNoIB->eta();
             t.gen_lep_phi[1] = hardInteraction->lepPlusNoIB->phi();
             t.gen_lep_qOverPt[1] = hardInteraction->lepPlusNoIB->charge() / hardInteraction->lepPlusNoIB->pt();
-            if (hardInteraction->quark!=0&&hardInteraction->antiquark!=0){
-            t.gen_deltap4[0]= hardInteraction->quark->energy()-hardInteraction->antiquark->energy();
-            t.gen_deltap4[1]= hardInteraction->quark->px()-hardInteraction->antiquark->px();
-            t.gen_deltap4[2]= hardInteraction->quark->py()-hardInteraction->antiquark->py();
-            t.gen_deltap4[3]= hardInteraction->quark->pz()-hardInteraction->antiquark->pz();
-}
+
             /*
             t.gen_lep_noib_pt[0]  = hardInteraction->lepMinusNoIB->pt();
             t.gen_lep_noib_px[0]  = hardInteraction->lepMinusNoIB->px();
@@ -1368,7 +1358,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
 
         // 
         // more event quantites
-         //
+        //
         t.cos_angle    = userFloat(dil, "cos_angle", 999);
         t.vertex_chi2  = userFloat(dil, "vertex_chi2");
         t.vertex_m     = userFloat(dil, "vertexM");

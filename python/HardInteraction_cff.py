@@ -5,6 +5,7 @@ hardInteraction = cms.PSet(src = cms.InputTag('prunedMCLeptons'),
                            allowFakeResonance = cms.bool(True),
                            resonanceIds = cms.vint32(32, 23, 39, 5000039),
                            shutUp = cms.bool(True),
+                           matchTaus = cms.bool(True),
                            )
 
 
@@ -13,4 +14,5 @@ hardInteraction_MiniAOD = cms.PSet(src = cms.InputTag('prunedGenParticles'),
                            allowFakeResonance = cms.bool(True),
                            resonanceIds = cms.vint32(32, 23, 39, 5000039),
                            shutUp = cms.bool(True),
+                           matchTaus = cms.bool(True),
                            )

@@ -10,7 +10,8 @@ HardInteraction::HardInteraction(const edm::ParameterSet cfg)
     leptonMass(doingElectrons ? 0.000511 : 0.10566),
     allowFakeResonance(cfg.getParameter<bool>("allowFakeResonance")),
     resonanceIds(cfg.getParameter<std::vector<int> >("resonanceIds")),
-    shutUp(cfg.getParameter<bool>("shutUp"))
+    shutUp(cfg.getParameter<bool>("shutUp")),
+    matchTaus(cfg.getParameter<bool>("matchTaus"))
 {
   Clear();
 }
@@ -21,7 +22,8 @@ HardInteraction::HardInteraction(bool doingElec, bool allowFakeRes)
     leptonFlavor(doingElectrons ? 11 : 13),
     leptonMass(doingElectrons ? 0.000511 : 0.10566),
     allowFakeResonance(allowFakeRes),
-    shutUp(false)
+    shutUp(false),
+    matchTaus(true)
 {
   Clear();
 }
@@ -113,8 +115,8 @@ void HardInteraction::Fill(const reco::GenParticleCollection& genParticles) {
     }
 //    if (abs(pdgId) == leptonFlavor) std::cout << pdgId << " " << genp->isPromptFinalState() <<  std::endl;
  //   if (abs(pdgId) == leptonFlavor && !(genp->isPromptFinalState())) std::cout << pdgId << " " << genp->mother()->pdgId() <<  std::endl;
-    //if (genp->isHardProcess()) {//it was 3 //it was else if
-    if (genp->isPromptFinalState() || genp->isDirectPromptTauDecayProductFinalState()) {//it was 3 //it was else if
+    //if (genp->isHardProcess() || (genp->isDirectPromptTauDecayProductFinalState() && matchTaus) ) {//it was 3 //it was else if
+    if (genp->isHardProcess() || (matchTaus && genp->isDirectPromptTauDecayProductFinalState()) ) {//it was 3 //it was else if
       if (pdgId == leptonFlavor) {
         // We found the l-. Make sure we didn't find a second one.
         if (lepMinusNoIB != 0 && !shutUp)

@@ -33,13 +33,11 @@ double LRWeightProducer::calculateWeight(const edm::Event& event, HardInteractio
   std::complex<double> meRL(0., 0.);
   std::complex<double> meLR_SM(0., 0.);
   std::complex<double> meRL_SM(0., 0.);
- if (!hardInteraction->IsValidForRes()) return 1.;
+ if (!hardInteraction->IsValidForRes()) {std::cout << "not valid" << std::endl; return 1.;}
  int quarkId=hardInteraction->quark->pdgId();
- int idAbs=quarkId;
-
+ int idAbs=abs(quarkId);
   int leptonMinusId=hardInteraction->lepMinusNoIB->pdgId();
   int idNew=leptonMinusId;
-
   double qCLambda2 = lambda*lambda;
   int qCetaLR = interference;
 
@@ -54,29 +52,25 @@ double LRWeightProducer::calculateWeight(const edm::Event& event, HardInteractio
   double uH2 = uH*uH;
 
 
-  double tmPgvf = 0.25 * af[idAbs] - 4. * 0.2223 * ef[idAbs];
+  double tmPe2QfQl = 4. * M_PI * alpEM * ef[idAbs] * ef[idNew];
+  double tmPgvf = 0.25 * (af[idAbs] - 4. * 0.2223 * ef[idAbs]);
   double tmPgaf = 0.25 * af[idAbs];
-
-  double tmPgvl = 0.25 * af[idNew] - 4. * 0.2223 * ef[idNew];
-  double tmPgal = 0.25 * af[idNew];
   double tmPgLf = tmPgvf + tmPgaf;
-  double tmPgLl = tmPgvl + tmPgal;
   double tmPgRf = tmPgvf - tmPgaf;
+  double tmPgvl = 0.25 * (af[idNew] - 4. * 0.2223 * ef[idNew]);
+  double tmPgal = 0.25 * af[idNew];
+  double tmPgLl = tmPgvl + tmPgal;
   double tmPgRl = tmPgvl - tmPgal;
+  double tmPe2s2c2 = 4. * M_PI * alpEM / (0.2223 * 0.7777 );
 // Kinematics  
-//double qCmNew  = fMasterGen.particleData.m0(idNew);
- //double qCmNew2 = qCmNew * qCmNew;  
   double qCmZ    = 91.1876;
   double qCmZ2   = qCmZ * qCmZ;
   double qCGZ    = 2.4952;
   double qCGZ2 = qCGZ * qCGZ;
   // Necessary variables to ampitude                                        	
  // First term 
- // double alpEM =1./137; 
-  double tmPe2QfQl = 4. * M_PI * alpEM * ef[idAbs] * ef[idNew];
   double qCPropGm = 1./sH;
   //Second term.Model depended variables are defined using incoming quark and outgoing fermion information                                                 
-     double tmPe2s2c2 = 4. * M_PI * alpEM / (0.2223 * 0.7777 );
      double denomPropZ = pow((sH - qCmZ2), 2) + qCmZ2 * qCGZ2;
      double qCrePropZ  = (sH - qCmZ2) / denomPropZ;
      double qCimPropZ = -qCmZ * qCGZ / denomPropZ;
@@ -91,7 +85,7 @@ double LRWeightProducer::calculateWeight(const edm::Event& event, HardInteractio
         + 4. * M_PI * qCetaLR / qCLambda2;
       meRL = tmPe2QfQl * qCPropGm
 	+ tmPe2s2c2 * tmPgRf * tmPgLl * (qCrePropZ + I * qCimPropZ)
-+ 4. * M_PI * qCetaLR / qCLambda2;
+	+ 4. * M_PI * qCetaLR / qCLambda2;
 
       // According to Steve's idea, add SM matrix elements for sigmaNew.        
       // // Define standard model matrix elements of RL and LR model   
@@ -99,7 +93,7 @@ double LRWeightProducer::calculateWeight(const edm::Event& event, HardInteractio
         + tmPe2s2c2 * tmPgLf * tmPgRl * (qCrePropZ + I * qCimPropZ);
 
       meRL_SM = tmPe2QfQl * qCPropGm
-+ tmPe2s2c2 * tmPgRf * tmPgLl * (qCrePropZ + I * qCimPropZ);
+	+ tmPe2s2c2 * tmPgRf * tmPgLl * (qCrePropZ + I * qCimPropZ);
  // Calculate weighting facror
       double sigma0 = 1.0;
       double sigmaOld = sigma0 * uH2 * std::real(meLL*std::conj(meLL));
@@ -110,13 +104,11 @@ double LRWeightProducer::calculateWeight(const edm::Event& event, HardInteractio
       double sigmaNewLR = sigma0 * uH2 *std:: real(meLL*std::conj(meLL));
       sigmaNewLR += sigma0 * uH2 * std::real(meRR*std::conj(meRR));
       sigmaNewLR += sigma0 * tH2 * std::real(meLR*std::conj(meLR));
-// sigma += sigma0 * tH2 * std::real(meRL*std::conj(meRL)); 
       sigmaNewLR += sigma0 * tH2 * std::real(meRL_SM *std::conj(meRL_SM));
       double fracLR = sigmaNewLR / sigmaOld;
 
       double sigmaNewRL = sigma0 * uH2 *std:: real(meLL*std::conj(meLL));
       sigmaNewRL += sigma0 * uH2 * std::real(meRR*std::conj(meRR));
-//sigmaNew += sigma0 * tH2 * std::real(meLR*std::conj(meLR));
       sigmaNewRL += sigma0 * tH2 * std::real(meRL*std::conj(meRL));
       sigmaNewRL += sigma0 * tH2 * std::real(meLR_SM*std::conj(meLR_SM));
       double fracRL = sigmaNewRL / sigmaOld;

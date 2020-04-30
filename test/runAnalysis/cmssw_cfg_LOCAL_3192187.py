@@ -11,11 +11,7 @@ process.maxEvents.input = -1
 isMC = True
 addNTuples = True
 year = 2017
-<<<<<<< HEAD
 sampleName = 'dy1400to2300'
-=======
-sampleName = 'tW'
->>>>>>> 612bc2c1c3683ce58b21086f3fe942aed2dcda6d
 process.GlobalTag.globaltag = '94X_mc2017_realistic_v17'
 process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
@@ -30,7 +26,6 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import prescaled_trig
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import electrons_miniAOD
 electrons_miniAOD(process)
 #!/usr/bin/env python
-<<<<<<< HEAD
 Electrons = False
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
@@ -110,20 +105,19 @@ elif year == 2018:
     getattr(process,'PrescaleToCommonMiniAOD').Prescale_src = cms.InputTag('patTrigger','','RECO')
     getattr(process,'PrescaleToCommonMiniAOD').L1Prescale_min_src = cms.InputTag('patTrigger','l1min','RECO')
     getattr(process,'PrescaleToCommonMiniAOD').L1Prescale_max_src = cms.InputTag('patTrigger','l1max','RECO')
-=======
->>>>>>> 612bc2c1c3683ce58b21086f3fe942aed2dcda6d
 
 
-hardInteraction_MiniAOD = cms.PSet(src = cms.InputTag('prunedGenParticles'),
-                           doingElectrons = cms.bool(True),
-                           allowFakeResonance = cms.bool(True),
-                           resonanceIds = cms.vint32(32, 23, 39, 5000039),
-                           shutUp = cms.bool(True),
-                           matchTaus = cms.bool(True),
-                           )
+from PhysicsTools.PatUtils.l1ECALPrefiringWeightProducer_cfi import l1ECALPrefiringWeightProducer
+if year == 2016 or year == 2017:
+	process.prefiringweight = l1ECALPrefiringWeightProducer.clone(
+    		DataEra = cms.string("2017BtoF"), #Use 2016BtoH for 2016
+    		UseJetEMPt = cms.bool(False),
+    		PrefiringRateSystematicUncty = cms.double(0.2),
+    		SkipWarnings = False)
 
+	if year==2016:
+    		process.prefiringweight.DataEra = cms.string("2016BtoH")
 
-<<<<<<< HEAD
 
 
 
@@ -161,18 +155,13 @@ if year == 2016:
 		}
 
 
-=======
 
-process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
-process.genMass = cms.EDAnalyzer('GenMassHistos',
-			       src = cms.InputTag('prunedGenParticles'),
-				hardInteraction = hardInteraction_MiniAOD,
-			       )
-process.load("SUSYBSMAnalysis.Zprime2muAnalysis.EventCounter_cfi")
->>>>>>> 612bc2c1c3683ce58b21086f3fe942aed2dcda6d
+# Loop over all the cut sets defined and make the lepton, allDilepton
+# (combinatorics only), and dilepton (apply cuts) modules for them.
+for cut_name, Selection in cuts.iteritems():
+	# Keep track of modules to put in the path for this set of cuts.
+    path_list = []
 
-
-<<<<<<< HEAD
     # Clone the LeptonProducer to make leptons with the set of cuts
     # we're doing here flagged.  I.e., muon_cuts in LeptonProducer
     # just marks each muon with a userInt "cutFor" that is 0 if it
@@ -209,13 +198,8 @@ process.load("SUSYBSMAnalysis.Zprime2muAnalysis.EventCounter_cfi")
 	leptons.prescaled_trigger_filters = prescaled_trigger_filters
 	leptons.prescaled_trigger_path_names = prescaled_trigger_path_names
  #       leptons.prescaled_trigger_path_full_names = prescaled_trigger_path_full_names
-=======
->>>>>>> 612bc2c1c3683ce58b21086f3fe942aed2dcda6d
 
-path = cms.Path(process.EventCounter*process.genMass)
-setattr(process, 'pathGenMass', path)
 
-<<<<<<< HEAD
 
 #    if isMC:
 #	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
@@ -393,6 +377,3 @@ if isMC:
     #switch_hlt_process_name(process, hlt_process_name) # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
 
 
-=======
-
->>>>>>> 612bc2c1c3683ce58b21086f3fe942aed2dcda6d

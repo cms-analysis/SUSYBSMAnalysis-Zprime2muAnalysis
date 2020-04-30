@@ -80,6 +80,17 @@ elif year == 2018:
     getattr(process,'PrescaleToCommonMiniAOD').L1Prescale_max_src = cms.InputTag('patTrigger','l1max','RECO')
 
 
+from PhysicsTools.PatUtils.l1ECALPrefiringWeightProducer_cfi import l1ECALPrefiringWeightProducer
+if year == 2016 or year == 2017:
+	process.prefiringweight = l1ECALPrefiringWeightProducer.clone(
+    		DataEra = cms.string("2017BtoF"), #Use 2016BtoH for 2016
+    		UseJetEMPt = cms.bool(False),
+    		PrefiringRateSystematicUncty = cms.double(0.2),
+    		SkipWarnings = False)
+
+	if year==2016:
+    		process.prefiringweight.DataEra = cms.string("2016BtoH")
+
 
 
 
@@ -271,7 +282,11 @@ for cut_name, Selection in cuts.iteritems():
     pathname = 'path' + cut_name
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DileptonPreselector_cfi')
     process.load("SUSYBSMAnalysis.Zprime2muAnalysis.EventCounter_cfi")
-    pobj = process.EventCounter * process.dileptonPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+ 	
+    if year == 2016 or year == 2017:
+   	 pobj = process.EventCounter* process.prefiringweight * process.dileptonPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+    else:
+	pobj = process.EventCounter * process.dileptonPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
 
 
 

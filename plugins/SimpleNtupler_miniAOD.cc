@@ -174,6 +174,7 @@ private:
     float lep_timeInOutErr[2];
     float lep_timeOutInErr[2];
     int lep_heep_id[2];
+    float lep_gen_match[2];
     float lep_min_muon_dR[2];
     short lep_tk_numberOfValidTrackerHits[2];
     short lep_tk_numberOfValidTrackerLayers[2];
@@ -338,6 +339,7 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
   tree->Branch("vertex_z_err", &t.vertex_z_err, "vertex_z_err/F");
   tree->Branch("lep_id", t.lep_id, "lep_id[2]/I");
   tree->Branch("lep_heep_id", t.lep_heep_id, "lep_heep_id[2]/I");
+  tree->Branch("lep_gen_match", t.lep_gen_match, "lep_gen_match[2]/F");
   tree->Branch("lep_p", t.lep_p, "lep_p[2]/F");
   tree->Branch("lep_pt", t.lep_pt, "lep_pt[2]/F");
   tree->Branch("lep_pt_err", t.lep_pt_err, "lep_pt_err[2]/F");
@@ -1016,6 +1018,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
                     t.lep_py[w] = dil.daughter(i)->py();
                     t.lep_pz[w] = dil.daughter(i)->pz();
                     t.lep_E[w] = dil.daughter(i)->energy();
+                    t.lep_gen_match[w] = userFloat(*el, "genMatch", 0);
                     t.lep_heep_id[w] = userInt(*el, "HEEPId", 999);
                     t.lep_min_muon_dR[w] = userFloat(*el, "min_muon_dR", 999);
                 } // end if electron 
@@ -1027,6 +1030,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
             //
             else { // else of if (abs(t.lep_id[w]) != 13) 
                 t.lep_heep_id[w] = 999;
+                t.lep_gen_match[w] = 1;
                 t.lep_min_muon_dR[w] = 999;
 
                 // 

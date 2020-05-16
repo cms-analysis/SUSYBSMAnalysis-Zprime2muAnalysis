@@ -18,7 +18,7 @@ for path_name, path in process.paths.iteritems():
 process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
 process.DYGenMassFilter = cms.EDFilter('DibosonGenMass',
 				       src = cms.InputTag('prunedGenParticles'),
-				       min_mass = cms.double(50),
+				       min_mass = cms.double(0),
 				       max_mass = cms.double(200), 
 				       )
 for path_name, path in process.paths.iteritems():
@@ -94,6 +94,7 @@ config = config()
 config.General.requestName = 'dileptonAna_%s'
 config.General.workArea = 'crab'
 config.General.transferLogs = False
+#config.General.instance = 'preprod'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'
 #config.JobType.priority = 1
@@ -123,6 +124,7 @@ from CRABClient.UserUtilities import config
 config = config()
 config.General.requestName = 'dileptonAna_%s'
 config.General.workArea = 'crab'
+#config.General.instance = 'prod'
 config.JobType.pluginName = 'Analysis'
 config.JobType.psetName = 'cmssw_cfg.py'   
 config.Data.inputDataset =  '%s'
@@ -479,7 +481,7 @@ def main():
 			if dataset_name == "dummy":
 				cmssw_tmp = cmssw_tmp.replace('dummyFile', dataset)
 			else:
-				if 'CITo2Mu_Lam10TeV' in dataset_name and args.ci2016:
+				if 'CITo2Mu_Lam10TeV' in dataset_name or args.ci2016:
 					print 'here'	
 					os.system('dasgoclient -query="file dataset=%s instance=prod/phys03| grep file.name" > myfiles.txt'%dataset)
 				else:	
@@ -503,8 +505,8 @@ def main():
 		print "submitting also weird samples"
 		from samples import backgrounds_electrons_2016_extra as samples2
 	
-		from dbs.apis.dbsClient import DbsApi
-		dbs = DbsApi('https://cmsweb.cern.ch/dbs/prod/global/DBSReader')
+		#from dbs.apis.dbsClient import DbsApi
+		#dbs = DbsApi('https://cmsweb.cern.ch/dbs/prod/global/DBSReader')
 	       
 		for name, ana_dataset in samples2:
 			arguments['name'] = dataset_name
@@ -536,13 +538,23 @@ def main():
 				cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2017')
 
 
-			fileDictList=dbs.listFiles(dataset=ana_dataset)
+			#fileDictList=dbs.listFiles(dataset=ana_dataset)
+                        os.system('dasgoclient -query="file dataset=%s | grep file.name" > myfiles.txt'%ana_dataset)
+                        with open('myfiles.txt') as fin:
+                        	content = fin.readlines()
+                        content = [x.strip() for x in content]
+                        #files = "["
+                        #        for fileName in content:
+                        #                files += "'%s'"%fileName
+                        #                files += ","
+                        #        files += "]"
+                        fin.close()
 		    
-			print ("dataset %s has %d files" % (ana_dataset, len(fileDictList)))
+			print ("dataset %s has %d files" % (ana_dataset, len(content)))
 		   
 			# DBS client returns a list of dictionaries, but we want a list of Logical File Names
-			lfnList = [ dic['logical_file_name'] for dic in fileDictList ]	
-			crab_cfg = getCRABCfgWeirdSubmission(prefix+name,ana_dataset,lfnList)
+			#lfnList = [ dic['logical_file_name'] for dic in fileDictList ]	
+			crab_cfg = getCRABCfgWeirdSubmission(prefix+name,ana_dataset,content)
 			open('crabConfig.py', 'wt').write(crab_cfg)
 			#cmssw_cfg+=getFilterSnippet(dataset_name) # high mass tails not available yet
 			#cmssw_tmp = cmssw_tmp.replace('/store/data/Run2017F/DoubleEG/MINIAOD/17Nov2017-v1/50000/00105BAD-63E0-E711-8640-02163E0146C5.root', lfnList[0])

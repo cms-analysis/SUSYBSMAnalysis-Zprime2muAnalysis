@@ -9,7 +9,7 @@
 #include "TRandom3.h"
 #include "TFile.h"
 
-
+#include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "DataFormats/BeamSpot/interface/BeamSpot.h"
 #include "DataFormats/Candidate/interface/CandidateFwd.h"
@@ -378,6 +378,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
 	edm::EDGetTokenT< double > prefweight_token;
 	edm::EDGetTokenT< double > prefweightup_token;
 	edm::EDGetTokenT< double > prefweightdown_token;
+        edm::EDGetTokenT<LHEEventProduct>LHEEventToken_;
 };
 
 Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
@@ -405,7 +406,8 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
     hardInteraction(fill_gen_info ? new HardInteraction(cfg.getParameter<edm::ParameterSet>("hardInteraction")) : 0),
     pu_info(cfg.getParameter<std::vector<std::string>>("pu_weights")),
     year_info(cfg.getParameter<int>("year")),
-    lrWeightProducer(cfg.getParameter<edm::ParameterSet>("lrWeightProducer"))
+    lrWeightProducer(cfg.getParameter<edm::ParameterSet>("lrWeightProducer")),
+    LHEEventToken_(consumes<LHEEventProduct>(cfg.getParameter<edm::InputTag>("LHEInfo")))
 {
 
   consumes<reco::CandidateView>(lepton_src);
@@ -1404,7 +1406,6 @@ void Zprime2muHistosFromPAT::fillLeptonHistosFromDileptons(const pat::CompositeC
 
 void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& dil, const edm::Event& event, double gM) {
 
-   GenMass->Fill(gM); 
 	kFactorGraph->Fill(_kFactor);
 	kFactorGraph_bb->Fill(_kFactor_bb);
 	kFactorGraph_be->Fill(_kFactor_be);
@@ -1503,22 +1504,34 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 			e2_pass_l1 = trigEle33l1::passTrig(ele1->et(),ele1->superCluster()->eta(),"Run_all", false);
 		}
 		else if(year_info==2018)e2_pass_trigger=trigEle_2018::passTrig(ele1->et(), ele1->superCluster()->eta(), "Run_all" , true) ;
-		//double trigFac1 = turnOn(ele0->superCluster()->eta(),ele0->et(), year_info);
-		//double trigFac2 = turnOn(ele1->superCluster()->eta(),ele1->et(), year_info);
-		//double L1TrigFac1 = L1TurnOn(ele0->superCluster()->eta(),ele0->et(), year_info);
-		//double L1TrigFac2 = L1TurnOn(ele1->superCluster()->eta(),ele1->et(), year_info);
-		//double heepFac1 = HEEPSF(ele0->superCluster()->eta(),year_info);
-		//double heepFac2 = HEEPSF(ele1->superCluster()->eta(),year_info);
+	
 		_eleMCFac = _prefireWeight;
 		if (!(e1_pass_trigger && e2_pass_trigger)) _eleMCFac = 0;
 		if (!(e1_pass_l1 || e2_pass_l1)) _eleMCFac = 0;
+		if (!(ele0->userFloat("genMatch") && ele1->userFloat("genMatch") )) _eleMCFac = 0;
+		//std::cout << ele0->userFloat("genMatch") << " " << ele1->userFloat("genMatch") << std::endl;
 	}
 	if (_eleMCFac != 0){
+   		GenMass->Fill(gM); 
 		double massScaleUp = 1.;
 		double massScaleDown = 1.;
 		double ttFac = 1.;
 		
 		if (_useTTBarWeight){
+                 edm::Handle<LHEEventProduct> lheInfoHandle;
+                 event.getByToken(LHEEventToken_ , lheInfoHandle);
+		if (lheInfoHandle.isValid()) {
+			lhef::HEPEUP lheParticleInfo = lheInfoHandle->hepeup();
+			std::vector<lhef::HEPEUP::FiveVector> allParticles = lheParticleInfo.PUP;
+			std::vector<int> statusCodes = lheParticleInfo.ISTUP;
+			for (unsigned int i = 0; i < statusCodes.size(); i++) {
+				if (statusCodes[i] == 1) {
+					if (abs(lheParticleInfo.IDUP[i]) == 11 || abs(lheParticleInfo.IDUP[i]) == 13 ||  abs(lheParticleInfo.IDUP[i]) == 15) {
+						std::cout << sqrt(pow(allParticles[i][0], 2) + pow(allParticles[i][1], 2)) << " "  << abs(lheParticleInfo.IDUP[i]) <<  std::endl;
+					}
+				}
+			}
+			}
 			std::string ttFileName = std::string(std::getenv("CMSSW_BASE")) + std::string("/src/SUSYBSMAnalysis/Zprime2muAnalysis/data/xgao_ttbar_ratio.root");
 
 			TFile *f_NNPDF = new TFile(ttFileName.c_str(),"read");
@@ -1587,6 +1600,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 		}
 
 		if (fabs(ele0->superCluster()->eta()) < 1.4442 && fabs(ele1->superCluster()->eta()) < 1.4442) {
+			//std::cout << "filling BB " << _madgraphWeight << " " << _kFactor << " " <<  _eleMCFac << " "  << _puWeight << " " << gM <<  std::endl;
 			DielectronMass_bb->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac*_puWeight);
 			DielectronMassVsCS_bb->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac*_puWeight);
 			DielectronMassScaleUp_bb->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac*_puWeight);
@@ -1640,6 +1654,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 
 		}
 		else if ((fabs(ele0->superCluster()->eta()) < 1.4442 && fabs(ele1->superCluster()->eta()) > 1.566) ||(fabs(ele0->superCluster()->eta()) > 1.566 && fabs(ele1->superCluster()->eta()) < 1.4442)) {
+			//std::cout << "filling BE " << _madgraphWeight << " " << _kFactor << " " <<  _eleMCFac << " "  << _puWeight << " " << gM <<  std::endl;
 			DielectronMass_be->Fill(dil.mass(), _madgraphWeight*_kFactor*_eleMCFac*_puWeight);
 			DielectronMassVsCS_be->Fill(dil.mass(),cos_cs, _madgraphWeight*_kFactor*_eleMCFac*_puWeight);
 			DielectronMassScaleUp_be->Fill(dil.mass()*massScaleUp, _madgraphWeight*_kFactor*_eleMCFac*_puWeight);
@@ -1737,6 +1752,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 
   if (dil.hasUserFloat("vertexM") && dil.hasUserFloat("vertexMError")) {
 
+   GenMass->Fill(gM); 
     float vertex_mass = dil.userFloat("vertexM");
     float vertex_mass_err = dil.userFloat("vertexMError");
  

@@ -98,6 +98,8 @@ private:
   edm::EDGetTokenT<edm::View<pat::Electron> > electronToken_;  
   edm::EDGetTokenT<edm::ValueMap<unsigned int> > vidBitmapToken_;
   edm::EDGetTokenT<double> rhoToken_;
+
+  edm::InputTag gen_src;
 };
 
 Zprime2muLeptonProducer_miniAOD::Zprime2muLeptonProducer_miniAOD(const edm::ParameterSet& cfg)
@@ -123,12 +125,14 @@ Zprime2muLeptonProducer_miniAOD::Zprime2muLeptonProducer_miniAOD(const edm::Para
     triggerPrescales_(consumes<pat::PackedTriggerPrescales>(cfg.getParameter<edm::InputTag>("prescales"))),
     electronToken_(consumes<edm::View<pat::Electron> >(cfg.getParameter<edm::InputTag>("electron_src"))),
     vidBitmapToken_(consumes<edm::ValueMap<unsigned int> >(cfg.getParameter<edm::InputTag>("electron_id"))),
-    rhoToken_ (consumes<double> (cfg.getParameter<edm::InputTag>("rho")))
+    rhoToken_ (consumes<double> (cfg.getParameter<edm::InputTag>("rho"))),
+    gen_src(cfg.getParameter<edm::InputTag>("gen_src"))
 {
   consumes<edm::View<reco::Candidate>>(muon_view_src);
   consumes<pat::MuonCollection>(muon_src);
   consumes<reco::VertexCollection>(vtx_src);
   consumes<reco::CandViewMatchMap >(muon_photon_match_src);
+  consumes<reco::GenParticleCollection >(gen_src);
 
   use_filters_for_trigger_matching = false;
   if(trigger_filters.size()>0 && prescaled_trigger_filters.size()>0) {
@@ -452,6 +456,27 @@ std::pair<pat::Electron*,int> Zprime2muLeptonProducer_miniAOD::doLepton(const ed
   new_el->addUserFloat("min_muon_dR", float(min_muon_dR));
   new_el->addUserFloat("etaSC",new_el->superCluster()->eta());
   new_el->addUserFloat("lowestUnprescaledL1",getLowestSingleL1EG(event.id().run(), event.luminosityBlock()));
+
+  edm::Handle<reco::GenParticleCollection> genParticles;
+  event.getByLabel(gen_src, genParticles);
+
+
+  int gsf_mc_match=0;
+  if(genParticles.isValid()){
+  	reco::GenParticleCollection::const_iterator genp = genParticles.product()->begin();
+  	for (; genp != genParticles.product()->end(); genp++) {
+  		if( abs(genp->pdgId()) != 11 || (abs(genp->status()) !=23 && abs(genp->status()) !=1 )) continue;
+		//std::cout << genp->eta() << " " << genp->phi() << " "  << genp->et() <<  std::endl;
+		//std::cout << new_el->eta() << " " << new_el->phi() << " " << new_el->pt() <<  std::endl;
+		double gen_dR = reco::deltaR(genp->eta(),genp->phi(), new_el->eta(), new_el->phi());
+		//std::cout << gen_dR << std::endl;
+		//std::cout << "------------------------------------------" << std::endl;
+		//double gen_dR = reco::deltaR(genp->eta(),genp->phi(), new_el->eta(), new_el->phi());
+		if(gen_dR<0.1){gsf_mc_match=1;break;}
+
+  	}
+  }
+  new_el->addUserFloat("genMatch",gsf_mc_match);
   // Evaluate cuts here with string object selector, and any code that
   // cannot be done in the string object selector (so far, just the
   // minimum muon dR above).
@@ -670,6 +695,7 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
       std::cout << "passEcalDriven " << passEcalDriven << std::endl;
       std::cout << "passDEtaIn " << passDEtaIn << std::endl;
       std::cout << "passDPhiIn " << passDPhiIn << std::endl;
+      std::cout << ele->userFloat("heepTrkPtIso") << std::endl;
       std::cout << "passTrackIso " << passTrackIso << std::endl;
       std::cout << "passMissingHits " << passMissingHits << std::endl;
       std::cout << "passDXY " << passDXY << std::endl;
@@ -677,6 +703,8 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
       std::cout << "eta " << ele->superCluster()->eta() << std::endl; 
       if (!passID == passID2018) std::cout << passID << " " << passID2018 << std::endl;
 */	
+      //std::cout << "userfloat " << ele->userFloat("heepTrkPtIso") << std::endl;
+      //std::cout << "member " << ele->dr03TkSumPt() << std::endl;
       if(passID || passID2018) {	
 	const pat::Electron Electrons = *ele;
 	std::pair<T*,int> res = doLepton(event, Electrons);

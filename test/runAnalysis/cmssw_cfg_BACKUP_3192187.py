@@ -1,4 +1,36 @@
 #!/usr/bin/env python
+import FWCore.ParameterSet.Config as cms
+from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_hlt_process_name
+from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_reco_process_name
+from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
+from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFiltersMiniAOD
+
+process.source.fileNames =['/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_1400_2300/MINIAODSIM/MUOTrackFix_12Apr2018_94X_mc2017_realistic_v14_ext1-v1/90000/D2652C30-F9FF-E811-9A82-A0369FC5B56C.root','/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_1400_2300/MINIAODSIM/MUOTrackFix_12Apr2018_94X_mc2017_realistic_v14_ext1-v1/90000/B4156155-F9FF-E811-AB7F-D4AE526DF7FF.root','/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_1400_2300/MINIAODSIM/MUOTrackFix_12Apr2018_94X_mc2017_realistic_v14_ext1-v1/90000/06E7EDC2-F9FF-E811-9364-0CC47A5FC67D.root','/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_1400_2300/MINIAODSIM/MUOTrackFix_12Apr2018_94X_mc2017_realistic_v14_ext1-v1/90000/10F317C6-FCFF-E811-B8F5-20CF307C98DC.root','/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_1400_2300/MINIAODSIM/MUOTrackFix_12Apr2018_94X_mc2017_realistic_v14_ext1-v1/90000/38FE9F6F-FCFF-E811-94F8-0CC47A4C8F08.root','/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_1400_2300/MINIAODSIM/MUOTrackFix_12Apr2018_94X_mc2017_realistic_v14_ext1-v1/90000/72892446-FAFF-E811-89D2-0242AC1C0504.root','/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_1400_2300/MINIAODSIM/MUOTrackFix_12Apr2018_94X_mc2017_realistic_v14_ext1-v1/90000/CC4C5B02-F9FF-E811-A257-0CC47A13D3A8.root','/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_1400_2300/MINIAODSIM/MUOTrackFix_12Apr2018_94X_mc2017_realistic_v14_ext1-v1/90000/905A2D74-FCFF-E811-A291-0025904C6620.root','/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_1400_2300/MINIAODSIM/MUOTrackFix_12Apr2018_94X_mc2017_realistic_v14_ext1-v1/90000/024AE64F-FCFF-E811-B06B-A4BF0108B90A.root','/store/mc/RunIIFall17MiniAODv2/ZToMuMu_NNPDF31_13TeV-powheg_M_1400_2300/MINIAODSIM/MUOTrackFix_12Apr2018_94X_mc2017_realistic_v14_ext1-v1/90000/904527DE-F8FF-E811-9ED8-E0071B74AC00.root',]
+
+process.maxEvents.input = -1
+isMC = True
+addNTuples = True
+year = 2017
+<<<<<<< HEAD
+sampleName = 'dy1400to2300'
+=======
+sampleName = 'tW'
+>>>>>>> 612bc2c1c3683ce58b21086f3fe942aed2dcda6d
+process.GlobalTag.globaltag = '94X_mc2017_realistic_v17'
+process.options.wantSummary = cms.untracked.bool(True)# false di default
+process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
+#import for high pT muon triggers
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, trigger_paths, overall_prescale, offline_pt_threshold, trigger_filters, trigger_filters2016, trigger_path_names, trigger_path_names2016, trigger_match_2018, trigger_match_2016,trigger_path_full_names, trigger_path_full_names2016
+#import for prescaled low pT muon triggers
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import prescaled_trigger_pt_threshold, overall_prescale_2016, overall_prescale_2017, overall_prescale_2018, prescaled_trigger_filters_16, prescaled_trigger_path_names_16, prescaled_trigger_path_full_names_16, prescaled_trigger_match_2016, prescaled_trigger_filters_18, prescaled_trigger_path_names_18, prescaled_trigger_path_full_names_18, prescaled_trigger_match_2018, prescaled_trigger_path_name_list_16, prescaled_trigger_path_name_list_17, prescaled_trigger_path_name_list_18, prescaled_offline_pt_threshold
+
+# The histogramming module that will be cloned multiple times below
+# for making histograms with different cut/dilepton combinations.
+
+from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import electrons_miniAOD
+electrons_miniAOD(process)
+#!/usr/bin/env python
+<<<<<<< HEAD
 Electrons = False
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
@@ -8,7 +40,7 @@ HistosFromPAT.leptonsFromDileptons = True
 ####################################
 
 HistosFromPAT.usekFactor = True #### Set TRUE to use K Factor #####
-HistosFromPAT.useTTBarWeight = True #### Set TRUE to use NNPDF Weights for ttbar #####
+HistosFromPAT.useTTBarWeight = False #### Set TRUE to use NNPDF Weights for ttbar #####
 
 ####################################
 ####################################
@@ -44,7 +76,7 @@ if year == 2016:
     prescaled_trigger_path_full_names = prescaled_trigger_path_full_names_16
     prescale_common_path_name_list = prescaled_trigger_path_name_list_16
     overall_prescale = overall_prescale_2016
-elif year == 2017 or (year==2018 and (sampleName == "WW200to600" or sampleName == "WW600to1200" or sampleName == "WW1200to2500" or sampleName == "WW2500" or sampleName == "ttbar_lep_500to800_ext" or sampleName == "ttbar_lep_500to800" or sampleName == "ttbar_lep_800to1200" or sampleName == "ttbar_lep_1200to1800" or sampleName == "ttbar_lep_1800toInf" or "CI" in sampleName or "ADD" in sampleName)):
+elif year == 2017 or (year==2018 and (sampleName == "WW200to600" or sampleName == "WW600to1200" or sampleName == "WW1200to2500" or sampleName == "WW2500" or sampleName == "ttbar_lep_500to800_ext" or sampleName == "ttbar_lep_500to800" or sampleName == "ttbar_lep_800to1200" or sampleName == "ttbar_lep_1200to1800" or sampleName == "ttbar_lep_1800toInf")):
     prescaled_trigger_match = prescaled_trigger_match_2018
     prescaled_trigger_filters = prescaled_trigger_filters_18
     prescaled_trigger_path_names = prescaled_trigger_path_names_18
@@ -78,19 +110,20 @@ elif year == 2018:
     getattr(process,'PrescaleToCommonMiniAOD').Prescale_src = cms.InputTag('patTrigger','','RECO')
     getattr(process,'PrescaleToCommonMiniAOD').L1Prescale_min_src = cms.InputTag('patTrigger','l1min','RECO')
     getattr(process,'PrescaleToCommonMiniAOD').L1Prescale_max_src = cms.InputTag('patTrigger','l1max','RECO')
+=======
+>>>>>>> 612bc2c1c3683ce58b21086f3fe942aed2dcda6d
 
 
-from PhysicsTools.PatUtils.l1ECALPrefiringWeightProducer_cfi import l1ECALPrefiringWeightProducer
-if year == 2016 or year == 2017:
-	process.prefiringweight = l1ECALPrefiringWeightProducer.clone(
-    		DataEra = cms.string("2017BtoF"), #Use 2016BtoH for 2016
-    		UseJetEMPt = cms.bool(False),
-    		PrefiringRateSystematicUncty = cms.double(0.2),
-    		SkipWarnings = False)
+hardInteraction_MiniAOD = cms.PSet(src = cms.InputTag('prunedGenParticles'),
+                           doingElectrons = cms.bool(True),
+                           allowFakeResonance = cms.bool(True),
+                           resonanceIds = cms.vint32(32, 23, 39, 5000039),
+                           shutUp = cms.bool(True),
+                           matchTaus = cms.bool(True),
+                           )
 
-	if year==2016:
-    		process.prefiringweight.DataEra = cms.string("2016BtoH")
 
+<<<<<<< HEAD
 
 
 
@@ -128,13 +161,18 @@ if year == 2016:
 		}
 
 
+=======
 
-# Loop over all the cut sets defined and make the lepton, allDilepton
-# (combinatorics only), and dilepton (apply cuts) modules for them.
-for cut_name, Selection in cuts.iteritems():
-	# Keep track of modules to put in the path for this set of cuts.
-    path_list = []
+process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
+process.genMass = cms.EDAnalyzer('GenMassHistos',
+			       src = cms.InputTag('prunedGenParticles'),
+				hardInteraction = hardInteraction_MiniAOD,
+			       )
+process.load("SUSYBSMAnalysis.Zprime2muAnalysis.EventCounter_cfi")
+>>>>>>> 612bc2c1c3683ce58b21086f3fe942aed2dcda6d
 
+
+<<<<<<< HEAD
     # Clone the LeptonProducer to make leptons with the set of cuts
     # we're doing here flagged.  I.e., muon_cuts in LeptonProducer
     # just marks each muon with a userInt "cutFor" that is 0 if it
@@ -171,8 +209,13 @@ for cut_name, Selection in cuts.iteritems():
 	leptons.prescaled_trigger_filters = prescaled_trigger_filters
 	leptons.prescaled_trigger_path_names = prescaled_trigger_path_names
  #       leptons.prescaled_trigger_path_full_names = prescaled_trigger_path_full_names
+=======
+>>>>>>> 612bc2c1c3683ce58b21086f3fe942aed2dcda6d
 
+path = cms.Path(process.EventCounter*process.genMass)
+setattr(process, 'pathGenMass', path)
 
+<<<<<<< HEAD
 
 #    if isMC:
 #	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
@@ -242,10 +285,8 @@ for cut_name, Selection in cuts.iteritems():
         setattr(process, name, dil)
         setattr(process, name + 'Histos', histos)
 	if not isMC:
-		delattr(getattr(process,name + 'Histos'),'hardInteraction')
-	else:
-		if "CI" in sampleName or "ADD" in sampleName:
-			getattr(process, name + 'Histos', histos).hardInteraction.matchTaus = cms.bool(False)
+		delattr(getattr(process,name + 'Histos'),'hardInteraction')	
+
         path_list.append(alldil * dil * histos)
 
 	if 'ConLR' in sampleName or 'DesLR' in sampleName or 'ConRL' in sampleName or 'DesRL' in sampleName:
@@ -352,3 +393,6 @@ if isMC:
     #switch_hlt_process_name(process, hlt_process_name) # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
 
 
+=======
+
+>>>>>>> 612bc2c1c3683ce58b21086f3fe942aed2dcda6d

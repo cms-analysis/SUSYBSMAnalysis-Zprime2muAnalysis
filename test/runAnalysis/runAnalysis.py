@@ -464,7 +464,7 @@ def main():
 				crab_cfg = getCRABCfgAAA(prefix+dataset_name,dataset,lumi_mask)
 			else:	
 				crab_cfg = getCRABCfg(prefix+dataset_name,dataset,lumi_mask)
-			if args.do2016 and ("Lam100kTeV" in dataset_name or "Lam10TeV"	in dataset_name):
+			if args.do2016 and ("Lam100kTeV" in dataset_name or "Lam10TeV"	in dataset_name or "ADDGravToLL_LambdaT100k_M1700" in dataset_name):
 				crab_cfg = crab_cfg.replace("config.Data.inputDBS = 'global'","config.Data.inputDBS = 'phys03'")
 			if args.do2016 and dataset_name == "CITo2E_Lam1TeVConLR_M300":
 				crab_cfg = crab_cfg + '\n'					

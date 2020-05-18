@@ -1,5 +1,1 @@
-T1_FR_CCIN2P3_Disk
-T1_UK_RAL_Buffer
-T1_UK_RAL_MSS
-T2_BE_UCL
-T2_US_MIT
+WARNING: No site records found in PhEDEx, will look-up original sites in DBS

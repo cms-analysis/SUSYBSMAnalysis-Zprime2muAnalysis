@@ -1226,6 +1226,7 @@ add_2016 = [
 ('ADDGravToLL_LambdaT8500_M1700', '/ADDGravToLL_LambdaT-8500_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
 ('ADDGravToLL_LambdaT9000_M1700', '/ADDGravToLL_LambdaT-9000_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
 ('ADDGravToLL_LambdaT10000_M1700', '/ADDGravToLL_LambdaT-10000_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+('ADDGravToLL_LambdaT100k_M1700', '/ADDGravToLL_LambdaT-100kTeV_M-1700ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1-56fe694eb6687338c7aeb0151d5792b3/USER'),
 
 ]
 

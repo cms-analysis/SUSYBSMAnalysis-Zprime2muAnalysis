@@ -30,7 +30,7 @@ private:
   const int overall_prescale;
   const bool assume_simulation_has_prescale_1;
   const bool debugInfo;
-  const bool no_common;
+
   HLTConfigProvider hlt_cfg;
   TH1F* randoms;
   bool _disable;
@@ -48,7 +48,7 @@ PrescaleToCommon_miniAOD::PrescaleToCommon_miniAOD(const edm::ParameterSet& cfg)
     overall_prescale(cfg.getParameter<int>("overall_prescale")),
     assume_simulation_has_prescale_1(cfg.getParameter<bool>("assume_simulation_has_prescale_1")),
     debugInfo(cfg.getParameter<bool>("debugInfo")),
-    no_common(cfg.getParameter<bool>("no_common")),
+
     _disable(cfg.getUntrackedParameter<bool>("disable",false)),
     hltPrescaleProvider_(cfg, consumesCollector(), *this)
 {
@@ -112,20 +112,6 @@ bool PrescaleToCommon_miniAOD::filter(edm::Event& event, const edm::EventSetup& 
     std::cout<<"path size "<<pathList.size()<<std::endl;
   }
 
-  edm::Handle<edm::TriggerResults> hlt_results;
-  event.getByLabel(TriggerResults_src, hlt_results);
-
-  //edm::TriggerResultsByName trbn = event.triggerResultsByName(*hlt_results);
-
-  //const edm::TriggerNames &names = event.triggerNames(*hlt_results);
-  //hltPrescales->setTriggerNames(event.triggerNames(*hlt_results));
-  //hltPrescales->setTriggerNames();
-
-  std::vector<unsigned> found_index;
-  std::vector<std::string> found_path;
-  std::vector<bool> found_result;
-  std::vector<double> found_l1_prescale;
-  std::vector<double> found_hlt_prescale;
     
   for (std::vector<std::string>::const_iterator path = trigger_paths.begin(), end = trigger_paths.end(); path != end; ++path) {
       if (debugInfo) {
@@ -160,46 +146,25 @@ bool PrescaleToCommon_miniAOD::filter(edm::Event& event, const edm::EventSetup& 
     throw cms::Exception("PrescaleToCommon_miniAOD") << "none of the trigger paths specified were found!\n";
   */
 
-  // If none of the triggers are in the event then throw an error
-  if (found_path.size()==0 || /*found_index.size()==0 ||*/ found_result.size()==0)
-    throw cms::Exception("PrescaleToCommon_miniAOD") << "none of the trigger paths specified were found!\n";
-  // This should never happen
-  //if (found_path.size()!=found_index.size()) {
-  if (found_path.size()!=found_result.size()) {
-    throw cms::Exception("PrescaleToCommon_miniAOD") << "path and index vectors not same size!?!\n";
-  }
 
+  // If the trigger path didn't fire for whatever reason, then go
+  // ahead and skip the event.
+  edm::Handle<edm::TriggerResults> hlt_results;
+  // event.getByLabel(edm::InputTag("TriggerResults", "", hlt_process_name), hlt_results);
+  event.getByLabel(TriggerResults_src, hlt_results);
+  if (!hlt_results->accept(path_index))
+    return false;
   if (debugInfo) {
-      for (unsigned int i=0; i<found_path.size(); i++) {
-          std::cout << "Path " << found_path[i] << /*" index " << found_index[i] << */" result " << found_result[i] 
-              << " l1 prescale " << found_l1_prescale[i] << " hlt prescale " << found_hlt_prescale[i] << std::endl;
-      }
+      std::cout<<" hlt_results->accept(path_index) "<<hlt_results->accept(path_index)<<std::endl;
+      // HLTConfigProvider does not have these methods anymore. They were moved to HLTPrescaleProvider in 2015.
+      //std::cout<<" hlt_cfg.prescaleValues(event, setup, trigger_path) "<<hlt_cfg.prescaleValues(event, setup, trigger_path).second<<std::endl;  
+     std::cout<<" hltPrescaleProvider_.prescaleValues(event, setup, trigger_path) "<<hltPrescaleProvider_.prescaleValues(event, setup, trigger_path).second<<std::endl;
   }
 
-  // Find result of trigger paths
-  bool result = false;
-  if (std::find(found_result.begin(), found_result.end(), true) != found_result.end()){
-      result = true;
-  }
-
-  // if we do not want a common prescale or event is MC or none of the triggers fired in the event, then return the trigger result
-  if (no_common || !event.isRealData() || result==false) {
-      return result;
-  }
-
-  // Everything here assumes that at least one of the trigger paths has fired
-  
-  // Check if prescales for triggers are idential
-  if (std::adjacent_find(found_hlt_prescale.begin(), found_hlt_prescale.end(), std::not_equal_to<>()) != found_hlt_prescale.end() || 
-          std::adjacent_find(found_l1_prescale.begin(), found_l1_prescale.end(), std::not_equal_to<>()) != found_l1_prescale.end()) {
-    throw cms::Exception("PrescaleToCommon_miniAOD") << "prescales not identical for all paths\n";
-  }
-
-  double hltPrescale = found_hlt_prescale[0]; // OK to use first element since all are identical
-  double L1Prescale_min = found_l1_prescale[0];
-  //double L1Prescale_max = 1;
-
-  /*
+  double hltPrescale = 1;
+ // double L1Prescale_max = 1;
+  double L1Prescale_min = 1;
+  std::ostringstream message;
   // For MC samples, can assume the prescales are 1.
   if (event.isRealData() || !assume_simulation_has_prescale_1) {
     hltPrescale = hltPrescales->getPrescaleForIndex(path_index);

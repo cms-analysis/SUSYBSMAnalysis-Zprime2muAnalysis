@@ -36,7 +36,8 @@ import FWCore.ParameterSet.Config as cms
 # the above cuts ("loose" is then a misnomer), and at least one must
 # pass the trigger match requirement (the only "tight" cut).
 
-from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import offline_pt_threshold, trigger_match_2018, prescaled_trigger_match_2018
+
+from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import trigger_match, offline_pt_threshold, trigger_match_2018, prescaled_trigger_match_2018
 
 loose_cut = 'isGlobalMuon && ' \
             'isTrackerMuon && ' \

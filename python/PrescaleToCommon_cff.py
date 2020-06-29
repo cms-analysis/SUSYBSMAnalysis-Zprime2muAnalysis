@@ -16,14 +16,13 @@ PrescaleToCommon = cms.EDFilter('PrescaleToCommon',
 PrescaleToCommonMiniAOD = cms.EDFilter('PrescaleToCommon_miniAOD',
                                 hlt_src = cms.InputTag('TriggerResults','','HLT'),
                                 TriggerResults_src = cms.InputTag('TriggerResults', '', 'HLT'),
-				Prescale_src = cms.InputTag('patTrigger','','RECO'),
-				L1Prescale_max_src = cms.InputTag('patTrigger','l1max','RECO'),
-				L1Prescale_min_src = cms.InputTag('patTrigger','l1min','RECO'),
+                                Prescale_src = cms.InputTag('patTrigger','','RECO'),
+                                L1Prescale_max_src = cms.InputTag('patTrigger','l1max','RECO'),
+                                L1Prescale_min_src = cms.InputTag('patTrigger','l1min','RECO'),
                                 trigger_paths = cms.vstring(),
                                 overall_prescale = cms.int32(1),
-                                assume_simulation_has_prescale_1 = cms.bool(True), # Current PAT tuples of MC samples don't have both L1 branches :-(                               
+                                assume_simulation_has_prescale_1 = cms.bool(True), # Current PAT tuples of MC samples don't have both L1 branches :-(                                
                                 debugInfo = cms.bool(False),
-                                no_common = cms.bool(False), 
 			        
 )
 

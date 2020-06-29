@@ -292,6 +292,7 @@ class Zprime2muHistosFromPAT : public edm::EDAnalyzer {
 
   TH1F* GenMass;
   
+
   TH1F* DileptonMass;
   TH1F* DileptonMass_bb;
   TH1F* DileptonMass_be;
@@ -553,6 +554,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   ChiDilepton            = fs->make<TH1F>("ChiDilepton",            titlePrefix + "dil. chi", 100, 0, 20);
   CosThetaStarDilepton   = fs->make<TH1F>("CosThetaStarDilepton",            titlePrefix + "dil. cos theta star", 100, -1, 1);
 
+
   // Dilepton invariant mass.
   DielectronMass            = fs->make<TH1F>("DielectronMass",            titlePrefix + "dil. mass", 20000, 0, 20000);
   DielectronMass_bbbe       = fs->make<TH1F>("DielectronMass_bbbe",       titlePrefix + "dil. mass", 20000, 0, 20000);
@@ -685,6 +687,7 @@ Zprime2muHistosFromPAT::Zprime2muHistosFromPAT(const edm::ParameterSet& cfg)
   DielectronResponseMassScaleDown_ee         = fs->make<TH2F>("DielectronResponseMassScaleDown_ee",            titlePrefix + "dil. mass endcaps-endcaps", 200, 0, 20000,200,0,20000);
   GenMass                 = fs->make<TH1F>("GenMass",            titlePrefix + "dil. mass", 20000, -10 , 20000);
   
+
   DileptonMass            = fs->make<TH1F>("DileptonMass",            titlePrefix + "dil. mass", 20000, 0, 20000);
   DileptonMass_bb         = fs->make<TH1F>("DileptonMass_bb",            titlePrefix + "dil. mass barrel-barrel", 20000, 0, 20000);
   DileptonMass_be         = fs->make<TH1F>("DileptonMass_be",            titlePrefix + "dil. mass barrel-endcaps and endcaps-endcaps", 20000, 0, 20000);
@@ -1417,8 +1420,10 @@ void Zprime2muHistosFromPAT::fillLeptonHistos(const reco::CandidateBaseRef& lep)
   const pat::Muon* muon = toConcretePtr<pat::Muon>(lep);
   if (muon) fillOfflineMuonHistos(muon);
   
-  const pat::Electron* electron = toConcretePtr<pat::Electron>(lep);
-  if (electron) fillOfflineElectronHistos(electron);
+  if (doElectrons) {
+      const pat::Electron* electron = toConcretePtr<pat::Electron>(lep);
+      if (electron) fillOfflineElectronHistos(electron);
+  }
 }
 
 void Zprime2muHistosFromPAT::fillLeptonHistos(const edm::View<reco::Candidate>& leptons) {
@@ -1552,6 +1557,7 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 		else if(year_info==2017){
 			e2_pass_trigger=trigEle_2017::passTrig(ele1->et(), ele1->superCluster()->eta());
 			e2_pass_l1 = trigEle33l1::passTrig(ele1->et(),ele1->superCluster()->eta(),"Run_all", false);
+
 		}
 		else if(year_info==2018)e2_pass_trigger=trigEle_2018::passTrig(ele1->et(), ele1->superCluster()->eta(), "Run_all" , true) ;
 	
@@ -1801,11 +1807,11 @@ void Zprime2muHistosFromPAT::fillDileptonHistos(const pat::CompositeCandidate& d
 
 		}
 
-	}
 
-    }
+    } // if ele0 && ele1
+    } // doElectrons
 
-  }
+  } // if lep0.isNonnull() && lep1.isNonnull()
 
   DileptonDaughterIds->Fill(dil.daughter(0)->pdgId(), dil.daughter(1)->pdgId(), _madgraphWeight*_kFactor*_puWeight);
 

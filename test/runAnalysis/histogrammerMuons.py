@@ -283,9 +283,9 @@ for cut_name, Selection in cuts.iteritems():
     process.load("SUSYBSMAnalysis.Zprime2muAnalysis.EventCounter_cfi")
  	
     if year == 2016 or year == 2017:
-   	 pobj = process.EventCounter* process.prefiringweight * process.dileptonPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+   	 pobj = process.EventCounter* process.prefiringweight * process.dileptonPreselector *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
     else:
-	pobj = process.EventCounter * process.dileptonPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+	pobj = process.EventCounter * process.dileptonPreselector *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
 
 
 

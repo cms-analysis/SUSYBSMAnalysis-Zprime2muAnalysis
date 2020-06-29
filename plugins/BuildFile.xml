@@ -68,7 +68,7 @@
   <use name="CommonTools/UtilAlgos"/>
   <use name="DataFormats/HepMCCandidate"/>
 </library>
-<library file="AsymmetryFrameAnalysis.cc,AsymmetryParametrizer.cc,CocktailAnalyzer.cc,EfficiencyFromMC.cc,EfficiencyFromMCMini.cc,EfficiencyFromMCnoTrigger.cc,HardInteractionFilter.cc,DibosonGenMass.cc,TauTauSelection.cc,HardInteractionNtuple.cc,HistosFromPAT.cc, MuonsFromDimuons.cc,PrintEvent.cc,QCDBackground.cc,ResolutionUsingMC.cc,ResolutionAtZ.cc,SimpleNtupler.cc,SimpleNtupler_miniAOD.cc,Zprime2muAsymmetry.cc,Zprime2muMassReach.cc,QScaleSelector.cc,TTbarSelection.cc,GenMassHistos.cc,ADDTruncator.cc" name="Zprime2muAnalyzers">
+<library file="AsymmetryFrameAnalysis.cc,AsymmetryParametrizer.cc,CocktailAnalyzer.cc,EfficiencyFromMC.cc,EfficiencyFromMCMini.cc,EfficiencyFromMCnoTrigger.cc,HardInteractionFilter.cc,DibosonGenMass.cc,TauTauSelection.cc,HardInteractionNtuple.cc,HistosFromPAT.cc, MuonsFromDimuons.cc,PrintEvent.cc,QCDBackground.cc,ResolutionUsingMC.cc,ResolutionAtZ.cc,SimpleNtupler.cc,SimpleNtupler_miniAOD.cc,Zprime2muAsymmetry.cc,Zprime2muMassReach.cc,QScaleSelector.cc,TTbarSelection.cc" name="Zprime2muAnalyzers">
   <use name="rootgraphics"/>
   <use name="CommonTools/UtilAlgos"/>
   <use name="DataFormats/PatCandidates"/>
@@ -131,7 +131,3 @@
     <use name="SimDataFormats/GeneratorProducts"/>
     <use name="CommonTools/UtilAlgos"/>
 </library>
-<library file="EventCounterTruncated.cc" name="EventCounterTruncated">
-    <use name="CommonTools/UtilAlgos"/>
-</library>
-

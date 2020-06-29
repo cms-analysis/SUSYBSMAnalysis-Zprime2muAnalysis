@@ -5,13 +5,13 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_reco_
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFiltersMiniAOD
 
-process.source.fileNames =['dummyFile']
+process.source.fileNames =['/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/EB675885-31D1-9448-A802-4D8AE9B37566.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/51B1931F-8D12-8C4A-87BB-3B1FE0502C6C.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/CD05A289-9842-754A-98E6-148388C4EF41.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/9703A373-2475-4F45-BA2B-30CBDDA74298.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/8E033556-7497-5341-AC31-02CCB9CDCADF.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/543B865A-C341-EF4F-8DD6-D56D6DFEBCFA.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/89E5100A-81A9-E64F-A2DB-C378D11A6C64.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/9898EABB-AFFE-AA41-9355-26DD08016FDC.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/99BD5B79-F881-6D40-8970-01B0088F74D1.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/4F3043C6-B0F4-C046-A075-9EB1174C26AF.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/1A885AD3-3BDE-AA43-88FB-CA7AE2F88BF2.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/3E77D9B6-3963-754A-9110-EEC969468B5E.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/3A00FE0E-09F5-6148-8A43-53BEBD2F39B8.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/802AE29A-757E-1B41-8182-D074726C27FB.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/90842FB5-209B-9B4E-8833-1EE978B9D4DB.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/000C927C-4DC5-E94E-9FFD-DC522900611D.root',]
 
 process.maxEvents.input = -1
 isMC = True
 addNTuples = False
-year = 2016
-sampleName = 'Wjets_ext'
+year = 2018
+sampleName = 'dy1400to2300'
 process.GlobalTag.globaltag = '94X_mc2017_realistic_v17'
 process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
@@ -28,7 +28,7 @@ electrons_miniAOD(process)
 #!/usr/bin/env python
 from SUSYBSMAnalysis.Zprime2muAnalysis.HistosFromPAT_cfi import HistosFromPAT_MiniAOD as HistosFromPAT
 HistosFromPAT.leptonsFromDileptons = True
-HistosFromPAT.usekFactor = False #### Set TRUE to use K Factor on DY. If used, the k factor will be applied to ALL samples submitted. #####
+HistosFromPAT.usekFactor = True #### Set TRUE to use K Factor on DY. If used, the k factor will be applied to ALL samples submitted. #####
 HistosFromPAT.useTTBarWeight = False #### Set TRUE to use NNPDF Weights for ttbar #####
 	
 # These modules define the basic selection cuts. For the monitoring
@@ -127,7 +127,7 @@ for cut_name, Selection in cuts.iteritems():
         # Histos now just needs to know which leptons and dileptons to use.
 	if isMC:
 		if year == 2018:
-			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2018","data_2018"), year = cms.int32(year))
+			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("dy1400to2300","data_2018"), year = cms.int32(year))
 		elif year == 2017:	
 			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2017","data_2017"), year = cms.int32(year))
 		else:	

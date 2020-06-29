@@ -9,7 +9,6 @@
 #include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
 #include "HLTrigger/HLTcore/interface/HLTPrescaleProvider.h"
 #include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
-#include "FWCore/Common/interface/TriggerResultsByName.h"
 
 
 class PrescaleToCommon_miniAOD : public edm::EDFilter {
@@ -30,7 +29,6 @@ private:
   const int overall_prescale;
   const bool assume_simulation_has_prescale_1;
   const bool debugInfo;
-
   HLTConfigProvider hlt_cfg;
   TH1F* randoms;
   bool _disable;
@@ -48,7 +46,6 @@ PrescaleToCommon_miniAOD::PrescaleToCommon_miniAOD(const edm::ParameterSet& cfg)
     overall_prescale(cfg.getParameter<int>("overall_prescale")),
     assume_simulation_has_prescale_1(cfg.getParameter<bool>("assume_simulation_has_prescale_1")),
     debugInfo(cfg.getParameter<bool>("debugInfo")),
-
     _disable(cfg.getUntrackedParameter<bool>("disable",false)),
     hltPrescaleProvider_(cfg, consumesCollector(), *this)
 {
@@ -57,6 +54,7 @@ PrescaleToCommon_miniAOD::PrescaleToCommon_miniAOD(const edm::ParameterSet& cfg)
   consumes<edm::TriggerResults>(TriggerResults_src);
   consumes<pat::PackedTriggerPrescales>(L1Prescale_max_src);
   consumes<pat::PackedTriggerPrescales>(L1Prescale_min_src);
+  consumes<pat::PackedTriggerPrescales>(Prescale_src);
   consumes<pat::PackedTriggerPrescales>(Prescale_src);
 }
 
@@ -85,9 +83,6 @@ bool PrescaleToCommon_miniAOD::filter(edm::Event& event, const edm::EventSetup& 
   // not meant to handle checking more-fundamentally different trigger
   // paths, e.g. HLT_Mu15_v2, HLT_Mu24_v1, but only different versions
   // of the "same" path.
-  //
-  // CJS - If different trigger types have the same exact prescales then this is OK
-  // e.g. HLT_Mu27_v* and HLT_TkMu27_v*
 
 
    edm::Handle<pat::PackedTriggerPrescales> hltPrescales;
@@ -102,16 +97,15 @@ bool PrescaleToCommon_miniAOD::filter(edm::Event& event, const edm::EventSetup& 
 
 
   HLTConfigProvider const& hlt_cfg = hltPrescaleProvider_.hltConfigProvider();
-  //bool found = false;
+  bool found = false;
   std::string trigger_path;
-  //unsigned path_index = hlt_cfg.size();
+  unsigned path_index = hlt_cfg.size();
   
  
   if (debugInfo) {
     const std::vector<std::string>& pathList = hlt_cfg.triggerNames();
     std::cout<<"path size "<<pathList.size()<<std::endl;
   }
-
     
   for (std::vector<std::string>::const_iterator path = trigger_paths.begin(), end = trigger_paths.end(); path != end; ++path) {
       if (debugInfo) {
@@ -123,29 +117,16 @@ bool PrescaleToCommon_miniAOD::filter(edm::Event& event, const edm::EventSetup& 
     if (ndx == hlt_cfg.size())
       continue;
 
-    //if (found)
-      //throw cms::Exception("PrescaleToCommon_miniAOD") << "a version of the trigger path " << *path << " was already found; probably you misconfigured.\n";
+    if (found)
+      throw cms::Exception("PrescaleToCommon_miniAOD") << "a version of the trigger path " << *path << " was already found; probably you misconfigured.\n";
     
-    //found = true;
-    //trigger_path = *path;
-    //path_index = ndx;
-    found_path.push_back(*path);
-    found_index.push_back(ndx);
-    found_result.push_back(hlt_results->accept(ndx));
-    //found_result.push_back(trbn.accept(ind));
-    //found_result.push_back(hltPrescales->triggerResults().accept(*path));
-    found_hlt_prescale.push_back(hltPrescales->getPrescaleForIndex(ndx));
-    //found_hlt_prescale.push_back(hltPrescales->getPrescaleForName(*path));
-    //L1Prescale_max = L1Prescales_max->getPrescaleForName(trigger_path);
-    //found_l1_prescale.push_back(L1Prescales_min->getPrescaleForName(*path));
-    found_l1_prescale.push_back(L1Prescales_min->getPrescaleForIndex(ndx));
+    found = true;
+    trigger_path = *path;
+    path_index = ndx;
   }
 
-  /*
   if (!found)
     throw cms::Exception("PrescaleToCommon_miniAOD") << "none of the trigger paths specified were found!\n";
-  */
-
 
   // If the trigger path didn't fire for whatever reason, then go
   // ahead and skip the event.
@@ -168,15 +149,15 @@ bool PrescaleToCommon_miniAOD::filter(edm::Event& event, const edm::EventSetup& 
   // For MC samples, can assume the prescales are 1.
   if (event.isRealData() || !assume_simulation_has_prescale_1) {
     hltPrescale = hltPrescales->getPrescaleForIndex(path_index);
-    //L1Prescale_max = L1Prescales_max->getPrescaleForName(trigger_path);
+//    L1Prescale_max = L1Prescales_max->getPrescaleForName(trigger_path);
     L1Prescale_min = L1Prescales_min->getPrescaleForIndex(path_index);
-  }
+    
+     }
   else
     //prescales = std::make_pair(1,1);
     // Do not filter out MC events with prescales=1, apply the
     // appropriate weights later.
     return true;
-  */
 
   //std::cout<<"------PRESCALES: "<<overall_prescale<<"\t"<<prescales.first<<"\t"<<prescales.second<<std::endl;
 

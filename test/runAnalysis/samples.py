@@ -341,6 +341,7 @@ backgrounds_electrons_2016_extra = [
 
      	('ZZ2L2Q', '/ZZTo2L2Q_13TeV_powheg_pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM'),
  
+     	('dyMCAtNLO', '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3_ext2-v1/MINIAODSIM'),
      	('WZ2L2Q', '/WZTo2L2Q_13TeV_amcatnloFXFX_madspin_pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3-v2/MINIAODSIM'),
      	     	('dyInclusive50', '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3_ext2-v1/MINIAODSIM'),
  	('Wjets_ext', '/WJetsToLNu_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3_ext2-v2/MINIAODSIM'),
@@ -1226,7 +1227,33 @@ add_2016 = [
 ('ADDGravToLL_LambdaT8500_M1700', '/ADDGravToLL_LambdaT-8500_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
 ('ADDGravToLL_LambdaT9000_M1700', '/ADDGravToLL_LambdaT-9000_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
 ('ADDGravToLL_LambdaT10000_M1700', '/ADDGravToLL_LambdaT-10000_M-1700_13TeV-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'),
+('ADDGravToLL_LambdaT15000_M1700', '/ADDGravToLL_LambdaT-15TeV_M-1700ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT30000_M1700', '/ADDGravToLL_LambdaT-30TeV_M-1700ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT50000_M1700', '/ADDGravToLL_LambdaT-50TeV_M-1700ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT100000_M1700', '/ADDGravToLL_LambdaT-100TeV_M-1700ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT1000000_M1700', '/ADDGravToLL_LambdaT-1000TeV_M-1700ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1-56fe694eb6687338c7aeb0151d5792b3/USER'),
 ('ADDGravToLL_LambdaT100k_M1700', '/ADDGravToLL_LambdaT-100kTeV_M-1700ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1-56fe694eb6687338c7aeb0151d5792b3/USER'),
+
+('ADDGravToLL_LambdaT3500_M2800', '/ADDGravToLL_LambdaT-3500TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT4000_M2800', '/ADDGravToLL_LambdaT-4000TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT4500_M2800', '/ADDGravToLL_LambdaT-4500TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT5000_M2800', '/ADDGravToLL_LambdaT-5000TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT5500_M2800', '/ADDGravToLL_LambdaT-5500TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT6000_M2800', '/ADDGravToLL_LambdaT-6000TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT6500_M2800', '/ADDGravToLL_LambdaT-6500TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT7000_M2800', '/ADDGravToLL_LambdaT-7000TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT7500_M2800', '/ADDGravToLL_LambdaT-7500TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT8000_M2800', '/ADDGravToLL_LambdaT-8000TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT8500_M2800', '/ADDGravToLL_LambdaT-8500TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT9000_M2800', '/ADDGravToLL_LambdaT-9000TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT10000_M2800', '/ADDGravToLL_LambdaT-10000TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT15000_M2800', '/ADDGravToLL_LambdaT-15TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT30000_M2800', '/ADDGravToLL_LambdaT-30TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT50000_M2800', '/ADDGravToLL_LambdaT-50TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT100000_M2800', '/ADDGravToLL_LambdaT-100TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT1000000_M2800', '/ADDGravToLL_LambdaT-1000TeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+('ADDGravToLL_LambdaT100k_M2800', '/ADDGravToLL_LambdaT-100kTeV_M-2800ToInf_13TeV-pythia8/jschulte-RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v4-56fe694eb6687338c7aeb0151d5792b3/USER'),
+
 
 ]
 
@@ -1271,6 +1298,21 @@ add_2017 = [
 ('ADDGravToLL_LambdaT-9000_M-2000ToInf', '/ADDGravToLL_LambdaT-9000_M-2000ToInf_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-9000_M-300To800', '/ADDGravToLL_LambdaT-9000_M-300To800_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-9000_M-800To1300', '/ADDGravToLL_LambdaT-9000_M-800To1300_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1/MINIAODSIM') ,
+
+
+
+('ADDGravToLL_LambdaT-100000_M-2800ToInf','/ADDGravToLL_LambdaT-100000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1-e5ee5f0fc56a914c05cf99b88263a67e/USER'),
+('ADDGravToLL_LambdaT-10000_M-2800ToInf','/ADDGravToLL_LambdaT-10000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1-e5ee5f0fc56a914c05cf99b88263a67e/USER'),
+('ADDGravToLL_LambdaT-11000_M-2800ToInf','/ADDGravToLL_LambdaT-11000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1-e5ee5f0fc56a914c05cf99b88263a67e/USER'),
+('ADDGravToLL_LambdaT-12000_M-2800ToInf','/ADDGravToLL_LambdaT-12000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1-e5ee5f0fc56a914c05cf99b88263a67e/USER'),
+('ADDGravToLL_LambdaT-4000_M-2800ToInf','/ADDGravToLL_LambdaT-4000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1-e5ee5f0fc56a914c05cf99b88263a67e/USER'),
+('ADDGravToLL_LambdaT-5000_M-2800ToInf','/ADDGravToLL_LambdaT-5000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1-e5ee5f0fc56a914c05cf99b88263a67e/USER'),
+('ADDGravToLL_LambdaT-6000_M-2800ToInf','/ADDGravToLL_LambdaT-6000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1-e5ee5f0fc56a914c05cf99b88263a67e/USER'),
+('ADDGravToLL_LambdaT-7000_M-2800ToInf','/ADDGravToLL_LambdaT-7000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1-e5ee5f0fc56a914c05cf99b88263a67e/USER'),
+('ADDGravToLL_LambdaT-8000_M-2800ToInf','/ADDGravToLL_LambdaT-8000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1-e5ee5f0fc56a914c05cf99b88263a67e/USER'),
+('ADDGravToLL_LambdaT-9000_M-2800ToInf','/ADDGravToLL_LambdaT-9000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14-v1-e5ee5f0fc56a914c05cf99b88263a67e/USER'),
+
+
 
 #('ADDGravToLL_CP2_LambdaT-10000_M-2000ToInf', '/ADDGravToLL_LambdaT-10000_M-2000ToInf_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14_ext1-v1/MINIAODSIM') ,
 #('ADDGravToLL_CP2_LambdaT-10000_M-300To800', '/ADDGravToLL_LambdaT-10000_M-300To800_13TeV-pythia8/RunIIFall17MiniAODv2-PU2017_12Apr2018_94X_mc2017_realistic_v14_ext1-v1/MINIAODSIM') ,
@@ -1343,5 +1385,18 @@ add_2018 = [
 ('ADDGravToLL_LambdaT-9000_M-2000ToInf', '/ADDGravToLL_LambdaT-9000_M-2000ToInf_13TeV-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-9000_M-300To800', '/ADDGravToLL_LambdaT-9000_M-300To800_13TeV-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM') ,
 ('ADDGravToLL_LambdaT-9000_M-800To1300', '/ADDGravToLL_LambdaT-9000_M-800To1300_13TeV-pythia8/RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1/MINIAODSIM') ,
+
+
+('ADDGravToLL_LambdaT-100000_M-2800ToInf', '/ADDGravToLL_LambdaT-100000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1-2d2d54bc51391eefaee040affbf31d45/USER'),
+('ADDGravToLL_LambdaT-10000_M-2800ToInf', '/ADDGravToLL_LambdaT-10000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1-2d2d54bc51391eefaee040affbf31d45/USER'),
+('ADDGravToLL_LambdaT-11000_M-2800ToInf', '/ADDGravToLL_LambdaT-11000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1-2d2d54bc51391eefaee040affbf31d45/USER'),
+('ADDGravToLL_LambdaT-12000_M-2800ToInf', '/ADDGravToLL_LambdaT-12000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1-2d2d54bc51391eefaee040affbf31d45/USER'),
+('ADDGravToLL_LambdaT-4000_M-2800ToInf', '/ADDGravToLL_LambdaT-4000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1-2d2d54bc51391eefaee040affbf31d45/USER'),
+('ADDGravToLL_LambdaT-5000_M-2800ToInf', '/ADDGravToLL_LambdaT-5000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1-2d2d54bc51391eefaee040affbf31d45/USER'),
+('ADDGravToLL_LambdaT-6000_M-2800ToInf', '/ADDGravToLL_LambdaT-6000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1-2d2d54bc51391eefaee040affbf31d45/USER'),
+('ADDGravToLL_LambdaT-7000_M-2800ToInf', '/ADDGravToLL_LambdaT-7000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1-2d2d54bc51391eefaee040affbf31d45/USER'),
+('ADDGravToLL_LambdaT-8000_M-2800ToInf', '/ADDGravToLL_LambdaT-8000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1-2d2d54bc51391eefaee040affbf31d45/USER'),
+('ADDGravToLL_LambdaT-9000_M-2800ToInf', '/ADDGravToLL_LambdaT-9000_M-2800ToInf_13TeV-pythia8/jschulte-RunIIAutumn18MiniAOD-102X_upgrade2018_realistic_v15-v1-2d2d54bc51391eefaee040affbf31d45/USER'),
+
 
 ]

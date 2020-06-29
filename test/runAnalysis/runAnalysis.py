@@ -56,6 +56,14 @@ process.DYGenMassFilter = cms.EDFilter('QScaleSelector',
 				       )
 for path_name, path in process.paths.iteritems():
 	getattr(process,path_name).insert(2,process.DYGenMassFilter)'''
+	ADDFilter1700  = '''
+process.DYGenMassFilter = cms.EDFilter('QScaleSelector',
+				       src = cms.InputTag('generator'),
+				       min_mass = cms.double(0),
+				       max_mass = cms.double(2800),
+				       )
+for path_name, path in process.paths.iteritems():
+	getattr(process,path_name).insert(2,process.DYGenMassFilter)'''
 	ZPtFilter = '''    
 process.DYGenMassFilter = cms.EDFilter('DyPt_ZSkim',
                                        src = cms.InputTag('prunedGenParticles'),
@@ -83,6 +91,8 @@ for path_name, path in process.paths.iteritems():
 			return CIFilter1300
 		else:
 			return ""
+	elif ("ADD" in name and "M1700" in name) or ("ADD" in name and "M-2000ToInf" in name):
+		return ADDFilter1700
 	else:
 		return ""
 
@@ -381,7 +391,12 @@ def main():
 			if args.inputDataset == sample[1]:
 				validSample = True
 				samples = [sample]
-		if validSample:
+
+		if args.inputDataset=="/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3_ext2-v1/MINIAODSIM":
+			validSample = True
+			samples = []
+
+		if validSample or args.inputDataset=="/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv3-PUMoriond17_94X_mcRun2_asymptotic_v3_ext2-v1/MINIAODSIM":
 			print "running over sample %s"%args.inputDataset
 		else:
 			print "sample does not fit the chosen configuration, please reconsider"
@@ -464,7 +479,7 @@ def main():
 				crab_cfg = getCRABCfgAAA(prefix+dataset_name,dataset,lumi_mask)
 			else:	
 				crab_cfg = getCRABCfg(prefix+dataset_name,dataset,lumi_mask)
-			if args.do2016 and ("Lam100kTeV" in dataset_name or "Lam10TeV"	in dataset_name or "ADDGravToLL_LambdaT100k_M1700" in dataset_name):
+			if (args.do2016 and ("Lam100kTeV" in dataset_name or "Lam10TeV"	in dataset_name or "ADDGravToLL_LambdaT100k_M1700" in dataset_name)) or "USER" in dataset:
 				crab_cfg = crab_cfg.replace("config.Data.inputDBS = 'global'","config.Data.inputDBS = 'phys03'")
 			if args.do2016 and dataset_name == "CITo2E_Lam1TeVConLR_M300":
 				crab_cfg = crab_cfg + '\n'					
@@ -509,32 +524,32 @@ def main():
 		#dbs = DbsApi('https://cmsweb.cern.ch/dbs/prod/global/DBSReader')
 	       
 		for name, ana_dataset in samples2:
-			arguments['name'] = dataset_name
+			arguments['name'] = name
 			cmssw_tmp = cmssw_cfg
 			cmssw_tmp = cmssw_tmp%arguments
 			cmssw_tmp += analyzer
 			
-			cmssw_tmp+=getFilterSnippet(dataset_name,args,applyAllGenFilters,year=arguments["year"])
-			if "dy" in dataset_name:
+			cmssw_tmp+=getFilterSnippet(name,args,applyAllGenFilters,year=arguments["year"])
+			if "dy" in name:
 				if "HistosFromPAT.usekFactor = False" in cmssw_tmp:
 					cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.usekFactor = False','HistosFromPAT.usekFactor = True')
 			else:
 				if "HistosFromPAT.usekFactor = True" in cmssw_tmp:
 					cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.usekFactor = True','HistosFromPAT.usekFactor = False')
-			if "ttbar" in dataset_name:
+			if "ttbar" in name:
 				if "HistosFromPAT.useTTBarWeight = False" in cmssw_tmp:
 					cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.useTTBarWeight = False','HistosFromPAT.useTTBarWeight = True')
 			else:
 				if "HistosFromPAT.useTTBarWeight = True" in cmssw_tmp:
 					cmssw_tmp = cmssw_tmp.replace('HistosFromPAT.useTTBarWeight = True','HistosFromPAT.useTTBarWeight = False')
 
-			if not args.do2016 and not args.do2018 and not args.ci2017 and not args.data and not args.resolution and args.electrons and not dataset_name == 'dummy':
+			if not args.do2016 and not args.do2018 and not args.ci2017 and not args.data and not args.resolution and args.electrons and not name == 'dummy':
 				print "trying"
-				cmssw_tmp = cmssw_tmp.replace('mc_2017',dataset_name)
+				cmssw_tmp = cmssw_tmp.replace('mc_2017',name)
 			#if args.do2018 and 'dy' in dataset_name and not dataset_name == "dyInclusive50":
 			#	cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2018_flat')
 			toReweight = ['WW200to600','WW600to1200','WW1200to2500','WW2500',"ttbar_lep_ext","ttbar_lep",'ttbar_lep_500to800_ext','ttbar_lep_500to800','ttbar_lep_800to1200','ttbar_lep_1200to1800','ttbar_lep1800toInf']
-			if (args.do2018 and dataset_name in toReweight) or (args.do2018 and 'CITo2E' in dataset_name):
+			if (args.do2018 and dataset_name in toReweight) or (args.do2018 and 'CITo2E' in name):
 				cmssw_tmp = cmssw_tmp.replace('mc_2018','mc_2017')
 
 

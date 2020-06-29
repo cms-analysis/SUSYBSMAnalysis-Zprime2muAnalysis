@@ -67,7 +67,7 @@ for cut_name, Selection in cuts.iteritems():
 	    
     leptons_name = cut_name + 'Leptons'
     leptons = process.leptonsMini.clone()
-    if year == 2016 and ("03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName or ("dy" in sampleName  and not "Inclusive" in sampleName) or "CI" in sampleName or "ADD" in sampleName):
+    if year == 2016 and ("03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName or ("dy" in sampleName  and not "Inclusive" in sampleName) or "CI" in sampleName or "ADD" in sampleName) and not sampleName == "dyMCAtNLO":
     #if year == 2016:
 	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
     if year == 2018:

@@ -44,7 +44,7 @@ if year == 2016:
     prescaled_trigger_path_full_names = prescaled_trigger_path_full_names_16
     prescale_common_path_name_list = prescaled_trigger_path_name_list_16
     overall_prescale = overall_prescale_2016
-elif year == 2017 or (year==2018 and (sampleName == "WW200to600" or sampleName == "WW600to1200" or sampleName == "WW1200to2500" or sampleName == "WW2500" or sampleName == "ttbar_lep_500to800_ext" or sampleName == "ttbar_lep_500to800" or sampleName == "ttbar_lep_800to1200" or sampleName == "ttbar_lep_1200to1800" or sampleName == "ttbar_lep_1800toInf" or "CI" in sampleName or "ADD" in sampleName)):
+elif year == 2017 or (year==2018 and (sampleName == "WW200to600" or sampleName == "WW600to1200" or sampleName == "WW1200to2500" or sampleName == "WW2500" or sampleName == "ttbar_lep_500to800_ext" or sampleName == "ttbar_lep_500to800" or sampleName == "ttbar_lep_800to1200" or sampleName == "ttbar_lep_1200to1800" or sampleName == "ttbar_lep_1800toInf" or "CI" in sampleName)):
     prescaled_trigger_match = prescaled_trigger_match_2018
     prescaled_trigger_filters = prescaled_trigger_filters_18
     prescaled_trigger_path_names = prescaled_trigger_path_names_18
@@ -90,7 +90,6 @@ if year == 2016 or year == 2017:
 
 	if year==2016:
     		process.prefiringweight.DataEra = cms.string("2016BtoH")
-
 
 
 
@@ -154,7 +153,7 @@ for cut_name, Selection in cuts.iteritems():
         muon_cuts = Selection.loose_cut
 
     leptons = process.leptonsMini.clone(muon_cuts = muon_cuts)
-    if year == 2016 and (isMC or "03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName):
+    if year == 2016 and (isMC or "03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName) and not sampleName == "dyMCAtNLO":
 	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
 
     if len(trigger_filters)>0 and (cut_name=='Our2017' or cut_name=='Our2017MuPrescaled' or cut_name=='Our2017MuPrescaledCommon' or cut_name=='Simple' or cut_name == 'Our2018' or cut_name=='Our2018MuPrescaled' or cut_name=='Our2018MuPrescaledCommon'):

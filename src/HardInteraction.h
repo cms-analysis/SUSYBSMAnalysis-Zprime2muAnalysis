@@ -90,6 +90,9 @@ struct HardInteraction {
   // expect. Useful to turn them off if running on e.g. single-muon
   // relval samples.
   const bool shutUp;
+
+  // to switch off matching to tau decays, needed for LR reweighting for CI samples
+  const bool matchTaus; 
 };
 
 #endif

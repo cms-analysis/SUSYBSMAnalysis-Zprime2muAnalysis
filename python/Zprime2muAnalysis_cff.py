@@ -36,7 +36,9 @@ leptons = cms.EDProducer('Zprime2muLeptonProducer',
                          trigger_summary_src = cms.InputTag('hltTriggerSummaryAOD', '', 'HLT'),
                          )
 leptonsMini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
+                              vtx_src = cms.InputTag('offlineSlimmedPrimaryVertices'),
                               muon_src = cms.InputTag('slimmedMuons'),
+                              #electron_src = cms.InputTag('slimmedElectrons',"","Zprime2muAnalysis"),
                               electron_src = cms.InputTag('slimmedElectrons'),
 			      electron_id = cms.InputTag("egmGsfElectronIDs:heepElectronID-HEEPV70Bitmap"),
                               muon_srcSecond = cms.InputTag('slimmedMuons'), #JMTBAD changeme after new PAT tuples
@@ -51,10 +53,13 @@ leptonsMini = cms.EDProducer('Zprime2muLeptonProducer_miniAOD',
                               prescales = cms.InputTag("patTrigger"),
                               trigger_filters = cms.vstring(),
                               trigger_path_names = cms.vstring(),
+                              trigger_path_full_names = cms.vstring(),
                               prescaled_trigger_filters = cms.vstring(),
                               prescaled_trigger_path_names = cms.vstring(),
-			      hlt_filter_ele = cms.string("hltDiEle33CaloIdLMWPMS2UnseededFilter"),
+			      hlt_filter_ele = cms.vstring("hltDiEle33CaloIdLMWPMS2UnseededFilter"),
 			      l1_filter_ele = cms.string("hltEGL1SingleAndDoubleEGNonIsoOrWithEG26WithJetAndTauFilter"),
+			      rho = cms.InputTag("fixedGridRhoFastjetAll"),
+			      gen_src = cms.InputTag('prunedGenParticles'),
                               )
 
 Zprime2muAnalysisSequence = cms.Sequence(muonPhotonMatch * leptons * allDimuons * dimuons)
@@ -70,7 +75,6 @@ Zprime2muAnalysisSequence_MiniAOD = cms.Sequence(muonPhotonMatchMiniAOD * lepton
 # to use it you have to do from CMSSW_X_X_X/src/:
 # git cms-merge-topic Sam-Harper:HEEPV70VID
 # compile it, and pass to "my_id_modules" the version that you merged 
-
 from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 def electrons_miniAOD(process):
     switchOnVIDElectronIdProducer(process, DataFormat.MiniAOD)

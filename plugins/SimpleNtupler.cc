@@ -655,7 +655,6 @@ void SimpleNtupler::analyze(const edm::Event& event, const edm::EventSetup&) {
   t.run = event.id().run();
   t.lumi = event.luminosityBlock();
   t.event = event.id().event();
-
   // Get Trigger information
 
 

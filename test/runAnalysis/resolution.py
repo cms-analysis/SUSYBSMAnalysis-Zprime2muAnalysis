@@ -52,14 +52,16 @@ dils = [('MuonsPlusMuonsMinus',          '%(leptons_name)s:muons@+ %(leptons_nam
 # Define sets of cuts for which to make plots. If using a selection
 # that doesn't have a trigger match, need to re-add a hltHighLevel
 # filter somewhere below.
+
 cuts = {
-	'Our2016'  : OurSelection2016,
 	'Our2017'  : OurSelection2017,
-	#'OurNoIso' : OurSelectionDec2012,
-	#'Simple'   : OurSelection2017, # The selection cuts in the module listed here are ignored below.
-	#'OurMuPrescaledNew'  : OurSelectionNew,
-	#'OurMuPrescaled2012' : OurSelectionDec2012
 	}
+if year == 2016:
+	cuts = {
+		'Our2016'  : OurSelection2016,
+		'Our2017'  : OurSelection2017,
+		}
+
 
 tracks = ["Inner","Global","Outer","TPFMS","DYT","Picky","TunePNew"]
 # Loop over all the cut sets defined and make the lepton, allDilepton
@@ -81,10 +83,11 @@ for trackType in tracks:
             leptons_name = cut_name + 'Leptons' + trackType
 	    if cut_name == 'Simple':
 		muon_cuts = ''
-	    elif 'MuPrescaled' in cut_name:
-		muon_cuts = Selection.loose_cut.replace('pt > %s' % offline_pt_threshold, 'pt > %s' % prescaled_offline_pt_threshold)
-	    else:
-		muon_cuts = Selection.loose_cut
+#	    elif 'MuPrescaled' in cut_name:
+#	    muon_cuts = Selection.loose_cut.replace('pt > %s' % offline_pt_threshold, 'pt > 20')
+#	    print muon_cuts
+#	    else:
+	    muon_cuts = Selection.loose_cut
 
 	    leptons = process.leptonsMini.clone(muon_cuts = muon_cuts)
 	    leptons.muon_track_for_momentum = cms.string(trackType)
@@ -102,6 +105,12 @@ for trackType in tracks:
 		leptons.trigger_path_names = trigger_path_names
 		leptons.prescaled_trigger_filters = prescaled_trigger_filters
 		leptons.prescaled_trigger_path_names = prescaled_trigger_path_names
+	    if len(trigger_filters)>0 and year == 2016:
+		leptons.trigger_filters = trigger_filters2016
+		leptons.trigger_path_names = trigger_path_names2016
+		leptons.prescaled_trigger_filters = prescaled_trigger_filters
+		leptons.prescaled_trigger_path_names = prescaled_trigger_path_names
+
 
 	    # Keep using old TuneP for past selections
 	#     if 'Dec2012' not in Selection.__file__:
@@ -129,9 +138,16 @@ for trackType in tracks:
 		    alldil.checkCharge = cms.bool(False)
 
 		dil = Selection.dimuons.clone(src = cms.InputTag(allname))
-		if len(trigger_filters) >  0 and (cut_name=='Our2017' or cut_name=='Simple'):
-			alldil.tight_cut = trigger_match_2018
+		print trigger_match_2018
+		if len(trigger_filters) >  0 and (cut_name=='Our2017' or cut_name=='Our2016' or cut_name=='Simple'):
+			if year == 2016:
+				alldil.tight_cut = trigger_match_2016
+			else:
+				alldil.tight_cut = trigger_match_2018
 
+		#if len(trigger_filters) >  0 and (cut_name=='Our2017' or cut_name=='Simple'):
+		#	alldil.tight_cut = ""
+		alldil.loose_cut = muon_cuts
 		# Implement the differences to the selections; currently, as
 		# in Zprime2muCombiner, the cuts in loose_cut and
 		# tight_cut are the ones actually used to drop leptons, and
@@ -178,6 +194,7 @@ for trackType in tracks:
 	    pathname = 'path' + cut_name + trackType
 	    process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DileptonPreselector_cfi')
 	    process.load("SUSYBSMAnalysis.Zprime2muAnalysis.EventCounter_cfi")
+	    process.dileptonPreseletor.ptCut = cms.double(20)	
 	    pobj = process.EventCounter * process.dileptonPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
 
 
@@ -200,4 +217,3 @@ for trackType in tracks:
 if isMC:
 	switch_reco_process_name(process, "PAT") # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
     #switch_hlt_process_name(process, hlt_process_name) # this must be done last (i.e. after anything that might have an InputTag for something HLT-related)
-print process.dumpPython()

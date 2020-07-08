@@ -8,11 +8,11 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFilt
 process.source.fileNames =['dummyFile']
 
 process.maxEvents.input = -1
-isMC = %(isMC)s
-addNTuples = %(addNTuples)s
-year = %(year)d
-sampleName = '%(name)s'
-process.GlobalTag.globaltag = '%(GT)s'
+isMC = True
+addNTuples = False
+year = 2017
+sampleName = 'tW'
+process.GlobalTag.globaltag = '94X_mc2017_realistic_v17'
 process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
 #import for high pT muon triggers
@@ -25,3 +25,29 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.hltTriggerMatch_cfi import prescaled_trig
 
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import electrons_miniAOD
 electrons_miniAOD(process)
+#!/usr/bin/env python
+
+
+hardInteraction_MiniAOD = cms.PSet(src = cms.InputTag('prunedGenParticles'),
+                           doingElectrons = cms.bool(True),
+                           allowFakeResonance = cms.bool(True),
+                           resonanceIds = cms.vint32(32, 23, 39, 5000039),
+                           shutUp = cms.bool(True),
+                           matchTaus = cms.bool(True),
+                           )
+
+
+
+process.load('SUSYBSMAnalysis.Zprime2muAnalysis.PrunedMCLeptons_cfi')
+process.genMass = cms.EDAnalyzer('GenMassHistos',
+			       src = cms.InputTag('prunedGenParticles'),
+				hardInteraction = hardInteraction_MiniAOD,
+			       )
+process.load("SUSYBSMAnalysis.Zprime2muAnalysis.EventCounter_cfi")
+
+
+
+path = cms.Path(process.EventCounter*process.genMass)
+setattr(process, 'pathGenMass', path)
+
+

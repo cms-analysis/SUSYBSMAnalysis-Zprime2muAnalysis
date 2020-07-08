@@ -5,13 +5,13 @@ from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import switch_reco_
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cfg import process
 from SUSYBSMAnalysis.Zprime2muAnalysis.Zprime2muAnalysis_cff import goodDataFiltersMiniAOD
 
-process.source.fileNames =['/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/EB675885-31D1-9448-A802-4D8AE9B37566.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/51B1931F-8D12-8C4A-87BB-3B1FE0502C6C.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/CD05A289-9842-754A-98E6-148388C4EF41.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/9703A373-2475-4F45-BA2B-30CBDDA74298.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/8E033556-7497-5341-AC31-02CCB9CDCADF.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/543B865A-C341-EF4F-8DD6-D56D6DFEBCFA.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/89E5100A-81A9-E64F-A2DB-C378D11A6C64.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/9898EABB-AFFE-AA41-9355-26DD08016FDC.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/99BD5B79-F881-6D40-8970-01B0088F74D1.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/4F3043C6-B0F4-C046-A075-9EB1174C26AF.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/1A885AD3-3BDE-AA43-88FB-CA7AE2F88BF2.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/3E77D9B6-3963-754A-9110-EEC969468B5E.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/3A00FE0E-09F5-6148-8A43-53BEBD2F39B8.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/802AE29A-757E-1B41-8182-D074726C27FB.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/90842FB5-209B-9B4E-8833-1EE978B9D4DB.root','/store/mc/RunIIAutumn18MiniAOD/ZToEE_NNPDF31_TuneCP5_13TeV-powheg_M_1400_2300/MINIAODSIM/102X_upgrade2018_realistic_v15-v1/230000/000C927C-4DC5-E94E-9FFD-DC522900611D.root',]
+process.source.fileNames =['dummyFile']
 
 process.maxEvents.input = -1
 isMC = True
 addNTuples = False
-year = 2018
-sampleName = 'dy1400to2300'
+year = 2017
+sampleName = 'dy6000toInf'
 process.GlobalTag.globaltag = '94X_mc2017_realistic_v17'
 process.options.wantSummary = cms.untracked.bool(True)# false di default
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000 # default 1000
@@ -59,8 +59,8 @@ if year == 2016 or year == 2017:
     		process.prefiringweight.DataEra = cms.string("2016BtoH")
 
 dils = [
-#	('ElectronsOppSign',        '%(leptons_name)s:electrons@+ %(leptons_name)s:electrons@-',     ''),
-#	('ElectronsSameSign',       '%(leptons_name)s:electrons@+ %(leptons_name)s:electrons@+',     ''),
+	('ElectronsOppSign',        '%(leptons_name)s:electrons@+ %(leptons_name)s:electrons@-',     ''),
+	('ElectronsSameSign',       '%(leptons_name)s:electrons@+ %(leptons_name)s:electrons@+',     ''),
 	('ElectronsAllSigns',       '%(leptons_name)s:electrons@+ %(leptons_name)s:electrons@+',     ''),
 	]
 
@@ -94,8 +94,7 @@ for cut_name, Selection in cuts.iteritems():
 	    
     leptons_name = cut_name + 'Leptons'
     leptons = process.leptonsMini.clone()
-    if year == 2016 and ("03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName or ("dy" in sampleName  and not "Inclusive" in sampleName) or "CI" in sampleName or "ADD" in sampleName) and not sampleName == "dyMCAtNLO":
-    #if year == 2016:
+    if year == 2016 and ("03Feb" in sampleName or "23Sep" in sampleName or "Prompt" in sampleName or "dy2300to3500" in sampleName):
 	leptons.trigger_summary = cms.InputTag('selectedPatTrigger')
     if year == 2018:
 	leptons.hlt_filter_ele = cms.vstring('hltDiEle25CaloIdLMWPMS2UnseededFilter')
@@ -118,6 +117,7 @@ for cut_name, Selection in cuts.iteritems():
         alldil = Selection.allDielectrons.clone(decay = dil_decay % locals(), cut = dil_cut)
         if 'AllSigns' in dil_name:
             alldil.checkCharge = cms.bool(False)
+
         dil = Selection.dielectrons.clone(src = cms.InputTag(allname))
 	
 	# Implement the differences to the selections; currently, as
@@ -127,9 +127,9 @@ for cut_name, Selection in cuts.iteritems():
         # Histos now just needs to know which leptons and dileptons to use.
 	if isMC:
 		if year == 2018:
-			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("dy1400to2300","data_2018"), year = cms.int32(year))
+			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2018","data_2018"), year = cms.int32(year))
 		elif year == 2017:	
-			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2017","data_2017"), year = cms.int32(year))
+			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("dy6000toInf","data_2017"), year = cms.int32(year))
 		else:	
 			histos = HistosFromPAT.clone(lepton_src = cms.InputTag(leptons_name, 'electrons'), dilepton_src = cms.InputTag(name),doElectrons = cms.bool(True),pu_weights = cms.vstring("mc_2016","data_2016"), year = cms.int32(year))
 	else:	
@@ -138,7 +138,6 @@ for cut_name, Selection in cuts.iteritems():
 	#	delattr(histos,'hardInteraction')
 
 	histos.hardInteraction.doingElectrons = True
-
 	if 'ConLR' in sampleName or 'DesLR' in sampleName or 'ConRL' in sampleName or 'DesRL' in sampleName:
 		L = 10000	
 		if '16TeV' in sampleName:
@@ -185,15 +184,10 @@ for cut_name, Selection in cuts.iteritems():
 		delattr(getattr(process,name + 'Histos'),'hardInteraction')	
         	path_list.append(trig * alldil * dil * histos)
 	else:
-		if year == 2018:
-			alldil.loose_cut_ele = cms.string('et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566) && userInt("cutFor2018") == 1')	
-		else:
-			alldil.loose_cut_ele = cms.string('et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566) && userInt("cutFor") == 1')	
+		alldil.loose_cut_ele = cms.string('et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566)')	
 		alldil.tight_cut_ele = cms.string("")
-		#if not year == 2017:	
-		alldil.ele_match_l1 = cms.bool(False)
-		if "CI" in sampleName or "ADD" in sampleName:
-			getattr(process, name + 'Histos', histos).hardInteraction.matchTaus = cms.bool(False)
+		if not year == 2017:	
+			alldil.ele_match_l1 = cms.bool(False)	
         	path_list.append(alldil * dil * histos)
 	
     # Finally, make the path for this set of cuts.
@@ -201,18 +195,18 @@ for cut_name, Selection in cuts.iteritems():
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.DielectronPreselector_cfi')
     process.load("SUSYBSMAnalysis.Zprime2muAnalysis.EventCounter_cfi")
     if year == 2016 or year == 2017:
-    	pobj = process.EventCounter * process.egammaPostRecoSeq * process.prefiringweight * process.dielectronPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+    	pobj = process.egammaPostRecoSeq * process.prefiringweight * process.EventCounter * process.dielectronPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
     else:	
-	pobj = process.EventCounter * process.egammaPostRecoSeq * process.dielectronPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
+	pobj = process.egammaPostRecoSeq * process.EventCounter * process.dielectronPreseletor *  process.muonPhotonMatchMiniAOD * reduce(lambda x,y: x*y, path_list)
 
-    path = cms.Path(pobj)
-    setattr(process, pathname, path)
 
     process.load('SUSYBSMAnalysis.Zprime2muAnalysis.goodData_cff')
     for dataFilter in goodDataFiltersMiniAOD:
 	#setattr(process,dataFilter 
-	getattr(process,pathname).insert(1,dataFilter)
+	pobj = dataFilter * pobj
 
+    path = cms.Path(pobj)
+    setattr(process, pathname, path)
 
 
 if addNTuples:

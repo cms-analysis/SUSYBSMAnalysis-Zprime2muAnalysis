@@ -53,6 +53,7 @@ private:
 
   template <typename T> edm::OrphanHandle<std::vector<T> > doLeptons(edm::Event&, edm::Handle<edm::ValueMap<unsigned int> >&, edm::Handle<edm::View<pat::Electron> >&, const std::string&);
 
+  edm::InputTag vtx_src;
   edm::InputTag muon_src;
   edm::InputTag muon_view_src;
   StringCutObjectSelector<pat::Muon> muon_selector;
@@ -69,13 +70,13 @@ private:
   std::vector<std::string> trigger_path_names;
   std::vector<std::string> prescaled_trigger_filters;
   std::vector<std::string> prescaled_trigger_path_names;
-  std::string hlt_filter_ele;
+  std::vector<std::string> hlt_filter_ele;
   std::string l1_filter_ele;
   
   edm::EDGetTokenT<edm::TriggerResults> triggerBits_;
   edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> trigger_summary_src_;
   edm::EDGetTokenT<pat::PackedTriggerPrescales> triggerPrescales_;
-  
+
   pat::TriggerObjectStandAloneCollection L3_muons;
   pat::TriggerObjectStandAloneCollection L3_muons_2;
   pat::TriggerObjectStandAloneCollection prescaled_L3_muons;
@@ -96,10 +97,14 @@ private:
 
   edm::EDGetTokenT<edm::View<pat::Electron> > electronToken_;  
   edm::EDGetTokenT<edm::ValueMap<unsigned int> > vidBitmapToken_;
+  edm::EDGetTokenT<double> rhoToken_;
+
+  edm::InputTag gen_src;
 };
 
 Zprime2muLeptonProducer_miniAOD::Zprime2muLeptonProducer_miniAOD(const edm::ParameterSet& cfg)
-  : muon_src(cfg.getParameter<edm::InputTag>("muon_src")),
+  : vtx_src(cfg.getParameter<edm::InputTag>("vtx_src")),
+    muon_src(cfg.getParameter<edm::InputTag>("muon_src")),
     muon_view_src(cfg.getParameter<edm::InputTag>("muon_src")),
     muon_selector(cfg.getParameter<std::string>("muon_cuts")),
     muon_track_for_momentum(cfg.getParameter<std::string>("muon_track_for_momentum")),
@@ -112,18 +117,22 @@ Zprime2muLeptonProducer_miniAOD::Zprime2muLeptonProducer_miniAOD(const edm::Para
     trigger_path_names(cfg.getParameter<std::vector<std::string>>("trigger_path_names")),
     prescaled_trigger_filters(cfg.getParameter<std::vector<std::string>>("prescaled_trigger_filters")),
     prescaled_trigger_path_names(cfg.getParameter<std::vector<std::string>>("prescaled_trigger_path_names")),
-    hlt_filter_ele(cfg.getParameter<std::string>("hlt_filter_ele")),
+    hlt_filter_ele(cfg.getParameter<std::vector<std::string>>("hlt_filter_ele")),
     l1_filter_ele(cfg.getParameter<std::string>("l1_filter_ele")),
 
     triggerBits_(consumes<edm::TriggerResults>(cfg.getParameter<edm::InputTag>("bits"))),
     trigger_summary_src_(consumes<pat::TriggerObjectStandAloneCollection>(cfg.getParameter<edm::InputTag>("trigger_summary"))),
     triggerPrescales_(consumes<pat::PackedTriggerPrescales>(cfg.getParameter<edm::InputTag>("prescales"))),
     electronToken_(consumes<edm::View<pat::Electron> >(cfg.getParameter<edm::InputTag>("electron_src"))),
-    vidBitmapToken_(consumes<edm::ValueMap<unsigned int> >(cfg.getParameter<edm::InputTag>("electron_id")))
+    vidBitmapToken_(consumes<edm::ValueMap<unsigned int> >(cfg.getParameter<edm::InputTag>("electron_id"))),
+    rhoToken_ (consumes<double> (cfg.getParameter<edm::InputTag>("rho"))),
+    gen_src(cfg.getParameter<edm::InputTag>("gen_src"))
 {
   consumes<edm::View<reco::Candidate>>(muon_view_src);
   consumes<pat::MuonCollection>(muon_src);
+  consumes<reco::VertexCollection>(vtx_src);
   consumes<reco::CandViewMatchMap >(muon_photon_match_src);
+  consumes<reco::GenParticleCollection >(gen_src);
 
   use_filters_for_trigger_matching = false;
   if(trigger_filters.size()>0 && prescaled_trigger_filters.size()>0) {
@@ -258,7 +267,6 @@ pat::Muon* Zprime2muLeptonProducer_miniAOD::cloneAndSwitchMuonTrack(const pat::M
   mu->setVertex(vtx);
 
   mu->addUserInt("trackUsedForMomentum", type);
-  
   return mu;
 }
 
@@ -302,14 +310,15 @@ void Zprime2muLeptonProducer_miniAOD::embedTriggerMatch(pat::Muon* new_mu, std::
 void Zprime2muLeptonProducer_miniAOD::embedTriggerMatch(pat::Electron* new_ele, std::string ex, const pat::TriggerObjectStandAloneCollection& hlt_objects_ele, std::vector<int>& L3_matched_ele) {
   int best = -1;
   float defaultpTvalue = -1.;
-  float best_dR = trigger_match_max_dR;
+  float best_dR = 0.2;
+  if (ex.find("HLT")) best_dR = 0.1;
+  else best_dR = 0.3;
   //std::cout << "size of L3 collection: " << L3.size() << std::endl;
   for (size_t i = 0; i < hlt_objects_ele.size(); ++i) {
     // Skip those already used.
     if (L3_matched_ele[i])
       continue;
-
-    const float dR = reco::deltaR(hlt_objects_ele[i], *new_ele);
+    const float dR = reco::deltaR(hlt_objects_ele[i].eta(),hlt_objects_ele[i].phi(), new_ele->superCluster()->eta(), new_ele->superCluster()->phi())  ;
     if (dR < best_dR) {
       best = int(i);
       best_dR = dR;
@@ -447,6 +456,27 @@ std::pair<pat::Electron*,int> Zprime2muLeptonProducer_miniAOD::doLepton(const ed
   new_el->addUserFloat("min_muon_dR", float(min_muon_dR));
   new_el->addUserFloat("etaSC",new_el->superCluster()->eta());
   new_el->addUserFloat("lowestUnprescaledL1",getLowestSingleL1EG(event.id().run(), event.luminosityBlock()));
+
+  edm::Handle<reco::GenParticleCollection> genParticles;
+  event.getByLabel(gen_src, genParticles);
+
+
+  int gsf_mc_match=0;
+  if(genParticles.isValid()){
+  	reco::GenParticleCollection::const_iterator genp = genParticles.product()->begin();
+  	for (; genp != genParticles.product()->end(); genp++) {
+  		if( abs(genp->pdgId()) != 11 || (abs(genp->status()) !=23 && abs(genp->status()) !=1 )) continue;
+		//std::cout << genp->eta() << " " << genp->phi() << " "  << genp->et() <<  std::endl;
+		//std::cout << new_el->eta() << " " << new_el->phi() << " " << new_el->pt() <<  std::endl;
+		double gen_dR = reco::deltaR(genp->eta(),genp->phi(), new_el->eta(), new_el->phi());
+		//std::cout << gen_dR << std::endl;
+		//std::cout << "------------------------------------------" << std::endl;
+		//double gen_dR = reco::deltaR(genp->eta(),genp->phi(), new_el->eta(), new_el->phi());
+		if(gen_dR<0.1){gsf_mc_match=1;break;}
+
+  	}
+  }
+  new_el->addUserFloat("genMatch",gsf_mc_match);
   // Evaluate cuts here with string object selector, and any code that
   // cannot be done in the string object selector (so far, just the
   // minimum muon dR above).
@@ -559,7 +589,12 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
     return edm::OrphanHandle<std::vector<T> >();
   }
   
-  
+  edm::Handle<reco::VertexCollection> vertices;
+  event.getByLabel(vtx_src, vertices);
+  edm::Handle<double> rho_;
+  event.getByToken(rhoToken_,rho_);
+  const float rho = *rho_;
+ 
   std::unique_ptr<TCollection> new_leptons(new TCollection);
   
   if(patEles.isValid()){ 
@@ -572,18 +607,112 @@ edm::OrphanHandle<std::vector<T> > Zprime2muLeptonProducer_miniAOD::doLeptons(ed
       //A bool true is returned if electron passes ID
       //and only in this case a new lepton is created
 
-      unsigned int heepV70Bitmap = (*vidBitMap)[elePtr];
-      using HEEPV70 = VIDCutCodes<cutnrs::HEEPV70>; 
-      const bool passID = HEEPV70::pass(heepV70Bitmap,HEEPV70::ET,HEEPV70::IGNORE);
+      //unsigned int heepV70Bitmap = (*vidBitMap)[elePtr];
+      //using HEEPV70 = VIDCutCodes<cutnrs::HEEPV70>; 
+      //const bool passID = HEEPV70::pass(heepV70Bitmap,HEEPV70::ET,HEEPV70::IGNORE);
+      //const bool passID = ele->electronID("heepElectronID-HEEPV70");
+      //const bool passID = HEEPV70::pass(heepV70Bitmap,HEEPV70);
+      bool passEmHadIso2018 = false;
+      bool passHOverE2018 = false;
+      bool passEmHadIso = false;
+      bool passHOverE = false;
+      bool passShowerShape = false;
+      bool passSieie = false;
+      bool passEcalDriven = false;
+      bool passDEtaIn = false;
+      bool passDPhiIn = false;
+      bool passTrackIso = false;
+      bool passMissingHits = false;
+      bool passDXY = false;
+      
+      double sc_et = ele->superCluster()->energy()*sin( ele->theta() ) ;
+      if (ele->hasUserFloat("ecalEnergyPostCorr"))  sc_et = ele->userFloat("ecalEnergyPostCorr")*sin( ele->theta() ) ;
+
+      if (fabs(ele->superCluster()->eta()) < 1.4442){
+		if (ele->full5x5_e1x5()/ele->full5x5_e5x5() > 0.83 || ele->full5x5_e2x5Max()/ele->full5x5_e5x5() > 0.94) passShowerShape = true;
+		//if (ele->scE1x5()/ele->scE5x5() > 0.83 || ele->scE2x5Max()/ele->scE5x5() > 0.94) passShowerShape = true;
+		//if (ele->e1x5()/ele->e5x5() > 0.83 || ele->e2x5Max()/ele->e5x5() > 0.94) passShowerShape = true;
+               
+		passEmHadIso = (ele->dr03HcalDepth1TowerSumEt() + ele->dr03EcalRecHitSumEt()) < (2 + 0.03*sc_et + 0.28*rho);
+		passEmHadIso2018 = (ele->dr03HcalDepth1TowerSumEt() + ele->dr03EcalRecHitSumEt()) < (2 + 0.03*sc_et + 0.28*rho);
+
+		//passHOverE = ele->hadronicOverEm() < (1./ele->userFloat("ecalEnergyPostCorr") + 0.05);
+		//passHOverE2018 = ele->hadronicOverEm() < (1./ele->userFloat("ecalEnergyPostCorr") + 0.05);
+
+		passHOverE = ele->hadronicOverEm() < (1./ele->superCluster()->energy() + 0.05);
+		passHOverE2018 = ele->hadronicOverEm() < (1./ele->superCluster()->energy() + 0.05);
+
+		passSieie = true;
+                passEcalDriven = int(ele->ecalDrivenSeed());
+		passDEtaIn = fabs(ele->deltaEtaSeedClusterTrackAtVtx()) < 0.004;
+	        passDPhiIn = fabs(ele->deltaPhiSuperClusterTrackAtVtx()) < 0.06;
+
+//		passDEtaIn = ele->deltaEtaSuperClusterTrackAtVtx() < 0.004;
+//	        passDPhiIn = ele->deltaPhiSuperClusterTrackAtVtx() < 0.06;
+//
+		if (ele->hasUserFloat("heepTrkPtIso")) passTrackIso = ele->userFloat("heepTrkPtIso") < 5;
+	        passMissingHits = ele->gsfTrack()->hitPattern().numberOfLostHits(reco::HitPattern::MISSING_INNER_HITS) < 2;
+		passDXY = fabs(ele->gsfTrack()->dxy(vertices->at( 0 ).position())) < 0.02;
+      }
+      else if (fabs(ele->superCluster()->eta()) > 1.566 && fabs(ele->superCluster()->eta()) < 2.5 ){
+		passShowerShape = true;
+		passEmHadIso = (ele->dr03HcalDepth1TowerSumEt() + ele->dr03EcalRecHitSumEt()) < (2.5 + std::max(0.,0.03*(sc_et-50)) + 0.28*rho);
+		passEmHadIso2018 = (ele->dr03HcalDepth1TowerSumEt() + ele->dr03EcalRecHitSumEt()) < (2.5 + std::max(0.,0.03*(sc_et-50)) + (0.15+0.07*fabs(ele->superCluster()->eta()))*rho);
+		
+//		passHOverE = ele->hadronicOverEm() < (5./ele->userFloat("ecalEnergyPostCorr") + 0.05);
+//		passHOverE2018 = ele->hadronicOverEm() < ((-0.4+0.4*fabs(ele->superCluster()->eta())*rho)/ele->userFloat("ecalEnergyPostCorr") + 0.05);
+		passHOverE = ele->hadronicOverEm() < (5./ele->superCluster()->energy() + 0.05);
+		//passHOverE2018 = ele->hadronicOverEm() < ((-0.4+0.4*fabs(ele->superCluster()->eta())*rho)/ele->superCluster()->energy() + 0.05);
+		passHOverE2018 = ele->hadronicOverEm() < ((-0.4+0.4*fabs(ele->superCluster()->eta()))*rho/ele->superCluster()->energy() + 0.05);
+
+		passSieie = ele->full5x5_sigmaIetaIeta() < 0.03;
+                passEcalDriven = int(ele->ecalDrivenSeed());
+//		passDEtaIn = ele->deltaEtaSuperClusterTrackAtVtx() < 0.006;
+//	        passDPhiIn = ele->deltaPhiSuperClusterTrackAtVtx() < 0.06;
+
+		passDEtaIn = fabs(ele->deltaEtaSeedClusterTrackAtVtx()) < 0.006;
+	        passDPhiIn = fabs(ele->deltaPhiSuperClusterTrackAtVtx()) < 0.06;
+		if (ele->hasUserFloat("heepTrkPtIso")) passTrackIso = ele->userFloat("heepTrkPtIso") < 5;
+	        passMissingHits = ele->gsfTrack()->hitPattern().numberOfLostHits(reco::HitPattern::MISSING_INNER_HITS) < 2;
+		passDXY = fabs(ele->gsfTrack()->dxy(vertices->at( 0 ).position())) < 0.05;
+     }
+      const bool passID = passEmHadIso && passHOverE && passShowerShape && passSieie && passEcalDriven && passDEtaIn && passDPhiIn && passTrackIso && passMissingHits && passDXY;
+      const bool passID2018 = passEmHadIso2018 && passHOverE2018 && passShowerShape && passSieie && passEcalDriven && passDEtaIn && passDPhiIn && passTrackIso && passMissingHits && passDXY;
+      //const bool passID2018 = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::HADEM,HEEPV70::EMHADD1ISO},HEEPV70::IGNORE) && passEmHadIso2018 && passHOverE2018;
       //const bool passID = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::SIGMAIETAIETA,HEEPV70::E2X5OVER5X5,HEEPV70::HADEM,HEEPV70::ETA,HEEPV70::DETAINSEED,HEEPV70::DPHIIN,HEEPV70::TRKISO});
       //const bool passID = HEEPV70::pass(heepV70Bitmap,{HEEPV70::ET,HEEPV70::SIGMAIETAIETA,HEEPV70::E2X5OVER5X5,HEEPV70::HADEM,HEEPV70::ETA,HEEPV70::DETAINSEED,HEEPV70::DPHIIN,HEEPV70::TRKISO,HEEPV70::EMHADD1ISO});
-      if(passID) {	
+/*      std::cout << "pass: " << passID << "pass2018: " << passID2018 << std::endl;
+      std::cout << "HEEP" << std::endl;
+      std::cout << "passShowerShape " << passShowerShape << std::endl;
+      std::cout << "passHOverE " << passHOverE << std::endl;
+      std::cout << "passHOverE2018 " << passHOverE2018 << std::endl;
+      std::cout << "H/E val" << ele->hadronicOverEm() << std::endl;
+      std::cout << "H/E ele" << ((-0.4+0.4*fabs(ele->superCluster()->eta()))*rho/ele->superCluster()->energy() + 0.05) << std::endl;
+      std::cout << "rho " << rho << std::endl;
+      std::cout << "passEmHadIso " << passEmHadIso << std::endl;
+      std::cout << "passEmHadIso2018 " << passEmHadIso2018 << std::endl;
+      std::cout << "passSieie " << passSieie << std::endl;
+      std::cout << "passEcalDriven " << passEcalDriven << std::endl;
+      std::cout << "passDEtaIn " << passDEtaIn << std::endl;
+      std::cout << "passDPhiIn " << passDPhiIn << std::endl;
+      std::cout << ele->userFloat("heepTrkPtIso") << std::endl;
+      std::cout << "passTrackIso " << passTrackIso << std::endl;
+      std::cout << "passMissingHits " << passMissingHits << std::endl;
+      std::cout << "passDXY " << passDXY << std::endl;
+      std::cout << "ET " << sc_et << std::endl;
+      std::cout << "eta " << ele->superCluster()->eta() << std::endl; 
+      if (!passID == passID2018) std::cout << passID << " " << passID2018 << std::endl;
+*/	
+      //std::cout << "userfloat " << ele->userFloat("heepTrkPtIso") << std::endl;
+      //std::cout << "member " << ele->dr03TkSumPt() << std::endl;
+      if(passID || passID2018) {	
 	const pat::Electron Electrons = *ele;
 	std::pair<T*,int> res = doLepton(event, Electrons);
 	if (res.first == 0)
 	  continue;
-	res.first->addUserInt("cutFor", res.second);
-//	cout << res.first->userFloat("L1_TriggerMatchPt") << std::endl;
+        res.first->addUserFloat("SC_Et", sc_et);
+        res.first->addUserInt("cutFor", passID);
+	res.first->addUserInt("cutFor2018", passID2018);
 	new_leptons->push_back(*res.first);
 	delete res.first;
       }
@@ -658,7 +787,7 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
         }
 
         for(unsigned i_f=0; i_f<prescaled_trigger_filters.size(); ++i_f) {
-          if (obj.filterLabels()[h] == prescaled_trigger_filters[i_f]){ 
+          if (obj.filterLabels()[h] == prescaled_trigger_filters[i_f]){
             vec_prescaled_L3_muons[i_f].push_back(obj);
           }
         }
@@ -802,9 +931,12 @@ void Zprime2muLeptonProducer_miniAOD::produce(edm::Event& event, const edm::Even
 	  
 	 //this should not be hard coded! 
 	//std::cout << obj.filterLabels()[h] << std::endl;   
-	if (obj.filterLabels()[h] == hlt_filter_ele){ 
-	    //FilterMatched[j] = 1;
-	    hlt_objects_ele.push_back(obj);
+	for (unsigned int l = 0; l < hlt_filter_ele.size(); l++){
+		if ( (event.id().run() < 276453 || event.id().run() > 278822) && hlt_filter_ele[l] == "hltDiEle33CaloIdLGsfTrkIdVLDPhiUnseededFilter" ) continue;
+		if (obj.filterLabels()[h] == hlt_filter_ele[l]){ 
+	    	//FilterMatched[j] = 1;
+	   	 hlt_objects_ele.push_back(obj);
+	}
     }
 //     if (obj.filterLabels()[h] == pandf.filter_2){
 //          //FilterMatched[j] = 1;

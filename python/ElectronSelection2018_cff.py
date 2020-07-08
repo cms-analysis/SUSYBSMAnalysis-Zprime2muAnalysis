@@ -1,7 +1,9 @@
 import FWCore.ParameterSet.Config as cms
 
-loose_cut = 'et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566) && userFloat("HLT_TriggerMatchEt") > 10 && userInt("cutFor") == 1'
+loose_cut = 'et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566) && userFloat("HLT_TriggerMatchEt") > 10 && userInt("cutFor2018") == 1'
+loose_cut_MC = 'et > 35 && abs(userFloat("etaSC")) < 2.5 && !(abs(userFloat("etaSC")) > 1.4442 && abs(userFloat("etaSC")) < 1.566) && userInt("cutFor2018") == 1'
 
+#tight_cut = 'userFloat("L1_TriggerMatchEt") > userFloat("lowestUnprescaledL1")'
 tight_cut = ''
 
 allDielectrons = cms.EDProducer('Zprime2muCombiner',
@@ -27,7 +29,7 @@ dielectrons = cms.EDProducer('Zprime2muCompositeCandidatePicker',
                          dpt_over_pt_max = cms.double(999999999999)
                          )
 dielectronHLT = cms.EDFilter("TriggerResultsFilter",
-    	triggerConditions = cms.vstring("HLT_DoubleEle33_CaloIdL_MW_v*","HLT_DoubleEle33_CaloIdL_GsfTrkIdVL_v*"),
+    	triggerConditions = cms.vstring("HLT_DoubleEle25_CaloIdL_MW_v*"),
 	hltResults = cms.InputTag("TriggerResults","","HLT"),
 	l1tResults = cms.InputTag("gtStage2Digis")
 	)

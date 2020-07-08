@@ -38,7 +38,7 @@ private:
    
     unsigned run;
     unsigned lumi;
-    unsigned event;
+    unsigned long  event;
     float genWeight;
     float beamspot_x;
     float beamspot_x_err;
@@ -187,6 +187,7 @@ private:
     float lep_timeInOutErr[2];
     float lep_timeOutInErr[2];
     int lep_heep_id[2];
+    float lep_gen_match[2];
     float lep_min_muon_dR[2];
     short lep_tk_numberOfValidTrackerHits[2];
     short lep_tk_numberOfValidTrackerLayers[2];
@@ -319,7 +320,7 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
   tree = fs->make<TTree>("t", "");
   tree->Branch("run", &t.run, "run/i");
   tree->Branch("lumi", &t.lumi, "lumi/i");
-  tree->Branch("event", &t.event, "event/i");
+  tree->Branch("event", &t.event, "event/l");
   tree->Branch("beamspot_x", &t.beamspot_x, "beamspot_x/F");
   tree->Branch("beamspot_x_err", &t.beamspot_x_err, "beamspot_x_err/F");
   tree->Branch("beamspot_y", &t.beamspot_y, "beamspot_y/F");
@@ -350,6 +351,7 @@ SimpleNtupler_miniAOD::SimpleNtupler_miniAOD(const edm::ParameterSet& cfg)
   tree->Branch("vertex_z_err", &t.vertex_z_err, "vertex_z_err/F");
   tree->Branch("lep_id", t.lep_id, "lep_id[2]/I");
   tree->Branch("lep_heep_id", t.lep_heep_id, "lep_heep_id[2]/I");
+  tree->Branch("lep_gen_match", t.lep_gen_match, "lep_gen_match[2]/F");
   tree->Branch("lep_p", t.lep_p, "lep_p[2]/F");
   tree->Branch("lep_pt", t.lep_pt, "lep_pt[2]/F");
   tree->Branch("lep_pt_err", t.lep_pt_err, "lep_pt_err[2]/F");
@@ -728,7 +730,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
     t.run = event.id().run();
     t.lumi = event.luminosityBlock();
     t.event = event.id().event();
-
+ 
     // Get Trigger information
 
 
@@ -775,6 +777,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
         hardInteraction->Fill(event);
         double EventWeight = 1.;
         edm::Handle<GenEventInfoProduct> gen_ev_info;
+
         event.getByLabel(genEventInfo_, gen_ev_info);
         if (gen_ev_info.isValid()) {
             EventWeight = gen_ev_info->weight();
@@ -1053,6 +1056,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
                     t.lep_py[w] = dil.daughter(i)->py();
                     t.lep_pz[w] = dil.daughter(i)->pz();
                     t.lep_E[w] = dil.daughter(i)->energy();
+                    t.lep_gen_match[w] = userFloat(*el, "genMatch", 0);
                     t.lep_heep_id[w] = userInt(*el, "HEEPId", 999);
                     t.lep_min_muon_dR[w] = userFloat(*el, "min_muon_dR", 999);
                 } // end if electron 
@@ -1064,6 +1068,7 @@ void SimpleNtupler_miniAOD::analyze(const edm::Event& event, const edm::EventSet
             //
             else { // else of if (abs(t.lep_id[w]) != 13) 
                 t.lep_heep_id[w] = 999;
+                t.lep_gen_match[w] = 1;
                 t.lep_min_muon_dR[w] = 999;
 
                 // 

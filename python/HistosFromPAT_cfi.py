@@ -1,5 +1,6 @@
 import FWCore.ParameterSet.Config as cms
 from SUSYBSMAnalysis.Zprime2muAnalysis.HardInteraction_cff import hardInteraction,hardInteraction_MiniAOD
+from SUSYBSMAnalysis.Zprime2muAnalysis.LRWeightProducer_cfi import LRWeightProducer
 
 HistosFromPAT = cms.EDAnalyzer('Zprime2muHistosFromPAT',
                                lepton_src = cms.InputTag('leptons', 'muons'),
@@ -23,7 +24,12 @@ HistosFromPAT_MiniAOD = cms.EDAnalyzer('Zprime2muHistosFromPAT',
                                use_bs_and_pv = cms.bool(True),
                                useMadgraphWeight = cms.bool(True),
                                usekFactor = cms.bool(False),
+                               useTTBarWeight = cms.bool(False),
 			       hardInteraction = hardInteraction_MiniAOD,
                                doElectrons = cms.bool(False),
-                               pu_weights = cms.vstring()
+                               pu_weights = cms.vstring(),
+			       year = cms.int32(2017),
+              		       lrWeightProducer = LRWeightProducer,
+			       prefireWeights = cms.InputTag("prefiringweight:nonPrefiringProb"),
+			       LHEInfo = cms.InputTag("source")	 
 )

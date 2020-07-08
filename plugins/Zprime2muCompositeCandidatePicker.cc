@@ -290,15 +290,13 @@ std::pair<bool, float> Zprime2muCompositeCandidatePicker::dpt_over_pt(const pat:
 void Zprime2muCompositeCandidatePicker::produce(edm::Event& event, const edm::EventSetup& setup) {
   edm::Handle<pat::CompositeCandidateCollection> cands;
   event.getByLabel(src, cands);
-  
   // does this get cached correctly? do we care?
   setup.get<TransientTrackRecord>().get("TransientTrackBuilder", ttkb);
-
   std::unique_ptr<pat::CompositeCandidateCollection> new_cands(new pat::CompositeCandidateCollection);
-
   // Copy all the candidates that pass the specified cuts into the new
   // output vector. Also embed into the output dimuons any other
   // things that are best to just calculate once and for all.
+  //std::cout << "Number of selected pairs " << cands->size();
   for (pat::CompositeCandidateCollection::const_iterator c = cands->begin(), ce = cands->end(); c != ce; ++c) {
     // Some cuts can be simply specified through the
     // StringCutSelector.
